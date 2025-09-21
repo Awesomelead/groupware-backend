@@ -1,0 +1,5 @@
+spring:
+  application:
+    name: groupware-backend
+  profiles:
+    default: local

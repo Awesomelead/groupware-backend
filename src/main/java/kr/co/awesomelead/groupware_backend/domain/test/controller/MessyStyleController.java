@@ -7,20 +7,20 @@ import org.springframework.web.bind.annotation.RestController;
 public class MessyStyleController {
 
     // 잘못된 들여쓰기와 공백
-private String message="안녕하세요";
-    private String name    =   "Test";
+    private String message = "안녕하세요";
+    private String name = "Test";
 
     @GetMapping("/messy")
-public String getMessyResponse(  ){
-if(message!=null){
-return message+name;
-}else{
-return"Error";
-}
-}
+    public String getMessyResponse() {
+        if (message != null) {
+            return message + name;
+        } else {
+            return "Error";
+        }
+    }
 
     @GetMapping("/another")
-    public String anotherMethod( ) {
+    public String anotherMethod() {
         return message;
     }
 }

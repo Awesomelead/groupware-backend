@@ -6,10 +6,10 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 public class StyleTestController {
 
-private String message = "안녕하세요";
+    private String message = "안녕하세요";
 
-@GetMapping("/test")
-public String test() {
-    return message;
-}
+    @GetMapping("/test")
+    public String test() {
+        return message;
+    }
 }

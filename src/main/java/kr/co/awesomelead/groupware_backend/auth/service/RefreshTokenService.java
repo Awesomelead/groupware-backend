@@ -1,12 +1,15 @@
 package kr.co.awesomelead.groupware_backend.auth.service;
 
-import java.time.LocalDateTime;
 import kr.co.awesomelead.groupware_backend.auth.entity.RefreshToken;
 import kr.co.awesomelead.groupware_backend.auth.repository.RefreshTokenRepository;
 import kr.co.awesomelead.groupware_backend.auth.util.JWTUtil;
+
 import lombok.RequiredArgsConstructor;
+
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.time.LocalDateTime;
 
 @Service
 @RequiredArgsConstructor
@@ -18,39 +21,43 @@ public class RefreshTokenService {
     // Refresh Token의 유효 기간 (초 단위, 예: 7일)
     private static final long REFRESH_TOKEN_VALIDITY_IN_SECONDS = 7 * 24 * 60 * 60;
 
-    /**
-     * 새로운 Refresh Token을 생성하고 DB에 저장하는 메소드
-     */
+    /** 새로운 Refresh Token을 생성하고 DB에 저장하는 메소드 */
     @Transactional
     public String createAndSaveRefreshToken(String loginId, String role) {
         // 1. 새로운 토큰 값 생성
-        String newRefreshTokenValue = jwtUtil.createJwt(loginId, role, REFRESH_TOKEN_VALIDITY_IN_SECONDS * 1000);
+        String newRefreshTokenValue =
+                jwtUtil.createJwt(loginId, role, REFRESH_TOKEN_VALIDITY_IN_SECONDS * 1000);
 
         // 2. 만료 시간 계산
-        LocalDateTime expiration = LocalDateTime.now().plusSeconds(REFRESH_TOKEN_VALIDITY_IN_SECONDS);
+        LocalDateTime expiration =
+                LocalDateTime.now().plusSeconds(REFRESH_TOKEN_VALIDITY_IN_SECONDS);
 
         // 3. 해당 사용자의 기존 Refresh Token이 있다면 삭제
         refreshTokenRepository.findByLoginId(loginId).ifPresent(refreshTokenRepository::delete);
 
         // 4. 새로운 Refresh Token 엔티티 생성 및 저장
-        RefreshToken newRefreshToken = RefreshToken.builder()
-            .loginId(loginId)
-            .tokenValue(newRefreshTokenValue)
-            .expirationDate(expiration)
-            .build();
+        RefreshToken newRefreshToken =
+                RefreshToken.builder()
+                        .loginId(loginId)
+                        .tokenValue(newRefreshTokenValue)
+                        .expirationDate(expiration)
+                        .build();
         refreshTokenRepository.save(newRefreshToken);
 
         return newRefreshTokenValue;
     }
 
-    /**
-     * DB에서 토큰을 찾아 유효성을 검증하는 메소드
-     */
+    /** DB에서 토큰을 찾아 유효성을 검증하는 메소드 */
     @Transactional(readOnly = true)
     public RefreshToken validateRefreshToken(String tokenValue) {
         // DB에서 토큰을 찾지 못하면 예외 발생
-        RefreshToken token = refreshTokenRepository.findByTokenValue(tokenValue)
-            .orElseThrow(() -> new IllegalArgumentException("Invalid or non-existent refresh token."));
+        RefreshToken token =
+                refreshTokenRepository
+                        .findByTokenValue(tokenValue)
+                        .orElseThrow(
+                                () ->
+                                        new IllegalArgumentException(
+                                                "Invalid or non-existent refresh token."));
 
         // DB에 저장된 만료 시간으로 유효성 검사
         if (token.isExpired()) {

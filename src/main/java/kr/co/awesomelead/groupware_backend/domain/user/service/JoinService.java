@@ -1,11 +1,13 @@
 package kr.co.awesomelead.groupware_backend.domain.user.service;
 
-import kr.co.awesomelead.groupware_backend.domain.user.enums.Role;
-import kr.co.awesomelead.groupware_backend.domain.user.enums.Status;
 import kr.co.awesomelead.groupware_backend.domain.user.dto.JoinRequestDto;
 import kr.co.awesomelead.groupware_backend.domain.user.entity.User;
+import kr.co.awesomelead.groupware_backend.domain.user.enums.Role;
+import kr.co.awesomelead.groupware_backend.domain.user.enums.Status;
 import kr.co.awesomelead.groupware_backend.domain.user.repository.UserRepository;
+
 import lombok.RequiredArgsConstructor;
+
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 
@@ -41,7 +43,7 @@ public class JoinService {
         user.setStatus(Status.PENDING);
 
         // 3. 관리자가 설정할 필드의 기본값 설정
-        user.setRole(Role.ROLE_USER);     // 기본 역할: USER
+        user.setRole(Role.ROLE_USER); // 기본 역할: USER
         user.setStatus(Status.PENDING); // 기본 상태: 승인 대기
 
         // 4. DB에 저장

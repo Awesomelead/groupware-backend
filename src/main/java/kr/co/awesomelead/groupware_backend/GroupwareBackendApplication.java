@@ -9,5 +9,4 @@ public class GroupwareBackendApplication {
     public static void main(String[] args) {
         SpringApplication.run(GroupwareBackendApplication.class, args);
     }
-
 }

@@ -4,7 +4,9 @@ import kr.co.awesomelead.groupware_backend.domain.admin.dto.UserApprovalRequestD
 import kr.co.awesomelead.groupware_backend.domain.user.entity.User;
 import kr.co.awesomelead.groupware_backend.domain.user.enums.Status;
 import kr.co.awesomelead.groupware_backend.domain.user.repository.UserRepository;
+
 import lombok.RequiredArgsConstructor;
+
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -17,8 +19,13 @@ public class AdminService {
     @Transactional
     public void approveUserRegistration(Long userId, UserApprovalRequestDto requestDto) {
         // 1. userId로 PENDING 상태의 사용자를 찾습니다.
-        User user = userRepository.findById(userId)
-            .orElseThrow(() -> new IllegalArgumentException("해당 ID의 사용자를 찾을 수 없습니다: " + userId));
+        User user =
+                userRepository
+                        .findById(userId)
+                        .orElseThrow(
+                                () ->
+                                        new IllegalArgumentException(
+                                                "해당 ID의 사용자를 찾을 수 없습니다: " + userId));
 
         if (user.getStatus() != Status.PENDING) {
             throw new IllegalStateException("이미 처리된 가입 요청입니다.");

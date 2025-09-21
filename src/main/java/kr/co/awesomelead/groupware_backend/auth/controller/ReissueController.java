@@ -1,14 +1,18 @@
 package kr.co.awesomelead.groupware_backend.auth.controller;
 
 import io.swagger.v3.oas.annotations.Operation;
+
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+
 import kr.co.awesomelead.groupware_backend.auth.dto.ReissueResponseDto;
 import kr.co.awesomelead.groupware_backend.auth.entity.RefreshToken;
 import kr.co.awesomelead.groupware_backend.auth.service.RefreshTokenService;
 import kr.co.awesomelead.groupware_backend.auth.util.JWTUtil;
+
 import lombok.RequiredArgsConstructor;
+
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -21,7 +25,7 @@ public class ReissueController {
     private final JWTUtil jwtUtil;
     private final RefreshTokenService refreshTokenService;
 
-    @Operation(summary="토큰 재발급", description="리프래쉬 토큰을 통해 재발급을 요청합니다.")
+    @Operation(summary = "토큰 재발급", description = "리프래쉬 토큰을 통해 재발급을 요청합니다.")
     @PostMapping("/api/reissue")
     public ResponseEntity<?> reissue(HttpServletRequest request, HttpServletResponse response) {
         // 1. 요청의 쿠키에서 리프레쉬 토큰 추출

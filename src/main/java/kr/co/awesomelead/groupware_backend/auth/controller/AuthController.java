@@ -1,15 +1,17 @@
 package kr.co.awesomelead.groupware_backend.auth.controller;
 
 import io.swagger.v3.oas.annotations.Operation;
+
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletResponse;
-import java.util.Collection;
-import java.util.Iterator;
+
 import kr.co.awesomelead.groupware_backend.auth.dto.LoginRequestDto;
 import kr.co.awesomelead.groupware_backend.auth.dto.LoginResponseDto;
 import kr.co.awesomelead.groupware_backend.auth.service.RefreshTokenService;
 import kr.co.awesomelead.groupware_backend.auth.util.JWTUtil;
+
 import lombok.RequiredArgsConstructor;
+
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -20,6 +22,9 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.util.Collection;
+import java.util.Iterator;
+
 @RestController
 @RequestMapping("/api/auth")
 @RequiredArgsConstructor
@@ -29,14 +34,14 @@ public class AuthController {
     private final JWTUtil jwtUtil;
     private final RefreshTokenService refreshTokenService;
 
-    @Operation(summary="로그인", description="로그인을 합니다.")
+    @Operation(summary = "로그인", description = "로그인을 합니다.")
     @PostMapping("/login")
-    public ResponseEntity<LoginResponseDto> login(@RequestBody LoginRequestDto requestDto,
-        HttpServletResponse response) {
+    public ResponseEntity<LoginResponseDto> login(
+            @RequestBody LoginRequestDto requestDto, HttpServletResponse response) {
 
         UsernamePasswordAuthenticationToken authToken =
-            new UsernamePasswordAuthenticationToken(requestDto.getLoginId(),
-                requestDto.getPassword(), null);
+                new UsernamePasswordAuthenticationToken(
+                        requestDto.getLoginId(), requestDto.getPassword(), null);
 
         Authentication authentication = authenticationManager.authenticate(authToken);
 
@@ -63,7 +68,7 @@ public class AuthController {
         Cookie cookie = new Cookie(key, value);
         cookie.setMaxAge(24 * 60 * 60); // 쿠키 유효기간 24시간
         // cookie.setSecure(true); // HTTPS 통신에서만 쿠키 전송
-        cookie.setPath("/");      // 모든 경로에서 쿠키 접근 가능
+        cookie.setPath("/"); // 모든 경로에서 쿠키 접근 가능
         cookie.setHttpOnly(true); // JavaScript가 쿠키에 접근 불가 (XSS 방지)
         return cookie;
     }

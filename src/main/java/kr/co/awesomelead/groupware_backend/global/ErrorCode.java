@@ -19,6 +19,7 @@ public enum ErrorCode {
     USER_NOT_FOUND(HttpStatus.NOT_FOUND,  "해당 사용자를 찾을 수 없습니다."),
 
     // 409 Conflict
+    DUPLICATED_SIGNUP_REQUEST(HttpStatus.CONFLICT, "이미 처리된 가입 요청입니다."),
     DUPLICATE_LOGIN_ID(HttpStatus.CONFLICT,  "이미 사용 중인 아이디입니다."),
 
     // 500 Internal Server Error

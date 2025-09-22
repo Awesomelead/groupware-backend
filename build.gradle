@@ -1,6 +1,7 @@
 plugins {
 	id 'java'
-	id 'org.springframework.boot' version '3.5.6'
+	//id 'org.springframework.boot' version '3.5.6' 매칭되는 스웨거 버젼이 없음..!
+	id 'org.springframework.boot' version '3.3.4'
 	id 'io.spring.dependency-management' version '1.1.7'
 }
 
@@ -33,6 +34,29 @@ dependencies {
 	annotationProcessor 'org.projectlombok:lombok'
 	testImplementation 'org.springframework.boot:spring-boot-starter-test'
 	testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+
+	// Swagger
+	implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui:2.5.0'
+
+
+	// Security
+	implementation 'org.springframework.boot:spring-boot-starter-security'
+
+	// ORM
+	implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
+
+	// JWT
+	implementation 'io.jsonwebtoken:jjwt-api:0.12.3'
+	runtimeOnly 'io.jsonwebtoken:jjwt-impl:0.12.3'
+	runtimeOnly 'io.jsonwebtoken:jjwt-jackson:0.12.3'
+
+	// DTO 유효성 검사
+	implementation 'org.springframework.boot:spring-boot-starter-validation'
+
+	// test db
+	testImplementation 'com.h2database:h2'
+
+
 }
 
 tasks.named('test') {

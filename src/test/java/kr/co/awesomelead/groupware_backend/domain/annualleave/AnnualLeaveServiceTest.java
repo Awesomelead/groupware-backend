@@ -1,6 +1,5 @@
 package kr.co.awesomelead.groupware_backend.domain.annualleave;
 
-
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
@@ -9,40 +8,35 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-import java.util.Optional;
 import kr.co.awesomelead.groupware_backend.domain.annualleave.entity.AnnualLeave;
 import kr.co.awesomelead.groupware_backend.domain.annualleave.repository.AnnualLeaveRepository;
 import kr.co.awesomelead.groupware_backend.domain.annualleave.service.AnnualLeaveService;
 import kr.co.awesomelead.groupware_backend.domain.user.dto.CustomUserDetails;
-import kr.co.awesomelead.groupware_backend.domain.user.dto.JoinRequestDto;
 import kr.co.awesomelead.groupware_backend.domain.user.entity.User;
-import kr.co.awesomelead.groupware_backend.domain.user.enums.Role;
-import kr.co.awesomelead.groupware_backend.domain.user.enums.Status;
 import kr.co.awesomelead.groupware_backend.domain.user.repository.UserRepository;
 import kr.co.awesomelead.groupware_backend.global.CustomException;
 import kr.co.awesomelead.groupware_backend.global.ErrorCode;
+
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.test.context.ActiveProfiles;
 
+import java.util.Optional;
+
 @ExtendWith(MockitoExtension.class) // Mockito 확장 기능을 JUnit 5와 통합
 @ActiveProfiles("test")
 public class AnnualLeaveServiceTest {
 
-    @Mock
-    private AnnualLeaveRepository annualLeaveRepository;
+    @Mock private AnnualLeaveRepository annualLeaveRepository;
 
-    @Mock
-    private UserRepository userRepository;
+    @Mock private UserRepository userRepository;
 
-    @InjectMocks
-    private AnnualLeaveService annualLeaveService;
+    @InjectMocks private AnnualLeaveService annualLeaveService;
 
     private CustomUserDetails customUserDetails;
     private User user;
@@ -86,12 +80,14 @@ public class AnnualLeaveServiceTest {
         when(userRepository.findById(customUserDetails.getId())).thenReturn(Optional.empty());
 
         // when & then
-        CustomException exception = assertThrows(CustomException.class, () -> {
-            annualLeaveService.getAnnualLeave(customUserDetails);
-        });
+        CustomException exception =
+                assertThrows(
+                        CustomException.class,
+                        () -> {
+                            annualLeaveService.getAnnualLeave(customUserDetails);
+                        });
 
         assertThat(exception.getErrorCode()).isEqualTo(ErrorCode.USER_NOT_FOUND);
         verify(annualLeaveRepository, never()).findByUser(any(User.class));
     }
-
 }

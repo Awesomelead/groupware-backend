@@ -4,6 +4,8 @@ import kr.co.awesomelead.groupware_backend.domain.admin.dto.UserApprovalRequestD
 import kr.co.awesomelead.groupware_backend.domain.user.entity.User;
 import kr.co.awesomelead.groupware_backend.domain.user.enums.Status;
 import kr.co.awesomelead.groupware_backend.domain.user.repository.UserRepository;
+import kr.co.awesomelead.groupware_backend.global.CustomException;
+import kr.co.awesomelead.groupware_backend.global.ErrorCode;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -18,10 +20,10 @@ public class AdminService {
     public void approveUserRegistration(Long userId, UserApprovalRequestDto requestDto) {
         // 1. userId로 PENDING 상태의 사용자를 찾습니다.
         User user = userRepository.findById(userId)
-            .orElseThrow(() -> new IllegalArgumentException("해당 ID의 사용자를 찾을 수 없습니다: " + userId));
+            .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
 
         if (user.getStatus() != Status.PENDING) {
-            throw new IllegalStateException("이미 처리된 가입 요청입니다.");
+            throw new CustomException(ErrorCode.DUPLICATED_SIGNUP_REQUEST);
         }
 
         // 2. DTO의 정보로 사용자 엔티티를 업데이트합니다.

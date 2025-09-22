@@ -1,7 +1,5 @@
 package kr.co.awesomelead.groupware_backend.global;
 
-import java.util.HashMap;
-import java.util.Map;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.BindingResult;
@@ -10,13 +8,16 @@ import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
+import java.util.HashMap;
+import java.util.Map;
+
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
     // MethodArgumentNotValidException 예외를 특별히 처리하는 메서드
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ResponseEntity<Map<String, String>> handleValidationExceptions(
-        MethodArgumentNotValidException ex) {
+            MethodArgumentNotValidException ex) {
 
         // 에러 메시지를 담을 Map 생성
         Map<String, String> errors = new HashMap<>();

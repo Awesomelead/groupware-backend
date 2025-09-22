@@ -3,7 +3,9 @@ package kr.co.awesomelead.groupware_backend.config;
 import kr.co.awesomelead.groupware_backend.auth.filter.JwtFilter;
 import kr.co.awesomelead.groupware_backend.auth.util.JWTUtil;
 import kr.co.awesomelead.groupware_backend.domain.user.repository.UserRepository;
+
 import lombok.RequiredArgsConstructor;
+
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -26,14 +28,13 @@ public class SecurityConfig {
     private final JWTUtil jwtUtil;
 
     private static final String[] SWAGGER_PATHS = {
-        "/swagger-ui/**",
-        "/v3/api-docs/**",
-        "/swagger-resources/**"
+        "/swagger-ui/**", "/v3/api-docs/**", "/swagger-resources/**"
     };
 
     // AuthenticationManager Bean 등록
     @Bean
-    public AuthenticationManager authenticationManager(AuthenticationConfiguration configuration) throws Exception {
+    public AuthenticationManager authenticationManager(AuthenticationConfiguration configuration)
+            throws Exception {
         return configuration.getAuthenticationManager();
     }
 
@@ -56,17 +57,27 @@ public class SecurityConfig {
         http.formLogin((auth) -> auth.disable());
         http.httpBasic((auth) -> auth.disable());
 
-        http.authorizeHttpRequests((auth) -> auth
-            // 테스트용으로 어드민 경로도 열어놓음
-            .requestMatchers("/api/join", "/api/auth/login", "/api/reissue", "/api/admin/**").permitAll()
-            //.requestMatchers("/api/join", "/api/auth/login", "/api/reissue").permitAll()
-            //.requestMatchers("/api/admin/**").hasRole("ADMIN")
-            .anyRequest().authenticated());
+        http.authorizeHttpRequests(
+                (auth) ->
+                        auth
+                                // 테스트용으로 어드민 경로도 열어놓음
+                                .requestMatchers(
+                                        "/api/join",
+                                        "/api/auth/login",
+                                        "/api/reissue",
+                                        "/api/admin/**")
+                                .permitAll()
+                                // .requestMatchers("/api/join", "/api/auth/login",
+                                // "/api/reissue").permitAll()
+                                // .requestMatchers("/api/admin/**").hasRole("ADMIN")
+                                .anyRequest()
+                                .authenticated());
 
-        http.addFilterBefore(new JwtFilter(jwtUtil, userRepository), UsernamePasswordAuthenticationFilter.class);
+        http.addFilterBefore(
+                new JwtFilter(jwtUtil, userRepository), UsernamePasswordAuthenticationFilter.class);
 
-        http.sessionManagement((session) -> session
-            .sessionCreationPolicy(SessionCreationPolicy.STATELESS));
+        http.sessionManagement(
+                (session) -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS));
 
         return http.build();
     }

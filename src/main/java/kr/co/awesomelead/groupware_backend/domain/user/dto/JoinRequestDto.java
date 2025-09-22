@@ -4,6 +4,7 @@ import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
+
 import lombok.Getter;
 import lombok.Setter;
 
@@ -17,14 +18,16 @@ public class JoinRequestDto {
 
     @NotBlank(message = "비밀번호는 필수입니다.")
     @Size(min = 8, message = "비밀번호는 최소 8자 이상이어야 합니다.")
-    @Pattern(regexp = "^(?=.*[a-zA-Z])(?=.*[!@#$%^*+=-])(?=.*[0-9]).{8,64}$",
-        message = "비밀번호는 영문, 숫자, 특수문자를 모두 포함해야 합니다.")
+    @Pattern(
+            regexp = "^(?=.*[a-zA-Z])(?=.*[!@#$%^*+=-])(?=.*[0-9]).{8,64}$",
+            message = "비밀번호는 영문, 숫자, 특수문자를 모두 포함해야 합니다.")
     private String password;
 
     private String nameKor;
 
     @NotBlank(message = "영문 이름은 필수입니다.")
     private String nameEng;
+
     private String nationality;
 
     @NotBlank(message = "주민등록번호(또는 외국인번호)는 필수입니다.")

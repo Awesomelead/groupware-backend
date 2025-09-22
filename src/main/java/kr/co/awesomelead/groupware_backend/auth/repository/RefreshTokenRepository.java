@@ -1,8 +1,10 @@
 package kr.co.awesomelead.groupware_backend.auth.repository;
 
-import java.util.Optional;
 import kr.co.awesomelead.groupware_backend.auth.entity.RefreshToken;
+
 import org.springframework.data.jpa.repository.JpaRepository;
+
+import java.util.Optional;
 
 public interface RefreshTokenRepository extends JpaRepository<RefreshToken, Long> {
 
@@ -11,5 +13,4 @@ public interface RefreshTokenRepository extends JpaRepository<RefreshToken, Long
     Optional<RefreshToken> findByEmail(String username);
 
     void delete(RefreshToken token);
-
 }

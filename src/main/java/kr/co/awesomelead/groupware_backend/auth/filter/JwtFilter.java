@@ -43,7 +43,7 @@ public class JwtFilter extends OncePerRequestFilter {
 
         // 5. 토큰에서 username과 role을 획득
         String username = jwtUtil.getUsername(token);
-        userRepository.findByLoginId(username).ifPresent(user -> {
+        userRepository.findByEmail(username).ifPresent(user -> {
             // 사용자의 상태가 'AVAILABLE'이 아니면 인증하지 않음
             if (user.getStatus() != Status.AVAILABLE) {
                 return; // 인증 객체를 SecurityContext에 저장하지 않고 메소드 종료

@@ -32,7 +32,7 @@ public class User {
 
     // == 직원이 직접 입력하는 정보 == //
     @Column(unique = true, nullable = false)
-    private String loginId; // 로그인 아이디
+    private String email; // 이메일
 
     @Column(nullable = false)
     private String password; // 비밀번호
@@ -49,9 +49,6 @@ public class User {
 
     @Column(nullable = false)
     private String phoneNumber; // 전화번호
-
-    @Column(unique = true, nullable = false)
-    private String email; // 이메일
 
     // == 관리자가 입력/수정하는 정보 == //
     private LocalDate hireDate; // 입사일

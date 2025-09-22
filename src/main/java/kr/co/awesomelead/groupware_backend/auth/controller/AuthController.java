@@ -35,7 +35,7 @@ public class AuthController {
         HttpServletResponse response) {
 
         UsernamePasswordAuthenticationToken authToken =
-            new UsernamePasswordAuthenticationToken(requestDto.getLoginId(),
+            new UsernamePasswordAuthenticationToken(requestDto.getEmail(),
                 requestDto.getPassword(), null);
 
         Authentication authentication = authenticationManager.authenticate(authToken);

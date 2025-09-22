@@ -5,6 +5,8 @@ import kr.co.awesomelead.groupware_backend.domain.user.enums.Status;
 import kr.co.awesomelead.groupware_backend.domain.user.dto.JoinRequestDto;
 import kr.co.awesomelead.groupware_backend.domain.user.entity.User;
 import kr.co.awesomelead.groupware_backend.domain.user.repository.UserRepository;
+import kr.co.awesomelead.groupware_backend.global.CustomException;
+import kr.co.awesomelead.groupware_backend.global.ErrorCode;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -18,15 +20,13 @@ public class JoinService {
 
     public void joinProcess(JoinRequestDto joinDto) {
         // 1. 로그인 아이디 중복 검사
-        if (userRepository.existsByLoginId(joinDto.getLoginId())) {
-            // 실제 프로젝트에서는 Custom Exception을 사용하는 것이 좋습니다.
-            throw new IllegalArgumentException("이미 사용 중인 아이디입니다.");
+        if (userRepository.existsByEmail(joinDto.getEmail())) {
+            throw new CustomException(ErrorCode.DUPLICATE_LOGIN_ID);
         }
 
         // 2. DTO를 Entity로 변환
         User user = new User();
-        user.setLoginId(joinDto.getLoginId());
-
+        user.setEmail(joinDto.getEmail());
         user.setPassword(bCryptPasswordEncoder.encode(joinDto.getPassword()));
 
         user.setNameKor(joinDto.getNameKor());
@@ -34,7 +34,6 @@ public class JoinService {
         user.setNationality(joinDto.getNationality());
         user.setRegistrationNumber(joinDto.getRegistrationNumber());
         user.setPhoneNumber(joinDto.getPhoneNumber());
-        user.setEmail(joinDto.getEmail());
 
         // 기본값 설정
         user.setRole(Role.ROLE_USER);

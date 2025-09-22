@@ -11,8 +11,9 @@ import lombok.Setter;
 @Setter
 public class JoinRequestDto {
 
-    @NotBlank(message = "로그인 아이디는 필수입니다.")
-    private String loginId;
+    @NotBlank(message = "이메일은 필수입니다.")
+    @Email(message = "유효한 이메일 형식이 아닙니다.")
+    private String email;
 
     @NotBlank(message = "비밀번호는 필수입니다.")
     @Size(min = 8, message = "비밀번호는 최소 8자 이상이어야 합니다.")
@@ -32,8 +33,4 @@ public class JoinRequestDto {
     @NotBlank(message = "전화번호는 필수입니다.")
     @Pattern(regexp = "^\\d{10,11}$", message = "전화번호는 '-' 없이 10~11자리 숫자로 입력해주세요.")
     private String phoneNumber;
-
-    @NotBlank(message = "이메일은 필수입니다.")
-    @Email(message = "유효한 이메일 형식이 아닙니다.")
-    private String email;
 }

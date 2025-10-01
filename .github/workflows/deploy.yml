@@ -51,7 +51,7 @@ jobs:
           script: |
             aws ecr get-login-password --region ap-northeast-2 | docker login --username AWS --password-stdin 188932086032.dkr.ecr.ap-northeast-2.amazonaws.com
             docker pull 188932086032.dkr.ecr.ap-northeast-2.amazonaws.com/groupware-backend:latest
-            docker stop groupware-backend || true
-            docker rm groupware-backend || true
+            docker stop $(docker ps -q --filter "publish=8080") || true
+            docker rm $(docker ps -aq --filter "publish=8080") || true
             docker run -d -p 8080:8080 --name groupware-backend --restart unless-stopped 188932086032.dkr.ecr.ap-northeast-2.amazonaws.com/groupware-backend:latest
             docker image prune -f

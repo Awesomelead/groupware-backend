@@ -54,5 +54,12 @@ jobs:
             docker stop groupware-backend || true
             docker rm groupware-backend || true
             docker ps -aq | xargs -r docker rm -f || true
-            docker run -d -p 8080:8080 --name groupware-backend --restart unless-stopped 188932086032.dkr.ecr.ap-northeast-2.amazonaws.com/groupware-backend:latest
+            docker run -d -p 8080:8080 \
+              -e SPRING_DATASOURCE_URL="${{ secrets.DB_URL }}" \
+              -e SPRING_DATASOURCE_USERNAME="${{ secrets.DB_USERNAME }}" \
+              -e SPRING_DATASOURCE_PASSWORD="${{ secrets.DB_PASSWORD }}" \
+              -e SPRING_JWT_SECRET="${{ secrets.JWT_SECRET }}" \
+              --name groupware-backend \
+              --restart unless-stopped \
+              188932086032.dkr.ecr.ap-northeast-2.amazonaws.com/groupware-backend:latest
             docker image prune -f

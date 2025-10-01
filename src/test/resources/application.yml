@@ -22,6 +22,16 @@ spring:
     console:
       enabled: true
 
+  cloud:
+    aws:
+      s3:
+        enabled: false
+      credentials:
+        access-key: test
+        secret-key: test
+      region:
+        static: ap-northeast-2
+
 logging:
   level:
     org.hibernate.SQL: DEBUG

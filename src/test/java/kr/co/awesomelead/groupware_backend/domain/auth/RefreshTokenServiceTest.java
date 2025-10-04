@@ -70,28 +70,34 @@ class RefreshTokenServiceTest {
     }
 
     @Test
-    @DisplayName("Refresh Token 생성 성공 - 기존 토큰 존재 시 삭제 후 생성")
+    @DisplayName("Refresh Token 생성 성공 - 기존 토큰 존재 시 갱신")
     void createAndSaveRefreshToken_Success_WithExistingToken() {
         // given
         String email = "test@example.com";
         String role = "ROLE_USER";
-        String generatedTokenValue = "new-refresh-token";
-        RefreshToken existingToken = RefreshToken.builder().email(email).build();
+        String newGeneratedTokenValue = "new-refresh-token";
+
+        RefreshToken existingToken = RefreshToken.builder()
+            .email(email)
+            .tokenValue("old-refresh-token") // 이전 값
+            .expirationDate(LocalDateTime.now().minusDays(1)) // 이전 값
+            .build();
 
         when(jwtUtil.createJwt(anyString(), anyString(), anyLong()))
-            .thenReturn(generatedTokenValue);
+            .thenReturn(newGeneratedTokenValue);
         when(refreshTokenRepository.findByEmail(email)).thenReturn(Optional.of(existingToken));
 
         // when
         String resultToken = refreshTokenService.createAndSaveRefreshToken(email, role);
 
         // then
-        assertThat(resultToken).isEqualTo(generatedTokenValue);
-
-        // findByEmail과 delete가 모두 호출되었는지 검증
+        assertThat(resultToken).isEqualTo(newGeneratedTokenValue);
         verify(refreshTokenRepository, times(1)).findByEmail(email);
-        verify(refreshTokenRepository, times(1)).delete(existingToken);
-        verify(refreshTokenRepository, times(1)).save(any(RefreshToken.class));
+
+        verify(refreshTokenRepository, never()).delete(any());
+        verify(refreshTokenRepository, never()).save(any());
+        assertThat(existingToken.getTokenValue()).isEqualTo(newGeneratedTokenValue);
+        assertThat(existingToken.getExpirationDate()).isAfter(LocalDateTime.now());
     }
 
     @Test

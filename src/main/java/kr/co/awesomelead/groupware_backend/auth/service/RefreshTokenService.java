@@ -1,6 +1,7 @@
 package kr.co.awesomelead.groupware_backend.auth.service;
 
 import java.time.LocalDateTime;
+import java.util.Optional;
 import kr.co.awesomelead.groupware_backend.auth.entity.RefreshToken;
 import kr.co.awesomelead.groupware_backend.auth.repository.RefreshTokenRepository;
 import kr.co.awesomelead.groupware_backend.auth.util.JWTUtil;
@@ -34,16 +35,21 @@ public class RefreshTokenService {
             LocalDateTime.now().plusSeconds(REFRESH_TOKEN_VALIDITY_IN_SECONDS);
 
         // 3. 해당 사용자의 기존 Refresh Token이 있다면 삭제
-        refreshTokenRepository.findByEmail(email).ifPresent(refreshTokenRepository::delete);
+        Optional<RefreshToken> existingTokenOpt = refreshTokenRepository.findByEmail(email);
 
-        // 4. 새로운 Refresh Token 엔티티 생성 및 저장
-        RefreshToken newRefreshToken =
-            RefreshToken.builder()
-                .email(email)
-                .tokenValue(newRefreshTokenValue)
-                .expirationDate(expiration)
-                .build();
-        refreshTokenRepository.save(newRefreshToken);
+        if (existingTokenOpt.isPresent()) {
+            RefreshToken existingToken = existingTokenOpt.get();
+            existingToken.setTokenValue(newRefreshTokenValue);
+            existingToken.setExpirationDate(expiration);
+        } else {
+            RefreshToken newRefreshToken =
+                RefreshToken.builder()
+                    .email(email)
+                    .tokenValue(newRefreshTokenValue)
+                    .expirationDate(expiration)
+                    .build();
+            refreshTokenRepository.save(newRefreshToken);
+        }
 
         return newRefreshTokenValue;
     }

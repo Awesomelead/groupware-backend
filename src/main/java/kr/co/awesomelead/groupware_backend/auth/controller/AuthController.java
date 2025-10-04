@@ -63,7 +63,7 @@ public class AuthController {
     }
 
     @PostMapping("/logout")
-    public ResponseEntity<String> logout(HttpServletRequest request, HttpServletResponse response) {
+    public ResponseEntity<Void> logout(HttpServletRequest request, HttpServletResponse response) {
         String refreshToken = null;
         Cookie[] cookies = request.getCookies();
         if (cookies != null) {
@@ -86,7 +86,7 @@ public class AuthController {
         cookie.setPath("/");
         response.addCookie(cookie);
 
-        return ResponseEntity.ok("성공적으로 로그아웃되었습니다.");
+        return ResponseEntity.noContent().build();
     }
 
     private Cookie createCookie(String key, String value) {

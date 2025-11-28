@@ -12,6 +12,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
+import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
@@ -35,21 +36,33 @@ public class RefreshTokenService {
                 LocalDateTime.now().plusSeconds(REFRESH_TOKEN_VALIDITY_IN_SECONDS);
 
         // 3. 해당 사용자의 기존 Refresh Token이 있다면 삭제
-        refreshTokenRepository.findByEmail(email).ifPresent(refreshTokenRepository::delete);
+        Optional<RefreshToken> existingTokenOpt = refreshTokenRepository.findByEmail(email);
 
-        // 4. 새로운 Refresh Token 엔티티 생성 및 저장
-        RefreshToken newRefreshToken =
-                RefreshToken.builder()
-                        .email(email)
-                        .tokenValue(newRefreshTokenValue)
-                        .expirationDate(expiration)
-                        .build();
-        refreshTokenRepository.save(newRefreshToken);
+        if (existingTokenOpt.isPresent()) {
+            RefreshToken existingToken = existingTokenOpt.get();
+            existingToken.setTokenValue(newRefreshTokenValue);
+            existingToken.setExpirationDate(expiration);
+        } else {
+            RefreshToken newRefreshToken =
+                    RefreshToken.builder()
+                            .email(email)
+                            .tokenValue(newRefreshTokenValue)
+                            .expirationDate(expiration)
+                            .build();
+            refreshTokenRepository.save(newRefreshToken);
+        }
 
         return newRefreshTokenValue;
     }
 
-    /** DB에서 토큰을 찾아 유효성을 검증하는 메소드 */
+    @Transactional
+    public void deleteRefreshToken(String refreshTokenValue) {
+        // 전달받은 토큰 값으로 DB에서 해당 토큰을 찾아 존재하면 삭제
+        refreshTokenRepository
+                .findByTokenValue(refreshTokenValue)
+                .ifPresent(refreshTokenRepository::delete);
+    }
+
     @Transactional(readOnly = true)
     public RefreshToken validateRefreshToken(String tokenValue) {
         // DB에서 토큰을 찾지 못하면 예외 발생

@@ -14,13 +14,16 @@ import jakarta.persistence.Lob;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
+
+import kr.co.awesomelead.groupware_backend.domain.department.entity.Department;
+import kr.co.awesomelead.groupware_backend.domain.education.enums.EduType;
+
+import lombok.Getter;
+import lombok.Setter;
+
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
-import kr.co.awesomelead.groupware_backend.domain.department.entity.Department;
-import kr.co.awesomelead.groupware_backend.domain.education.enums.EduType;
-import lombok.Getter;
-import lombok.Setter;
 
 @Entity
 @Getter

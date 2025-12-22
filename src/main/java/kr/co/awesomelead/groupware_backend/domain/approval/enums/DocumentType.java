@@ -6,7 +6,6 @@ import lombok.Getter;
 @Getter
 @AllArgsConstructor
 public enum DocumentType {
-
     LEAVE_REQUEST("휴가신청서"),
     MESSAGE("메시지문서");
 

@@ -9,6 +9,7 @@ import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
+
 import lombok.Getter;
 import lombok.Setter;
 
@@ -32,6 +33,5 @@ public class NoticeAttachment {
     @Column(nullable = false, length = 200)
     private String s3Key; // 다운로드용 키
 
-    @Column
-    private Long fileSize; // (선택) 파일 크기
+    @Column private Long fileSize; // (선택) 파일 크기
 }

@@ -1,6 +1,7 @@
 package kr.co.awesomelead.groupware_backend.domain.message.entity;
 
 import com.fasterxml.jackson.annotation.JsonBackReference;
+
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -12,13 +13,16 @@ import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.OneToOne;
 import jakarta.persistence.Table;
+
+import kr.co.awesomelead.groupware_backend.domain.approval.entity.ApprovalProcess;
+import kr.co.awesomelead.groupware_backend.domain.user.entity.User;
+
+import lombok.Getter;
+import lombok.Setter;
+
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
-import kr.co.awesomelead.groupware_backend.domain.approval.entity.ApprovalProcess;
-import kr.co.awesomelead.groupware_backend.domain.user.entity.User;
-import lombok.Getter;
-import lombok.Setter;
 
 @Entity
 @Getter
@@ -26,8 +30,7 @@ import lombok.Setter;
 @Table(name = "messages")
 public class Message {
 
-    @Id
-    private Long id;
+    @Id private Long id;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "sender_id", nullable = false)

@@ -11,9 +11,11 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
+
+import kr.co.awesomelead.groupware_backend.domain.user.entity.User;
+
 import java.util.ArrayList;
 import java.util.List;
-import kr.co.awesomelead.groupware_backend.domain.user.entity.User;
 
 @Entity
 @Table(name = "saved_approval_lines")

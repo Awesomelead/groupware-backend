@@ -6,7 +6,6 @@ import lombok.Getter;
 @Getter
 @AllArgsConstructor
 public enum VisitPurpose {
-
     CUSTOMER_INSPECTION("고객 검수"),
     GOODS_DELIVERY("물품 납품"),
     FACILITY_CONSTRUCTION("시설공사"),

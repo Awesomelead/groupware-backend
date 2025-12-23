@@ -8,6 +8,7 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
+
 import lombok.Getter;
 import lombok.Setter;
 
@@ -32,6 +33,4 @@ public class Companion {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "visit_info_id")
     private VisitInfo visitInfo; // 동행한 방문 정보
-
-
 }

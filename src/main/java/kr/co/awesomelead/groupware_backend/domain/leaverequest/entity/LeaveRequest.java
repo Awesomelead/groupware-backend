@@ -1,6 +1,7 @@
 package kr.co.awesomelead.groupware_backend.domain.leaverequest.entity;
 
 import com.fasterxml.jackson.annotation.JsonBackReference;
+
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -14,15 +15,18 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToOne;
 import jakarta.persistence.Table;
-import java.time.LocalDateTime;
+
 import kr.co.awesomelead.groupware_backend.domain.approval.entity.ApprovalProcess;
 import kr.co.awesomelead.groupware_backend.domain.approval.enums.ApprovalStatus;
 import kr.co.awesomelead.groupware_backend.domain.department.entity.Department;
 import kr.co.awesomelead.groupware_backend.domain.leaverequest.enums.LeaveDetail;
 import kr.co.awesomelead.groupware_backend.domain.leaverequest.enums.LeaveType;
 import kr.co.awesomelead.groupware_backend.domain.user.entity.User;
+
 import lombok.Getter;
 import lombok.Setter;
+
+import java.time.LocalDateTime;
 
 @Setter
 @Getter
@@ -64,7 +68,6 @@ public class LeaveRequest {
     @JoinColumn(name = "ref_dept_id", nullable = true)
     private Department refDepartment; // 참조 부서
 
-
     @Column(nullable = false)
     private LocalDateTime leaveStartDate; // 근태 시작 일시
 
@@ -77,5 +80,4 @@ public class LeaveRequest {
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 20)
     private ApprovalStatus status = ApprovalStatus.WAITING;
-
 }

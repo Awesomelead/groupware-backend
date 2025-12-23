@@ -2,6 +2,7 @@ package kr.co.awesomelead.groupware_backend.domain.user.entity;
 
 import com.fasterxml.jackson.annotation.JsonBackReference;
 import com.fasterxml.jackson.annotation.JsonManagedReference;
+
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.CollectionTable;
 import jakarta.persistence.Column;
@@ -18,11 +19,7 @@ import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.OneToOne;
 import jakarta.persistence.Table;
-import java.time.LocalDate;
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+
 import kr.co.awesomelead.groupware_backend.domain.annualleave.entity.AnnualLeave;
 import kr.co.awesomelead.groupware_backend.domain.checksheet.entity.CheckSheet;
 import kr.co.awesomelead.groupware_backend.domain.department.entity.Department;
@@ -33,8 +30,15 @@ import kr.co.awesomelead.groupware_backend.domain.user.enums.Authority;
 import kr.co.awesomelead.groupware_backend.domain.user.enums.Role;
 import kr.co.awesomelead.groupware_backend.domain.user.enums.Status;
 import kr.co.awesomelead.groupware_backend.domain.visit.entity.VisitInfo;
+
 import lombok.Getter;
 import lombok.Setter;
+
+import java.time.LocalDate;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
 @Entity
 @Getter
@@ -89,7 +93,7 @@ public class User {
 
     @Column(length = 100)
     private String workLocation; // 근무지
-    
+
     private LocalDate birthDate; // 생년월일
 
     @OneToOne(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
@@ -126,10 +130,7 @@ public class User {
     private Department department;
 
     @ElementCollection(fetch = FetchType.LAZY)
-    @CollectionTable(
-        name = "user_authorities",
-        joinColumns = @JoinColumn(name = "user_id")
-    )
+    @CollectionTable(name = "user_authorities", joinColumns = @JoinColumn(name = "user_id"))
     @Enumerated(EnumType.STRING)
     @Column(name = "authority")
     private Set<Authority> authorities = new HashSet<>();

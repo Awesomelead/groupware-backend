@@ -14,13 +14,16 @@ import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.OrderBy;
 import jakarta.persistence.Table;
-import java.util.ArrayList;
-import java.util.List;
+
 import kr.co.awesomelead.groupware_backend.domain.approval.enums.ApprovalStatus;
 import kr.co.awesomelead.groupware_backend.domain.approval.enums.DocumentType;
 import kr.co.awesomelead.groupware_backend.domain.user.entity.User;
+
 import lombok.Getter;
 import lombok.Setter;
+
+import java.util.ArrayList;
+import java.util.List;
 
 @Setter
 @Getter
@@ -56,5 +59,4 @@ public class ApprovalProcess {
     @OneToMany(mappedBy = "approvalProcess", cascade = CascadeType.ALL)
     @OrderBy("stepOrder ASC")
     private List<ApprovalStep> steps = new ArrayList<>();
-
 }

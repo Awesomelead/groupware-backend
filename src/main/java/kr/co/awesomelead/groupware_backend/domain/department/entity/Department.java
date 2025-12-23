@@ -2,6 +2,7 @@ package kr.co.awesomelead.groupware_backend.domain.department.entity;
 
 import com.fasterxml.jackson.annotation.JsonBackReference;
 import com.fasterxml.jackson.annotation.JsonManagedReference;
+
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
@@ -14,12 +15,15 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
-import java.util.ArrayList;
-import java.util.List;
+
 import kr.co.awesomelead.groupware_backend.domain.department.enums.Company;
 import kr.co.awesomelead.groupware_backend.domain.user.entity.User;
+
 import lombok.Getter;
 import lombok.Setter;
+
+import java.util.ArrayList;
+import java.util.List;
 
 @Entity
 @Getter
@@ -61,7 +65,7 @@ public class Department {
     // Service 로직 예시
 
     // 1. 부모가 없는 최상위 부서(Root)들만 조회
-    //List<Department> roots = departmentRepository.findByParentIsNullAndCompany(Company.AWESOME);
+    // List<Department> roots = departmentRepository.findByParentIsNullAndCompany(Company.AWESOME);
     // 2. 프론트엔드로 리턴하면
     // roots.children -> 그 밑에 팀들이 줄줄이 딸려 나옴 (Recursive)
 }

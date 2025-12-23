@@ -1,4 +1,6 @@
-package kr.co.awesomelead.groupware_backend.domain.education.entity;
+package kr.co.awesomelead.groupware_backend.domain.payslip.entity;
+
+import com.fasterxml.jackson.annotation.JsonBackReference;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -17,23 +19,20 @@ import lombok.Setter;
 @Entity
 @Getter
 @Setter
-public class EduAttendance {
+public class Payslip {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "user_id") // DB 컬럼명: user_id
+    @JoinColumn(name = "user_id", nullable = false)
+    @JsonBackReference
     private User user;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "edu_report_id", nullable = false)
-    private EduReport eduReport;
+    @Column(nullable = true) // null 허용 명시
+    private Boolean approved;
 
-    @Column(nullable = false)
-    private boolean attendance = false; // 출석 여부
-
-    @Column(length = 200)
-    private String signatureKey; // 서명 키
+    @Column(nullable = false, length = 200)
+    private String fileKey; // 파일 키
 }

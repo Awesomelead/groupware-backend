@@ -1,8 +1,6 @@
 spring:
   application:
     name: groupware-backend
-  jwt:
-    secret: ${JWT_SECRET}
 
   datasource:
     url: ${DB_URL}
@@ -10,6 +8,9 @@ spring:
     username: ${DB_USERNAME}
     password: ${DB_PASSWORD}
 
+  jwt:
+    secret: ${JWT_SECRET}
   jpa:
     hibernate:
       ddl-auto: update
+    show-sql: true

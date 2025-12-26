@@ -2,18 +2,16 @@ package kr.co.awesomelead.groupware_backend.domain.auth.controller;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
-
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
-
+import java.util.Collection;
+import java.util.Iterator;
 import kr.co.awesomelead.groupware_backend.domain.auth.dto.request.LoginRequestDto;
 import kr.co.awesomelead.groupware_backend.domain.auth.dto.response.LoginResponseDto;
 import kr.co.awesomelead.groupware_backend.domain.auth.service.RefreshTokenService;
 import kr.co.awesomelead.groupware_backend.domain.auth.util.JWTUtil;
-
 import lombok.RequiredArgsConstructor;
-
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -23,9 +21,6 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
-
-import java.util.Collection;
-import java.util.Iterator;
 
 @RestController
 @RequestMapping("/api/auth")
@@ -40,11 +35,11 @@ public class AuthController {
     @Operation(summary = "로그인", description = "로그인을 합니다.")
     @PostMapping("/login")
     public ResponseEntity<LoginResponseDto> login(
-            @RequestBody LoginRequestDto requestDto, HttpServletResponse response) {
+        @RequestBody LoginRequestDto requestDto, HttpServletResponse response) {
 
         UsernamePasswordAuthenticationToken authToken =
-                new UsernamePasswordAuthenticationToken(
-                        requestDto.getEmail(), requestDto.getPassword(), null);
+            new UsernamePasswordAuthenticationToken(
+                requestDto.getEmail(), requestDto.getPassword(), null);
 
         Authentication authentication = authenticationManager.authenticate(authToken);
 
@@ -54,7 +49,7 @@ public class AuthController {
         Collection<? extends GrantedAuthority> authorities = authentication.getAuthorities();
         Iterator<? extends GrantedAuthority> iterator = authorities.iterator();
         GrantedAuthority auth = iterator.next();
-        String role = auth.getAuthority();
+        String role = auth.getAuthority().replace("ROLE_", "");
 
         // JWTUtil을 사용하여 Access Token 생성 (유효기간 1시간으로 설정)
         String accessToken = jwtUtil.createJwt(username, role, 60 * 60 * 1000L);

@@ -2,6 +2,7 @@ package kr.co.awesomelead.groupware_backend.domain.auth.dto.response;
 
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Pattern;
+
 import lombok.Getter;
 import lombok.Setter;
 

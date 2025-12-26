@@ -63,10 +63,11 @@ public class SecurityConfig {
                         "/",
                         "/index.html",
                         "/api/join",
+                        "/api/join/send-code",
+                        "/api/join/verify-code",
                         "/api/auth/login",
                         "/api/reissue",
-                        "/api/admin/**,",
-                        "/api/aligo/auth-request")
+                        "/api/admin/**,")
                     .permitAll()
                     // .requestMatchers("/api/join", "/api/auth/login",
                     // "/api/reissue").permitAll()

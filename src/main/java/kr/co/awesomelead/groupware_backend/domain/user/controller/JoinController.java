@@ -1,14 +1,13 @@
 package kr.co.awesomelead.groupware_backend.domain.user.controller;
 
 import io.swagger.v3.oas.annotations.Operation;
-
 import jakarta.validation.Valid;
-
+import kr.co.awesomelead.groupware_backend.domain.Aligo.dto.request.SendAuthCodeRequestDto;
+import kr.co.awesomelead.groupware_backend.domain.Aligo.dto.response.VerifyAuthCodeRequestDto;
+import kr.co.awesomelead.groupware_backend.domain.Aligo.service.PhoneAuthService;
 import kr.co.awesomelead.groupware_backend.domain.user.dto.JoinRequestDto;
 import kr.co.awesomelead.groupware_backend.domain.user.service.JoinService;
-
 import lombok.RequiredArgsConstructor;
-
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -21,6 +20,23 @@ import org.springframework.web.bind.annotation.RestController;
 public class JoinController {
 
     private final JoinService joinService;
+    private final PhoneAuthService phoneAuthService;
+
+    @Operation(summary = "인증번호 발송", description = "회원가입을 위한 휴대폰 인증번호를 발송합니다.")
+    @PostMapping("/join/send-code")
+    public ResponseEntity<String> sendAuthCode(
+        @Valid @RequestBody SendAuthCodeRequestDto requestDto) {
+        phoneAuthService.sendAuthCode(requestDto.getPhoneNumber());
+        return ResponseEntity.ok("인증번호가 발송되었습니다.");
+    }
+
+    @Operation(summary = "인증번호 확인", description = "발송된 인증번호를 확인합니다.")
+    @PostMapping("/join/verify-code")
+    public ResponseEntity<String> verifyAuthCode(
+        @Valid @RequestBody VerifyAuthCodeRequestDto requestDto) {
+        phoneAuthService.verifyAuthCode(requestDto.getPhoneNumber(), requestDto.getAuthCode());
+        return ResponseEntity.ok("인증이 완료되었습니다.");
+    }
 
     @Operation(summary = "회원가입", description = "회원가입을 요청합니다.")
     @PostMapping("/join")

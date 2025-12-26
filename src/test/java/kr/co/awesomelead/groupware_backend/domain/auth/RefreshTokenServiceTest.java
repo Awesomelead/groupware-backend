@@ -10,10 +10,10 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-import kr.co.awesomelead.groupware_backend.auth.entity.RefreshToken;
-import kr.co.awesomelead.groupware_backend.auth.repository.RefreshTokenRepository;
-import kr.co.awesomelead.groupware_backend.auth.service.RefreshTokenService;
-import kr.co.awesomelead.groupware_backend.auth.util.JWTUtil;
+import kr.co.awesomelead.groupware_backend.domain.auth.entity.RefreshToken;
+import kr.co.awesomelead.groupware_backend.domain.auth.repository.RefreshTokenRepository;
+import kr.co.awesomelead.groupware_backend.domain.auth.service.RefreshTokenService;
+import kr.co.awesomelead.groupware_backend.domain.auth.util.JWTUtil;
 import kr.co.awesomelead.groupware_backend.global.CustomException;
 import kr.co.awesomelead.groupware_backend.global.ErrorCode;
 

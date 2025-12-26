@@ -1,4 +1,4 @@
-package kr.co.awesomelead.groupware_backend.domain.user;
+package kr.co.awesomelead.groupware_backend.domain.auth;
 
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -8,8 +8,10 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import kr.co.awesomelead.groupware_backend.domain.aligo.service.PhoneAuthService;
 import kr.co.awesomelead.groupware_backend.domain.auth.dto.request.JoinRequestDto;
 import kr.co.awesomelead.groupware_backend.domain.auth.service.JoinService;
+import kr.co.awesomelead.groupware_backend.domain.department.enums.Company;
 import kr.co.awesomelead.groupware_backend.domain.user.entity.User;
 import kr.co.awesomelead.groupware_backend.domain.user.enums.Role;
 import kr.co.awesomelead.groupware_backend.domain.user.enums.Status;
@@ -26,7 +28,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.test.context.ActiveProfiles;
 
-@ExtendWith(MockitoExtension.class) // Mockito 확장 기능을 JUnit 5와 통합
+@ExtendWith(MockitoExtension.class)
 @ActiveProfiles("test")
 class JoinServiceTest {
 
@@ -35,6 +37,9 @@ class JoinServiceTest {
 
     @Mock
     private BCryptPasswordEncoder bCryptPasswordEncoder;
+
+    @Mock
+    private PhoneAuthService phoneAuthService;
 
     @InjectMocks
     private JoinService joinService;
@@ -46,13 +51,18 @@ class JoinServiceTest {
         JoinRequestDto joinDto = new JoinRequestDto();
         joinDto.setEmail("test@example.com");
         joinDto.setPassword("password123!");
+        joinDto.setPasswordConfirm("password123!");
         joinDto.setNameKor("김어썸");
         joinDto.setNameEng("Awesome Kim");
         joinDto.setNationality("대한민국");
         joinDto.setRegistrationNumber("950101-1234567");
         joinDto.setPhoneNumber("01012345678");
+        joinDto.setCompany(Company.AWESOME);
 
+        when(phoneAuthService.isPhoneVerified(joinDto.getPhoneNumber())).thenReturn(true);
         when(userRepository.existsByEmail(joinDto.getEmail())).thenReturn(false);
+        when(userRepository.existsByRegistrationNumber(joinDto.getRegistrationNumber())).thenReturn(
+            false);
         when(bCryptPasswordEncoder.encode(joinDto.getPassword())).thenReturn("encodedPassword");
 
         // when
@@ -72,6 +82,8 @@ class JoinServiceTest {
         assertThat(savedUser.getNameKor()).isEqualTo(joinDto.getNameKor());
         assertThat(savedUser.getRole()).isEqualTo(Role.USER); // 기본값 확인
         assertThat(savedUser.getStatus()).isEqualTo(Status.PENDING); // 기본값 확인
+
+        verify(phoneAuthService, times(1)).clearVerification(joinDto.getPhoneNumber());
     }
 
     @Test
@@ -79,10 +91,13 @@ class JoinServiceTest {
     void joinProcess_Fail_DuplicateLoginId() {
         // given
         JoinRequestDto joinDto = new JoinRequestDto();
-        joinDto.setEmail("testEmail@example.com");
+        joinDto.setEmail("test@example.com");
         joinDto.setPassword("password123!");
+        joinDto.setPasswordConfirm("password123!");
+        joinDto.setPhoneNumber("01012345678");
 
         // userRepository.existsByLoginId가 true를 반환하도록 설정 (아이디 중복 있음)
+        when(phoneAuthService.isPhoneVerified(joinDto.getPhoneNumber())).thenReturn(true);
         when(userRepository.existsByEmail(joinDto.getEmail())).thenReturn(true);
 
         // when & then
@@ -90,6 +105,68 @@ class JoinServiceTest {
             assertThrows(CustomException.class, () -> joinService.joinProcess(joinDto));
 
         assertThat(exception.getErrorCode()).isEqualTo(ErrorCode.DUPLICATE_LOGIN_ID);
+        verify(userRepository, never()).save(any(User.class));
+    }
+
+    @Test
+    @DisplayName("회원가입 실패 테스트 - 비밀번호 불일치")
+    void joinProcess_Fail_PasswordMismatch() {
+        // given
+        JoinRequestDto joinDto = new JoinRequestDto();
+        joinDto.setEmail("test@example.com");
+        joinDto.setPassword("Password123!");
+        joinDto.setPasswordConfirm("DifferentPassword123!");  // 다른 비밀번호
+
+        // when & then
+        CustomException exception =
+            assertThrows(CustomException.class, () -> joinService.joinProcess(joinDto));
+
+        assertThat(exception.getErrorCode()).isEqualTo(ErrorCode.PASSWORD_MISMATCH);
+        verify(userRepository, never()).save(any(User.class));
+    }
+
+    @Test
+    @DisplayName("회원가입 실패 테스트 - 전화번호 미인증")
+    void joinProcess_Fail_PhoneNotVerified() {
+        // given
+        JoinRequestDto joinDto = new JoinRequestDto();
+        joinDto.setEmail("test@example.com");
+        joinDto.setPassword("Password123!");
+        joinDto.setPasswordConfirm("Password123!");
+        joinDto.setPhoneNumber("01012345678");
+
+        when(phoneAuthService.isPhoneVerified(joinDto.getPhoneNumber())).thenReturn(
+            false);  // 인증 안 됨
+
+        // when & then
+        CustomException exception =
+            assertThrows(CustomException.class, () -> joinService.joinProcess(joinDto));
+
+        assertThat(exception.getErrorCode()).isEqualTo(ErrorCode.PHONE_NOT_VERIFIED);
+        verify(userRepository, never()).save(any(User.class));
+    }
+
+    @Test
+    @DisplayName("회원가입 실패 테스트 - 주민등록번호 중복")
+    void joinProcess_Fail_DuplicateRegistrationNumber() {
+        // given
+        JoinRequestDto joinDto = new JoinRequestDto();
+        joinDto.setEmail("test@example.com");
+        joinDto.setPassword("Password123!");
+        joinDto.setPasswordConfirm("Password123!");
+        joinDto.setPhoneNumber("01012345678");
+        joinDto.setRegistrationNumber("950101-1234567");
+
+        when(phoneAuthService.isPhoneVerified(joinDto.getPhoneNumber())).thenReturn(true);
+        when(userRepository.existsByEmail(joinDto.getEmail())).thenReturn(false);
+        when(userRepository.existsByRegistrationNumber(joinDto.getRegistrationNumber())).thenReturn(
+            true);  // 주민번호 중복
+
+        // when & then
+        CustomException exception =
+            assertThrows(CustomException.class, () -> joinService.joinProcess(joinDto));
+
+        assertThat(exception.getErrorCode()).isEqualTo(ErrorCode.DUPLICATE_REGISTRATION_NUMBER);
         verify(userRepository, never()).save(any(User.class));
     }
 }

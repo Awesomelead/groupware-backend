@@ -1,9 +1,12 @@
 package kr.co.awesomelead.groupware_backend.domain.aligo.service;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+
 import kr.co.awesomelead.groupware_backend.domain.aligo.dto.response.AligoResponse;
+
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
@@ -44,10 +47,7 @@ public class AligoKakaoService {
     // 테스트 모드
     private static final boolean TEST_MODE = true;
 
-
-    /**
-     * 회원가입 인증번호 알림톡 전송
-     */
+    /** 회원가입 인증번호 알림톡 전송 */
     public boolean sendAuthCodeAlimtalk(String phoneNumber, String authCode) {
 
         // 테스트 모드일 경우 실제 전송 없이 성공 반환
@@ -82,21 +82,17 @@ public class AligoKakaoService {
 
             HttpEntity<MultiValueMap<String, String>> request = new HttpEntity<>(params, headers);
 
-            ResponseEntity<String> response = restTemplate.postForEntity(
-                apiUrl,
-                request,
-                String.class
-            );
+            ResponseEntity<String> response =
+                    restTemplate.postForEntity(apiUrl, request, String.class);
 
             if (response.getStatusCode() == HttpStatus.OK) {
-                AligoResponse aligoResponse = objectMapper.readValue(
-                    response.getBody(),
-                    AligoResponse.class
-                );
+                AligoResponse aligoResponse =
+                        objectMapper.readValue(response.getBody(), AligoResponse.class);
 
-                log.info("알림톡 전송 결과 - code: {}, message: {}",
-                    aligoResponse.getCode(),
-                    aligoResponse.getMessage());
+                log.info(
+                        "알림톡 전송 결과 - code: {}, message: {}",
+                        aligoResponse.getCode(),
+                        aligoResponse.getMessage());
 
                 return aligoResponse.getCode() == 0;
             }

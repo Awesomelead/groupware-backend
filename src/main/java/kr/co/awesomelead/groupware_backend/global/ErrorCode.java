@@ -12,6 +12,7 @@ public enum ErrorCode {
     INVALID_ARGUMENT(HttpStatus.BAD_REQUEST, "유효하지 않은 ARGUMENT입니다."),
     AUTH_CODE_MISMATCH(HttpStatus.BAD_REQUEST, "인증번호가 일치하지 않습니다."),
     PHONE_NOT_VERIFIED(HttpStatus.BAD_REQUEST, "전화번호 인증이 필요합니다."),
+    PASSWORD_MISMATCH(HttpStatus.BAD_REQUEST, "비밀번호가 일치하지 않습니다."),
 
     // 401 Unauthorized
     INVALID_TOKEN(HttpStatus.UNAUTHORIZED, "유효하지 않은 토큰입니다."),
@@ -24,6 +25,8 @@ public enum ErrorCode {
     // 409 Conflict
     DUPLICATED_SIGNUP_REQUEST(HttpStatus.CONFLICT, "이미 처리된 가입 요청입니다."),
     DUPLICATE_LOGIN_ID(HttpStatus.CONFLICT, "이미 사용 중인 아이디입니다."),
+    DUPLICATE_PHONE_NUMBER(HttpStatus.CONFLICT, "이미 가입된 전화번호입니다."),
+    DUPLICATE_REGISTRATION_NUMBER(HttpStatus.CONFLICT, "이미 가입된 주민등록번호입니다."),
 
     // 500 Internal Server Error
     INTERNAL_SERVER_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "서버 내부 오류가 발생했습니다."),

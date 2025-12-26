@@ -11,6 +11,7 @@ import kr.co.awesomelead.groupware_backend.global.ErrorCode;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @RequiredArgsConstructor
@@ -20,6 +21,7 @@ public class JoinService {
     private final BCryptPasswordEncoder bCryptPasswordEncoder;
     private final PhoneAuthService phoneAuthService;
 
+    @Transactional
     public void joinProcess(JoinRequestDto joinDto) {
 
         // 1. 비밀번호 확인 검증
@@ -32,12 +34,17 @@ public class JoinService {
             throw new CustomException(ErrorCode.PHONE_NOT_VERIFIED);
         }
 
-        // 3. 로그인 아이디 중복 검사
+        // 3. 이메일 중복 검사
         if (userRepository.existsByEmail(joinDto.getEmail())) {
             throw new CustomException(ErrorCode.DUPLICATE_LOGIN_ID);
         }
 
-        // 4. DTO를 Entity로 변환
+        // 5. 주민등록번호 중복 검사
+        if (userRepository.existsByRegistrationNumber(joinDto.getRegistrationNumber())) {
+            throw new CustomException(ErrorCode.DUPLICATE_REGISTRATION_NUMBER);
+        }
+
+        // 6. DTO를 Entity로 변환
         User user = new User();
         user.setEmail(joinDto.getEmail());
         user.setPassword(bCryptPasswordEncoder.encode(joinDto.getPassword()));
@@ -51,10 +58,10 @@ public class JoinService {
         user.setRole(Role.ROLE_USER);
         user.setStatus(Status.PENDING);
 
-        // 5. DB에 저장
+        // 7. DB에 저장
         userRepository.save(user);
 
-        // 6. 인증 완료 플래그 삭제
+        // 8. 인증 완료 플래그 삭제
         phoneAuthService.clearVerification(joinDto.getPhoneNumber());
     }
 }

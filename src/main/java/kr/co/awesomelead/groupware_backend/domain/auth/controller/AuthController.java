@@ -54,7 +54,7 @@ public class AuthController {
         Collection<? extends GrantedAuthority> authorities = authentication.getAuthorities();
         Iterator<? extends GrantedAuthority> iterator = authorities.iterator();
         GrantedAuthority auth = iterator.next();
-        String role = auth.getAuthority();
+        String role = auth.getAuthority().replace("ROLE_", "");
 
         // JWTUtil을 사용하여 Access Token 생성 (유효기간 1시간으로 설정)
         String accessToken = jwtUtil.createJwt(username, role, 60 * 60 * 1000L);

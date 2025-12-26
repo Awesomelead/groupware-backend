@@ -1,14 +1,12 @@
 package kr.co.awesomelead.groupware_backend.domain.user.dto;
 
+import java.util.Collection;
+import java.util.Collections;
 import kr.co.awesomelead.groupware_backend.domain.user.entity.User;
 import kr.co.awesomelead.groupware_backend.domain.user.enums.Status;
-
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
-
-import java.util.Collection;
-import java.util.Collections;
 
 public class CustomUserDetails implements UserDetails {
 
@@ -21,7 +19,8 @@ public class CustomUserDetails implements UserDetails {
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
         // 사용자의 Role 정보를 Spring Security의 권한 형태로 변환
-        return Collections.singletonList(new SimpleGrantedAuthority(user.getRole().name()));
+        return Collections.singletonList(
+            new SimpleGrantedAuthority("ROLE_" + user.getRole().name()));
     }
 
     @Override

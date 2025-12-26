@@ -1,7 +1,7 @@
 package kr.co.awesomelead.groupware_backend.config;
 
-import kr.co.awesomelead.groupware_backend.auth.filter.JwtFilter;
-import kr.co.awesomelead.groupware_backend.auth.util.JWTUtil;
+import kr.co.awesomelead.groupware_backend.domain.auth.filter.JwtFilter;
+import kr.co.awesomelead.groupware_backend.domain.auth.util.JWTUtil;
 import kr.co.awesomelead.groupware_backend.domain.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;

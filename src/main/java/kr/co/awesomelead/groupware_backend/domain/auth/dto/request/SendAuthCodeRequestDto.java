@@ -1,4 +1,4 @@
-package kr.co.awesomelead.groupware_backend.domain.Aligo.dto.request;
+package kr.co.awesomelead.groupware_backend.domain.auth.dto.request;
 
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Pattern;

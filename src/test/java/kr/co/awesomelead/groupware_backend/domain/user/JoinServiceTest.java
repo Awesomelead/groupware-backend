@@ -8,15 +8,14 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-import kr.co.awesomelead.groupware_backend.domain.user.dto.JoinRequestDto;
+import kr.co.awesomelead.groupware_backend.domain.auth.dto.request.JoinRequestDto;
+import kr.co.awesomelead.groupware_backend.domain.auth.service.JoinService;
 import kr.co.awesomelead.groupware_backend.domain.user.entity.User;
 import kr.co.awesomelead.groupware_backend.domain.user.enums.Role;
 import kr.co.awesomelead.groupware_backend.domain.user.enums.Status;
 import kr.co.awesomelead.groupware_backend.domain.user.repository.UserRepository;
-import kr.co.awesomelead.groupware_backend.domain.user.service.JoinService;
 import kr.co.awesomelead.groupware_backend.global.CustomException;
 import kr.co.awesomelead.groupware_backend.global.ErrorCode;
-
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -31,11 +30,14 @@ import org.springframework.test.context.ActiveProfiles;
 @ActiveProfiles("test")
 class JoinServiceTest {
 
-    @Mock private UserRepository userRepository;
+    @Mock
+    private UserRepository userRepository;
 
-    @Mock private BCryptPasswordEncoder bCryptPasswordEncoder;
+    @Mock
+    private BCryptPasswordEncoder bCryptPasswordEncoder;
 
-    @InjectMocks private JoinService joinService;
+    @InjectMocks
+    private JoinService joinService;
 
     @Test
     @DisplayName("회원가입 성공 테스트")
@@ -68,7 +70,7 @@ class JoinServiceTest {
         // 캡처된 User 객체의 필드가 예상대로 설정되었는지 검증
         assertThat(savedUser.getPassword()).isEqualTo("encodedPassword"); // 암호화된 비밀번호 확인
         assertThat(savedUser.getNameKor()).isEqualTo(joinDto.getNameKor());
-        assertThat(savedUser.getRole()).isEqualTo(Role.ROLE_USER); // 기본값 확인
+        assertThat(savedUser.getRole()).isEqualTo(Role.USER); // 기본값 확인
         assertThat(savedUser.getStatus()).isEqualTo(Status.PENDING); // 기본값 확인
     }
 
@@ -85,7 +87,7 @@ class JoinServiceTest {
 
         // when & then
         CustomException exception =
-                assertThrows(CustomException.class, () -> joinService.joinProcess(joinDto));
+            assertThrows(CustomException.class, () -> joinService.joinProcess(joinDto));
 
         assertThat(exception.getErrorCode()).isEqualTo(ErrorCode.DUPLICATE_LOGIN_ID);
         verify(userRepository, never()).save(any(User.class));

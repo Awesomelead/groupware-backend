@@ -1,19 +1,17 @@
-package kr.co.awesomelead.groupware_backend.auth.controller;
+package kr.co.awesomelead.groupware_backend.domain.auth.controller;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
-
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
-
-import kr.co.awesomelead.groupware_backend.auth.dto.LoginRequestDto;
-import kr.co.awesomelead.groupware_backend.auth.dto.LoginResponseDto;
-import kr.co.awesomelead.groupware_backend.auth.service.RefreshTokenService;
-import kr.co.awesomelead.groupware_backend.auth.util.JWTUtil;
-
+import java.util.Collection;
+import java.util.Iterator;
+import kr.co.awesomelead.groupware_backend.domain.auth.dto.request.LoginRequestDto;
+import kr.co.awesomelead.groupware_backend.domain.auth.dto.response.LoginResponseDto;
+import kr.co.awesomelead.groupware_backend.domain.auth.service.RefreshTokenService;
+import kr.co.awesomelead.groupware_backend.domain.auth.util.JWTUtil;
 import lombok.RequiredArgsConstructor;
-
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -23,9 +21,6 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
-
-import java.util.Collection;
-import java.util.Iterator;
 
 @RestController
 @RequestMapping("/api/auth")
@@ -40,11 +35,11 @@ public class AuthController {
     @Operation(summary = "로그인", description = "로그인을 합니다.")
     @PostMapping("/login")
     public ResponseEntity<LoginResponseDto> login(
-            @RequestBody LoginRequestDto requestDto, HttpServletResponse response) {
+        @RequestBody LoginRequestDto requestDto, HttpServletResponse response) {
 
         UsernamePasswordAuthenticationToken authToken =
-                new UsernamePasswordAuthenticationToken(
-                        requestDto.getEmail(), requestDto.getPassword(), null);
+            new UsernamePasswordAuthenticationToken(
+                requestDto.getEmail(), requestDto.getPassword(), null);
 
         Authentication authentication = authenticationManager.authenticate(authToken);
 

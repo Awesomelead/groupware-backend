@@ -1,7 +1,7 @@
-package kr.co.awesomelead.groupware_backend.domain.user.service;
+package kr.co.awesomelead.groupware_backend.domain.auth.service;
 
-import kr.co.awesomelead.groupware_backend.domain.Aligo.service.PhoneAuthService;
-import kr.co.awesomelead.groupware_backend.domain.user.dto.JoinRequestDto;
+import kr.co.awesomelead.groupware_backend.domain.auth.dto.request.JoinRequestDto;
+import kr.co.awesomelead.groupware_backend.domain.aligo.service.PhoneAuthService;
 import kr.co.awesomelead.groupware_backend.domain.user.entity.User;
 import kr.co.awesomelead.groupware_backend.domain.user.enums.Role;
 import kr.co.awesomelead.groupware_backend.domain.user.enums.Status;
@@ -55,7 +55,7 @@ public class JoinService {
         user.setPhoneNumber(joinDto.getPhoneNumber());
         user.setWorkLocation(joinDto.getCompany().getDescription());
         // 기본값 설정
-        user.setRole(Role.ROLE_USER);
+        user.setRole(Role.USER);
         user.setStatus(Status.PENDING);
 
         // 7. DB에 저장

@@ -1,4 +1,4 @@
-package kr.co.awesomelead.groupware_backend.domain.Aligo.service;
+package kr.co.awesomelead.groupware_backend.domain.aligo.service;
 
 import java.security.SecureRandom;
 import java.util.concurrent.TimeUnit;

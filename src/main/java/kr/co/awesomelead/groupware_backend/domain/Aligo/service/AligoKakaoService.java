@@ -1,7 +1,7 @@
-package kr.co.awesomelead.groupware_backend.domain.Aligo.service;
+package kr.co.awesomelead.groupware_backend.domain.aligo.service;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import kr.co.awesomelead.groupware_backend.domain.Aligo.dto.response.AligoResponse;
+import kr.co.awesomelead.groupware_backend.domain.aligo.dto.response.AligoResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;

@@ -1,11 +1,9 @@
-package kr.co.awesomelead.groupware_backend.domain.admin.dto;
-
-import kr.co.awesomelead.groupware_backend.domain.user.enums.Role;
-
-import lombok.Getter;
-import lombok.Setter;
+package kr.co.awesomelead.groupware_backend.domain.admin.dto.request;
 
 import java.time.LocalDate;
+import kr.co.awesomelead.groupware_backend.domain.user.enums.Role;
+import lombok.Getter;
+import lombok.Setter;
 
 @Getter
 @Setter

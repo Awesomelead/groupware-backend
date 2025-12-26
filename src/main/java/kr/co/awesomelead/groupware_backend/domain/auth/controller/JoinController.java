@@ -1,12 +1,12 @@
-package kr.co.awesomelead.groupware_backend.domain.user.controller;
+package kr.co.awesomelead.groupware_backend.domain.auth.controller;
 
 import io.swagger.v3.oas.annotations.Operation;
 import jakarta.validation.Valid;
-import kr.co.awesomelead.groupware_backend.domain.Aligo.dto.request.SendAuthCodeRequestDto;
-import kr.co.awesomelead.groupware_backend.domain.Aligo.dto.response.VerifyAuthCodeRequestDto;
-import kr.co.awesomelead.groupware_backend.domain.Aligo.service.PhoneAuthService;
-import kr.co.awesomelead.groupware_backend.domain.user.dto.JoinRequestDto;
-import kr.co.awesomelead.groupware_backend.domain.user.service.JoinService;
+import kr.co.awesomelead.groupware_backend.domain.auth.dto.request.JoinRequestDto;
+import kr.co.awesomelead.groupware_backend.domain.auth.dto.request.SendAuthCodeRequestDto;
+import kr.co.awesomelead.groupware_backend.domain.auth.dto.response.VerifyAuthCodeRequestDto;
+import kr.co.awesomelead.groupware_backend.domain.auth.service.JoinService;
+import kr.co.awesomelead.groupware_backend.domain.aligo.service.PhoneAuthService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;

@@ -1,18 +1,14 @@
-package kr.co.awesomelead.groupware_backend.auth.controller;
+package kr.co.awesomelead.groupware_backend.domain.auth.controller;
 
 import io.swagger.v3.oas.annotations.Operation;
-
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
-
-import kr.co.awesomelead.groupware_backend.auth.dto.ReissueResponseDto;
-import kr.co.awesomelead.groupware_backend.auth.entity.RefreshToken;
-import kr.co.awesomelead.groupware_backend.auth.service.RefreshTokenService;
-import kr.co.awesomelead.groupware_backend.auth.util.JWTUtil;
-
+import kr.co.awesomelead.groupware_backend.domain.auth.dto.response.ReissueResponseDto;
+import kr.co.awesomelead.groupware_backend.domain.auth.entity.RefreshToken;
+import kr.co.awesomelead.groupware_backend.domain.auth.service.RefreshTokenService;
+import kr.co.awesomelead.groupware_backend.domain.auth.util.JWTUtil;
 import lombok.RequiredArgsConstructor;
-
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;

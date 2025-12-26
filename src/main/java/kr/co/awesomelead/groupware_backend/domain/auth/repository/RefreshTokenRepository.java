@@ -1,6 +1,6 @@
-package kr.co.awesomelead.groupware_backend.auth.repository;
+package kr.co.awesomelead.groupware_backend.domain.auth.repository;
 
-import kr.co.awesomelead.groupware_backend.auth.entity.RefreshToken;
+import kr.co.awesomelead.groupware_backend.domain.auth.entity.RefreshToken;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 

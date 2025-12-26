@@ -1,4 +1,4 @@
-package kr.co.awesomelead.groupware_backend.domain.user.dto;
+package kr.co.awesomelead.groupware_backend.domain.auth.dto.request;
 
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;

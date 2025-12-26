@@ -1,4 +1,4 @@
-package kr.co.awesomelead.groupware_backend.domain.Aligo.dto.response;
+package kr.co.awesomelead.groupware_backend.domain.aligo.dto.response;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;

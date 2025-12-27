@@ -32,6 +32,20 @@ spring:
       region:
         static: ap-northeast-2
 
+  data:
+    redis:
+      host: localhost
+      port: 6379
+
+aligo:
+  api:
+    url: https://kakaoapi.aligo.in/akv10/alimtalk/send/
+    apikey: test-api-key
+    userid: test-user-id
+    senderkey: test-sender-key
+    sender: 01012345678
+    tpl-code: test-template-code
+
 logging:
   level:
     org.hibernate.SQL: DEBUG

@@ -1,6 +1,6 @@
 package kr.co.awesomelead.groupware_backend.domain.admin.service;
 
-import kr.co.awesomelead.groupware_backend.domain.admin.dto.UserApprovalRequestDto;
+import kr.co.awesomelead.groupware_backend.domain.admin.dto.request.UserApprovalRequestDto;
 import kr.co.awesomelead.groupware_backend.domain.user.entity.User;
 import kr.co.awesomelead.groupware_backend.domain.user.enums.Status;
 import kr.co.awesomelead.groupware_backend.domain.user.repository.UserRepository;

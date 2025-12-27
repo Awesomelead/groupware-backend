@@ -11,19 +11,27 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+
       - name: Set up JDK 17
         uses: actions/setup-java@v4
         with:
           java-version: '17'
           distribution: 'temurin'
-      - name: Run Google Java Format
+
+      - name: Download Google Java Format
         run: |
-          wget https://github.com/google/google-java-format/releases/download/v1.17.0/google-java-format-1.17.0-all-deps.jar
-          find . -name "*.java" -type f -print0 | xargs -0 java -jar google-java-format-1.17.0-all-deps.jar --replace --aosp
-      - name: Commit changes
+          wget -q https://github.com/google/google-java-format/releases/download/v1.17.0/google-java-format-1.17.0-all-deps.jar
+
+      - name: Format Java files
         run: |
-          git config --local user.email "action@github.com"
-          git config --local user.name "GitHub Action"
-          git add -A
-          git diff --quiet && git diff --staged --quiet || git commit -m "chore: Java 스타일 수정"
-          git push
+          find src -name "*.java" -type f -print0 | \
+            xargs -0 java -jar google-java-format-1.17.0-all-deps.jar --replace --aosp
+          rm -f google-java-format-1.17.0-all-deps.jar
+
+      - name: Commit formatted code
+        run: |
+          git config --local user.email "github-actions[bot]@users.noreply.github.com"
+          git config --local user.name "github-actions[bot]"
+          git add src/**/*.java
+          git diff --quiet && git diff --staged --quiet || \
+            (git commit -m "style: Apply Java code formatting" && git push)

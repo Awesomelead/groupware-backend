@@ -6,7 +6,7 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-import kr.co.awesomelead.groupware_backend.domain.admin.dto.UserApprovalRequestDto;
+import kr.co.awesomelead.groupware_backend.domain.admin.dto.request.UserApprovalRequestDto;
 import kr.co.awesomelead.groupware_backend.domain.admin.service.AdminService;
 import kr.co.awesomelead.groupware_backend.domain.user.entity.User;
 import kr.co.awesomelead.groupware_backend.domain.user.enums.Role;
@@ -48,7 +48,7 @@ class AdminServiceTest {
         requestDto.setJobType("정규직");
         requestDto.setPosition("사원");
         requestDto.setWorkLocation("본사");
-        requestDto.setRole(Role.ROLE_USER);
+        requestDto.setRole(Role.USER);
 
         // userRepository.findById가 호출되면 PENDING 상태의 유저를 반환하도록 설정
         when(userRepository.findById(userId)).thenReturn(Optional.of(pendingUser));

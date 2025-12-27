@@ -1,9 +1,12 @@
 package kr.co.awesomelead.groupware_backend.domain.admin.controller;
 
 import io.swagger.v3.oas.annotations.Operation;
-import kr.co.awesomelead.groupware_backend.domain.admin.dto.UserApprovalRequestDto;
+
+import kr.co.awesomelead.groupware_backend.domain.admin.dto.request.UserApprovalRequestDto;
 import kr.co.awesomelead.groupware_backend.domain.admin.service.AdminService;
+
 import lombok.RequiredArgsConstructor;
+
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -21,7 +24,7 @@ public class AdminController {
     @Operation(summary = "회원가입 승인", description = "관리자가 회원가입 요청에 대해 승인합니다.")
     @PatchMapping("/users/{userId}/approve")
     public ResponseEntity<String> approveUser(
-        @PathVariable("userId") Long userId, @RequestBody UserApprovalRequestDto requestDto) {
+            @PathVariable("userId") Long userId, @RequestBody UserApprovalRequestDto requestDto) {
 
         adminService.approveUserRegistration(userId, requestDto);
 

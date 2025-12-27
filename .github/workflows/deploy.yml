@@ -79,17 +79,18 @@ jobs:
             ALIGO_TPL_CODE=${{ secrets.ALIGO_TPL_CODE }}
             EOF
             
-            # Docker Compose로 배포
             cd /home/ubuntu
             
             # 최신 이미지 다운로드
-            docker-compose pull
+            docker-compose pull app
             
-            # 무중단 재시작
-            docker-compose up -d --force-recreate --no-deps app
+            # 컨테이너 재시작
+            docker-compose up -d app
             
-            # 새 컨테이너가 정상 시작될 때까지 대기 (최대 60초)
+            # 새 컨테이너가 정상 시작될 때까지 대기
             echo "Waiting for application to start..."
+            sleep 10
+            
             for i in {1..30}; do
               if curl -f http://localhost:8080/ > /dev/null 2>&1; then
                 echo "Application is healthy!"

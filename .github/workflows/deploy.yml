@@ -85,13 +85,13 @@ jobs:
             # 최신 이미지 다운로드
             docker-compose pull
             
-            # 무중단 재시작 (--no-deps: 의존성 서비스 재시작 안 함, --force-recreate: 컨테이너 강제 재생성)
+            # 무중단 재시작
             docker-compose up -d --force-recreate --no-deps app
             
             # 새 컨테이너가 정상 시작될 때까지 대기 (최대 60초)
             echo "Waiting for application to start..."
             for i in {1..30}; do
-              if docker exec groupware-backend curl -f http://localhost:8080/ > /dev/null 2>&1; then
+              if curl -f http://localhost:8080/ > /dev/null 2>&1; then
                 echo "Application is healthy!"
                 break
               fi

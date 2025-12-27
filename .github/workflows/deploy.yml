@@ -81,10 +81,16 @@ jobs:
             
             cd /home/ubuntu
             
+            # 기존 컨테이너 중지 및 제거
+            docker-compose down app
+            
+            # 중지된 컨테이너 정리
+            docker container prune -f
+            
             # 최신 이미지 다운로드
             docker-compose pull app
             
-            # 컨테이너 재시작
+            # 컨테이너 시작
             docker-compose up -d app
             
             # 새 컨테이너가 정상 시작될 때까지 대기

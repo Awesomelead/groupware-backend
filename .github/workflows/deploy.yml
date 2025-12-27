@@ -42,7 +42,17 @@ jobs:
           docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
           docker push $ECR_REGISTRY/$ECR_REPOSITORY:latest
 
-      - name: Deploy to EC2
+      - name: Copy docker-compose.yml to EC2
+        uses: appleboy/scp-action@master
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ubuntu
+          key: ${{ secrets.EC2_SSH_KEY }}
+          source: "./docker-compose.yml"
+          target: "/home/ubuntu"
+          overwrite: true
+
+      - name: Deploy to EC2 with Docker Compose
         uses: appleboy/ssh-action@master
         with:
           host: ${{ secrets.EC2_HOST }}
@@ -52,33 +62,27 @@ jobs:
             # ECR 로그인
             aws ecr get-login-password --region ap-northeast-2 | docker login --username AWS --password-stdin 188932086032.dkr.ecr.ap-northeast-2.amazonaws.com
             
-            # 최신 이미지 pull
-            docker pull 188932086032.dkr.ecr.ap-northeast-2.amazonaws.com/groupware-backend:latest
+            # 환경변수 파일 생성
+            cat > /home/ubuntu/.env << EOF
+            DB_URL=${{ secrets.DB_URL }}
+            DB_USERNAME=${{ secrets.DB_USERNAME }}
+            DB_PASSWORD=${{ secrets.DB_PASSWORD }}
+            JWT_SECRET=${{ secrets.JWT_SECRET }}
+            AWS_S3_ACCESS_KEY=${{ secrets.AWS_S3_ACCESS_KEY }}
+            AWS_S3_SECRET_KEY=${{ secrets.AWS_S3_SECRET_KEY }}
+            AWS_S3_BUCKET=${{ secrets.AWS_S3_BUCKET }}
+            ALIGO_API_URL=${{ secrets.ALIGO_API_URL }}
+            ALIGO_API_KEY=${{ secrets.ALIGO_API_KEY }}
+            ALIGO_USER_ID=${{ secrets.ALIGO_USER_ID }}
+            ALIGO_SENDER_KEY=${{ secrets.ALIGO_SENDER_KEY }}
+            ALIGO_SENDER_PHONE=${{ secrets.ALIGO_SENDER_PHONE }}
+            ALIGO_TPL_CODE=${{ secrets.ALIGO_TPL_CODE }}
+            EOF
             
-            # 기존 컨테이너 정지 및 삭제
-            docker stop groupware-backend || true
-            docker rm groupware-backend || true
-            
-            
-            docker ps -aq | xargs -r docker rm -f || true
-            docker run -d -p 8080:8080 \
-              -e SPRING_DATASOURCE_URL="${{ secrets.DB_URL }}" \
-              -e SPRING_DATASOURCE_USERNAME="${{ secrets.DB_USERNAME }}" \
-              -e SPRING_DATASOURCE_PASSWORD="${{ secrets.DB_PASSWORD }}" \
-              -e SPRING_JWT_SECRET="${{ secrets.JWT_SECRET }}" \
-              -e AWS_ACCESS_KEY_ID="${{ secrets.AWS_S3_ACCESS_KEY }}" \
-              -e AWS_SECRET_ACCESS_KEY="${{ secrets.AWS_S3_SECRET_KEY }}" \
-              -e CLOUD_AWS_S3_BUCKET="${{ secrets.AWS_S3_BUCKET }}" \
-              -e CLOUD_AWS_REGION_STATIC="ap-northeast-2" \
-              -e ALIGO_API_URL="${{ secrets.ALIGO_API_URL }}" \
-              -e ALIGO_API_KEY="${{ secrets.ALIGO_API_KEY }}" \
-              -e ALIGO_USER_ID="${{ secrets.ALIGO_USER_ID }}" \
-              -e ALIGO_SENDER_KEY="${{ secrets.ALIGO_SENDER_KEY }}" \
-              -e ALIGO_SENDER_PHONE="${{ secrets.ALIGO_SENDER_PHONE }}" \
-              -e ALIGO_TPL_CODE="${{ secrets.ALIGO_TPL_CODE }}" \
-              --name groupware-backend \
-              --restart unless-stopped \
-              188932086032.dkr.ecr.ap-northeast-2.amazonaws.com/groupware-backend:latest
+            # Docker Compose로 배포
+            cd /home/ubuntu
+            docker-compose pull
+            docker-compose up -d
             
             # 사용하지 않는 이미지 정리
             docker image prune -f

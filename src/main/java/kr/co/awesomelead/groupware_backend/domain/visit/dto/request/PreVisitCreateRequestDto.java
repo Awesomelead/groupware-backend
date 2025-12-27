@@ -30,8 +30,6 @@ public class PreVisitCreateRequestDto {
 
     @NotNull
     private LocalDateTime visitStartDate;
-    @NotNull
-    private LocalDateTime visitEndDate;
 
     @Valid
     private List<CompanionRequestDto> companions;

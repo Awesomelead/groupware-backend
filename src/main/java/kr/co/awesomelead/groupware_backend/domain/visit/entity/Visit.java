@@ -57,8 +57,7 @@ public class Visit {
     @Column(nullable = false)
     private LocalDateTime visitStartDate; // 방문 시작 일시
 
-    @Column(nullable = false)
-    private LocalDateTime visitEndDate; // 방문 종료 일시
+    private LocalDateTime visitEndDate; // 방문 종료 일시, null 가능
 
     @Column(nullable = false)
     private boolean additionalRequirements = false; // 보충적허가 필요여부 (기본값 false)
@@ -106,7 +105,7 @@ public class Visit {
 
     public static Visit createBaseVisit(User host, Visitor visitor, String hostCompany,
         String visitorCompany,
-        VisitPurpose purpose, String carNumber, LocalDateTime start, LocalDateTime end) {
+        VisitPurpose purpose, String carNumber, LocalDateTime start) {
         Visit visit = new Visit();
         visit.user = host;
         visit.visitor = visitor;
@@ -115,7 +114,6 @@ public class Visit {
         visit.purpose = purpose;
         visit.carNumber = carNumber;
         visit.visitStartDate = start;
-        visit.visitEndDate = end;
 
         // 공통 초기 상태: 아직 방문 전(visited = false)
         visit.visited = false;
@@ -128,8 +126,7 @@ public class Visit {
         PreVisitCreateRequestDto requestDto) {
         Visit visit = createBaseVisit(host, visitor, requestDto.getHostCompany(),
             requestDto.getVisitor().getVisitorCompany(), requestDto.getPurpose(),
-            requestDto.getCarNumber(), requestDto.getVisitStartDate(),
-            requestDto.getVisitEndDate());
+            requestDto.getCarNumber(), requestDto.getVisitStartDate());
 
         visit.visitType = VisitType.PRE_REGISTRATION;
         return visit;
@@ -139,12 +136,15 @@ public class Visit {
         OnSiteVisitCreateRequestDto requestDto) {
         Visit visit = createBaseVisit(host, visitor, requestDto.getHostCompany(),
             requestDto.getVisitor().getVisitorCompany(), requestDto.getPurpose(),
-            requestDto.getCarNumber(), requestDto.getVisitStartDate(),
-            requestDto.getVisitEndDate());
+            requestDto.getCarNumber(), requestDto.getVisitStartDate());
         visit.setVisited(true);
         visit.setVerified(true);
 
         visit.visitType = VisitType.ON_SITE;
         return visit;
+    }
+
+    public void checkOut() {
+        this.visitEndDate = LocalDateTime.now(); // 실제 나가는 시점의 시간을 기록
     }
 }

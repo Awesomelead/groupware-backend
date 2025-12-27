@@ -59,6 +59,7 @@ public class Visit {
 
     private LocalDateTime visitEndDate; // 방문 종료 일시, null 가능
 
+    @Builder.Default
     @Column(nullable = false)
     private boolean additionalRequirements = false; // 보충적허가 필요여부 (기본값 false)
 
@@ -87,6 +88,7 @@ public class Visit {
     @JsonBackReference
     private Visitor visitor; // 내방객
 
+    @Builder.Default
     @OneToMany(mappedBy = "visit", cascade = CascadeType.ALL, orphanRemoval = true)
     @JsonManagedReference
     private List<Companion> companions = new ArrayList<>(); // 동행한 방문자들

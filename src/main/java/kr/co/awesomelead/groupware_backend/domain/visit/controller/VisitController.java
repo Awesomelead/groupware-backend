@@ -9,6 +9,8 @@ import kr.co.awesomelead.groupware_backend.domain.visit.dto.response.VisitRespon
 import kr.co.awesomelead.groupware_backend.domain.visit.service.VisitService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.PatchMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -44,5 +46,13 @@ public class VisitController {
         return ResponseEntity
             .created(URI.create("/api/visits/" + responseDto.getId()))
             .body(responseDto);
+    }
+
+    @Operation(summary = "퇴실 처리", description = "내방객의 방문에 대해 퇴실 처리를 수행합니다.")
+    @PatchMapping("/{visitId}/check-out")
+    public ResponseEntity<Void> checkOut(@PathVariable Long visitId) {
+        visitService.checkOut(visitId);
+
+        return ResponseEntity.ok().build();
     }
 }

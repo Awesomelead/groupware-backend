@@ -81,8 +81,19 @@ public class VisitService {
             Companion companion = new Companion();
             companion.setName(dto.getName());
             companion.setPhoneNumber(dto.getPhoneNumber());
-            companion.setVisitorCompany(dto.getVisitorCompany()); // DTO 필드명 이슈 해결 후 사용
-            visit.addCompanion(companion); // 연관관계 편의 메서드 사용
+            companion.setVisitorCompany(dto.getVisitorCompany());
+            visit.addCompanion(companion);
         }
+    }
+
+    @Transactional
+    public void checkOut(Long visitId) {
+        // 차후, 해당 기능에 대해 경비원만 혹은 특정 권한을 가진 사용자만 호출할 수 있도록 처리 필요!
+        Visit visit = visitRepository.findById(visitId)
+            .orElseThrow(() -> new CustomException(ErrorCode.VISIT_NOT_FOUND));
+        if (visit.getVisitEndDate() != null) {
+            throw new CustomException(ErrorCode.VISIT_ALREADY_CHECKED_OUT);
+        }
+        visit.checkOut();
     }
 }

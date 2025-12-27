@@ -115,7 +115,6 @@ public class VisitServiceTest {
         dto.setHostCompany("어썸리드");
         dto.setPurpose(VisitPurpose.MEETING);
         dto.setVisitStartDate(LocalDateTime.now().plusHours(1));
-        dto.setVisitEndDate(LocalDateTime.now().plusHours(3));
 
         VisitorRequestDto visitorDto = new VisitorRequestDto();
         visitorDto.setName("방문객");

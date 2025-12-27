@@ -1,7 +1,7 @@
 package kr.co.awesomelead.groupware_backend.config;
 
-import kr.co.awesomelead.groupware_backend.auth.filter.JwtFilter;
-import kr.co.awesomelead.groupware_backend.auth.util.JWTUtil;
+import kr.co.awesomelead.groupware_backend.domain.auth.filter.JwtFilter;
+import kr.co.awesomelead.groupware_backend.domain.auth.util.JWTUtil;
 import kr.co.awesomelead.groupware_backend.domain.user.repository.UserRepository;
 
 import lombok.RequiredArgsConstructor;
@@ -65,6 +65,8 @@ public class SecurityConfig {
                                         "/",
                                         "/index.html",
                                         "/api/join",
+                                        "/api/join/send-code",
+                                        "/api/join/verify-code",
                                         "/api/auth/login",
                                         "/api/reissue",
                                         "/api/admin/**")

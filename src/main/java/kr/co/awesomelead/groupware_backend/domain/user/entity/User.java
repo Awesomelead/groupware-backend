@@ -19,6 +19,7 @@ import jakarta.persistence.OneToMany;
 import jakarta.persistence.OneToOne;
 import jakarta.persistence.Table;
 import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -139,5 +140,34 @@ public class User {
     // 권한 확인
     public boolean hasAuthority(Authority authority) {
         return this.authorities.contains(authority);
+    }
+
+    public void calculateBirthDateFromRegistrationNumber() {
+        if (this.registrationNumber == null || this.registrationNumber.length() < 7) {
+            return;
+        }
+
+        // 앞 6자리 추출 (YYMMDD)
+        String birthPart = this.registrationNumber.substring(0, 6);
+
+        // 뒤 첫 번째 자리 추출 (성별/세기 구분자)
+        char genderDigit = this.registrationNumber.contains("-")
+            ? this.registrationNumber.charAt(7)
+            : this.registrationNumber.charAt(6);
+
+        // 세기 판단
+        String century;
+        if (genderDigit == '1' || genderDigit == '2' || genderDigit == '5' || genderDigit == '6') {
+            century = "19";
+        } else if (genderDigit == '3' || genderDigit == '4' || genderDigit == '7'
+            || genderDigit == '8') {
+            century = "20";
+        } else {
+            century = "20"; // 기본값 (보통 2000년대생)
+        }
+
+        // LocalDate로 변환하여 set
+        String fullDate = century + birthPart;
+        this.birthDate = LocalDate.parse(fullDate, DateTimeFormatter.ofPattern("yyyyMMdd"));
     }
 }

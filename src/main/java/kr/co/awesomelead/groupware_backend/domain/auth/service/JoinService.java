@@ -8,9 +8,7 @@ import kr.co.awesomelead.groupware_backend.domain.user.enums.Status;
 import kr.co.awesomelead.groupware_backend.domain.user.repository.UserRepository;
 import kr.co.awesomelead.groupware_backend.global.CustomException;
 import kr.co.awesomelead.groupware_backend.global.ErrorCode;
-
 import lombok.RequiredArgsConstructor;
-
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -56,6 +54,8 @@ public class JoinService {
         user.setRegistrationNumber(joinDto.getRegistrationNumber());
         user.setPhoneNumber(joinDto.getPhoneNumber());
         user.setWorkLocation(joinDto.getCompany().getDescription());
+        // 생년월일 자동 계산 및 설정
+        user.calculateBirthDateFromRegistrationNumber();
         // 기본값 설정
         user.setRole(Role.USER);
         user.setStatus(Status.PENDING);

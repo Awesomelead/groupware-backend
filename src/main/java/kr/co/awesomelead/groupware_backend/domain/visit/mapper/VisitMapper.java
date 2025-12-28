@@ -8,6 +8,7 @@ import kr.co.awesomelead.groupware_backend.domain.visit.entity.Companion;
 import kr.co.awesomelead.groupware_backend.domain.visit.entity.Visit;
 import kr.co.awesomelead.groupware_backend.domain.visit.entity.Visitor;
 import kr.co.awesomelead.groupware_backend.domain.visit.enums.VisitType;
+
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 
@@ -46,5 +47,4 @@ public interface VisitMapper {
     VisitResponseDto toResponseDto(Visit visit);
 
     VisitResponseDto.CompanionResponseDto toCompanionResponseDto(Companion companion);
-
 }

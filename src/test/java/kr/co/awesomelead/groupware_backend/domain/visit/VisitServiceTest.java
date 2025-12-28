@@ -8,9 +8,6 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-import java.time.LocalDateTime;
-import java.util.List;
-import java.util.Optional;
 import kr.co.awesomelead.groupware_backend.domain.user.entity.User;
 import kr.co.awesomelead.groupware_backend.domain.user.repository.UserRepository;
 import kr.co.awesomelead.groupware_backend.domain.visit.dto.request.CompanionRequestDto;
@@ -27,6 +24,7 @@ import kr.co.awesomelead.groupware_backend.domain.visit.repository.VisitorReposi
 import kr.co.awesomelead.groupware_backend.domain.visit.service.VisitService;
 import kr.co.awesomelead.groupware_backend.global.CustomException;
 import kr.co.awesomelead.groupware_backend.global.ErrorCode;
+
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -37,20 +35,19 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.util.ReflectionTestUtils;
 
+import java.time.LocalDateTime;
+import java.util.List;
+import java.util.Optional;
+
 @ExtendWith(MockitoExtension.class)
 @ActiveProfiles("test")
 public class VisitServiceTest {
 
-    @Mock
-    private VisitRepository visitRepository;
-    @Mock
-    private VisitorRepository visitorRepository;
-    @Mock
-    private UserRepository userRepository;
-    @InjectMocks
-    private VisitService visitService;
-    @Mock
-    private VisitMapper visitMapper;
+    @Mock private VisitRepository visitRepository;
+    @Mock private VisitorRepository visitorRepository;
+    @Mock private UserRepository userRepository;
+    @InjectMocks private VisitService visitService;
+    @Mock private VisitMapper visitMapper;
 
     @Test
     @DisplayName("현장 방문 등록 성공 테스트 - 동행자 포함")
@@ -66,30 +63,32 @@ public class VisitServiceTest {
         ReflectionTestUtils.setField(visitor, "id", 10L);
         ReflectionTestUtils.setField(visitor, "phoneNumber", requestDto.getVisitorPhone());
 
-        Visit visit = Visit.builder()
-            .user(host)
-            .visitor(visitor)
-            .hostCompany(requestDto.getHostCompany())
-            .visitorCompany(requestDto.getVisitorCompany())
-            .visitType(VisitType.ON_SITE)
-            .visited(true)
-            .verified(true)
-            .build();
+        Visit visit =
+                Visit.builder()
+                        .user(host)
+                        .visitor(visitor)
+                        .hostCompany(requestDto.getHostCompany())
+                        .visitorCompany(requestDto.getVisitorCompany())
+                        .visitType(VisitType.ON_SITE)
+                        .visited(true)
+                        .verified(true)
+                        .build();
         // 동행자 수동 추가 (매퍼 동작 모킹용)
-        visit.addCompanion(Companion.builder()
-            .name("동행자1").build());
+        visit.addCompanion(Companion.builder().name("동행자1").build());
 
         // Mock 설정
         when(userRepository.findById(hostId)).thenReturn(Optional.of(host));
-        when(visitorRepository.findByPhoneNumber(requestDto.getVisitorPhone())).thenReturn(
-            Optional.of(visitor));
+        when(visitorRepository.findByPhoneNumber(requestDto.getVisitorPhone()))
+                .thenReturn(Optional.of(visitor));
         when(visitMapper.toVisitEntity(any(), any(), any(), any())).thenReturn(visit);
 
-        when(visitRepository.save(any(Visit.class))).thenAnswer(invocation -> {
-            Visit v = invocation.getArgument(0);
-            ReflectionTestUtils.setField(v, "id", 100L);
-            return v;
-        });
+        when(visitRepository.save(any(Visit.class)))
+                .thenAnswer(
+                        invocation -> {
+                            Visit v = invocation.getArgument(0);
+                            ReflectionTestUtils.setField(v, "id", 100L);
+                            return v;
+                        });
 
         // when
         VisitResponseDto response = visitService.createOnSiteVisit(requestDto);
@@ -114,8 +113,9 @@ public class VisitServiceTest {
         when(userRepository.findById(99L)).thenReturn(Optional.empty());
 
         // when & then
-        CustomException exception = assertThrows(CustomException.class,
-            () -> visitService.createOnSiteVisit(requestDto));
+        CustomException exception =
+                assertThrows(
+                        CustomException.class, () -> visitService.createOnSiteVisit(requestDto));
 
         assertThat(exception.getErrorCode()).isEqualTo(ErrorCode.USER_NOT_FOUND);
         verify(visitRepository, never()).save(any());
@@ -141,5 +141,4 @@ public class VisitServiceTest {
 
         return dto;
     }
-
 }

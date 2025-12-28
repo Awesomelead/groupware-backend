@@ -2,6 +2,7 @@ package kr.co.awesomelead.groupware_backend.domain.visit.entity;
 
 import com.fasterxml.jackson.annotation.JsonBackReference;
 import com.fasterxml.jackson.annotation.JsonManagedReference;
+
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -14,18 +15,21 @@ import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToMany;
-import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.List;
+
 import kr.co.awesomelead.groupware_backend.domain.user.entity.User;
 import kr.co.awesomelead.groupware_backend.domain.visit.enums.VisitPurpose;
 import kr.co.awesomelead.groupware_backend.domain.visit.enums.VisitType;
+
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+
+import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 
 @Setter
 @Getter
@@ -103,9 +107,14 @@ public class Visit {
         this.verified = true; // 신원 확인됨
     }
 
-    public static Visit createBaseVisit(User host, Visitor visitor, String hostCompany,
-        String visitorCompany,
-        VisitPurpose purpose, String carNumber, LocalDateTime start) {
+    public static Visit createBaseVisit(
+            User host,
+            Visitor visitor,
+            String hostCompany,
+            String visitorCompany,
+            VisitPurpose purpose,
+            String carNumber,
+            LocalDateTime start) {
         Visit visit = new Visit();
         visit.user = host;
         visit.visitor = visitor;

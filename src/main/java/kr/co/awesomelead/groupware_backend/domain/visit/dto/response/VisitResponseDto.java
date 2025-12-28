@@ -1,12 +1,14 @@
 package kr.co.awesomelead.groupware_backend.domain.visit.dto.response;
 
-import java.time.LocalDateTime;
-import java.util.List;
 import kr.co.awesomelead.groupware_backend.domain.visit.enums.VisitPurpose;
 import kr.co.awesomelead.groupware_backend.domain.visit.enums.VisitType;
+
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
+
+import java.time.LocalDateTime;
+import java.util.List;
 
 @Getter
 @Builder

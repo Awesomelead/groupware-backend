@@ -18,6 +18,7 @@ import kr.co.awesomelead.groupware_backend.domain.user.enums.Status;
 import kr.co.awesomelead.groupware_backend.domain.user.repository.UserRepository;
 import kr.co.awesomelead.groupware_backend.global.CustomException;
 import kr.co.awesomelead.groupware_backend.global.ErrorCode;
+
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -32,17 +33,13 @@ import org.springframework.test.context.ActiveProfiles;
 @ActiveProfiles("test")
 class JoinServiceTest {
 
-    @Mock
-    private UserRepository userRepository;
+    @Mock private UserRepository userRepository;
 
-    @Mock
-    private BCryptPasswordEncoder bCryptPasswordEncoder;
+    @Mock private BCryptPasswordEncoder bCryptPasswordEncoder;
 
-    @Mock
-    private PhoneAuthService phoneAuthService;
+    @Mock private PhoneAuthService phoneAuthService;
 
-    @InjectMocks
-    private JoinService joinService;
+    @InjectMocks private JoinService joinService;
 
     @Test
     @DisplayName("회원가입 성공 테스트")
@@ -62,7 +59,7 @@ class JoinServiceTest {
         when(phoneAuthService.isPhoneVerified(joinDto.getPhoneNumber())).thenReturn(true);
         when(userRepository.existsByEmail(joinDto.getEmail())).thenReturn(false);
         when(userRepository.existsByRegistrationNumber(joinDto.getRegistrationNumber()))
-            .thenReturn(false);
+                .thenReturn(false);
         when(bCryptPasswordEncoder.encode(joinDto.getPassword())).thenReturn("encodedPassword");
 
         // when
@@ -102,7 +99,7 @@ class JoinServiceTest {
 
         // when & then
         CustomException exception =
-            assertThrows(CustomException.class, () -> joinService.joinProcess(joinDto));
+                assertThrows(CustomException.class, () -> joinService.joinProcess(joinDto));
 
         assertThat(exception.getErrorCode()).isEqualTo(ErrorCode.DUPLICATE_LOGIN_ID);
         verify(userRepository, never()).save(any(User.class));
@@ -119,7 +116,7 @@ class JoinServiceTest {
 
         // when & then
         CustomException exception =
-            assertThrows(CustomException.class, () -> joinService.joinProcess(joinDto));
+                assertThrows(CustomException.class, () -> joinService.joinProcess(joinDto));
 
         assertThat(exception.getErrorCode()).isEqualTo(ErrorCode.PASSWORD_MISMATCH);
         verify(userRepository, never()).save(any(User.class));
@@ -136,11 +133,11 @@ class JoinServiceTest {
         joinDto.setPhoneNumber("01012345678");
 
         when(phoneAuthService.isPhoneVerified(joinDto.getPhoneNumber()))
-            .thenReturn(false); // 인증 안 됨
+                .thenReturn(false); // 인증 안 됨
 
         // when & then
         CustomException exception =
-            assertThrows(CustomException.class, () -> joinService.joinProcess(joinDto));
+                assertThrows(CustomException.class, () -> joinService.joinProcess(joinDto));
 
         assertThat(exception.getErrorCode()).isEqualTo(ErrorCode.PHONE_NOT_VERIFIED);
         verify(userRepository, never()).save(any(User.class));
@@ -160,11 +157,11 @@ class JoinServiceTest {
         when(phoneAuthService.isPhoneVerified(joinDto.getPhoneNumber())).thenReturn(true);
         when(userRepository.existsByEmail(joinDto.getEmail())).thenReturn(false);
         when(userRepository.existsByRegistrationNumber(joinDto.getRegistrationNumber()))
-            .thenReturn(true); // 주민번호 중복
+                .thenReturn(true); // 주민번호 중복
 
         // when & then
         CustomException exception =
-            assertThrows(CustomException.class, () -> joinService.joinProcess(joinDto));
+                assertThrows(CustomException.class, () -> joinService.joinProcess(joinDto));
 
         assertThat(exception.getErrorCode()).isEqualTo(ErrorCode.DUPLICATE_REGISTRATION_NUMBER);
         verify(userRepository, never()).save(any(User.class));

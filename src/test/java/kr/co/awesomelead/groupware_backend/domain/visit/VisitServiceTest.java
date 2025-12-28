@@ -14,13 +14,14 @@ import java.util.Optional;
 import kr.co.awesomelead.groupware_backend.domain.user.entity.User;
 import kr.co.awesomelead.groupware_backend.domain.user.repository.UserRepository;
 import kr.co.awesomelead.groupware_backend.domain.visit.dto.request.CompanionRequestDto;
-import kr.co.awesomelead.groupware_backend.domain.visit.dto.request.OnSiteVisitCreateRequestDto;
-import kr.co.awesomelead.groupware_backend.domain.visit.dto.request.VisitorRequestDto;
+import kr.co.awesomelead.groupware_backend.domain.visit.dto.request.VisitCreateRequestDto;
 import kr.co.awesomelead.groupware_backend.domain.visit.dto.response.VisitResponseDto;
+import kr.co.awesomelead.groupware_backend.domain.visit.entity.Companion;
 import kr.co.awesomelead.groupware_backend.domain.visit.entity.Visit;
 import kr.co.awesomelead.groupware_backend.domain.visit.entity.Visitor;
 import kr.co.awesomelead.groupware_backend.domain.visit.enums.VisitPurpose;
 import kr.co.awesomelead.groupware_backend.domain.visit.enums.VisitType;
+import kr.co.awesomelead.groupware_backend.domain.visit.mapper.VisitMapper;
 import kr.co.awesomelead.groupware_backend.domain.visit.repository.VisitRepository;
 import kr.co.awesomelead.groupware_backend.domain.visit.repository.VisitorRepository;
 import kr.co.awesomelead.groupware_backend.domain.visit.service.VisitService;
@@ -46,34 +47,48 @@ public class VisitServiceTest {
     private VisitorRepository visitorRepository;
     @Mock
     private UserRepository userRepository;
-
     @InjectMocks
     private VisitService visitService;
+    @Mock
+    private VisitMapper visitMapper;
 
     @Test
     @DisplayName("현장 방문 등록 성공 테스트 - 동행자 포함")
     void createOnSiteVisit_Success() {
         // given
         Long hostId = 1L;
-        OnSiteVisitCreateRequestDto requestDto = createRequestDto(hostId);
+        VisitCreateRequestDto requestDto = createRequestDto(hostId);
 
         User host = new User();
         ReflectionTestUtils.setField(host, "id", hostId);
-        ReflectionTestUtils.setField(host, "nameKor", "담당자");
 
         Visitor visitor = new Visitor();
         ReflectionTestUtils.setField(visitor, "id", 10L);
-        ReflectionTestUtils.setField(visitor, "name", "방문객");
+        ReflectionTestUtils.setField(visitor, "phoneNumber", requestDto.getVisitorPhone());
+
+        Visit visit = Visit.builder()
+            .user(host)
+            .visitor(visitor)
+            .hostCompany(requestDto.getHostCompany())
+            .visitorCompany(requestDto.getVisitorCompany())
+            .visitType(VisitType.ON_SITE)
+            .visited(true)
+            .verified(true)
+            .build();
+        // 동행자 수동 추가 (매퍼 동작 모킹용)
+        visit.addCompanion(Companion.builder()
+            .name("동행자1").build());
 
         // Mock 설정
         when(userRepository.findById(hostId)).thenReturn(Optional.of(host));
-        when(visitorRepository.findByPhoneNumber(requestDto.getVisitor().getPhoneNumber()))
-            .thenReturn(Optional.of(visitor));
+        when(visitorRepository.findByPhoneNumber(requestDto.getVisitorPhone())).thenReturn(
+            Optional.of(visitor));
+        when(visitMapper.toVisitEntity(any(), any(), any(), any())).thenReturn(visit);
 
         when(visitRepository.save(any(Visit.class))).thenAnswer(invocation -> {
-            Visit visit = invocation.getArgument(0);
-            ReflectionTestUtils.setField(visit, "id", 100L); // 저장된 ID 모킹
-            return visit;
+            Visit v = invocation.getArgument(0);
+            ReflectionTestUtils.setField(v, "id", 100L);
+            return v;
         });
 
         // when
@@ -81,23 +96,21 @@ public class VisitServiceTest {
 
         // then
         assertThat(response).isNotNull();
-        assertThat(response.getVisitType()).isEqualTo(VisitType.ON_SITE);
+        verify(visitRepository, times(1)).save(any(Visit.class));
 
         ArgumentCaptor<Visit> visitCaptor = ArgumentCaptor.forClass(Visit.class);
-        verify(visitRepository, times(1)).save(visitCaptor.capture());
+        verify(visitRepository).save(visitCaptor.capture());
 
         Visit savedVisit = visitCaptor.getValue();
-        assertThat(savedVisit.isVisited()).isTrue(); // 진형님 로직: 초기값은 false
-        assertThat(savedVisit.getHostCompany()).isEqualTo("어썸리드");
-        assertThat(savedVisit.getCompanions().size()).isEqualTo(1);
-        assertThat(savedVisit.getCompanions().get(0).getName()).isEqualTo("동행자1");
+        assertThat(savedVisit.isVisited()).isTrue();
+        assertThat(savedVisit.getCompanions().get(0).getVisit()).isEqualTo(savedVisit);
     }
 
     @Test
     @DisplayName("현장 방문 등록 실패 - 담당 직원이 없는 경우")
     void createOnSiteVisit_Fail_UserNotFound() {
         // given
-        OnSiteVisitCreateRequestDto requestDto = createRequestDto(99L);
+        VisitCreateRequestDto requestDto = createRequestDto(99L);
         when(userRepository.findById(99L)).thenReturn(Optional.empty());
 
         // when & then
@@ -109,19 +122,16 @@ public class VisitServiceTest {
     }
 
     // 테스트 데이터 생성 헬퍼 메서드
-    private OnSiteVisitCreateRequestDto createRequestDto(Long hostId) {
-        OnSiteVisitCreateRequestDto dto = new OnSiteVisitCreateRequestDto();
+    private VisitCreateRequestDto createRequestDto(Long hostId) {
+        VisitCreateRequestDto dto = new VisitCreateRequestDto();
         dto.setHostUserId(hostId);
         dto.setHostCompany("어썸리드");
+        dto.setVisitorName("방문객");
+        dto.setVisitorPhone("01012345678");
+        dto.setVisitorPassword("1234");
+        dto.setVisitorCompany("외부업체");
         dto.setPurpose(VisitPurpose.MEETING);
         dto.setVisitStartDate(LocalDateTime.now().plusHours(1));
-
-        VisitorRequestDto visitorDto = new VisitorRequestDto();
-        visitorDto.setName("방문객");
-        visitorDto.setPhoneNumber("01012345678");
-        visitorDto.setPassword("1234");
-        visitorDto.setVisitorCompany("외부업체");
-        dto.setVisitor(visitorDto);
 
         CompanionRequestDto companionDto = new CompanionRequestDto();
         companionDto.setName("동행자1");

@@ -18,8 +18,6 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import kr.co.awesomelead.groupware_backend.domain.user.entity.User;
-import kr.co.awesomelead.groupware_backend.domain.visit.dto.request.OnSiteVisitCreateRequestDto;
-import kr.co.awesomelead.groupware_backend.domain.visit.dto.request.PreVisitCreateRequestDto;
 import kr.co.awesomelead.groupware_backend.domain.visit.enums.VisitPurpose;
 import kr.co.awesomelead.groupware_backend.domain.visit.enums.VisitType;
 import lombok.AccessLevel;
@@ -121,28 +119,6 @@ public class Visit {
         visit.visited = false;
         visit.verified = false;
         visit.agreement = true;
-        return visit;
-    }
-
-    public static Visit createPreVisit(User host, Visitor visitor,
-        PreVisitCreateRequestDto requestDto) {
-        Visit visit = createBaseVisit(host, visitor, requestDto.getHostCompany(),
-            requestDto.getVisitor().getVisitorCompany(), requestDto.getPurpose(),
-            requestDto.getCarNumber(), requestDto.getVisitStartDate());
-
-        visit.visitType = VisitType.PRE_REGISTRATION;
-        return visit;
-    }
-
-    public static Visit createOnSiteVisit(User host, Visitor visitor,
-        OnSiteVisitCreateRequestDto requestDto) {
-        Visit visit = createBaseVisit(host, visitor, requestDto.getHostCompany(),
-            requestDto.getVisitor().getVisitorCompany(), requestDto.getPurpose(),
-            requestDto.getCarNumber(), requestDto.getVisitStartDate());
-        visit.setVisited(true);
-        visit.setVerified(true);
-
-        visit.visitType = VisitType.ON_SITE;
         return visit;
     }
 

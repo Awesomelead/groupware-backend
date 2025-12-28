@@ -1,16 +1,13 @@
 package kr.co.awesomelead.groupware_backend.domain.visit.service;
 
-import java.util.List;
 import kr.co.awesomelead.groupware_backend.domain.user.entity.User;
 import kr.co.awesomelead.groupware_backend.domain.user.repository.UserRepository;
-import kr.co.awesomelead.groupware_backend.domain.visit.dto.request.CompanionRequestDto;
-import kr.co.awesomelead.groupware_backend.domain.visit.dto.request.OnSiteVisitCreateRequestDto;
-import kr.co.awesomelead.groupware_backend.domain.visit.dto.request.PreVisitCreateRequestDto;
-import kr.co.awesomelead.groupware_backend.domain.visit.dto.request.VisitorRequestDto;
+import kr.co.awesomelead.groupware_backend.domain.visit.dto.request.VisitCreateRequestDto;
 import kr.co.awesomelead.groupware_backend.domain.visit.dto.response.VisitResponseDto;
-import kr.co.awesomelead.groupware_backend.domain.visit.entity.Companion;
 import kr.co.awesomelead.groupware_backend.domain.visit.entity.Visit;
 import kr.co.awesomelead.groupware_backend.domain.visit.entity.Visitor;
+import kr.co.awesomelead.groupware_backend.domain.visit.enums.VisitType;
+import kr.co.awesomelead.groupware_backend.domain.visit.mapper.VisitMapper;
 import kr.co.awesomelead.groupware_backend.domain.visit.repository.VisitRepository;
 import kr.co.awesomelead.groupware_backend.domain.visit.repository.VisitorRepository;
 import kr.co.awesomelead.groupware_backend.global.CustomException;
@@ -18,6 +15,7 @@ import kr.co.awesomelead.groupware_backend.global.ErrorCode;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.StringUtils;
 
 @Service
 @RequiredArgsConstructor
@@ -26,64 +24,55 @@ public class VisitService {
     private final VisitRepository visitRepository;
     private final VisitorRepository visitorRepository;
     private final UserRepository userRepository;
+    private final VisitMapper visitMapper;
 
     @Transactional
-    public VisitResponseDto createPreVisit(PreVisitCreateRequestDto requestDto) {
-        // 담당자 조회
-        User host = userRepository.findById(requestDto.getHostUserId())
-            .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
-
-        // 방문객 조회 혹은 생성
-        Visitor visitor = getOrCreateVisitor(requestDto.getVisitor());
-
-        // 방문 기록 생성
-        Visit visit = Visit.createPreVisit(host, visitor, requestDto);
-
-        Visit savedVisit = visitRepository.save(visit);
-        return VisitResponseDto.from(savedVisit);
+    public VisitResponseDto createPreVisit(VisitCreateRequestDto requestDto) {
+        return createVisitProcess(requestDto, VisitType.PRE_REGISTRATION);
     }
 
     @Transactional
-    public VisitResponseDto createOnSiteVisit(OnSiteVisitCreateRequestDto requestDto) {
-        // 담당자 조회
-        User host = userRepository.findById(requestDto.getHostUserId())
+    public VisitResponseDto createOnSiteVisit(VisitCreateRequestDto requestDto) {
+        return createVisitProcess(requestDto, VisitType.ON_SITE);
+    }
+
+    private VisitResponseDto createVisitProcess(VisitCreateRequestDto dto, VisitType type) {
+        // 사전 방문 예약 시, 비밀번호 필수 체크
+        if (type == VisitType.PRE_REGISTRATION && !StringUtils.hasText(dto.getVisitorPassword())) {
+            throw new CustomException(ErrorCode.VISITOR_PASSWORD_REQUIRED_FOR_PRE_REGISTRATION);
+        }
+
+        // 담당 직원 조회
+        User host = userRepository.findById(dto.getHostUserId())
             .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
 
-        // 방문객 조회 혹은 생성
-        Visitor visitor = getOrCreateVisitor(requestDto.getVisitor());
+        // 내방객 조회 혹은 생성
+        Visitor visitor = getOrCreateVisitor(dto, type);
 
-        // 방문 기록 생성
-        Visit visit = Visit.createOnSiteVisit(host, visitor, requestDto);
-        // 동행자 저장
-        saveCompanions(visit, requestDto.getCompanions());
+        // Mapper
+        Visit visit = visitMapper.toVisitEntity(dto, host, visitor, type);
+
+        if (visit.getCompanions() != null) {
+            visit.getCompanions().forEach(companion -> companion.setVisit(visit));
+        }
 
         Visit savedVisit = visitRepository.save(visit);
-        return VisitResponseDto.from(savedVisit);
+
+        return visitMapper.toResponseDto(savedVisit);
     }
 
-    private Visitor getOrCreateVisitor(VisitorRequestDto dto) {
-        return visitorRepository.findByPhoneNumber(dto.getPhoneNumber())
-            .orElseGet(() -> {
-                Visitor newVisitor = new Visitor();
-                newVisitor.setName(dto.getName());
-                newVisitor.setPhoneNumber(dto.getPhoneNumber());
-                newVisitor.setPassword(dto.getPassword());
-                return visitorRepository.save(newVisitor);
-            });
-    }
-
-    private void saveCompanions(Visit visit, List<CompanionRequestDto> companionDtos) {
-        if (companionDtos == null || companionDtos.isEmpty()) {
-            return;
-        }
-
-        for (CompanionRequestDto dto : companionDtos) {
-            Companion companion = new Companion();
-            companion.setName(dto.getName());
-            companion.setPhoneNumber(dto.getPhoneNumber());
-            companion.setVisitorCompany(dto.getVisitorCompany());
-            visit.addCompanion(companion);
-        }
+    private Visitor getOrCreateVisitor(VisitCreateRequestDto dto, VisitType type) {
+        return visitorRepository.findByPhoneNumber(dto.getVisitorPhone())
+            .map(existingVisitor -> {
+                // 기존 방문자가 있고, 사전 예약 시 새로운 비번이 들어왔다면 갱신
+                if (type == VisitType.PRE_REGISTRATION && StringUtils.hasText(
+                    dto.getVisitorPassword())) {
+                    existingVisitor.setPassword(dto.getVisitorPassword());
+                    return visitorRepository.save(existingVisitor);
+                }
+                return existingVisitor;
+            })
+            .orElseGet(() -> visitorRepository.save(visitMapper.toVisitorEntity(dto)));
     }
 
     @Transactional

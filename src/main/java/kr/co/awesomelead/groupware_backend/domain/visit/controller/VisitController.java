@@ -3,8 +3,7 @@ package kr.co.awesomelead.groupware_backend.domain.visit.controller;
 import io.swagger.v3.oas.annotations.Operation;
 import jakarta.validation.Valid;
 import java.net.URI;
-import kr.co.awesomelead.groupware_backend.domain.visit.dto.request.OnSiteVisitCreateRequestDto;
-import kr.co.awesomelead.groupware_backend.domain.visit.dto.request.PreVisitCreateRequestDto;
+import kr.co.awesomelead.groupware_backend.domain.visit.dto.request.VisitCreateRequestDto;
 import kr.co.awesomelead.groupware_backend.domain.visit.dto.response.VisitResponseDto;
 import kr.co.awesomelead.groupware_backend.domain.visit.service.VisitService;
 import lombok.RequiredArgsConstructor;
@@ -26,7 +25,7 @@ public class VisitController {
     // 사전 방문 예약
     @PostMapping("/pre-registration")
     public ResponseEntity<VisitResponseDto> createPreVisit(
-        @RequestBody @Valid PreVisitCreateRequestDto requestDto) {
+        @RequestBody @Valid VisitCreateRequestDto requestDto) {
 
         VisitResponseDto responseDto = visitService.createPreVisit(requestDto);
 
@@ -39,7 +38,7 @@ public class VisitController {
     @Operation(summary = "현장 방문 접수", description = "내방객이 현장에서 방문접수를 수행합니다.")
     @PostMapping("/on-site")
     public ResponseEntity<VisitResponseDto> createOnSiteVisit(
-        @RequestBody @Valid OnSiteVisitCreateRequestDto requestDto) {
+        @RequestBody @Valid VisitCreateRequestDto requestDto) {
 
         VisitResponseDto responseDto = visitService.createOnSiteVisit(requestDto);
 

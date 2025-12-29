@@ -30,10 +30,10 @@ public class Visitor {
     @Column(nullable = false, length = 11)
     private String phoneNumber; // 방문자 전화번호
 
-    @Column(nullable = false, columnDefinition = "CHAR(4)")
+    @Column(columnDefinition = "CHAR(4)")
     private String password; // 방문자 비밀번호 (4자리 숫자)
 
     @OneToMany(mappedBy = "visitor")
     @JsonManagedReference
-    private List<VisitInfo> visitInfos = new ArrayList<>(); // 방문 기록들
+    private List<Visit> visitInfos = new ArrayList<>(); // 방문 기록들
 }

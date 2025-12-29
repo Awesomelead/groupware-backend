@@ -14,6 +14,9 @@ public enum ErrorCode {
     AUTH_CODE_MISMATCH(HttpStatus.BAD_REQUEST, "인증번호가 일치하지 않습니다."),
     PHONE_NOT_VERIFIED(HttpStatus.BAD_REQUEST, "전화번호 인증이 필요합니다."),
     PASSWORD_MISMATCH(HttpStatus.BAD_REQUEST, "비밀번호가 일치하지 않습니다."),
+    VISIT_ALREADY_CHECKED_OUT(HttpStatus.BAD_REQUEST, "이미 체크아웃된 방문정보입니다."),
+    VISITOR_PASSWORD_REQUIRED_FOR_PRE_REGISTRATION(
+            HttpStatus.BAD_REQUEST, "사전 방문 예약 시 내방객 비밀번호가 필요합니다."),
 
     // 401 Unauthorized
     INVALID_TOKEN(HttpStatus.UNAUTHORIZED, "유효하지 않은 토큰입니다."),
@@ -22,6 +25,7 @@ public enum ErrorCode {
 
     // 404 Not Found
     USER_NOT_FOUND(HttpStatus.NOT_FOUND, "해당 사용자를 찾을 수 없습니다."),
+    VISIT_NOT_FOUND(HttpStatus.NOT_FOUND, "해당 방문정보를 찾을 수 없습니다."),
 
     // 409 Conflict
     DUPLICATED_SIGNUP_REQUEST(HttpStatus.CONFLICT, "이미 처리된 가입 요청입니다."),

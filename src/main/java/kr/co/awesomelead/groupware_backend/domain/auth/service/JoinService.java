@@ -56,6 +56,8 @@ public class JoinService {
         user.setRegistrationNumber(joinDto.getRegistrationNumber());
         user.setPhoneNumber(joinDto.getPhoneNumber());
         user.setWorkLocation(joinDto.getCompany().getDescription());
+        // 생년월일 자동 계산 및 설정
+        user.calculateBirthDateFromRegistrationNumber();
         // 기본값 설정
         user.setRole(Role.USER);
         user.setStatus(Status.PENDING);

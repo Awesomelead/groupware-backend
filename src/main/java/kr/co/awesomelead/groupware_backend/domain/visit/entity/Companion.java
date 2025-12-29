@@ -9,12 +9,18 @@ import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 
+import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 @Setter
 @Getter
 @Entity
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
 public class Companion {
 
     @Id
@@ -25,12 +31,12 @@ public class Companion {
     private String name; // 동행자 이름
 
     @Column(length = 50)
-    private String hostCompany; // 동행자 회사
+    private String visitorCompany; // 동행자 회사
 
     @Column(nullable = false, length = 11)
     private String phoneNumber; // 동행자 전화번호
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "visit_info_id")
-    private VisitInfo visitInfo; // 동행한 방문 정보
+    @JoinColumn(name = "visit_id")
+    private Visit visit; // 동행한 방문 정보
 }

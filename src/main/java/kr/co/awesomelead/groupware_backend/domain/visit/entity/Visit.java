@@ -3,6 +3,7 @@ package kr.co.awesomelead.groupware_backend.domain.visit.entity;
 import com.fasterxml.jackson.annotation.JsonBackReference;
 import com.fasterxml.jackson.annotation.JsonManagedReference;
 
+import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
@@ -17,17 +18,26 @@ import jakarta.persistence.OneToMany;
 
 import kr.co.awesomelead.groupware_backend.domain.user.entity.User;
 import kr.co.awesomelead.groupware_backend.domain.visit.enums.VisitPurpose;
+import kr.co.awesomelead.groupware_backend.domain.visit.enums.VisitType;
 
+import lombok.AccessLevel;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 
 @Setter
 @Getter
 @Entity
-public class VisitInfo {
+@Builder
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
+@AllArgsConstructor
+public class Visit {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -49,11 +59,15 @@ public class VisitInfo {
     @Column(nullable = false)
     private LocalDateTime visitStartDate; // 방문 시작 일시
 
-    @Column(nullable = false)
-    private LocalDateTime visitEndDate; // 방문 종료 일시
+    private LocalDateTime visitEndDate; // 방문 종료 일시, null 가능
 
+    @Builder.Default
     @Column(nullable = false)
     private boolean additionalRequirements = false; // 보충적허가 필요여부 (기본값 false)
+
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false, length = 20)
+    private VisitType visitType; // 방문 유형 (사전/현장)
 
     @Column(nullable = false)
     private boolean visited; // 방문 여부
@@ -76,7 +90,48 @@ public class VisitInfo {
     @JsonBackReference
     private Visitor visitor; // 내방객
 
-    @OneToMany(mappedBy = "visitInfo", fetch = FetchType.LAZY, orphanRemoval = true)
+    @Builder.Default
+    @OneToMany(mappedBy = "visit", cascade = CascadeType.ALL, orphanRemoval = true)
     @JsonManagedReference
-    private List<Companion> companions; // 동행한 방문자들
+    private List<Companion> companions = new ArrayList<>(); // 동행한 방문자들
+
+    // 연관관계 편의 메서드
+    public void addCompanion(Companion companion) {
+        this.companions.add(companion);
+        companion.setVisit(this);
+    }
+
+    // 사전 예약 -> 방문 완료 처리 메서드
+    public void completeVisit() {
+        this.visited = true;
+        this.verified = true; // 신원 확인됨
+    }
+
+    public static Visit createBaseVisit(
+            User host,
+            Visitor visitor,
+            String hostCompany,
+            String visitorCompany,
+            VisitPurpose purpose,
+            String carNumber,
+            LocalDateTime start) {
+        Visit visit = new Visit();
+        visit.user = host;
+        visit.visitor = visitor;
+        visit.hostCompany = hostCompany;
+        visit.visitorCompany = visitorCompany;
+        visit.purpose = purpose;
+        visit.carNumber = carNumber;
+        visit.visitStartDate = start;
+
+        // 공통 초기 상태: 아직 방문 전(visited = false)
+        visit.visited = false;
+        visit.verified = false;
+        visit.agreement = true;
+        return visit;
+    }
+
+    public void checkOut() {
+        this.visitEndDate = LocalDateTime.now(); // 실제 나가는 시점의 시간을 기록
+    }
 }

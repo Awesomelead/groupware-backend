@@ -69,7 +69,8 @@ public class SecurityConfig {
                                         "/api/join/verify-code",
                                         "/api/auth/login",
                                         "/api/reissue",
-                                        "/api/admin/**")
+                                        "/api/admin/**",
+                                        "/api/visits/**")
                                 .permitAll()
                                 // .requestMatchers("/api/join", "/api/auth/login",
                                 // "/api/reissue").permitAll()

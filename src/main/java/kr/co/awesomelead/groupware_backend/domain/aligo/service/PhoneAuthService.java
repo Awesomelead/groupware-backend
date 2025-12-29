@@ -17,7 +17,8 @@ import java.util.concurrent.TimeUnit;
 @RequiredArgsConstructor
 public class PhoneAuthService {
 
-    private final AligoKakaoService aligoKakaoService;
+    private final kr.co.awesomelead.groupware_backend.domain.aligo.service.AligoKakaoService
+            aligoKakaoService;
     private final RedisTemplate<String, String> redisTemplate;
 
     private static final String AUTH_CODE_PREFIX = "auth:phone:";

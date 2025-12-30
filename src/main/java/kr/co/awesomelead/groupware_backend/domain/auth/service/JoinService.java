@@ -8,9 +8,7 @@ import kr.co.awesomelead.groupware_backend.domain.user.enums.Status;
 import kr.co.awesomelead.groupware_backend.domain.user.repository.UserRepository;
 import kr.co.awesomelead.groupware_backend.global.CustomException;
 import kr.co.awesomelead.groupware_backend.global.ErrorCode;
-
 import lombok.RequiredArgsConstructor;
-
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -22,6 +20,7 @@ public class JoinService {
     private final UserRepository userRepository;
     private final BCryptPasswordEncoder bCryptPasswordEncoder;
     private final PhoneAuthService phoneAuthService;
+    private final EmailAuthService emailAuthService;
 
     @Transactional
     public void joinProcess(JoinRequestDto joinDto) {
@@ -39,6 +38,11 @@ public class JoinService {
         // 3. 이메일 중복 검사
         if (userRepository.existsByEmail(joinDto.getEmail())) {
             throw new CustomException(ErrorCode.DUPLICATE_LOGIN_ID);
+        }
+
+        // 4. 이메일 인증 여부 확인
+        if (!emailAuthService.isEmailVerified(joinDto.getEmail())) {
+            throw new CustomException(ErrorCode.EMAIL_NOT_VERIFIED);
         }
 
         // 5. 주민등록번호 중복 검사

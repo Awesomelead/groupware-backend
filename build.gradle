@@ -67,6 +67,8 @@ dependencies {
     // LocalDateTime jackson 처리
     implementation 'com.fasterxml.jackson.datatype:jackson-datatype-jsr310'
 
+    implementation 'org.springframework.boot:spring-boot-starter-mail'
+
 }
 
 tasks.named('test') {

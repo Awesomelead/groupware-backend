@@ -1,14 +1,16 @@
 package kr.co.awesomelead.groupware_backend.domain.visit.mapper;
 
+import java.util.List;
 import kr.co.awesomelead.groupware_backend.domain.user.entity.User;
 import kr.co.awesomelead.groupware_backend.domain.visit.dto.request.CompanionRequestDto;
 import kr.co.awesomelead.groupware_backend.domain.visit.dto.request.VisitCreateRequestDto;
+import kr.co.awesomelead.groupware_backend.domain.visit.dto.response.MyVisitResponseDto;
 import kr.co.awesomelead.groupware_backend.domain.visit.dto.response.VisitResponseDto;
+import kr.co.awesomelead.groupware_backend.domain.visit.dto.response.VisitSummaryResponseDto;
 import kr.co.awesomelead.groupware_backend.domain.visit.entity.Companion;
 import kr.co.awesomelead.groupware_backend.domain.visit.entity.Visit;
 import kr.co.awesomelead.groupware_backend.domain.visit.entity.Visitor;
 import kr.co.awesomelead.groupware_backend.domain.visit.enums.VisitType;
-
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 
@@ -47,4 +49,16 @@ public interface VisitMapper {
     VisitResponseDto toResponseDto(Visit visit);
 
     VisitResponseDto.CompanionResponseDto toCompanionResponseDto(Companion companion);
+
+    @Mapping(target = "visitId", source = "id")
+    @Mapping(target = "visitorName", source = "visitor.name")
+    VisitSummaryResponseDto toVisitSummaryResponseDto(Visit visit);
+
+    List<VisitSummaryResponseDto> toVisitSummaryResponseDtoList(List<Visit> visits);
+
+    @Mapping(target = "visitId", source = "id")
+    @Mapping(target = "visitorName", source = "visitor.name")
+    @Mapping(target = "hostDepartment", source = "user.department.name")
+    @Mapping(target = "phoneNumber", source = "visitor.phoneNumber")
+    MyVisitResponseDto toMyVisitResponseDto(Visit visit);
 }

@@ -2,12 +2,12 @@ package kr.co.awesomelead.groupware_backend.domain.auth.controller;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
+
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
-import java.util.Collection;
-import java.util.Iterator;
+
 import kr.co.awesomelead.groupware_backend.domain.auth.dto.request.LoginRequestDto;
 import kr.co.awesomelead.groupware_backend.domain.auth.dto.request.SendEmailAuthCodeRequestDto;
 import kr.co.awesomelead.groupware_backend.domain.auth.dto.request.VerifyEmailAuthCodeRequestDto;
@@ -15,7 +15,9 @@ import kr.co.awesomelead.groupware_backend.domain.auth.dto.response.LoginRespons
 import kr.co.awesomelead.groupware_backend.domain.auth.service.EmailAuthService;
 import kr.co.awesomelead.groupware_backend.domain.auth.service.RefreshTokenService;
 import kr.co.awesomelead.groupware_backend.domain.auth.util.JWTUtil;
+
 import lombok.RequiredArgsConstructor;
+
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -25,6 +27,9 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+
+import java.util.Collection;
+import java.util.Iterator;
 
 @RestController
 @RequestMapping("/api/auth")
@@ -40,7 +45,7 @@ public class AuthController {
     @Operation(summary = "이메일 인증번호 발송", description = "이메일 인증번호를 발송합니다.")
     @PostMapping("/send-email-code")
     public ResponseEntity<String> sendEmailAuthCode(
-        @Valid @RequestBody SendEmailAuthCodeRequestDto requestDto) {
+            @Valid @RequestBody SendEmailAuthCodeRequestDto requestDto) {
         emailAuthService.sendAuthCode(requestDto.getEmail());
         return ResponseEntity.ok("이메일 인증번호가 발송되었습니다.");
     }
@@ -48,19 +53,19 @@ public class AuthController {
     @Operation(summary = "이메일 인증번호 확인", description = "발송된 이메일 인증번호를 확인합니다.")
     @PostMapping("/verify-email-code")
     public ResponseEntity<String> verifyEmailAuthCode(
-        @Valid @RequestBody VerifyEmailAuthCodeRequestDto requestDto) {
+            @Valid @RequestBody VerifyEmailAuthCodeRequestDto requestDto) {
         emailAuthService.verifyAuthCode(requestDto.getEmail(), requestDto.getAuthCode());
         return ResponseEntity.ok("이메일 인증이 완료되었습니다.");
     }
-    
+
     @Operation(summary = "로그인", description = "로그인을 합니다.")
     @PostMapping("/login")
     public ResponseEntity<LoginResponseDto> login(
-        @RequestBody LoginRequestDto requestDto, HttpServletResponse response) {
+            @RequestBody LoginRequestDto requestDto, HttpServletResponse response) {
 
         UsernamePasswordAuthenticationToken authToken =
-            new UsernamePasswordAuthenticationToken(
-                requestDto.getEmail(), requestDto.getPassword(), null);
+                new UsernamePasswordAuthenticationToken(
+                        requestDto.getEmail(), requestDto.getPassword(), null);
 
         Authentication authentication = authenticationManager.authenticate(authToken);
 

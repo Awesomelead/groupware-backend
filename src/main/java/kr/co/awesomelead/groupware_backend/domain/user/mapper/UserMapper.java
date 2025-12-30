@@ -4,10 +4,13 @@ import kr.co.awesomelead.groupware_backend.domain.auth.dto.request.JoinRequestDt
 import kr.co.awesomelead.groupware_backend.domain.user.entity.User;
 import kr.co.awesomelead.groupware_backend.domain.user.enums.Role;
 import kr.co.awesomelead.groupware_backend.domain.user.enums.Status;
+
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 
-@Mapper(componentModel = "spring", imports = {Role.class, Status.class})
+@Mapper(
+        componentModel = "spring",
+        imports = {Role.class, Status.class})
 public interface UserMapper {
 
     @Mapping(target = "id", ignore = true)

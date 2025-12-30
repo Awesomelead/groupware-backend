@@ -2,17 +2,21 @@ package kr.co.awesomelead.groupware_backend.domain.auth.service;
 
 import jakarta.mail.MessagingException;
 import jakarta.mail.internet.MimeMessage;
-import java.security.SecureRandom;
-import java.util.concurrent.TimeUnit;
+
 import kr.co.awesomelead.groupware_backend.global.CustomException;
 import kr.co.awesomelead.groupware_backend.global.ErrorCode;
+
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.stereotype.Service;
+
+import java.security.SecureRandom;
+import java.util.concurrent.TimeUnit;
 
 @Slf4j
 @Service
@@ -44,8 +48,8 @@ public class EmailAuthService {
         // Redis에 인증번호 저장 (5분 유효)
         String key = AUTH_CODE_PREFIX + email;
         redisTemplate
-            .opsForValue()
-            .set(key, authCode, AUTH_CODE_EXPIRATION_MINUTES, TimeUnit.MINUTES);
+                .opsForValue()
+                .set(key, authCode, AUTH_CODE_EXPIRATION_MINUTES, TimeUnit.MINUTES);
     }
 
     // 이메일 인증번호 검증
@@ -84,7 +88,6 @@ public class EmailAuthService {
         redisTemplate.delete(verifiedKey);
     }
 
-
     // 6자리 랜덤 인증번호 생성
     private String generateAuthCode() {
         SecureRandom rnadom = new SecureRandom();
@@ -107,7 +110,7 @@ public class EmailAuthService {
         helper.setSubject("[어썸그룹] 이메일 인증번호");
 
         String htmlContent =
-            """
+                """
                 <!DOCTYPE html>
                 <html>
                 <head>
@@ -130,11 +133,11 @@ public class EmailAuthService {
                             <p>안녕하세요,</p>
                             <p>어썸그룹 이메일 인증번호입니다.</p>
                             <p>아래 인증번호를 입력하여 이메일 인증을 완료해주세요.</p>
-                
+
                             <div class="code-box">
                                 %s
                             </div>
-                
+
                             <p style="color: #E74C3C;">※ 인증번호는 <strong>5분간 유효</strong>합니다.</p>
                             <p>본인이 요청하지 않은 경우, 이 이메일을 무시하셔도 됩니다.</p>
                         </div>
@@ -144,7 +147,8 @@ public class EmailAuthService {
                     </div>
                 </body>
                 </html>
-                """.formatted(authCode);
+                """
+                        .formatted(authCode);
 
         helper.setText(htmlContent, true);
 

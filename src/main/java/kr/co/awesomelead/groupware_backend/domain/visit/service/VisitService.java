@@ -3,7 +3,10 @@ package kr.co.awesomelead.groupware_backend.domain.visit.service;
 import kr.co.awesomelead.groupware_backend.domain.user.entity.User;
 import kr.co.awesomelead.groupware_backend.domain.user.repository.UserRepository;
 import kr.co.awesomelead.groupware_backend.domain.visit.dto.request.VisitCreateRequestDto;
+import kr.co.awesomelead.groupware_backend.domain.visit.dto.request.VisitSearchRequestDto;
+import kr.co.awesomelead.groupware_backend.domain.visit.dto.response.MyVisitResponseDto;
 import kr.co.awesomelead.groupware_backend.domain.visit.dto.response.VisitResponseDto;
+import kr.co.awesomelead.groupware_backend.domain.visit.dto.response.VisitSummaryResponseDto;
 import kr.co.awesomelead.groupware_backend.domain.visit.entity.Visit;
 import kr.co.awesomelead.groupware_backend.domain.visit.entity.Visitor;
 import kr.co.awesomelead.groupware_backend.domain.visit.enums.VisitType;
@@ -18,6 +21,8 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
+
+import java.util.List;
 
 @Service
 @RequiredArgsConstructor
@@ -79,6 +84,44 @@ public class VisitService {
                             return existingVisitor;
                         })
                 .orElseGet(() -> visitorRepository.save(visitMapper.toVisitorEntity(dto)));
+    }
+
+    @Transactional(readOnly = true)
+    public List<VisitSummaryResponseDto> getMyVisits(VisitSearchRequestDto requestDto) {
+
+        Visitor visitor =
+                visitorRepository
+                        .findByPhoneNumber(requestDto.getPhoneNumber())
+                        .orElseThrow(() -> new CustomException(ErrorCode.VISITOR_NOT_FOUND));
+
+        if (!visitor.getName().equals(requestDto.getName())
+                || !visitor.getPassword().equals(requestDto.getPassword())) {
+            throw new CustomException(ErrorCode.VISITOR_AUTHENTICATION_FAILED);
+        }
+
+        List<Visit> visits = visitRepository.findByVisitor(visitor);
+        return visitMapper.toVisitSummaryResponseDtoList(visits);
+    }
+
+    @Transactional(readOnly = true)
+    public MyVisitResponseDto getMyVisitDetail(Long visitId) {
+        Visit visit =
+                visitRepository
+                        .findById(visitId)
+                        .orElseThrow(() -> new CustomException(ErrorCode.VISIT_NOT_FOUND));
+
+        return visitMapper.toMyVisitResponseDto(visit);
+    }
+
+    // 사전 내방객의 현장 방문처리
+    // 해당 로직에서 현재시간으로 방문 시작시간을 갱신하는건 어떤지?
+    @Transactional
+    public void checkIn(Long visitId) {
+        Visit visit =
+                visitRepository
+                        .findById(visitId)
+                        .orElseThrow(() -> new CustomException(ErrorCode.VISIT_NOT_FOUND));
+        visit.checkIn();
     }
 
     @Transactional

@@ -131,6 +131,12 @@ public class Visit {
         return visit;
     }
 
+    public void checkIn() {
+        this.visited = true;
+        this.verified = true; // 신원 확인됨
+        this.visitStartDate = LocalDateTime.now(); // 실제 들어오는 시점의 시간을 기록
+    }
+
     public void checkOut() {
         this.visitEndDate = LocalDateTime.now(); // 실제 나가는 시점의 시간을 기록
     }

@@ -37,6 +37,18 @@ spring:
       host: localhost
       port: 6379
 
+  mail:
+    host: smtp.gmail.com
+    port: 587
+    username: test@example.com
+    password: test-password
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls:
+            enable: true
+
 aligo:
   api:
     url: https://kakaoapi.aligo.in/akv10/alimtalk/send/

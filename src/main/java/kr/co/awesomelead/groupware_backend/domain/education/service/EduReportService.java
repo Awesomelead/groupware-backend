@@ -43,7 +43,7 @@ public class EduReportService {
     private final S3Service s3Service;
 
     @Transactional
-    public void createEduReport(EduReportRequestDto requestDto, List<MultipartFile> files, Long id)
+    public Long createEduReport(EduReportRequestDto requestDto, List<MultipartFile> files, Long id)
         throws IOException {
 
         User user =
@@ -80,7 +80,7 @@ public class EduReportService {
                 report.addAttachment(attachment);
             }
         }
-        eduReportRepository.save(report);
+        return eduReportRepository.save(report).getId();
     }
 
     @Transactional(readOnly = true)

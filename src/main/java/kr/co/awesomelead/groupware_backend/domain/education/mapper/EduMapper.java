@@ -58,7 +58,7 @@ public interface EduMapper {
             target = "signatureUrl",
             expression =
                     "java(attendance.getSignatureKey() != null ?"
-                        + " s3Service.getFileUrl(attendance.getSignatureKey()) : null)")
+                            + " s3Service.getFileUrl(attendance.getSignatureKey()) : null)")
     EduReportAdminDetailDto.AttendeeInfo toAttendeeInfo(
             EduAttendance attendance, @Context S3Service s3Service);
 }

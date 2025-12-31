@@ -1,12 +1,14 @@
 package kr.co.awesomelead.groupware_backend.domain.education.dto.response;
 
-import java.time.LocalDate;
-import java.util.List;
 import kr.co.awesomelead.groupware_backend.domain.education.enums.EduType;
+
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.Setter;
+
+import java.time.LocalDate;
+import java.util.List;
 
 @Getter
 @Setter
@@ -21,7 +23,6 @@ public class EduReportAdminDetailDto {
     private int numberOfAttendees; // 출석 인원 수
     private String content;
     private LocalDate eduDate;
-
 
     // 출석 인원 리스트 [직원명, 서명 이미지 URL]
     private List<AttendeeInfo> attendees;

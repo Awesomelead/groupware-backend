@@ -1,6 +1,5 @@
 package kr.co.awesomelead.groupware_backend.domain.education.mapper;
 
-import java.util.List;
 import kr.co.awesomelead.groupware_backend.domain.department.entity.Department;
 import kr.co.awesomelead.groupware_backend.domain.education.dto.request.EduReportRequestDto;
 import kr.co.awesomelead.groupware_backend.domain.education.dto.response.EduReportAdminDetailDto;
@@ -10,9 +9,12 @@ import kr.co.awesomelead.groupware_backend.domain.education.entity.EduAttendance
 import kr.co.awesomelead.groupware_backend.domain.education.entity.EduReport;
 import kr.co.awesomelead.groupware_backend.domain.user.entity.User;
 import kr.co.awesomelead.groupware_backend.global.infra.s3.S3Service;
+
 import org.mapstruct.Context;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
+
+import java.util.List;
 
 @Mapper(componentModel = "spring")
 public interface EduMapper {
@@ -27,8 +29,8 @@ public interface EduMapper {
     EduReportDetailDto toDetailDto(EduReport eduReport, @Context S3Service s3Service);
 
     @Mapping(target = "viewUrl", expression = "java(s3Service.getFileUrl(attachment.getS3Key()))")
-    EduReportDetailDto.AttachmentResponse toAttachmentDto(EduAttachment attachment,
-        @Context S3Service s3Service);
+    EduReportDetailDto.AttachmentResponse toAttachmentDto(
+            EduAttachment attachment, @Context S3Service s3Service);
 
     @Mapping(target = "id", ignore = true)
     @Mapping(target = "user", source = "user")
@@ -46,17 +48,17 @@ public interface EduMapper {
     @Mapping(target = "numberOfAttendees", expression = "java(attendances.size())")
     @Mapping(target = "attendees", source = "attendances")
     EduReportAdminDetailDto toAdminDetailDto(
-        EduReport report,
-        List<EduAttendance> attendances,
-        long numberOfPeople,
-        @Context S3Service s3Service
-    );
+            EduReport report,
+            List<EduAttendance> attendances,
+            long numberOfPeople,
+            @Context S3Service s3Service);
 
     @Mapping(target = "userName", expression = "java(attendance.getUser().getDisplayName())")
-    @Mapping(target = "signatureUrl", expression = "java(attendance.getSignatureKey() != null ? s3Service.getFileUrl(attendance.getSignatureKey()) : null)")
+    @Mapping(
+            target = "signatureUrl",
+            expression =
+                    "java(attendance.getSignatureKey() != null ?"
+                        + " s3Service.getFileUrl(attendance.getSignatureKey()) : null)")
     EduReportAdminDetailDto.AttendeeInfo toAttendeeInfo(
-        EduAttendance attendance,
-        @Context S3Service s3Service
-    );
-
+            EduAttendance attendance, @Context S3Service s3Service);
 }

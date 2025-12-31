@@ -1,13 +1,12 @@
 package kr.co.awesomelead.groupware_backend.global.infra.s3;
 
-import java.io.IOException;
-import java.time.Duration;
-import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
+
 import software.amazon.awssdk.core.sync.RequestBody;
 import software.amazon.awssdk.services.s3.S3Client;
 import software.amazon.awssdk.services.s3.model.GetObjectRequest;
@@ -15,6 +14,10 @@ import software.amazon.awssdk.services.s3.model.PutObjectRequest;
 import software.amazon.awssdk.services.s3.presigner.S3Presigner;
 import software.amazon.awssdk.services.s3.presigner.model.GetObjectPresignRequest;
 import software.amazon.awssdk.services.s3.presigner.model.PresignedGetObjectRequest;
+
+import java.io.IOException;
+import java.time.Duration;
+import java.util.UUID;
 
 @Slf4j
 @Service
@@ -36,15 +39,14 @@ public class S3Service {
         }
 
         try {
-            GetObjectRequest getObjectRequest = GetObjectRequest.builder()
-                .bucket(bucketName)
-                .key(fileKey)
-                .build();
+            GetObjectRequest getObjectRequest =
+                    GetObjectRequest.builder().bucket(bucketName).key(fileKey).build();
 
-            GetObjectPresignRequest presignRequest = GetObjectPresignRequest.builder()
-                .signatureDuration(duration)
-                .getObjectRequest(getObjectRequest)
-                .build();
+            GetObjectPresignRequest presignRequest =
+                    GetObjectPresignRequest.builder()
+                            .signatureDuration(duration)
+                            .getObjectRequest(getObjectRequest)
+                            .build();
 
             PresignedGetObjectRequest presigned = s3Presigner.presignGetObject(presignRequest);
             return presigned.url().toString();
@@ -61,15 +63,16 @@ public class S3Service {
 
         String fileName = generateFileName(file.getOriginalFilename());
 
-        PutObjectRequest putObjectRequest = PutObjectRequest.builder()
-            .bucket(bucketName)
-            .key(fileName)
-            .contentType(file.getContentType())
-            .contentDisposition("inline")
-            .build();
+        PutObjectRequest putObjectRequest =
+                PutObjectRequest.builder()
+                        .bucket(bucketName)
+                        .key(fileName)
+                        .contentType(file.getContentType())
+                        .contentDisposition("inline")
+                        .build();
 
-        RequestBody requestBody = RequestBody.fromInputStream(file.getInputStream(),
-            file.getSize());
+        RequestBody requestBody =
+                RequestBody.fromInputStream(file.getInputStream(), file.getSize());
         s3Client.putObject(putObjectRequest, requestBody);
 
         return fileName;
@@ -89,8 +92,9 @@ public class S3Service {
     }
 
     private String generateFileName(String originalFileName) {
-        return UUID.randomUUID().toString() + "_" + (originalFileName != null ? originalFileName
-            : "file");
+        return UUID.randomUUID().toString()
+                + "_"
+                + (originalFileName != null ? originalFileName : "file");
     }
 
     public String getFileUrl(String fileName) {
@@ -99,9 +103,8 @@ public class S3Service {
 
     public byte[] downloadFile(String fileKey) {
         try {
-            return s3Client.getObjectAsBytes(builder ->
-                builder.bucket(bucketName).key(fileKey)
-            ).asByteArray();
+            return s3Client.getObjectAsBytes(builder -> builder.bucket(bucketName).key(fileKey))
+                    .asByteArray();
         } catch (Exception e) {
             log.error("S3 파일 다운로드 실패: {}", e.getMessage());
             throw new RuntimeException("파일 다운로드 중 오류가 발생했습니다.");

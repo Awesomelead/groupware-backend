@@ -2,7 +2,6 @@ package kr.co.awesomelead.groupware_backend.domain.user.entity;
 
 import com.fasterxml.jackson.annotation.JsonBackReference;
 import com.fasterxml.jackson.annotation.JsonManagedReference;
-
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.CollectionTable;
 import jakarta.persistence.Column;
@@ -19,7 +18,12 @@ import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.OneToOne;
 import jakarta.persistence.Table;
-
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 import kr.co.awesomelead.groupware_backend.domain.annualleave.entity.AnnualLeave;
 import kr.co.awesomelead.groupware_backend.domain.checksheet.entity.CheckSheet;
 import kr.co.awesomelead.groupware_backend.domain.department.entity.Department;
@@ -30,20 +34,18 @@ import kr.co.awesomelead.groupware_backend.domain.user.enums.Authority;
 import kr.co.awesomelead.groupware_backend.domain.user.enums.Role;
 import kr.co.awesomelead.groupware_backend.domain.user.enums.Status;
 import kr.co.awesomelead.groupware_backend.domain.visit.entity.Visit;
-
+import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 import lombok.Setter;
-
-import java.time.LocalDate;
-import java.time.format.DateTimeFormatter;
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
 
 @Entity
 @Getter
 @Setter
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
 @Table(name = "users")
 public class User {
 
@@ -101,26 +103,32 @@ public class User {
     @JsonManagedReference
     private AnnualLeave annualLeave;
 
+    @Builder.Default
     @OneToMany(mappedBy = "user", fetch = FetchType.LAZY)
     @JsonManagedReference
     private List<Visit> visits = new ArrayList<>();
 
+    @Builder.Default
     @OneToMany(mappedBy = "user", fetch = FetchType.LAZY)
     @JsonManagedReference
     private List<CheckSheet> checkSheets = new ArrayList<>();
 
+    @Builder.Default
     @OneToMany(mappedBy = "user", fetch = FetchType.LAZY)
     @JsonManagedReference
     private List<LeaveRequest> leaveRequests = new ArrayList<>();
 
+    @Builder.Default
     @OneToMany(mappedBy = "user", fetch = FetchType.LAZY)
     @JsonManagedReference
     private List<Payslip> payslips = new ArrayList<>();
 
+    @Builder.Default
     @OneToMany(mappedBy = "sender", fetch = FetchType.LAZY)
     @JsonManagedReference
     private List<Message> sentMessages = new ArrayList<>();
 
+    @Builder.Default
     @OneToMany(mappedBy = "receiver", fetch = FetchType.LAZY)
     @JsonManagedReference
     private List<Message> receivedMessages = new ArrayList<>();
@@ -130,6 +138,7 @@ public class User {
     @JsonBackReference
     private Department department;
 
+    @Builder.Default
     @ElementCollection(fetch = FetchType.LAZY)
     @CollectionTable(name = "user_authorities", joinColumns = @JoinColumn(name = "user_id"))
     @Enumerated(EnumType.STRING)
@@ -156,18 +165,18 @@ public class User {
 
         // 뒤 첫 번째 자리 추출 (성별/세기 구분자)
         char genderDigit =
-                this.registrationNumber.contains("-")
-                        ? this.registrationNumber.charAt(7)
-                        : this.registrationNumber.charAt(6);
+            this.registrationNumber.contains("-")
+                ? this.registrationNumber.charAt(7)
+                : this.registrationNumber.charAt(6);
 
         // 세기 판단
         String century;
         if (genderDigit == '1' || genderDigit == '2' || genderDigit == '5' || genderDigit == '6') {
             century = "19";
         } else if (genderDigit == '3'
-                || genderDigit == '4'
-                || genderDigit == '7'
-                || genderDigit == '8') {
+            || genderDigit == '4'
+            || genderDigit == '7'
+            || genderDigit == '8') {
             century = "20";
         } else {
             century = "20"; // 기본값 (보통 2000년대생)
@@ -176,5 +185,9 @@ public class User {
         // LocalDate로 변환하여 set
         String fullDate = century + birthPart;
         this.birthDate = LocalDate.parse(fullDate, DateTimeFormatter.ofPattern("yyyyMMdd"));
+    }
+
+    public String getDisplayName() {
+        return (nameKor != null && !nameKor.isBlank()) ? nameKor : nameEng;
     }
 }

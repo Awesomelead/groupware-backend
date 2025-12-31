@@ -2,7 +2,6 @@ package kr.co.awesomelead.groupware_backend.domain.department.entity;
 
 import com.fasterxml.jackson.annotation.JsonBackReference;
 import com.fasterxml.jackson.annotation.JsonManagedReference;
-
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
@@ -15,19 +14,22 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
-
-import kr.co.awesomelead.groupware_backend.domain.department.enums.Company;
-import kr.co.awesomelead.groupware_backend.domain.user.entity.User;
-
-import lombok.Getter;
-import lombok.Setter;
-
 import java.util.ArrayList;
 import java.util.List;
+import kr.co.awesomelead.groupware_backend.domain.department.enums.Company;
+import kr.co.awesomelead.groupware_backend.domain.user.entity.User;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 
 @Entity
 @Getter
 @Setter
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
 @Table(name = "departments")
 public class Department {
 
@@ -47,10 +49,12 @@ public class Department {
     @JsonBackReference // 자식 -> 부모 순환참조 방지
     private Department parent;
 
+    @Builder.Default
     @OneToMany(mappedBy = "parent", fetch = FetchType.LAZY)
     @JsonManagedReference // 부모 -> 자식 순환참조 허용 (직렬화 방향)
     private List<Department> children = new ArrayList<>();
 
+    @Builder.Default
     @OneToMany(mappedBy = "department", fetch = FetchType.LAZY)
     @JsonManagedReference
     private List<User> users = new ArrayList<>();

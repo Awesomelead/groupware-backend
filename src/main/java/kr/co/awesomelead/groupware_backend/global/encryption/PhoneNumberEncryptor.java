@@ -1,9 +1,10 @@
 package kr.co.awesomelead.groupware_backend.global.encryption;
 
-
 import jakarta.persistence.AttributeConverter;
 import jakarta.persistence.Converter;
+
 import lombok.RequiredArgsConstructor;
+
 import org.springframework.stereotype.Component;
 
 @Converter

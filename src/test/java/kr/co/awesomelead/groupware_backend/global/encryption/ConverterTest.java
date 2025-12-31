@@ -8,6 +8,7 @@ import kr.co.awesomelead.groupware_backend.domain.user.enums.Status;
 import kr.co.awesomelead.groupware_backend.domain.user.repository.UserRepository;
 import kr.co.awesomelead.groupware_backend.domain.visit.entity.Visitor;
 import kr.co.awesomelead.groupware_backend.domain.visit.repository.VisitorRepository;
+
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -21,14 +22,11 @@ import org.springframework.transaction.annotation.Transactional;
 @Transactional
 public class ConverterTest {
 
-    @Autowired
-    private UserRepository userRepository;
+    @Autowired private UserRepository userRepository;
 
-    @Autowired
-    private VisitorRepository visitorRepository;
+    @Autowired private VisitorRepository visitorRepository;
 
-    @Autowired
-    private JdbcTemplate jdbcTemplate;
+    @Autowired private JdbcTemplate jdbcTemplate;
 
     @Test
     @DisplayName("User 전화번호가 암호화되어 저장되는지 확인")
@@ -48,20 +46,20 @@ public class ConverterTest {
 
         // when
         User savedUser = userRepository.save(user);
-        userRepository.flush();  // 즉시 DB 반영
+        userRepository.flush(); // 즉시 DB 반영
 
         // then - Entity에서는 복호화된 값
         assertThat(savedUser.getPhoneNumber()).isEqualTo(originalPhone);
 
         // DB에는 암호화된 값 확인
-        String encryptedInDb = jdbcTemplate.queryForObject(
-            "SELECT phone_number FROM users WHERE id = ?",
-            String.class,
-            savedUser.getId()
-        );
+        String encryptedInDb =
+                jdbcTemplate.queryForObject(
+                        "SELECT phone_number FROM users WHERE id = ?",
+                        String.class,
+                        savedUser.getId());
 
-        assertThat(encryptedInDb).isNotEqualTo(originalPhone);  // 암호화됨
-        assertThat(encryptedInDb.length()).isGreaterThan(50);   // 암호화하면 길어짐
+        assertThat(encryptedInDb).isNotEqualTo(originalPhone); // 암호화됨
+        assertThat(encryptedInDb.length()).isGreaterThan(50); // 암호화하면 길어짐
 
         System.out.println("원본: " + originalPhone);
         System.out.println("DB 저장값: " + encryptedInDb);
@@ -90,11 +88,11 @@ public class ConverterTest {
         // then
         assertThat(savedUser.getRegistrationNumber()).isEqualTo(originalRegNum);
 
-        String encryptedInDb = jdbcTemplate.queryForObject(
-            "SELECT registration_number FROM users WHERE id = ?",
-            String.class,
-            savedUser.getId()
-        );
+        String encryptedInDb =
+                jdbcTemplate.queryForObject(
+                        "SELECT registration_number FROM users WHERE id = ?",
+                        String.class,
+                        savedUser.getId());
 
         assertThat(encryptedInDb).isNotEqualTo(originalRegNum);
 
@@ -119,11 +117,11 @@ public class ConverterTest {
         // then
         assertThat(savedVisitor.getPhoneNumber()).isEqualTo(originalPhone);
 
-        String encryptedInDb = jdbcTemplate.queryForObject(
-            "SELECT phone_number FROM visitor WHERE id = ?",
-            String.class,
-            savedVisitor.getId()
-        );
+        String encryptedInDb =
+                jdbcTemplate.queryForObject(
+                        "SELECT phone_number FROM visitor WHERE id = ?",
+                        String.class,
+                        savedVisitor.getId());
 
         assertThat(encryptedInDb).isNotEqualTo(originalPhone);
 
@@ -152,9 +150,12 @@ public class ConverterTest {
 
         // 영속성 컨텍스트 초기화 (캐시 방지)
         userRepository.flush();
-        userRepository.findById(userId).ifPresent(u -> {
-            // Detach to force fresh DB query
-        });
+        userRepository
+                .findById(userId)
+                .ifPresent(
+                        u -> {
+                            // Detach to force fresh DB query
+                        });
 
         // when - 새로 조회
         User foundUser = userRepository.findById(userId).orElseThrow();

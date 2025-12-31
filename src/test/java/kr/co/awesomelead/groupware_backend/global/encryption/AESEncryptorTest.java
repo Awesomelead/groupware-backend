@@ -12,8 +12,7 @@ import org.springframework.test.context.ActiveProfiles;
 @ActiveProfiles("test")
 class AESEncryptorTest {
 
-    @Autowired
-    private AESEncryptor aesEncryptor;
+    @Autowired private AESEncryptor aesEncryptor;
 
     @Test
     @DisplayName("문자열 암호화 후 복호화하면 원본과 같아야 한다")
@@ -27,7 +26,7 @@ class AESEncryptorTest {
 
         // then
         assertThat(encrypted).isNotEqualTo(original); // 암호화됨
-        assertThat(decrypted).isEqualTo(original);     // 복호화하면 원본
+        assertThat(decrypted).isEqualTo(original); // 복호화하면 원본
     }
 
     @Test

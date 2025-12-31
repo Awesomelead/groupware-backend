@@ -2,6 +2,7 @@ package kr.co.awesomelead.groupware_backend.domain.user.entity;
 
 import com.fasterxml.jackson.annotation.JsonBackReference;
 import com.fasterxml.jackson.annotation.JsonManagedReference;
+
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.CollectionTable;
 import jakarta.persistence.Column;
@@ -19,12 +20,7 @@ import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.OneToOne;
 import jakarta.persistence.Table;
-import java.time.LocalDate;
-import java.time.format.DateTimeFormatter;
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+
 import kr.co.awesomelead.groupware_backend.domain.annualleave.entity.AnnualLeave;
 import kr.co.awesomelead.groupware_backend.domain.checksheet.entity.CheckSheet;
 import kr.co.awesomelead.groupware_backend.domain.department.entity.Department;
@@ -38,8 +34,16 @@ import kr.co.awesomelead.groupware_backend.domain.user.enums.Status;
 import kr.co.awesomelead.groupware_backend.domain.visit.entity.Visit;
 import kr.co.awesomelead.groupware_backend.global.encryption.PhoneNumberEncryptor;
 import kr.co.awesomelead.groupware_backend.global.encryption.RegistrationNumberEncryptor;
+
 import lombok.Getter;
 import lombok.Setter;
+
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
 @Entity
 @Getter
@@ -163,17 +167,16 @@ public class User {
         String birthPart = regNum.substring(0, 6);
 
         // 뒤 첫 번째 자리 추출 (성별/세기 구분자)
-        char genderDigit = regNum.contains("-")
-            ? regNum.charAt(7)
-            : regNum.charAt(6);
+        char genderDigit = regNum.contains("-") ? regNum.charAt(7) : regNum.charAt(6);
 
         // 세기 판단
         String century;
-        if (genderDigit == '1' || genderDigit == '2' ||
-            genderDigit == '5' || genderDigit == '6') {
+        if (genderDigit == '1' || genderDigit == '2' || genderDigit == '5' || genderDigit == '6') {
             century = "19";
-        } else if (genderDigit == '3' || genderDigit == '4' ||
-            genderDigit == '7' || genderDigit == '8') {
+        } else if (genderDigit == '3'
+                || genderDigit == '4'
+                || genderDigit == '7'
+                || genderDigit == '8') {
             century = "20";
         } else {
             century = "20"; // 기본값

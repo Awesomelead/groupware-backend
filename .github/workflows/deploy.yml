@@ -79,6 +79,8 @@ jobs:
             ALIGO_TPL_CODE=${{ secrets.ALIGO_TPL_CODE }}
             SPRING_MAIL_USERNAME=${{secrets.SPRING_MAIL_USERNAME}}
             SPRING_MAIL_PASSWORD=${{secrets.SPRING_MAIL_PASSWORD}}
+            ENCRYPTION_SECRET_KEY=${{ secrets.ENCRYPTION_SECRET_KEY }}
+            ENCRYPTION_SALT=${{ secrets.ENCRYPTION_SALT }}
             EOF
             
             # Docker Compose로 배포

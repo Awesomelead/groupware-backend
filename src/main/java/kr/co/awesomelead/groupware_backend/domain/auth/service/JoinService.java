@@ -3,8 +3,7 @@ package kr.co.awesomelead.groupware_backend.domain.auth.service;
 import kr.co.awesomelead.groupware_backend.domain.aligo.service.PhoneAuthService;
 import kr.co.awesomelead.groupware_backend.domain.auth.dto.request.JoinRequestDto;
 import kr.co.awesomelead.groupware_backend.domain.user.entity.User;
-import kr.co.awesomelead.groupware_backend.domain.user.enums.Role;
-import kr.co.awesomelead.groupware_backend.domain.user.enums.Status;
+import kr.co.awesomelead.groupware_backend.domain.user.mapper.UserMapper;
 import kr.co.awesomelead.groupware_backend.domain.user.repository.UserRepository;
 import kr.co.awesomelead.groupware_backend.global.CustomException;
 import kr.co.awesomelead.groupware_backend.global.ErrorCode;
@@ -22,6 +21,8 @@ public class JoinService {
     private final UserRepository userRepository;
     private final BCryptPasswordEncoder bCryptPasswordEncoder;
     private final PhoneAuthService phoneAuthService;
+    private final EmailAuthService emailAuthService;
+    private final UserMapper userMapper;
 
     @Transactional
     public void joinProcess(JoinRequestDto joinDto) {
@@ -36,7 +37,12 @@ public class JoinService {
             throw new CustomException(ErrorCode.PHONE_NOT_VERIFIED);
         }
 
-        // 3. 이메일 중복 검사
+        // 3. 이메일 인증 여부 확인
+        if (!emailAuthService.isEmailVerified(joinDto.getEmail())) {
+            throw new CustomException(ErrorCode.EMAIL_NOT_VERIFIED);
+        }
+
+        // 4. 이메일 중복 검사
         if (userRepository.existsByEmail(joinDto.getEmail())) {
             throw new CustomException(ErrorCode.DUPLICATE_LOGIN_ID);
         }
@@ -47,25 +53,16 @@ public class JoinService {
         }
 
         // 6. DTO를 Entity로 변환
-        User user = new User();
-        user.setEmail(joinDto.getEmail());
+        User user = userMapper.toEntity(joinDto);
+        // Mapper에서 처리 안 되는 필드만 설정
         user.setPassword(bCryptPasswordEncoder.encode(joinDto.getPassword()));
-        user.setNameKor(joinDto.getNameKor());
-        user.setNameEng(joinDto.getNameEng());
-        user.setNationality(joinDto.getNationality());
-        user.setRegistrationNumber(joinDto.getRegistrationNumber());
-        user.setPhoneNumber(joinDto.getPhoneNumber());
-        user.setWorkLocation(joinDto.getCompany().getDescription());
-        // 생년월일 자동 계산 및 설정
         user.calculateBirthDateFromRegistrationNumber();
-        // 기본값 설정
-        user.setRole(Role.USER);
-        user.setStatus(Status.PENDING);
 
         // 7. DB에 저장
         userRepository.save(user);
 
         // 8. 인증 완료 플래그 삭제
+        emailAuthService.clearVerification(joinDto.getEmail());
         phoneAuthService.clearVerification(joinDto.getPhoneNumber());
     }
 }

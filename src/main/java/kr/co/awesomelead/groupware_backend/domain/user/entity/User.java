@@ -23,6 +23,7 @@ import jakarta.persistence.Table;
 import kr.co.awesomelead.groupware_backend.domain.annualleave.entity.AnnualLeave;
 import kr.co.awesomelead.groupware_backend.domain.checksheet.entity.CheckSheet;
 import kr.co.awesomelead.groupware_backend.domain.department.entity.Department;
+import kr.co.awesomelead.groupware_backend.domain.department.enums.Company;
 import kr.co.awesomelead.groupware_backend.domain.leaverequest.entity.LeaveRequest;
 import kr.co.awesomelead.groupware_backend.domain.message.entity.Message;
 import kr.co.awesomelead.groupware_backend.domain.payslip.entity.Payslip;
@@ -92,8 +93,9 @@ public class User {
     @Column(nullable = false, length = 20)
     private Status status; // 상태 (PENDING, AVAILABLE)
 
-    @Column(length = 100)
-    private String workLocation; // 근무지
+    @Enumerated(EnumType.STRING)
+    @Column(length = 20)
+    private Company workLocation; // 근무지
 
     private LocalDate birthDate; // 생년월일
 

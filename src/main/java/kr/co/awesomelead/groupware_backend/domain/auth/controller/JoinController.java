@@ -7,7 +7,7 @@ import jakarta.validation.Valid;
 import kr.co.awesomelead.groupware_backend.domain.aligo.service.PhoneAuthService;
 import kr.co.awesomelead.groupware_backend.domain.auth.dto.request.JoinRequestDto;
 import kr.co.awesomelead.groupware_backend.domain.auth.dto.request.SendAuthCodeRequestDto;
-import kr.co.awesomelead.groupware_backend.domain.auth.dto.response.VerifyAuthCodeRequestDto;
+import kr.co.awesomelead.groupware_backend.domain.auth.dto.request.VerifyAuthCodeRequestDto;
 import kr.co.awesomelead.groupware_backend.domain.auth.service.JoinService;
 
 import lombok.RequiredArgsConstructor;

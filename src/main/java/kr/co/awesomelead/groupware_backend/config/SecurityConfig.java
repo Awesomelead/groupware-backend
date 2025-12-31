@@ -67,7 +67,7 @@ public class SecurityConfig {
                                         "/api/join",
                                         "/api/join/send-code",
                                         "/api/join/verify-code",
-                                        "/api/auth/login",
+                                        "/api/auth/**",
                                         "/api/reissue",
                                         "/api/admin/**",
                                         "/api/visits/**")

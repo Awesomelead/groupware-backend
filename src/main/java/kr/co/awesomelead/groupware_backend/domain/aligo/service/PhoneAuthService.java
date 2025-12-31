@@ -6,6 +6,7 @@ import kr.co.awesomelead.groupware_backend.global.ErrorCode;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 
@@ -24,8 +25,8 @@ public class PhoneAuthService {
     private static final String AUTH_CODE_PREFIX = "auth:phone:";
     private static final int AUTH_CODE_EXPIRATION_MINUTES = 5;
 
-    // 테스트 모드
-    private static final boolean TEST_MODE = true;
+    @Value("${aligo.api.test-mode:false}")
+    private boolean testMode;
 
     /** 인증번호 발송 */
     public void sendAuthCode(String phoneNumber) {
@@ -46,7 +47,7 @@ public class PhoneAuthService {
                 .set(key, authCode, AUTH_CODE_EXPIRATION_MINUTES, TimeUnit.MINUTES);
 
         // 테스트 모드일 경우 콘솔에 인증번호 출력
-        if (TEST_MODE) { // ← 변수명 변경
+        if (testMode) { // ← 변수명 변경
             log.warn("========================================");
             log.warn("📱 [테스트 모드] 인증번호 확인");
             log.warn("전화번호: {}", phoneNumber);

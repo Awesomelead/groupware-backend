@@ -10,11 +10,13 @@ import static org.mockito.Mockito.when;
 
 import kr.co.awesomelead.groupware_backend.domain.aligo.service.PhoneAuthService;
 import kr.co.awesomelead.groupware_backend.domain.auth.dto.request.JoinRequestDto;
+import kr.co.awesomelead.groupware_backend.domain.auth.service.EmailAuthService;
 import kr.co.awesomelead.groupware_backend.domain.auth.service.JoinService;
 import kr.co.awesomelead.groupware_backend.domain.department.enums.Company;
 import kr.co.awesomelead.groupware_backend.domain.user.entity.User;
 import kr.co.awesomelead.groupware_backend.domain.user.enums.Role;
 import kr.co.awesomelead.groupware_backend.domain.user.enums.Status;
+import kr.co.awesomelead.groupware_backend.domain.user.mapper.UserMapper;
 import kr.co.awesomelead.groupware_backend.domain.user.repository.UserRepository;
 import kr.co.awesomelead.groupware_backend.global.CustomException;
 import kr.co.awesomelead.groupware_backend.global.ErrorCode;
@@ -39,6 +41,10 @@ class JoinServiceTest {
 
     @Mock private PhoneAuthService phoneAuthService;
 
+    @Mock private EmailAuthService emailAuthService;
+
+    @Mock private UserMapper userMapper;
+
     @InjectMocks private JoinService joinService;
 
     @Test
@@ -56,53 +62,45 @@ class JoinServiceTest {
         joinDto.setPhoneNumber("01012345678");
         joinDto.setCompany(Company.AWESOME);
 
+        // Mapper가 반환할 User 객체 생성
+        User mockUser = new User();
+        mockUser.setEmail(joinDto.getEmail());
+        mockUser.setNameKor(joinDto.getNameKor());
+        mockUser.setNameEng(joinDto.getNameEng());
+        mockUser.setNationality(joinDto.getNationality());
+        mockUser.setRegistrationNumber(joinDto.getRegistrationNumber());
+        mockUser.setPhoneNumber(joinDto.getPhoneNumber());
+        mockUser.setWorkLocation(Company.AWESOME);
+        mockUser.setRole(Role.USER);
+        mockUser.setStatus(Status.PENDING);
+
+        // Mock 설정
+        when(emailAuthService.isEmailVerified(joinDto.getEmail())).thenReturn(true);
         when(phoneAuthService.isPhoneVerified(joinDto.getPhoneNumber())).thenReturn(true);
         when(userRepository.existsByEmail(joinDto.getEmail())).thenReturn(false);
         when(userRepository.existsByRegistrationNumber(joinDto.getRegistrationNumber()))
                 .thenReturn(false);
+        when(userMapper.toEntity(joinDto)).thenReturn(mockUser);
         when(bCryptPasswordEncoder.encode(joinDto.getPassword())).thenReturn("encodedPassword");
 
         // when
         joinService.joinProcess(joinDto);
 
         // then
-        // userRepository.save() 메서드가 정확히 1번 호출되었는지 검증
         verify(userRepository, times(1)).save(any(User.class));
 
-        // ArgumentCaptor를 사용해 save 메서드에 전달된 User 객체를 캡처
         ArgumentCaptor<User> userCaptor = ArgumentCaptor.forClass(User.class);
         verify(userRepository).save(userCaptor.capture());
         User savedUser = userCaptor.getValue();
 
-        // 캡처된 User 객체의 필드가 예상대로 설정되었는지 검증
-        assertThat(savedUser.getPassword()).isEqualTo("encodedPassword"); // 암호화된 비밀번호 확인
+        assertThat(savedUser.getPassword()).isEqualTo("encodedPassword");
         assertThat(savedUser.getNameKor()).isEqualTo(joinDto.getNameKor());
-        assertThat(savedUser.getRole()).isEqualTo(Role.USER); // 기본값 확인
-        assertThat(savedUser.getStatus()).isEqualTo(Status.PENDING); // 기본값 확인
+        assertThat(savedUser.getRole()).isEqualTo(Role.USER);
+        assertThat(savedUser.getStatus()).isEqualTo(Status.PENDING);
 
+        // 이메일 & 휴대폰 인증 플래그 삭제 검증
+        verify(emailAuthService, times(1)).clearVerification(joinDto.getEmail());
         verify(phoneAuthService, times(1)).clearVerification(joinDto.getPhoneNumber());
-    }
-
-    @Test
-    @DisplayName("회원가입 실패 테스트 - 아이디 중복")
-    void joinProcess_Fail_DuplicateLoginId() {
-        // given
-        JoinRequestDto joinDto = new JoinRequestDto();
-        joinDto.setEmail("test@example.com");
-        joinDto.setPassword("password123!");
-        joinDto.setPasswordConfirm("password123!");
-        joinDto.setPhoneNumber("01012345678");
-
-        // userRepository.existsByLoginId가 true를 반환하도록 설정 (아이디 중복 있음)
-        when(phoneAuthService.isPhoneVerified(joinDto.getPhoneNumber())).thenReturn(true);
-        when(userRepository.existsByEmail(joinDto.getEmail())).thenReturn(true);
-
-        // when & then
-        CustomException exception =
-                assertThrows(CustomException.class, () -> joinService.joinProcess(joinDto));
-
-        assertThat(exception.getErrorCode()).isEqualTo(ErrorCode.DUPLICATE_LOGIN_ID);
-        verify(userRepository, never()).save(any(User.class));
     }
 
     @Test
@@ -112,7 +110,7 @@ class JoinServiceTest {
         JoinRequestDto joinDto = new JoinRequestDto();
         joinDto.setEmail("test@example.com");
         joinDto.setPassword("Password123!");
-        joinDto.setPasswordConfirm("DifferentPassword123!"); // 다른 비밀번호
+        joinDto.setPasswordConfirm("DifferentPassword123!");
 
         // when & then
         CustomException exception =
@@ -132,14 +130,63 @@ class JoinServiceTest {
         joinDto.setPasswordConfirm("Password123!");
         joinDto.setPhoneNumber("01012345678");
 
-        when(phoneAuthService.isPhoneVerified(joinDto.getPhoneNumber()))
-                .thenReturn(false); // 인증 안 됨
+        // 🔥 전화번호 미인증 (전화번호가 먼저 체크됨!)
+        when(phoneAuthService.isPhoneVerified(joinDto.getPhoneNumber())).thenReturn(false);
 
         // when & then
         CustomException exception =
                 assertThrows(CustomException.class, () -> joinService.joinProcess(joinDto));
 
         assertThat(exception.getErrorCode()).isEqualTo(ErrorCode.PHONE_NOT_VERIFIED);
+        verify(userRepository, never()).save(any(User.class));
+        // 🔥 전화번호 인증 실패 시 이메일 확인은 실행 안 됨
+        verify(emailAuthService, never()).isEmailVerified(any());
+    }
+
+    @Test
+    @DisplayName("회원가입 실패 테스트 - 이메일 미인증")
+    void joinProcess_Fail_EmailNotVerified() {
+        // given
+        JoinRequestDto joinDto = new JoinRequestDto();
+        joinDto.setEmail("test@example.com");
+        joinDto.setPassword("Password123!");
+        joinDto.setPasswordConfirm("Password123!");
+        joinDto.setPhoneNumber("01012345678");
+
+        // 🔥 전화번호 인증은 통과 (먼저 체크됨!)
+        when(phoneAuthService.isPhoneVerified(joinDto.getPhoneNumber())).thenReturn(true);
+        // 이메일 미인증
+        when(emailAuthService.isEmailVerified(joinDto.getEmail())).thenReturn(false);
+
+        // when & then
+        CustomException exception =
+                assertThrows(CustomException.class, () -> joinService.joinProcess(joinDto));
+
+        assertThat(exception.getErrorCode()).isEqualTo(ErrorCode.EMAIL_NOT_VERIFIED);
+        verify(userRepository, never()).save(any(User.class));
+    }
+
+    @Test
+    @DisplayName("회원가입 실패 테스트 - 이메일 중복")
+    void joinProcess_Fail_DuplicateEmail() {
+        // given
+        JoinRequestDto joinDto = new JoinRequestDto();
+        joinDto.setEmail("test@example.com");
+        joinDto.setPassword("password123!");
+        joinDto.setPasswordConfirm("password123!");
+        joinDto.setPhoneNumber("01012345678");
+
+        // 이메일 & 휴대폰 인증 통과
+        when(emailAuthService.isEmailVerified(joinDto.getEmail())).thenReturn(true);
+        when(phoneAuthService.isPhoneVerified(joinDto.getPhoneNumber())).thenReturn(true);
+        // 이메일 중복
+        when(userRepository.existsByEmail(joinDto.getEmail())).thenReturn(true);
+
+        // when & then
+        CustomException exception =
+                assertThrows(CustomException.class, () -> joinService.joinProcess(joinDto));
+
+        assertThat(exception.getErrorCode()).isEqualTo(ErrorCode.DUPLICATE_LOGIN_ID);
         verify(userRepository, never()).save(any(User.class));
     }
 
@@ -154,10 +201,13 @@ class JoinServiceTest {
         joinDto.setPhoneNumber("01012345678");
         joinDto.setRegistrationNumber("950101-1234567");
 
+        // 이메일 & 휴대폰 인증 통과
+        when(emailAuthService.isEmailVerified(joinDto.getEmail())).thenReturn(true);
         when(phoneAuthService.isPhoneVerified(joinDto.getPhoneNumber())).thenReturn(true);
         when(userRepository.existsByEmail(joinDto.getEmail())).thenReturn(false);
+        // 주민번호 중복
         when(userRepository.existsByRegistrationNumber(joinDto.getRegistrationNumber()))
-                .thenReturn(true); // 주민번호 중복
+                .thenReturn(true);
 
         // when & then
         CustomException exception =

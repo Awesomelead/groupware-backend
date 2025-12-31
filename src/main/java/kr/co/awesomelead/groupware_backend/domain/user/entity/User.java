@@ -2,10 +2,10 @@ package kr.co.awesomelead.groupware_backend.domain.user.entity;
 
 import com.fasterxml.jackson.annotation.JsonBackReference;
 import com.fasterxml.jackson.annotation.JsonManagedReference;
-
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.CollectionTable;
 import jakarta.persistence.Column;
+import jakarta.persistence.Convert;
 import jakarta.persistence.ElementCollection;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
@@ -19,7 +19,12 @@ import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.OneToOne;
 import jakarta.persistence.Table;
-
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 import kr.co.awesomelead.groupware_backend.domain.annualleave.entity.AnnualLeave;
 import kr.co.awesomelead.groupware_backend.domain.checksheet.entity.CheckSheet;
 import kr.co.awesomelead.groupware_backend.domain.department.entity.Department;
@@ -31,16 +36,10 @@ import kr.co.awesomelead.groupware_backend.domain.user.enums.Authority;
 import kr.co.awesomelead.groupware_backend.domain.user.enums.Role;
 import kr.co.awesomelead.groupware_backend.domain.user.enums.Status;
 import kr.co.awesomelead.groupware_backend.domain.visit.entity.Visit;
-
+import kr.co.awesomelead.groupware_backend.global.encryption.PhoneNumberEncryptor;
+import kr.co.awesomelead.groupware_backend.global.encryption.RegistrationNumberEncryptor;
 import lombok.Getter;
 import lombok.Setter;
-
-import java.time.LocalDate;
-import java.time.format.DateTimeFormatter;
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
 
 @Entity
 @Getter
@@ -68,10 +67,12 @@ public class User {
     @Column(length = 30)
     private String nationality; // 국적
 
-    @Column(unique = true, nullable = false, columnDefinition = "CHAR(14)")
+    @Column(unique = true, nullable = false, length = 500)
+    @Convert(converter = RegistrationNumberEncryptor.class)
     private String registrationNumber; // 주민등록번호 또는 외국인번호
 
-    @Column(nullable = false, length = 15)
+    @Column(nullable = false, length = 300)
+    @Convert(converter = PhoneNumberEncryptor.class)
     private String phoneNumber; // 전화번호
 
     // == 관리자가 입력/수정하는 정보 == //
@@ -158,18 +159,18 @@ public class User {
 
         // 뒤 첫 번째 자리 추출 (성별/세기 구분자)
         char genderDigit =
-                this.registrationNumber.contains("-")
-                        ? this.registrationNumber.charAt(7)
-                        : this.registrationNumber.charAt(6);
+            this.registrationNumber.contains("-")
+                ? this.registrationNumber.charAt(7)
+                : this.registrationNumber.charAt(6);
 
         // 세기 판단
         String century;
         if (genderDigit == '1' || genderDigit == '2' || genderDigit == '5' || genderDigit == '6') {
             century = "19";
         } else if (genderDigit == '3'
-                || genderDigit == '4'
-                || genderDigit == '7'
-                || genderDigit == '8') {
+            || genderDigit == '4'
+            || genderDigit == '7'
+            || genderDigit == '8') {
             century = "20";
         } else {
             century = "20"; // 기본값 (보통 2000년대생)

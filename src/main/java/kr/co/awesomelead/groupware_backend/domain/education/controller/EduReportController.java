@@ -1,9 +1,10 @@
 package kr.co.awesomelead.groupware_backend.domain.education.controller;
 
 import io.swagger.v3.oas.annotations.Operation;
-
 import jakarta.validation.Valid;
-
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import java.util.List;
 import kr.co.awesomelead.groupware_backend.domain.education.dto.request.EduReportRequestDto;
 import kr.co.awesomelead.groupware_backend.domain.education.dto.response.EduReportAdminDetailDto;
 import kr.co.awesomelead.groupware_backend.domain.education.dto.response.EduReportDetailDto;
@@ -13,9 +14,7 @@ import kr.co.awesomelead.groupware_backend.domain.education.repository.EduAttach
 import kr.co.awesomelead.groupware_backend.domain.education.service.EduReportService;
 import kr.co.awesomelead.groupware_backend.domain.education.service.EduReportService.FileDownloadDto;
 import kr.co.awesomelead.groupware_backend.domain.user.dto.CustomUserDetails;
-
 import lombok.RequiredArgsConstructor;
-
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -32,10 +31,6 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.util.UriUtils;
 
-import java.io.IOException;
-import java.nio.charset.StandardCharsets;
-import java.util.List;
-
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/api/edu-reports")
@@ -47,10 +42,10 @@ public class EduReportController {
     @Operation(summary = "교육 보고서 생성", description = "교육 보고서를 생성합니다.")
     @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<Long> createEduReport(
-            @RequestPart("requestDto") @Valid EduReportRequestDto requestDto,
-            @RequestPart(value = "files", required = false) List<MultipartFile> files,
-            @AuthenticationPrincipal CustomUserDetails userDetails)
-            throws IOException {
+        @RequestPart("requestDto") @Valid EduReportRequestDto requestDto,
+        @RequestPart(value = "files", required = false) List<MultipartFile> files,
+        @AuthenticationPrincipal CustomUserDetails userDetails)
+        throws IOException {
 
         eduReportService.createEduReport(requestDto, files, userDetails.getId());
         return ResponseEntity.ok().build();
@@ -59,18 +54,18 @@ public class EduReportController {
     @Operation(summary = "교육 보고서 목록 조회", description = "교육 보고서 목록을 조회합니다. 교육 유형으로 필터링할 수 있습니다.")
     @GetMapping
     public ResponseEntity<List<EduReportSummaryDto>> getEduReports(
-            @RequestParam(required = false) EduType type,
-            @AuthenticationPrincipal CustomUserDetails userDetails) {
+        @RequestParam(required = false) EduType type,
+        @AuthenticationPrincipal CustomUserDetails userDetails) {
         List<EduReportSummaryDto> reports =
-                eduReportService.getEduReports(type, userDetails.getId());
+            eduReportService.getEduReports(type, userDetails.getId());
         return ResponseEntity.ok(reports);
     }
 
     @Operation(summary = "교육 보고서 조회", description = "교육 보고서의 상세 정보를 조회합니다.")
     @GetMapping("/{eduReportId}")
     public ResponseEntity<EduReportDetailDto> getEduReport(
-            @PathVariable Long eduReportId,
-            @AuthenticationPrincipal CustomUserDetails userDetails) {
+        @PathVariable Long eduReportId,
+        @AuthenticationPrincipal CustomUserDetails userDetails) {
         EduReportDetailDto report = eduReportService.getEduReport(eduReportId, userDetails.getId());
         return ResponseEntity.ok(report);
     }
@@ -78,8 +73,8 @@ public class EduReportController {
     @Operation(summary = "교육 보고서 삭제", description = "교육 보고서를 삭제합니다.")
     @DeleteMapping("/{eduReportId}")
     public ResponseEntity<Void> deleteEduReport(
-            @PathVariable Long eduReportId, @AuthenticationPrincipal CustomUserDetails userDetails)
-            throws IOException {
+        @PathVariable Long eduReportId, @AuthenticationPrincipal CustomUserDetails userDetails)
+        throws IOException {
         eduReportService.deleteEduReport(eduReportId, userDetails.getId());
         return ResponseEntity.ok().build();
     }
@@ -90,24 +85,33 @@ public class EduReportController {
         FileDownloadDto downloadDto = eduReportService.getFileForDownload(id);
 
         String encodedFileName =
-                UriUtils.encode(downloadDto.originalFileName(), StandardCharsets.UTF_8);
+            UriUtils.encode(downloadDto.originalFileName(), StandardCharsets.UTF_8);
 
         return ResponseEntity.ok()
-                .header(
-                        HttpHeaders.CONTENT_DISPOSITION,
-                        "attachment; filename=\"" + encodedFileName + "\"")
-                .contentType(MediaType.APPLICATION_OCTET_STREAM)
-                .contentLength(downloadDto.fileSize())
-                .body(downloadDto.fileData());
+            .header(
+                HttpHeaders.CONTENT_DISPOSITION,
+                "attachment; filename=\"" + encodedFileName + "\"")
+            .contentType(MediaType.APPLICATION_OCTET_STREAM)
+            .contentLength(downloadDto.fileSize())
+            .body(downloadDto.fileData());
     }
+
+//    @GetMapping("/attachments/{id}/download")
+//    public ResponseEntity<Void> downloadAttachment(@PathVariable Long id) {
+//        String downloadUrl = eduReportService.getDownloadUrl(id);
+//
+//        return ResponseEntity.status(HttpStatus.FOUND)
+//            .location(URI.create(downloadUrl))
+//            .build();
+//    }
 
     @Operation(summary = "출석 체크", description = "png 서명 이미지를 통해 교육 보고서에 대한 출석 체크를 수행합니다.")
     @PostMapping("/{id}/attendance")
     public ResponseEntity<String> markAttendance(
-            @PathVariable Long id,
-            @RequestPart(value = "signature", required = false) MultipartFile signature,
-            @AuthenticationPrincipal CustomUserDetails userDetails)
-            throws IOException {
+        @PathVariable Long id,
+        @RequestPart(value = "signature", required = false) MultipartFile signature,
+        @AuthenticationPrincipal CustomUserDetails userDetails)
+        throws IOException {
 
         eduReportService.markAttendance(id, signature, userDetails.getId());
 

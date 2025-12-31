@@ -26,6 +26,7 @@ spring:
     aws:
       s3:
         enabled: false
+        bucket: test-bucket
       credentials:
         access-key: test
         secret-key: test

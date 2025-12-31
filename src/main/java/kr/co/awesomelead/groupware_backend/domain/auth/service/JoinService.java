@@ -7,9 +7,7 @@ import kr.co.awesomelead.groupware_backend.domain.user.mapper.UserMapper;
 import kr.co.awesomelead.groupware_backend.domain.user.repository.UserRepository;
 import kr.co.awesomelead.groupware_backend.global.CustomException;
 import kr.co.awesomelead.groupware_backend.global.ErrorCode;
-
 import lombok.RequiredArgsConstructor;
-
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -56,7 +54,6 @@ public class JoinService {
         User user = userMapper.toEntity(joinDto);
         // Mapper에서 처리 안 되는 필드만 설정
         user.setPassword(bCryptPasswordEncoder.encode(joinDto.getPassword()));
-        user.calculateBirthDateFromRegistrationNumber();
 
         // 7. DB에 저장
         userRepository.save(user);

@@ -1,7 +1,5 @@
 package kr.co.awesomelead.groupware_backend.domain.education.service;
 
-import java.io.IOException;
-import java.util.List;
 import kr.co.awesomelead.groupware_backend.domain.department.entity.Department;
 import kr.co.awesomelead.groupware_backend.domain.department.repository.DepartmentRepository;
 import kr.co.awesomelead.groupware_backend.domain.education.dto.request.EduReportRequestDto;
@@ -49,7 +47,7 @@ public class EduReportService {
 
     @Transactional
     public Long createEduReport(EduReportRequestDto requestDto, List<MultipartFile> files, Long id)
-        throws IOException {
+            throws IOException {
 
         User user =
                 userRepository

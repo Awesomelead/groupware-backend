@@ -1,11 +1,8 @@
 package kr.co.awesomelead.groupware_backend.domain.education.controller;
 
 import io.swagger.v3.oas.annotations.Operation;
+
 import jakarta.validation.Valid;
-import java.io.IOException;
-import java.net.URI;
-import java.nio.charset.StandardCharsets;
-import java.util.List;
 
 import kr.co.awesomelead.groupware_backend.domain.education.dto.request.EduReportRequestDto;
 import kr.co.awesomelead.groupware_backend.domain.education.dto.response.EduReportAdminDetailDto;
@@ -16,7 +13,9 @@ import kr.co.awesomelead.groupware_backend.domain.education.repository.EduAttach
 import kr.co.awesomelead.groupware_backend.domain.education.service.EduReportService;
 import kr.co.awesomelead.groupware_backend.domain.education.service.EduReportService.FileDownloadDto;
 import kr.co.awesomelead.groupware_backend.domain.user.dto.CustomUserDetails;
+
 import lombok.RequiredArgsConstructor;
+
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -35,6 +34,7 @@ import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 import org.springframework.web.util.UriUtils;
 
 import java.io.IOException;
+import java.net.URI;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
 
@@ -56,10 +56,11 @@ public class EduReportController {
 
         Long reportId = eduReportService.createEduReport(requestDto, files, userDetails.getId());
 
-        URI location = ServletUriComponentsBuilder.fromCurrentRequest()
-            .path("/{id}")
-            .buildAndExpand(reportId)
-            .toUri();
+        URI location =
+                ServletUriComponentsBuilder.fromCurrentRequest()
+                        .path("/{id}")
+                        .buildAndExpand(reportId)
+                        .toUri();
 
         return ResponseEntity.created(location).build();
     }

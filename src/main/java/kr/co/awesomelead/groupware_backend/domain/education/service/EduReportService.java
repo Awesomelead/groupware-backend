@@ -16,7 +16,6 @@ import kr.co.awesomelead.groupware_backend.domain.education.mapper.EduMapper;
 import kr.co.awesomelead.groupware_backend.domain.education.repository.EduAttachmentRepository;
 import kr.co.awesomelead.groupware_backend.domain.education.repository.EduAttendanceRepository;
 import kr.co.awesomelead.groupware_backend.domain.education.repository.EduReportRepository;
-import kr.co.awesomelead.groupware_backend.domain.user.dto.CustomUserDetails;
 import kr.co.awesomelead.groupware_backend.domain.user.entity.User;
 import kr.co.awesomelead.groupware_backend.domain.user.enums.Authority;
 import kr.co.awesomelead.groupware_backend.domain.user.repository.UserRepository;
@@ -92,15 +91,15 @@ public class EduReportService {
     }
 
     @Transactional(readOnly = true)
-    public EduReportDetailDto getEduReport(Long eduReportId, CustomUserDetails userDetails) {
+    public EduReportDetailDto getEduReport(Long eduReportId, Long id) {
+
+        User user = userRepository.findById(id)
+            .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
 
         EduReport report = eduReportRepository.findById(eduReportId)
             .orElseThrow(() -> new CustomException(ErrorCode.EDU_REPORT_NOT_FOUND));
 
         EduReportDetailDto dto = eduMapper.toDetailDto(report, s3Service);
-
-        User user = userRepository.findById(userDetails.getId())
-            .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
 
         boolean isAttended = eduAttendanceRepository.existsByEduReportAndUser(report, user);
         dto.setAttendance(isAttended);
@@ -109,17 +108,17 @@ public class EduReportService {
     }
 
     @Transactional
-    public void deleteEduReport(Long eduReportId, CustomUserDetails userDetails) {
+    public void deleteEduReport(Long eduReportId, Long id) {
 
-        EduReport report = eduReportRepository.findById(eduReportId)
-            .orElseThrow(() -> new CustomException(ErrorCode.EDU_REPORT_NOT_FOUND));
-
-        User user = userRepository.findById(userDetails.getId())
+        User user = userRepository.findById(id)
             .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
 
         if (!user.hasAuthority(Authority.WRITE_EDUCATION)) {
             throw new CustomException(ErrorCode.NO_AUTHORITY_FOR_EDU_REPORT);
         }
+
+        EduReport report = eduReportRepository.findById(eduReportId)
+            .orElseThrow(() -> new CustomException(ErrorCode.EDU_REPORT_NOT_FOUND));
 
         report.getAttachments().forEach(attachment -> {
             s3Service.deleteFile(attachment.getS3Key());
@@ -145,14 +144,14 @@ public class EduReportService {
     }
 
     @Transactional
-    public void markAttendance(Long id, MultipartFile signatureFile, CustomUserDetails userDetails)
+    public void markAttendance(Long reportId, MultipartFile signatureFile, Long userId)
         throws IOException {
 
-        EduReport report = eduReportRepository.findById(id)
-            .orElseThrow(() -> new CustomException(ErrorCode.EDU_REPORT_NOT_FOUND));
-
-        User user = userRepository.findById(userDetails.getId())
+        User user = userRepository.findById(userId)
             .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
+
+        EduReport report = eduReportRepository.findById(reportId)
+            .orElseThrow(() -> new CustomException(ErrorCode.EDU_REPORT_NOT_FOUND));
 
         if (eduAttendanceRepository.existsByEduReportAndUser(report, user)) {
             throw new CustomException(ErrorCode.ALREADY_MARKED_ATTENDANCE);

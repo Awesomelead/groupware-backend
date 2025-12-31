@@ -62,11 +62,11 @@ public class EduReportController {
         return ResponseEntity.ok(reports);
     }
 
-    @Operation(summary = "교육 보고서 목록 조회", description = "교육 보고서 목록을 조회합니다. 교육 유형으로 필터링할 수 있습니다.")
+    @Operation(summary = "교육 보고서 조회", description = "교육 보고서의 상세 정보를 조회합니다.")
     @GetMapping("/{eduReportId}")
     public ResponseEntity<EduReportDetailDto> getEduReport(@PathVariable Long eduReportId,
         @AuthenticationPrincipal CustomUserDetails userDetails) {
-        EduReportDetailDto report = eduReportService.getEduReport(eduReportId, userDetails);
+        EduReportDetailDto report = eduReportService.getEduReport(eduReportId, userDetails.getId());
         return ResponseEntity.ok(report);
     }
 
@@ -74,7 +74,7 @@ public class EduReportController {
     @DeleteMapping("/{eduReportId}")
     public ResponseEntity<Void> deleteEduReport(@PathVariable Long eduReportId,
         @AuthenticationPrincipal CustomUserDetails userDetails) throws IOException {
-        eduReportService.deleteEduReport(eduReportId, userDetails);
+        eduReportService.deleteEduReport(eduReportId, userDetails.getId());
         return ResponseEntity.ok().build();
     }
 
@@ -101,7 +101,7 @@ public class EduReportController {
         @RequestPart(value = "signature", required = false) MultipartFile signature,
         @AuthenticationPrincipal CustomUserDetails userDetails) throws IOException {
 
-        eduReportService.markAttendance(id, signature, userDetails);
+        eduReportService.markAttendance(id, signature, userDetails.getId());
 
         return ResponseEntity.ok("출석 체크가 완료되었습니다.");
     }

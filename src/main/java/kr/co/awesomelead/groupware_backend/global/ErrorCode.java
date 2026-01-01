@@ -18,17 +18,25 @@ public enum ErrorCode {
     VISIT_ALREADY_CHECKED_OUT(HttpStatus.BAD_REQUEST, "이미 체크아웃된 방문정보입니다."),
     VISITOR_PASSWORD_REQUIRED_FOR_PRE_REGISTRATION(
             HttpStatus.BAD_REQUEST, "사전 방문 예약 시 내방객 비밀번호가 필요합니다."),
+    DEPARTMENT_ID_REQUIRED(HttpStatus.BAD_REQUEST, "부서교육인 경우 부서 ID가 필요합니다."),
+    ALREADY_MARKED_ATTENDANCE(HttpStatus.BAD_REQUEST, "이미 출석이 체크된 교육입니다."),
+    NO_SIGNATURE_PROVIDED(HttpStatus.BAD_REQUEST, "서명이 제공되지 않았습니다."),
+    INVALID_SIGNATURE_FORMAT(HttpStatus.BAD_REQUEST, "서명은 PNG 파일 형식만 지원합니다."),
 
     // 401 Unauthorized
     INVALID_TOKEN(HttpStatus.UNAUTHORIZED, "유효하지 않은 토큰입니다."),
     EXPIRED_TOKEN(HttpStatus.UNAUTHORIZED, "만료된 토큰입니다."),
     AUTH_CODE_EXPIRED(HttpStatus.UNAUTHORIZED, "인증번호가 만료되었습니다."),
     VISITOR_AUTHENTICATION_FAILED(HttpStatus.UNAUTHORIZED, "내방객 인증에 실패했습니다."),
+    NO_AUTHORITY_FOR_EDU_REPORT(HttpStatus.UNAUTHORIZED, "교육 보고서 작성 권한이 없습니다."),
 
     // 404 Not Found
     USER_NOT_FOUND(HttpStatus.NOT_FOUND, "해당 사용자를 찾을 수 없습니다."),
     VISIT_NOT_FOUND(HttpStatus.NOT_FOUND, "해당 방문정보를 찾을 수 없습니다."),
     VISITOR_NOT_FOUND(HttpStatus.NOT_FOUND, "해당 내방객을 찾을 수 없습니다."),
+    DEPARTMENT_NOT_FOUND(HttpStatus.NOT_FOUND, "해당 부서를 찾을 수 없습니다."),
+    EDU_REPORT_NOT_FOUND(HttpStatus.NOT_FOUND, "해당 교육 보고서를 찾을 수 없습니다."),
+    EDU_ATTACHMENT_NOT_FOUND(HttpStatus.NOT_FOUND, "해당 교육 첨부파일을 찾을 수 없습니다."),
 
     // 409 Conflict
     DUPLICATED_SIGNUP_REQUEST(HttpStatus.CONFLICT, "이미 처리된 가입 요청입니다."),

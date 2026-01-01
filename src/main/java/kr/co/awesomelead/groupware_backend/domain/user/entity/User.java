@@ -32,7 +32,10 @@ import kr.co.awesomelead.groupware_backend.domain.user.enums.Role;
 import kr.co.awesomelead.groupware_backend.domain.user.enums.Status;
 import kr.co.awesomelead.groupware_backend.domain.visit.entity.Visit;
 
+import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 import java.time.LocalDate;
@@ -45,6 +48,9 @@ import java.util.Set;
 @Entity
 @Getter
 @Setter
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
 @Table(name = "users")
 public class User {
 
@@ -103,26 +109,32 @@ public class User {
     @JsonManagedReference
     private AnnualLeave annualLeave;
 
+    @Builder.Default
     @OneToMany(mappedBy = "user", fetch = FetchType.LAZY)
     @JsonManagedReference
     private List<Visit> visits = new ArrayList<>();
 
+    @Builder.Default
     @OneToMany(mappedBy = "user", fetch = FetchType.LAZY)
     @JsonManagedReference
     private List<CheckSheet> checkSheets = new ArrayList<>();
 
+    @Builder.Default
     @OneToMany(mappedBy = "user", fetch = FetchType.LAZY)
     @JsonManagedReference
     private List<LeaveRequest> leaveRequests = new ArrayList<>();
 
+    @Builder.Default
     @OneToMany(mappedBy = "user", fetch = FetchType.LAZY)
     @JsonManagedReference
     private List<Payslip> payslips = new ArrayList<>();
 
+    @Builder.Default
     @OneToMany(mappedBy = "sender", fetch = FetchType.LAZY)
     @JsonManagedReference
     private List<Message> sentMessages = new ArrayList<>();
 
+    @Builder.Default
     @OneToMany(mappedBy = "receiver", fetch = FetchType.LAZY)
     @JsonManagedReference
     private List<Message> receivedMessages = new ArrayList<>();
@@ -132,6 +144,7 @@ public class User {
     @JsonBackReference
     private Department department;
 
+    @Builder.Default
     @ElementCollection(fetch = FetchType.LAZY)
     @CollectionTable(name = "user_authorities", joinColumns = @JoinColumn(name = "user_id"))
     @Enumerated(EnumType.STRING)
@@ -178,5 +191,9 @@ public class User {
         // LocalDate로 변환하여 set
         String fullDate = century + birthPart;
         this.birthDate = LocalDate.parse(fullDate, DateTimeFormatter.ofPattern("yyyyMMdd"));
+    }
+
+    public String getDisplayName() {
+        return (nameKor != null && !nameKor.isBlank()) ? nameKor : nameEng;
     }
 }

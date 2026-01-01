@@ -216,7 +216,7 @@ public class VisitServiceTest {
         visitService.checkIn(visitId);
 
         // then
-        // 💡 엔티티 내부의 checkIn()이 호출되어 visitStartDate가 채워졌는지 검증
+        // 엔티티 내부의 checkIn()이 호출되어 visitStartDate가 채워졌는지 검증
         assertThat(visit.getVisitStartDate()).isNotNull();
     }
 

@@ -70,7 +70,10 @@ public class SecurityConfig {
                                         "/api/auth/**",
                                         "/api/reissue",
                                         "/api/admin/**",
-                                        "/api/visits/**")
+                                        "/api/visits/**",
+                                        "/api/edu-reports/attachments/{id}/download" // 테스트용으로 교육자료
+                                        // 다운로드 열어놓음
+                                        )
                                 .permitAll()
                                 // .requestMatchers("/api/join", "/api/auth/login",
                                 // "/api/reissue").permitAll()

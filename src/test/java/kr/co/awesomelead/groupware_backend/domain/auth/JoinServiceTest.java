@@ -31,6 +31,8 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.test.context.ActiveProfiles;
 
+import java.time.LocalDate;
+
 @ExtendWith(MockitoExtension.class)
 @ActiveProfiles("test")
 class JoinServiceTest {
@@ -97,6 +99,9 @@ class JoinServiceTest {
         assertThat(savedUser.getNameKor()).isEqualTo(joinDto.getNameKor());
         assertThat(savedUser.getRole()).isEqualTo(Role.USER);
         assertThat(savedUser.getStatus()).isEqualTo(Status.PENDING);
+
+        assertThat(savedUser.getBirthDate()).isNotNull();
+        assertThat(savedUser.getBirthDate()).isEqualTo(LocalDate.of(1995, 1, 1));
 
         // 이메일 & 휴대폰 인증 플래그 삭제 검증
         verify(emailAuthService, times(1)).clearVerification(joinDto.getEmail());

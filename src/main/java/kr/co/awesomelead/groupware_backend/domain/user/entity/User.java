@@ -6,6 +6,7 @@ import com.fasterxml.jackson.annotation.JsonManagedReference;
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.CollectionTable;
 import jakarta.persistence.Column;
+import jakarta.persistence.Convert;
 import jakarta.persistence.ElementCollection;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
@@ -31,6 +32,8 @@ import kr.co.awesomelead.groupware_backend.domain.user.enums.Authority;
 import kr.co.awesomelead.groupware_backend.domain.user.enums.Role;
 import kr.co.awesomelead.groupware_backend.domain.user.enums.Status;
 import kr.co.awesomelead.groupware_backend.domain.visit.entity.Visit;
+import kr.co.awesomelead.groupware_backend.global.encryption.PhoneNumberEncryptor;
+import kr.co.awesomelead.groupware_backend.global.encryption.RegistrationNumberEncryptor;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -74,10 +77,12 @@ public class User {
     @Column(length = 30)
     private String nationality; // 국적
 
-    @Column(unique = true, nullable = false, columnDefinition = "CHAR(14)")
+    @Column(unique = true, nullable = false, length = 500)
+    @Convert(converter = RegistrationNumberEncryptor.class)
     private String registrationNumber; // 주민등록번호 또는 외국인번호
 
-    @Column(nullable = false, length = 15)
+    @Column(nullable = false, length = 300)
+    @Convert(converter = PhoneNumberEncryptor.class)
     private String phoneNumber; // 전화번호
 
     // == 관리자가 입력/수정하는 정보 == //
@@ -161,19 +166,21 @@ public class User {
         return this.authorities.contains(authority);
     }
 
-    public void calculateBirthDateFromRegistrationNumber() {
-        if (this.registrationNumber == null || this.registrationNumber.length() < 7) {
-            return;
-        }
+    public void setRegistrationNumber(String registrationNumber) {
+        this.registrationNumber = registrationNumber;
 
+        // 암호화되기 전 원본 값으로 생년월일 계산
+        if (registrationNumber != null && registrationNumber.length() >= 7) {
+            this.birthDate = calculateBirthDate(registrationNumber);
+        }
+    }
+
+    private LocalDate calculateBirthDate(String regNum) {
         // 앞 6자리 추출 (YYMMDD)
-        String birthPart = this.registrationNumber.substring(0, 6);
+        String birthPart = regNum.substring(0, 6);
 
         // 뒤 첫 번째 자리 추출 (성별/세기 구분자)
-        char genderDigit =
-                this.registrationNumber.contains("-")
-                        ? this.registrationNumber.charAt(7)
-                        : this.registrationNumber.charAt(6);
+        char genderDigit = regNum.contains("-") ? regNum.charAt(7) : regNum.charAt(6);
 
         // 세기 판단
         String century;
@@ -185,12 +192,12 @@ public class User {
                 || genderDigit == '8') {
             century = "20";
         } else {
-            century = "20"; // 기본값 (보통 2000년대생)
+            century = "20"; // 기본값
         }
 
-        // LocalDate로 변환하여 set
+        // LocalDate로 변환
         String fullDate = century + birthPart;
-        this.birthDate = LocalDate.parse(fullDate, DateTimeFormatter.ofPattern("yyyyMMdd"));
+        return LocalDate.parse(fullDate, DateTimeFormatter.ofPattern("yyyyMMdd"));
     }
 
     public String getDisplayName() {

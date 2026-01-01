@@ -3,11 +3,14 @@ package kr.co.awesomelead.groupware_backend.domain.visit.entity;
 import com.fasterxml.jackson.annotation.JsonManagedReference;
 
 import jakarta.persistence.Column;
+import jakarta.persistence.Convert;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.OneToMany;
+
+import kr.co.awesomelead.groupware_backend.global.encryption.PhoneNumberEncryptor;
 
 import lombok.Getter;
 import lombok.Setter;
@@ -27,7 +30,8 @@ public class Visitor {
     @Column(nullable = false, length = 10)
     private String name; // 방문자 이름
 
-    @Column(nullable = false, length = 11)
+    @Column(nullable = false, length = 300)
+    @Convert(converter = PhoneNumberEncryptor.class)
     private String phoneNumber; // 방문자 전화번호
 
     @Column(columnDefinition = "CHAR(4)")

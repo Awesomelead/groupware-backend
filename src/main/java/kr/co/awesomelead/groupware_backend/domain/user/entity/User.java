@@ -2,7 +2,6 @@ package kr.co.awesomelead.groupware_backend.domain.user.entity;
 
 import com.fasterxml.jackson.annotation.JsonBackReference;
 import com.fasterxml.jackson.annotation.JsonManagedReference;
-
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.CollectionTable;
 import jakarta.persistence.Column;
@@ -19,8 +18,19 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.OneToOne;
+import jakarta.persistence.PrePersist;
+import jakarta.persistence.PreUpdate;
 import jakarta.persistence.Table;
-
+import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
+import java.util.Base64;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 import kr.co.awesomelead.groupware_backend.domain.annualleave.entity.AnnualLeave;
 import kr.co.awesomelead.groupware_backend.domain.checksheet.entity.CheckSheet;
 import kr.co.awesomelead.groupware_backend.domain.department.entity.Department;
@@ -34,19 +44,11 @@ import kr.co.awesomelead.groupware_backend.domain.user.enums.Status;
 import kr.co.awesomelead.groupware_backend.domain.visit.entity.Visit;
 import kr.co.awesomelead.groupware_backend.global.encryption.PhoneNumberEncryptor;
 import kr.co.awesomelead.groupware_backend.global.encryption.RegistrationNumberEncryptor;
-
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
-
-import java.time.LocalDate;
-import java.time.format.DateTimeFormatter;
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
 
 @Entity
 @Getter
@@ -84,6 +86,9 @@ public class User {
     @Column(nullable = false, length = 300)
     @Convert(converter = PhoneNumberEncryptor.class)
     private String phoneNumber; // 전화번호
+
+    @Column(nullable = false, length = 64, unique = true)
+    private String phoneNumberHash; // SHA-256 해시 (조회용)
 
     // == 관리자가 입력/수정하는 정보 == //
     private LocalDate hireDate; // 입사일
@@ -156,6 +161,30 @@ public class User {
     @Column(name = "authority")
     private Set<Authority> authorities = new HashSet<>();
 
+
+    // JPA 저장 직전에 자동으로 해시 생성
+    @PrePersist
+    @PreUpdate
+    public void generatePhoneNumberHash() {
+        if (this.phoneNumber != null && this.phoneNumberHash == null) {
+            this.phoneNumberHash = hashPhoneNumber(this.phoneNumber);
+        }
+    }
+
+    // hashPhoneNumber 메서드
+    public static String hashPhoneNumber(String phoneNumber) {
+        if (phoneNumber == null || phoneNumber.isEmpty()) {
+            return null;
+        }
+        try {
+            MessageDigest digest = MessageDigest.getInstance("SHA-256");
+            byte[] hash = digest.digest(phoneNumber.getBytes(StandardCharsets.UTF_8));
+            return Base64.getEncoder().encodeToString(hash);
+        } catch (NoSuchAlgorithmException e) {
+            throw new RuntimeException("SHA-256 알고리즘을 찾을 수 없습니다.", e);
+        }
+    }
+
     // 권한 추가
     public void addAuthority(Authority authority) {
         this.authorities.add(authority);
@@ -187,9 +216,9 @@ public class User {
         if (genderDigit == '1' || genderDigit == '2' || genderDigit == '5' || genderDigit == '6') {
             century = "19";
         } else if (genderDigit == '3'
-                || genderDigit == '4'
-                || genderDigit == '7'
-                || genderDigit == '8') {
+            || genderDigit == '4'
+            || genderDigit == '7'
+            || genderDigit == '8') {
             century = "20";
         } else {
             century = "20"; // 기본값

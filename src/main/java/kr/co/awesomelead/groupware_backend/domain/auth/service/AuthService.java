@@ -2,6 +2,7 @@ package kr.co.awesomelead.groupware_backend.domain.auth.service;
 
 import java.util.Collection;
 import java.util.Iterator;
+import java.util.List;
 import kr.co.awesomelead.groupware_backend.domain.aligo.service.PhoneAuthService;
 import kr.co.awesomelead.groupware_backend.domain.auth.dto.request.LoginRequestDto;
 import kr.co.awesomelead.groupware_backend.domain.auth.dto.request.SignupRequestDto;
@@ -15,6 +16,7 @@ import kr.co.awesomelead.groupware_backend.domain.user.repository.UserRepository
 import kr.co.awesomelead.groupware_backend.global.CustomException;
 import kr.co.awesomelead.groupware_backend.global.ErrorCode;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
@@ -23,6 +25,7 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class AuthService {
@@ -132,23 +135,59 @@ public class AuthService {
 
     @Transactional
     public FindEmailResponseDto findEmail(String name, String phoneNumber) {
+        long startTime = System.currentTimeMillis();
 
         // 1. 휴대폰 인증 확인
         if (!phoneAuthService.isPhoneVerified(phoneNumber)) {
             throw new CustomException(ErrorCode.PHONE_NOT_VERIFIED);
         }
 
-        // 2. 이름 + 휴대폰 번호로 사용자 찾기
-        User user = userRepository.findByNameKorAndPhoneNumber(name, phoneNumber)
+        // 2. 이름이 일치하는 모든 사용자 조회
+        List<User> users = userRepository.findAllByNameKor(name);
+        log.info("조회된 사용자 수: {}", users.size());
+
+        // 3. 복호화해서 휴대폰 번호 비교
+        User user = users.stream()
+            .filter(u -> u.getPhoneNumber().equals(phoneNumber))
+            .findFirst()
             .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
 
-        // 3. 인증 플래그 삭제
+        long endTime = System.currentTimeMillis();
+        log.info("전체 조회 방식 소요 시간: {}ms", endTime - startTime);
+
+        // 4. 인증 플래그 삭제
         phoneAuthService.clearVerification(phoneNumber);
 
-        // 4. 이메일 마스킹 처리
-        String maskedEmail = maskEmail(user.getEmail());
+        // 5. 응답 생성
+        return new FindEmailResponseDto(maskEmail(user.getEmail()));
+    }
 
-        return new FindEmailResponseDto(maskedEmail);
+    public FindEmailResponseDto findEmailByHash(String name, String phoneNumber) {
+        long startTime = System.currentTimeMillis();
+
+        // 1. 휴대폰 인증 확인
+        if (!phoneAuthService.isPhoneVerified(phoneNumber)) {
+            throw new CustomException(ErrorCode.PHONE_NOT_VERIFIED);
+        }
+
+        // 2. 해시로 사용자 찾기
+        String phoneNumberHash = User.hashPhoneNumber(phoneNumber);
+        User user = userRepository.findByPhoneNumberHash(phoneNumberHash)
+            .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
+
+        // 3. 이름 검증
+        if (!user.getNameKor().equals(name)) {
+            throw new CustomException(ErrorCode.USER_NOT_FOUND);
+        }
+
+        long endTime = System.currentTimeMillis();
+        log.info("해시 검색 방식 소요 시간: {}ms", endTime - startTime);
+
+        // 4. 인증 플래그 삭제
+        phoneAuthService.clearVerification(phoneNumber);
+
+        // 5. 응답 생성
+        return new FindEmailResponseDto(maskEmail(user.getEmail()));
     }
 
     private String maskEmail(String email) {

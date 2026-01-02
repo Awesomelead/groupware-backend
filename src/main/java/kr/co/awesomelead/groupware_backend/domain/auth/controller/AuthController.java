@@ -128,13 +128,26 @@ public class AuthController {
         return ResponseEntity.ok(new ReissueResponseDto(tokens.getAccessToken()));
     }
 
-    @Operation(summary = "아이디 찾기", description = "휴대폰 번호로 아이디를 찾습니다.")
+    @Operation(summary = "아이디 찾기 (전체 조회)", description = "전체 조회하여 휴대폰 번호로 아이디를 찾습니다.")
     @PostMapping("/find-email")
     public ResponseEntity<FindEmailResponseDto> findEmail(
         @Valid @RequestBody FindEmailRequestDto requestDto) {
 
         FindEmailResponseDto response = authService.findEmail(
             requestDto.getName(), requestDto.getPhoneNumber()
+        );
+
+        return ResponseEntity.ok(response);
+    }
+
+    @Operation(summary = "아이디 찾기 (해시)", description = "해시 기반 검색하여 휴대폰 번호로 아이디를 찾습니다.")
+    @PostMapping("/find-email/hash")
+    public ResponseEntity<FindEmailResponseDto> findEmailByHash(
+        @Valid @RequestBody FindEmailRequestDto requestDto) {
+
+        FindEmailResponseDto response = authService.findEmailByHash(
+            requestDto.getName(),
+            requestDto.getPhoneNumber()
         );
 
         return ResponseEntity.ok(response);

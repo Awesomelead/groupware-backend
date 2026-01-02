@@ -1,5 +1,6 @@
 package kr.co.awesomelead.groupware_backend.domain.user.repository;
 
+import java.util.List;
 import java.util.Optional;
 import kr.co.awesomelead.groupware_backend.domain.department.entity.Department;
 import kr.co.awesomelead.groupware_backend.domain.user.entity.User;
@@ -15,5 +16,7 @@ public interface UserRepository extends JpaRepository<User, Long> {
 
     long countByDepartment(Department department);
 
-    Optional<User> findByNameKorAndPhoneNumber(String nameKor, String phoneNumber);
+    List<User> findAllByNameKor(String nameKor);
+
+    Optional<User> findByPhoneNumberHash(String phoneNumberHash);
 }

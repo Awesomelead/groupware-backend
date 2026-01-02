@@ -38,18 +38,18 @@ public class DepartmentService {
 
     @Transactional(readOnly = true)
     public List<UserSummaryResponseDto> getUsersByDepartmentHierarchy(Long departmentId) {
-        // 1. 기준 부서 조회
+        // 기준 부서 조회
         Department targetDept = departmentRepository.findById(departmentId)
             .orElseThrow(() -> new CustomException(ErrorCode.DEPARTMENT_NOT_FOUND));
 
-        // 2. 모든 하위 부서 ID 수집 (본인 포함)
+        // 모든 하위 부서 ID 수집 (본인 포함)
         List<Long> allDeptIds = new ArrayList<>();
         collectDepartmentIdsRecursive(targetDept, allDeptIds);
 
-        // 3. 해당 부서들에 속한 모든 유저 조회
+        // 해당 부서들에 속한 모든 유저 조회
         List<User> users = userRepository.findAllByDepartmentIdIn(allDeptIds);
 
-        // 4. DTO 변환 및 반환
+        // DTO 변환 및 반환
         return users.stream()
             .map(userMapper::toSummaryDto)
             .toList();

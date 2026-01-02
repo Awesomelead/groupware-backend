@@ -1,13 +1,23 @@
 package kr.co.awesomelead.groupware_backend.domain.auth.service;
 
+import java.util.Collection;
+import java.util.Iterator;
 import kr.co.awesomelead.groupware_backend.domain.aligo.service.PhoneAuthService;
+import kr.co.awesomelead.groupware_backend.domain.auth.dto.request.LoginRequestDto;
 import kr.co.awesomelead.groupware_backend.domain.auth.dto.request.SignupRequestDto;
+import kr.co.awesomelead.groupware_backend.domain.auth.dto.response.AuthTokensDto;
+import kr.co.awesomelead.groupware_backend.domain.auth.entity.RefreshToken;
+import kr.co.awesomelead.groupware_backend.domain.auth.util.JWTUtil;
 import kr.co.awesomelead.groupware_backend.domain.user.entity.User;
 import kr.co.awesomelead.groupware_backend.domain.user.mapper.UserMapper;
 import kr.co.awesomelead.groupware_backend.domain.user.repository.UserRepository;
 import kr.co.awesomelead.groupware_backend.global.CustomException;
 import kr.co.awesomelead.groupware_backend.global.ErrorCode;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -21,6 +31,9 @@ public class AuthService {
     private final PhoneAuthService phoneAuthService;
     private final EmailAuthService emailAuthService;
     private final UserMapper userMapper;
+    private final AuthenticationManager authenticationManager;
+    private final JWTUtil jwtUtil;
+    private final RefreshTokenService refreshTokenService;
 
     @Transactional
     public void signup(SignupRequestDto joinDto) {
@@ -61,5 +74,58 @@ public class AuthService {
         // 8. 인증 완료 플래그 삭제
         emailAuthService.clearVerification(joinDto.getEmail());
         phoneAuthService.clearVerification(joinDto.getPhoneNumber());
+    }
+
+    public AuthTokensDto login(LoginRequestDto requestDto) {
+        // 1. 인증 처리
+        UsernamePasswordAuthenticationToken authToken =
+            new UsernamePasswordAuthenticationToken(
+                requestDto.getEmail(),
+                requestDto.getPassword(),
+                null);
+
+        Authentication authentication = authenticationManager.authenticate(authToken);
+
+        // 2. 사용자 정보 추출
+        String username = authentication.getName();
+
+        // 3. 역할(Role) 정보 추출
+        Collection<? extends GrantedAuthority> authorities = authentication.getAuthorities();
+        Iterator<? extends GrantedAuthority> iterator = authorities.iterator();
+        GrantedAuthority auth = iterator.next();
+        String role = auth.getAuthority().replace("ROLE_", "");
+
+        // 4. Access Token 생성 (1시간 유효)
+        String accessToken = jwtUtil.createJwt(username, role, 60 * 60 * 1000L);
+
+        // 5. Refresh Token 생성 및 DB 저장
+        String refreshToken = refreshTokenService.createAndSaveRefreshToken(username, role);
+
+        // 6. 두 토큰 모두 반환
+        return new AuthTokensDto(accessToken, refreshToken);
+    }
+
+    public void logout(String refreshToken) {
+        if (refreshToken != null) {
+            refreshTokenService.deleteRefreshToken(refreshToken);
+        }
+    }
+
+    public AuthTokensDto reissue(String refreshToken) {
+        // 1. Refresh Token 검증 및 DB 조회
+        RefreshToken storedToken = refreshTokenService.validateRefreshToken(refreshToken);
+
+        // 2. 토큰에서 사용자 정보 추출
+        String username = jwtUtil.getUsername(storedToken.getTokenValue());
+        String role = jwtUtil.getRole(storedToken.getTokenValue());
+
+        // 3. 새로운 Access Token 생성 (1시간 유효)
+        String newAccessToken = jwtUtil.createJwt(username, role, 60 * 60 * 1000L);
+
+        // 4. 새로운 Refresh Token 생성 및 DB 업데이트
+        String newRefreshToken = refreshTokenService.createAndSaveRefreshToken(username, role);
+
+        // 5. 두 토큰 모두 반환
+        return new AuthTokensDto(newAccessToken, newRefreshToken);
     }
 }

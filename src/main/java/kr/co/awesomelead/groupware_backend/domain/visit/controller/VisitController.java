@@ -17,7 +17,6 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -66,9 +65,9 @@ public class VisitController {
     }
 
     @Operation(summary = "내 방문 정보 조회 ", description = "내방객이 사전등록 정보 목록을 조회합니다.")
-    @GetMapping("/visitor")
+    @PostMapping("/visitor")
     public ResponseEntity<List<VisitSummaryResponseDto>> getMyVisits(
-        @ModelAttribute @Valid VisitSearchRequestDto requestDto) {
+        @RequestBody @Valid VisitSearchRequestDto requestDto) {
 
         return ResponseEntity.ok(visitService.getMyVisits(requestDto));
     }

@@ -8,8 +8,12 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import java.time.LocalDateTime;
+import java.util.List;
+import java.util.Optional;
 import kr.co.awesomelead.groupware_backend.domain.user.entity.User;
 import kr.co.awesomelead.groupware_backend.domain.user.repository.UserRepository;
+import kr.co.awesomelead.groupware_backend.domain.visit.dto.request.CheckOutRequestDto;
 import kr.co.awesomelead.groupware_backend.domain.visit.dto.request.CompanionRequestDto;
 import kr.co.awesomelead.groupware_backend.domain.visit.dto.request.VisitCreateRequestDto;
 import kr.co.awesomelead.groupware_backend.domain.visit.dto.request.VisitSearchRequestDto;
@@ -25,7 +29,6 @@ import kr.co.awesomelead.groupware_backend.domain.visit.repository.VisitorReposi
 import kr.co.awesomelead.groupware_backend.domain.visit.service.VisitService;
 import kr.co.awesomelead.groupware_backend.global.CustomException;
 import kr.co.awesomelead.groupware_backend.global.ErrorCode;
-
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -36,19 +39,20 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.util.ReflectionTestUtils;
 
-import java.time.LocalDateTime;
-import java.util.List;
-import java.util.Optional;
-
 @ExtendWith(MockitoExtension.class)
 @ActiveProfiles("test")
 public class VisitServiceTest {
 
-    @Mock private VisitRepository visitRepository;
-    @Mock private VisitorRepository visitorRepository;
-    @Mock private UserRepository userRepository;
-    @InjectMocks private VisitService visitService;
-    @Mock private VisitMapper visitMapper;
+    @Mock
+    private VisitRepository visitRepository;
+    @Mock
+    private VisitorRepository visitorRepository;
+    @Mock
+    private UserRepository userRepository;
+    @InjectMocks
+    private VisitService visitService;
+    @Mock
+    private VisitMapper visitMapper;
 
     @Test
     @DisplayName("현장 방문 등록 성공 테스트 - 동행자 포함")
@@ -65,37 +69,37 @@ public class VisitServiceTest {
         ReflectionTestUtils.setField(visitor, "phoneNumber", requestDto.getVisitorPhone());
 
         Visit visit =
-                Visit.builder()
-                        .user(host)
-                        .visitor(visitor)
-                        .hostCompany(requestDto.getHostCompany())
-                        .visitorCompany(requestDto.getVisitorCompany())
-                        .visitType(VisitType.ON_SITE)
-                        .visited(true)
-                        .verified(true)
-                        .build();
+            Visit.builder()
+                .user(host)
+                .visitor(visitor)
+                .hostCompany(requestDto.getHostCompany())
+                .visitorCompany(requestDto.getVisitorCompany())
+                .visitType(VisitType.ON_SITE)
+                .visited(true)
+                .verified(true)
+                .build();
         // 동행자 수동 추가 (매퍼 동작 모킹용)
         visit.addCompanion(Companion.builder().name("동행자1").build());
 
         // Mock 설정
         when(userRepository.findById(hostId)).thenReturn(Optional.of(host));
         when(visitorRepository.findByPhoneNumberHash(requestDto.getVisitorPhone()))
-                .thenReturn(Optional.of(visitor));
+            .thenReturn(Optional.of(visitor));
         when(visitMapper.toVisitEntity(any(), any(), any(), any())).thenReturn(visit);
         VisitResponseDto mockResponse =
-                VisitResponseDto.builder()
-                        .id(100L) // 실제 서비스 로직이 반환할 데이터와 유사하게 세팅
-                        .visitorName(requestDto.getVisitorName())
-                        .build();
+            VisitResponseDto.builder()
+                .id(100L) // 실제 서비스 로직이 반환할 데이터와 유사하게 세팅
+                .visitorName(requestDto.getVisitorName())
+                .build();
         when(visitMapper.toResponseDto(any())).thenReturn(mockResponse);
 
         when(visitRepository.save(any(Visit.class)))
-                .thenAnswer(
-                        invocation -> {
-                            Visit v = invocation.getArgument(0);
-                            ReflectionTestUtils.setField(v, "id", 100L);
-                            return v;
-                        });
+            .thenAnswer(
+                invocation -> {
+                    Visit v = invocation.getArgument(0);
+                    ReflectionTestUtils.setField(v, "id", 100L);
+                    return v;
+                });
 
         // when
         VisitResponseDto response = visitService.createOnSiteVisit(requestDto);
@@ -121,8 +125,8 @@ public class VisitServiceTest {
 
         // when & then
         CustomException exception =
-                assertThrows(
-                        CustomException.class, () -> visitService.createOnSiteVisit(requestDto));
+            assertThrows(
+                CustomException.class, () -> visitService.createOnSiteVisit(requestDto));
 
         assertThat(exception.getErrorCode()).isEqualTo(ErrorCode.USER_NOT_FOUND);
         verify(visitRepository, never()).save(any());
@@ -160,10 +164,10 @@ public class VisitServiceTest {
 
         // when & then
         CustomException exception =
-                assertThrows(CustomException.class, () -> visitService.createPreVisit(requestDto));
+            assertThrows(CustomException.class, () -> visitService.createPreVisit(requestDto));
 
         assertThat(exception.getErrorCode())
-                .isEqualTo(ErrorCode.VISITOR_PASSWORD_REQUIRED_FOR_PRE_REGISTRATION);
+            .isEqualTo(ErrorCode.VISITOR_PASSWORD_REQUIRED_FOR_PRE_REGISTRATION);
     }
 
     @Test
@@ -177,7 +181,7 @@ public class VisitServiceTest {
 
         String phoneNumberHash = Visitor.hashPhoneNumber(searchDto.getPhoneNumber());
         when(visitorRepository.findByPhoneNumberHash(phoneNumberHash))
-                .thenReturn(Optional.of(visitor));
+            .thenReturn(Optional.of(visitor));
         when(visitRepository.findByVisitor(visitor)).thenReturn(List.of(Visit.builder().build()));
         // when
         visitService.getMyVisits(searchDto);
@@ -191,7 +195,7 @@ public class VisitServiceTest {
     void getMyVisits_Fail_Authentication() {
         // given
         VisitSearchRequestDto searchDto =
-                new VisitSearchRequestDto("방문객", "01012345678", "wrong_pw");
+            new VisitSearchRequestDto("방문객", "01012345678", "wrong_pw");
         Visitor visitor = new Visitor();
         ReflectionTestUtils.setField(visitor, "name", "방문객");
         ReflectionTestUtils.setField(visitor, "password", "1234"); // 실제 비번은 1234
@@ -200,7 +204,7 @@ public class VisitServiceTest {
 
         // when & then
         CustomException exception =
-                assertThrows(CustomException.class, () -> visitService.getMyVisits(searchDto));
+            assertThrows(CustomException.class, () -> visitService.getMyVisits(searchDto));
 
         assertThat(exception.getErrorCode()).isEqualTo(ErrorCode.VISITOR_AUTHENTICATION_FAILED);
     }
@@ -217,7 +221,6 @@ public class VisitServiceTest {
         visitService.checkIn(visitId);
 
         // then
-        // 엔티티 내부의 checkIn()이 호출되어 visitStartDate가 채워졌는지 검증
         assertThat(visit.getVisitStartDate()).isNotNull();
     }
 
@@ -226,14 +229,18 @@ public class VisitServiceTest {
     void checkOut_Success() {
         // given
         Long visitId = 100L;
+        LocalDateTime checkOutTime = LocalDateTime.now();
+
+        CheckOutRequestDto requestDto = new CheckOutRequestDto(visitId, checkOutTime);
+
         Visit visit = Visit.builder().build();
         when(visitRepository.findById(visitId)).thenReturn(Optional.of(visit));
 
         // when
-        visitService.checkOut(visitId);
+        visitService.checkOut(requestDto);
 
         // then
-        assertThat(visit.getVisitEndDate()).isNotNull();
+        assertThat(visit.getVisitEndDate()).isEqualTo(checkOutTime);
     }
 
     @Test
@@ -241,14 +248,19 @@ public class VisitServiceTest {
     void checkOut_Fail_AlreadyCheckedOut() {
         // given
         Long visitId = 100L;
+        LocalDateTime checkOutTime = LocalDateTime.now();
+
+        CheckOutRequestDto requestDto = new CheckOutRequestDto(visitId, checkOutTime);
+
         Visit visit = Visit.builder().build();
-        ReflectionTestUtils.setField(visit, "visitEndDate", LocalDateTime.now()); // 이미 퇴실함
+        // 이미 퇴실한 상태로 설정
+        ReflectionTestUtils.setField(visit, "visitEndDate", LocalDateTime.now().minusHours(1));
 
         when(visitRepository.findById(visitId)).thenReturn(Optional.of(visit));
 
         // when & then
         CustomException exception =
-                assertThrows(CustomException.class, () -> visitService.checkOut(visitId));
+            assertThrows(CustomException.class, () -> visitService.checkOut(requestDto));
 
         assertThat(exception.getErrorCode()).isEqualTo(ErrorCode.VISIT_ALREADY_CHECKED_OUT);
     }

@@ -101,7 +101,8 @@ public class VisitServiceTest {
 
         // Mock 설정
         when(userRepository.findById(hostId)).thenReturn(Optional.of(host));
-        when(visitorRepository.findByPhoneNumberHash(requestDto.getVisitorPhone()))
+        String phoneNumberHash = Visitor.hashPhoneNumber(requestDto.getVisitorPhone());
+        when(visitorRepository.findByPhoneNumberHash(phoneNumberHash))
             .thenReturn(Optional.of(visitor));
         when(s3Service.uploadFile(any(MultipartFile.class))).thenReturn(s3Key);
         when(visitMapper.toVisitEntity(any(), any(), any(), any())).thenReturn(visit);
@@ -177,7 +178,9 @@ public class VisitServiceTest {
         Visit visit = Visit.builder().build();
 
         when(userRepository.findById(any())).thenReturn(Optional.of(host));
-        when(visitorRepository.findByPhoneNumberHash(any())).thenReturn(Optional.of(visitor));
+        String phoneNumberHash = Visitor.hashPhoneNumber(requestDto.getVisitorPhone());
+        when(visitorRepository.findByPhoneNumberHash(phoneNumberHash)).thenReturn(
+            Optional.of(new Visitor()));
         when(s3Service.uploadFile(any())).thenReturn(s3Key);
         when(visitMapper.toVisitEntity(any(), any(), any(), any())).thenReturn(visit);
         when(visitRepository.save(any())).thenReturn(visit);

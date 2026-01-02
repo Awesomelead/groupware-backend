@@ -56,6 +56,11 @@ public class VisitService {
 
     private VisitResponseDto createVisitProcess(VisitCreateRequestDto dto,
         MultipartFile signatureFile, VisitType type) throws IOException {
+
+        if (signatureFile == null || signatureFile.isEmpty()) {
+            throw new CustomException(ErrorCode.NO_SIGNATURE_PROVIDED);
+        }
+        
         // 사전 방문 예약 시, 비밀번호 필수 체크
         if (type == VisitType.PRE_REGISTRATION && !StringUtils.hasText(dto.getVisitorPassword())) {
             throw new CustomException(ErrorCode.VISITOR_PASSWORD_REQUIRED_FOR_PRE_REGISTRATION);
@@ -117,8 +122,11 @@ public class VisitService {
     }
 
     private Visitor getOrCreateVisitor(VisitCreateRequestDto dto, VisitType type) {
+
+        String phoneNumberHash = Visitor.hashPhoneNumber(dto.getVisitorPhone());
+
         return visitorRepository
-            .findByPhoneNumberHash(dto.getVisitorPhone())
+            .findByPhoneNumberHash(phoneNumberHash)
             .map(
                 existingVisitor -> {
                     // 기존 방문자가 있고, 사전 예약 시 새로운 비번이 들어왔다면 갱신

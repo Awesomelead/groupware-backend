@@ -1,5 +1,6 @@
 package kr.co.awesomelead.groupware_backend.domain.visit.service;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import kr.co.awesomelead.groupware_backend.domain.department.entity.Department;
@@ -21,15 +22,15 @@ import kr.co.awesomelead.groupware_backend.domain.visit.repository.VisitReposito
 import kr.co.awesomelead.groupware_backend.domain.visit.repository.VisitorRepository;
 import kr.co.awesomelead.groupware_backend.global.CustomException;
 import kr.co.awesomelead.groupware_backend.global.ErrorCode;
-
+import kr.co.awesomelead.groupware_backend.global.infra.s3.S3Service;
 import lombok.RequiredArgsConstructor;
-
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
+import org.springframework.web.multipart.MultipartFile;
 
-import java.util.List;
-
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class VisitService {
@@ -39,18 +40,22 @@ public class VisitService {
     private final UserRepository userRepository;
     private final DepartmentRepository departmentRepository;
     private final VisitMapper visitMapper;
+    private final S3Service s3Service;
 
     @Transactional
-    public VisitResponseDto createPreVisit(VisitCreateRequestDto requestDto) {
-        return createVisitProcess(requestDto, VisitType.PRE_REGISTRATION);
+    public VisitResponseDto createPreVisit(VisitCreateRequestDto requestDto,
+        MultipartFile signatureFile) throws IOException {
+        return createVisitProcess(requestDto, signatureFile, VisitType.PRE_REGISTRATION);
     }
 
     @Transactional
-    public VisitResponseDto createOnSiteVisit(VisitCreateRequestDto requestDto) {
-        return createVisitProcess(requestDto, VisitType.ON_SITE);
+    public VisitResponseDto createOnSiteVisit(VisitCreateRequestDto requestDto,
+        MultipartFile signatureFile) throws IOException {
+        return createVisitProcess(requestDto, signatureFile, VisitType.ON_SITE);
     }
 
-    private VisitResponseDto createVisitProcess(VisitCreateRequestDto dto, VisitType type) {
+    private VisitResponseDto createVisitProcess(VisitCreateRequestDto dto,
+        MultipartFile signatureFile, VisitType type) throws IOException {
         // 사전 방문 예약 시, 비밀번호 필수 체크
         if (type == VisitType.PRE_REGISTRATION && !StringUtils.hasText(dto.getVisitorPassword())) {
             throw new CustomException(ErrorCode.VISITOR_PASSWORD_REQUIRED_FOR_PRE_REGISTRATION);
@@ -58,39 +63,73 @@ public class VisitService {
 
         // 담당 직원 조회
         User host =
-                userRepository
-                        .findById(dto.getHostUserId())
-                        .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
+            userRepository
+                .findById(dto.getHostUserId())
+                .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
 
         // 내방객 조회 혹은 생성
         Visitor visitor = getOrCreateVisitor(dto, type);
 
-        // Mapper
-        Visit visit = visitMapper.toVisitEntity(dto, host, visitor, type);
+        String signatureKey = null;
+        try {
+            // 3. 서명 이미지 처리 (PNG 검증 및 S3 업로드)
+            if (signatureFile != null && !signatureFile.isEmpty()) {
+                validatePngFormat(signatureFile);
+                signatureKey = s3Service.uploadFile(signatureFile);
+            }
 
-        if (visit.getCompanions() != null) {
-            visit.getCompanions().forEach(companion -> companion.setVisit(visit));
+            // 4. 엔티티 생성 및 서명 키 설정
+            Visit visit = visitMapper.toVisitEntity(dto, host, visitor, type);
+            visit.setSignatureKey(signatureKey); // S3 키 저장
+
+            if (visit.getCompanions() != null) {
+                visit.getCompanions().forEach(companion -> companion.setVisit(visit));
+            }
+
+            // 5. DB 저장
+            Visit savedVisit = visitRepository.save(visit);
+            return visitMapper.toResponseDto(savedVisit);
+
+        } catch (Exception e) {
+            // 6. DB 저장 중 에러 발생 시 S3 파일 삭제 (고아 파일 방지)
+            deleteS3FileIfExist(signatureKey);
+            throw e;
         }
+    }
 
-        Visit savedVisit = visitRepository.save(visit);
+    // PNG 형식 검증
+    private void validatePngFormat(MultipartFile file) {
+        String contentType = file.getContentType();
+        if (contentType == null || !contentType.equals("image/png")) {
+            throw new CustomException(ErrorCode.INVALID_SIGNATURE_FORMAT);
+        }
+    }
 
-        return visitMapper.toResponseDto(savedVisit);
+    // S3 파일 삭제 헬퍼
+    private void deleteS3FileIfExist(String signatureKey) {
+        if (signatureKey != null) {
+            try {
+                s3Service.deleteFile(signatureKey);
+            } catch (Exception s3Ex) {
+                log.error("롤백 중 S3 파일 삭제 실패: {}", signatureKey);
+            }
+        }
     }
 
     private Visitor getOrCreateVisitor(VisitCreateRequestDto dto, VisitType type) {
         return visitorRepository
-                .findByPhoneNumberHash(dto.getVisitorPhone())
-                .map(
-                        existingVisitor -> {
-                            // 기존 방문자가 있고, 사전 예약 시 새로운 비번이 들어왔다면 갱신
-                            if (type == VisitType.PRE_REGISTRATION
-                                    && StringUtils.hasText(dto.getVisitorPassword())) {
-                                existingVisitor.setPassword(dto.getVisitorPassword());
-                                return visitorRepository.save(existingVisitor);
-                            }
-                            return existingVisitor;
-                        })
-                .orElseGet(() -> visitorRepository.save(visitMapper.toVisitorEntity(dto)));
+            .findByPhoneNumberHash(dto.getVisitorPhone())
+            .map(
+                existingVisitor -> {
+                    // 기존 방문자가 있고, 사전 예약 시 새로운 비번이 들어왔다면 갱신
+                    if (type == VisitType.PRE_REGISTRATION
+                        && StringUtils.hasText(dto.getVisitorPassword())) {
+                        existingVisitor.setPassword(dto.getVisitorPassword());
+                        return visitorRepository.save(existingVisitor);
+                    }
+                    return existingVisitor;
+                })
+            .orElseGet(() -> visitorRepository.save(visitMapper.toVisitorEntity(dto)));
     }
 
     @Transactional(readOnly = true)
@@ -98,12 +137,12 @@ public class VisitService {
 
         String phoneNumberHash = Visitor.hashPhoneNumber(requestDto.getPhoneNumber());
         Visitor visitor =
-                visitorRepository
-                        .findByPhoneNumberHash(phoneNumberHash)
-                        .orElseThrow(() -> new CustomException(ErrorCode.VISITOR_NOT_FOUND));
+            visitorRepository
+                .findByPhoneNumberHash(phoneNumberHash)
+                .orElseThrow(() -> new CustomException(ErrorCode.VISITOR_NOT_FOUND));
 
         if (!visitor.getName().equals(requestDto.getName())
-                || !visitor.getPassword().equals(requestDto.getPassword())) {
+            || !visitor.getPassword().equals(requestDto.getPassword())) {
             throw new CustomException(ErrorCode.VISITOR_AUTHENTICATION_FAILED);
         }
 
@@ -114,9 +153,9 @@ public class VisitService {
     @Transactional(readOnly = true)
     public MyVisitResponseDto getMyVisitDetail(Long visitId) {
         Visit visit =
-                visitRepository
-                        .findById(visitId)
-                        .orElseThrow(() -> new CustomException(ErrorCode.VISIT_NOT_FOUND));
+            visitRepository
+                .findById(visitId)
+                .orElseThrow(() -> new CustomException(ErrorCode.VISIT_NOT_FOUND));
 
         return visitMapper.toMyVisitResponseDto(visit);
     }
@@ -158,19 +197,16 @@ public class VisitService {
     }
 
     @Transactional(readOnly = true)
-    public VisitDetailResponseDto getVisitDetailByEmployee(Long userId, Long visitId) {
-        User host =
-            userRepository
-                .findById(userId)
-                .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
-        Department department = host.getDepartment();
+    public VisitDetailResponseDto getVisitDetailByEmployee(Long visitId) {
 
         Visit visit =
             visitRepository
                 .findById(visitId)
                 .orElseThrow(() -> new CustomException(ErrorCode.VISIT_NOT_FOUND));
-        return visitMapper.toVisitDetailResponseDto(visit);
+        VisitDetailResponseDto responseDto = visitMapper.toVisitDetailResponseDto(visit);
+        responseDto.setSignatureUrl(s3Service.getPresignedViewUrl(visit.getSignatureKey()));
 
+        return responseDto;
     }
 
     // 사전 내방객의 현장 방문처리
@@ -178,9 +214,9 @@ public class VisitService {
     @Transactional
     public void checkIn(Long visitId) {
         Visit visit =
-                visitRepository
-                        .findById(visitId)
-                        .orElseThrow(() -> new CustomException(ErrorCode.VISIT_NOT_FOUND));
+            visitRepository
+                .findById(visitId)
+                .orElseThrow(() -> new CustomException(ErrorCode.VISIT_NOT_FOUND));
         visit.checkIn();
     }
 

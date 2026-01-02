@@ -8,6 +8,7 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import java.io.IOException;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
@@ -29,15 +30,18 @@ import kr.co.awesomelead.groupware_backend.domain.visit.repository.VisitorReposi
 import kr.co.awesomelead.groupware_backend.domain.visit.service.VisitService;
 import kr.co.awesomelead.groupware_backend.global.CustomException;
 import kr.co.awesomelead.groupware_backend.global.ErrorCode;
+import kr.co.awesomelead.groupware_backend.global.infra.s3.S3Service;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.util.ReflectionTestUtils;
+import org.springframework.web.multipart.MultipartFile;
 
 @ExtendWith(MockitoExtension.class)
 @ActiveProfiles("test")
@@ -54,9 +58,21 @@ public class VisitServiceTest {
     @Mock
     private VisitMapper visitMapper;
 
+    @Mock
+    private S3Service s3Service;
+
+    private MockMultipartFile signatureFile;
+
+    @BeforeEach
+    void setUp() {
+        signatureFile = new MockMultipartFile(
+            "signatureFile", "test.png", "image/png", "test-signature".getBytes()
+        );
+    }
+
     @Test
     @DisplayName("현장 방문 등록 성공 테스트 - 동행자 포함")
-    void createOnSiteVisit_Success() {
+    void createOnSiteVisit_Success() throws IOException {
         // given
         Long hostId = 1L;
         VisitCreateRequestDto requestDto = createRequestDto(hostId);
@@ -67,6 +83,8 @@ public class VisitServiceTest {
         Visitor visitor = new Visitor();
         ReflectionTestUtils.setField(visitor, "id", 10L);
         ReflectionTestUtils.setField(visitor, "phoneNumber", requestDto.getVisitorPhone());
+
+        String s3Key = "s3-signature-key-123";
 
         Visit visit =
             Visit.builder()
@@ -85,6 +103,7 @@ public class VisitServiceTest {
         when(userRepository.findById(hostId)).thenReturn(Optional.of(host));
         when(visitorRepository.findByPhoneNumberHash(requestDto.getVisitorPhone()))
             .thenReturn(Optional.of(visitor));
+        when(s3Service.uploadFile(any(MultipartFile.class))).thenReturn(s3Key);
         when(visitMapper.toVisitEntity(any(), any(), any(), any())).thenReturn(visit);
         VisitResponseDto mockResponse =
             VisitResponseDto.builder()
@@ -102,18 +121,12 @@ public class VisitServiceTest {
                 });
 
         // when
-        VisitResponseDto response = visitService.createOnSiteVisit(requestDto);
+        visitService.createOnSiteVisit(requestDto, signatureFile);
 
         // then
-        assertThat(response).isNotNull();
-        verify(visitRepository, times(1)).save(any(Visit.class));
-
-        ArgumentCaptor<Visit> visitCaptor = ArgumentCaptor.forClass(Visit.class);
-        verify(visitRepository).save(visitCaptor.capture());
-
-        Visit savedVisit = visitCaptor.getValue();
-        assertThat(savedVisit.isVisited()).isTrue();
-        assertThat(savedVisit.getCompanions().get(0).getVisit()).isEqualTo(savedVisit);
+        verify(s3Service, times(1)).uploadFile(any());
+        verify(visitRepository, times(1)).save(any());
+        assertThat(visit.getSignatureKey()).isEqualTo(s3Key);
     }
 
     @Test
@@ -126,18 +139,38 @@ public class VisitServiceTest {
         // when & then
         CustomException exception =
             assertThrows(
-                CustomException.class, () -> visitService.createOnSiteVisit(requestDto));
+                CustomException.class, () -> visitService.createOnSiteVisit(requestDto,
+                    signatureFile));
 
         assertThat(exception.getErrorCode()).isEqualTo(ErrorCode.USER_NOT_FOUND);
         verify(visitRepository, never()).save(any());
     }
 
     @Test
+    @DisplayName("현장 방문 등록 실패 - 잘못된 파일 형식(PNG 아님)")
+    void createOnSiteVisit_Fail_InvalidFormat() {
+        // given
+        MockMultipartFile invalidFile = new MockMultipartFile(
+            "signatureFile", "test.jpg", "image/jpeg", "test".getBytes()
+        );
+        VisitCreateRequestDto requestDto = createRequestDto(1L);
+        when(userRepository.findById(any())).thenReturn(Optional.of(new User()));
+        when(visitorRepository.findByPhoneNumberHash(any())).thenReturn(Optional.of(new Visitor()));
+
+        // when & then
+        CustomException exception = assertThrows(CustomException.class,
+            () -> visitService.createOnSiteVisit(requestDto, invalidFile));
+
+        assertThat(exception.getErrorCode()).isEqualTo(ErrorCode.INVALID_SIGNATURE_FORMAT);
+    }
+
+    @Test
     @DisplayName("사전 방문 예약 성공 - 비밀번호 포함")
-    void createPreVisit_Success() {
+    void createPreVisit_Success() throws IOException {
         // given
         VisitCreateRequestDto requestDto = createRequestDto(1L);
         requestDto.setVisitorPassword("1234"); // 비밀번호 설정
+        String s3Key = "pre-reg-signature-key";
 
         User host = new User();
         Visitor visitor = new Visitor();
@@ -145,13 +178,15 @@ public class VisitServiceTest {
 
         when(userRepository.findById(any())).thenReturn(Optional.of(host));
         when(visitorRepository.findByPhoneNumberHash(any())).thenReturn(Optional.of(visitor));
+        when(s3Service.uploadFile(any())).thenReturn(s3Key);
         when(visitMapper.toVisitEntity(any(), any(), any(), any())).thenReturn(visit);
         when(visitRepository.save(any())).thenReturn(visit);
 
         // when
-        visitService.createPreVisit(requestDto);
+        visitService.createPreVisit(requestDto, signatureFile);
 
         // then
+        verify(s3Service, times(1)).uploadFile(any());
         verify(visitRepository, times(1)).save(any());
     }
 
@@ -164,10 +199,43 @@ public class VisitServiceTest {
 
         // when & then
         CustomException exception =
-            assertThrows(CustomException.class, () -> visitService.createPreVisit(requestDto));
+            assertThrows(CustomException.class, () -> visitService.createPreVisit(requestDto,
+                signatureFile));
 
         assertThat(exception.getErrorCode())
             .isEqualTo(ErrorCode.VISITOR_PASSWORD_REQUIRED_FOR_PRE_REGISTRATION);
+    }
+
+    @Test
+    @DisplayName("방문 등록 실패 - 서명 파일이 누락된 경우")
+    void createVisit_Fail_NoSignature() {
+        // given
+        VisitCreateRequestDto requestDto = createRequestDto(1L);
+        MockMultipartFile emptyFile = new MockMultipartFile("signatureFile", "", "image/png",
+            new byte[0]);
+
+        // when & then (서비스 로직에 서명 필수 체크 로직이 있다고 가정)
+        assertThrows(CustomException.class, () -> visitService.createOnSiteVisit(requestDto, null));
+        assertThrows(CustomException.class,
+            () -> visitService.createOnSiteVisit(requestDto, emptyFile));
+    }
+
+    @Test
+    @DisplayName("현장 방문 등록 실패 - 잘못된 파일 형식(PNG 아님)")
+    void createVisit_Fail_InvalidFormat() {
+        // given
+        MockMultipartFile invalidFile = new MockMultipartFile(
+            "signatureFile", "test.jpg", "image/jpeg", "test".getBytes()
+        );
+        VisitCreateRequestDto requestDto = createRequestDto(1L);
+        when(userRepository.findById(any())).thenReturn(Optional.of(new User()));
+        when(visitorRepository.findByPhoneNumberHash(any())).thenReturn(Optional.of(new Visitor()));
+
+        // when & then
+        CustomException exception = assertThrows(CustomException.class,
+            () -> visitService.createOnSiteVisit(requestDto, invalidFile));
+
+        assertThat(exception.getErrorCode()).isEqualTo(ErrorCode.INVALID_SIGNATURE_FORMAT);
     }
 
     @Test

@@ -6,6 +6,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
 import kr.co.awesomelead.groupware_backend.domain.aligo.service.PhoneAuthService;
+import kr.co.awesomelead.groupware_backend.domain.auth.dto.request.FindEmailRequestDto;
 import kr.co.awesomelead.groupware_backend.domain.auth.dto.request.LoginRequestDto;
 import kr.co.awesomelead.groupware_backend.domain.auth.dto.request.SendAuthCodeRequestDto;
 import kr.co.awesomelead.groupware_backend.domain.auth.dto.request.SendEmailAuthCodeRequestDto;
@@ -13,6 +14,7 @@ import kr.co.awesomelead.groupware_backend.domain.auth.dto.request.SignupRequest
 import kr.co.awesomelead.groupware_backend.domain.auth.dto.request.VerifyAuthCodeRequestDto;
 import kr.co.awesomelead.groupware_backend.domain.auth.dto.request.VerifyEmailAuthCodeRequestDto;
 import kr.co.awesomelead.groupware_backend.domain.auth.dto.response.AuthTokensDto;
+import kr.co.awesomelead.groupware_backend.domain.auth.dto.response.FindEmailResponseDto;
 import kr.co.awesomelead.groupware_backend.domain.auth.dto.response.LoginResponseDto;
 import kr.co.awesomelead.groupware_backend.domain.auth.dto.response.ReissueResponseDto;
 import kr.co.awesomelead.groupware_backend.domain.auth.service.AuthService;
@@ -124,5 +126,17 @@ public class AuthController {
 
         // 4. 새로운 Access Token 응답
         return ResponseEntity.ok(new ReissueResponseDto(tokens.getAccessToken()));
+    }
+
+    @Operation(summary = "아이디 찾기", description = "휴대폰 번호로 아이디를 찾습니다.")
+    @PostMapping("/find-email")
+    public ResponseEntity<FindEmailResponseDto> findEmail(
+        @Valid @RequestBody FindEmailRequestDto requestDto) {
+
+        FindEmailResponseDto response = authService.findEmail(
+            requestDto.getName(), requestDto.getPhoneNumber()
+        );
+
+        return ResponseEntity.ok(response);
     }
 }

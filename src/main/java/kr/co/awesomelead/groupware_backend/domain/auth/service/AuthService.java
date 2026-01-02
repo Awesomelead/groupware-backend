@@ -6,6 +6,7 @@ import kr.co.awesomelead.groupware_backend.domain.aligo.service.PhoneAuthService
 import kr.co.awesomelead.groupware_backend.domain.auth.dto.request.LoginRequestDto;
 import kr.co.awesomelead.groupware_backend.domain.auth.dto.request.SignupRequestDto;
 import kr.co.awesomelead.groupware_backend.domain.auth.dto.response.AuthTokensDto;
+import kr.co.awesomelead.groupware_backend.domain.auth.dto.response.FindEmailResponseDto;
 import kr.co.awesomelead.groupware_backend.domain.auth.entity.RefreshToken;
 import kr.co.awesomelead.groupware_backend.domain.auth.util.JWTUtil;
 import kr.co.awesomelead.groupware_backend.domain.user.entity.User;
@@ -127,5 +128,34 @@ public class AuthService {
 
         // 5. 두 토큰 모두 반환
         return new AuthTokensDto(newAccessToken, newRefreshToken);
+    }
+
+    @Transactional
+    public FindEmailResponseDto findEmail(String name, String phoneNumber) {
+
+        // 1. 휴대폰 인증 확인
+        if (!phoneAuthService.isPhoneVerified(phoneNumber)) {
+            throw new CustomException(ErrorCode.PHONE_NOT_VERIFIED);
+        }
+
+        // 2. 이름 + 휴대폰 번호로 사용자 찾기
+        User user = userRepository.findByNameKorAndPhoneNumber(name, phoneNumber)
+            .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
+
+        // 3. 인증 플래그 삭제
+        phoneAuthService.clearVerification(phoneNumber);
+
+        // 4. 이메일 마스킹 처리
+        String maskedEmail = maskEmail(user.getEmail());
+
+        return new FindEmailResponseDto(maskedEmail);
+    }
+
+    private String maskEmail(String email) {
+        int atIndex = email.indexOf("@");
+        if (atIndex <= 2) {
+            return email.charAt(0) + "***" + email.substring(atIndex);
+        }
+        return email.substring(0, 2) + "***" + email.substring(atIndex);
     }
 }

@@ -84,7 +84,7 @@ public class VisitController {
     @GetMapping("/department/{departmentId}")
     public ResponseEntity<List<VisitSummaryResponseDto>> getVisitsByDepartment(
         @AuthenticationPrincipal CustomUserDetails userDetails,
-        @PathVariable Long departmentId
+        @PathVariable(required = false) Long departmentId
     ) {
 
         return ResponseEntity.ok(

@@ -126,21 +126,19 @@ public class VisitService {
         // 요청한 사용자의 부서명 조회
         String requestingUserDeptName = requestingUser.getDepartment().getName();
 
-        // 기준 부서 조회
-        Department targetDept = departmentRepository.findById(departmentId)
-            .orElseThrow(() -> new CustomException(ErrorCode.DEPARTMENT_NOT_FOUND));
-
         List<Visit> visits;
 
         // '경비' 부서인 경우 전체 조회
-        if (requestingUserDeptName.equals("경비")) {
+        if (requestingUserDeptName.equals("경비") || departmentId == null) {
             visits = visitRepository.findAll();
         } else {
-            // 재귀적으로 하위 부서 ID들을 모두 수집
+            // 특정 부서 ID가 넘어온 경우
+            Department targetDept = departmentRepository.findById(departmentId)
+                .orElseThrow(() -> new CustomException(ErrorCode.DEPARTMENT_NOT_FOUND));
+
             List<Long> allDeptIds = new ArrayList<>();
             collectDepartmentIdsRecursive(targetDept, allDeptIds);
 
-            // 수집된 모든 ID로 방문 기록 조회 (IN 절 사용)
             visits = visitRepository.findAllByDepartmentIdIn(allDeptIds);
         }
 

@@ -79,7 +79,7 @@ public class VisitServiceTest {
 
         // Mock 설정
         when(userRepository.findById(hostId)).thenReturn(Optional.of(host));
-        when(visitorRepository.findByPhoneNumber(requestDto.getVisitorPhone()))
+        when(visitorRepository.findByPhoneNumberHash(requestDto.getVisitorPhone()))
                 .thenReturn(Optional.of(visitor));
         when(visitMapper.toVisitEntity(any(), any(), any(), any())).thenReturn(visit);
         VisitResponseDto mockResponse =
@@ -140,7 +140,7 @@ public class VisitServiceTest {
         Visit visit = Visit.builder().build();
 
         when(userRepository.findById(any())).thenReturn(Optional.of(host));
-        when(visitorRepository.findByPhoneNumber(any())).thenReturn(Optional.of(visitor));
+        when(visitorRepository.findByPhoneNumberHash(any())).thenReturn(Optional.of(visitor));
         when(visitMapper.toVisitEntity(any(), any(), any(), any())).thenReturn(visit);
         when(visitRepository.save(any())).thenReturn(visit);
 
@@ -175,7 +175,8 @@ public class VisitServiceTest {
         ReflectionTestUtils.setField(visitor, "name", "방문객");
         ReflectionTestUtils.setField(visitor, "password", "1234");
 
-        when(visitorRepository.findByPhoneNumber(searchDto.getPhoneNumber()))
+        String phoneNumberHash = Visitor.hashPhoneNumber(searchDto.getPhoneNumber());
+        when(visitorRepository.findByPhoneNumberHash(phoneNumberHash))
                 .thenReturn(Optional.of(visitor));
         when(visitRepository.findByVisitor(visitor)).thenReturn(List.of(Visit.builder().build()));
         // when
@@ -195,7 +196,7 @@ public class VisitServiceTest {
         ReflectionTestUtils.setField(visitor, "name", "방문객");
         ReflectionTestUtils.setField(visitor, "password", "1234"); // 실제 비번은 1234
 
-        when(visitorRepository.findByPhoneNumber(any())).thenReturn(Optional.of(visitor));
+        when(visitorRepository.findByPhoneNumberHash(any())).thenReturn(Optional.of(visitor));
 
         // when & then
         CustomException exception =

@@ -19,6 +19,8 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.OneToOne;
+import jakarta.persistence.PrePersist;
+import jakarta.persistence.PreUpdate;
 import jakarta.persistence.Table;
 
 import kr.co.awesomelead.groupware_backend.domain.annualleave.entity.AnnualLeave;
@@ -41,9 +43,13 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
+import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
+import java.util.Base64;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -84,6 +90,9 @@ public class User {
     @Column(nullable = false, length = 300)
     @Convert(converter = PhoneNumberEncryptor.class)
     private String phoneNumber; // 전화번호
+
+    @Column(nullable = false, length = 64, unique = true)
+    private String phoneNumberHash; // SHA-256 해시 (조회용)
 
     // == 관리자가 입력/수정하는 정보 == //
     private LocalDate hireDate; // 입사일
@@ -156,6 +165,20 @@ public class User {
     @Column(name = "authority")
     private Set<Authority> authorities = new HashSet<>();
 
+    @PrePersist
+    @PreUpdate
+    public void onPrePersist() {
+        // 1. 전화번호 해시 생성 (평문 상태에서)
+        if (this.phoneNumber != null && this.phoneNumberHash == null) {
+            this.phoneNumberHash = hashPhoneNumber(this.phoneNumber);
+        }
+
+        // 2. 생년월일 계산 (평문 상태에서)
+        if (this.registrationNumber != null && this.birthDate == null) {
+            this.birthDate = calculateBirthDate(this.registrationNumber);
+        }
+    }
+
     // 권한 추가
     public void addAuthority(Authority authority) {
         this.authorities.add(authority);
@@ -166,13 +189,8 @@ public class User {
         return this.authorities.contains(authority);
     }
 
-    public void setRegistrationNumber(String registrationNumber) {
-        this.registrationNumber = registrationNumber;
-
-        // 암호화되기 전 원본 값으로 생년월일 계산
-        if (registrationNumber != null && registrationNumber.length() >= 7) {
-            this.birthDate = calculateBirthDate(registrationNumber);
-        }
+    public String getDisplayName() {
+        return (nameKor != null && !nameKor.isBlank()) ? nameKor : nameEng;
     }
 
     private LocalDate calculateBirthDate(String regNum) {
@@ -200,7 +218,17 @@ public class User {
         return LocalDate.parse(fullDate, DateTimeFormatter.ofPattern("yyyyMMdd"));
     }
 
-    public String getDisplayName() {
-        return (nameKor != null && !nameKor.isBlank()) ? nameKor : nameEng;
+    // hashPhoneNumber 메서드
+    public static String hashPhoneNumber(String phoneNumber) {
+        if (phoneNumber == null || phoneNumber.isEmpty()) {
+            return null;
+        }
+        try {
+            MessageDigest digest = MessageDigest.getInstance("SHA-256");
+            byte[] hash = digest.digest(phoneNumber.getBytes(StandardCharsets.UTF_8));
+            return Base64.getEncoder().encodeToString(hash);
+        } catch (NoSuchAlgorithmException e) {
+            throw new RuntimeException("SHA-256 알고리즘을 찾을 수 없습니다.", e);
+        }
     }
 }

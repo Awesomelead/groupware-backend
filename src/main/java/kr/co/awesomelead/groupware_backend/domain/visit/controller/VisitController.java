@@ -57,7 +57,7 @@ public class VisitController {
     }
 
     @Operation(summary = "내 방문 정보 조회 ", description = "내방객이 사전등록 정보를 조회합니다.")
-    @GetMapping("/visitor")
+    @PostMapping("/visitor")
     public ResponseEntity<List<VisitSummaryResponseDto>> getMyVisits(
             @RequestBody @Valid VisitSearchRequestDto requestDto) {
 

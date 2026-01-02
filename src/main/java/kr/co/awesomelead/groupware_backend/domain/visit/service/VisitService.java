@@ -72,7 +72,7 @@ public class VisitService {
 
     private Visitor getOrCreateVisitor(VisitCreateRequestDto dto, VisitType type) {
         return visitorRepository
-                .findByPhoneNumber(dto.getVisitorPhone())
+                .findByPhoneNumberHash(dto.getVisitorPhone())
                 .map(
                         existingVisitor -> {
                             // 기존 방문자가 있고, 사전 예약 시 새로운 비번이 들어왔다면 갱신
@@ -89,9 +89,10 @@ public class VisitService {
     @Transactional(readOnly = true)
     public List<VisitSummaryResponseDto> getMyVisits(VisitSearchRequestDto requestDto) {
 
+        String phoneNumberHash = Visitor.hashPhoneNumber(requestDto.getPhoneNumber());
         Visitor visitor =
                 visitorRepository
-                        .findByPhoneNumber(requestDto.getPhoneNumber())
+                        .findByPhoneNumberHash(phoneNumberHash)
                         .orElseThrow(() -> new CustomException(ErrorCode.VISITOR_NOT_FOUND));
 
         if (!visitor.getName().equals(requestDto.getName())

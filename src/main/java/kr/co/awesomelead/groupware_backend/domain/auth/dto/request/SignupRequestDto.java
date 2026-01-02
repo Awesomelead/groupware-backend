@@ -13,7 +13,7 @@ import lombok.Setter;
 
 @Getter
 @Setter
-public class JoinRequestDto {
+public class SignupRequestDto {
 
     @NotBlank(message = "성명은 필수입니다.")
     private String nameKor;

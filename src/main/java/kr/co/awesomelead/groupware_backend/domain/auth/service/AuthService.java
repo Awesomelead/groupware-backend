@@ -2,7 +2,6 @@ package kr.co.awesomelead.groupware_backend.domain.auth.service;
 
 import java.util.Collection;
 import java.util.Iterator;
-import java.util.List;
 import kr.co.awesomelead.groupware_backend.domain.aligo.service.PhoneAuthService;
 import kr.co.awesomelead.groupware_backend.domain.auth.dto.request.LoginRequestDto;
 import kr.co.awesomelead.groupware_backend.domain.auth.dto.request.SignupRequestDto;
@@ -133,36 +132,7 @@ public class AuthService {
         return new AuthTokensDto(newAccessToken, newRefreshToken);
     }
 
-    @Transactional
     public FindEmailResponseDto findEmail(String name, String phoneNumber) {
-        long startTime = System.currentTimeMillis();
-
-        // 1. 휴대폰 인증 확인
-        if (!phoneAuthService.isPhoneVerified(phoneNumber)) {
-            throw new CustomException(ErrorCode.PHONE_NOT_VERIFIED);
-        }
-
-        // 2. 이름이 일치하는 모든 사용자 조회
-        List<User> users = userRepository.findAllByNameKor(name);
-        log.info("조회된 사용자 수: {}", users.size());
-
-        // 3. 복호화해서 휴대폰 번호 비교
-        User user = users.stream()
-            .filter(u -> u.getPhoneNumber().equals(phoneNumber))
-            .findFirst()
-            .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
-
-        long endTime = System.currentTimeMillis();
-        log.info("전체 조회 방식 소요 시간: {}ms", endTime - startTime);
-
-        // 4. 인증 플래그 삭제
-        phoneAuthService.clearVerification(phoneNumber);
-
-        // 5. 응답 생성
-        return new FindEmailResponseDto(maskEmail(user.getEmail()));
-    }
-
-    public FindEmailResponseDto findEmailByHash(String name, String phoneNumber) {
         long startTime = System.currentTimeMillis();
 
         // 1. 휴대폰 인증 확인

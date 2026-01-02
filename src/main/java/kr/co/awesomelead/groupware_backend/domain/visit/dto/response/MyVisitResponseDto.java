@@ -1,12 +1,10 @@
 package kr.co.awesomelead.groupware_backend.domain.visit.dto.response;
 
+import java.time.LocalDateTime;
 import kr.co.awesomelead.groupware_backend.domain.visit.enums.VisitPurpose;
-
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
-
-import java.time.LocalDateTime;
 
 @Getter
 @Builder
@@ -21,4 +19,5 @@ public class MyVisitResponseDto {
     private String phoneNumber; // 내방객휴대전화 번호
     private LocalDateTime visitStartDate;
     private LocalDateTime visitEndDate;
+    private boolean visited;
 }

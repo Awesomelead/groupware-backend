@@ -1,6 +1,7 @@
 package kr.co.awesomelead.groupware_backend.domain.visit.entity;
 
 import com.fasterxml.jackson.annotation.JsonManagedReference;
+
 import jakarta.persistence.Column;
 import jakarta.persistence.Convert;
 import jakarta.persistence.Entity;
@@ -10,15 +11,18 @@ import jakarta.persistence.Id;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.PrePersist;
 import jakarta.persistence.PreUpdate;
+
+import kr.co.awesomelead.groupware_backend.global.encryption.PhoneNumberEncryptor;
+
+import lombok.Getter;
+import lombok.Setter;
+
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
 import java.util.Base64;
 import java.util.List;
-import kr.co.awesomelead.groupware_backend.global.encryption.PhoneNumberEncryptor;
-import lombok.Getter;
-import lombok.Setter;
 
 @Setter
 @Getter

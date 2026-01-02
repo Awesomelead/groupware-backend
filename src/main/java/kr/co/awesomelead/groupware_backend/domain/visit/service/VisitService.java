@@ -1,5 +1,6 @@
 package kr.co.awesomelead.groupware_backend.domain.visit.service;
 
+import java.util.List;
 import kr.co.awesomelead.groupware_backend.domain.user.entity.User;
 import kr.co.awesomelead.groupware_backend.domain.user.repository.UserRepository;
 import kr.co.awesomelead.groupware_backend.domain.visit.dto.request.VisitCreateRequestDto;
@@ -15,14 +16,10 @@ import kr.co.awesomelead.groupware_backend.domain.visit.repository.VisitReposito
 import kr.co.awesomelead.groupware_backend.domain.visit.repository.VisitorRepository;
 import kr.co.awesomelead.groupware_backend.global.CustomException;
 import kr.co.awesomelead.groupware_backend.global.ErrorCode;
-
 import lombok.RequiredArgsConstructor;
-
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
-
-import java.util.List;
 
 @Service
 @RequiredArgsConstructor
@@ -51,9 +48,9 @@ public class VisitService {
 
         // 담당 직원 조회
         User host =
-                userRepository
-                        .findById(dto.getHostUserId())
-                        .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
+            userRepository
+                .findById(dto.getHostUserId())
+                .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
 
         // 내방객 조회 혹은 생성
         Visitor visitor = getOrCreateVisitor(dto, type);
@@ -72,30 +69,31 @@ public class VisitService {
 
     private Visitor getOrCreateVisitor(VisitCreateRequestDto dto, VisitType type) {
         return visitorRepository
-                .findByPhoneNumber(dto.getVisitorPhone())
-                .map(
-                        existingVisitor -> {
-                            // 기존 방문자가 있고, 사전 예약 시 새로운 비번이 들어왔다면 갱신
-                            if (type == VisitType.PRE_REGISTRATION
-                                    && StringUtils.hasText(dto.getVisitorPassword())) {
-                                existingVisitor.setPassword(dto.getVisitorPassword());
-                                return visitorRepository.save(existingVisitor);
-                            }
-                            return existingVisitor;
-                        })
-                .orElseGet(() -> visitorRepository.save(visitMapper.toVisitorEntity(dto)));
+            .findByPhoneNumberHash(dto.getVisitorPhone())
+            .map(
+                existingVisitor -> {
+                    // 기존 방문자가 있고, 사전 예약 시 새로운 비번이 들어왔다면 갱신
+                    if (type == VisitType.PRE_REGISTRATION
+                        && StringUtils.hasText(dto.getVisitorPassword())) {
+                        existingVisitor.setPassword(dto.getVisitorPassword());
+                        return visitorRepository.save(existingVisitor);
+                    }
+                    return existingVisitor;
+                })
+            .orElseGet(() -> visitorRepository.save(visitMapper.toVisitorEntity(dto)));
     }
 
     @Transactional(readOnly = true)
     public List<VisitSummaryResponseDto> getMyVisits(VisitSearchRequestDto requestDto) {
 
+        String phoneNumberHash = Visitor.hashPhoneNumber(requestDto.getPhoneNumber());
         Visitor visitor =
-                visitorRepository
-                        .findByPhoneNumber(requestDto.getPhoneNumber())
-                        .orElseThrow(() -> new CustomException(ErrorCode.VISITOR_NOT_FOUND));
+            visitorRepository
+                .findByPhoneNumberHash(phoneNumberHash)
+                .orElseThrow(() -> new CustomException(ErrorCode.VISITOR_NOT_FOUND));
 
         if (!visitor.getName().equals(requestDto.getName())
-                || !visitor.getPassword().equals(requestDto.getPassword())) {
+            || !visitor.getPassword().equals(requestDto.getPassword())) {
             throw new CustomException(ErrorCode.VISITOR_AUTHENTICATION_FAILED);
         }
 
@@ -106,9 +104,9 @@ public class VisitService {
     @Transactional(readOnly = true)
     public MyVisitResponseDto getMyVisitDetail(Long visitId) {
         Visit visit =
-                visitRepository
-                        .findById(visitId)
-                        .orElseThrow(() -> new CustomException(ErrorCode.VISIT_NOT_FOUND));
+            visitRepository
+                .findById(visitId)
+                .orElseThrow(() -> new CustomException(ErrorCode.VISIT_NOT_FOUND));
 
         return visitMapper.toMyVisitResponseDto(visit);
     }
@@ -118,9 +116,9 @@ public class VisitService {
     @Transactional
     public void checkIn(Long visitId) {
         Visit visit =
-                visitRepository
-                        .findById(visitId)
-                        .orElseThrow(() -> new CustomException(ErrorCode.VISIT_NOT_FOUND));
+            visitRepository
+                .findById(visitId)
+                .orElseThrow(() -> new CustomException(ErrorCode.VISIT_NOT_FOUND));
         visit.checkIn();
     }
 
@@ -128,9 +126,9 @@ public class VisitService {
     public void checkOut(Long visitId) {
         // 차후, 해당 기능에 대해 경비원만 혹은 특정 권한을 가진 사용자만 호출할 수 있도록 처리 필요!
         Visit visit =
-                visitRepository
-                        .findById(visitId)
-                        .orElseThrow(() -> new CustomException(ErrorCode.VISIT_NOT_FOUND));
+            visitRepository
+                .findById(visitId)
+                .orElseThrow(() -> new CustomException(ErrorCode.VISIT_NOT_FOUND));
         if (visit.getVisitEndDate() != null) {
             throw new CustomException(ErrorCode.VISIT_ALREADY_CHECKED_OUT);
         }

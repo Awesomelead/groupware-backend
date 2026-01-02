@@ -9,9 +9,13 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
-
+import jakarta.persistence.PrePersist;
+import jakarta.persistence.PreUpdate;
+import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
+import java.util.Base64;
 import kr.co.awesomelead.groupware_backend.global.encryption.PhoneNumberEncryptor;
-
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
@@ -40,7 +44,33 @@ public class Companion {
     @Convert(converter = PhoneNumberEncryptor.class)
     private String phoneNumber; // 동행자 전화번호
 
+    @Column(nullable = false, length = 64, unique = true)
+    private String phoneNumberHash; // SHA-256 해시 (조회용)
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "visit_id")
     private Visit visit; // 동행한 방문 정보
+
+    @PrePersist
+    @PreUpdate
+    public void onPrePersist() {
+        // 전화번호 해시 생성 (평문 상태에서)
+        if (this.phoneNumber != null && this.phoneNumberHash == null) {
+            this.phoneNumberHash = hashPhoneNumber(this.phoneNumber);
+        }
+    }
+
+    // 전화번호 SHA-256 해시 생성
+    public static String hashPhoneNumber(String phoneNumber) {
+        if (phoneNumber == null || phoneNumber.isEmpty()) {
+            return null;
+        }
+        try {
+            MessageDigest digest = MessageDigest.getInstance("SHA-256");
+            byte[] hash = digest.digest(phoneNumber.getBytes(StandardCharsets.UTF_8));
+            return Base64.getEncoder().encodeToString(hash);
+        } catch (NoSuchAlgorithmException e) {
+            throw new RuntimeException("SHA-256 알고리즘을 찾을 수 없습니다.", e);
+        }
+    }
 }

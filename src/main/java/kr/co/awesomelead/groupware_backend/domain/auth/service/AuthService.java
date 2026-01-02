@@ -1,22 +1,20 @@
 package kr.co.awesomelead.groupware_backend.domain.auth.service;
 
 import kr.co.awesomelead.groupware_backend.domain.aligo.service.PhoneAuthService;
-import kr.co.awesomelead.groupware_backend.domain.auth.dto.request.JoinRequestDto;
+import kr.co.awesomelead.groupware_backend.domain.auth.dto.request.SignupRequestDto;
 import kr.co.awesomelead.groupware_backend.domain.user.entity.User;
 import kr.co.awesomelead.groupware_backend.domain.user.mapper.UserMapper;
 import kr.co.awesomelead.groupware_backend.domain.user.repository.UserRepository;
 import kr.co.awesomelead.groupware_backend.global.CustomException;
 import kr.co.awesomelead.groupware_backend.global.ErrorCode;
-
 import lombok.RequiredArgsConstructor;
-
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @RequiredArgsConstructor
-public class JoinService {
+public class AuthService {
 
     private final UserRepository userRepository;
     private final BCryptPasswordEncoder bCryptPasswordEncoder;
@@ -25,7 +23,7 @@ public class JoinService {
     private final UserMapper userMapper;
 
     @Transactional
-    public void joinProcess(JoinRequestDto joinDto) {
+    public void signup(SignupRequestDto joinDto) {
 
         // 1. 비밀번호 확인 검증
         if (!joinDto.getPassword().equals(joinDto.getPasswordConfirm())) {

@@ -1,18 +1,14 @@
 package kr.co.awesomelead.groupware_backend.domain.auth.controller;
 
 import io.swagger.v3.oas.annotations.Operation;
-
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
-
 import kr.co.awesomelead.groupware_backend.domain.auth.dto.response.ReissueResponseDto;
 import kr.co.awesomelead.groupware_backend.domain.auth.entity.RefreshToken;
 import kr.co.awesomelead.groupware_backend.domain.auth.service.RefreshTokenService;
 import kr.co.awesomelead.groupware_backend.domain.auth.util.JWTUtil;
-
 import lombok.RequiredArgsConstructor;
-
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -45,7 +41,7 @@ public class ReissueController {
         }
 
         try {
-            // 2. [개선사항 1] RefreshTokenService를 통해 DB에서 토큰 검증
+            // 2. RefreshTokenService를 통해 DB에서 토큰 검증
             RefreshToken storedToken = refreshTokenService.validateRefreshToken(refreshToken);
 
             // 3. 토큰에서 사용자 정보 추출
@@ -55,7 +51,7 @@ public class ReissueController {
             // 4. 새로운 Access Token 생성
             String newAccessToken = jwtUtil.createJwt(username, role, 60 * 60 * 1000L); // 1시간 유효
 
-            // 5. [개선사항 1] 새로운 Refresh Token 생성 및 DB 업데이트
+            // 5. 새로운 Refresh Token 생성 및 DB 업데이트
             String newRefreshToken = refreshTokenService.createAndSaveRefreshToken(username, role);
 
             // 6. 응답 설정

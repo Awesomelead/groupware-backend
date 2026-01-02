@@ -1,6 +1,7 @@
 package kr.co.awesomelead.groupware_backend.domain.visit.controller;
 
 import io.swagger.v3.oas.annotations.Operation;
+
 import jakarta.validation.Valid;
 import java.net.URI;
 import java.util.List;
@@ -13,7 +14,9 @@ import kr.co.awesomelead.groupware_backend.domain.visit.dto.response.VisitDetail
 import kr.co.awesomelead.groupware_backend.domain.visit.dto.response.VisitResponseDto;
 import kr.co.awesomelead.groupware_backend.domain.visit.dto.response.VisitSummaryResponseDto;
 import kr.co.awesomelead.groupware_backend.domain.visit.service.VisitService;
+
 import lombok.RequiredArgsConstructor;
+
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -36,7 +39,7 @@ public class VisitController {
     @Operation(summary = "사전 방문 접수", description = "내방객이 온라인으로 사전방문접수를 수행합니다.")
     @PostMapping("/pre-registration")
     public ResponseEntity<VisitResponseDto> createPreVisit(
-        @RequestBody @Valid VisitCreateRequestDto requestDto) {
+            @RequestBody @Valid VisitCreateRequestDto requestDto) {
 
         VisitResponseDto responseDto = visitService.createPreVisit(requestDto);
 
@@ -52,7 +55,7 @@ public class VisitController {
     @Operation(summary = "현장 방문 접수", description = "내방객이 현장에서 방문접수를 수행합니다.")
     @PostMapping("/on-site")
     public ResponseEntity<VisitResponseDto> createOnSiteVisit(
-        @RequestBody @Valid VisitCreateRequestDto requestDto) {
+            @RequestBody @Valid VisitCreateRequestDto requestDto) {
 
         VisitResponseDto responseDto = visitService.createOnSiteVisit(requestDto);
 
@@ -64,10 +67,10 @@ public class VisitController {
         return ResponseEntity.created(location).body(responseDto);
     }
 
-    @Operation(summary = "내 방문 정보 조회 ", description = "내방객이 사전등록 정보 목록을 조회합니다.")
+    @Operation(summary = "내 방문 정보 조회 ", description = "내방객이 사전등록 정보를 조회합니다.")
     @PostMapping("/visitor")
     public ResponseEntity<List<VisitSummaryResponseDto>> getMyVisits(
-        @RequestBody @Valid VisitSearchRequestDto requestDto) {
+            @RequestBody @Valid VisitSearchRequestDto requestDto) {
 
         return ResponseEntity.ok(visitService.getMyVisits(requestDto));
     }

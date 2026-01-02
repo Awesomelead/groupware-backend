@@ -1,6 +1,7 @@
 package kr.co.awesomelead.groupware_backend.domain.auth.util;
 
 import jakarta.servlet.http.Cookie;
+
 import org.springframework.stereotype.Component;
 
 @Component
@@ -27,8 +28,8 @@ public class CookieUtil {
     }
 
     // HttpServletRequest에서 특정 쿠키 추출
-    public static String getCookieValue(jakarta.servlet.http.HttpServletRequest request,
-        String cookieName) {
+    public static String getCookieValue(
+            jakarta.servlet.http.HttpServletRequest request, String cookieName) {
         Cookie[] cookies = request.getCookies();
         if (cookies != null) {
             for (Cookie cookie : cookies) {

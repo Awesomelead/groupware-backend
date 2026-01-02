@@ -8,7 +8,6 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-import java.time.LocalDate;
 import kr.co.awesomelead.groupware_backend.domain.aligo.service.PhoneAuthService;
 import kr.co.awesomelead.groupware_backend.domain.auth.dto.request.SignupRequestDto;
 import kr.co.awesomelead.groupware_backend.domain.auth.service.AuthService;
@@ -21,6 +20,7 @@ import kr.co.awesomelead.groupware_backend.domain.user.mapper.UserMapper;
 import kr.co.awesomelead.groupware_backend.domain.user.repository.UserRepository;
 import kr.co.awesomelead.groupware_backend.global.CustomException;
 import kr.co.awesomelead.groupware_backend.global.ErrorCode;
+
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -31,27 +31,23 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.test.context.ActiveProfiles;
 
+import java.time.LocalDate;
+
 @ExtendWith(MockitoExtension.class)
 @ActiveProfiles("test")
 class AuthServiceTest {
 
-    @Mock
-    private UserRepository userRepository;
+    @Mock private UserRepository userRepository;
 
-    @Mock
-    private BCryptPasswordEncoder bCryptPasswordEncoder;
+    @Mock private BCryptPasswordEncoder bCryptPasswordEncoder;
 
-    @Mock
-    private PhoneAuthService phoneAuthService;
+    @Mock private PhoneAuthService phoneAuthService;
 
-    @Mock
-    private EmailAuthService emailAuthService;
+    @Mock private EmailAuthService emailAuthService;
 
-    @Mock
-    private UserMapper userMapper;
+    @Mock private UserMapper userMapper;
 
-    @InjectMocks
-    private AuthService authService;
+    @InjectMocks private AuthService authService;
 
     @Test
     @DisplayName("회원가입 성공 테스트")
@@ -85,7 +81,7 @@ class AuthServiceTest {
         when(phoneAuthService.isPhoneVerified(signupDto.getPhoneNumber())).thenReturn(true);
         when(userRepository.existsByEmail(signupDto.getEmail())).thenReturn(false);
         when(userRepository.existsByRegistrationNumber(signupDto.getRegistrationNumber()))
-            .thenReturn(false);
+                .thenReturn(false);
         when(userMapper.toEntity(signupDto)).thenReturn(mockUser);
         when(bCryptPasswordEncoder.encode(signupDto.getPassword())).thenReturn("encodedPassword");
 
@@ -123,7 +119,7 @@ class AuthServiceTest {
 
         // when & then
         CustomException exception =
-            assertThrows(CustomException.class, () -> authService.signup(signupDto));
+                assertThrows(CustomException.class, () -> authService.signup(signupDto));
 
         assertThat(exception.getErrorCode()).isEqualTo(ErrorCode.PASSWORD_MISMATCH);
         verify(userRepository, never()).save(any(User.class));
@@ -144,7 +140,7 @@ class AuthServiceTest {
 
         // when & then
         CustomException exception =
-            assertThrows(CustomException.class, () -> authService.signup(signupDto));
+                assertThrows(CustomException.class, () -> authService.signup(signupDto));
 
         assertThat(exception.getErrorCode()).isEqualTo(ErrorCode.PHONE_NOT_VERIFIED);
         verify(userRepository, never()).save(any(User.class));
@@ -169,7 +165,7 @@ class AuthServiceTest {
 
         // when & then
         CustomException exception =
-            assertThrows(CustomException.class, () -> authService.signup(signupDto));
+                assertThrows(CustomException.class, () -> authService.signup(signupDto));
 
         assertThat(exception.getErrorCode()).isEqualTo(ErrorCode.EMAIL_NOT_VERIFIED);
         verify(userRepository, never()).save(any(User.class));
@@ -193,7 +189,7 @@ class AuthServiceTest {
 
         // when & then
         CustomException exception =
-            assertThrows(CustomException.class, () -> authService.signup(signupDto));
+                assertThrows(CustomException.class, () -> authService.signup(signupDto));
 
         assertThat(exception.getErrorCode()).isEqualTo(ErrorCode.DUPLICATE_LOGIN_ID);
         verify(userRepository, never()).save(any(User.class));
@@ -216,11 +212,11 @@ class AuthServiceTest {
         when(userRepository.existsByEmail(signupDto.getEmail())).thenReturn(false);
         // 주민번호 중복
         when(userRepository.existsByRegistrationNumber(signupDto.getRegistrationNumber()))
-            .thenReturn(true);
+                .thenReturn(true);
 
         // when & then
         CustomException exception =
-            assertThrows(CustomException.class, () -> authService.signup(signupDto));
+                assertThrows(CustomException.class, () -> authService.signup(signupDto));
 
         assertThat(exception.getErrorCode()).isEqualTo(ErrorCode.DUPLICATE_REGISTRATION_NUMBER);
         verify(userRepository, never()).save(any(User.class));

@@ -161,27 +161,17 @@ public class User {
     @Column(name = "authority")
     private Set<Authority> authorities = new HashSet<>();
 
-
-    // JPA 저장 직전에 자동으로 해시 생성
     @PrePersist
     @PreUpdate
-    public void generatePhoneNumberHash() {
+    public void onPrePersist() {
+        // 1. 전화번호 해시 생성 (평문 상태에서)
         if (this.phoneNumber != null && this.phoneNumberHash == null) {
             this.phoneNumberHash = hashPhoneNumber(this.phoneNumber);
         }
-    }
 
-    // hashPhoneNumber 메서드
-    public static String hashPhoneNumber(String phoneNumber) {
-        if (phoneNumber == null || phoneNumber.isEmpty()) {
-            return null;
-        }
-        try {
-            MessageDigest digest = MessageDigest.getInstance("SHA-256");
-            byte[] hash = digest.digest(phoneNumber.getBytes(StandardCharsets.UTF_8));
-            return Base64.getEncoder().encodeToString(hash);
-        } catch (NoSuchAlgorithmException e) {
-            throw new RuntimeException("SHA-256 알고리즘을 찾을 수 없습니다.", e);
+        // 2. 생년월일 계산 (평문 상태에서)
+        if (this.registrationNumber != null && this.birthDate == null) {
+            this.birthDate = calculateBirthDate(this.registrationNumber);
         }
     }
 
@@ -195,13 +185,8 @@ public class User {
         return this.authorities.contains(authority);
     }
 
-    public void setRegistrationNumber(String registrationNumber) {
-        this.registrationNumber = registrationNumber;
-
-        // 암호화되기 전 원본 값으로 생년월일 계산
-        if (registrationNumber != null && registrationNumber.length() >= 7) {
-            this.birthDate = calculateBirthDate(registrationNumber);
-        }
+    public String getDisplayName() {
+        return (nameKor != null && !nameKor.isBlank()) ? nameKor : nameEng;
     }
 
     private LocalDate calculateBirthDate(String regNum) {
@@ -229,7 +214,18 @@ public class User {
         return LocalDate.parse(fullDate, DateTimeFormatter.ofPattern("yyyyMMdd"));
     }
 
-    public String getDisplayName() {
-        return (nameKor != null && !nameKor.isBlank()) ? nameKor : nameEng;
+
+    // hashPhoneNumber 메서드
+    public static String hashPhoneNumber(String phoneNumber) {
+        if (phoneNumber == null || phoneNumber.isEmpty()) {
+            return null;
+        }
+        try {
+            MessageDigest digest = MessageDigest.getInstance("SHA-256");
+            byte[] hash = digest.digest(phoneNumber.getBytes(StandardCharsets.UTF_8));
+            return Base64.getEncoder().encodeToString(hash);
+        } catch (NoSuchAlgorithmException e) {
+            throw new RuntimeException("SHA-256 알고리즘을 찾을 수 없습니다.", e);
+        }
     }
 }

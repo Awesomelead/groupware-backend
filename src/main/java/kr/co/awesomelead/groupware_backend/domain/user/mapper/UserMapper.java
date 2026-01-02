@@ -16,6 +16,7 @@ public interface UserMapper {
     @Mapping(target = "password", ignore = true)
     @Mapping(target = "workLocation", source = "company")
     @Mapping(target = "birthDate", ignore = true)
+    @Mapping(target = "phoneNumberHash", ignore = true)
     @Mapping(target = "role", expression = "java(Role.USER)")
     @Mapping(target = "status", expression = "java(Status.PENDING)")
 

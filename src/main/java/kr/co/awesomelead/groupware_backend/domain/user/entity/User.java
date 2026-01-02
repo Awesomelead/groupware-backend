@@ -2,7 +2,6 @@ package kr.co.awesomelead.groupware_backend.domain.user.entity;
 
 import com.fasterxml.jackson.annotation.JsonBackReference;
 import com.fasterxml.jackson.annotation.JsonManagedReference;
-
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.CollectionTable;
 import jakarta.persistence.Column;
@@ -20,7 +19,12 @@ import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.OneToOne;
 import jakarta.persistence.Table;
-
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 import kr.co.awesomelead.groupware_backend.domain.annualleave.entity.AnnualLeave;
 import kr.co.awesomelead.groupware_backend.domain.checksheet.entity.CheckSheet;
 import kr.co.awesomelead.groupware_backend.domain.department.entity.Department;
@@ -34,19 +38,11 @@ import kr.co.awesomelead.groupware_backend.domain.user.enums.Status;
 import kr.co.awesomelead.groupware_backend.domain.visit.entity.Visit;
 import kr.co.awesomelead.groupware_backend.global.encryption.PhoneNumberEncryptor;
 import kr.co.awesomelead.groupware_backend.global.encryption.RegistrationNumberEncryptor;
-
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
-
-import java.time.LocalDate;
-import java.time.format.DateTimeFormatter;
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
 
 @Entity
 @Getter
@@ -110,7 +106,7 @@ public class User {
 
     private LocalDate birthDate; // 생년월일
 
-    @OneToOne(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
+    @OneToOne(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
     @JsonManagedReference
     private AnnualLeave annualLeave;
 
@@ -187,9 +183,9 @@ public class User {
         if (genderDigit == '1' || genderDigit == '2' || genderDigit == '5' || genderDigit == '6') {
             century = "19";
         } else if (genderDigit == '3'
-                || genderDigit == '4'
-                || genderDigit == '7'
-                || genderDigit == '8') {
+            || genderDigit == '4'
+            || genderDigit == '7'
+            || genderDigit == '8') {
             century = "20";
         } else {
             century = "20"; // 기본값

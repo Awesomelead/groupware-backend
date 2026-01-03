@@ -22,12 +22,7 @@ import jakarta.persistence.OneToOne;
 import jakarta.persistence.PrePersist;
 import jakarta.persistence.PreUpdate;
 import jakarta.persistence.Table;
-import java.time.LocalDate;
-import java.time.format.DateTimeFormatter;
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+
 import kr.co.awesomelead.groupware_backend.domain.annualleave.entity.AnnualLeave;
 import kr.co.awesomelead.groupware_backend.domain.checksheet.entity.CheckSheet;
 import kr.co.awesomelead.groupware_backend.domain.department.entity.Department;
@@ -124,7 +119,11 @@ public class User {
 
     private LocalDate birthDate; // 생년월일
 
-    @OneToOne(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
+    @OneToOne(
+            mappedBy = "user",
+            cascade = CascadeType.ALL,
+            orphanRemoval = true,
+            fetch = FetchType.LAZY)
     @JsonManagedReference
     private AnnualLeave annualLeave;
 
@@ -210,9 +209,9 @@ public class User {
         if (genderDigit == '1' || genderDigit == '2' || genderDigit == '5' || genderDigit == '6') {
             century = "19";
         } else if (genderDigit == '3'
-            || genderDigit == '4'
-            || genderDigit == '7'
-            || genderDigit == '8') {
+                || genderDigit == '4'
+                || genderDigit == '7'
+                || genderDigit == '8') {
             century = "20";
         } else {
             century = "20"; // 기본값

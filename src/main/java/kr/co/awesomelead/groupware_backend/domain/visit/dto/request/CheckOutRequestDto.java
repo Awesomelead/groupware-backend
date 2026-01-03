@@ -1,9 +1,10 @@
 package kr.co.awesomelead.groupware_backend.domain.visit.dto.request;
 
-import java.time.LocalDateTime;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+
+import java.time.LocalDateTime;
 
 @Getter
 @AllArgsConstructor
@@ -12,5 +13,4 @@ public class CheckOutRequestDto {
 
     private Long visitId;
     private LocalDateTime checkOutTime;
-
 }

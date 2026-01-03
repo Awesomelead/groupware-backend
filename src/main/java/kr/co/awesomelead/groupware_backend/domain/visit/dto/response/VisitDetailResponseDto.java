@@ -1,11 +1,13 @@
 package kr.co.awesomelead.groupware_backend.domain.visit.dto.response;
 
-import java.time.LocalDateTime;
 import kr.co.awesomelead.groupware_backend.domain.visit.enums.VisitPurpose;
+
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.Setter;
+
+import java.time.LocalDateTime;
 
 @Getter
 @Setter
@@ -24,5 +26,4 @@ public class VisitDetailResponseDto {
     private LocalDateTime visitEndDate;
     private String signatureUrl; // 서명 이미지 URL
     private boolean visited;
-
 }

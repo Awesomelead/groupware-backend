@@ -3,7 +3,9 @@ package kr.co.awesomelead.groupware_backend.config;
 import kr.co.awesomelead.groupware_backend.domain.auth.filter.JwtFilter;
 import kr.co.awesomelead.groupware_backend.domain.auth.util.JWTUtil;
 import kr.co.awesomelead.groupware_backend.domain.user.repository.UserRepository;
+
 import lombok.RequiredArgsConstructor;
+
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -32,7 +34,7 @@ public class SecurityConfig {
     // AuthenticationManager Bean 등록
     @Bean
     public AuthenticationManager authenticationManager(AuthenticationConfiguration configuration)
-        throws Exception {
+            throws Exception {
         return configuration.getAuthenticationManager();
     }
 
@@ -82,10 +84,10 @@ public class SecurityConfig {
                     .authenticated());
 
         http.addFilterBefore(
-            new JwtFilter(jwtUtil, userRepository), UsernamePasswordAuthenticationFilter.class);
+                new JwtFilter(jwtUtil, userRepository), UsernamePasswordAuthenticationFilter.class);
 
         http.sessionManagement(
-            (session) -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS));
+                (session) -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS));
 
         return http.build();
     }

@@ -6,9 +6,9 @@ import lombok.Getter;
 @Getter
 @AllArgsConstructor
 public enum NoticeType {
-    GENERAL("일반 공지"),
-    URGENT("긴급 공지"),
-    EVENT("경조사/이벤트");
+    REGULAR("상시공지"),
+    MENU("식단표"),
+    ETC("기타");
 
     private final String description;
 }

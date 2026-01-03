@@ -10,6 +10,9 @@ import jakarta.validation.Valid;
 import kr.co.awesomelead.groupware_backend.domain.aligo.service.PhoneAuthService;
 import kr.co.awesomelead.groupware_backend.domain.auth.dto.request.FindEmailRequestDto;
 import kr.co.awesomelead.groupware_backend.domain.auth.dto.request.LoginRequestDto;
+import kr.co.awesomelead.groupware_backend.domain.auth.dto.request.ResetPasswordByEmailRequestDto;
+import kr.co.awesomelead.groupware_backend.domain.auth.dto.request.ResetPasswordByPhoneRequestDto;
+import kr.co.awesomelead.groupware_backend.domain.auth.dto.request.ResetPasswordRequestDto;
 import kr.co.awesomelead.groupware_backend.domain.auth.dto.request.SendAuthCodeRequestDto;
 import kr.co.awesomelead.groupware_backend.domain.auth.dto.request.SendEmailAuthCodeRequestDto;
 import kr.co.awesomelead.groupware_backend.domain.auth.dto.request.SignupRequestDto;
@@ -22,11 +25,14 @@ import kr.co.awesomelead.groupware_backend.domain.auth.dto.response.ReissueRespo
 import kr.co.awesomelead.groupware_backend.domain.auth.service.AuthService;
 import kr.co.awesomelead.groupware_backend.domain.auth.service.EmailAuthService;
 import kr.co.awesomelead.groupware_backend.domain.auth.util.CookieUtil;
+import kr.co.awesomelead.groupware_backend.domain.user.dto.CustomUserDetails;
 
 import lombok.RequiredArgsConstructor;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -139,5 +145,30 @@ public class AuthController {
                 authService.findEmail(requestDto.getName(), requestDto.getPhoneNumber());
 
         return ResponseEntity.ok(response);
+    }
+
+    @Operation(summary = "이메일로 비밀번호 재설정", description = "이메일 인증을 완료한 후, 비밀번호 재설정합니다.")
+    @PatchMapping("/reset-password/email")
+    public ResponseEntity<String> resetPasswordByEmail(
+            @Valid @RequestBody ResetPasswordByEmailRequestDto requestDto) {
+        authService.resetPasswordByEmail(requestDto);
+        return ResponseEntity.ok("비밀번호가 성공적으로 재설정되었습니다.");
+    }
+
+    @Operation(summary = "휴대폰으로 비밀번호 재설정", description = "휴대폰 인증을 완료한 후, 비밀번호 재설정합니다.")
+    @PatchMapping("/reset-password/phone")
+    public ResponseEntity<String> resetPasswordByPhone(
+            @Valid @RequestBody ResetPasswordByPhoneRequestDto requestDto) {
+        authService.resetPasswordByPhone(requestDto);
+        return ResponseEntity.ok("비밀번호가 성공적으로 재설정되었습니다.");
+    }
+
+    @Operation(summary = "로그인 후 비밀번호 재설정", description = "로그인 한 사용자가 비밀번호 재설정합니다.")
+    @PatchMapping("/reset-password")
+    public ResponseEntity<String> resetPassword(
+            @Valid @RequestBody ResetPasswordRequestDto requestDto,
+            @AuthenticationPrincipal CustomUserDetails userDetails) {
+        authService.resetPassword(requestDto, userDetails.getId());
+        return ResponseEntity.ok("비밀번호가 성공적으로 변경되었습니다.");
     }
 }

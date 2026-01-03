@@ -34,7 +34,7 @@ public class SecurityConfig {
     // AuthenticationManager Bean 등록
     @Bean
     public AuthenticationManager authenticationManager(AuthenticationConfiguration configuration)
-        throws Exception {
+            throws Exception {
         return configuration.getAuthenticationManager();
     }
 
@@ -71,10 +71,10 @@ public class SecurityConfig {
                                         "/api/reissue",
                                         "/api/admin/**",
                                         "/api/visits/**",
-                                        "/api/edu-reports/attachments/{id}/download", // 테스트용으로 교육자료 다운로드 열어놓음
+                                        "/api/edu-reports/attachments/{id}/download", // 테스트용으로 교육자료
+                                                                                      // 다운로드 열어놓음
                                         "/api/test/**",
-                                        "/api/departments/{departmentId}/users"
-                                    )
+                                        "/api/departments/{departmentId}/users")
                                 .permitAll()
                                 // .requestMatchers("/api/join", "/api/auth/login",
                                 // "/api/reissue").permitAll()

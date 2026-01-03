@@ -11,5 +11,4 @@ public class UserSummaryResponseDto {
 
     private Long id;
     private String name;
-
 }

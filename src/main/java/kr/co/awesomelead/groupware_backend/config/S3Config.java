@@ -3,6 +3,7 @@ package kr.co.awesomelead.groupware_backend.config;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+
 import software.amazon.awssdk.auth.credentials.AwsBasicCredentials;
 import software.amazon.awssdk.auth.credentials.StaticCredentialsProvider;
 import software.amazon.awssdk.regions.Region;
@@ -27,22 +28,22 @@ public class S3Config {
         AwsBasicCredentials credentials = AwsBasicCredentials.create(accessKey, secretKey);
 
         StaticCredentialsProvider credentialsProvider =
-            StaticCredentialsProvider.create(credentials);
+                StaticCredentialsProvider.create(credentials);
 
         return S3Client.builder()
-            .region(Region.of(region))
-            .credentialsProvider(credentialsProvider)
-            .build();
+                .region(Region.of(region))
+                .credentialsProvider(credentialsProvider)
+                .build();
     }
 
     @Bean
     public S3Presigner s3Presigner() {
         AwsBasicCredentials credentials = AwsBasicCredentials.create(accessKey, secretKey);
         StaticCredentialsProvider credentialsProvider =
-            StaticCredentialsProvider.create(credentials);
+                StaticCredentialsProvider.create(credentials);
         return S3Presigner.builder()
-            .region(Region.of(region)) // 동일한 리전 설정
-            .credentialsProvider(credentialsProvider) // 동일한 자격 증명 사용
-            .build();
+                .region(Region.of(region)) // 동일한 리전 설정
+                .credentialsProvider(credentialsProvider) // 동일한 자격 증명 사용
+                .build();
     }
 }

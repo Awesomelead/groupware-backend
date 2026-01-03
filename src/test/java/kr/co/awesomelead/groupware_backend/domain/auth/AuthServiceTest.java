@@ -11,8 +11,6 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-import java.time.LocalDate;
-import java.util.Optional;
 import kr.co.awesomelead.groupware_backend.domain.aligo.service.PhoneAuthService;
 import kr.co.awesomelead.groupware_backend.domain.auth.dto.request.ResetPasswordByEmailRequestDto;
 import kr.co.awesomelead.groupware_backend.domain.auth.dto.request.ResetPasswordByPhoneRequestDto;
@@ -28,6 +26,7 @@ import kr.co.awesomelead.groupware_backend.domain.user.mapper.UserMapper;
 import kr.co.awesomelead.groupware_backend.domain.user.repository.UserRepository;
 import kr.co.awesomelead.groupware_backend.global.CustomException;
 import kr.co.awesomelead.groupware_backend.global.ErrorCode;
+
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -40,27 +39,24 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.test.context.ActiveProfiles;
 
+import java.time.LocalDate;
+import java.util.Optional;
+
 @ExtendWith(MockitoExtension.class)
 @ActiveProfiles("test")
 class AuthServiceTest {
 
-    @Mock
-    private UserRepository userRepository;
+    @Mock private UserRepository userRepository;
 
-    @Mock
-    private BCryptPasswordEncoder bCryptPasswordEncoder;
+    @Mock private BCryptPasswordEncoder bCryptPasswordEncoder;
 
-    @Mock
-    private PhoneAuthService phoneAuthService;
+    @Mock private PhoneAuthService phoneAuthService;
 
-    @Mock
-    private EmailAuthService emailAuthService;
+    @Mock private EmailAuthService emailAuthService;
 
-    @Mock
-    private UserMapper userMapper;
+    @Mock private UserMapper userMapper;
 
-    @InjectMocks
-    private AuthService authService;
+    @InjectMocks private AuthService authService;
 
     private User testUser;
     private final String TEST_EMAIL = "test@example.com";
@@ -96,17 +92,17 @@ class AuthServiceTest {
 
         // Builder 사용 + onPrePersist 호출
         User mockUser =
-            User.builder()
-                .email(signupDto.getEmail())
-                .nameKor(signupDto.getNameKor())
-                .nameEng(signupDto.getNameEng())
-                .nationality(signupDto.getNationality())
-                .registrationNumber(signupDto.getRegistrationNumber())
-                .phoneNumber(signupDto.getPhoneNumber())
-                .workLocation(Company.AWESOME)
-                .role(Role.USER)
-                .status(Status.PENDING)
-                .build();
+                User.builder()
+                        .email(signupDto.getEmail())
+                        .nameKor(signupDto.getNameKor())
+                        .nameEng(signupDto.getNameEng())
+                        .nationality(signupDto.getNationality())
+                        .registrationNumber(signupDto.getRegistrationNumber())
+                        .phoneNumber(signupDto.getPhoneNumber())
+                        .workLocation(Company.AWESOME)
+                        .role(Role.USER)
+                        .status(Status.PENDING)
+                        .build();
 
         // @PrePersist 로직 수동 실행
         mockUser.onPrePersist();
@@ -116,7 +112,7 @@ class AuthServiceTest {
         when(phoneAuthService.isPhoneVerified(signupDto.getPhoneNumber())).thenReturn(true);
         when(userRepository.existsByEmail(signupDto.getEmail())).thenReturn(false);
         when(userRepository.existsByRegistrationNumber(signupDto.getRegistrationNumber()))
-            .thenReturn(false);
+                .thenReturn(false);
         when(userMapper.toEntity(signupDto)).thenReturn(mockUser);
         when(bCryptPasswordEncoder.encode(signupDto.getPassword())).thenReturn("encodedPassword");
 
@@ -154,7 +150,7 @@ class AuthServiceTest {
 
         // when & then
         CustomException exception =
-            assertThrows(CustomException.class, () -> authService.signup(signupDto));
+                assertThrows(CustomException.class, () -> authService.signup(signupDto));
 
         assertThat(exception.getErrorCode()).isEqualTo(ErrorCode.PASSWORD_MISMATCH);
         verify(userRepository, never()).save(any(User.class));
@@ -175,7 +171,7 @@ class AuthServiceTest {
 
         // when & then
         CustomException exception =
-            assertThrows(CustomException.class, () -> authService.signup(signupDto));
+                assertThrows(CustomException.class, () -> authService.signup(signupDto));
 
         assertThat(exception.getErrorCode()).isEqualTo(ErrorCode.PHONE_NOT_VERIFIED);
         verify(userRepository, never()).save(any(User.class));
@@ -200,7 +196,7 @@ class AuthServiceTest {
 
         // when & then
         CustomException exception =
-            assertThrows(CustomException.class, () -> authService.signup(signupDto));
+                assertThrows(CustomException.class, () -> authService.signup(signupDto));
 
         assertThat(exception.getErrorCode()).isEqualTo(ErrorCode.EMAIL_NOT_VERIFIED);
         verify(userRepository, never()).save(any(User.class));
@@ -224,7 +220,7 @@ class AuthServiceTest {
 
         // when & then
         CustomException exception =
-            assertThrows(CustomException.class, () -> authService.signup(signupDto));
+                assertThrows(CustomException.class, () -> authService.signup(signupDto));
 
         assertThat(exception.getErrorCode()).isEqualTo(ErrorCode.DUPLICATE_LOGIN_ID);
         verify(userRepository, never()).save(any(User.class));
@@ -247,11 +243,11 @@ class AuthServiceTest {
         when(userRepository.existsByEmail(signupDto.getEmail())).thenReturn(false);
         // 주민번호 중복
         when(userRepository.existsByRegistrationNumber(signupDto.getRegistrationNumber()))
-            .thenReturn(true);
+                .thenReturn(true);
 
         // when & then
         CustomException exception =
-            assertThrows(CustomException.class, () -> authService.signup(signupDto));
+                assertThrows(CustomException.class, () -> authService.signup(signupDto));
 
         assertThat(exception.getErrorCode()).isEqualTo(ErrorCode.DUPLICATE_REGISTRATION_NUMBER);
         verify(userRepository, never()).save(any(User.class));
@@ -299,8 +295,8 @@ class AuthServiceTest {
 
             // when & then
             assertThatThrownBy(() -> authService.resetPasswordByEmail(requestDto))
-                .isInstanceOf(CustomException.class)
-                .hasFieldOrPropertyWithValue("errorCode", ErrorCode.EMAIL_NOT_VERIFIED);
+                    .isInstanceOf(CustomException.class)
+                    .hasFieldOrPropertyWithValue("errorCode", ErrorCode.EMAIL_NOT_VERIFIED);
 
             verify(emailAuthService).isEmailVerified(TEST_EMAIL);
             verify(userRepository, never()).findByEmail(anyString());
@@ -316,8 +312,8 @@ class AuthServiceTest {
 
             // when & then
             assertThatThrownBy(() -> authService.resetPasswordByEmail(requestDto))
-                .isInstanceOf(CustomException.class)
-                .hasFieldOrPropertyWithValue("errorCode", ErrorCode.PASSWORD_MISMATCH);
+                    .isInstanceOf(CustomException.class)
+                    .hasFieldOrPropertyWithValue("errorCode", ErrorCode.PASSWORD_MISMATCH);
 
             verify(userRepository, never()).findByEmail(anyString());
             verify(userRepository, never()).save(any());
@@ -332,8 +328,8 @@ class AuthServiceTest {
 
             // when & then
             assertThatThrownBy(() -> authService.resetPasswordByEmail(requestDto))
-                .isInstanceOf(CustomException.class)
-                .hasFieldOrPropertyWithValue("errorCode", ErrorCode.USER_NOT_FOUND);
+                    .isInstanceOf(CustomException.class)
+                    .hasFieldOrPropertyWithValue("errorCode", ErrorCode.USER_NOT_FOUND);
 
             verify(userRepository).findByEmail(TEST_EMAIL);
             verify(userRepository, never()).save(any());
@@ -360,8 +356,8 @@ class AuthServiceTest {
             // given
             String phoneHash = User.hashPhoneNumber(TEST_PHONE);
             given(phoneAuthService.isPhoneVerified(TEST_PHONE)).willReturn(true);
-            given(userRepository.findByPhoneNumberHash(phoneHash)).willReturn(
-                Optional.of(testUser));
+            given(userRepository.findByPhoneNumberHash(phoneHash))
+                    .willReturn(Optional.of(testUser));
             given(bCryptPasswordEncoder.encode(NEW_PASSWORD)).willReturn(ENCODED_NEW_PASSWORD);
 
             // when
@@ -384,8 +380,8 @@ class AuthServiceTest {
 
             // when & then
             assertThatThrownBy(() -> authService.resetPasswordByPhone(requestDto))
-                .isInstanceOf(CustomException.class)
-                .hasFieldOrPropertyWithValue("errorCode", ErrorCode.PHONE_NOT_VERIFIED);
+                    .isInstanceOf(CustomException.class)
+                    .hasFieldOrPropertyWithValue("errorCode", ErrorCode.PHONE_NOT_VERIFIED);
 
             verify(phoneAuthService).isPhoneVerified(TEST_PHONE);
             verify(userRepository, never()).findByPhoneNumberHash(anyString());
@@ -401,8 +397,8 @@ class AuthServiceTest {
 
             // when & then
             assertThatThrownBy(() -> authService.resetPasswordByPhone(requestDto))
-                .isInstanceOf(CustomException.class)
-                .hasFieldOrPropertyWithValue("errorCode", ErrorCode.PASSWORD_MISMATCH);
+                    .isInstanceOf(CustomException.class)
+                    .hasFieldOrPropertyWithValue("errorCode", ErrorCode.PASSWORD_MISMATCH);
 
             verify(userRepository, never()).findByPhoneNumberHash(anyString());
             verify(userRepository, never()).save(any());
@@ -418,8 +414,8 @@ class AuthServiceTest {
 
             // when & then
             assertThatThrownBy(() -> authService.resetPasswordByPhone(requestDto))
-                .isInstanceOf(CustomException.class)
-                .hasFieldOrPropertyWithValue("errorCode", ErrorCode.USER_NOT_FOUND);
+                    .isInstanceOf(CustomException.class)
+                    .hasFieldOrPropertyWithValue("errorCode", ErrorCode.USER_NOT_FOUND);
 
             verify(userRepository).findByPhoneNumberHash(phoneHash);
             verify(userRepository, never()).save(any());
@@ -446,8 +442,8 @@ class AuthServiceTest {
             // given
             Long userId = 1L;
             given(userRepository.findById(userId)).willReturn(Optional.of(testUser));
-            given(bCryptPasswordEncoder.matches(OLD_PASSWORD, ENCODED_OLD_PASSWORD)).willReturn(
-                true);
+            given(bCryptPasswordEncoder.matches(OLD_PASSWORD, ENCODED_OLD_PASSWORD))
+                    .willReturn(true);
             given(bCryptPasswordEncoder.encode(NEW_PASSWORD)).willReturn(ENCODED_NEW_PASSWORD);
 
             // when
@@ -470,8 +466,8 @@ class AuthServiceTest {
 
             // when & then
             assertThatThrownBy(() -> authService.resetPassword(requestDto, userId))
-                .isInstanceOf(CustomException.class)
-                .hasFieldOrPropertyWithValue("errorCode", ErrorCode.PASSWORD_MISMATCH);
+                    .isInstanceOf(CustomException.class)
+                    .hasFieldOrPropertyWithValue("errorCode", ErrorCode.PASSWORD_MISMATCH);
 
             verify(userRepository, never()).findById(any());
             verify(userRepository, never()).save(any());
@@ -486,8 +482,8 @@ class AuthServiceTest {
 
             // when & then
             assertThatThrownBy(() -> authService.resetPassword(requestDto, userId))
-                .isInstanceOf(CustomException.class)
-                .hasFieldOrPropertyWithValue("errorCode", ErrorCode.USER_NOT_FOUND);
+                    .isInstanceOf(CustomException.class)
+                    .hasFieldOrPropertyWithValue("errorCode", ErrorCode.USER_NOT_FOUND);
 
             verify(userRepository).findById(userId);
             verify(userRepository, never()).save(any());
@@ -499,13 +495,13 @@ class AuthServiceTest {
             // given
             Long userId = 1L;
             given(userRepository.findById(userId)).willReturn(Optional.of(testUser));
-            given(bCryptPasswordEncoder.matches(OLD_PASSWORD, ENCODED_OLD_PASSWORD)).willReturn(
-                false);
+            given(bCryptPasswordEncoder.matches(OLD_PASSWORD, ENCODED_OLD_PASSWORD))
+                    .willReturn(false);
 
             // when & then
             assertThatThrownBy(() -> authService.resetPassword(requestDto, userId))
-                .isInstanceOf(CustomException.class)
-                .hasFieldOrPropertyWithValue("errorCode", ErrorCode.CURRENT_PASSWORD_MISMATCH);
+                    .isInstanceOf(CustomException.class)
+                    .hasFieldOrPropertyWithValue("errorCode", ErrorCode.CURRENT_PASSWORD_MISMATCH);
 
             verify(bCryptPasswordEncoder).matches(OLD_PASSWORD, ENCODED_OLD_PASSWORD);
             verify(userRepository, never()).save(any());
@@ -519,13 +515,13 @@ class AuthServiceTest {
             requestDto.setNewPassword(OLD_PASSWORD);
             requestDto.setNewPasswordConfirm(OLD_PASSWORD);
             given(userRepository.findById(userId)).willReturn(Optional.of(testUser));
-            given(bCryptPasswordEncoder.matches(OLD_PASSWORD, ENCODED_OLD_PASSWORD)).willReturn(
-                true);
+            given(bCryptPasswordEncoder.matches(OLD_PASSWORD, ENCODED_OLD_PASSWORD))
+                    .willReturn(true);
 
             // when & then
             assertThatThrownBy(() -> authService.resetPassword(requestDto, userId))
-                .isInstanceOf(CustomException.class)
-                .hasFieldOrPropertyWithValue("errorCode", ErrorCode.SAME_AS_CURRENT_PASSWORD);
+                    .isInstanceOf(CustomException.class)
+                    .hasFieldOrPropertyWithValue("errorCode", ErrorCode.SAME_AS_CURRENT_PASSWORD);
 
             verify(bCryptPasswordEncoder).matches(OLD_PASSWORD, ENCODED_OLD_PASSWORD);
             verify(userRepository, never()).save(any());

@@ -1,7 +1,5 @@
 package kr.co.awesomelead.groupware_backend.domain.auth.service;
 
-import java.util.Collection;
-import java.util.Iterator;
 import kr.co.awesomelead.groupware_backend.domain.aligo.service.PhoneAuthService;
 import kr.co.awesomelead.groupware_backend.domain.auth.dto.request.LoginRequestDto;
 import kr.co.awesomelead.groupware_backend.domain.auth.dto.request.ResetPasswordByEmailRequestDto;
@@ -17,8 +15,10 @@ import kr.co.awesomelead.groupware_backend.domain.user.mapper.UserMapper;
 import kr.co.awesomelead.groupware_backend.domain.user.repository.UserRepository;
 import kr.co.awesomelead.groupware_backend.global.CustomException;
 import kr.co.awesomelead.groupware_backend.global.ErrorCode;
+
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
@@ -26,6 +26,9 @@ import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.util.Collection;
+import java.util.Iterator;
 
 @Slf4j
 @Service
@@ -85,8 +88,8 @@ public class AuthService {
     public AuthTokensDto login(LoginRequestDto requestDto) {
         // 1. 인증 처리
         UsernamePasswordAuthenticationToken authToken =
-            new UsernamePasswordAuthenticationToken(
-                requestDto.getEmail(), requestDto.getPassword(), null);
+                new UsernamePasswordAuthenticationToken(
+                        requestDto.getEmail(), requestDto.getPassword(), null);
 
         Authentication authentication = authenticationManager.authenticate(authToken);
 
@@ -144,9 +147,9 @@ public class AuthService {
         // 2. 해시로 사용자 찾기
         String phoneNumberHash = User.hashPhoneNumber(phoneNumber);
         User user =
-            userRepository
-                .findByPhoneNumberHash(phoneNumberHash)
-                .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
+                userRepository
+                        .findByPhoneNumberHash(phoneNumberHash)
+                        .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
 
         // 3. 이름 검증
         if (!user.getNameKor().equals(name)) {
@@ -181,8 +184,10 @@ public class AuthService {
             throw new CustomException(ErrorCode.PASSWORD_MISMATCH);
         }
         // 3. 이메일로 사용자 찾기
-        User user = userRepository.findByEmail(requestDto.getEmail())
-            .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
+        User user =
+                userRepository
+                        .findByEmail(requestDto.getEmail())
+                        .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
 
         // 4. 해당 유저의 비밀번호 변경
         user.setPassword(bCryptPasswordEncoder.encode(requestDto.getNewPassword()));
@@ -206,9 +211,9 @@ public class AuthService {
         // 3. 해시로 사용자 찾기
         String phoneNumberHash = User.hashPhoneNumber(requestDto.getPhoneNumber());
         User user =
-            userRepository
-                .findByPhoneNumberHash(phoneNumberHash)
-                .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
+                userRepository
+                        .findByPhoneNumberHash(phoneNumberHash)
+                        .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
 
         // 4. 해당 유저의 비밀번호 변경
         user.setPassword(bCryptPasswordEncoder.encode(requestDto.getNewPassword()));
@@ -227,8 +232,10 @@ public class AuthService {
         }
 
         // 2. 사용자 조회
-        User user = userRepository.findById(userId)
-            .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
+        User user =
+                userRepository
+                        .findById(userId)
+                        .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
 
         // 3. 현재 비밀번호 확인
         if (!bCryptPasswordEncoder.matches(requestDto.getCurrentPassword(), user.getPassword())) {

@@ -24,6 +24,7 @@ import lombok.Getter;
 import lombok.Setter;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.LastModifiedDate;
+import org.springframework.util.StringUtils;
 
 @Setter
 @Getter
@@ -82,5 +83,22 @@ public class Notice {
     // 조회수 증가 메서드
     public void increaseViewCount() {
         this.viewCount++;
+    }
+
+    public void update(String title, String content, Boolean pinned) {
+        if (StringUtils.hasText(title)) {
+            this.title = title;
+        }
+        if (StringUtils.hasText(content)) {
+            this.content = content;
+        }
+        if (pinned != null) {
+            this.pinned = pinned;
+        }
+    }
+
+    public void removeAttachment(NoticeAttachment attachment) {
+        this.attachments.remove(attachment);
+        attachment.setNotice(null);
     }
 }

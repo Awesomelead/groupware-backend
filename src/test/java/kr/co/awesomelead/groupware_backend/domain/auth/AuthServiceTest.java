@@ -15,6 +15,7 @@ import java.time.LocalDate;
 import java.util.Optional;
 import kr.co.awesomelead.groupware_backend.domain.aligo.service.PhoneAuthService;
 import kr.co.awesomelead.groupware_backend.domain.auth.dto.request.ResetPasswordByEmailRequestDto;
+import kr.co.awesomelead.groupware_backend.domain.auth.dto.request.ResetPasswordByPhoneRequestDto;
 import kr.co.awesomelead.groupware_backend.domain.auth.dto.request.SignupRequestDto;
 import kr.co.awesomelead.groupware_backend.domain.auth.service.AuthService;
 import kr.co.awesomelead.groupware_backend.domain.auth.service.EmailAuthService;
@@ -334,6 +335,92 @@ class AuthServiceTest {
                 .hasFieldOrPropertyWithValue("errorCode", ErrorCode.USER_NOT_FOUND);
 
             verify(userRepository).findByEmail(TEST_EMAIL);
+            verify(userRepository, never()).save(any());
+        }
+    }
+
+    @Nested
+    @DisplayName("휴대폰 인증 후 비밀번호 재설정")
+    class ResetPasswordByPhoneTest {
+
+        private ResetPasswordByPhoneRequestDto requestDto;
+
+        @BeforeEach
+        void setUp() {
+            requestDto = new ResetPasswordByPhoneRequestDto();
+            requestDto.setPhoneNumber(TEST_PHONE);
+            requestDto.setNewPassword(NEW_PASSWORD);
+            requestDto.setNewPasswordConfirm(NEW_PASSWORD);
+        }
+
+        @Test
+        @DisplayName("성공: 휴대폰 인증 후 비밀번호가 정상적으로 재설정된다")
+        void resetPasswordByPhone_Success() {
+            // given
+            String phoneHash = User.hashPhoneNumber(TEST_PHONE);
+            given(phoneAuthService.isPhoneVerified(TEST_PHONE)).willReturn(true);
+            given(userRepository.findByPhoneNumberHash(phoneHash)).willReturn(
+                Optional.of(testUser));
+            given(bCryptPasswordEncoder.encode(NEW_PASSWORD)).willReturn(ENCODED_NEW_PASSWORD);
+
+            // when
+            authService.resetPasswordByPhone(requestDto);
+
+            // then
+            verify(phoneAuthService).isPhoneVerified(TEST_PHONE);
+            verify(userRepository).findByPhoneNumberHash(phoneHash);
+            verify(bCryptPasswordEncoder).encode(NEW_PASSWORD);
+            verify(userRepository).save(testUser);
+            verify(phoneAuthService).clearVerification(TEST_PHONE);
+            assertThat(testUser.getPassword()).isEqualTo(ENCODED_NEW_PASSWORD);
+        }
+
+        @Test
+        @DisplayName("실패: 휴대폰 인증을 하지 않은 경우")
+        void resetPasswordByPhone_NotVerified() {
+            // given
+            given(phoneAuthService.isPhoneVerified(TEST_PHONE)).willReturn(false);
+
+            // when & then
+            assertThatThrownBy(() -> authService.resetPasswordByPhone(requestDto))
+                .isInstanceOf(CustomException.class)
+                .hasFieldOrPropertyWithValue("errorCode", ErrorCode.PHONE_NOT_VERIFIED);
+
+            verify(phoneAuthService).isPhoneVerified(TEST_PHONE);
+            verify(userRepository, never()).findByPhoneNumberHash(anyString());
+            verify(userRepository, never()).save(any());
+        }
+
+        @Test
+        @DisplayName("실패: 비밀번호 확인이 일치하지 않는 경우")
+        void resetPasswordByPhone_PasswordMismatch() {
+            // given
+            requestDto.setNewPasswordConfirm("differentPassword!@#");
+            given(phoneAuthService.isPhoneVerified(TEST_PHONE)).willReturn(true);
+
+            // when & then
+            assertThatThrownBy(() -> authService.resetPasswordByPhone(requestDto))
+                .isInstanceOf(CustomException.class)
+                .hasFieldOrPropertyWithValue("errorCode", ErrorCode.PASSWORD_MISMATCH);
+
+            verify(userRepository, never()).findByPhoneNumberHash(anyString());
+            verify(userRepository, never()).save(any());
+        }
+
+        @Test
+        @DisplayName("실패: 존재하지 않는 전화번호인 경우")
+        void resetPasswordByPhone_UserNotFound() {
+            // given
+            String phoneHash = User.hashPhoneNumber(TEST_PHONE);
+            given(phoneAuthService.isPhoneVerified(TEST_PHONE)).willReturn(true);
+            given(userRepository.findByPhoneNumberHash(phoneHash)).willReturn(Optional.empty());
+
+            // when & then
+            assertThatThrownBy(() -> authService.resetPasswordByPhone(requestDto))
+                .isInstanceOf(CustomException.class)
+                .hasFieldOrPropertyWithValue("errorCode", ErrorCode.USER_NOT_FOUND);
+
+            verify(userRepository).findByPhoneNumberHash(phoneHash);
             verify(userRepository, never()).save(any());
         }
     }

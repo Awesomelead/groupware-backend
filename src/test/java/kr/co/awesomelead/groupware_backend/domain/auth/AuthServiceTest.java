@@ -16,6 +16,7 @@ import java.util.Optional;
 import kr.co.awesomelead.groupware_backend.domain.aligo.service.PhoneAuthService;
 import kr.co.awesomelead.groupware_backend.domain.auth.dto.request.ResetPasswordByEmailRequestDto;
 import kr.co.awesomelead.groupware_backend.domain.auth.dto.request.ResetPasswordByPhoneRequestDto;
+import kr.co.awesomelead.groupware_backend.domain.auth.dto.request.ResetPasswordRequestDto;
 import kr.co.awesomelead.groupware_backend.domain.auth.dto.request.SignupRequestDto;
 import kr.co.awesomelead.groupware_backend.domain.auth.service.AuthService;
 import kr.co.awesomelead.groupware_backend.domain.auth.service.EmailAuthService;
@@ -421,6 +422,112 @@ class AuthServiceTest {
                 .hasFieldOrPropertyWithValue("errorCode", ErrorCode.USER_NOT_FOUND);
 
             verify(userRepository).findByPhoneNumberHash(phoneHash);
+            verify(userRepository, never()).save(any());
+        }
+    }
+
+    @Nested
+    @DisplayName("로그인 후 비밀번호 변경")
+    class ResetPasswordTest {
+
+        private ResetPasswordRequestDto requestDto;
+
+        @BeforeEach
+        void setUp() {
+            requestDto = new ResetPasswordRequestDto();
+            requestDto.setCurrentPassword(OLD_PASSWORD);
+            requestDto.setNewPassword(NEW_PASSWORD);
+            requestDto.setNewPasswordConfirm(NEW_PASSWORD);
+        }
+
+        @Test
+        @DisplayName("성공: 현재 비밀번호 확인 후 비밀번호가 정상적으로 변경된다")
+        void resetPassword_Success() {
+            // given
+            Long userId = 1L;
+            given(userRepository.findById(userId)).willReturn(Optional.of(testUser));
+            given(bCryptPasswordEncoder.matches(OLD_PASSWORD, ENCODED_OLD_PASSWORD)).willReturn(
+                true);
+            given(bCryptPasswordEncoder.encode(NEW_PASSWORD)).willReturn(ENCODED_NEW_PASSWORD);
+
+            // when
+            authService.resetPassword(requestDto, userId);
+
+            // then
+            verify(userRepository).findById(userId);
+            verify(bCryptPasswordEncoder).matches(OLD_PASSWORD, ENCODED_OLD_PASSWORD);
+            verify(bCryptPasswordEncoder).encode(NEW_PASSWORD);
+            verify(userRepository).save(testUser);
+            assertThat(testUser.getPassword()).isEqualTo(ENCODED_NEW_PASSWORD);
+        }
+
+        @Test
+        @DisplayName("실패: 비밀번호 확인이 일치하지 않는 경우")
+        void resetPassword_PasswordMismatch() {
+            // given
+            Long userId = 1L;
+            requestDto.setNewPasswordConfirm("differentPassword!@#");
+
+            // when & then
+            assertThatThrownBy(() -> authService.resetPassword(requestDto, userId))
+                .isInstanceOf(CustomException.class)
+                .hasFieldOrPropertyWithValue("errorCode", ErrorCode.PASSWORD_MISMATCH);
+
+            verify(userRepository, never()).findById(any());
+            verify(userRepository, never()).save(any());
+        }
+
+        @Test
+        @DisplayName("실패: 존재하지 않는 사용자인 경우")
+        void resetPassword_UserNotFound() {
+            // given
+            Long userId = 999L;
+            given(userRepository.findById(userId)).willReturn(Optional.empty());
+
+            // when & then
+            assertThatThrownBy(() -> authService.resetPassword(requestDto, userId))
+                .isInstanceOf(CustomException.class)
+                .hasFieldOrPropertyWithValue("errorCode", ErrorCode.USER_NOT_FOUND);
+
+            verify(userRepository).findById(userId);
+            verify(userRepository, never()).save(any());
+        }
+
+        @Test
+        @DisplayName("실패: 현재 비밀번호가 일치하지 않는 경우")
+        void resetPassword_CurrentPasswordMismatch() {
+            // given
+            Long userId = 1L;
+            given(userRepository.findById(userId)).willReturn(Optional.of(testUser));
+            given(bCryptPasswordEncoder.matches(OLD_PASSWORD, ENCODED_OLD_PASSWORD)).willReturn(
+                false);
+
+            // when & then
+            assertThatThrownBy(() -> authService.resetPassword(requestDto, userId))
+                .isInstanceOf(CustomException.class)
+                .hasFieldOrPropertyWithValue("errorCode", ErrorCode.CURRENT_PASSWORD_MISMATCH);
+
+            verify(bCryptPasswordEncoder).matches(OLD_PASSWORD, ENCODED_OLD_PASSWORD);
+            verify(userRepository, never()).save(any());
+        }
+
+        @Test
+        @DisplayName("실패: 새 비밀번호가 현재 비밀번호와 같은 경우")
+        void resetPassword_SameAsCurrentPassword() {
+            // given
+            Long userId = 1L;
+            requestDto.setNewPassword(OLD_PASSWORD);
+            requestDto.setNewPasswordConfirm(OLD_PASSWORD);
+            given(userRepository.findById(userId)).willReturn(Optional.of(testUser));
+            given(bCryptPasswordEncoder.matches(OLD_PASSWORD, ENCODED_OLD_PASSWORD)).willReturn(
+                true);
+
+            // when & then
+            assertThatThrownBy(() -> authService.resetPassword(requestDto, userId))
+                .isInstanceOf(CustomException.class)
+                .hasFieldOrPropertyWithValue("errorCode", ErrorCode.SAME_AS_CURRENT_PASSWORD);
+
+            verify(bCryptPasswordEncoder).matches(OLD_PASSWORD, ENCODED_OLD_PASSWORD);
             verify(userRepository, never()).save(any());
         }
     }

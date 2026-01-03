@@ -15,4 +15,6 @@ public class VisitSummaryResponseDto {
     private String visitorName;
     private String visitorCompany;
     private LocalDateTime visitStartDate;
+    private LocalDateTime visitEndDate;
+    private boolean visited;
 }

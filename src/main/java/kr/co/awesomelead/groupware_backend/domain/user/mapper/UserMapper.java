@@ -1,6 +1,7 @@
 package kr.co.awesomelead.groupware_backend.domain.user.mapper;
 
 import kr.co.awesomelead.groupware_backend.domain.auth.dto.request.SignupRequestDto;
+import kr.co.awesomelead.groupware_backend.domain.department.dto.response.UserSummaryResponseDto;
 import kr.co.awesomelead.groupware_backend.domain.user.entity.User;
 import kr.co.awesomelead.groupware_backend.domain.user.enums.Role;
 import kr.co.awesomelead.groupware_backend.domain.user.enums.Status;
@@ -17,7 +18,6 @@ public interface UserMapper {
     @Mapping(target = "password", ignore = true)
     @Mapping(target = "workLocation", source = "company")
     @Mapping(target = "birthDate", ignore = true)
-    @Mapping(target = "phoneNumberHash", ignore = true)
     @Mapping(target = "role", expression = "java(Role.USER)")
     @Mapping(target = "status", expression = "java(Status.PENDING)")
 
@@ -38,4 +38,7 @@ public interface UserMapper {
     @Mapping(target = "department", ignore = true)
     @Mapping(target = "authorities", ignore = true)
     User toEntity(SignupRequestDto dto);
+
+    @Mapping(target = "name", expression = "java(user.getDisplayName())")
+    UserSummaryResponseDto toSummaryDto(User user);
 }

@@ -119,7 +119,11 @@ public class User {
 
     private LocalDate birthDate; // 생년월일
 
-    @OneToOne(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
+    @OneToOne(
+            mappedBy = "user",
+            cascade = CascadeType.ALL,
+            orphanRemoval = true,
+            fetch = FetchType.LAZY)
     @JsonManagedReference
     private AnnualLeave annualLeave;
 

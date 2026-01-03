@@ -82,11 +82,7 @@ public class NoticeService {
 
     @Transactional
     public void deleteNotice(Long userId, Long noticeId) {
-        User user = userRepository.findById(userId)
-            .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
-        if (!user.hasAuthority(Authority.WRITE_NOTICE)) {
-            throw new CustomException(ErrorCode.NO_AUTHORITY_FOR_NOTICE);
-        }
+        validateAndGetAuthor(userId);
 
         Notice notice = noticeRepository.findByIdWithDetails(noticeId)
             .orElseThrow(() -> new CustomException(ErrorCode.NOTICE_NOT_FOUND));

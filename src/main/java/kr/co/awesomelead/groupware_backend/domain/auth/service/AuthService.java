@@ -176,7 +176,7 @@ public class AuthService {
             throw new CustomException(ErrorCode.EMAIL_NOT_VERIFIED);
         }
         // 2. 새비밀번호 일치하는지 확인
-        if (!requestDto.getNewPassword().equals(requestDto.getNewPassword())) {
+        if (!requestDto.getNewPassword().equals(requestDto.getNewPasswordConfirm())) {
             throw new CustomException(ErrorCode.PASSWORD_MISMATCH);
         }
         // 3. 이메일로 사용자 찾기
@@ -199,7 +199,7 @@ public class AuthService {
             throw new CustomException(ErrorCode.PHONE_NOT_VERIFIED);
         }
         // 2. 새비밀번호 일치하는지 확인
-        if (!requestDto.getNewPassword().equals(requestDto.getNewPassword())) {
+        if (!requestDto.getNewPassword().equals(requestDto.getNewPasswordConfirm())) {
             throw new CustomException(ErrorCode.PASSWORD_MISMATCH);
         }
         // 3. 해시로 사용자 찾기

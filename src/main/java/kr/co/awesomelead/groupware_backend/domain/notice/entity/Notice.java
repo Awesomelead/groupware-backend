@@ -1,7 +1,6 @@
 package kr.co.awesomelead.groupware_backend.domain.notice.entity;
 
 import com.fasterxml.jackson.annotation.JsonBackReference;
-
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -16,19 +15,15 @@ import jakarta.persistence.Lob;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
-
-import kr.co.awesomelead.groupware_backend.domain.notice.enums.NoticeType;
-import kr.co.awesomelead.groupware_backend.domain.user.entity.User;
-
-import lombok.Getter;
-import lombok.Setter;
-
-import org.springframework.data.annotation.CreatedDate;
-import org.springframework.data.annotation.LastModifiedDate;
-
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import kr.co.awesomelead.groupware_backend.domain.notice.enums.NoticeType;
+import kr.co.awesomelead.groupware_backend.domain.user.entity.User;
+import lombok.Getter;
+import lombok.Setter;
+import org.springframework.data.annotation.CreatedDate;
+import org.springframework.data.annotation.LastModifiedDate;
 
 @Setter
 @Getter
@@ -49,9 +44,9 @@ public class Notice {
     @Column(nullable = false, length = 100)
     private String title;
 
-    // 내용
+    // 내용 (식단표의 경우 null 가능)
     @Lob
-    @Column(nullable = false, columnDefinition = "TEXT")
+    @Column(columnDefinition = "TEXT")
     private String content;
 
     @ManyToOne(fetch = FetchType.LAZY)
@@ -64,7 +59,8 @@ public class Notice {
     @Column(nullable = false, updatable = false)
     private LocalDateTime createdDate;
 
-    @LastModifiedDate private LocalDateTime updatedDate;
+    @LastModifiedDate
+    private LocalDateTime updatedDate;
 
     // 조회수
     @Column(nullable = false)

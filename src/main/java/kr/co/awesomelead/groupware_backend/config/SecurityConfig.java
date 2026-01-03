@@ -58,30 +58,30 @@ public class SecurityConfig {
         http.httpBasic((auth) -> auth.disable());
 
         http.authorizeHttpRequests(
-            (auth) ->
-                auth
-                    // 테스트용으로 어드민 경로도 열어놓음
-                    .requestMatchers(
-                        "/",
-                        "/index.html",
-                        "/api/join",
-                        "/api/join/send-code",
-                        "/api/join/verify-code",
-                        "/api/auth/**",
-                        "/api/reissue",
-                        "/api/admin/**",
-                        "/api/visits/**",
-                        "/api/edu-reports/attachments/{id}/download", // 테스트용으로 교육자료 다운로드 열어놓음
-                        "/api/test/**",
-                        "/api/departments/hierarchy",
-                        "/api/departments/{departmentId}/users"
-                    )
-                    .permitAll()
-                    // .requestMatchers("/api/join", "/api/auth/login",
-                    // "/api/reissue").permitAll()
-                    // .requestMatchers("/api/admin/**").hasRole("ADMIN")
-                    .anyRequest()
-                    .authenticated());
+                (auth) ->
+                        auth
+                                // 테스트용으로 어드민 경로도 열어놓음
+                                .requestMatchers(
+                                        "/",
+                                        "/index.html",
+                                        "/api/join",
+                                        "/api/join/send-code",
+                                        "/api/join/verify-code",
+                                        "/api/auth/**",
+                                        "/api/reissue",
+                                        "/api/admin/**",
+                                        "/api/visits/**",
+                                        "/api/edu-reports/attachments/{id}/download", // 테스트용으로 교육자료
+                                                                                      // 다운로드 열어놓음
+                                        "/api/test/**",
+                                        "/api/departments/hierarchy",
+                                        "/api/departments/{departmentId}/users")
+                                .permitAll()
+                                // .requestMatchers("/api/join", "/api/auth/login",
+                                // "/api/reissue").permitAll()
+                                // .requestMatchers("/api/admin/**").hasRole("ADMIN")
+                                .anyRequest()
+                                .authenticated());
 
         http.addFilterBefore(
                 new JwtFilter(jwtUtil, userRepository), UsernamePasswordAuthenticationFilter.class);

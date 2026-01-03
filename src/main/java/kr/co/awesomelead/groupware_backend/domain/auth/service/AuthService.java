@@ -6,6 +6,7 @@ import kr.co.awesomelead.groupware_backend.domain.aligo.service.PhoneAuthService
 import kr.co.awesomelead.groupware_backend.domain.auth.dto.request.LoginRequestDto;
 import kr.co.awesomelead.groupware_backend.domain.auth.dto.request.ResetPasswordByEmailRequestDto;
 import kr.co.awesomelead.groupware_backend.domain.auth.dto.request.ResetPasswordByPhoneRequestDto;
+import kr.co.awesomelead.groupware_backend.domain.auth.dto.request.ResetPasswordRequestDto;
 import kr.co.awesomelead.groupware_backend.domain.auth.dto.request.SignupRequestDto;
 import kr.co.awesomelead.groupware_backend.domain.auth.dto.response.AuthTokensDto;
 import kr.co.awesomelead.groupware_backend.domain.auth.dto.response.FindEmailResponseDto;
@@ -217,6 +218,33 @@ public class AuthService {
         phoneAuthService.clearVerification(requestDto.getPhoneNumber());
 
         log.info("비밀번호 재설정 완료 (휴대폰 인증) - 사용자 ID: {}", user.getId());
+    }
+
+    public void resetPassword(ResetPasswordRequestDto requestDto, Long userId) {
+        // 1. 새비밀번호 일치하는지 확인
+        if (!requestDto.getNewPassword().equals(requestDto.getNewPasswordConfirm())) {
+            throw new CustomException(ErrorCode.PASSWORD_MISMATCH);
+        }
+
+        // 2. 사용자 조회
+        User user = userRepository.findById(userId)
+            .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
+
+        // 3. 현재 비밀번호 확인
+        if (!bCryptPasswordEncoder.matches(requestDto.getCurrentPassword(), user.getPassword())) {
+            throw new CustomException(ErrorCode.CURRENT_PASSWORD_MISMATCH);
+        }
+
+        // 4. 새 비밀번호가 현재 비밀번호와 같은지 확인
+        if (requestDto.getCurrentPassword().equals(requestDto.getNewPassword())) {
+            throw new CustomException(ErrorCode.SAME_AS_CURRENT_PASSWORD);
+        }
+
+        // 5. 해당 유저의 비밀번호 변경
+        user.setPassword(bCryptPasswordEncoder.encode(requestDto.getNewPassword()));
+        userRepository.save(user);
+
+        log.info("비밀번호 변경 완료 - 사용자 ID: {}", userId);
     }
 
 }

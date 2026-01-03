@@ -2,14 +2,14 @@ package kr.co.awesomelead.groupware_backend.domain.auth.controller;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
-
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
-
 import kr.co.awesomelead.groupware_backend.domain.aligo.service.PhoneAuthService;
 import kr.co.awesomelead.groupware_backend.domain.auth.dto.request.FindEmailRequestDto;
 import kr.co.awesomelead.groupware_backend.domain.auth.dto.request.LoginRequestDto;
+import kr.co.awesomelead.groupware_backend.domain.auth.dto.request.ResetPasswordByEmailRequestDto;
+import kr.co.awesomelead.groupware_backend.domain.auth.dto.request.ResetPasswordByPhoneRequestDto;
 import kr.co.awesomelead.groupware_backend.domain.auth.dto.request.SendAuthCodeRequestDto;
 import kr.co.awesomelead.groupware_backend.domain.auth.dto.request.SendEmailAuthCodeRequestDto;
 import kr.co.awesomelead.groupware_backend.domain.auth.dto.request.SignupRequestDto;
@@ -22,11 +22,10 @@ import kr.co.awesomelead.groupware_backend.domain.auth.dto.response.ReissueRespo
 import kr.co.awesomelead.groupware_backend.domain.auth.service.AuthService;
 import kr.co.awesomelead.groupware_backend.domain.auth.service.EmailAuthService;
 import kr.co.awesomelead.groupware_backend.domain.auth.util.CookieUtil;
-
 import lombok.RequiredArgsConstructor;
-
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -45,7 +44,7 @@ public class AuthController {
     @Operation(summary = "휴대폰 인증번호 발송", description = "휴대폰 인증번호를 발송합니다.")
     @PostMapping("/send-phone-code")
     public ResponseEntity<String> sendAuthCode(
-            @Valid @RequestBody SendAuthCodeRequestDto requestDto) {
+        @Valid @RequestBody SendAuthCodeRequestDto requestDto) {
         phoneAuthService.sendAuthCode(requestDto.getPhoneNumber());
         return ResponseEntity.ok("휴대폰 인증번호가 발송되었습니다.");
     }
@@ -53,7 +52,7 @@ public class AuthController {
     @Operation(summary = "휴대폰 인증번호 확인", description = "발송된 휴대폰 인증번호를 확인합니다.")
     @PostMapping("/verify-phone-code")
     public ResponseEntity<String> verifyAuthCode(
-            @Valid @RequestBody VerifyAuthCodeRequestDto requestDto) {
+        @Valid @RequestBody VerifyAuthCodeRequestDto requestDto) {
         phoneAuthService.verifyAuthCode(requestDto.getPhoneNumber(), requestDto.getAuthCode());
         return ResponseEntity.ok("휴대폰 인증이 완료되었습니다.");
     }
@@ -61,7 +60,7 @@ public class AuthController {
     @Operation(summary = "이메일 인증번호 발송", description = "이메일 인증번호를 발송합니다.")
     @PostMapping("/send-email-code")
     public ResponseEntity<String> sendEmailAuthCode(
-            @Valid @RequestBody SendEmailAuthCodeRequestDto requestDto) {
+        @Valid @RequestBody SendEmailAuthCodeRequestDto requestDto) {
         emailAuthService.sendAuthCode(requestDto.getEmail());
         return ResponseEntity.ok("이메일 인증번호가 발송되었습니다.");
     }
@@ -69,7 +68,7 @@ public class AuthController {
     @Operation(summary = "이메일 인증번호 확인", description = "발송된 이메일 인증번호를 확인합니다.")
     @PostMapping("/verify-email-code")
     public ResponseEntity<String> verifyEmailAuthCode(
-            @Valid @RequestBody VerifyEmailAuthCodeRequestDto requestDto) {
+        @Valid @RequestBody VerifyEmailAuthCodeRequestDto requestDto) {
         emailAuthService.verifyAuthCode(requestDto.getEmail(), requestDto.getAuthCode());
         return ResponseEntity.ok("이메일 인증이 완료되었습니다.");
     }
@@ -84,7 +83,7 @@ public class AuthController {
     @Operation(summary = "로그인", description = "로그인을 합니다.")
     @PostMapping("/login")
     public ResponseEntity<LoginResponseDto> login(
-            @RequestBody LoginRequestDto requestDto, HttpServletResponse response) {
+        @RequestBody LoginRequestDto requestDto, HttpServletResponse response) {
 
         AuthTokensDto tokens = authService.login(requestDto);
 
@@ -111,7 +110,7 @@ public class AuthController {
     @Operation(summary = "토큰 재발급", description = "Refresh Token으로 Access Token을 재발급합니다.")
     @PostMapping("/reissue")
     public ResponseEntity<ReissueResponseDto> reissue(
-            HttpServletRequest request, HttpServletResponse response) {
+        HttpServletRequest request, HttpServletResponse response) {
 
         // 1. 쿠키에서 Refresh Token 추출
         String refreshToken = CookieUtil.getCookieValue(request, "refresh");
@@ -133,11 +132,28 @@ public class AuthController {
     @Operation(summary = "아이디 찾기", description = "해시 기반 검색하여 휴대폰 번호로 아이디를 찾습니다.")
     @PostMapping("/find-email")
     public ResponseEntity<FindEmailResponseDto> findEmail(
-            @Valid @RequestBody FindEmailRequestDto requestDto) {
+        @Valid @RequestBody FindEmailRequestDto requestDto) {
 
         FindEmailResponseDto response =
-                authService.findEmail(requestDto.getName(), requestDto.getPhoneNumber());
+            authService.findEmail(requestDto.getName(), requestDto.getPhoneNumber());
 
         return ResponseEntity.ok(response);
     }
+
+    @Operation(summary = "이메일로 비밀번호 재설정", description = "이메일 인증을 완료한 후, 비밀번호 재설정합니다.")
+    @PatchMapping("/reset-password/email")
+    public ResponseEntity<String> findPassword(
+        @Valid @RequestBody ResetPasswordByEmailRequestDto requestDto) {
+        authService.resetPasswordByEmail(requestDto);
+        return ResponseEntity.ok("비밀번호가 성공적으로 재설정되었습니다.");
+    }
+
+    @Operation(summary = "휴대폰으로 비밀번호 재설정", description = "휴대폰 인증을 완료한 후, 비밀번호 재설정합니다.")
+    @PatchMapping("/reset-password/phone")
+    public ResponseEntity<String> findPassword(
+        @Valid @RequestBody ResetPasswordByPhoneRequestDto requestDto) {
+        authService.resetPasswordByPhone(requestDto);
+        return ResponseEntity.ok("비밀번호가 성공적으로 재설정되었습니다.");
+    }
+
 }

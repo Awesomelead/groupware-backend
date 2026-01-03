@@ -1,7 +1,11 @@
 package kr.co.awesomelead.groupware_backend.domain.auth.service;
 
+import java.util.Collection;
+import java.util.Iterator;
 import kr.co.awesomelead.groupware_backend.domain.aligo.service.PhoneAuthService;
 import kr.co.awesomelead.groupware_backend.domain.auth.dto.request.LoginRequestDto;
+import kr.co.awesomelead.groupware_backend.domain.auth.dto.request.ResetPasswordByEmailRequestDto;
+import kr.co.awesomelead.groupware_backend.domain.auth.dto.request.ResetPasswordByPhoneRequestDto;
 import kr.co.awesomelead.groupware_backend.domain.auth.dto.request.SignupRequestDto;
 import kr.co.awesomelead.groupware_backend.domain.auth.dto.response.AuthTokensDto;
 import kr.co.awesomelead.groupware_backend.domain.auth.dto.response.FindEmailResponseDto;
@@ -12,10 +16,8 @@ import kr.co.awesomelead.groupware_backend.domain.user.mapper.UserMapper;
 import kr.co.awesomelead.groupware_backend.domain.user.repository.UserRepository;
 import kr.co.awesomelead.groupware_backend.global.CustomException;
 import kr.co.awesomelead.groupware_backend.global.ErrorCode;
-
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
@@ -23,9 +25,6 @@ import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
-import java.util.Collection;
-import java.util.Iterator;
 
 @Slf4j
 @Service
@@ -85,8 +84,8 @@ public class AuthService {
     public AuthTokensDto login(LoginRequestDto requestDto) {
         // 1. 인증 처리
         UsernamePasswordAuthenticationToken authToken =
-                new UsernamePasswordAuthenticationToken(
-                        requestDto.getEmail(), requestDto.getPassword(), null);
+            new UsernamePasswordAuthenticationToken(
+                requestDto.getEmail(), requestDto.getPassword(), null);
 
         Authentication authentication = authenticationManager.authenticate(authToken);
 
@@ -144,9 +143,9 @@ public class AuthService {
         // 2. 해시로 사용자 찾기
         String phoneNumberHash = User.hashPhoneNumber(phoneNumber);
         User user =
-                userRepository
-                        .findByPhoneNumberHash(phoneNumberHash)
-                        .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
+            userRepository
+                .findByPhoneNumberHash(phoneNumberHash)
+                .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
 
         // 3. 이름 검증
         if (!user.getNameKor().equals(name)) {
@@ -170,4 +169,54 @@ public class AuthService {
         }
         return email.substring(0, 2) + "***" + email.substring(atIndex);
     }
+
+    public void resetPasswordByEmail(ResetPasswordByEmailRequestDto requestDto) {
+        // 1. 이메일 인증 여부 확인
+        if (!emailAuthService.isEmailVerified(requestDto.getEmail())) {
+            throw new CustomException(ErrorCode.EMAIL_NOT_VERIFIED);
+        }
+        // 2. 새비밀번호 일치하는지 확인
+        if (!requestDto.getNewPassword().equals(requestDto.getNewPassword())) {
+            throw new CustomException(ErrorCode.PASSWORD_MISMATCH);
+        }
+        // 3. 이메일로 사용자 찾기
+        User user = userRepository.findByEmail(requestDto.getEmail())
+            .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
+
+        // 4. 해당 유저의 비밀번호 변경
+        user.setPassword(bCryptPasswordEncoder.encode(requestDto.getNewPassword()));
+        userRepository.save(user);
+
+        // 5. 인증 플래그 삭제
+        emailAuthService.clearVerification(requestDto.getEmail());
+
+        log.info("비밀번호 재설정 완료 (이메일 인증) - 사용자 ID: {}", user.getId());
+    }
+
+    public void resetPasswordByPhone(ResetPasswordByPhoneRequestDto requestDto) {
+        // 1. 휴대폰 인증 여부 확인
+        if (!phoneAuthService.isPhoneVerified(requestDto.getPhoneNumber())) {
+            throw new CustomException(ErrorCode.PHONE_NOT_VERIFIED);
+        }
+        // 2. 새비밀번호 일치하는지 확인
+        if (!requestDto.getNewPassword().equals(requestDto.getNewPassword())) {
+            throw new CustomException(ErrorCode.PASSWORD_MISMATCH);
+        }
+        // 3. 해시로 사용자 찾기
+        String phoneNumberHash = User.hashPhoneNumber(requestDto.getPhoneNumber());
+        User user =
+            userRepository
+                .findByPhoneNumberHash(phoneNumberHash)
+                .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
+
+        // 4. 해당 유저의 비밀번호 변경
+        user.setPassword(bCryptPasswordEncoder.encode(requestDto.getNewPassword()));
+        userRepository.save(user);
+
+        // 5. 인증 플래그 삭제
+        phoneAuthService.clearVerification(requestDto.getPhoneNumber());
+
+        log.info("비밀번호 재설정 완료 (휴대폰 인증) - 사용자 ID: {}", user.getId());
+    }
+
 }

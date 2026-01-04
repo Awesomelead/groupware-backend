@@ -1,5 +1,6 @@
 package kr.co.awesomelead.groupware_backend.domain.admin.dto.request;
 
+import kr.co.awesomelead.groupware_backend.domain.department.enums.Company;
 import kr.co.awesomelead.groupware_backend.domain.user.enums.Role;
 
 import lombok.Getter;
@@ -14,6 +15,6 @@ public class UserApprovalRequestDto {
     private LocalDate hireDate;
     private String jobType;
     private String position;
-    private String workLocation;
+    private Company workLocation;
     private Role role;
 }

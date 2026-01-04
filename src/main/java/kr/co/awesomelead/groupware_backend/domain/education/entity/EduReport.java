@@ -18,7 +18,10 @@ import jakarta.persistence.Table;
 import kr.co.awesomelead.groupware_backend.domain.department.entity.Department;
 import kr.co.awesomelead.groupware_backend.domain.education.enums.EduType;
 
+import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 import java.time.LocalDate;
@@ -28,7 +31,11 @@ import java.util.List;
 @Entity
 @Getter
 @Setter
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
 @Table(name = "edu_reports")
+// @Table(indexes = @Index(name = "idx_edu_date", columnList = "eduDate")) 차후 성능비교를 위해 대기
 public class EduReport {
 
     @Id
@@ -42,16 +49,22 @@ public class EduReport {
     @Column(nullable = false)
     private LocalDate eduDate;
 
+    @Column(nullable = false, length = 200)
+    private String title;
+
     @Lob
     @Column(columnDefinition = "TEXT", nullable = false)
     private String content;
 
+    @Builder.Default
     @OneToMany(mappedBy = "eduReport", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<EduAttachment> attachments = new ArrayList<>();
 
+    @Builder.Default
     @Column(nullable = false)
     private boolean pinned = false;
 
+    @Builder.Default
     @Column(nullable = false)
     private boolean signatureRequired = false; // true일 때만 EduAttendance.signatureKey 작성
 

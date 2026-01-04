@@ -19,7 +19,10 @@ import jakarta.persistence.Table;
 import kr.co.awesomelead.groupware_backend.domain.department.enums.Company;
 import kr.co.awesomelead.groupware_backend.domain.user.entity.User;
 
+import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 import java.util.ArrayList;
@@ -28,6 +31,9 @@ import java.util.List;
 @Entity
 @Getter
 @Setter
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
 @Table(name = "departments")
 public class Department {
 
@@ -47,10 +53,12 @@ public class Department {
     @JsonBackReference // 자식 -> 부모 순환참조 방지
     private Department parent;
 
+    @Builder.Default
     @OneToMany(mappedBy = "parent", fetch = FetchType.LAZY)
     @JsonManagedReference // 부모 -> 자식 순환참조 허용 (직렬화 방향)
     private List<Department> children = new ArrayList<>();
 
+    @Builder.Default
     @OneToMany(mappedBy = "department", fetch = FetchType.LAZY)
     @JsonManagedReference
     private List<User> users = new ArrayList<>();

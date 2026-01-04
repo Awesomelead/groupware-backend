@@ -77,6 +77,9 @@ jobs:
             ALIGO_SENDER_KEY=${{ secrets.ALIGO_SENDER_KEY }}
             ALIGO_SENDER_PHONE=${{ secrets.ALIGO_SENDER_PHONE }}
             ALIGO_TPL_CODE=${{ secrets.ALIGO_TPL_CODE }}
+            ALIGO_TEST_MODE=${{ secrets.ALIGO_TEST_MODE }}
+            SPRING_MAIL_HOST=${{ secrets.SPRING_MAIL_HOST }}
+            SPRING_MAIL_PORT=${{ secrets.SPRING_MAIL_PORT }}
             SPRING_MAIL_USERNAME=${{secrets.SPRING_MAIL_USERNAME}}
             SPRING_MAIL_PASSWORD=${{secrets.SPRING_MAIL_PASSWORD}}
             ENCRYPTION_SECRET_KEY=${{ secrets.ENCRYPTION_SECRET_KEY }}

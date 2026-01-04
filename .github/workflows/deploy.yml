@@ -86,10 +86,35 @@ jobs:
             ENCRYPTION_SALT=${{ secrets.ENCRYPTION_SALT }}
             EOF
             
-            # Docker Compose로 배포
             cd /home/ubuntu
-            docker-compose pull
-            docker-compose up -d
+            
+            # 기존 컨테이너 중지
+            docker-compose stop app
+            
+            # 중지된 컨테이너 제거
+            docker-compose rm -f app
+            
+            # 최신 이미지 다운로드
+            docker-compose pull app
+            
+            # 컨테이너 시작
+            docker-compose up -d app
+            
+            # 새 컨테이너가 정상 시작될 때까지 대기
+            echo "Waiting for application to start..."
+            sleep 10
+            
+            for i in {1..30}; do
+              if curl -f http://localhost:8080/ > /dev/null 2>&1; then
+                echo "Application is healthy!"
+                break
+              fi
+              echo "Waiting... ($i/30)"
+              sleep 2
+            done
+            
+            # 중지된 컨테이너 정리
+            docker container prune -f
             
             # 사용하지 않는 이미지 정리
             docker image prune -f

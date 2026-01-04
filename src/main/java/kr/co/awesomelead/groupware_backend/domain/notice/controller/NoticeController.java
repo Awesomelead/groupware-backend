@@ -1,10 +1,9 @@
 package kr.co.awesomelead.groupware_backend.domain.notice.controller;
 
 import io.swagger.v3.oas.annotations.Operation;
+
 import jakarta.validation.Valid;
-import java.io.IOException;
-import java.net.URI;
-import java.util.List;
+
 import kr.co.awesomelead.groupware_backend.domain.notice.dto.request.NoticeCreateRequestDto;
 import kr.co.awesomelead.groupware_backend.domain.notice.dto.request.NoticeUpdateRequestDto;
 import kr.co.awesomelead.groupware_backend.domain.notice.dto.response.NoticeDetailDto;
@@ -12,7 +11,9 @@ import kr.co.awesomelead.groupware_backend.domain.notice.dto.response.NoticeSumm
 import kr.co.awesomelead.groupware_backend.domain.notice.enums.NoticeType;
 import kr.co.awesomelead.groupware_backend.domain.notice.service.NoticeService;
 import kr.co.awesomelead.groupware_backend.domain.user.dto.CustomUserDetails;
+
 import lombok.RequiredArgsConstructor;
+
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -28,6 +29,10 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
+import java.io.IOException;
+import java.net.URI;
+import java.util.List;
+
 @RestController
 @RequestMapping("/api/notices")
 @RequiredArgsConstructor
@@ -38,18 +43,18 @@ public class NoticeController {
     @Operation(summary = "공지 생성", description = "새로운 공지를 생성합니다.")
     @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<Long> createNotice(
-        @RequestPart("requestDto") @Valid NoticeCreateRequestDto requestDto,
-        @RequestPart(value = "files", required = false) List<MultipartFile> files,
-        @AuthenticationPrincipal CustomUserDetails userDetails)
-        throws IOException {
+            @RequestPart("requestDto") @Valid NoticeCreateRequestDto requestDto,
+            @RequestPart(value = "files", required = false) List<MultipartFile> files,
+            @AuthenticationPrincipal CustomUserDetails userDetails)
+            throws IOException {
 
         Long noticeId = noticeService.createNotice(requestDto, files, userDetails.getId());
 
         URI location =
-            ServletUriComponentsBuilder.fromCurrentRequest()
-                .path("/{id}")
-                .buildAndExpand(noticeId)
-                .toUri();
+                ServletUriComponentsBuilder.fromCurrentRequest()
+                        .path("/{id}")
+                        .buildAndExpand(noticeId)
+                        .toUri();
 
         return ResponseEntity.created(location).build();
     }
@@ -70,8 +75,8 @@ public class NoticeController {
 
     @Operation(summary = "공지 삭제", description = "특정 공지를 삭제합니다.")
     @DeleteMapping("/{noticeId}")
-    public ResponseEntity<Void> deleteNotice(@PathVariable Long noticeId,
-        @AuthenticationPrincipal CustomUserDetails userDetails) {
+    public ResponseEntity<Void> deleteNotice(
+            @PathVariable Long noticeId, @AuthenticationPrincipal CustomUserDetails userDetails) {
         noticeService.deleteNotice(userDetails.getId(), noticeId);
         return ResponseEntity.noContent().build();
     }
@@ -79,11 +84,11 @@ public class NoticeController {
     @Operation(summary = "공지 수정", description = "특정 공지를 수정합니다.")
     @PatchMapping("/{noticeId}")
     public ResponseEntity<Long> updateNotice(
-        @AuthenticationPrincipal CustomUserDetails userDetails,
-        @PathVariable Long noticeId,
-        @RequestPart(value = "notice") @Valid NoticeUpdateRequestDto dto,
-        @RequestPart(value = "files", required = false) List<MultipartFile> files
-    ) throws IOException {
+            @AuthenticationPrincipal CustomUserDetails userDetails,
+            @PathVariable Long noticeId,
+            @RequestPart(value = "notice") @Valid NoticeUpdateRequestDto dto,
+            @RequestPart(value = "files", required = false) List<MultipartFile> files)
+            throws IOException {
 
         Long updatedId = noticeService.updateNotice(userDetails.getId(), noticeId, dto, files);
 

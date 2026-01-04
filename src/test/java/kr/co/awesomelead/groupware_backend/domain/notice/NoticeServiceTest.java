@@ -9,9 +9,6 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-import java.io.IOException;
-import java.util.List;
-import java.util.Optional;
 import kr.co.awesomelead.groupware_backend.domain.notice.dto.request.NoticeCreateRequestDto;
 import kr.co.awesomelead.groupware_backend.domain.notice.dto.request.NoticeUpdateRequestDto;
 import kr.co.awesomelead.groupware_backend.domain.notice.dto.response.NoticeSummaryDto;
@@ -28,6 +25,7 @@ import kr.co.awesomelead.groupware_backend.domain.user.repository.UserRepository
 import kr.co.awesomelead.groupware_backend.global.CustomException;
 import kr.co.awesomelead.groupware_backend.global.ErrorCode;
 import kr.co.awesomelead.groupware_backend.global.infra.s3.S3Service;
+
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -39,21 +37,19 @@ import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.io.IOException;
+import java.util.List;
+import java.util.Optional;
+
 @ExtendWith(MockitoExtension.class)
 public class NoticeServiceTest {
 
-    @Mock
-    private NoticeRepository noticeRepository;
-    @Mock
-    private NoticeAttachmentRepository noticeAttachmentRepository;
-    @Mock
-    private NoticeMapper noticeMapper;
-    @Mock
-    private S3Service s3Service;
-    @Mock
-    private UserRepository userRepository;
-    @InjectMocks
-    private NoticeService noticeService;
+    @Mock private NoticeRepository noticeRepository;
+    @Mock private NoticeAttachmentRepository noticeAttachmentRepository;
+    @Mock private NoticeMapper noticeMapper;
+    @Mock private S3Service s3Service;
+    @Mock private UserRepository userRepository;
+    @InjectMocks private NoticeService noticeService;
 
     private User author;
     private NoticeCreateRequestDto createRequestDto;
@@ -68,20 +64,18 @@ public class NoticeServiceTest {
         author.addAuthority(Authority.WRITE_NOTICE);
 
         // 2. 테스트용 DTO 생성
-        createRequestDto = NoticeCreateRequestDto.builder()
-            .title("테스트 공지사항")
-            .content("공지사항 내용입니다.")
-            .type(NoticeType.REGULAR)
-            .pinned(false)
-            .build();
+        createRequestDto =
+                NoticeCreateRequestDto.builder()
+                        .title("테스트 공지사항")
+                        .content("공지사항 내용입니다.")
+                        .type(NoticeType.REGULAR)
+                        .pinned(false)
+                        .build();
 
         // 3. 테스트용 파일 생성
-        mockFile = new MockMultipartFile(
-            "files",
-            "test-image.png",
-            "image/png",
-            "test content".getBytes()
-        );
+        mockFile =
+                new MockMultipartFile(
+                        "files", "test-image.png", "image/png", "test content".getBytes());
     }
 
     @Test
@@ -94,11 +88,13 @@ public class NoticeServiceTest {
         when(userRepository.findById(anyLong())).thenReturn(Optional.of(author));
         when(noticeMapper.toNoticeEntity(any())).thenReturn(notice);
         when(s3Service.uploadFile(any())).thenReturn("s3-key-123");
-        when(noticeRepository.save(any(Notice.class))).thenAnswer(invocation -> {
-            Notice savedNotice = invocation.getArgument(0);
-            ReflectionTestUtils.setField(savedNotice, "id", 100L); // 저장 후 ID 부여 모사
-            return savedNotice;
-        });
+        when(noticeRepository.save(any(Notice.class)))
+                .thenAnswer(
+                        invocation -> {
+                            Notice savedNotice = invocation.getArgument(0);
+                            ReflectionTestUtils.setField(savedNotice, "id", 100L); // 저장 후 ID 부여 모사
+                            return savedNotice;
+                        });
 
         // when
         Long savedId = noticeService.createNotice(createRequestDto, files, 1L);
@@ -119,8 +115,8 @@ public class NoticeServiceTest {
 
         // when & then
         assertThatThrownBy(() -> noticeService.createNotice(createRequestDto, null, invalidUserId))
-            .isInstanceOf(CustomException.class)
-            .hasFieldOrPropertyWithValue("errorCode", ErrorCode.USER_NOT_FOUND);
+                .isInstanceOf(CustomException.class)
+                .hasFieldOrPropertyWithValue("errorCode", ErrorCode.USER_NOT_FOUND);
 
         verify(noticeRepository, never()).save(any());
     }
@@ -137,8 +133,8 @@ public class NoticeServiceTest {
 
         // when & then
         assertThatThrownBy(() -> noticeService.createNotice(createRequestDto, null, userId))
-            .isInstanceOf(CustomException.class)
-            .hasFieldOrPropertyWithValue("errorCode", ErrorCode.NO_AUTHORITY_FOR_NOTICE);
+                .isInstanceOf(CustomException.class)
+                .hasFieldOrPropertyWithValue("errorCode", ErrorCode.NO_AUTHORITY_FOR_NOTICE);
 
         verify(s3Service, never()).uploadFile(any());
         verify(noticeRepository, never()).save(any());
@@ -150,8 +146,8 @@ public class NoticeServiceTest {
         // given
         List<Notice> notices = List.of(new Notice(), new Notice());
         when(noticeRepository.findAllByOrderByPinnedDescUpdatedDateDesc()).thenReturn(notices);
-        when(noticeMapper.toNoticeSummaryDtoList(any())).thenReturn(
-            List.of(new NoticeSummaryDto(), new NoticeSummaryDto()));
+        when(noticeMapper.toNoticeSummaryDtoList(any()))
+                .thenReturn(List.of(new NoticeSummaryDto(), new NoticeSummaryDto()));
 
         // when
         List<NoticeSummaryDto> result = noticeService.getNoticesByType(null);
@@ -165,15 +161,15 @@ public class NoticeServiceTest {
     @DisplayName("공지사항 목록 조회 성공 - 특정 타입 조회")
     void getNoticesByType_Filtered_Success() {
         // given
-        when(noticeRepository.findByTypeOrderByPinnedDescUpdatedDateDesc(
-            NoticeType.MENU)).thenReturn(List.of(new Notice()));
+        when(noticeRepository.findByTypeOrderByPinnedDescUpdatedDateDesc(NoticeType.MENU))
+                .thenReturn(List.of(new Notice()));
 
         // when
         noticeService.getNoticesByType(NoticeType.MENU);
 
         // then
-        verify(noticeRepository, times(1)).findByTypeOrderByPinnedDescUpdatedDateDesc(
-            NoticeType.MENU);
+        verify(noticeRepository, times(1))
+                .findByTypeOrderByPinnedDescUpdatedDateDesc(NoticeType.MENU);
     }
 
     @Test
@@ -200,8 +196,8 @@ public class NoticeServiceTest {
 
         // when & then
         assertThatThrownBy(() -> noticeService.getNotice(999L))
-            .isInstanceOf(CustomException.class)
-            .hasFieldOrPropertyWithValue("errorCode", ErrorCode.NOTICE_NOT_FOUND);
+                .isInstanceOf(CustomException.class)
+                .hasFieldOrPropertyWithValue("errorCode", ErrorCode.NOTICE_NOT_FOUND);
     }
 
     @Test
@@ -239,10 +235,11 @@ public class NoticeServiceTest {
         oldAttachment.setS3Key("old-s3-key");
         notice.addAttachment(oldAttachment);
 
-        NoticeUpdateRequestDto updateDto = NoticeUpdateRequestDto.builder()
-            .title("수정된 제목")
-            .attachmentsIdsToRemove(List.of(50L))
-            .build();
+        NoticeUpdateRequestDto updateDto =
+                NoticeUpdateRequestDto.builder()
+                        .title("수정된 제목")
+                        .attachmentsIdsToRemove(List.of(50L))
+                        .build();
 
         when(userRepository.findById(userId)).thenReturn(Optional.of(author));
         when(noticeRepository.findByIdWithDetails(noticeId)).thenReturn(Optional.of(notice));
@@ -268,9 +265,8 @@ public class NoticeServiceTest {
         Long noticeId = 10L;
 
         Notice notice = new Notice();
-        NoticeUpdateRequestDto updateDto = NoticeUpdateRequestDto.builder()
-            .attachmentsIdsToRemove(List.of(99L))
-            .build();
+        NoticeUpdateRequestDto updateDto =
+                NoticeUpdateRequestDto.builder().attachmentsIdsToRemove(List.of(99L)).build();
 
         when(userRepository.findById(userId)).thenReturn(Optional.of(author));
         when(noticeRepository.findByIdWithDetails(noticeId)).thenReturn(Optional.of(notice));
@@ -278,8 +274,7 @@ public class NoticeServiceTest {
 
         // when & then
         assertThatThrownBy(() -> noticeService.updateNotice(userId, noticeId, updateDto, null))
-            .isInstanceOf(CustomException.class)
-            .hasFieldOrPropertyWithValue("errorCode", ErrorCode.NOTICE_ATTACHMENT_NOT_FOUND);
+                .isInstanceOf(CustomException.class)
+                .hasFieldOrPropertyWithValue("errorCode", ErrorCode.NOTICE_ATTACHMENT_NOT_FOUND);
     }
-
 }

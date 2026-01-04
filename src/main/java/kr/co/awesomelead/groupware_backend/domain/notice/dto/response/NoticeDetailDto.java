@@ -1,12 +1,13 @@
 package kr.co.awesomelead.groupware_backend.domain.notice.dto.response;
 
-import java.time.LocalDateTime;
-import java.util.List;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+
+import java.time.LocalDateTime;
+import java.util.List;
 
 @Getter
 @AllArgsConstructor
@@ -35,5 +36,4 @@ public class NoticeDetailDto {
         private long fileSize;
         private String viewUrl; // S3에서 바로 열기 위한 URL
     }
-
 }

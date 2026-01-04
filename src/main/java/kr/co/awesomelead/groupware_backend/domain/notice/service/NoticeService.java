@@ -1,8 +1,5 @@
 package kr.co.awesomelead.groupware_backend.domain.notice.service;
 
-import java.io.IOException;
-import java.time.LocalDateTime;
-import java.util.List;
 import kr.co.awesomelead.groupware_backend.domain.notice.dto.request.NoticeCreateRequestDto;
 import kr.co.awesomelead.groupware_backend.domain.notice.dto.request.NoticeUpdateRequestDto;
 import kr.co.awesomelead.groupware_backend.domain.notice.dto.response.NoticeDetailDto;
@@ -19,10 +16,16 @@ import kr.co.awesomelead.groupware_backend.domain.user.repository.UserRepository
 import kr.co.awesomelead.groupware_backend.global.CustomException;
 import kr.co.awesomelead.groupware_backend.global.ErrorCode;
 import kr.co.awesomelead.groupware_backend.global.infra.s3.S3Service;
+
 import lombok.RequiredArgsConstructor;
+
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
+
+import java.io.IOException;
+import java.time.LocalDateTime;
+import java.util.List;
 
 @Service
 @RequiredArgsConstructor
@@ -35,8 +38,10 @@ public class NoticeService {
     private final UserRepository userRepository;
 
     private User validateAndGetAuthor(Long userId) {
-        User user = userRepository.findById(userId)
-            .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
+        User user =
+                userRepository
+                        .findById(userId)
+                        .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
 
         if (!user.hasAuthority(Authority.WRITE_NOTICE)) {
             throw new CustomException(ErrorCode.NO_AUTHORITY_FOR_NOTICE);
@@ -45,8 +50,9 @@ public class NoticeService {
     }
 
     @Transactional
-    public Long createNotice(NoticeCreateRequestDto requestDto, List<MultipartFile> files,
-        Long userId) throws IOException {
+    public Long createNotice(
+            NoticeCreateRequestDto requestDto, List<MultipartFile> files, Long userId)
+            throws IOException {
         User author = validateAndGetAuthor(userId);
 
         Notice notice = noticeMapper.toNoticeEntity(requestDto);
@@ -61,17 +67,21 @@ public class NoticeService {
 
     @Transactional(readOnly = true)
     public List<NoticeSummaryDto> getNoticesByType(NoticeType type) {
-        List<Notice> notices = (type == null)
-            ? noticeRepository.findAllByOrderByPinnedDescUpdatedDateDesc() // 전체 정렬 조회
-            : noticeRepository.findByTypeOrderByPinnedDescUpdatedDateDesc(type); // 타입별 정렬 조회
+        List<Notice> notices =
+                (type == null)
+                        ? noticeRepository.findAllByOrderByPinnedDescUpdatedDateDesc() // 전체 정렬 조회
+                        : noticeRepository.findByTypeOrderByPinnedDescUpdatedDateDesc(
+                                type); // 타입별 정렬 조회
 
         return noticeMapper.toNoticeSummaryDtoList(notices);
     }
 
     @Transactional(readOnly = true)
     public NoticeDetailDto getNotice(Long noticeId) {
-        Notice notice = noticeRepository.findByIdWithDetails(noticeId)
-            .orElseThrow(() -> new CustomException(ErrorCode.NOTICE_NOT_FOUND));
+        Notice notice =
+                noticeRepository
+                        .findByIdWithDetails(noticeId)
+                        .orElseThrow(() -> new CustomException(ErrorCode.NOTICE_NOT_FOUND));
 
         // 조회수 증가
         notice.increaseViewCount();
@@ -84,8 +94,10 @@ public class NoticeService {
     public void deleteNotice(Long userId, Long noticeId) {
         validateAndGetAuthor(userId);
 
-        Notice notice = noticeRepository.findByIdWithDetails(noticeId)
-            .orElseThrow(() -> new CustomException(ErrorCode.NOTICE_NOT_FOUND));
+        Notice notice =
+                noticeRepository
+                        .findByIdWithDetails(noticeId)
+                        .orElseThrow(() -> new CustomException(ErrorCode.NOTICE_NOT_FOUND));
 
         // 첨부파일 S3에서 삭제
         for (NoticeAttachment attachment : notice.getAttachments()) {
@@ -97,23 +109,26 @@ public class NoticeService {
     }
 
     @Transactional
-    public Long updateNotice(Long userId, Long noticeId, NoticeUpdateRequestDto dto,
-        List<MultipartFile> newFiles)
-        throws IOException {
+    public Long updateNotice(
+            Long userId, Long noticeId, NoticeUpdateRequestDto dto, List<MultipartFile> newFiles)
+            throws IOException {
         validateAndGetAuthor(userId);
-        Notice notice = noticeRepository.findByIdWithDetails(noticeId)
-            .orElseThrow(() -> new CustomException(ErrorCode.NOTICE_NOT_FOUND));
+        Notice notice =
+                noticeRepository
+                        .findByIdWithDetails(noticeId)
+                        .orElseThrow(() -> new CustomException(ErrorCode.NOTICE_NOT_FOUND));
 
-        notice.update(
-            dto.getTitle(),
-            dto.getContent(),
-            dto.getPinned()
-        );
+        notice.update(dto.getTitle(), dto.getContent(), dto.getPinned());
 
         if (dto.getAttachmentsIdsToRemove() != null) {
             for (Long attachmentId : dto.getAttachmentsIdsToRemove()) {
-                NoticeAttachment attachment = noticeAttachmentRepository.findById(attachmentId)
-                    .orElseThrow(() -> new CustomException(ErrorCode.NOTICE_ATTACHMENT_NOT_FOUND));
+                NoticeAttachment attachment =
+                        noticeAttachmentRepository
+                                .findById(attachmentId)
+                                .orElseThrow(
+                                        () ->
+                                                new CustomException(
+                                                        ErrorCode.NOTICE_ATTACHMENT_NOT_FOUND));
                 // S3에서 파일 삭제
                 s3Service.deleteFile(attachment.getS3Key());
                 // DB에서 첨부파일 삭제

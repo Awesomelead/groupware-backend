@@ -32,6 +32,10 @@ public class ApiResponse<T> {
         return new ApiResponse<>(true, "COMMON204", "성공적으로 처리되었습니다.", null);
     }
 
+    public static <T> ApiResponse<T> onNoContent(String message) {
+        return new ApiResponse<>(true, "COMMON204", message, null);
+    }
+
     // 실패 시 호출하는 메서드 (보통 에러 코드를 상수로 관리)
     public static <T> ApiResponse<T> onFailure(String code, String message) {
         return new ApiResponse<>(false, code, message, null);

@@ -11,6 +11,9 @@ import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Optional;
 import kr.co.awesomelead.groupware_backend.domain.department.dto.response.DepartmentHierarchyResponseDto;
 import kr.co.awesomelead.groupware_backend.domain.department.dto.response.UserSummaryResponseDto;
 import kr.co.awesomelead.groupware_backend.domain.department.entity.Department;
@@ -20,9 +23,8 @@ import kr.co.awesomelead.groupware_backend.domain.department.service.DepartmentS
 import kr.co.awesomelead.groupware_backend.domain.user.entity.User;
 import kr.co.awesomelead.groupware_backend.domain.user.mapper.UserMapper;
 import kr.co.awesomelead.groupware_backend.domain.user.repository.UserRepository;
-import kr.co.awesomelead.groupware_backend.global.CustomException;
-import kr.co.awesomelead.groupware_backend.global.ErrorCode;
-
+import kr.co.awesomelead.groupware_backend.global.error.CustomException;
+import kr.co.awesomelead.groupware_backend.global.error.ErrorCode;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -31,20 +33,20 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
-
 @ExtendWith(MockitoExtension.class)
 public class DepartmentServiceTest {
 
-    @InjectMocks private DepartmentService departmentService;
+    @InjectMocks
+    private DepartmentService departmentService;
 
-    @Mock private DepartmentRepository departmentRepository;
+    @Mock
+    private DepartmentRepository departmentRepository;
 
-    @Mock private UserRepository userRepository;
+    @Mock
+    private UserRepository userRepository;
 
-    @Mock private UserMapper userMapper;
+    @Mock
+    private UserMapper userMapper;
 
     private Department rootDept;
     private Department awesomeProdDept; // 어썸리드 생산본부
@@ -55,41 +57,41 @@ public class DepartmentServiceTest {
     void setUp() {
         // 최상위 부서 (Level 0)
         rootDept =
-                Department.builder()
-                        .id(1L)
-                        .name("충남사업본부")
-                        .company(Company.AWESOME)
-                        .children(new ArrayList<>())
-                        .build();
+            Department.builder()
+                .id(1L)
+                .name("충남사업본부")
+                .company(Company.AWESOME)
+                .children(new ArrayList<>())
+                .build();
 
         // Level 1 (어썸리드 생산본부)
         awesomeProdDept =
-                Department.builder()
-                        .id(5L)
-                        .name("(주)어썸리드 생산본부")
-                        .company(Company.AWESOME)
-                        .parent(rootDept)
-                        .children(new ArrayList<>())
-                        .build();
+            Department.builder()
+                .id(5L)
+                .name("(주)어썸리드 생산본부")
+                .company(Company.AWESOME)
+                .parent(rootDept)
+                .children(new ArrayList<>())
+                .build();
         rootDept.getChildren().add(awesomeProdDept);
 
         // Level 2 (생산본부 하위 부서들)
         chamberDept =
-                Department.builder()
-                        .id(10L)
-                        .name("챔버생산부")
-                        .company(Company.AWESOME)
-                        .parent(awesomeProdDept)
-                        .children(new ArrayList<>())
-                        .build();
+            Department.builder()
+                .id(10L)
+                .name("챔버생산부")
+                .company(Company.AWESOME)
+                .parent(awesomeProdDept)
+                .children(new ArrayList<>())
+                .build();
         partDept =
-                Department.builder()
-                        .id(11L)
-                        .name("부품생산부")
-                        .company(Company.AWESOME)
-                        .parent(awesomeProdDept)
-                        .children(new ArrayList<>())
-                        .build();
+            Department.builder()
+                .id(11L)
+                .name("부품생산부")
+                .company(Company.AWESOME)
+                .parent(awesomeProdDept)
+                .children(new ArrayList<>())
+                .build();
         awesomeProdDept.getChildren().add(chamberDept);
         awesomeProdDept.getChildren().add(partDept);
     }
@@ -99,11 +101,11 @@ public class DepartmentServiceTest {
     void getDepartmentHierarchy_Success() {
         // given
         given(departmentRepository.findByParentIsNullAndCompany(Company.AWESOME))
-                .willReturn(List.of(rootDept));
+            .willReturn(List.of(rootDept));
 
         // when
         List<DepartmentHierarchyResponseDto> result =
-                departmentService.getDepartmentHierarchy(Company.AWESOME);
+            departmentService.getDepartmentHierarchy(Company.AWESOME);
 
         // then
         assertThat(result).hasSize(1);
@@ -123,16 +125,16 @@ public class DepartmentServiceTest {
 
         List<Long> expectedIds = List.of(5L, 10L, 11L);
         given(
-                        userRepository.findAllByDepartmentIdIn(
-                                argThat(list -> list.containsAll(expectedIds))))
-                .willReturn(List.of(manager, chamberStaff, partStaff));
+            userRepository.findAllByDepartmentIdIn(
+                argThat(list -> list.containsAll(expectedIds))))
+            .willReturn(List.of(manager, chamberStaff, partStaff));
 
         given(userMapper.toSummaryDto(any(User.class)))
-                .willReturn(UserSummaryResponseDto.builder().build());
+            .willReturn(UserSummaryResponseDto.builder().build());
 
         // when
         List<UserSummaryResponseDto> result =
-                departmentService.getUsersByDepartmentHierarchy(targetId);
+            departmentService.getUsersByDepartmentHierarchy(targetId);
 
         // then
         assertThat(result).hasSize(3);
@@ -147,7 +149,7 @@ public class DepartmentServiceTest {
 
         // when & then
         assertThatThrownBy(() -> departmentService.getUsersByDepartmentHierarchy(999L))
-                .isInstanceOf(CustomException.class)
-                .hasFieldOrPropertyWithValue("errorCode", ErrorCode.DEPARTMENT_NOT_FOUND);
+            .isInstanceOf(CustomException.class)
+            .hasFieldOrPropertyWithValue("errorCode", ErrorCode.DEPARTMENT_NOT_FOUND);
     }
 }

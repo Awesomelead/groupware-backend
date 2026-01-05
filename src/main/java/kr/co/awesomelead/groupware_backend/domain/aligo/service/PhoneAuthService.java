@@ -1,17 +1,14 @@
 package kr.co.awesomelead.groupware_backend.domain.aligo.service;
 
-import kr.co.awesomelead.groupware_backend.global.CustomException;
-import kr.co.awesomelead.groupware_backend.global.ErrorCode;
-
+import java.security.SecureRandom;
+import java.util.concurrent.TimeUnit;
+import kr.co.awesomelead.groupware_backend.global.error.CustomException;
+import kr.co.awesomelead.groupware_backend.global.error.ErrorCode;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
-
-import java.security.SecureRandom;
-import java.util.concurrent.TimeUnit;
 
 @Slf4j
 @Service
@@ -19,7 +16,7 @@ import java.util.concurrent.TimeUnit;
 public class PhoneAuthService {
 
     private final kr.co.awesomelead.groupware_backend.domain.aligo.service.AligoKakaoService
-            aligoKakaoService;
+        aligoKakaoService;
     private final RedisTemplate<String, String> redisTemplate;
 
     private static final String AUTH_CODE_PREFIX = "auth:phone:";
@@ -28,7 +25,9 @@ public class PhoneAuthService {
     @Value("${aligo.api.test-mode:false}")
     private boolean testMode;
 
-    /** 인증번호 발송 */
+    /**
+     * 인증번호 발송
+     */
     public void sendAuthCode(String phoneNumber) {
         // 인증번호 생성
         String authCode = generateAuthCode();
@@ -43,8 +42,8 @@ public class PhoneAuthService {
         // Redis에 인증번호 저장 (5분 유효)
         String key = AUTH_CODE_PREFIX + phoneNumber;
         redisTemplate
-                .opsForValue()
-                .set(key, authCode, AUTH_CODE_EXPIRATION_MINUTES, TimeUnit.MINUTES);
+            .opsForValue()
+            .set(key, authCode, AUTH_CODE_EXPIRATION_MINUTES, TimeUnit.MINUTES);
 
         // 테스트 모드일 경우 콘솔에 인증번호 출력
         if (testMode) { // ← 변수명 변경
@@ -58,7 +57,9 @@ public class PhoneAuthService {
         log.info("인증번호 발송 성공 - 전화번호: {}", phoneNumber);
     }
 
-    /** 인증번호 검증 */
+    /**
+     * 인증번호 검증
+     */
     public void verifyAuthCode(String phoneNumber, String authCode) {
         String key = AUTH_CODE_PREFIX + phoneNumber;
         String savedCode = redisTemplate.opsForValue().get(key);
@@ -81,20 +82,26 @@ public class PhoneAuthService {
         log.info("인증번호 검증 성공 - 전화번호: {}", phoneNumber);
     }
 
-    /** 전화번호 인증 여부 확인 (회원가입 시 사용) */
+    /**
+     * 전화번호 인증 여부 확인 (회원가입 시 사용)
+     */
     public boolean isPhoneVerified(String phoneNumber) {
         String verifiedKey = AUTH_CODE_PREFIX + "verified:" + phoneNumber;
         String verified = redisTemplate.opsForValue().get(verifiedKey);
         return "true".equals(verified);
     }
 
-    /** 인증 완료 플래그 삭제 (회원가입 완료 후 호출) */
+    /**
+     * 인증 완료 플래그 삭제 (회원가입 완료 후 호출)
+     */
     public void clearVerification(String phoneNumber) {
         String verifiedKey = AUTH_CODE_PREFIX + "verified:" + phoneNumber;
         redisTemplate.delete(verifiedKey);
     }
 
-    /** 6자리 랜덤 인증번호 생성 */
+    /**
+     * 6자리 랜덤 인증번호 생성
+     */
     private String generateAuthCode() {
         SecureRandom random = new SecureRandom();
         StringBuilder sb = new StringBuilder();

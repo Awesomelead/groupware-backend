@@ -10,13 +10,14 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import java.time.LocalDateTime;
+import java.util.Optional;
 import kr.co.awesomelead.groupware_backend.domain.auth.entity.RefreshToken;
 import kr.co.awesomelead.groupware_backend.domain.auth.repository.RefreshTokenRepository;
 import kr.co.awesomelead.groupware_backend.domain.auth.service.RefreshTokenService;
 import kr.co.awesomelead.groupware_backend.domain.auth.util.JWTUtil;
-import kr.co.awesomelead.groupware_backend.global.CustomException;
-import kr.co.awesomelead.groupware_backend.global.ErrorCode;
-
+import kr.co.awesomelead.groupware_backend.global.error.CustomException;
+import kr.co.awesomelead.groupware_backend.global.error.ErrorCode;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -25,17 +26,17 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import java.time.LocalDateTime;
-import java.util.Optional;
-
 @ExtendWith(MockitoExtension.class)
 class RefreshTokenServiceTest {
 
-    @Mock private RefreshTokenRepository refreshTokenRepository;
+    @Mock
+    private RefreshTokenRepository refreshTokenRepository;
 
-    @Mock private JWTUtil jwtUtil;
+    @Mock
+    private JWTUtil jwtUtil;
 
-    @InjectMocks private RefreshTokenService refreshTokenService;
+    @InjectMocks
+    private RefreshTokenService refreshTokenService;
 
     @Test
     @DisplayName("Refresh Token 생성 성공 - 기존 토큰 없음")
@@ -46,7 +47,7 @@ class RefreshTokenServiceTest {
         String generatedTokenValue = "new-refresh-token";
 
         when(jwtUtil.createJwt(anyString(), anyString(), anyLong()))
-                .thenReturn(generatedTokenValue);
+            .thenReturn(generatedTokenValue);
         when(refreshTokenRepository.findByEmail(email)).thenReturn(Optional.empty());
 
         // when
@@ -77,14 +78,14 @@ class RefreshTokenServiceTest {
         String newGeneratedTokenValue = "new-refresh-token";
 
         RefreshToken existingToken =
-                RefreshToken.builder()
-                        .email(email)
-                        .tokenValue("old-refresh-token") // 이전 값
-                        .expirationDate(LocalDateTime.now().minusDays(1)) // 이전 값
-                        .build();
+            RefreshToken.builder()
+                .email(email)
+                .tokenValue("old-refresh-token") // 이전 값
+                .expirationDate(LocalDateTime.now().minusDays(1)) // 이전 값
+                .build();
 
         when(jwtUtil.createJwt(anyString(), anyString(), anyLong()))
-                .thenReturn(newGeneratedTokenValue);
+            .thenReturn(newGeneratedTokenValue);
         when(refreshTokenRepository.findByEmail(email)).thenReturn(Optional.of(existingToken));
 
         // when
@@ -109,7 +110,7 @@ class RefreshTokenServiceTest {
 
         // findByTokenValue가 호출되면, existingToken을 포함한 Optional을 반환하도록 설정
         when(refreshTokenRepository.findByTokenValue(tokenValue))
-                .thenReturn(Optional.of(existingToken));
+            .thenReturn(Optional.of(existingToken));
 
         // when
         refreshTokenService.deleteRefreshToken(tokenValue);
@@ -146,13 +147,13 @@ class RefreshTokenServiceTest {
         // given
         String tokenValue = "valid-token";
         RefreshToken validToken =
-                RefreshToken.builder()
-                        .tokenValue(tokenValue)
-                        .expirationDate(LocalDateTime.now().plusDays(1)) // 만료되지 않음
-                        .build();
+            RefreshToken.builder()
+                .tokenValue(tokenValue)
+                .expirationDate(LocalDateTime.now().plusDays(1)) // 만료되지 않음
+                .build();
 
         when(refreshTokenRepository.findByTokenValue(tokenValue))
-                .thenReturn(Optional.of(validToken));
+            .thenReturn(Optional.of(validToken));
         // RefreshToken 클래스의 isExpired()가 false를 반환한다고 가정
 
         // when
@@ -173,9 +174,9 @@ class RefreshTokenServiceTest {
 
         // when & then
         CustomException exception =
-                assertThrows(
-                        CustomException.class,
-                        () -> refreshTokenService.validateRefreshToken(tokenValue));
+            assertThrows(
+                CustomException.class,
+                () -> refreshTokenService.validateRefreshToken(tokenValue));
         assertThat(exception.getErrorCode()).isEqualTo(ErrorCode.INVALID_TOKEN);
     }
 
@@ -186,19 +187,19 @@ class RefreshTokenServiceTest {
         String tokenValue = "expired-token";
         // isExpired() 메서드가 true를 반환하도록 expirationDate를 과거로 설정
         RefreshToken expiredToken =
-                RefreshToken.builder()
-                        .tokenValue(tokenValue)
-                        .expirationDate(LocalDateTime.now().minusDays(1))
-                        .build();
+            RefreshToken.builder()
+                .tokenValue(tokenValue)
+                .expirationDate(LocalDateTime.now().minusDays(1))
+                .build();
 
         when(refreshTokenRepository.findByTokenValue(tokenValue))
-                .thenReturn(Optional.of(expiredToken));
+            .thenReturn(Optional.of(expiredToken));
 
         // when & then
         CustomException exception =
-                assertThrows(
-                        CustomException.class,
-                        () -> refreshTokenService.validateRefreshToken(tokenValue));
+            assertThrows(
+                CustomException.class,
+                () -> refreshTokenService.validateRefreshToken(tokenValue));
         assertThat(exception.getErrorCode()).isEqualTo(ErrorCode.EXPIRED_TOKEN);
 
         // 만료된 토큰이므로 delete 메서드가 호출되었는지 검증

@@ -1,7 +1,5 @@
 package kr.co.awesomelead.groupware_backend.domain.department.service;
 
-import java.util.ArrayList;
-import java.util.List;
 import kr.co.awesomelead.groupware_backend.domain.department.dto.response.DepartmentHierarchyResponseDto;
 import kr.co.awesomelead.groupware_backend.domain.department.dto.response.UserSummaryResponseDto;
 import kr.co.awesomelead.groupware_backend.domain.department.entity.Department;
@@ -12,9 +10,14 @@ import kr.co.awesomelead.groupware_backend.domain.user.mapper.UserMapper;
 import kr.co.awesomelead.groupware_backend.domain.user.repository.UserRepository;
 import kr.co.awesomelead.groupware_backend.global.error.CustomException;
 import kr.co.awesomelead.groupware_backend.global.error.ErrorCode;
+
 import lombok.RequiredArgsConstructor;
+
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.util.ArrayList;
+import java.util.List;
 
 @Service
 @RequiredArgsConstructor
@@ -28,7 +31,7 @@ public class DepartmentService {
     public List<DepartmentHierarchyResponseDto> getDepartmentHierarchy(Company company) {
         // 해당 회사의 최상위 부서(parent가 null인 곳)들을 조회
         List<Department> rootDepartments =
-            departmentRepository.findByParentIsNullAndCompany(company);
+                departmentRepository.findByParentIsNullAndCompany(company);
 
         // DTO로 변환 후 반환
         return rootDepartments.stream().map(DepartmentHierarchyResponseDto::from).toList();
@@ -38,9 +41,9 @@ public class DepartmentService {
     public List<UserSummaryResponseDto> getUsersByDepartmentHierarchy(Long departmentId) {
         // 기준 부서 조회
         Department targetDept =
-            departmentRepository
-                .findById(departmentId)
-                .orElseThrow(() -> new CustomException(ErrorCode.DEPARTMENT_NOT_FOUND));
+                departmentRepository
+                        .findById(departmentId)
+                        .orElseThrow(() -> new CustomException(ErrorCode.DEPARTMENT_NOT_FOUND));
 
         // 모든 하위 부서 ID 수집 (본인 포함)
         List<Long> allDeptIds = new ArrayList<>();

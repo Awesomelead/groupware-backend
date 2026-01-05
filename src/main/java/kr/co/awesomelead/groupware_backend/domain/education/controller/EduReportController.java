@@ -1,11 +1,9 @@
 package kr.co.awesomelead.groupware_backend.domain.education.controller;
 
 import io.swagger.v3.oas.annotations.Operation;
+
 import jakarta.validation.Valid;
-import java.io.IOException;
-import java.net.URI;
-import java.nio.charset.StandardCharsets;
-import java.util.List;
+
 import kr.co.awesomelead.groupware_backend.domain.education.dto.request.EduReportRequestDto;
 import kr.co.awesomelead.groupware_backend.domain.education.dto.response.EduReportAdminDetailDto;
 import kr.co.awesomelead.groupware_backend.domain.education.dto.response.EduReportDetailDto;
@@ -16,7 +14,9 @@ import kr.co.awesomelead.groupware_backend.domain.education.service.EduReportSer
 import kr.co.awesomelead.groupware_backend.domain.education.service.EduReportService.FileDownloadDto;
 import kr.co.awesomelead.groupware_backend.domain.user.dto.CustomUserDetails;
 import kr.co.awesomelead.groupware_backend.global.common.response.ApiResponse;
+
 import lombok.RequiredArgsConstructor;
+
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -34,6 +34,11 @@ import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 import org.springframework.web.util.UriUtils;
 
+import java.io.IOException;
+import java.net.URI;
+import java.nio.charset.StandardCharsets;
+import java.util.List;
+
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/api/edu-reports")
@@ -45,18 +50,18 @@ public class EduReportController {
     @Operation(summary = "교육 보고서 생성", description = "교육 보고서를 생성합니다.")
     @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<ApiResponse<Long>> createEduReport(
-        @RequestPart("requestDto") @Valid EduReportRequestDto requestDto,
-        @RequestPart(value = "files", required = false) List<MultipartFile> files,
-        @AuthenticationPrincipal CustomUserDetails userDetails)
-        throws IOException {
+            @RequestPart("requestDto") @Valid EduReportRequestDto requestDto,
+            @RequestPart(value = "files", required = false) List<MultipartFile> files,
+            @AuthenticationPrincipal CustomUserDetails userDetails)
+            throws IOException {
 
         Long reportId = eduReportService.createEduReport(requestDto, files, userDetails.getId());
 
         URI location =
-            ServletUriComponentsBuilder.fromCurrentRequest()
-                .path("/{id}")
-                .buildAndExpand(reportId)
-                .toUri();
+                ServletUriComponentsBuilder.fromCurrentRequest()
+                        .path("/{id}")
+                        .buildAndExpand(reportId)
+                        .toUri();
 
         return ResponseEntity.created(location).body(ApiResponse.onCreated(reportId));
     }
@@ -64,18 +69,18 @@ public class EduReportController {
     @Operation(summary = "교육 보고서 목록 조회", description = "교육 보고서 목록을 조회합니다. 교육 유형으로 필터링할 수 있습니다.")
     @GetMapping
     public ResponseEntity<ApiResponse<List<EduReportSummaryDto>>> getEduReports(
-        @RequestParam(required = false) EduType type,
-        @AuthenticationPrincipal CustomUserDetails userDetails) {
+            @RequestParam(required = false) EduType type,
+            @AuthenticationPrincipal CustomUserDetails userDetails) {
         List<EduReportSummaryDto> reports =
-            eduReportService.getEduReports(type, userDetails.getId());
+                eduReportService.getEduReports(type, userDetails.getId());
         return ResponseEntity.ok(ApiResponse.onSuccess(reports));
     }
 
     @Operation(summary = "교육 보고서 조회", description = "교육 보고서의 상세 정보를 조회합니다.")
     @GetMapping("/{eduReportId}")
     public ResponseEntity<ApiResponse<EduReportDetailDto>> getEduReport(
-        @PathVariable Long eduReportId,
-        @AuthenticationPrincipal CustomUserDetails userDetails) {
+            @PathVariable Long eduReportId,
+            @AuthenticationPrincipal CustomUserDetails userDetails) {
         EduReportDetailDto report = eduReportService.getEduReport(eduReportId, userDetails.getId());
         return ResponseEntity.ok(ApiResponse.onSuccess(report));
     }
@@ -83,8 +88,8 @@ public class EduReportController {
     @Operation(summary = "교육 보고서 삭제", description = "교육 보고서를 삭제합니다.")
     @DeleteMapping("/{eduReportId}")
     public ResponseEntity<ApiResponse<Void>> deleteEduReport(
-        @PathVariable Long eduReportId, @AuthenticationPrincipal CustomUserDetails userDetails)
-        throws IOException {
+            @PathVariable Long eduReportId, @AuthenticationPrincipal CustomUserDetails userDetails)
+            throws IOException {
         eduReportService.deleteEduReport(eduReportId, userDetails.getId());
         return ResponseEntity.ok().body(ApiResponse.onNoContent());
     }
@@ -96,15 +101,15 @@ public class EduReportController {
         FileDownloadDto downloadDto = eduReportService.getFileForDownload(id);
 
         String encodedFileName =
-            UriUtils.encode(downloadDto.originalFileName(), StandardCharsets.UTF_8);
+                UriUtils.encode(downloadDto.originalFileName(), StandardCharsets.UTF_8);
 
         return ResponseEntity.ok()
-            .header(
-                HttpHeaders.CONTENT_DISPOSITION,
-                "attachment; filename=\"" + encodedFileName + "\"")
-            .contentType(MediaType.APPLICATION_OCTET_STREAM)
-            .contentLength(downloadDto.fileSize())
-            .body(downloadDto.fileData());
+                .header(
+                        HttpHeaders.CONTENT_DISPOSITION,
+                        "attachment; filename=\"" + encodedFileName + "\"")
+                .contentType(MediaType.APPLICATION_OCTET_STREAM)
+                .contentLength(downloadDto.fileSize())
+                .body(downloadDto.fileData());
     }
 
     //    @GetMapping("/attachments/{id}/download")
@@ -119,10 +124,10 @@ public class EduReportController {
     @Operation(summary = "출석 체크", description = "png 서명 이미지를 통해 교육 보고서에 대한 출석 체크를 수행합니다.")
     @PostMapping("/{id}/attendance")
     public ResponseEntity<ApiResponse<Void>> markAttendance(
-        @PathVariable Long id,
-        @RequestPart(value = "signature", required = false) MultipartFile signature,
-        @AuthenticationPrincipal CustomUserDetails userDetails)
-        throws IOException {
+            @PathVariable Long id,
+            @RequestPart(value = "signature", required = false) MultipartFile signature,
+            @AuthenticationPrincipal CustomUserDetails userDetails)
+            throws IOException {
 
         eduReportService.markAttendance(id, signature, userDetails.getId());
 
@@ -133,7 +138,7 @@ public class EduReportController {
     @GetMapping("/{id}/admin")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<ApiResponse<EduReportAdminDetailDto>> getEduReportForAdmin(
-        @PathVariable Long id) {
+            @PathVariable Long id) {
 
         EduReportAdminDetailDto response = eduReportService.getEduReportForAdmin(id);
 

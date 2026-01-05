@@ -31,6 +31,7 @@ public enum ErrorCode {
     VISITOR_AUTHENTICATION_FAILED(HttpStatus.UNAUTHORIZED, "내방객 인증에 실패했습니다."),
     NO_AUTHORITY_FOR_EDU_REPORT(HttpStatus.UNAUTHORIZED, "교육 보고서 작성 권한이 없습니다."),
     VISIT_ACCESS_DENIED(HttpStatus.UNAUTHORIZED, "해당 방문정보에 대한 접근 권한이 없습니다."),
+    NO_AUTHORITY_FOR_NOTICE(HttpStatus.UNAUTHORIZED, "공지사항 작성 권한이 없습니다."),
 
     // 404 Not Found
     USER_NOT_FOUND(HttpStatus.NOT_FOUND, "해당 사용자를 찾을 수 없습니다."),
@@ -39,6 +40,8 @@ public enum ErrorCode {
     DEPARTMENT_NOT_FOUND(HttpStatus.NOT_FOUND, "해당 부서를 찾을 수 없습니다."),
     EDU_REPORT_NOT_FOUND(HttpStatus.NOT_FOUND, "해당 교육 보고서를 찾을 수 없습니다."),
     EDU_ATTACHMENT_NOT_FOUND(HttpStatus.NOT_FOUND, "해당 교육 첨부파일을 찾을 수 없습니다."),
+    NOTICE_NOT_FOUND(HttpStatus.NOT_FOUND, "해당 공지사항을 찾을 수 없습니다."),
+    NOTICE_ATTACHMENT_NOT_FOUND(HttpStatus.NOT_FOUND, "해당 공지사항 첨부파일을 찾을 수 없습니다."),
 
     // 409 Conflict
     DUPLICATED_SIGNUP_REQUEST(HttpStatus.CONFLICT, "이미 처리된 가입 요청입니다."),

@@ -2,6 +2,7 @@ package kr.co.awesomelead.groupware_backend.global.common.response;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
+
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 

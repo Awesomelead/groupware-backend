@@ -6,6 +6,7 @@ import kr.co.awesomelead.groupware_backend.domain.department.dto.response.Depart
 import kr.co.awesomelead.groupware_backend.domain.department.dto.response.UserSummaryResponseDto;
 import kr.co.awesomelead.groupware_backend.domain.department.enums.Company;
 import kr.co.awesomelead.groupware_backend.domain.department.service.DepartmentService;
+import kr.co.awesomelead.groupware_backend.global.common.response.ApiResponse;
 
 import lombok.RequiredArgsConstructor;
 
@@ -27,23 +28,23 @@ public class DepartmentController {
 
     @Operation(summary = "부서 계층 구조 조회", description = "회사의 전체 부서 구조를 트리 형태로 조회합니다.")
     @GetMapping("/hierarchy")
-    public ResponseEntity<List<DepartmentHierarchyResponseDto>> getHierarchy(
+    public ResponseEntity<ApiResponse<List<DepartmentHierarchyResponseDto>>> getHierarchy(
             @RequestParam Company company) {
 
         List<DepartmentHierarchyResponseDto> hierarchy =
                 departmentService.getDepartmentHierarchy(company);
 
-        return ResponseEntity.ok(hierarchy);
+        return ResponseEntity.ok(ApiResponse.onSuccess(hierarchy));
     }
 
     @Operation(summary = "부서 및 하위 부서 사용자 조회", description = "지정한 부서와 그 하위 부서에 속한 모든 사용자를 조회합니다.")
     @GetMapping("/{departmentId}/users")
-    public ResponseEntity<List<UserSummaryResponseDto>> getUsersByHierarchy(
+    public ResponseEntity<ApiResponse<List<UserSummaryResponseDto>>> getUsersByHierarchy(
             @PathVariable Long departmentId) {
 
         List<UserSummaryResponseDto> users =
                 departmentService.getUsersByDepartmentHierarchy(departmentId);
 
-        return ResponseEntity.ok(users);
+        return ResponseEntity.ok(ApiResponse.onSuccess(users));
     }
 }

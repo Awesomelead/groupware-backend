@@ -1,4 +1,4 @@
-package kr.co.awesomelead.groupware_backend.global;
+package kr.co.awesomelead.groupware_backend.global.error;
 
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;

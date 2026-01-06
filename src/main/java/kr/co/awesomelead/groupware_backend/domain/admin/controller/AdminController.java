@@ -4,6 +4,7 @@ import io.swagger.v3.oas.annotations.Operation;
 
 import kr.co.awesomelead.groupware_backend.domain.admin.dto.request.UserApprovalRequestDto;
 import kr.co.awesomelead.groupware_backend.domain.admin.service.AdminService;
+import kr.co.awesomelead.groupware_backend.global.common.response.ApiResponse;
 
 import lombok.RequiredArgsConstructor;
 
@@ -23,11 +24,11 @@ public class AdminController {
 
     @Operation(summary = "회원가입 승인", description = "관리자가 회원가입 요청에 대해 승인합니다.")
     @PatchMapping("/users/{userId}/approve")
-    public ResponseEntity<String> approveUser(
+    public ResponseEntity<ApiResponse<Void>> approveUser(
             @PathVariable("userId") Long userId, @RequestBody UserApprovalRequestDto requestDto) {
 
         adminService.approveUserRegistration(userId, requestDto);
 
-        return ResponseEntity.ok(userId + "번 사용자의 회원가입이 성공적으로 승인되었습니다.");
+        return ResponseEntity.ok(ApiResponse.onNoContent(userId + "번 사용자의 회원가입이 성공적으로 승인되었습니다."));
     }
 }

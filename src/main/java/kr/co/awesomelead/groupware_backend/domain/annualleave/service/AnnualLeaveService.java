@@ -5,8 +5,8 @@ import kr.co.awesomelead.groupware_backend.domain.annualleave.repository.AnnualL
 import kr.co.awesomelead.groupware_backend.domain.user.dto.CustomUserDetails;
 import kr.co.awesomelead.groupware_backend.domain.user.entity.User;
 import kr.co.awesomelead.groupware_backend.domain.user.repository.UserRepository;
-import kr.co.awesomelead.groupware_backend.global.CustomException;
-import kr.co.awesomelead.groupware_backend.global.ErrorCode;
+import kr.co.awesomelead.groupware_backend.global.error.CustomException;
+import kr.co.awesomelead.groupware_backend.global.error.ErrorCode;
 
 import lombok.RequiredArgsConstructor;
 

@@ -139,7 +139,7 @@ public class AnnualLeaveService {
             return LocalDate.parse(dateStr, DateTimeFormatter.ISO_DATE);
         } catch (Exception e) {
             log.error("기준일 파싱 실패, 오늘 날짜로 대체합니다.");
-            return LocalDate.now();
+            throw new CustomException(ErrorCode.INVALID_BASE_DATE_FORMAT);
         }
     }
 

@@ -24,6 +24,7 @@ public enum ErrorCode {
     CURRENT_PASSWORD_MISMATCH(HttpStatus.BAD_REQUEST, "현재 비밀번호가 일치하지 않습니다."),
     SAME_AS_CURRENT_PASSWORD(HttpStatus.BAD_REQUEST, "새 비밀번호는 현재 비밀번호와 달라야 합니다."),
     FILE_UPLOAD_ERROR(HttpStatus.BAD_REQUEST, "파일 업로드 중 오류가 발생했습니다."),
+    INVALID_BASE_DATE_FORMAT(HttpStatus.BAD_REQUEST, "유효하지 않은 기준일자 형식입니다. (yyyy-MM-dd)"),
 
     // 401 Unauthorized
     INVALID_TOKEN(HttpStatus.UNAUTHORIZED, "유효하지 않은 토큰입니다."),

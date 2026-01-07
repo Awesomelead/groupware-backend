@@ -42,6 +42,7 @@ public class AnnualLeaveService {
     @Transactional
     public ExcelUploadResponseDto uploadAnnualLeaveFile(MultipartFile file, String sheetName,
         Long userId) {
+        // 유저의 연차발송 권한 확인
         User currentUser = userRepository.findById(userId)
             .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
         if (!currentUser.hasAuthority(Authority.UPLOAD_ANNUAL_LEAVE)) {
@@ -63,20 +64,20 @@ public class AnnualLeaveService {
             // 데이터 파싱 (8행(Index 7)부터 시작)
             for (int i = 7; i <= sheet.getLastRowNum(); i++) {
                 Row row = sheet.getRow(i);
-                if (isRowEmpty(row)) {
-                    break;
+                if (isRowEmpty(row)) { // 성명이 비었는지 확인 후
+                    break; //파싱 종료
                 }
 
-                totalProcessed++;
+                totalProcessed++; // 파싱 작업 수 증가
                 try {
                     processAnnualLeaveRow(row, baseUpdateDate);
-                    successCount++;
+                    successCount++; // 성공 작업 수 증가
                 } catch (Exception e) {
                     log.warn("엑셀 업로드 실패 - 행 {}: {}", i + 1, e.getMessage());
                     failures.add(new ExcelUploadResponseDto.FailureDetail(
-                        i + 1,
+                        i + 1, // 엑셀 상의 열
                         getCellValueAsString(row.getCell(3)), // 성명
-                        e.getMessage()
+                        e.getMessage() // 실패 원인 (에러 메세지)
                     ));
                 }
             }

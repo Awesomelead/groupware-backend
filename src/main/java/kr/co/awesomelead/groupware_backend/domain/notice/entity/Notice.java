@@ -5,6 +5,7 @@ import com.fasterxml.jackson.annotation.JsonBackReference;
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EntityListeners;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
 import jakarta.persistence.FetchType;
@@ -25,6 +26,8 @@ import lombok.Setter;
 
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.LastModifiedDate;
+import org.springframework.data.jpa.domain.support.AuditingEntityListener;
+import org.springframework.util.StringUtils;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -34,6 +37,7 @@ import java.util.List;
 @Getter
 @Entity
 @Table(name = "notices")
+@EntityListeners(AuditingEntityListener.class)
 public class Notice {
 
     @Id
@@ -49,9 +53,9 @@ public class Notice {
     @Column(nullable = false, length = 100)
     private String title;
 
-    // 내용
+    // 내용 (식단표의 경우 null 가능)
     @Lob
-    @Column(nullable = false, columnDefinition = "TEXT")
+    @Column(columnDefinition = "TEXT")
     private String content;
 
     @ManyToOne(fetch = FetchType.LAZY)
@@ -86,5 +90,22 @@ public class Notice {
     // 조회수 증가 메서드
     public void increaseViewCount() {
         this.viewCount++;
+    }
+
+    public void update(String title, String content, Boolean pinned) {
+        if (StringUtils.hasText(title)) {
+            this.title = title;
+        }
+        if (StringUtils.hasText(content)) {
+            this.content = content;
+        }
+        if (pinned != null) {
+            this.pinned = pinned;
+        }
+    }
+
+    public void removeAttachment(NoticeAttachment attachment) {
+        this.attachments.remove(attachment);
+        attachment.setNotice(null);
     }
 }

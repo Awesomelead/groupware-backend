@@ -14,8 +14,8 @@ import kr.co.awesomelead.groupware_backend.domain.auth.entity.RefreshToken;
 import kr.co.awesomelead.groupware_backend.domain.auth.repository.RefreshTokenRepository;
 import kr.co.awesomelead.groupware_backend.domain.auth.service.RefreshTokenService;
 import kr.co.awesomelead.groupware_backend.domain.auth.util.JWTUtil;
-import kr.co.awesomelead.groupware_backend.global.CustomException;
-import kr.co.awesomelead.groupware_backend.global.ErrorCode;
+import kr.co.awesomelead.groupware_backend.global.error.CustomException;
+import kr.co.awesomelead.groupware_backend.global.error.ErrorCode;
 
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;

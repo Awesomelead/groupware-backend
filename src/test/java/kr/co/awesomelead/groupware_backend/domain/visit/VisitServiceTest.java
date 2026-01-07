@@ -24,8 +24,8 @@ import kr.co.awesomelead.groupware_backend.domain.visit.mapper.VisitMapper;
 import kr.co.awesomelead.groupware_backend.domain.visit.repository.VisitRepository;
 import kr.co.awesomelead.groupware_backend.domain.visit.repository.VisitorRepository;
 import kr.co.awesomelead.groupware_backend.domain.visit.service.VisitService;
-import kr.co.awesomelead.groupware_backend.global.CustomException;
-import kr.co.awesomelead.groupware_backend.global.ErrorCode;
+import kr.co.awesomelead.groupware_backend.global.error.CustomException;
+import kr.co.awesomelead.groupware_backend.global.error.ErrorCode;
 import kr.co.awesomelead.groupware_backend.global.infra.s3.S3Service;
 
 import org.junit.jupiter.api.BeforeEach;

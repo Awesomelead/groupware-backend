@@ -11,6 +11,7 @@ import kr.co.awesomelead.groupware_backend.domain.notice.dto.response.NoticeSumm
 import kr.co.awesomelead.groupware_backend.domain.notice.enums.NoticeType;
 import kr.co.awesomelead.groupware_backend.domain.notice.service.NoticeService;
 import kr.co.awesomelead.groupware_backend.domain.user.dto.CustomUserDetails;
+import kr.co.awesomelead.groupware_backend.global.common.response.ApiResponse;
 
 import lombok.RequiredArgsConstructor;
 
@@ -42,7 +43,7 @@ public class NoticeController {
 
     @Operation(summary = "공지 생성", description = "새로운 공지를 생성합니다.")
     @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    public ResponseEntity<Long> createNotice(
+    public ResponseEntity<ApiResponse<Long>> createNotice(
             @RequestPart("requestDto") @Valid NoticeCreateRequestDto requestDto,
             @RequestPart(value = "files", required = false) List<MultipartFile> files,
             @AuthenticationPrincipal CustomUserDetails userDetails)
@@ -56,34 +57,35 @@ public class NoticeController {
                         .buildAndExpand(noticeId)
                         .toUri();
 
-        return ResponseEntity.created(location).build();
+        return ResponseEntity.created(location).body(ApiResponse.onCreated(noticeId));
     }
 
     @Operation(summary = "공지 목록 조회", description = "특정 유형의 공지 목록을 조회합니다.")
     @GetMapping
-    public ResponseEntity<List<NoticeSummaryDto>> getNotices(@RequestParam NoticeType type) {
+    public ResponseEntity<ApiResponse<List<NoticeSummaryDto>>> getNotices(
+            @RequestParam NoticeType type) {
         List<NoticeSummaryDto> notices = noticeService.getNoticesByType(type);
-        return ResponseEntity.ok(notices);
+        return ResponseEntity.ok(ApiResponse.onSuccess(notices));
     }
 
     @Operation(summary = "공지 상세 조회", description = "특정 공지의 상세 정보를 조회합니다.")
     @GetMapping("/{noticeId}")
-    public ResponseEntity<NoticeDetailDto> getNotice(@PathVariable Long noticeId) {
+    public ResponseEntity<ApiResponse<NoticeDetailDto>> getNotice(@PathVariable Long noticeId) {
         NoticeDetailDto dto = noticeService.getNotice(noticeId);
-        return ResponseEntity.ok(dto);
+        return ResponseEntity.ok(ApiResponse.onSuccess(dto));
     }
 
     @Operation(summary = "공지 삭제", description = "특정 공지를 삭제합니다.")
     @DeleteMapping("/{noticeId}")
-    public ResponseEntity<Void> deleteNotice(
+    public ResponseEntity<ApiResponse<Void>> deleteNotice(
             @PathVariable Long noticeId, @AuthenticationPrincipal CustomUserDetails userDetails) {
         noticeService.deleteNotice(userDetails.getId(), noticeId);
-        return ResponseEntity.noContent().build();
+        return ResponseEntity.ok(ApiResponse.onNoContent());
     }
 
     @Operation(summary = "공지 수정", description = "특정 공지를 수정합니다.")
     @PatchMapping("/{noticeId}")
-    public ResponseEntity<Long> updateNotice(
+    public ResponseEntity<ApiResponse<Long>> updateNotice(
             @AuthenticationPrincipal CustomUserDetails userDetails,
             @PathVariable Long noticeId,
             @RequestPart(value = "notice") @Valid NoticeUpdateRequestDto dto,
@@ -92,6 +94,6 @@ public class NoticeController {
 
         Long updatedId = noticeService.updateNotice(userDetails.getId(), noticeId, dto, files);
 
-        return ResponseEntity.ok(updatedId);
+        return ResponseEntity.ok(ApiResponse.onSuccess(updatedId));
     }
 }

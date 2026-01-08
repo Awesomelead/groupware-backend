@@ -8,9 +8,6 @@ import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.atLeastOnce;
 import static org.mockito.Mockito.verify;
 
-import java.io.IOException;
-import java.time.LocalDate;
-import java.util.Optional;
 import kr.co.awesomelead.groupware_backend.domain.annualleave.dto.response.AnnualLeaveResponseDto;
 import kr.co.awesomelead.groupware_backend.domain.annualleave.dto.response.ExcelUploadResponseDto;
 import kr.co.awesomelead.groupware_backend.domain.annualleave.entity.AnnualLeave;
@@ -21,6 +18,7 @@ import kr.co.awesomelead.groupware_backend.domain.user.entity.User;
 import kr.co.awesomelead.groupware_backend.domain.user.enums.Authority;
 import kr.co.awesomelead.groupware_backend.domain.user.repository.UserRepository;
 import kr.co.awesomelead.groupware_backend.global.error.CustomException;
+
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -32,19 +30,19 @@ import org.springframework.core.io.ClassPathResource;
 import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.io.IOException;
+import java.time.LocalDate;
+import java.util.Optional;
+
 @ExtendWith(MockitoExtension.class)
 public class AnnualLeaveServiceTest {
 
-    @Mock
-    private AnnualLeaveRepository annualLeaveRepository;
+    @Mock private AnnualLeaveRepository annualLeaveRepository;
 
-    @Mock
-    private UserRepository userRepository;
-    @Mock
-    private AnnualLeaveMapper annualLeaveMapper;
+    @Mock private UserRepository userRepository;
+    @Mock private AnnualLeaveMapper annualLeaveMapper;
 
-    @InjectMocks
-    private AnnualLeaveService annualLeaveService;
+    @InjectMocks private AnnualLeaveService annualLeaveService;
 
     @Nested
     @DisplayName("uploadAnnualLeaveFile 메서드는")
@@ -62,14 +60,16 @@ public class AnnualLeaveServiceTest {
             void it_throws_exception() {
                 // given
                 User userWithoutAuth = createMockUser(null); // 권한 없는 유저
-                given(userRepository.findById(loginUserId)).willReturn(
-                    Optional.of(userWithoutAuth));
+                given(userRepository.findById(loginUserId))
+                        .willReturn(Optional.of(userWithoutAuth));
 
                 // when & then
                 assertThatThrownBy(
-                    () -> annualLeaveService.uploadAnnualLeaveFile(null, sheetName, loginUserId))
-                    .isInstanceOf(CustomException.class)
-                    .hasMessageContaining("연차 발송 권한이 없습니다.");
+                                () ->
+                                        annualLeaveService.uploadAnnualLeaveFile(
+                                                null, sheetName, loginUserId))
+                        .isInstanceOf(CustomException.class)
+                        .hasMessageContaining("연차 발송 권한이 없습니다.");
             }
         }
 
@@ -86,17 +86,18 @@ public class AnnualLeaveServiceTest {
 
                 MultipartFile mockFile = createMockExcelFile();
 
-                User targetUser = User.builder()
-                    .nameKor("테스트 유저")
-                    .hireDate(LocalDate.of(2025, 12, 31))
-                    .build();
-                given(userRepository.findByNameAndJoinDate(anyString(), any())).willReturn(
-                    Optional.of(targetUser));
+                User targetUser =
+                        User.builder()
+                                .nameKor("테스트 유저")
+                                .hireDate(LocalDate.of(2025, 12, 31))
+                                .build();
+                given(userRepository.findByNameAndJoinDate(anyString(), any()))
+                        .willReturn(Optional.of(targetUser));
                 given(annualLeaveRepository.findByUser(targetUser)).willReturn(Optional.empty());
 
                 // when
-                ExcelUploadResponseDto response = annualLeaveService.uploadAnnualLeaveFile(mockFile,
-                    sheetName, loginUserId);
+                ExcelUploadResponseDto response =
+                        annualLeaveService.uploadAnnualLeaveFile(mockFile, sheetName, loginUserId);
 
                 // then
                 assertThat(response.getSuccessCount()).isGreaterThan(0);
@@ -119,11 +120,12 @@ public class AnnualLeaveServiceTest {
 
                 // when & then
                 assertThatThrownBy(
-                    () -> annualLeaveService.uploadAnnualLeaveFile(invalidFile, sheetName,
-                        loginUserId))
-                    .isInstanceOf(CustomException.class)
-                    .hasMessageContaining(
-                        "유효하지 않은 기준일자 형식입니다. (yyyy-MM-dd)"); // ErrorCode 메시지에 따라 수정
+                                () ->
+                                        annualLeaveService.uploadAnnualLeaveFile(
+                                                invalidFile, sheetName, loginUserId))
+                        .isInstanceOf(CustomException.class)
+                        .hasMessageContaining(
+                                "유효하지 않은 기준일자 형식입니다. (yyyy-MM-dd)"); // ErrorCode 메시지에 따라 수정
             }
         }
 
@@ -135,16 +137,16 @@ public class AnnualLeaveServiceTest {
             @DisplayName("해당 행은 실패 목록(failures)에 담긴다")
             void it_adds_to_failures() throws IOException {
                 // given
-                given(userRepository.findById(loginUserId)).willReturn(
-                    Optional.of(createMockUser(Authority.UPLOAD_ANNUAL_LEAVE)));
-                given(userRepository.findByNameAndJoinDate(anyString(), any())).willReturn(
-                    Optional.empty()); // 유저 못 찾음
+                given(userRepository.findById(loginUserId))
+                        .willReturn(Optional.of(createMockUser(Authority.UPLOAD_ANNUAL_LEAVE)));
+                given(userRepository.findByNameAndJoinDate(anyString(), any()))
+                        .willReturn(Optional.empty()); // 유저 못 찾음
 
                 MultipartFile mockFile = createMockExcelFile();
 
                 // when
-                ExcelUploadResponseDto response = annualLeaveService.uploadAnnualLeaveFile(mockFile,
-                    sheetName, loginUserId);
+                ExcelUploadResponseDto response =
+                        annualLeaveService.uploadAnnualLeaveFile(mockFile, sheetName, loginUserId);
 
                 // then
                 assertThat(response.getSuccessCount()).isEqualTo(0);
@@ -169,10 +171,12 @@ public class AnnualLeaveServiceTest {
                 given(mockFile.getInputStream()).willThrow(new IOException("강제 발생 에러"));
 
                 // when & then
-                assertThatThrownBy(() ->
-                    annualLeaveService.uploadAnnualLeaveFile(mockFile, sheetName, loginUserId))
-                    .isInstanceOf(CustomException.class)
-                    .hasMessageContaining("파일 업로드 중 오류가 발생했습니다."); // ErrorCode의 메시지에 맞춰 수정
+                assertThatThrownBy(
+                                () ->
+                                        annualLeaveService.uploadAnnualLeaveFile(
+                                                mockFile, sheetName, loginUserId))
+                        .isInstanceOf(CustomException.class)
+                        .hasMessageContaining("파일 업로드 중 오류가 발생했습니다."); // ErrorCode의 메시지에 맞춰 수정
             }
         }
     }
@@ -189,27 +193,26 @@ public class AnnualLeaveServiceTest {
             @DisplayName("정상적으로 연차 정보를 반환한다")
             void it_returns_annual_leave_info() {
                 // given
-                AnnualLeave annualLeave = AnnualLeave.builder()
-                    .id(1L)
-                    .total(15.0)
-                    .used(5.0)
-                    .remain(10.0)
-                    .updateDate(LocalDate.now())
-                    .build();
+                AnnualLeave annualLeave =
+                        AnnualLeave.builder()
+                                .id(1L)
+                                .total(15.0)
+                                .used(5.0)
+                                .remain(10.0)
+                                .updateDate(LocalDate.now())
+                                .build();
                 Long userId = 1L;
-                User user = User.builder()
-                    .id(userId)
-                    .nameKor("테스트 유저")
-                    .annualLeave(annualLeave)
-                    .build();
-                AnnualLeaveResponseDto annualLeaveResponseDto = AnnualLeaveResponseDto.builder()
-                    .total(15.0)
-                    .used(5.0)
-                    .remain(10.0)
-                    .build();
+                User user =
+                        User.builder()
+                                .id(userId)
+                                .nameKor("테스트 유저")
+                                .annualLeave(annualLeave)
+                                .build();
+                AnnualLeaveResponseDto annualLeaveResponseDto =
+                        AnnualLeaveResponseDto.builder().total(15.0).used(5.0).remain(10.0).build();
                 given(userRepository.findById(userId)).willReturn(Optional.of(user));
-                given(annualLeaveMapper.toAnnualLeaveResponseDto(annualLeave)).willReturn(
-                    annualLeaveResponseDto);
+                given(annualLeaveMapper.toAnnualLeaveResponseDto(annualLeave))
+                        .willReturn(annualLeaveResponseDto);
 
                 // when
                 AnnualLeaveResponseDto result = annualLeaveService.getAnnualLeave(userId);
@@ -235,18 +238,14 @@ public class AnnualLeaveServiceTest {
 
                 // when & then
                 assertThatThrownBy(() -> annualLeaveService.getAnnualLeave(userId))
-                    .isInstanceOf(CustomException.class)
-                    .hasMessageContaining("사용자를 찾을 수 없습니다.");
+                        .isInstanceOf(CustomException.class)
+                        .hasMessageContaining("사용자를 찾을 수 없습니다.");
             }
         }
-
     }
 
     private User createMockUser(Authority authority) { // 권한을 받아 유저를 생성하는
-        User user = User.builder()
-            .id(1L)
-            .nameKor("테스트 업로더")
-            .build();
+        User user = User.builder().id(1L).nameKor("테스트 업로더").build();
         user.addAuthority(authority); // 권한 추가
         return user;
     }
@@ -259,11 +258,10 @@ public class AnnualLeaveServiceTest {
         // 2. MockMultipartFile 생성
         // (필드명, 원본파일명, 컨텐츠타입, 바이트데이터)
         return new MockMultipartFile(
-            "file",
-            "annual_leave_test.xlsx",
-            "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-            resource.getInputStream()
-        );
+                "file",
+                "annual_leave_test.xlsx",
+                "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                resource.getInputStream());
     }
 
     private MultipartFile createMockExcelFileWithWrongDateFormat() throws IOException {
@@ -274,11 +272,9 @@ public class AnnualLeaveServiceTest {
         // 2. MockMultipartFile 생성
         // (필드명, 원본파일명, 컨텐츠타입, 바이트데이터)
         return new MockMultipartFile(
-            "file",
-            "wrong_annual_leave_test.xlsx",
-            "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-            resource.getInputStream()
-        );
+                "file",
+                "wrong_annual_leave_test.xlsx",
+                "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                resource.getInputStream());
     }
-
 }

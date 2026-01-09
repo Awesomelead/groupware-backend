@@ -175,6 +175,42 @@ public class AuthController {
     }
 
     @Operation(summary = "이메일 인증번호 발송", description = "이메일 인증번호를 발송합니다.")
+    @ApiResponses(value = {
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(
+            responseCode = "200",
+            description = "인증번호 발송 성공",
+            content = @Content(
+                mediaType = "application/json",
+                examples = @ExampleObject(
+                    value = """
+                        {
+                          "isSuccess": true,
+                          "code": "COMMON204",
+                          "message": "이메일 인증번호가 발송되었습니다.",
+                          "result": null
+                        }
+                        """
+                )
+            )
+        ),
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(
+            responseCode = "500",
+            description = "이메일 전송 실패",
+            content = @Content(
+                mediaType = "application/json",
+                examples = @ExampleObject(
+                    value = """
+                        {
+                          "isSuccess": false,
+                          "code": "EMAIL_SEND_FAILED",
+                          "message": "이메일 전송에 실패했습니다.",
+                          "result": null
+                        }
+                        """
+                )
+            )
+        )
+    })
     @PostMapping("/send-email-code")
     public ResponseEntity<ApiResponse<Void>> sendEmailAuthCode(
         @Valid @RequestBody SendEmailAuthCodeRequestDto requestDto) {

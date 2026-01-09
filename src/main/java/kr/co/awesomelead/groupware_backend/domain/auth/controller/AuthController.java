@@ -374,6 +374,44 @@ public class AuthController {
     }
 
     @Operation(summary = "토큰 재발급", description = "Refresh Token으로 Access Token을 재발급합니다.")
+    @ApiResponses(value = {
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(
+            responseCode = "200",
+            description = "토큰 재발급 성공",
+            content = @Content(
+                mediaType = "application/json",
+                examples = @ExampleObject(
+                    value = """
+                        {
+                          "isSuccess": true,
+                          "code": "COMMON200",
+                          "message": "요청에 성공했습니다.",
+                          "result": {
+                            "accessToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+                          }
+                        }
+                        """
+                )
+            )
+        ),
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(
+            responseCode = "401",
+            description = "토큰 만료 또는 유효하지 않음",
+            content = @Content(
+                mediaType = "application/json",
+                examples = @ExampleObject(
+                    value = """
+                        {
+                          "isSuccess": false,
+                          "code": "EXPIRED_TOKEN",
+                          "message": "만료된 토큰입니다.",
+                          "result": null
+                        }
+                        """
+                )
+            )
+        )
+    })
     @PostMapping("/reissue")
     public ResponseEntity<ApiResponse<ReissueResponseDto>> reissue(
         HttpServletRequest request, HttpServletResponse response) {

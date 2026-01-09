@@ -435,6 +435,44 @@ public class AuthController {
     }
 
     @Operation(summary = "아이디 찾기", description = "해시 기반 검색하여 휴대폰 번호로 아이디를 찾습니다.")
+    @ApiResponses(value = {
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(
+            responseCode = "200",
+            description = "아이디 찾기 성공",
+            content = @Content(
+                mediaType = "application/json",
+                examples = @ExampleObject(
+                    value = """
+                        {
+                          "isSuccess": true,
+                          "code": "COMMON200",
+                          "message": "요청에 성공했습니다.",
+                          "result": {
+                            "email": "ho***@example.com"
+                          }
+                        }
+                        """
+                )
+            )
+        ),
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(
+            responseCode = "404",
+            description = "사용자를 찾을 수 없음",
+            content = @Content(
+                mediaType = "application/json",
+                examples = @ExampleObject(
+                    value = """
+                        {
+                          "isSuccess": false,
+                          "code": "USER_NOT_FOUND",
+                          "message": "해당 사용자를 찾을 수 없습니다.",
+                          "result": null
+                        }
+                        """
+                )
+            )
+        )
+    })
     @PostMapping("/find-email")
     public ResponseEntity<ApiResponse<FindEmailResponseDto>> findEmail(
         @Valid @RequestBody FindEmailRequestDto requestDto) {

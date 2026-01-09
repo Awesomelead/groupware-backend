@@ -12,22 +12,30 @@ import jakarta.persistence.OneToOne;
 
 import kr.co.awesomelead.groupware_backend.domain.user.entity.User;
 
+import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
-import java.util.Date;
+import java.time.LocalDate;
 
 @Entity
 @Data
+@Builder
+@AllArgsConstructor
+@NoArgsConstructor
 public class AnnualLeave {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    private int total;
-    private int used;
-    private int remain;
-    private Date updateDate;
+    private Double total; // 발생 연차
+    private Double monthlyLeave; // 월차
+    private Double carriedOver; // 이월 월차
+    private Double used; // 사용
+    private Double remain; // 잔여일
+    private LocalDate updateDate; // 수정일
 
     @OneToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id")

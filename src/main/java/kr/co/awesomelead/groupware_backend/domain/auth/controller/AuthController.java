@@ -287,6 +287,45 @@ public class AuthController {
     }
 
     @Operation(summary = "로그인", description = "로그인을 합니다.")
+    @ApiResponses(value = {
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(
+            responseCode = "200",
+            description = "로그인 성공",
+            content = @Content(
+                mediaType = "application/json",
+                schema = @Schema(implementation = kr.co.awesomelead.groupware_backend.global.common.response.ApiResponse.class),
+                examples = @ExampleObject(
+                    value = """
+                        {
+                          "isSuccess": true,
+                          "code": "COMMON200",
+                          "message": "요청에 성공했습니다.",
+                          "result": {
+                            "accessToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+                          }
+                        }
+                        """
+                )
+            )
+        ),
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(
+            responseCode = "401",
+            description = "로그인 실패",
+            content = @Content(
+                mediaType = "application/json",
+                examples = @ExampleObject(
+                    value = """
+                        {
+                          "isSuccess": false,
+                          "code": "INVALID_CREDENTIALS",
+                          "message": "이메일 또는 비밀번호가 일치하지 않습니다.",
+                          "result": null
+                        }
+                        """
+                )
+            )
+        )
+    })
     @PostMapping("/login")
     public ResponseEntity<ApiResponse<LoginResponseDto>> login(
         @RequestBody LoginRequestDto requestDto, HttpServletResponse response) {

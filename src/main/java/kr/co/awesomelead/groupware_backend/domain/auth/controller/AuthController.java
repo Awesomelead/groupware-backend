@@ -227,6 +227,59 @@ public class AuthController {
     }
 
     @Operation(summary = "회원가입", description = "회원가입을 요청합니다.")
+    @ApiResponses(value = {
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(
+            responseCode = "200",
+            description = "회원가입 요청 성공",
+            content = @Content(
+                mediaType = "application/json",
+                examples = @ExampleObject(
+                    value = """
+                        {
+                          "isSuccess": true,
+                          "code": "COMMON204",
+                          "message": "회원가입 요청이 완료되었습니다. 관리자 승인을 기다려주세요.",
+                          "result": null
+                        }
+                        """
+                )
+            )
+        ),
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(
+            responseCode = "400",
+            description = "인증 미완료 또는 비밀번호 불일치",
+            content = @Content(
+                mediaType = "application/json",
+                examples = @ExampleObject(
+                    value = """
+                        {
+                          "isSuccess": false,
+                          "code": "PHONE_NOT_VERIFIED",
+                          "message": "전화번호 인증이 필요합니다.",
+                          "result": null
+                        }
+                        """
+                )
+            )
+        ),
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(
+            responseCode = "409",
+            description = "중복된 정보",
+            content = @Content(
+                mediaType = "application/json",
+                examples = @ExampleObject(
+                    value = """
+                        {
+                          "isSuccess": false,
+                          "code": "DUPLICATE_LOGIN_ID",
+                          "message": "이미 사용 중인 아이디입니다.",
+                          "result": null
+                        }
+                        """
+                )
+            )
+        )
+    })
     @PostMapping("/signup")
     public ResponseEntity<ApiResponse<Void>> signup(@Valid @RequestBody SignupRequestDto joinDto) {
         authService.signup(joinDto);

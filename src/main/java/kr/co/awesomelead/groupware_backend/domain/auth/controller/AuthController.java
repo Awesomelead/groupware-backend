@@ -339,6 +339,25 @@ public class AuthController {
     }
 
     @Operation(summary = "로그아웃", description = "로그아웃을 합니다.")
+    @ApiResponses(value = {
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(
+            responseCode = "200",
+            description = "로그아웃 성공",
+            content = @Content(
+                mediaType = "application/json",
+                examples = @ExampleObject(
+                    value = """
+                        {
+                          "isSuccess": true,
+                          "code": "COMMON204",
+                          "message": "로그아웃되었습니다.",
+                          "result": null
+                        }
+                        """
+                )
+            )
+        )
+    })
     @PostMapping("/logout")
     public ResponseEntity<ApiResponse<Void>> logout(
         HttpServletRequest request, HttpServletResponse response) {

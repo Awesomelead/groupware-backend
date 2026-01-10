@@ -1,13 +1,16 @@
 package kr.co.awesomelead.groupware_backend.domain.visit.dto.response;
 
 import io.swagger.v3.oas.annotations.media.Schema;
-import java.time.LocalDateTime;
-import java.util.List;
+
 import kr.co.awesomelead.groupware_backend.domain.visit.enums.VisitPurpose;
 import kr.co.awesomelead.groupware_backend.domain.visit.enums.VisitType;
+
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
+
+import java.time.LocalDateTime;
+import java.util.List;
 
 @Getter
 @Builder
@@ -18,8 +21,10 @@ public class VisitResponseDto {
     @Schema(description = "방문 ID", example = "1")
     private Long id;
 
-    @Schema(description = "방문 유형", example = "PRE_REGISTRATION", allowableValues = {
-        "PRE_REGISTRATION", "ON_SITE"})
+    @Schema(
+            description = "방문 유형",
+            example = "PRE_REGISTRATION",
+            allowableValues = {"PRE_REGISTRATION", "ON_SITE"})
     private VisitType visitType;
 
     @Schema(description = "내방객 이름", example = "홍길동")

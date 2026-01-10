@@ -1,9 +1,12 @@
 package kr.co.awesomelead.groupware_backend.domain.notice.dto.request;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
+
 import kr.co.awesomelead.groupware_backend.domain.notice.enums.NoticeType;
+
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
@@ -25,11 +28,10 @@ public class NoticeCreateRequestDto {
 
     @NotNull(message = "공지 유형은 필수입니다.")
     @Schema(
-        description = "공지사항 유형",
-        example = "REGULAR",
-        required = true,
-        allowableValues = {"REGULAR", "MENU", "ETC"}
-    )
+            description = "공지사항 유형",
+            example = "REGULAR",
+            required = true,
+            allowableValues = {"REGULAR", "MENU", "ETC"})
     private NoticeType type;
 
     @Builder.Default

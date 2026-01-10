@@ -1,9 +1,11 @@
 package kr.co.awesomelead.groupware_backend.domain.visit.dto.request;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
+
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -27,6 +29,11 @@ public class VisitSearchRequestDto {
 
     @NotBlank
     @Size(min = 4, max = 4, message = "비밀번호는 4자리여야 합니다.")
-    @Schema(description = "내방객 비밀번호 (4자리)", example = "1234", required = true, minLength = 4, maxLength = 4)
+    @Schema(
+            description = "내방객 비밀번호 (4자리)",
+            example = "1234",
+            required = true,
+            minLength = 4,
+            maxLength = 4)
     private String password;
 }

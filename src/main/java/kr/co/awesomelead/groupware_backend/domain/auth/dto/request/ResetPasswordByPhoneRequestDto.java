@@ -1,9 +1,11 @@
 package kr.co.awesomelead.groupware_backend.domain.auth.dto.request;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
+
 import lombok.Getter;
 import lombok.Setter;
 
@@ -17,12 +19,15 @@ public class ResetPasswordByPhoneRequestDto {
     @Pattern(regexp = "^\\d{10,11}$", message = "전화번호는 '-' 없이 10~11자리 숫자로 입력해주세요.")
     private String phoneNumber;
 
-    @Schema(description = "새 비밀번호 (영문, 숫자, 특수문자 포함 8자 이상)", example = "newPassword123!", required = true)
+    @Schema(
+            description = "새 비밀번호 (영문, 숫자, 특수문자 포함 8자 이상)",
+            example = "newPassword123!",
+            required = true)
     @NotBlank(message = "새 비밀번호는 필수입니다.")
     @Size(min = 8, message = "비밀번호는 최소 8자 이상이어야 합니다.")
     @Pattern(
-        regexp = "^(?=.*[a-zA-Z])(?=.*[!@#$%^*+=-])(?=.*[0-9]).{8,64}$",
-        message = "비밀번호는 영문, 숫자, 특수문자를 모두 포함해야 합니다.")
+            regexp = "^(?=.*[a-zA-Z])(?=.*[!@#$%^*+=-])(?=.*[0-9]).{8,64}$",
+            message = "비밀번호는 영문, 숫자, 특수문자를 모두 포함해야 합니다.")
     private String newPassword;
 
     @Schema(description = "새 비밀번호 확인", example = "newPassword123!", required = true)

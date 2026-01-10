@@ -1,12 +1,15 @@
 package kr.co.awesomelead.groupware_backend.domain.visit.dto.response;
 
 import io.swagger.v3.oas.annotations.media.Schema;
-import java.time.LocalDateTime;
+
 import kr.co.awesomelead.groupware_backend.domain.visit.enums.VisitPurpose;
+
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.Setter;
+
+import java.time.LocalDateTime;
 
 @Getter
 @Setter
@@ -42,7 +45,9 @@ public class VisitDetailResponseDto {
     @Schema(description = "방문 종료 일시", example = "2025-01-15T18:00:00")
     private LocalDateTime visitEndDate;
 
-    @Schema(description = "서명 이미지 URL", example = "https://bucket.s3.amazonaws.com/signatures/uuid_signature.png")
+    @Schema(
+            description = "서명 이미지 URL",
+            example = "https://bucket.s3.amazonaws.com/signatures/uuid_signature.png")
     private String signatureUrl;
 
     @Schema(description = "방문 여부", example = "false")

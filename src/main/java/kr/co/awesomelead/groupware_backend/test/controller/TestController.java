@@ -1,6 +1,7 @@
 package kr.co.awesomelead.groupware_backend.test.controller;
 
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 
 import jakarta.validation.Valid;
 
@@ -28,6 +29,9 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @RequestMapping("/api/test")
 @RequiredArgsConstructor
+@Tag(name = "Test", description = """
+            ## 개발 중 테스트 API
+            """)
 public class TestController {
 
     private final UserRepository userRepository;

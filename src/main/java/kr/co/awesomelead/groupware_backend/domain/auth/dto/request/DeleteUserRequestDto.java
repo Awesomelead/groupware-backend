@@ -10,11 +10,11 @@ import lombok.Setter;
 
 @Getter
 @Setter
-@Schema(description = "이메일 인증번호 발송 요청")
-public class SendEmailAuthCodeRequestDto {
+@Schema(description = "[테스트] 계정 삭제")
+public class DeleteUserRequestDto {
 
     @Schema(description = "이메일", example = "test@example.com", required = true)
-    @NotBlank(message = "이메일은 필수입니다.")
+    @NotBlank(message = "이메일을 입력해주세요.")
     @Email(message = "유효한 이메일 형식이 아닙니다.")
     private String email;
 }

@@ -253,4 +253,19 @@ public class AuthService {
 
         log.info("비밀번호 변경 완료 - 사용자 ID: {}", userId);
     }
+
+    // 계정 삭제 (테스트)
+    @Transactional
+    public void deleteUser(String email) {
+        // 1. 사용자 찾기
+        User user =
+                userRepository
+                        .findByEmail(email)
+                        .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
+
+        // 2. 해당 사용자 계정 삭제
+        userRepository.delete(user);
+
+        log.info("계정 삭제 완료 - 이메일: {}", email);
+    }
 }

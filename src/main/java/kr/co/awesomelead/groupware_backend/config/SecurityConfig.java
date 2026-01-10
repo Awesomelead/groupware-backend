@@ -64,6 +64,7 @@ public class SecurityConfig {
                                 .requestMatchers(
                                         "/",
                                         "/index.html",
+                                        "/api/test/**",
                                         "/api/join",
                                         "/api/join/send-code",
                                         "/api/join/verify-code",

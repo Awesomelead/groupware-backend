@@ -1,18 +1,15 @@
 package kr.co.awesomelead.groupware_backend.test.service;
 
+import java.util.List;
 import kr.co.awesomelead.groupware_backend.domain.auth.dto.response.FindEmailResponseDto;
 import kr.co.awesomelead.groupware_backend.domain.user.entity.User;
 import kr.co.awesomelead.groupware_backend.domain.user.repository.UserRepository;
 import kr.co.awesomelead.groupware_backend.global.error.CustomException;
 import kr.co.awesomelead.groupware_backend.global.error.ErrorCode;
-
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
-import java.util.List;
 
 @Slf4j
 @Service
@@ -30,10 +27,10 @@ public class TestService {
 
         List<User> users = userRepository.findAllByNameKor(name);
         User user =
-                users.stream()
-                        .filter(u -> u.getPhoneNumber().equals(phoneNumber))
-                        .findFirst()
-                        .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
+            users.stream()
+                .filter(u -> u.getPhoneNumber().equals(phoneNumber))
+                .findFirst()
+                .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
 
         long endTime = System.nanoTime();
         log.info("[전체조회] 조회 {}명, 소요시간: {}ms", users.size(), (endTime - startTime) / 1_000_000);
@@ -47,9 +44,9 @@ public class TestService {
 
         String phoneNumberHash = User.hashPhoneNumber(phoneNumber);
         User user =
-                userRepository
-                        .findByPhoneNumberHash(phoneNumberHash)
-                        .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
+            userRepository
+                .findByPhoneNumberHash(phoneNumberHash)
+                .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
 
         if (!user.getNameKor().equals(name)) {
             throw new CustomException(ErrorCode.USER_NOT_FOUND);
@@ -67,5 +64,18 @@ public class TestService {
             return email.charAt(0) + "***" + email.substring(atIndex);
         }
         return email.substring(0, 2) + "***" + email.substring(atIndex);
+    }
+
+    // 계정 삭제
+    @Transactional
+    public void deleteUser(String email) {
+        // 1. 사용자 찾기
+        User user = userRepository.findByEmail(email)
+            .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
+
+        // 2. 해당 사용자 계정 삭제
+        userRepository.delete(user);
+
+        log.info("계정 삭제 완료 - 이메일: {}", email);
     }
 }

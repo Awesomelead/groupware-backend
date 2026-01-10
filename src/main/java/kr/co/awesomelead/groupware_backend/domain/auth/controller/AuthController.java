@@ -537,6 +537,59 @@ public class AuthController {
     }
 
     @Operation(summary = "이메일로 비밀번호 재설정", description = "이메일 인증을 완료한 후, 비밀번호 재설정합니다.")
+    @ApiResponses(value = {
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(
+            responseCode = "200",
+            description = "비밀번호 재설정 성공",
+            content = @Content(
+                mediaType = "application/json",
+                examples = @ExampleObject(
+                    value = """
+                        {
+                          "isSuccess": true,
+                          "code": "COMMON204",
+                          "message": "비밀번호가 성공적으로 재설정되었습니다.",
+                          "result": null
+                        }
+                        """
+                )
+            )
+        ),
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(
+            responseCode = "400",
+            description = "이메일 인증 미완료 또는 비밀번호 불일치",
+            content = @Content(
+                mediaType = "application/json",
+                examples = @ExampleObject(
+                    value = """
+                        {
+                          "isSuccess": false,
+                          "code": "EMAIL_NOT_VERIFIED",
+                          "message": "이메일 인증이 필요합니다.",
+                          "result": null
+                        }
+                        """
+                )
+            )
+        ),
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(
+            responseCode = "404",
+            description = "사용자를 찾을 수 없음",
+            content = @Content(
+                mediaType = "application/json",
+                examples = @ExampleObject(
+                    value = """
+                        {
+                          "isSuccess": false,
+                          "code": "USER_NOT_FOUND",
+                          "message": "해당 사용자를 찾을 수 없습니다.",
+                          "result": null
+                        }
+                        """
+                )
+            )
+        )
+    })
     @PatchMapping("/reset-password/email")
     public ResponseEntity<ApiResponse<Void>> resetPasswordByEmail(
         @Valid @RequestBody ResetPasswordByEmailRequestDto requestDto) {
@@ -545,6 +598,59 @@ public class AuthController {
     }
 
     @Operation(summary = "휴대폰으로 비밀번호 재설정", description = "휴대폰 인증을 완료한 후, 비밀번호 재설정합니다.")
+    @ApiResponses(value = {
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(
+            responseCode = "200",
+            description = "비밀번호 재설정 성공",
+            content = @Content(
+                mediaType = "application/json",
+                examples = @ExampleObject(
+                    value = """
+                        {
+                          "isSuccess": true,
+                          "code": "COMMON204",
+                          "message": "비밀번호가 성공적으로 재설정되었습니다.",
+                          "result": null
+                        }
+                        """
+                )
+            )
+        ),
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(
+            responseCode = "400",
+            description = "전화번호 인증 미완료 또는 비밀번호 불일치",
+            content = @Content(
+                mediaType = "application/json",
+                examples = @ExampleObject(
+                    value = """
+                        {
+                          "isSuccess": false,
+                          "code": "PHONE_NOT_VERIFIED",
+                          "message": "전화번호 인증이 필요합니다.",
+                          "result": null
+                        }
+                        """
+                )
+            )
+        ),
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(
+            responseCode = "404",
+            description = "사용자를 찾을 수 없음",
+            content = @Content(
+                mediaType = "application/json",
+                examples = @ExampleObject(
+                    value = """
+                        {
+                          "isSuccess": false,
+                          "code": "USER_NOT_FOUND",
+                          "message": "해당 사용자를 찾을 수 없습니다.",
+                          "result": null
+                        }
+                        """
+                )
+            )
+        )
+    })
     @PatchMapping("/reset-password/phone")
     public ResponseEntity<ApiResponse<Void>> resetPasswordByPhone(
         @Valid @RequestBody ResetPasswordByPhoneRequestDto requestDto) {
@@ -553,6 +659,59 @@ public class AuthController {
     }
 
     @Operation(summary = "로그인 후 비밀번호 재설정", description = "로그인 한 사용자가 비밀번호 재설정합니다.")
+    @ApiResponses(value = {
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(
+            responseCode = "200",
+            description = "비밀번호 변경 성공",
+            content = @Content(
+                mediaType = "application/json",
+                examples = @ExampleObject(
+                    value = """
+                        {
+                          "isSuccess": true,
+                          "code": "COMMON204",
+                          "message": "비밀번호가 성공적으로 변경되었습니다.",
+                          "result": null
+                        }
+                        """
+                )
+            )
+        ),
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(
+            responseCode = "400",
+            description = "비밀번호 불일치 또는 현재 비밀번호와 동일",
+            content = @Content(
+                mediaType = "application/json",
+                examples = @ExampleObject(
+                    value = """
+                        {
+                          "isSuccess": false,
+                          "code": "CURRENT_PASSWORD_MISMATCH",
+                          "message": "현재 비밀번호가 일치하지 않습니다.",
+                          "result": null
+                        }
+                        """
+                )
+            )
+        ),
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(
+            responseCode = "404",
+            description = "사용자를 찾을 수 없음",
+            content = @Content(
+                mediaType = "application/json",
+                examples = @ExampleObject(
+                    value = """
+                        {
+                          "isSuccess": false,
+                          "code": "USER_NOT_FOUND",
+                          "message": "해당 사용자를 찾을 수 없습니다.",
+                          "result": null
+                        }
+                        """
+                )
+            )
+        )
+    })
     @PatchMapping("/reset-password")
     public ResponseEntity<ApiResponse<Void>> resetPassword(
         @Valid @RequestBody ResetPasswordRequestDto requestDto,

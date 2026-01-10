@@ -42,7 +42,17 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @RequestMapping("/api/auth")
 @RequiredArgsConstructor
-@Tag(name = "Auth", description = "회원가입, 로그인, 로그아웃, 토큰 재발급 등 인증 관련 API")
+@Tag(
+    name = "Auth",
+    description = """
+        ## 회원가입, 로그인, 로그아웃, 토큰 재발급 등 인증 관련 API
+        
+        ### 사용되는 Enum 타입
+        - **Company**: 근무 사업장 (AWESOME, MARUI)
+        - **Role**: 사용자 역할 (USER, ADMIN)
+        - **Status**: 사용자 상태 (PENDING, AVAILABLE, SUSPENDED)
+        """
+)
 public class AuthController {
 
     private final PhoneAuthService phoneAuthService;
@@ -134,19 +144,35 @@ public class AuthController {
         ),
         @io.swagger.v3.oas.annotations.responses.ApiResponse(
             responseCode = "400",
-            description = "인증번호 불일치",
+            description = "입력값 검증 실패 또는 인증번호 불일치",
             content = @Content(
                 mediaType = "application/json",
-                examples = @ExampleObject(
-                    value = """
-                        {
-                          "isSuccess": false,
-                          "code": "AUTH_CODE_MISMATCH",
-                          "message": "인증번호가 일치하지 않습니다.",
-                          "result": null
-                        }
-                        """
-                )
+                examples = {
+                    @ExampleObject(
+                        name = "입력값 검증 실패",
+                        value = """
+                            {
+                              "isSuccess": false,
+                              "code": "COMMON400",
+                              "message": "입력값이 유효하지 않습니다.",
+                              "result": {
+                                "authCode": "인증번호는 6자리 숫자여야 합니다."
+                              }
+                            }
+                            """
+                    ),
+                    @ExampleObject(
+                        name = "인증번호 불일치",
+                        value = """
+                            {
+                              "isSuccess": false,
+                              "code": "AUTH_CODE_MISMATCH",
+                              "message": "인증번호가 일치하지 않습니다.",
+                              "result": null
+                            }
+                            """
+                    )
+                }
             )
         ),
         @io.swagger.v3.oas.annotations.responses.ApiResponse(
@@ -188,6 +214,25 @@ public class AuthController {
                           "code": "COMMON204",
                           "message": "이메일 인증번호가 발송되었습니다.",
                           "result": null
+                        }
+                        """
+                )
+            )
+        ),
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(
+            responseCode = "400",
+            description = "잘못된 요청",
+            content = @Content(
+                mediaType = "application/json",
+                examples = @ExampleObject(
+                    value = """
+                        {
+                          "isSuccess": false,
+                          "code": "COMMON400",
+                          "message": "입력값이 유효하지 않습니다.",
+                          "result": {
+                            "email": "유효한 이메일 형식이 아닙니다."
+                          }
                         }
                         """
                 )
@@ -239,19 +284,35 @@ public class AuthController {
         ),
         @io.swagger.v3.oas.annotations.responses.ApiResponse(
             responseCode = "400",
-            description = "인증번호 불일치",
+            description = "입력값 검증 실패 또는 인증번호 불일치",
             content = @Content(
                 mediaType = "application/json",
-                examples = @ExampleObject(
-                    value = """
-                        {
-                          "isSuccess": false,
-                          "code": "AUTH_CODE_MISMATCH",
-                          "message": "인증번호가 일치하지 않습니다.",
-                          "result": null
-                        }
-                        """
-                )
+                examples = {
+                    @ExampleObject(
+                        name = "입력값 검증 실패",
+                        value = """
+                            {
+                              "isSuccess": false,
+                              "code": "COMMON400",
+                              "message": "입력값이 유효하지 않습니다.",
+                              "result": {
+                                "authCode": "인증번호는 6자리 숫자여야 합니다."
+                              }
+                            }
+                            """
+                    ),
+                    @ExampleObject(
+                        name = "인증번호 불일치",
+                        value = """
+                            {
+                              "isSuccess": false,
+                              "code": "AUTH_CODE_MISMATCH",
+                              "message": "인증번호가 일치하지 않습니다.",
+                              "result": null
+                            }
+                            """
+                    )
+                }
             )
         ),
         @io.swagger.v3.oas.annotations.responses.ApiResponse(
@@ -300,19 +361,57 @@ public class AuthController {
         ),
         @io.swagger.v3.oas.annotations.responses.ApiResponse(
             responseCode = "400",
-            description = "인증 미완료 또는 비밀번호 불일치",
+            description = "입력값 검증 실패",
             content = @Content(
                 mediaType = "application/json",
-                examples = @ExampleObject(
-                    value = """
-                        {
-                          "isSuccess": false,
-                          "code": "PHONE_NOT_VERIFIED",
-                          "message": "전화번호 인증이 필요합니다.",
-                          "result": null
-                        }
-                        """
-                )
+                examples = {
+                    @ExampleObject(
+                        name = "입력값 검증 실패",
+                        value = """
+                            {
+                              "isSuccess": false,
+                              "code": "COMMON400",
+                              "message": "입력값이 유효하지 않습니다.",
+                              "result": {
+                                "email": "유효한 이메일 형식이 아닙니다."
+                              }
+                            }
+                            """
+                    ),
+                    @ExampleObject(
+                        name = "비밀번호 불일치",
+                        value = """
+                            {
+                              "isSuccess": false,
+                              "code": "PASSWORD_MISMATCH",
+                              "message": "비밀번호가 일치하지 않습니다.",
+                              "result": null
+                            }
+                            """
+                    ),
+                    @ExampleObject(
+                        name = "전화번호 인증 미완료",
+                        value = """
+                            {
+                              "isSuccess": false,
+                              "code": "PHONE_NOT_VERIFIED",
+                              "message": "전화번호 인증이 필요합니다.",
+                              "result": null
+                            }
+                            """
+                    ),
+                    @ExampleObject(
+                        name = "이메일 인증 미완료",
+                        value = """
+                            {
+                              "isSuccess": false,
+                              "code": "EMAIL_NOT_VERIFIED",
+                              "message": "이메일 인증이 필요합니다.",
+                              "result": null
+                            }
+                            """
+                    )
+                }
             )
         ),
         @io.swagger.v3.oas.annotations.responses.ApiResponse(
@@ -320,16 +419,30 @@ public class AuthController {
             description = "중복된 정보",
             content = @Content(
                 mediaType = "application/json",
-                examples = @ExampleObject(
-                    value = """
-                        {
-                          "isSuccess": false,
-                          "code": "DUPLICATE_LOGIN_ID",
-                          "message": "이미 사용 중인 아이디입니다.",
-                          "result": null
-                        }
-                        """
-                )
+                examples = {
+                    @ExampleObject(
+                        name = "이메일 중복",
+                        value = """
+                            {
+                              "isSuccess": false,
+                              "code": "DUPLICATE_LOGIN_ID",
+                              "message": "이미 사용 중인 아이디입니다.",
+                              "result": null
+                            }
+                            """
+                    ),
+                    @ExampleObject(
+                        name = "주민등록번호 중복",
+                        value = """
+                            {
+                              "isSuccess": false,
+                              "code": "DUPLICATE_REGISTRATION_NUMBER",
+                              "message": "이미 가입된 주민등록번호입니다.",
+                              "result": null
+                            }
+                            """
+                    )
+                }
             )
         )
     })
@@ -346,7 +459,7 @@ public class AuthController {
             description = "로그인 성공",
             content = @Content(
                 mediaType = "application/json",
-                schema = @Schema(implementation = kr.co.awesomelead.groupware_backend.global.common.response.ApiResponse.class),
+                schema = @Schema(implementation = ApiResponse.class),
                 examples = @ExampleObject(
                     value = """
                         {
@@ -362,16 +475,35 @@ public class AuthController {
             )
         ),
         @io.swagger.v3.oas.annotations.responses.ApiResponse(
-            responseCode = "401",
-            description = "로그인 실패",
+            responseCode = "400",
+            description = "입력값 검증 실패",
             content = @Content(
                 mediaType = "application/json",
                 examples = @ExampleObject(
                     value = """
                         {
                           "isSuccess": false,
-                          "code": "INVALID_CREDENTIALS",
-                          "message": "이메일 또는 비밀번호가 일치하지 않습니다.",
+                          "code": "COMMON400",
+                          "message": "입력값이 유효하지 않습니다.",
+                          "result": {
+                            "email": "이메일을 입력해주세요."
+                          }
+                        }
+                        """
+                )
+            )
+        ),
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(
+            responseCode = "401",
+            description = "로그인 실패 (인증 실패)",
+            content = @Content(
+                mediaType = "application/json",
+                examples = @ExampleObject(
+                    value = """
+                        {
+                          "isSuccess": false,
+                          "code": "COMMON401",
+                          "message": "인증에 실패했습니다.",
                           "result": null
                         }
                         """
@@ -452,16 +584,30 @@ public class AuthController {
             description = "토큰 만료 또는 유효하지 않음",
             content = @Content(
                 mediaType = "application/json",
-                examples = @ExampleObject(
-                    value = """
-                        {
-                          "isSuccess": false,
-                          "code": "EXPIRED_TOKEN",
-                          "message": "만료된 토큰입니다.",
-                          "result": null
-                        }
-                        """
-                )
+                examples = {
+                    @ExampleObject(
+                        name = "토큰 만료",
+                        value = """
+                            {
+                              "isSuccess": false,
+                              "code": "EXPIRED_TOKEN",
+                              "message": "만료된 토큰입니다.",
+                              "result": null
+                            }
+                            """
+                    ),
+                    @ExampleObject(
+                        name = "유효하지 않은 토큰",
+                        value = """
+                            {
+                              "isSuccess": false,
+                              "code": "INVALID_TOKEN",
+                              "message": "유효하지 않은 토큰입니다.",
+                              "result": null
+                            }
+                            """
+                    )
+                }
             )
         )
     })
@@ -503,6 +649,23 @@ public class AuthController {
                           "result": {
                             "email": "ho***@example.com"
                           }
+                        }
+                        """
+                )
+            )
+        ),
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(
+            responseCode = "400",
+            description = "전화번호 인증 미완료",
+            content = @Content(
+                mediaType = "application/json",
+                examples = @ExampleObject(
+                    value = """
+                        {
+                          "isSuccess": false,
+                          "code": "PHONE_NOT_VERIFIED",
+                          "message": "전화번호 인증이 필요합니다.",
+                          "result": null
                         }
                         """
                 )
@@ -560,16 +723,30 @@ public class AuthController {
             description = "이메일 인증 미완료 또는 비밀번호 불일치",
             content = @Content(
                 mediaType = "application/json",
-                examples = @ExampleObject(
-                    value = """
-                        {
-                          "isSuccess": false,
-                          "code": "EMAIL_NOT_VERIFIED",
-                          "message": "이메일 인증이 필요합니다.",
-                          "result": null
-                        }
-                        """
-                )
+                examples = {
+                    @ExampleObject(
+                        name = "이메일 인증 미완료",
+                        value = """
+                            {
+                              "isSuccess": false,
+                              "code": "EMAIL_NOT_VERIFIED",
+                              "message": "이메일 인증이 필요합니다.",
+                              "result": null
+                            }
+                            """
+                    ),
+                    @ExampleObject(
+                        name = "비밀번호 불일치",
+                        value = """
+                            {
+                              "isSuccess": false,
+                              "code": "PASSWORD_MISMATCH",
+                              "message": "비밀번호가 일치하지 않습니다.",
+                              "result": null
+                            }
+                            """
+                    )
+                }
             )
         ),
         @io.swagger.v3.oas.annotations.responses.ApiResponse(
@@ -621,16 +798,30 @@ public class AuthController {
             description = "전화번호 인증 미완료 또는 비밀번호 불일치",
             content = @Content(
                 mediaType = "application/json",
-                examples = @ExampleObject(
-                    value = """
-                        {
-                          "isSuccess": false,
-                          "code": "PHONE_NOT_VERIFIED",
-                          "message": "전화번호 인증이 필요합니다.",
-                          "result": null
-                        }
-                        """
-                )
+                examples = {
+                    @ExampleObject(
+                        name = "전화번호 인증 미완료",
+                        value = """
+                            {
+                              "isSuccess": false,
+                              "code": "PHONE_NOT_VERIFIED",
+                              "message": "전화번호 인증이 필요합니다.",
+                              "result": null
+                            }
+                            """
+                    ),
+                    @ExampleObject(
+                        name = "비밀번호 불일치",
+                        value = """
+                            {
+                              "isSuccess": false,
+                              "code": "PASSWORD_MISMATCH",
+                              "message": "비밀번호가 일치하지 않습니다.",
+                              "result": null
+                            }
+                            """
+                    )
+                }
             )
         ),
         @io.swagger.v3.oas.annotations.responses.ApiResponse(
@@ -682,16 +873,41 @@ public class AuthController {
             description = "비밀번호 불일치 또는 현재 비밀번호와 동일",
             content = @Content(
                 mediaType = "application/json",
-                examples = @ExampleObject(
-                    value = """
-                        {
-                          "isSuccess": false,
-                          "code": "CURRENT_PASSWORD_MISMATCH",
-                          "message": "현재 비밀번호가 일치하지 않습니다.",
-                          "result": null
-                        }
-                        """
-                )
+                examples = {
+                    @ExampleObject(
+                        name = "비밀번호 확인 불일치",
+                        value = """
+                            {
+                              "isSuccess": false,
+                              "code": "PASSWORD_MISMATCH",
+                              "message": "비밀번호가 일치하지 않습니다.",
+                              "result": null
+                            }
+                            """
+                    ),
+                    @ExampleObject(
+                        name = "현재 비밀번호 불일치",
+                        value = """
+                            {
+                              "isSuccess": false,
+                              "code": "CURRENT_PASSWORD_MISMATCH",
+                              "message": "현재 비밀번호가 일치하지 않습니다.",
+                              "result": null
+                            }
+                            """
+                    ),
+                    @ExampleObject(
+                        name = "새 비밀번호가 현재 비밀번호와 동일",
+                        value = """
+                            {
+                              "isSuccess": false,
+                              "code": "SAME_AS_CURRENT_PASSWORD",
+                              "message": "새 비밀번호는 현재 비밀번호와 달라야 합니다.",
+                              "result": null
+                            }
+                            """
+                    )
+                }
             )
         ),
         @io.swagger.v3.oas.annotations.responses.ApiResponse(

@@ -219,6 +219,59 @@ public class AuthController {
     }
 
     @Operation(summary = "이메일 인증번호 확인", description = "발송된 이메일 인증번호를 확인합니다.")
+    @ApiResponses(value = {
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(
+            responseCode = "200",
+            description = "인증 성공",
+            content = @Content(
+                mediaType = "application/json",
+                examples = @ExampleObject(
+                    value = """
+                        {
+                          "isSuccess": true,
+                          "code": "COMMON204",
+                          "message": "이메일 인증이 완료되었습니다.",
+                          "result": null
+                        }
+                        """
+                )
+            )
+        ),
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(
+            responseCode = "400",
+            description = "인증번호 불일치",
+            content = @Content(
+                mediaType = "application/json",
+                examples = @ExampleObject(
+                    value = """
+                        {
+                          "isSuccess": false,
+                          "code": "AUTH_CODE_MISMATCH",
+                          "message": "인증번호가 일치하지 않습니다.",
+                          "result": null
+                        }
+                        """
+                )
+            )
+        ),
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(
+            responseCode = "401",
+            description = "인증번호 만료",
+            content = @Content(
+                mediaType = "application/json",
+                examples = @ExampleObject(
+                    value = """
+                        {
+                          "isSuccess": false,
+                          "code": "AUTH_CODE_EXPIRED",
+                          "message": "인증번호가 만료되었습니다.",
+                          "result": null
+                        }
+                        """
+                )
+            )
+        )
+    })
     @PostMapping("/verify-email-code")
     public ResponseEntity<ApiResponse<Void>> verifyEmailAuthCode(
         @Valid @RequestBody VerifyEmailAuthCodeRequestDto requestDto) {

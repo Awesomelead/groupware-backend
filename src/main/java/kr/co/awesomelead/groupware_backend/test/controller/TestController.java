@@ -1,9 +1,8 @@
 package kr.co.awesomelead.groupware_backend.test.controller;
 
 import io.swagger.v3.oas.annotations.Operation;
-
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
-
 import kr.co.awesomelead.groupware_backend.domain.auth.dto.request.FindEmailRequestDto;
 import kr.co.awesomelead.groupware_backend.domain.auth.dto.response.FindEmailResponseDto;
 import kr.co.awesomelead.groupware_backend.domain.department.enums.Company;
@@ -11,13 +10,13 @@ import kr.co.awesomelead.groupware_backend.domain.user.entity.User;
 import kr.co.awesomelead.groupware_backend.domain.user.enums.Role;
 import kr.co.awesomelead.groupware_backend.domain.user.enums.Status;
 import kr.co.awesomelead.groupware_backend.domain.user.repository.UserRepository;
+import kr.co.awesomelead.groupware_backend.global.common.response.ApiResponse;
 import kr.co.awesomelead.groupware_backend.test.service.TestService;
-
 import lombok.RequiredArgsConstructor;
-
 import org.springframework.context.annotation.Profile;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -28,6 +27,12 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @RequestMapping("/api/test")
 @RequiredArgsConstructor
+@Tag(
+    name = "Test",
+    description =
+        """
+            ## 개발 중 테스트 API
+            """)
 public class TestController {
 
     private final UserRepository userRepository;
@@ -37,11 +42,11 @@ public class TestController {
     @Operation(summary = "[테스트] 아이디 찾기 (전체 조회)", description = "성능 테스트용 - 인증 우회")
     @PostMapping("/find-email")
     public ResponseEntity<FindEmailResponseDto> testFindEmail(
-            @Valid @RequestBody FindEmailRequestDto requestDto) {
+        @Valid @RequestBody FindEmailRequestDto requestDto) {
 
         // 인증 체크 없음
         FindEmailResponseDto response =
-                testService.findEmailByAll(requestDto.getName(), requestDto.getPhoneNumber());
+            testService.findEmailByAll(requestDto.getName(), requestDto.getPhoneNumber());
 
         return ResponseEntity.ok(response);
     }
@@ -49,11 +54,11 @@ public class TestController {
     @Operation(summary = "[테스트] 아이디 찾기 (해시)", description = "성능 테스트용 - 인증 우회")
     @PostMapping("/find-email/hash")
     public ResponseEntity<FindEmailResponseDto> testFindEmailByHash(
-            @Valid @RequestBody FindEmailRequestDto requestDto) {
+        @Valid @RequestBody FindEmailRequestDto requestDto) {
 
         // 인증 체크 없음
         FindEmailResponseDto response =
-                testService.findEmailByHash(requestDto.getName(), requestDto.getPhoneNumber());
+            testService.findEmailByHash(requestDto.getName(), requestDto.getPhoneNumber());
 
         return ResponseEntity.ok(response);
     }
@@ -63,22 +68,29 @@ public class TestController {
     public ResponseEntity<String> generateUsers(@PathVariable int count) {
         for (int i = 1; i <= count; i++) {
             User user =
-                    User.builder()
-                            .nameKor("홍길동")
-                            .nameEng("Hong " + i)
-                            .email("testuser" + i + "@example.com")
-                            .password(passwordEncoder.encode("test1234!"))
-                            .phoneNumber(String.format("0101234%04d", i))
-                            .nationality("대한민국")
-                            .registrationNumber(String.format("9001%02d-1234567", i % 28 + 1))
-                            .workLocation(Company.AWESOME)
-                            .role(Role.USER)
-                            .status(Status.AVAILABLE)
-                            .build();
+                User.builder()
+                    .nameKor("홍길동")
+                    .nameEng("Hong " + i)
+                    .email("testuser" + i + "@example.com")
+                    .password(passwordEncoder.encode("test1234!"))
+                    .phoneNumber(String.format("0101234%04d", i))
+                    .nationality("대한민국")
+                    .registrationNumber(String.format("9001%02d-1234567", i % 28 + 1))
+                    .workLocation(Company.AWESOME)
+                    .role(Role.USER)
+                    .status(Status.AVAILABLE)
+                    .build();
 
             userRepository.save(user);
         }
 
         return ResponseEntity.ok(count + "명의 테스트 사용자 생성 완료!");
+    }
+
+    @Operation(summary = "[테스트] 계정 삭제", description = "입력한 이메일로 해당 계정을 삭제합니다.")
+    @DeleteMapping("/user")
+    public ResponseEntity<ApiResponse<Void>> deleteUser(@RequestBody String email) {
+        testService.deleteUser(email);
+        return ResponseEntity.ok(ApiResponse.onNoContent("계정이 성공적으로 삭제되었습니다."));
     }
 }

@@ -10,6 +10,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
 import kr.co.awesomelead.groupware_backend.domain.aligo.service.PhoneAuthService;
+import kr.co.awesomelead.groupware_backend.domain.auth.dto.request.DeleteUserRequestDto;
 import kr.co.awesomelead.groupware_backend.domain.auth.dto.request.FindEmailRequestDto;
 import kr.co.awesomelead.groupware_backend.domain.auth.dto.request.LoginRequestDto;
 import kr.co.awesomelead.groupware_backend.domain.auth.dto.request.ResetPasswordByEmailRequestDto;
@@ -948,8 +949,9 @@ public class AuthController {
 
     @Operation(summary = "[테스트] 계정 삭제", description = "입력한 이메일로 해당 계정을 삭제합니다.")
     @DeleteMapping("/user")
-    public ResponseEntity<ApiResponse<Void>> deleteUser(@RequestBody String email) {
-        authService.deleteUser(email);
+    public ResponseEntity<ApiResponse<Void>> deleteUser(
+        @RequestBody DeleteUserRequestDto requestDto) {
+        authService.deleteUser(requestDto.getEmail());
         return ResponseEntity.ok(ApiResponse.onNoContent("계정이 성공적으로 삭제되었습니다."));
     }
 }

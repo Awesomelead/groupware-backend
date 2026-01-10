@@ -10,13 +10,11 @@ import kr.co.awesomelead.groupware_backend.domain.user.entity.User;
 import kr.co.awesomelead.groupware_backend.domain.user.enums.Role;
 import kr.co.awesomelead.groupware_backend.domain.user.enums.Status;
 import kr.co.awesomelead.groupware_backend.domain.user.repository.UserRepository;
-import kr.co.awesomelead.groupware_backend.global.common.response.ApiResponse;
 import kr.co.awesomelead.groupware_backend.test.service.TestService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Profile;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
-import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -85,12 +83,5 @@ public class TestController {
         }
 
         return ResponseEntity.ok(count + "명의 테스트 사용자 생성 완료!");
-    }
-
-    @Operation(summary = "[테스트] 계정 삭제", description = "입력한 이메일로 해당 계정을 삭제합니다.")
-    @DeleteMapping("/user")
-    public ResponseEntity<ApiResponse<Void>> deleteUser(@RequestBody String email) {
-        testService.deleteUser(email);
-        return ResponseEntity.ok(ApiResponse.onNoContent("계정이 성공적으로 삭제되었습니다."));
     }
 }

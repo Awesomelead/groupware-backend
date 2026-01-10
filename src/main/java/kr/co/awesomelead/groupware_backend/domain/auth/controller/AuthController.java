@@ -33,6 +33,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -943,5 +944,12 @@ public class AuthController {
         @AuthenticationPrincipal CustomUserDetails userDetails) {
         authService.resetPassword(requestDto, userDetails.getId());
         return ResponseEntity.ok(ApiResponse.onNoContent("비밀번호가 성공적으로 변경되었습니다."));
+    }
+
+    @Operation(summary = "[테스트] 계정 삭제", description = "입력한 이메일로 해당 계정을 삭제합니다.")
+    @DeleteMapping("/user")
+    public ResponseEntity<ApiResponse<Void>> deleteUser(@RequestBody String email) {
+        authService.deleteUser(email);
+        return ResponseEntity.ok(ApiResponse.onNoContent("계정이 성공적으로 삭제되었습니다."));
     }
 }

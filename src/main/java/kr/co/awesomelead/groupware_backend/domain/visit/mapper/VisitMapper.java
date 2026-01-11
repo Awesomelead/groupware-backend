@@ -1,5 +1,6 @@
 package kr.co.awesomelead.groupware_backend.domain.visit.mapper;
 
+import java.util.List;
 import kr.co.awesomelead.groupware_backend.domain.user.entity.User;
 import kr.co.awesomelead.groupware_backend.domain.visit.dto.request.CompanionRequestDto;
 import kr.co.awesomelead.groupware_backend.domain.visit.dto.request.VisitCreateRequestDto;
@@ -11,13 +12,11 @@ import kr.co.awesomelead.groupware_backend.domain.visit.entity.Companion;
 import kr.co.awesomelead.groupware_backend.domain.visit.entity.Visit;
 import kr.co.awesomelead.groupware_backend.domain.visit.entity.Visitor;
 import kr.co.awesomelead.groupware_backend.domain.visit.enums.VisitType;
-
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
+import org.mapstruct.ReportingPolicy;
 
-import java.util.List;
-
-@Mapper(componentModel = "spring")
+@Mapper(componentModel = "spring", unmappedTargetPolicy = ReportingPolicy.WARN)
 public interface VisitMapper {
 
     @Mapping(target = "id", ignore = true)
@@ -25,6 +24,7 @@ public interface VisitMapper {
     @Mapping(target = "phoneNumber", source = "dto.visitorPhone")
     @Mapping(target = "password", source = "dto.visitorPassword")
     @Mapping(target = "visitInfos", ignore = true)
+    @Mapping(target = "phoneNumberHash", ignore = true)
     Visitor toVisitorEntity(VisitCreateRequestDto dto);
 
     @Mapping(target = "id", ignore = true)
@@ -37,10 +37,12 @@ public interface VisitMapper {
     @Mapping(target = "additionalRequirements", ignore = true)
     @Mapping(target = "signatureKey", ignore = true)
     @Mapping(target = "agreement", constant = "true")
+    @Mapping(target = "hostCompany", ignore = true)
     Visit toVisitEntity(VisitCreateRequestDto dto, User host, Visitor visitor, VisitType type);
 
     @Mapping(target = "id", ignore = true)
     @Mapping(target = "visit", ignore = true)
+    @Mapping(target = "phoneNumberHash", ignore = true)
     Companion toCompanionEntity(CompanionRequestDto dto);
 
     @Mapping(target = "hostUserId", source = "user.id")
@@ -70,5 +72,6 @@ public interface VisitMapper {
     @Mapping(target = "hostDepartment", source = "user.department.name")
     @Mapping(target = "hostName", source = "user.nameKor")
     @Mapping(target = "phoneNumber", source = "visitor.phoneNumber")
+    @Mapping(target = "signatureUrl", ignore = true)
     VisitDetailResponseDto toVisitDetailResponseDto(Visit visit);
 }

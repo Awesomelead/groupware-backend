@@ -11,19 +11,16 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.PrePersist;
 import jakarta.persistence.PreUpdate;
-
+import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
+import java.util.Base64;
 import kr.co.awesomelead.groupware_backend.global.encryption.PhoneNumberEncryptor;
-
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
-
-import java.nio.charset.StandardCharsets;
-import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
-import java.util.Base64;
 
 @Setter
 @Getter
@@ -47,7 +44,7 @@ public class Companion {
     @Convert(converter = PhoneNumberEncryptor.class)
     private String phoneNumber; // 동행자 전화번호
 
-    @Column(nullable = false, length = 64, unique = true)
+    @Column(nullable = false, length = 64)
     private String phoneNumberHash; // SHA-256 해시 (조회용)
 
     @ManyToOne(fetch = FetchType.LAZY)

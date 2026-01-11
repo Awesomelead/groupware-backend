@@ -1,13 +1,16 @@
 package kr.co.awesomelead.groupware_backend.domain.education.dto.response;
 
 import io.swagger.v3.oas.annotations.media.Schema;
-import java.time.LocalDate;
-import java.util.List;
+
 import kr.co.awesomelead.groupware_backend.domain.education.enums.EduType;
+
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.Setter;
+
+import java.time.LocalDate;
+import java.util.List;
 
 @Getter
 @Setter
@@ -48,7 +51,9 @@ public class EduReportAdminDetailDto {
         @Schema(description = "직원 이름", example = "홍길동")
         private String userName;
 
-        @Schema(description = "서명 이미지 URL", example = "https://s3.amazonaws.com/bucket/signature.png")
+        @Schema(
+                description = "서명 이미지 URL",
+                example = "https://s3.amazonaws.com/bucket/signature.png")
         private String signatureUrl; // S3에서 생성한 조회용 URL
     }
 }

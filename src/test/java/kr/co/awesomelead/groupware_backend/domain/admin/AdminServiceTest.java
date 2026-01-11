@@ -6,8 +6,6 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-import java.time.LocalDate;
-import java.util.Optional;
 import kr.co.awesomelead.groupware_backend.domain.admin.dto.request.UserApprovalRequestDto;
 import kr.co.awesomelead.groupware_backend.domain.admin.service.AdminService;
 import kr.co.awesomelead.groupware_backend.domain.department.enums.Company;
@@ -17,6 +15,7 @@ import kr.co.awesomelead.groupware_backend.domain.user.enums.Status;
 import kr.co.awesomelead.groupware_backend.domain.user.repository.UserRepository;
 import kr.co.awesomelead.groupware_backend.global.error.CustomException;
 import kr.co.awesomelead.groupware_backend.global.error.ErrorCode;
+
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -26,14 +25,15 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import java.time.LocalDate;
+import java.util.Optional;
+
 @ExtendWith(MockitoExtension.class)
 class AdminServiceTest {
 
-    @Mock
-    private UserRepository userRepository;
+    @Mock private UserRepository userRepository;
 
-    @InjectMocks
-    private AdminService adminService;
+    @InjectMocks private AdminService adminService;
 
     @Test
     @DisplayName("사용자 등록 승인 성공")
@@ -92,9 +92,12 @@ class AdminServiceTest {
         when(userRepository.findById(adminId)).thenReturn(Optional.of(notAdmin));
 
         // when & then
-        CustomException exception = assertThrows(CustomException.class, () -> {
-            adminService.approveUserRegistration(userId, requestDto, adminId);
-        });
+        CustomException exception =
+                assertThrows(
+                        CustomException.class,
+                        () -> {
+                            adminService.approveUserRegistration(userId, requestDto, adminId);
+                        });
 
         assertThat(exception.getErrorCode()).isEqualTo(ErrorCode.NO_AUTHORITY_FOR_REGISTRATION);
         verify(userRepository, never()).save(ArgumentMatchers.any(User.class));
@@ -116,9 +119,12 @@ class AdminServiceTest {
         when(userRepository.findById(userId)).thenReturn(Optional.empty());
 
         // when & then
-        CustomException exception = assertThrows(CustomException.class, () -> {
-            adminService.approveUserRegistration(userId, requestDto, adminId);
-        });
+        CustomException exception =
+                assertThrows(
+                        CustomException.class,
+                        () -> {
+                            adminService.approveUserRegistration(userId, requestDto, adminId);
+                        });
 
         assertThat(exception.getErrorCode()).isEqualTo(ErrorCode.USER_NOT_FOUND);
     }
@@ -144,9 +150,12 @@ class AdminServiceTest {
         when(userRepository.findById(userId)).thenReturn(Optional.of(availableUser));
 
         // when & then
-        CustomException exception = assertThrows(CustomException.class, () -> {
-            adminService.approveUserRegistration(userId, requestDto, adminId);
-        });
+        CustomException exception =
+                assertThrows(
+                        CustomException.class,
+                        () -> {
+                            adminService.approveUserRegistration(userId, requestDto, adminId);
+                        });
 
         assertThat(exception.getErrorCode()).isEqualTo(ErrorCode.DUPLICATED_SIGNUP_REQUEST);
         verify(userRepository, never()).save(ArgumentMatchers.any(User.class));

@@ -1,15 +1,18 @@
 package kr.co.awesomelead.groupware_backend.domain.education.dto.request;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
-import java.time.LocalDate;
+
 import kr.co.awesomelead.groupware_backend.domain.education.enums.EduType;
+
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
+import java.time.LocalDate;
 
 @Getter
 @Builder
@@ -17,8 +20,10 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 public class EduReportRequestDto {
 
-    @Schema(description = "교육 유형", example = "LEGAL", allowableValues = {"LEGAL", "JOB",
-        "DEPARTMENT", "OTHER"})
+    @Schema(
+            description = "교육 유형",
+            example = "LEGAL",
+            allowableValues = {"LEGAL", "JOB", "DEPARTMENT", "OTHER"})
     @NotNull(message = "교육 유형은 필수입니다.")
     private EduType eduType;
 

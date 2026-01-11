@@ -16,6 +16,7 @@ import kr.co.awesomelead.groupware_backend.domain.education.repository.EduAttend
 import kr.co.awesomelead.groupware_backend.domain.education.repository.EduReportRepository;
 import kr.co.awesomelead.groupware_backend.domain.user.entity.User;
 import kr.co.awesomelead.groupware_backend.domain.user.enums.Authority;
+import kr.co.awesomelead.groupware_backend.domain.user.enums.Role;
 import kr.co.awesomelead.groupware_backend.domain.user.repository.UserRepository;
 import kr.co.awesomelead.groupware_backend.global.error.CustomException;
 import kr.co.awesomelead.groupware_backend.global.error.ErrorCode;
@@ -233,15 +234,25 @@ public class EduReportService {
     }
 
     @Transactional(readOnly = true)
-    public EduReportAdminDetailDto getEduReportForAdmin(Long id) {
+    public EduReportAdminDetailDto getEduReportForAdmin(Long reportId, Long userId) {
+
+        User user =
+                userRepository
+                        .findById(userId)
+                        .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
+
+        if (user.getRole() != Role.ADMIN) {
+            throw new CustomException(ErrorCode.NO_AUTHORITY_FOR_EDU_REPORT);
+        }
 
         EduReport report =
                 eduReportRepository
-                        .findById(id)
+                        .findById(reportId)
                         .orElseThrow(() -> new CustomException(ErrorCode.EDU_REPORT_NOT_FOUND));
 
         // 출석 명단 조회
-        List<EduAttendance> attendances = eduAttendanceRepository.findAllByEduReportIdWithUser(id);
+        List<EduAttendance> attendances =
+                eduAttendanceRepository.findAllByEduReportIdWithUser(reportId);
 
         // 통계 데이터 계산
         long numberOfPeople = calculateTargetPeopleCount(report); // 교육 대상 인원

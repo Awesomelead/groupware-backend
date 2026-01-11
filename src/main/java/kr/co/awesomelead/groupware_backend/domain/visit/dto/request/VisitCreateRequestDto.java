@@ -8,6 +8,7 @@ import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
 
+import kr.co.awesomelead.groupware_backend.domain.department.enums.Company;
 import kr.co.awesomelead.groupware_backend.domain.visit.enums.VisitPurpose;
 
 import lombok.Getter;
@@ -64,7 +65,7 @@ public class VisitCreateRequestDto {
 
     @NotBlank
     @Schema(description = "담당자 회사명 (클라이언트에서 자동 주입)", example = "어썸리드", required = true)
-    private String hostCompany;
+    private Company hostCompany;
 
     @Valid
     @Schema(description = "동행자 목록")

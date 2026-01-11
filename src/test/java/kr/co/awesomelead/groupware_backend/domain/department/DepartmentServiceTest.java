@@ -15,6 +15,7 @@ import kr.co.awesomelead.groupware_backend.domain.department.dto.response.Depart
 import kr.co.awesomelead.groupware_backend.domain.department.dto.response.UserSummaryResponseDto;
 import kr.co.awesomelead.groupware_backend.domain.department.entity.Department;
 import kr.co.awesomelead.groupware_backend.domain.department.enums.Company;
+import kr.co.awesomelead.groupware_backend.domain.department.enums.DepartmentName;
 import kr.co.awesomelead.groupware_backend.domain.department.repository.DepartmentRepository;
 import kr.co.awesomelead.groupware_backend.domain.department.service.DepartmentService;
 import kr.co.awesomelead.groupware_backend.domain.user.entity.User;
@@ -57,7 +58,7 @@ public class DepartmentServiceTest {
         rootDept =
                 Department.builder()
                         .id(1L)
-                        .name("충남사업본부")
+                        .name(DepartmentName.CHUNGNAM_HQ)
                         .company(Company.AWESOME)
                         .children(new ArrayList<>())
                         .build();
@@ -66,7 +67,7 @@ public class DepartmentServiceTest {
         awesomeProdDept =
                 Department.builder()
                         .id(5L)
-                        .name("(주)어썸리드 생산본부")
+                        .name(DepartmentName.AWESOME_PROD_HQ)
                         .company(Company.AWESOME)
                         .parent(rootDept)
                         .children(new ArrayList<>())
@@ -77,7 +78,7 @@ public class DepartmentServiceTest {
         chamberDept =
                 Department.builder()
                         .id(10L)
-                        .name("챔버생산부")
+                        .name(DepartmentName.CHAMBER_PROD)
                         .company(Company.AWESOME)
                         .parent(awesomeProdDept)
                         .children(new ArrayList<>())
@@ -85,7 +86,7 @@ public class DepartmentServiceTest {
         partDept =
                 Department.builder()
                         .id(11L)
-                        .name("부품생산부")
+                        .name(DepartmentName.PARTS_PROD)
                         .company(Company.AWESOME)
                         .parent(awesomeProdDept)
                         .children(new ArrayList<>())
@@ -107,7 +108,7 @@ public class DepartmentServiceTest {
 
         // then
         assertThat(result).hasSize(1);
-        assertThat(result.get(0).getName()).isEqualTo("충남사업본부");
+        assertThat(result.get(0).getName()).isEqualTo(DepartmentName.CHUNGNAM_HQ);
         assertThat(result.get(0).getChildren()).hasSize(1);
     }
 

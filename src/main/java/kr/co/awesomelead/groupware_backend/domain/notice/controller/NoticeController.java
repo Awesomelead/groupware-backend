@@ -422,9 +422,9 @@ public class NoticeController {
                                                     name = "사용자 없음",
                                                     value =
                                                             "{\"isSuccess\": false, \"code\":"
-                                                                + " \"USER_NOT_FOUND\","
-                                                                + " \"message\": \"해당 사용자를 찾을 수"
-                                                                + " 없습니다.\" }"),
+                                                                    + " \"USER_NOT_FOUND\","
+                                                                    + " \"message\": \"해당 사용자를 찾을 수"
+                                                                    + " 없습니다.\" }"),
                                             @ExampleObject(
                                                     name = "공지사항 없음",
                                                     value =

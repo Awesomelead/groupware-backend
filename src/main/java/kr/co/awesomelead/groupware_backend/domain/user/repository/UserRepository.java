@@ -30,7 +30,7 @@ public interface UserRepository extends JpaRepository<User, Long> {
 
     @Query(
             "SELECT u FROM User u WHERE (u.nameKor = :name OR u.nameEng = :name) AND u.hireDate ="
-                + " :joinDate")
+                    + " :joinDate")
     Optional<User> findByNameAndJoinDate(
             @Param("name") String name, @Param("joinDate") LocalDate joinDate);
 }

@@ -9,5 +9,4 @@ public class LoginiResultDto {
 
     private LoginResponseDto loginResponse;
     private String refreshToken;
-
 }

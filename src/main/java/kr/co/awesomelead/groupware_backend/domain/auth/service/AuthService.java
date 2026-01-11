@@ -10,6 +10,8 @@ import kr.co.awesomelead.groupware_backend.domain.auth.dto.request.ResetPassword
 import kr.co.awesomelead.groupware_backend.domain.auth.dto.request.SignupRequestDto;
 import kr.co.awesomelead.groupware_backend.domain.auth.dto.response.AuthTokensDto;
 import kr.co.awesomelead.groupware_backend.domain.auth.dto.response.FindEmailResponseDto;
+import kr.co.awesomelead.groupware_backend.domain.auth.dto.response.LoginResponseDto;
+import kr.co.awesomelead.groupware_backend.domain.auth.dto.response.LoginiResultDto;
 import kr.co.awesomelead.groupware_backend.domain.auth.dto.response.SignupResponseDto;
 import kr.co.awesomelead.groupware_backend.domain.auth.entity.RefreshToken;
 import kr.co.awesomelead.groupware_backend.domain.auth.util.JWTUtil;
@@ -85,7 +87,7 @@ public class AuthService {
         return new SignupResponseDto(savedUser.getId(), savedUser.getEmail());
     }
 
-    public AuthTokensDto login(LoginRequestDto requestDto) {
+    public LoginiResultDto login(LoginRequestDto requestDto) {
         // 1. 인증 처리
         UsernamePasswordAuthenticationToken authToken =
             new UsernamePasswordAuthenticationToken(
@@ -108,8 +110,19 @@ public class AuthService {
         // 5. Refresh Token 생성 및 DB 저장
         String refreshToken = refreshTokenService.createAndSaveRefreshToken(username, role);
 
-        // 6. 두 토큰 모두 반환
-        return new AuthTokensDto(accessToken, refreshToken);
+        // 6. 사용자 정보 조회
+        User user = userRepository.findByEmail(username)
+            .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
+
+        // 7. 응답 생성
+        LoginResponseDto loginResponseDto = new LoginResponseDto(
+            accessToken,
+            user.getId(),
+            user.getNameKor(),
+            user.getNameEng()
+        );
+
+        return new LoginiResultDto(loginResponseDto, refreshToken);
     }
 
     public void logout(String refreshToken) {

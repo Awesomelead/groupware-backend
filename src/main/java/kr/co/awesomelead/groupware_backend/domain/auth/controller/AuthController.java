@@ -24,6 +24,7 @@ import kr.co.awesomelead.groupware_backend.domain.auth.dto.request.VerifyEmailAu
 import kr.co.awesomelead.groupware_backend.domain.auth.dto.response.AuthTokensDto;
 import kr.co.awesomelead.groupware_backend.domain.auth.dto.response.FindEmailResponseDto;
 import kr.co.awesomelead.groupware_backend.domain.auth.dto.response.LoginResponseDto;
+import kr.co.awesomelead.groupware_backend.domain.auth.dto.response.LoginiResultDto;
 import kr.co.awesomelead.groupware_backend.domain.auth.dto.response.ReissueResponseDto;
 import kr.co.awesomelead.groupware_backend.domain.auth.dto.response.SignupResponseDto;
 import kr.co.awesomelead.groupware_backend.domain.auth.service.AuthService;
@@ -526,12 +527,13 @@ public class AuthController {
     public ResponseEntity<ApiResponse<LoginResponseDto>> login(
         @RequestBody LoginRequestDto requestDto, HttpServletResponse response) {
 
-        AuthTokensDto tokens = authService.login(requestDto);
+        LoginiResultDto loginiResultDto = authService.login(requestDto);
 
-        response.addCookie(CookieUtil.createRefreshTokenCookie(tokens.getRefreshToken()));
+        // Refresh Token은 쿠키로
+        response.addCookie(CookieUtil.createRefreshTokenCookie(loginiResultDto.getRefreshToken()));
 
-        return ResponseEntity.ok(
-            ApiResponse.onSuccess(new LoginResponseDto(tokens.getAccessToken())));
+        // LoginResponseDto는 응답 본문으로
+        return ResponseEntity.ok(ApiResponse.onSuccess(loginiResultDto.getLoginResponse()));
     }
 
     @Operation(summary = "로그아웃", description = "로그아웃을 합니다.")

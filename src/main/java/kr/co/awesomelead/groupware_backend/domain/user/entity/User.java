@@ -84,6 +84,9 @@ public class User {
     @Convert(converter = RegistrationNumberEncryptor.class)
     private String registrationNumber; // 주민등록번호 또는 외국인번호
 
+    @Column(nullable = false, length = 64, unique = true)
+    private String registrationNumberHash; // 주민번호 SHA-256 해시 (조회용)
+
     @Column(nullable = false, length = 300)
     @Convert(converter = PhoneNumberEncryptor.class)
     private String phoneNumber; // 전화번호
@@ -172,12 +175,28 @@ public class User {
     public void onPrePersist() {
         // 1. 전화번호 해시 생성 (평문 상태에서)
         if (this.phoneNumber != null && this.phoneNumberHash == null) {
-            this.phoneNumberHash = hashPhoneNumber(this.phoneNumber);
+            this.phoneNumberHash = hashValue(this.phoneNumber);
         }
 
-        // 2. 생년월일 계산 (평문 상태에서)
-        if (this.registrationNumber != null && this.birthDate == null) {
-            this.birthDate = calculateBirthDate(this.registrationNumber);
+        // 2. 주민등록번호 해시 생성 및 생년월일 계산
+        if (this.registrationNumber != null) {
+            if (this.registrationNumberHash == null) {
+                this.registrationNumberHash = hashValue(this.registrationNumber);
+            }
+            if (this.birthDate == null) {
+                this.birthDate = calculateBirthDate(this.registrationNumber);
+            }
+        }
+    }
+
+    // 주민등록번호 수정 및 관련 필드 갱신
+    public void updateRegistrationNumber(String newRegNum) {
+        if (newRegNum != null && !newRegNum.equals(this.registrationNumber)) {
+            this.registrationNumber = newRegNum;
+            // 1. 해시 갱신 (조회용)
+            this.registrationNumberHash = hashValue(newRegNum);
+            // 2. 생년월일 갱신
+            this.birthDate = calculateBirthDate(newRegNum);
         }
     }
 
@@ -186,16 +205,7 @@ public class User {
         if (newPhoneNumber != null && !newPhoneNumber.equals(this.phoneNumber)) {
             this.phoneNumber = newPhoneNumber;
             // 전화번호가 변경될 때 해시도 함께 변경되도록 보장
-            this.phoneNumberHash = hashPhoneNumber(newPhoneNumber);
-        }
-    }
-
-    // 주민등록번호 수정 및 생년월일 자동 갱신
-    public void updateRegistrationNumber(String newRegNum) {
-        if (newRegNum != null && !newRegNum.equals(this.registrationNumber)) {
-            this.registrationNumber = newRegNum;
-            // 번호가 바뀌면 생년월일도 즉시 다시 계산하여 세팅
-            this.birthDate = calculateBirthDate(newRegNum);
+            this.phoneNumberHash = hashValue(newPhoneNumber);
         }
     }
 
@@ -236,14 +246,14 @@ public class User {
         return LocalDate.parse(century + birthPart, DateTimeFormatter.ofPattern("yyyyMMdd"));
     }
 
-    // hashPhoneNumber 메서드
-    public static String hashPhoneNumber(String phoneNumber) {
-        if (phoneNumber == null || phoneNumber.isEmpty()) {
+    // 공통 해시 로직 (기존 hashPhoneNumber를 범용적으로 변경)
+    public static String hashValue(String value) {
+        if (value == null || value.isEmpty()) {
             return null;
         }
         try {
             MessageDigest digest = MessageDigest.getInstance("SHA-256");
-            byte[] hash = digest.digest(phoneNumber.getBytes(StandardCharsets.UTF_8));
+            byte[] hash = digest.digest(value.getBytes(StandardCharsets.UTF_8));
             return Base64.getEncoder().encodeToString(hash);
         } catch (NoSuchAlgorithmException e) {
             throw new RuntimeException("SHA-256 알고리즘을 찾을 수 없습니다.", e);

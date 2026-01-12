@@ -221,8 +221,8 @@ public class User {
         // 1. 앞 6자리 추출 (YYMMDD)
         String birthPart = regNum.substring(0, 6);
 
-        // 2. 뒤 첫 번째 자리 추출 (하이픈이 포함된 14자리로 가정)
-        char genderDigit = regNum.charAt(7);
+        // 2. 뒤 첫 번째 자리 추출 (하이픈 제외 포함된 14자리로 가정)
+        char genderDigit = regNum.charAt(6);
 
         // 3. 세기 판단 (그룹화)
         String century = switch (genderDigit) {

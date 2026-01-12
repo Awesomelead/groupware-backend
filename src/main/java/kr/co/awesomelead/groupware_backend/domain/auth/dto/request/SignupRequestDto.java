@@ -35,11 +35,11 @@ public class SignupRequestDto {
     @NotNull(message = "근무사업장은 필수입니다.")
     private Company company;
 
-    @Schema(description = "주민등록번호 또는 외국인등록번호", example = "900101-1234567", required = true)
+    @Schema(description = "주민등록번호 또는 외국인등록번호 (하이픈 제외 13자리)", example = "9001011234567", required = true)
     @NotBlank(message = "주민등록번호(또는 외국인번호)는 필수입니다.")
     @Pattern(
-        regexp = "^\\d{6}-[1-8]\\d{6}$",
-        message = "주민등록번호 형식(YYMMDD-GXXXXXX)이 올바르지 않습니다."
+        regexp = "^\\d{6}[1-8]\\d{6}$",
+        message = "주민등록번호 형식(13자리 숫자)이 올바르지 않습니다."
     )
     private String registrationNumber;
 

@@ -1,15 +1,15 @@
 package kr.co.awesomelead.groupware_backend.domain.auth.service;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import java.io.UnsupportedEncodingException;
-import java.net.URLEncoder;
-import java.nio.charset.StandardCharsets;
+
 import kr.co.awesomelead.groupware_backend.domain.auth.dto.PortoneIdentityVerificationDto;
 import kr.co.awesomelead.groupware_backend.domain.auth.dto.response.IdentityVerificationResponseDto;
 import kr.co.awesomelead.groupware_backend.global.error.CustomException;
 import kr.co.awesomelead.groupware_backend.global.error.ErrorCode;
+
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
@@ -19,6 +19,10 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
+
+import java.io.UnsupportedEncodingException;
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 
 @Slf4j
 @Service
@@ -33,14 +37,12 @@ public class IdentityVerificationService {
 
     private static final String PORTONE_API_URL = "https://api.portone.io/identity-verifications/";
 
-    /**
-     * 포트원 본인인증 정보 조회
-     */
+    /** 포트원 본인인증 정보 조회 */
     public IdentityVerificationResponseDto verifyIdentity(String identityVerificationId) {
         try {
             // URL 인코딩
-            String encodedId = URLEncoder.encode(identityVerificationId,
-                StandardCharsets.UTF_8.toString());
+            String encodedId =
+                    URLEncoder.encode(identityVerificationId, StandardCharsets.UTF_8.toString());
             String url = PORTONE_API_URL + encodedId;
 
             // 요청 헤더 설정
@@ -51,12 +53,8 @@ public class IdentityVerificationService {
             HttpEntity<Void> requestEntity = new HttpEntity<>(headers);
 
             // API 호출
-            ResponseEntity<String> response = restTemplate.exchange(
-                url,
-                HttpMethod.GET,
-                requestEntity,
-                String.class
-            );
+            ResponseEntity<String> response =
+                    restTemplate.exchange(url, HttpMethod.GET, requestEntity, String.class);
 
             // 404 Not Found - 존재하지 않는 identityVerificationId
             if (response.getStatusCode() == HttpStatus.NOT_FOUND) {
@@ -66,34 +64,39 @@ public class IdentityVerificationService {
 
             // 기타 에러 응답
             if (!response.getStatusCode().is2xxSuccessful()) {
-                log.error("포트원 API 호출 실패: status={}, body={}",
-                    response.getStatusCode(), response.getBody());
+                log.error(
+                        "포트원 API 호출 실패: status={}, body={}",
+                        response.getStatusCode(),
+                        response.getBody());
                 throw new CustomException(ErrorCode.IDENTITY_VERIFICATION_FAILED);
             }
 
             // 응답 파싱
             PortoneIdentityVerificationDto portoneResponse =
-                objectMapper.readValue(response.getBody(), PortoneIdentityVerificationDto.class);
+                    objectMapper.readValue(
+                            response.getBody(), PortoneIdentityVerificationDto.class);
 
             // 인증 상태 확인 (VERIFIED가 아닌 경우: READY, FAILED 등)
             if (!"VERIFIED".equals(portoneResponse.getStatus())) {
-                log.warn("본인인증 미완료: status={}, id={}",
-                    portoneResponse.getStatus(), identityVerificationId);
+                log.warn(
+                        "본인인증 미완료: status={}, id={}",
+                        portoneResponse.getStatus(),
+                        identityVerificationId);
                 throw new CustomException(ErrorCode.IDENTITY_VERIFICATION_NOT_COMPLETED);
             }
 
             // DTO 변환
             PortoneIdentityVerificationDto.VerifiedCustomer customer =
-                portoneResponse.getVerifiedCustomer();
+                    portoneResponse.getVerifiedCustomer();
 
             return IdentityVerificationResponseDto.builder()
-                .identityVerificationId(identityVerificationId)
-                .status(portoneResponse.getStatus())
-                .name(customer.getName())
-                .phoneNumber(customer.getPhoneNumber())
-                .birthDate(customer.getBirthDate())
-                .gender(customer.getGender())
-                .build();
+                    .identityVerificationId(identityVerificationId)
+                    .status(portoneResponse.getStatus())
+                    .name(customer.getName())
+                    .phoneNumber(customer.getPhoneNumber())
+                    .birthDate(customer.getBirthDate())
+                    .gender(customer.getGender())
+                    .build();
 
         } catch (CustomException e) {
             // CustomException은 그대로 던짐

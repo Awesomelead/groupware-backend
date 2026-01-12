@@ -2,6 +2,7 @@ package kr.co.awesomelead.groupware_backend.domain.auth.dto;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
+
 import lombok.Data;
 
 @Data

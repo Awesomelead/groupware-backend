@@ -23,14 +23,17 @@ import kr.co.awesomelead.groupware_backend.domain.auth.dto.request.SendEmailAuth
 import kr.co.awesomelead.groupware_backend.domain.auth.dto.request.SignupRequestDto;
 import kr.co.awesomelead.groupware_backend.domain.auth.dto.request.VerifyAuthCodeRequestDto;
 import kr.co.awesomelead.groupware_backend.domain.auth.dto.request.VerifyEmailAuthCodeRequestDto;
+import kr.co.awesomelead.groupware_backend.domain.auth.dto.request.VerifyIdentityRequestDto;
 import kr.co.awesomelead.groupware_backend.domain.auth.dto.response.AuthTokensDto;
 import kr.co.awesomelead.groupware_backend.domain.auth.dto.response.FindEmailResponseDto;
+import kr.co.awesomelead.groupware_backend.domain.auth.dto.response.IdentityVerificationResponseDto;
 import kr.co.awesomelead.groupware_backend.domain.auth.dto.response.LoginResponseDto;
 import kr.co.awesomelead.groupware_backend.domain.auth.dto.response.LoginiResultDto;
 import kr.co.awesomelead.groupware_backend.domain.auth.dto.response.ReissueResponseDto;
 import kr.co.awesomelead.groupware_backend.domain.auth.dto.response.SignupResponseDto;
 import kr.co.awesomelead.groupware_backend.domain.auth.service.AuthService;
 import kr.co.awesomelead.groupware_backend.domain.auth.service.EmailAuthService;
+import kr.co.awesomelead.groupware_backend.domain.auth.service.IdentityVerificationService;
 import kr.co.awesomelead.groupware_backend.domain.auth.util.CookieUtil;
 import kr.co.awesomelead.groupware_backend.domain.user.dto.CustomUserDetails;
 import kr.co.awesomelead.groupware_backend.global.common.response.ApiResponse;
@@ -66,6 +69,7 @@ public class AuthController {
     private final PhoneAuthService phoneAuthService;
     private final EmailAuthService emailAuthService;
     private final AuthService authService;
+    private final IdentityVerificationService identityVerificationService;
 
     @Operation(summary = "휴대폰 인증번호 발송", description = "휴대폰 인증번호를 발송합니다.")
     @ApiResponses(
@@ -961,5 +965,104 @@ public class AuthController {
             @RequestBody DeleteUserRequestDto requestDto) {
         authService.deleteUser(requestDto.getEmail());
         return ResponseEntity.ok(ApiResponse.onNoContent("계정이 성공적으로 삭제되었습니다."));
+    }
+
+    @Operation(summary = "본인인증 확인", description = "포트원 본인인증 결과를 확인하고 인증 정보를 반환합니다.")
+    @ApiResponses(
+            value = {
+                @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                        responseCode = "200",
+                        description = "본인인증 확인 성공",
+                        content =
+                                @Content(
+                                        mediaType = "application/json",
+                                        schema = @Schema(implementation = ApiResponse.class),
+                                        examples =
+                                                @ExampleObject(
+                                                        value =
+                                                                """
+                            {
+                              "isSuccess": true,
+                              "code": "COMMON200",
+                              "message": "요청에 성공했습니다.",
+                              "result": {
+                                "identityVerificationId": "identity-1768232040185",
+                                "status": "VERIFIED",
+                                "name": "홍길동",
+                                "phoneNumber": "01012345678",
+                                "birthDate": "1990-01-01",
+                                "gender": "MALE"
+                              }
+                            }
+                            """))),
+                @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                        responseCode = "400",
+                        description = "잘못된 요청",
+                        content =
+                                @Content(
+                                        mediaType = "application/json",
+                                        examples = {
+                                            @ExampleObject(
+                                                    name = "입력값 검증 실패",
+                                                    value =
+                                                            """
+                                {
+                                  "isSuccess": false,
+                                  "code": "COMMON400",
+                                  "message": "입력값이 유효하지 않습니다.",
+                                  "result": {
+                                    "identityVerificationId": "identityVerificationId는 필수입니다."
+                                  }
+                                }
+                                """),
+                                            @ExampleObject(
+                                                    name = "본인인증 미완료",
+                                                    value =
+                                                            """
+                                {
+                                  "isSuccess": false,
+                                  "code": "IDENTITY_VERIFICATION_NOT_COMPLETED",
+                                  "message": "본인인증이 완료되지 않았습니다.",
+                                  "result": null
+                                }
+                                """),
+                                            @ExampleObject(
+                                                    name = "유효하지 않은 인증 ID",
+                                                    value =
+                                                            """
+                                {
+                                  "isSuccess": false,
+                                  "code": "IDENTITY_VERIFICATION_NOT_FOUND",
+                                  "message": "해당 본인인증 정보를 찾을 수 없습니다.",
+                                  "result": null
+                                }
+                                """)
+                                        })),
+                @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                        responseCode = "500",
+                        description = "서버 오류",
+                        content =
+                                @Content(
+                                        mediaType = "application/json",
+                                        examples =
+                                                @ExampleObject(
+                                                        value =
+                                                                """
+                            {
+                              "isSuccess": false,
+                              "code": "IDENTITY_VERIFICATION_FAILED",
+                              "message": "본인인증 조회에 실패했습니다.",
+                              "result": null
+                            }
+                            """)))
+            })
+    @PostMapping("/verify-identity")
+    public ResponseEntity<ApiResponse<IdentityVerificationResponseDto>> verifyIdentity(
+            @Valid @RequestBody VerifyIdentityRequestDto requestDto) {
+
+        IdentityVerificationResponseDto response =
+                identityVerificationService.verifyIdentity(requestDto.getIdentityVerificationId());
+
+        return ResponseEntity.ok(ApiResponse.onSuccess(response));
     }
 }

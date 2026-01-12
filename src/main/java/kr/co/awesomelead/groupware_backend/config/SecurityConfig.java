@@ -59,18 +59,25 @@ public class SecurityConfig {
 
         http.authorizeHttpRequests(
                 (auth) ->
-                        auth
-                                // 테스트용으로 어드민 경로도 열어놓음
-                                .requestMatchers(
+                        auth.requestMatchers(
                                         "/",
                                         "/index.html",
                                         "/api/test/**",
+                                        "/api/auth/login",
+                                        "/api/auth/signup",
+                                        "/api/auth/reissue",
+                                        "/api/auth/send-phone-code",
+                                        "/api/auth/verify-phone-code",
+                                        "/api/auth/send-email-code",
+                                        "/api/auth/verify-email-code",
+                                        "/api/auth/find-email",
+                                        "/api/auth/reset-password/email",
+                                        "/api/auth/reset-password/phone",
                                         "/api/join",
                                         "/api/join/send-code",
                                         "/api/join/verify-code",
-                                        "/api/auth/**",
                                         "/api/reissue",
-                                        "/api/admin/**",
+                                        "/api/admin/**", // 테스트용으로 어드민 경로도 열어놓음
                                         "/api/visits/**",
                                         "/api/edu-reports/attachments/{id}/download", // 테스트용으로 교육자료
                                         // 다운로드 열어놓음
@@ -78,9 +85,13 @@ public class SecurityConfig {
                                         "/api/departments/hierarchy",
                                         "/api/departments/{departmentId}/users")
                                 .permitAll()
-                                // .requestMatchers("/api/join", "/api/auth/login",
-                                // "/api/reissue").permitAll()
-                                // .requestMatchers("/api/admin/**").hasRole("ADMIN")
+                                .requestMatchers(
+                                        "/api/auth/logout",
+                                        "/api/auth/reset-password", // 로그인 상태에서의 비번 변경
+                                        "/api/admin/**", // 관리자 기능
+                                        "/api/visits/**" // 방문 관리
+                                        )
+                                .authenticated()
                                 .anyRequest()
                                 .authenticated());
 

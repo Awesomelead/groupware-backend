@@ -37,6 +37,7 @@ public enum ErrorCode {
     NO_AUTHORITY_FOR_NOTICE(HttpStatus.UNAUTHORIZED, "공지사항 작성 권한이 없습니다."),
     NO_AUTHORITY_FOR_ANNUAL_LEAVE(HttpStatus.UNAUTHORIZED, "연차 발송 권한이 없습니다."),
     NO_AUTHORITY_FOR_REGISTRATION(HttpStatus.UNAUTHORIZED, "회원가입 승인 권한이 없습니다."),
+    NO_AUTHORITY_FOR_ROLE_UPDATE(HttpStatus.UNAUTHORIZED, "사용자 역할 변경 권한이 없습니다."),
 
     // 404 Not Found
     USER_NOT_FOUND(HttpStatus.NOT_FOUND, "해당 사용자를 찾을 수 없습니다."),

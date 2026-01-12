@@ -16,6 +16,7 @@ import kr.co.awesomelead.groupware_backend.domain.auth.dto.request.ResetPassword
 import kr.co.awesomelead.groupware_backend.domain.auth.dto.request.ResetPasswordByPhoneRequestDto;
 import kr.co.awesomelead.groupware_backend.domain.auth.dto.request.ResetPasswordRequestDto;
 import kr.co.awesomelead.groupware_backend.domain.auth.dto.request.SignupRequestDto;
+import kr.co.awesomelead.groupware_backend.domain.auth.dto.response.SignupResponseDto;
 import kr.co.awesomelead.groupware_backend.domain.auth.service.AuthService;
 import kr.co.awesomelead.groupware_backend.domain.auth.service.EmailAuthService;
 import kr.co.awesomelead.groupware_backend.domain.department.enums.Company;
@@ -32,7 +33,6 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -90,7 +90,6 @@ class AuthServiceTest {
         signupDto.setPhoneNumber("01012345678");
         signupDto.setCompany(Company.AWESOME);
 
-        // Builder 사용 + onPrePersist 호출
         User mockUser =
                 User.builder()
                         .email(signupDto.getEmail())
@@ -104,8 +103,25 @@ class AuthServiceTest {
                         .status(Status.PENDING)
                         .build();
 
-        // @PrePersist 로직 수동 실행
         mockUser.onPrePersist();
+
+        // 저장 후 반환될 User (ID 포함)
+        User savedMockUser =
+                User.builder()
+                        .id(1L)
+                        .email(signupDto.getEmail())
+                        .nameKor(signupDto.getNameKor())
+                        .nameEng(signupDto.getNameEng())
+                        .nationality(signupDto.getNationality())
+                        .registrationNumber(signupDto.getRegistrationNumber())
+                        .phoneNumber(signupDto.getPhoneNumber())
+                        .password("encodedPassword")
+                        .workLocation(Company.AWESOME)
+                        .role(Role.USER)
+                        .status(Status.PENDING)
+                        .birthDate(LocalDate.of(1995, 1, 1))
+                        .phoneNumberHash(User.hashValue(signupDto.getPhoneNumber()))
+                        .build();
 
         // Mock 설정
         when(emailAuthService.isEmailVerified(signupDto.getEmail())).thenReturn(true);
@@ -115,26 +131,17 @@ class AuthServiceTest {
                 .thenReturn(false);
         when(userMapper.toEntity(signupDto)).thenReturn(mockUser);
         when(bCryptPasswordEncoder.encode(signupDto.getPassword())).thenReturn("encodedPassword");
+        when(userRepository.save(any(User.class))).thenReturn(savedMockUser);
 
         // when
-        authService.signup(signupDto);
+        SignupResponseDto result = authService.signup(signupDto);
 
         // then
+        assertThat(result).isNotNull();
+        assertThat(result.getUserId()).isEqualTo(1L);
+        assertThat(result.getEmail()).isEqualTo(signupDto.getEmail());
+
         verify(userRepository, times(1)).save(any(User.class));
-
-        ArgumentCaptor<User> userCaptor = ArgumentCaptor.forClass(User.class);
-        verify(userRepository).save(userCaptor.capture());
-        User savedUser = userCaptor.getValue();
-
-        assertThat(savedUser.getPassword()).isEqualTo("encodedPassword");
-        assertThat(savedUser.getNameKor()).isEqualTo(signupDto.getNameKor());
-        assertThat(savedUser.getRole()).isEqualTo(Role.USER);
-        assertThat(savedUser.getStatus()).isEqualTo(Status.PENDING);
-
-        assertThat(savedUser.getBirthDate()).isNotNull();
-        assertThat(savedUser.getBirthDate()).isEqualTo(LocalDate.of(1995, 1, 1));
-
-        // 이메일 & 휴대폰 인증 플래그 삭제 검증
         verify(emailAuthService, times(1)).clearVerification(signupDto.getEmail());
         verify(phoneAuthService, times(1)).clearVerification(signupDto.getPhoneNumber());
     }
@@ -354,7 +361,7 @@ class AuthServiceTest {
         @DisplayName("성공: 휴대폰 인증 후 비밀번호가 정상적으로 재설정된다")
         void resetPasswordByPhone_Success() {
             // given
-            String phoneHash = User.hashPhoneNumber(TEST_PHONE);
+            String phoneHash = User.hashValue(TEST_PHONE);
             given(phoneAuthService.isPhoneVerified(TEST_PHONE)).willReturn(true);
             given(userRepository.findByPhoneNumberHash(phoneHash))
                     .willReturn(Optional.of(testUser));
@@ -408,7 +415,7 @@ class AuthServiceTest {
         @DisplayName("실패: 존재하지 않는 전화번호인 경우")
         void resetPasswordByPhone_UserNotFound() {
             // given
-            String phoneHash = User.hashPhoneNumber(TEST_PHONE);
+            String phoneHash = User.hashValue(TEST_PHONE);
             given(phoneAuthService.isPhoneVerified(TEST_PHONE)).willReturn(true);
             given(userRepository.findByPhoneNumberHash(phoneHash)).willReturn(Optional.empty());
 

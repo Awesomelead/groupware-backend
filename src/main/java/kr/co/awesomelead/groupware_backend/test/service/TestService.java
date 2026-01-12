@@ -45,7 +45,7 @@ public class TestService {
     public FindEmailResponseDto findEmailByHash(String name, String phoneNumber) {
         long startTime = System.nanoTime();
 
-        String phoneNumberHash = User.hashPhoneNumber(phoneNumber);
+        String phoneNumberHash = User.hashValue(phoneNumber);
         User user =
                 userRepository
                         .findByPhoneNumberHash(phoneNumberHash)

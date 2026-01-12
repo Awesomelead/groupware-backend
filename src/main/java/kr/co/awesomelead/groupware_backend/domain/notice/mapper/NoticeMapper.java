@@ -26,7 +26,6 @@ public interface NoticeMapper {
     @Mapping(target = "attachments", source = "attachments")
     NoticeDetailDto toNoticeDetailDto(Notice notice, @Context S3Service s3Service);
 
-    // 🚩 하위 매핑 메서드에도 @Context S3Service 추가
     @Mapping(
             target = "viewUrl",
             expression = "java(s3Service.getPresignedViewUrl(attachment.getS3Key()))")

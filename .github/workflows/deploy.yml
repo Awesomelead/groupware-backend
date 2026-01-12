@@ -84,6 +84,7 @@ jobs:
             SPRING_MAIL_PASSWORD=${{secrets.SPRING_MAIL_PASSWORD}}
             ENCRYPTION_SECRET_KEY=${{ secrets.ENCRYPTION_SECRET_KEY }}
             ENCRYPTION_SALT=${{ secrets.ENCRYPTION_SALT }}
+            PORTONE_APISECRET=${{ secrets.PORTONE_APISECRET }}
             EOF
             
             cd /home/ubuntu

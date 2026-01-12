@@ -59,6 +59,9 @@ aligo:
     sender: 01012345678
     tpl-code: test-template-code
 
+portone:
+  api-secret: test-portone-api-secret
+
 encryption:
   secret-key: test-secret-key-for-testing-only-change-in-production
   salt: test-salt-for-testing

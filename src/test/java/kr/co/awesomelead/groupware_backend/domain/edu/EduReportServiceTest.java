@@ -11,6 +11,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import kr.co.awesomelead.groupware_backend.domain.department.entity.Department;
+import kr.co.awesomelead.groupware_backend.domain.department.enums.DepartmentName;
 import kr.co.awesomelead.groupware_backend.domain.department.repository.DepartmentRepository;
 import kr.co.awesomelead.groupware_backend.domain.education.dto.request.EduReportRequestDto;
 import kr.co.awesomelead.groupware_backend.domain.education.dto.response.EduReportAdminDetailDto;
@@ -69,7 +70,7 @@ public class EduReportServiceTest {
 
     @BeforeEach
     void setUp() {
-        defaultDept = Department.builder().id(1L).name("개발팀").build();
+        defaultDept = Department.builder().id(1L).name(DepartmentName.SALES_DEPT).build();
     }
 
     private User createNormalUser() {
@@ -596,6 +597,9 @@ public class EduReportServiceTest {
     void getEduReportForAdmin_Success() {
         // given
         Long reportId = 1L;
+        Long userId = 99L;
+        User adminUser = createAdminUser();
+
         EduReport report =
                 EduReport.builder()
                         .id(reportId)
@@ -614,24 +618,43 @@ public class EduReportServiceTest {
                         .numberOfAttendees(0)
                         .build();
 
+        when(userRepository.findById(userId)).thenReturn(Optional.of(adminUser));
         when(eduReportRepository.findById(reportId)).thenReturn(Optional.of(report));
         when(eduAttendanceRepository.findAllByEduReportIdWithUser(reportId))
                 .thenReturn(attendances);
-        when(userRepository.count()).thenReturn((long) targetCount); // COMMON 교육이므로 전체 카운트
+        when(userRepository.count()).thenReturn((long) targetCount);
         when(eduMapper.toAdminDetailDto(report, attendances, targetCount, s3Service))
                 .thenReturn(mockDto);
 
         // when
-        EduReportAdminDetailDto result = eduReportService.getEduReportForAdmin(reportId);
+        EduReportAdminDetailDto result = eduReportService.getEduReportForAdmin(reportId, userId);
 
         // then
         assertThat(result).isNotNull();
         assertThat(result.getTitle()).isEqualTo("관리자용 테스트 보고서");
         assertThat(result.getNumberOfPeople()).isEqualTo(50L);
 
+        verify(userRepository, times(1)).findById(userId);
         verify(eduReportRepository, times(1)).findById(reportId);
-        verify(userRepository, times(1)).count();
-        verify(eduMapper, times(1)).toAdminDetailDto(report, attendances, targetCount, s3Service);
+    }
+
+    @Test
+    @DisplayName("관리자용 상세 조회 실패 - 권한이 없는 유저")
+    void getEduReportForAdmin_Fail_NoAuthority() {
+        // given
+        Long reportId = 1L;
+        Long userId = 1L;
+        User normalUser = createNormalUser(); // 일반 유저 (ROLE.USER)
+
+        when(userRepository.findById(userId)).thenReturn(Optional.of(normalUser));
+
+        // when & then
+        assertThatThrownBy(() -> eduReportService.getEduReportForAdmin(reportId, userId))
+                .isInstanceOf(CustomException.class)
+                .hasFieldOrPropertyWithValue("errorCode", ErrorCode.NO_AUTHORITY_FOR_EDU_REPORT);
+
+        verify(userRepository, times(1)).findById(userId);
+        verify(eduReportRepository, never()).findById(anyLong());
     }
 
     @Test
@@ -639,13 +662,18 @@ public class EduReportServiceTest {
     void getEduReportForAdmin_Fail_NotFound() {
         // given
         Long reportId = 1L;
+        Long userId = 99L;
+        User adminUser = createAdminUser();
+
+        when(userRepository.findById(userId)).thenReturn(Optional.of(adminUser));
         when(eduReportRepository.findById(reportId)).thenReturn(Optional.empty());
 
         // when & then
-        assertThatThrownBy(() -> eduReportService.getEduReportForAdmin(reportId))
+        assertThatThrownBy(() -> eduReportService.getEduReportForAdmin(reportId, userId))
                 .isInstanceOf(CustomException.class)
                 .hasFieldOrPropertyWithValue("errorCode", ErrorCode.EDU_REPORT_NOT_FOUND);
 
+        verify(userRepository, times(1)).findById(userId);
         verify(eduAttendanceRepository, never()).findAllByEduReportIdWithUser(anyLong());
     }
 }

@@ -1,5 +1,7 @@
 package kr.co.awesomelead.groupware_backend.domain.auth.dto.request;
 
+import io.swagger.v3.oas.annotations.media.Schema;
+
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Pattern;
@@ -10,12 +12,18 @@ import lombok.Setter;
 
 @Getter
 @Setter
+@Schema(description = "이메일로 비밀번호 재설정 요청")
 public class ResetPasswordByEmailRequestDto {
 
+    @Schema(description = "이메일", example = "test@example.com", required = true)
     @NotBlank(message = "이메일은 필수입니다.")
     @Email(message = "유효한 이메일 형식이 아닙니다.")
     private String email;
 
+    @Schema(
+            description = "새 비밀번호 (영문, 숫자, 특수문자 포함 8자 이상)",
+            example = "newPassword123!",
+            required = true)
     @NotBlank(message = "새 비밀번호는 필수입니다.")
     @Size(min = 8, message = "비밀번호는 최소 8자 이상이어야 합니다.")
     @Pattern(
@@ -23,6 +31,7 @@ public class ResetPasswordByEmailRequestDto {
             message = "비밀번호는 영문, 숫자, 특수문자를 모두 포함해야 합니다.")
     private String newPassword;
 
+    @Schema(description = "새 비밀번호 확인", example = "newPassword123!", required = true)
     @NotBlank(message = "비밀번호 확인은 필수입니다.")
     private String newPasswordConfirm;
 }

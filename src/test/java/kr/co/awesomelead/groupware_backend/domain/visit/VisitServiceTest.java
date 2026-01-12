@@ -8,6 +8,7 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import kr.co.awesomelead.groupware_backend.domain.department.enums.Company;
 import kr.co.awesomelead.groupware_backend.domain.user.entity.User;
 import kr.co.awesomelead.groupware_backend.domain.user.repository.UserRepository;
 import kr.co.awesomelead.groupware_backend.domain.visit.dto.request.CheckOutRequestDto;
@@ -339,7 +340,7 @@ public class VisitServiceTest {
     private VisitCreateRequestDto createRequestDto(Long hostId) {
         VisitCreateRequestDto dto = new VisitCreateRequestDto();
         dto.setHostUserId(hostId);
-        dto.setHostCompany("어썸리드");
+        dto.setHostCompany(Company.AWESOME);
         dto.setVisitorName("방문객");
         dto.setVisitorPhone("01012345678");
         dto.setVisitorPassword("1234");

@@ -2,7 +2,6 @@ package kr.co.awesomelead.groupware_backend.domain.user.entity;
 
 import com.fasterxml.jackson.annotation.JsonBackReference;
 import com.fasterxml.jackson.annotation.JsonManagedReference;
-
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.CollectionTable;
 import jakarta.persistence.Column;
@@ -22,27 +21,6 @@ import jakarta.persistence.OneToOne;
 import jakarta.persistence.PrePersist;
 import jakarta.persistence.PreUpdate;
 import jakarta.persistence.Table;
-
-import kr.co.awesomelead.groupware_backend.domain.annualleave.entity.AnnualLeave;
-import kr.co.awesomelead.groupware_backend.domain.checksheet.entity.CheckSheet;
-import kr.co.awesomelead.groupware_backend.domain.department.entity.Department;
-import kr.co.awesomelead.groupware_backend.domain.department.enums.Company;
-import kr.co.awesomelead.groupware_backend.domain.leaverequest.entity.LeaveRequest;
-import kr.co.awesomelead.groupware_backend.domain.message.entity.Message;
-import kr.co.awesomelead.groupware_backend.domain.payslip.entity.Payslip;
-import kr.co.awesomelead.groupware_backend.domain.user.enums.Authority;
-import kr.co.awesomelead.groupware_backend.domain.user.enums.Role;
-import kr.co.awesomelead.groupware_backend.domain.user.enums.Status;
-import kr.co.awesomelead.groupware_backend.domain.visit.entity.Visit;
-import kr.co.awesomelead.groupware_backend.global.encryption.PhoneNumberEncryptor;
-import kr.co.awesomelead.groupware_backend.global.encryption.RegistrationNumberEncryptor;
-
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
-
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
@@ -53,6 +31,25 @@ import java.util.Base64;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import kr.co.awesomelead.groupware_backend.domain.annualleave.entity.AnnualLeave;
+import kr.co.awesomelead.groupware_backend.domain.checksheet.entity.CheckSheet;
+import kr.co.awesomelead.groupware_backend.domain.department.entity.Department;
+import kr.co.awesomelead.groupware_backend.domain.department.enums.Company;
+import kr.co.awesomelead.groupware_backend.domain.leaverequest.entity.LeaveRequest;
+import kr.co.awesomelead.groupware_backend.domain.message.entity.Message;
+import kr.co.awesomelead.groupware_backend.domain.payslip.entity.Payslip;
+import kr.co.awesomelead.groupware_backend.domain.user.enums.Authority;
+import kr.co.awesomelead.groupware_backend.domain.user.enums.JobType;
+import kr.co.awesomelead.groupware_backend.domain.user.enums.Role;
+import kr.co.awesomelead.groupware_backend.domain.user.enums.Status;
+import kr.co.awesomelead.groupware_backend.domain.visit.entity.Visit;
+import kr.co.awesomelead.groupware_backend.global.encryption.PhoneNumberEncryptor;
+import kr.co.awesomelead.groupware_backend.global.encryption.RegistrationNumberEncryptor;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 
 @Entity
 @Getter
@@ -99,8 +96,9 @@ public class User {
 
     private LocalDate resignationDate; // 퇴사일
 
+    @Enumerated(EnumType.STRING)
     @Column(length = 20)
-    private String jobType; // 근무 직종
+    private JobType jobType; // 근무 직종
 
     @Column(length = 20)
     private String position; // 직급
@@ -120,10 +118,10 @@ public class User {
     private LocalDate birthDate; // 생년월일
 
     @OneToOne(
-            mappedBy = "user",
-            cascade = CascadeType.ALL,
-            orphanRemoval = true,
-            fetch = FetchType.LAZY)
+        mappedBy = "user",
+        cascade = CascadeType.ALL,
+        orphanRemoval = true,
+        fetch = FetchType.LAZY)
     @JsonManagedReference
     private AnnualLeave annualLeave;
 
@@ -183,9 +181,31 @@ public class User {
         }
     }
 
+    // 관리자가 전화번호 수정 시 호출
+    public void updatePhoneNumber(String newPhoneNumber) {
+        if (newPhoneNumber != null && !newPhoneNumber.equals(this.phoneNumber)) {
+            this.phoneNumber = newPhoneNumber;
+            // 전화번호가 변경될 때 해시도 함께 변경되도록 보장
+            this.phoneNumberHash = hashPhoneNumber(newPhoneNumber);
+        }
+    }
+
+    // 주민등록번호 수정 및 생년월일 자동 갱신
+    public void updateRegistrationNumber(String newRegNum) {
+        if (newRegNum != null && !newRegNum.equals(this.registrationNumber)) {
+            this.registrationNumber = newRegNum;
+            // 번호가 바뀌면 생년월일도 즉시 다시 계산하여 세팅
+            this.birthDate = calculateBirthDate(newRegNum);
+        }
+    }
+
     // 권한 추가
     public void addAuthority(Authority authority) {
         this.authorities.add(authority);
+    }
+
+    public void removeAuthority(Authority authority) {
+        this.authorities.remove(authority);
     }
 
     // 권한 확인
@@ -198,28 +218,22 @@ public class User {
     }
 
     private LocalDate calculateBirthDate(String regNum) {
-        // 앞 6자리 추출 (YYMMDD)
+        // 1. 앞 6자리 추출 (YYMMDD)
         String birthPart = regNum.substring(0, 6);
 
-        // 뒤 첫 번째 자리 추출 (성별/세기 구분자)
-        char genderDigit = regNum.contains("-") ? regNum.charAt(7) : regNum.charAt(6);
+        // 2. 뒤 첫 번째 자리 추출 (하이픈이 포함된 14자리로 가정)
+        char genderDigit = regNum.charAt(7);
 
-        // 세기 판단
-        String century;
-        if (genderDigit == '1' || genderDigit == '2' || genderDigit == '5' || genderDigit == '6') {
-            century = "19";
-        } else if (genderDigit == '3'
-                || genderDigit == '4'
-                || genderDigit == '7'
-                || genderDigit == '8') {
-            century = "20";
-        } else {
-            century = "20"; // 기본값
-        }
+        // 3. 세기 판단 (그룹화)
+        String century = switch (genderDigit) {
+            case '1', '2', '5', '6' -> "19";
+            case '3', '4', '7', '8' -> "20";
+            case '9', '0' -> "18"; // 혹시 모를 1800년대생 대비
+            default -> "20"; // 기본값
+        };
 
-        // LocalDate로 변환
-        String fullDate = century + birthPart;
-        return LocalDate.parse(fullDate, DateTimeFormatter.ofPattern("yyyyMMdd"));
+        // 4. LocalDate로 변환
+        return LocalDate.parse(century + birthPart, DateTimeFormatter.ofPattern("yyyyMMdd"));
     }
 
     // hashPhoneNumber 메서드

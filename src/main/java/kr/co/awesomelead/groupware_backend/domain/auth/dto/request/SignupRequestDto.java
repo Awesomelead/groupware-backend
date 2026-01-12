@@ -28,10 +28,10 @@ public class SignupRequestDto {
     private String nationality;
 
     @Schema(
-        description = "근무 사업장",
-        example = "AWESOME",
-        required = true,
-        implementation = Company.class)
+            description = "근무 사업장",
+            example = "AWESOME",
+            required = true,
+            implementation = Company.class)
     @NotNull(message = "근무사업장은 필수입니다.")
     private Company company;
 
@@ -57,8 +57,8 @@ public class SignupRequestDto {
     @NotBlank(message = "비밀번호는 필수입니다.")
     @Size(min = 8, message = "비밀번호는 최소 8자 이상이어야 합니다.")
     @Pattern(
-        regexp = "^(?=.*[a-zA-Z])(?=.*[!@#$%^*+=-])(?=.*[0-9]).{8,64}$",
-        message = "비밀번호는 영문, 숫자, 특수문자를 모두 포함해야 합니다.")
+            regexp = "^(?=.*[a-zA-Z])(?=.*[!@#$%^*+=-])(?=.*[0-9]).{8,64}$",
+            message = "비밀번호는 영문, 숫자, 특수문자를 모두 포함해야 합니다.")
     private String password;
 
     @Schema(description = "비밀번호 확인", example = "test1234!", required = true)

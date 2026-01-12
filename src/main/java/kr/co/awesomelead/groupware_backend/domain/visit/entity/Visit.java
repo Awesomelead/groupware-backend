@@ -16,6 +16,7 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToMany;
 
+import kr.co.awesomelead.groupware_backend.domain.department.enums.Company;
 import kr.co.awesomelead.groupware_backend.domain.user.entity.User;
 import kr.co.awesomelead.groupware_backend.domain.visit.enums.VisitPurpose;
 import kr.co.awesomelead.groupware_backend.domain.visit.enums.VisitType;
@@ -44,7 +45,7 @@ public class Visit {
     private Long id;
 
     @Column(nullable = false, length = 50)
-    private String hostCompany; // 내방객 방문 회사
+    private Company hostCompany; // 내방객 방문 회사
 
     @Column(length = 50)
     private String visitorCompany; // 내방객 소속 회사

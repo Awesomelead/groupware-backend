@@ -1,26 +1,31 @@
 package kr.co.awesomelead.groupware_backend.domain.admin;
 
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
-import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.mockito.Mockito.never;
+import static org.assertj.core.api.AssertionsForClassTypes.assertThatThrownBy;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import kr.co.awesomelead.groupware_backend.domain.admin.dto.request.UserApprovalRequestDto;
 import kr.co.awesomelead.groupware_backend.domain.admin.service.AdminService;
-import kr.co.awesomelead.groupware_backend.domain.department.enums.Company;
+import kr.co.awesomelead.groupware_backend.domain.department.entity.Department;
+import kr.co.awesomelead.groupware_backend.domain.department.enums.DepartmentName;
+import kr.co.awesomelead.groupware_backend.domain.department.repository.DepartmentRepository;
 import kr.co.awesomelead.groupware_backend.domain.user.entity.User;
+import kr.co.awesomelead.groupware_backend.domain.user.enums.Authority;
+import kr.co.awesomelead.groupware_backend.domain.user.enums.JobType;
 import kr.co.awesomelead.groupware_backend.domain.user.enums.Role;
 import kr.co.awesomelead.groupware_backend.domain.user.enums.Status;
 import kr.co.awesomelead.groupware_backend.domain.user.repository.UserRepository;
 import kr.co.awesomelead.groupware_backend.global.error.CustomException;
 import kr.co.awesomelead.groupware_backend.global.error.ErrorCode;
 
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
-import org.mockito.ArgumentMatchers;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -29,135 +34,197 @@ import java.time.LocalDate;
 import java.util.Optional;
 
 @ExtendWith(MockitoExtension.class)
+@DisplayName("AdminService 클래스의")
 class AdminServiceTest {
 
     @Mock private UserRepository userRepository;
-
+    @Mock private DepartmentRepository departmentRepository;
     @InjectMocks private AdminService adminService;
+    private final Long adminId = 100L;
+    private final Long userId = 1L;
+    private final UserApprovalRequestDto requestDto = createRequestDto();
 
-    @Test
-    @DisplayName("사용자 등록 승인 성공")
-    void approveUserRegistration_Success() {
-        // given
-        Long adminId = 100L;
-        Long userId = 1L;
-
-        User admin = new User();
-        admin.setId(adminId);
-        admin.setRole(Role.ADMIN); // 관리자 권한 설정
-
-        User pendingUser = new User(); // 테스트용 User 객체 생성
-        pendingUser.setId(userId);
-        pendingUser.setStatus(Status.PENDING);
-
-        UserApprovalRequestDto requestDto = new UserApprovalRequestDto();
-        requestDto.setHireDate(LocalDate.of(2025, 9, 22));
-        requestDto.setJobType("정규직");
-        requestDto.setPosition("사원");
-        requestDto.setWorkLocation(Company.AWESOME);
-        requestDto.setRole(Role.USER);
-
-        // userRepository.findById가 호출되면 PENDING 상태의 유저를 반환하도록 설정
-        when(userRepository.findById(adminId)).thenReturn(Optional.of(admin));
-        when(userRepository.findById(userId)).thenReturn(Optional.of(pendingUser));
-
-        // when
-        adminService.approveUserRegistration(userId, requestDto, adminId);
-
-        // then
-        ArgumentCaptor<User> userCaptor = ArgumentCaptor.forClass(User.class);
-        verify(userRepository).save(userCaptor.capture());
-        User savedUser = userCaptor.getValue();
-
-        // 캡처된 User 객체의 필드가 예상대로 업데이트되었는지 검증
-        assertThat(savedUser.getStatus()).isEqualTo(Status.AVAILABLE);
-        assertThat(savedUser.getHireDate()).isEqualTo(requestDto.getHireDate());
-        assertThat(savedUser.getPosition()).isEqualTo(requestDto.getPosition());
-        assertThat(savedUser.getRole()).isEqualTo(requestDto.getRole());
-    }
-
-    @Test
-    @DisplayName("사용자 등록 승인 실패 - 관리자 권한 없음")
-    void approveUserRegistration_Fail_NoAuthority() {
-        // given
-        Long adminId = 100L;
-        Long userId = 1L;
-
-        User notAdmin = new User();
-        notAdmin.setId(adminId);
-        notAdmin.setRole(Role.USER); // 관리자가 아닌 일반 유저
-
-        UserApprovalRequestDto requestDto = new UserApprovalRequestDto();
-
-        when(userRepository.findById(adminId)).thenReturn(Optional.of(notAdmin));
-
-        // when & then
-        CustomException exception =
-                assertThrows(
-                        CustomException.class,
-                        () -> {
-                            adminService.approveUserRegistration(userId, requestDto, adminId);
-                        });
-
-        assertThat(exception.getErrorCode()).isEqualTo(ErrorCode.NO_AUTHORITY_FOR_REGISTRATION);
-        verify(userRepository, never()).save(ArgumentMatchers.any(User.class));
-    }
-
-    @DisplayName("사용자 등록 승인 실패 - 대상 사용자를 찾을 수 없음")
-    void approveUserRegistration_Fail_UserNotFound() {
-        // given
-        Long adminId = 100L;
-        Long userId = 99L;
-
+    @BeforeEach
+    void setup() {
         User admin = new User();
         admin.setId(adminId);
         admin.setRole(Role.ADMIN);
-
-        UserApprovalRequestDto requestDto = new UserApprovalRequestDto();
-
         when(userRepository.findById(adminId)).thenReturn(Optional.of(admin));
-        when(userRepository.findById(userId)).thenReturn(Optional.empty());
-
-        // when & then
-        CustomException exception =
-                assertThrows(
-                        CustomException.class,
-                        () -> {
-                            adminService.approveUserRegistration(userId, requestDto, adminId);
-                        });
-
-        assertThat(exception.getErrorCode()).isEqualTo(ErrorCode.USER_NOT_FOUND);
     }
 
-    @Test
-    @DisplayName("사용자 등록 승인 실패 - 이미 처리된 요청")
-    void approveUserRegistration_Fail_AlreadyProcessed() {
-        // given
-        Long adminId = 100L;
-        Long userId = 1L;
+    @Nested
+    @DisplayName("approveUserRegistration 메서드는")
+    class Describe_approveUserRegistration {
 
-        User admin = new User();
-        admin.setId(adminId);
-        admin.setRole(Role.ADMIN);
+        @Nested
+        @DisplayName("올바른 관리자가 대기 중인 사용자를 승인하면")
+        class Context_with_admin_user {
 
-        User availableUser = new User();
-        availableUser.setId(userId);
-        availableUser.setStatus(Status.AVAILABLE);
+            @Test
+            @DisplayName("사용자 상태를 AVAILABLE로 변경하고 정보를 업데이트한다")
+            void it_updates_user_info_and_status() {
+                // given
+                Department department =
+                        Department.builder().id(1L).name(DepartmentName.SALES_DEPT).build();
+                User pendingUser = new User();
+                pendingUser.setId(userId);
+                pendingUser.setStatus(Status.PENDING);
 
-        UserApprovalRequestDto requestDto = new UserApprovalRequestDto();
+                when(userRepository.findById(userId)).thenReturn(Optional.of(pendingUser));
+                when(departmentRepository.findById(any())).thenReturn(Optional.of(department));
 
-        when(userRepository.findById(adminId)).thenReturn(Optional.of(admin));
-        when(userRepository.findById(userId)).thenReturn(Optional.of(availableUser));
+                // when
+                adminService.approveUserRegistration(userId, requestDto, adminId);
 
-        // when & then
-        CustomException exception =
-                assertThrows(
-                        CustomException.class,
-                        () -> {
-                            adminService.approveUserRegistration(userId, requestDto, adminId);
-                        });
+                // then
+                ArgumentCaptor<User> userCaptor = ArgumentCaptor.forClass(User.class);
+                verify(userRepository).save(userCaptor.capture());
+                User savedUser = userCaptor.getValue();
 
-        assertThat(exception.getErrorCode()).isEqualTo(ErrorCode.DUPLICATED_SIGNUP_REQUEST);
-        verify(userRepository, never()).save(ArgumentMatchers.any(User.class));
+                assertThat(savedUser.getStatus()).isEqualTo(Status.AVAILABLE);
+                assertThat(savedUser.getRole()).isEqualTo(Role.USER);
+            }
+        }
+
+        @Nested
+        @DisplayName("이미 승인된 유저를 다시 승인하려 하면")
+        class Context_with_already_available_user {
+
+            @Test
+            @DisplayName("DUPLICATED_SIGNUP_REQUEST 에러를 던진다")
+            void it_throws_duplicated_signup_request_exception() {
+                // given
+                User availableUser = new User();
+                availableUser.setStatus(Status.AVAILABLE);
+                when(userRepository.findById(userId)).thenReturn(Optional.of(availableUser));
+
+                // when & then
+                assertThatThrownBy(
+                                () ->
+                                        adminService.approveUserRegistration(
+                                                userId, requestDto, adminId))
+                        .isInstanceOf(CustomException.class)
+                        .extracting("errorCode")
+                        .isEqualTo(ErrorCode.DUPLICATED_SIGNUP_REQUEST);
+            }
+        }
+
+        @Nested
+        @DisplayName("존재하지 않는 유저 ID를 승인하려 하면")
+        class Context_with_non_existent_user {
+
+            @Test
+            @DisplayName("USER_NOT_FOUND 에러를 던진다")
+            void it_throws_user_not_found_exception() {
+                // given
+                when(userRepository.findById(userId)).thenReturn(Optional.empty());
+
+                // when & then
+                assertThatThrownBy(
+                                () ->
+                                        adminService.approveUserRegistration(
+                                                userId, requestDto, adminId))
+                        .isInstanceOf(CustomException.class)
+                        .extracting("errorCode")
+                        .isEqualTo(ErrorCode.USER_NOT_FOUND);
+            }
+        }
+
+        @Nested
+        @DisplayName("관리자 권한이 없는 유저가 승인을 시도하면")
+        class Context_with_normal_user {
+
+            @Test
+            @DisplayName("NO_AUTHORITY_FOR_REGISTRATION 에러를 던진다")
+            void it_throws_no_authority_exception() {
+                // given
+                User normalUser = new User();
+                normalUser.setRole(Role.USER);
+                when(userRepository.findById(adminId)).thenReturn(Optional.of(normalUser));
+
+                // when & then
+                assertThatThrownBy(
+                                () ->
+                                        adminService.approveUserRegistration(
+                                                userId, requestDto, adminId))
+                        .isInstanceOf(CustomException.class)
+                        .extracting("errorCode")
+                        .isEqualTo(ErrorCode.NO_AUTHORITY_FOR_REGISTRATION);
+            }
+        }
+    }
+
+    private UserApprovalRequestDto createRequestDto() {
+        UserApprovalRequestDto dto = new UserApprovalRequestDto();
+        dto.setJobType(JobType.MANAGEMENT);
+        dto.setDepartmentId(1L);
+        dto.setHireDate(LocalDate.now());
+        dto.setPosition("사원");
+        return dto;
+    }
+
+    @Nested
+    @DisplayName("updateUserRole 메서드는")
+    class Describe_updateUserRole {
+
+        @Nested
+        @DisplayName("올바른 관리자가 사용자의 역할을 업데이트하면")
+        class Context_with_admin_user {
+
+            @Test
+            @DisplayName("사용자의 역할이 업데이트된다")
+            void it_updates_user_role_successfully() {
+                // given
+                User user = User.builder().id(1L).role(Role.USER).build();
+
+                when(userRepository.findById(1L)).thenReturn(Optional.of(user));
+
+                // when
+                adminService.updateUserRole(1L, Role.ADMIN, 100L);
+
+                // then
+                assertThat(user.getRole()).isEqualTo(Role.ADMIN);
+                assertThat(user.hasAuthority(Authority.WRITE_NOTICE)).isEqualTo(true);
+                assertThat(user.hasAuthority(Authority.UPLOAD_ANNUAL_LEAVE)).isEqualTo(true);
+            }
+        }
+
+        @Nested
+        @DisplayName("관리자 권한이 없는 유저가 역할 업데이트를 시도하면")
+        class Context_with_normal_user {
+
+            @Test
+            @DisplayName("NO_AUTHORITY_FOR_ROLE_UPDATE 에러를 던진다")
+            void it_throws_no_authority_exception() {
+                // given
+                User normalUser = new User();
+                normalUser.setRole(Role.USER);
+                when(userRepository.findById(adminId)).thenReturn(Optional.of(normalUser));
+
+                // when & then
+                assertThatThrownBy(() -> adminService.updateUserRole(1L, Role.ADMIN, adminId))
+                        .isInstanceOf(CustomException.class)
+                        .extracting("errorCode")
+                        .isEqualTo(ErrorCode.NO_AUTHORITY_FOR_ROLE_UPDATE);
+            }
+        }
+
+        @Nested
+        @DisplayName("존재하지 않는 유저 ID로 역할 업데이트를 시도하면")
+        class Context_with_non_existent_user {
+
+            @Test
+            @DisplayName("USER_NOT_FOUND 에러를 던진다")
+            void it_throws_user_not_found_exception() {
+                // given
+                when(userRepository.findById(1L)).thenReturn(Optional.empty());
+
+                // when & then
+                assertThatThrownBy(() -> adminService.updateUserRole(1L, Role.ADMIN, adminId))
+                        .isInstanceOf(CustomException.class)
+                        .extracting("errorCode")
+                        .isEqualTo(ErrorCode.USER_NOT_FOUND);
+            }
+        }
     }
 }

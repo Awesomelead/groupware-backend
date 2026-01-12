@@ -47,7 +47,7 @@ public class Companion {
     @Convert(converter = PhoneNumberEncryptor.class)
     private String phoneNumber; // 동행자 전화번호
 
-    @Column(nullable = false, length = 64, unique = true)
+    @Column(nullable = false, length = 64)
     private String phoneNumberHash; // SHA-256 해시 (조회용)
 
     @ManyToOne(fetch = FetchType.LAZY)

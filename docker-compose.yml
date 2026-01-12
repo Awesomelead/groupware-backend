@@ -30,6 +30,7 @@ services:
       - SPRING_MAIL_PASSWORD=${SPRING_MAIL_PASSWORD}
       - ENCRYPTION_SECRET_KEY=${ENCRYPTION_SECRET_KEY}
       - ENCRYPTION_SALT=${ENCRYPTION_SALT}
+      - PORTONE_APISECRET=${PORTONE_APISECRET}
     depends_on:
       - redis
     restart: unless-stopped

@@ -120,7 +120,7 @@ class AuthServiceTest {
                         .role(Role.USER)
                         .status(Status.PENDING)
                         .birthDate(LocalDate.of(1995, 1, 1))
-                        .phoneNumberHash(User.hashPhoneNumber(signupDto.getPhoneNumber()))
+                        .phoneNumberHash(User.hashValue(signupDto.getPhoneNumber()))
                         .build();
 
         // Mock 설정
@@ -361,7 +361,7 @@ class AuthServiceTest {
         @DisplayName("성공: 휴대폰 인증 후 비밀번호가 정상적으로 재설정된다")
         void resetPasswordByPhone_Success() {
             // given
-            String phoneHash = User.hashPhoneNumber(TEST_PHONE);
+            String phoneHash = User.hashValue(TEST_PHONE);
             given(phoneAuthService.isPhoneVerified(TEST_PHONE)).willReturn(true);
             given(userRepository.findByPhoneNumberHash(phoneHash))
                     .willReturn(Optional.of(testUser));
@@ -415,7 +415,7 @@ class AuthServiceTest {
         @DisplayName("실패: 존재하지 않는 전화번호인 경우")
         void resetPasswordByPhone_UserNotFound() {
             // given
-            String phoneHash = User.hashPhoneNumber(TEST_PHONE);
+            String phoneHash = User.hashValue(TEST_PHONE);
             given(phoneAuthService.isPhoneVerified(TEST_PHONE)).willReturn(true);
             given(userRepository.findByPhoneNumberHash(phoneHash)).willReturn(Optional.empty());
 

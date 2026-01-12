@@ -160,7 +160,7 @@ public class AuthService {
         }
 
         // 2. 해시로 사용자 찾기
-        String phoneNumberHash = User.hashPhoneNumber(phoneNumber);
+        String phoneNumberHash = User.hashValue(phoneNumber);
         User user =
                 userRepository
                         .findByPhoneNumberHash(phoneNumberHash)
@@ -224,7 +224,7 @@ public class AuthService {
             throw new CustomException(ErrorCode.PASSWORD_MISMATCH);
         }
         // 3. 해시로 사용자 찾기
-        String phoneNumberHash = User.hashPhoneNumber(requestDto.getPhoneNumber());
+        String phoneNumberHash = User.hashValue(requestDto.getPhoneNumber());
         User user =
                 userRepository
                         .findByPhoneNumberHash(phoneNumberHash)

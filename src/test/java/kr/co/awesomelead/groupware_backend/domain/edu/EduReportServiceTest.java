@@ -11,6 +11,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import kr.co.awesomelead.groupware_backend.domain.department.entity.Department;
+import kr.co.awesomelead.groupware_backend.domain.department.enums.DepartmentName;
 import kr.co.awesomelead.groupware_backend.domain.department.repository.DepartmentRepository;
 import kr.co.awesomelead.groupware_backend.domain.education.dto.request.EduReportRequestDto;
 import kr.co.awesomelead.groupware_backend.domain.education.dto.response.EduReportAdminDetailDto;
@@ -69,7 +70,7 @@ public class EduReportServiceTest {
 
     @BeforeEach
     void setUp() {
-        defaultDept = Department.builder().id(1L).name("개발팀").build();
+        defaultDept = Department.builder().id(1L).name(DepartmentName.SALES_DEPT).build();
     }
 
     private User createNormalUser() {

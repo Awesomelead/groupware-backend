@@ -1,6 +1,7 @@
 package kr.co.awesomelead.groupware_backend.domain.visit.service;
 
 import kr.co.awesomelead.groupware_backend.domain.department.entity.Department;
+import kr.co.awesomelead.groupware_backend.domain.department.enums.DepartmentName;
 import kr.co.awesomelead.groupware_backend.domain.department.repository.DepartmentRepository;
 import kr.co.awesomelead.groupware_backend.domain.user.entity.User;
 import kr.co.awesomelead.groupware_backend.domain.user.repository.UserRepository;
@@ -182,12 +183,12 @@ public class VisitService {
                         .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
 
         // 요청한 사용자의 부서명 조회
-        String requestingUserDeptName = requestingUser.getDepartment().getName();
+        DepartmentName requestingUserDeptName = requestingUser.getDepartment().getName();
 
         List<Visit> visits;
 
         // '경비' 부서인 경우 전체 조회
-        if (requestingUserDeptName.equals("경비") || departmentId == null) {
+        if (requestingUserDeptName == DepartmentName.SECURITY_DEPT || departmentId == null) {
             visits = visitRepository.findAll();
         } else {
             // 특정 부서 ID가 넘어온 경우

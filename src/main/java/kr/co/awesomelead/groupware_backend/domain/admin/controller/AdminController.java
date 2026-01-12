@@ -95,16 +95,16 @@ public class AdminController {
                                                     name = "사용자 없음",
                                                     value =
                                                             "{\"isSuccess\": false, \"code\":"
-                                                                + " \"USER_NOT_FOUND\","
-                                                                + " \"message\": \"해당 사용자를 찾을 수"
-                                                                + " 없습니다.\"}"),
+                                                                    + " \"USER_NOT_FOUND\","
+                                                                    + " \"message\": \"해당 사용자를 찾을 수"
+                                                                    + " 없습니다.\"}"),
                                             @ExampleObject(
                                                     name = "부서 없음",
                                                     value =
                                                             "{\"isSuccess\": false, \"code\":"
-                                                                + " \"DEPARTMENT_NOT_FOUND\","
-                                                                + " \"message\": \"해당 부서를 찾을 수"
-                                                                + " 없습니다.\"}")
+                                                                    + " \"DEPARTMENT_NOT_FOUND\","
+                                                                    + " \"message\": \"해당 부서를 찾을 수"
+                                                                    + " 없습니다.\"}")
                                         }))
             })
     @PatchMapping("/users/{userId}/approve")
@@ -125,7 +125,7 @@ public class AdminController {
             summary = "사용자 역할(Role) 변경",
             description =
                     "특정 사용자의 역할을 변경하고, 역할에 따른 기본 권한(Authority)을 자동으로 부여/회수합니다. (ADMIN,"
-                        + " MASTER_ADMIN만 호출 가능)")
+                            + " MASTER_ADMIN만 호출 가능)")
     @ApiResponses(
             value = {
                 @io.swagger.v3.oas.annotations.responses.ApiResponse(

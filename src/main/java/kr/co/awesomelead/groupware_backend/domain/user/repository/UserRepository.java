@@ -33,4 +33,6 @@ public interface UserRepository extends JpaRepository<User, Long> {
                     + " :joinDate")
     Optional<User> findByNameAndJoinDate(
             @Param("name") String name, @Param("joinDate") LocalDate joinDate);
+
+    boolean existsByPhoneNumberHash(String phoneNumberHash);
 }

@@ -14,6 +14,7 @@ import kr.co.awesomelead.groupware_backend.domain.visit.dto.response.VisitRespon
 import kr.co.awesomelead.groupware_backend.domain.visit.dto.response.VisitSummaryResponseDto;
 import kr.co.awesomelead.groupware_backend.domain.visit.entity.Visit;
 import kr.co.awesomelead.groupware_backend.domain.visit.entity.Visitor;
+import kr.co.awesomelead.groupware_backend.domain.visit.enums.AdditionalPermissionType;
 import kr.co.awesomelead.groupware_backend.domain.visit.enums.VisitType;
 import kr.co.awesomelead.groupware_backend.domain.visit.mapper.VisitMapper;
 import kr.co.awesomelead.groupware_backend.domain.visit.repository.VisitRepository;
@@ -69,6 +70,11 @@ public class VisitService {
         // 사전 방문 예약 시, 비밀번호 필수 체크
         if (type == VisitType.PRE_REGISTRATION && !StringUtils.hasText(dto.getVisitorPassword())) {
             throw new CustomException(ErrorCode.VISITOR_PASSWORD_REQUIRED_FOR_PRE_REGISTRATION);
+        }
+
+        if (dto.getPermissionType() == AdditionalPermissionType.OTHER_PERMISSION
+                && !StringUtils.hasText(dto.getPermissionDetail())) {
+            throw new CustomException(ErrorCode.PERMISSION_DETAIL_REQUIRED);
         }
 
         // 담당 직원 조회

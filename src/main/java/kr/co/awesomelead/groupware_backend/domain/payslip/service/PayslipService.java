@@ -175,17 +175,12 @@ public class PayslipService {
         payslip.setStatus(requestDto.getStatus());
     }
 
-    public record FileDownloadDto(byte[] fileData, String originalFileName) {
-
-    }
+    public record FileDownloadDto(byte[] fileData, String originalFileName) {}
 
     public FileDownloadDto downloadPayslip(String fileKey, String originalFileName) {
         byte[] fileData = s3Service.downloadFile(fileKey);
 
-        return new FileDownloadDto(
-            fileData,
-            originalFileName
-        );
+        return new FileDownloadDto(fileData, originalFileName);
     }
 
     private void validateRejectionReason(String reason) {

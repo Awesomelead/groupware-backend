@@ -34,7 +34,6 @@ public interface VisitMapper {
     @Mapping(target = "visitEndDate", ignore = true)
     @Mapping(target = "visited", expression = "java(type == VisitType.ON_SITE)")
     @Mapping(target = "verified", expression = "java(type == VisitType.ON_SITE)")
-    @Mapping(target = "additionalRequirements", ignore = true)
     @Mapping(target = "signatureKey", ignore = true)
     @Mapping(target = "agreement", constant = "true")
     @Mapping(target = "hostCompany", source = "dto.hostCompany")

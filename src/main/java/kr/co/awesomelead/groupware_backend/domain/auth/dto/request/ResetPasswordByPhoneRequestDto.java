@@ -1,11 +1,10 @@
 package kr.co.awesomelead.groupware_backend.domain.auth.dto.request;
 
 import io.swagger.v3.oas.annotations.media.Schema;
-
+import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
-
 import lombok.Getter;
 import lombok.Setter;
 
@@ -14,20 +13,25 @@ import lombok.Setter;
 @Schema(description = "휴대폰으로 비밀번호 재설정 요청")
 public class ResetPasswordByPhoneRequestDto {
 
+    @Schema(description = "이메일", example = "test@example.com", required = true)
+    @NotBlank(message = "이메일은 필수입니다.")
+    @Email(message = "유효한 이메일 형식이 아닙니다.")
+    private String email;
+
     @Schema(description = "전화번호 ('-' 없이 10~11자리)", example = "01012345678", required = true)
     @NotBlank(message = "전화번호는 필수입니다.")
     @Pattern(regexp = "^\\d{10,11}$", message = "전화번호는 '-' 없이 10~11자리 숫자로 입력해주세요.")
     private String phoneNumber;
 
     @Schema(
-            description = "새 비밀번호 (영문, 숫자, 특수문자 포함 8자 이상)",
-            example = "newPassword123!",
-            required = true)
+        description = "새 비밀번호 (영문, 숫자, 특수문자 포함 8자 이상)",
+        example = "newPassword123!",
+        required = true)
     @NotBlank(message = "새 비밀번호는 필수입니다.")
     @Size(min = 8, message = "비밀번호는 최소 8자 이상이어야 합니다.")
     @Pattern(
-            regexp = "^(?=.*[a-zA-Z])(?=.*[!@#$%^*+=-])(?=.*[0-9]).{8,64}$",
-            message = "비밀번호는 영문, 숫자, 특수문자를 모두 포함해야 합니다.")
+        regexp = "^(?=.*[a-zA-Z])(?=.*[!@#$%^*+=-])(?=.*[0-9]).{8,64}$",
+        message = "비밀번호는 영문, 숫자, 특수문자를 모두 포함해야 합니다.")
     private String newPassword;
 
     @Schema(description = "새 비밀번호 확인", example = "newPassword123!", required = true)

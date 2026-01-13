@@ -7,8 +7,10 @@ import kr.co.awesomelead.groupware_backend.domain.user.entity.User;
 import kr.co.awesomelead.groupware_backend.domain.user.repository.UserRepository;
 import kr.co.awesomelead.groupware_backend.global.error.CustomException;
 import kr.co.awesomelead.groupware_backend.global.error.ErrorCode;
+
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -24,19 +26,23 @@ public class UserService {
     // 내 정보 조회
     @Transactional(readOnly = true)
     public MyInfoResponseDto getMyInfo(UserDetails userDetails) {
-        User user = userRepository.findByEmail(userDetails.getUsername())
-            .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
+        User user =
+                userRepository
+                        .findByEmail(userDetails.getUsername())
+                        .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
 
         return MyInfoResponseDto.from(user);
     }
 
     // 내 정보 수정
     @Transactional
-    public MyInfoResponseDto updateMyInfo(UserDetails userDetails,
-        UpdateMyInfoRequestDto requestDto) {
+    public MyInfoResponseDto updateMyInfo(
+            UserDetails userDetails, UpdateMyInfoRequestDto requestDto) {
         // 1. 사용자 조회
-        User user = userRepository.findByEmail(userDetails.getUsername())
-            .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
+        User user =
+                userRepository
+                        .findByEmail(userDetails.getUsername())
+                        .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
 
         boolean isUpdated = false;
 

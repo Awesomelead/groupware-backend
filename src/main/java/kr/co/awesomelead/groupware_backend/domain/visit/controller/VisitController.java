@@ -45,9 +45,9 @@ import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
     description =
         """
             ## 방문 관리 API
-            
+                        
             내방객의 사전 예약 및 현장 방문 접수, 방문 정보 조회, 입/퇴실 처리 등을 수행합니다.
-            
+                        
             ### 사용되는 Enum 타입
             - **VisitType**: 방문 유형 (PRE_REGISTRATION: 사전 예약, ON_SITE: 현장 방문)
             - **VisitPurpose**: 방문 목적 (CUSTOMER_INSPECTION: 고객 검수, GOODS_DELIVERY: 물품 납품, FACILITY_CONSTRUCTION: 시설공사, LOGISTICS: 입출고, MEETING: 미팅, OTHER: 기타)
@@ -84,6 +84,8 @@ public class VisitController {
                                     "visitorCompany": "어썸리드",
                                     "carNumber": "12가3456",
                                     "purpose": "MEETING",
+                                    "permissionType": "HIGH_ALTITUDE_WORK",
+                                    "permissionDetail": null,
                                     "visitStartDate": "2025-01-15T14:00:00",
                                     "visitEndDate": null,
                                     "hostUserId": 1,
@@ -115,6 +117,17 @@ public class VisitController {
                                         "visitorPhone": "올바른 전화번호 형식이 아닙니다.",
                                         "visitorPassword": "비밀번호는 4자리여야 합니다."
                                       }
+                                    }
+                                    """),
+                        @ExampleObject(
+                            name = "기타 허가 상세 내용 누락",
+                            value =
+                                """
+                                    {
+                                      "isSuccess": false,
+                                      "code": "PERMISSION_DETAIL_REQUIRED",
+                                      "message": "기타 허가 선택 시 상세 내용 작성이 필수입니다.",
+                                      "result": null
                                     }
                                     """),
                         @ExampleObject(
@@ -239,6 +252,8 @@ public class VisitController {
                                     "visitorCompany": "테스트회사",
                                     "carNumber": null,
                                     "purpose": "GOODS_DELIVERY",
+                                    "permissionType": "OTHER_PERMISSION",
+                                    "permissionDetail": "특수 장비 반입 허가 필요",
                                     "visitStartDate": "2025-01-15T10:00:00",
                                     "visitEndDate": null,
                                     "hostUserId": 2,
@@ -269,6 +284,17 @@ public class VisitController {
                                         "visitorName": "내방객 이름은 필수입니다.",
                                         "purpose": "방문 목적은 필수입니다."
                                       }
+                                    }
+                                    """),
+                        @ExampleObject(
+                            name = "기타 허가 상세 내용 누락",
+                            value =
+                                """
+                                    {
+                                      "isSuccess": false,
+                                      "code": "PERMISSION_DETAIL_REQUIRED",
+                                      "message": "기타 허가 선택 시 상세 내용 작성이 필수입니다.",
+                                      "result": null
                                     }
                                     """),
                         @ExampleObject(

@@ -9,6 +9,7 @@ public enum Position {
     CEO("대표이사"),
     VICE_PRESIDENT("부사장"),
     SENIOR_MANAGING_DIRECTOR("전무이사"),
+    MANAGING_DIRECTOR("상무이사"),
     DIRECTOR("이사"),
     GENERAL_MANAGER("부장"),
     DEPUTY_GENERAL_MANAGER("차장"),
@@ -19,7 +20,8 @@ public enum Position {
 
     // 특수 직급
     SECTION_HEAD("반장"),
-    ADVISOR("전문위원");
+    ADVISOR("전문위원"),
+    SECURITY_GUARD("경비원");
 
     private final String description;
 }

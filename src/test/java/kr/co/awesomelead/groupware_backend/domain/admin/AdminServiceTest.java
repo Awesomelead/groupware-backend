@@ -6,8 +6,6 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-import java.time.LocalDate;
-import java.util.Optional;
 import kr.co.awesomelead.groupware_backend.domain.admin.dto.request.UserApprovalRequestDto;
 import kr.co.awesomelead.groupware_backend.domain.admin.service.AdminService;
 import kr.co.awesomelead.groupware_backend.domain.department.entity.Department;
@@ -21,6 +19,7 @@ import kr.co.awesomelead.groupware_backend.domain.user.enums.Status;
 import kr.co.awesomelead.groupware_backend.domain.user.repository.UserRepository;
 import kr.co.awesomelead.groupware_backend.global.error.CustomException;
 import kr.co.awesomelead.groupware_backend.global.error.ErrorCode;
+
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -31,16 +30,16 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import java.time.LocalDate;
+import java.util.Optional;
+
 @ExtendWith(MockitoExtension.class)
 @DisplayName("AdminService 클래스의")
 class AdminServiceTest {
 
-    @Mock
-    private UserRepository userRepository;
-    @Mock
-    private DepartmentRepository departmentRepository;
-    @InjectMocks
-    private AdminService adminService;
+    @Mock private UserRepository userRepository;
+    @Mock private DepartmentRepository departmentRepository;
+    @InjectMocks private AdminService adminService;
     private final Long adminId = 100L;
     private final Long userId = 1L;
     private final UserApprovalRequestDto requestDto = createRequestDto();
@@ -66,7 +65,7 @@ class AdminServiceTest {
             void it_updates_user_info_and_status() {
                 // given
                 Department department =
-                    Department.builder().id(1L).name(DepartmentName.SALES_DEPT).build();
+                        Department.builder().id(1L).name(DepartmentName.SALES_DEPT).build();
                 User pendingUser = new User();
                 pendingUser.setId(userId);
                 pendingUser.setStatus(Status.PENDING);
@@ -101,12 +100,12 @@ class AdminServiceTest {
 
                 // when & then
                 assertThatThrownBy(
-                    () ->
-                        adminService.approveUserRegistration(
-                            userId, requestDto, adminId))
-                    .isInstanceOf(CustomException.class)
-                    .extracting("errorCode")
-                    .isEqualTo(ErrorCode.DUPLICATED_SIGNUP_REQUEST);
+                                () ->
+                                        adminService.approveUserRegistration(
+                                                userId, requestDto, adminId))
+                        .isInstanceOf(CustomException.class)
+                        .extracting("errorCode")
+                        .isEqualTo(ErrorCode.DUPLICATED_SIGNUP_REQUEST);
             }
         }
 
@@ -122,12 +121,12 @@ class AdminServiceTest {
 
                 // when & then
                 assertThatThrownBy(
-                    () ->
-                        adminService.approveUserRegistration(
-                            userId, requestDto, adminId))
-                    .isInstanceOf(CustomException.class)
-                    .extracting("errorCode")
-                    .isEqualTo(ErrorCode.USER_NOT_FOUND);
+                                () ->
+                                        adminService.approveUserRegistration(
+                                                userId, requestDto, adminId))
+                        .isInstanceOf(CustomException.class)
+                        .extracting("errorCode")
+                        .isEqualTo(ErrorCode.USER_NOT_FOUND);
             }
         }
 
@@ -145,12 +144,12 @@ class AdminServiceTest {
 
                 // when & then
                 assertThatThrownBy(
-                    () ->
-                        adminService.approveUserRegistration(
-                            userId, requestDto, adminId))
-                    .isInstanceOf(CustomException.class)
-                    .extracting("errorCode")
-                    .isEqualTo(ErrorCode.NO_AUTHORITY_FOR_REGISTRATION);
+                                () ->
+                                        adminService.approveUserRegistration(
+                                                userId, requestDto, adminId))
+                        .isInstanceOf(CustomException.class)
+                        .extracting("errorCode")
+                        .isEqualTo(ErrorCode.NO_AUTHORITY_FOR_REGISTRATION);
             }
         }
     }
@@ -204,9 +203,9 @@ class AdminServiceTest {
 
                 // when & then
                 assertThatThrownBy(() -> adminService.updateUserRole(1L, Role.ADMIN, adminId))
-                    .isInstanceOf(CustomException.class)
-                    .extracting("errorCode")
-                    .isEqualTo(ErrorCode.NO_AUTHORITY_FOR_ROLE_UPDATE);
+                        .isInstanceOf(CustomException.class)
+                        .extracting("errorCode")
+                        .isEqualTo(ErrorCode.NO_AUTHORITY_FOR_ROLE_UPDATE);
             }
         }
 
@@ -222,9 +221,9 @@ class AdminServiceTest {
 
                 // when & then
                 assertThatThrownBy(() -> adminService.updateUserRole(1L, Role.ADMIN, adminId))
-                    .isInstanceOf(CustomException.class)
-                    .extracting("errorCode")
-                    .isEqualTo(ErrorCode.USER_NOT_FOUND);
+                        .isInstanceOf(CustomException.class)
+                        .extracting("errorCode")
+                        .isEqualTo(ErrorCode.USER_NOT_FOUND);
             }
         }
     }

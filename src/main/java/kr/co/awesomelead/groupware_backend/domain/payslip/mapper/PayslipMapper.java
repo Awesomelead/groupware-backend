@@ -1,13 +1,15 @@
 package kr.co.awesomelead.groupware_backend.domain.payslip.mapper;
 
-import java.util.List;
 import kr.co.awesomelead.groupware_backend.domain.payslip.dto.response.AdminPayslipDetailDto;
 import kr.co.awesomelead.groupware_backend.domain.payslip.dto.response.AdminPayslipSummaryDto;
 import kr.co.awesomelead.groupware_backend.domain.payslip.dto.response.EmployeePayslipDetailDto;
 import kr.co.awesomelead.groupware_backend.domain.payslip.dto.response.EmployeePayslipSummaryDto;
 import kr.co.awesomelead.groupware_backend.domain.payslip.entity.Payslip;
+
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
+
+import java.util.List;
 
 @Mapper(componentModel = "spring")
 public interface PayslipMapper {
@@ -30,5 +32,4 @@ public interface PayslipMapper {
     List<EmployeePayslipSummaryDto> toEmployeePayslipSummaryDtoList(List<Payslip> payslips);
 
     EmployeePayslipDetailDto toEmployeePayslipDetailDto(Payslip payslip);
-
 }

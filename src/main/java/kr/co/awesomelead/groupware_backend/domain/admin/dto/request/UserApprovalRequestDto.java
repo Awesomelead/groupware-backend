@@ -1,14 +1,12 @@
 package kr.co.awesomelead.groupware_backend.domain.admin.dto.request;
 
 import io.swagger.v3.oas.annotations.media.Schema;
-
+import java.time.LocalDate;
 import kr.co.awesomelead.groupware_backend.domain.department.enums.Company;
 import kr.co.awesomelead.groupware_backend.domain.user.enums.JobType;
-
+import kr.co.awesomelead.groupware_backend.domain.user.enums.Position;
 import lombok.Getter;
 import lombok.Setter;
-
-import java.time.LocalDate;
 
 @Getter
 @Setter
@@ -33,7 +31,7 @@ public class UserApprovalRequestDto {
     private JobType jobType;
 
     @Schema(description = "직급", example = "대리")
-    private String position;
+    private Position position;
 
     @Schema(description = "입사일", example = "2025-09-22")
     private LocalDate hireDate;

@@ -36,10 +36,11 @@ public interface VisitMapper {
     @Mapping(target = "visitEndDate", ignore = true)
     @Mapping(target = "visited", expression = "java(type == VisitType.ON_SITE)")
     @Mapping(target = "verified", expression = "java(type == VisitType.ON_SITE)")
-    @Mapping(target = "additionalRequirements", ignore = true)
     @Mapping(target = "signatureKey", ignore = true)
     @Mapping(target = "agreement", constant = "true")
-    @Mapping(target = "hostCompany", ignore = true)
+    @Mapping(target = "hostCompany", source = "dto.hostCompany")
+    @Mapping(target = "permissionType", source = "dto.permissionType")
+    @Mapping(target = "permissionDetail", source = "dto.permissionDetail")
     Visit toVisitEntity(VisitCreateRequestDto dto, User host, Visitor visitor, VisitType type);
 
     @Mapping(target = "id", ignore = true)
@@ -75,5 +76,7 @@ public interface VisitMapper {
     @Mapping(target = "hostName", source = "user.nameKor")
     @Mapping(target = "phoneNumber", source = "visitor.phoneNumber")
     @Mapping(target = "signatureUrl", ignore = true)
+    @Mapping(target = "permissionType", source = "permissionType")
+    @Mapping(target = "permissionDetail", source = "permissionDetail")
     VisitDetailResponseDto toVisitDetailResponseDto(Visit visit);
 }

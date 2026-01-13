@@ -2,6 +2,7 @@ package kr.co.awesomelead.groupware_backend.domain.visit.dto.response;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 
+import kr.co.awesomelead.groupware_backend.domain.visit.enums.AdditionalPermissionType;
 import kr.co.awesomelead.groupware_backend.domain.visit.enums.VisitPurpose;
 
 import lombok.AllArgsConstructor;
@@ -29,6 +30,12 @@ public class VisitDetailResponseDto {
 
     @Schema(description = "방문 목적", example = "MEETING")
     private VisitPurpose purpose;
+
+    @Schema(description = "보충적 허가 타입", example = "HIGH_ALTITUDE_WORK")
+    private AdditionalPermissionType permissionType;
+
+    @Schema(description = "기타 허가 상세 내용", example = "특수 장비 반입 허가 필요")
+    private String permissionDetail;
 
     @Schema(description = "담당 부서", example = "개발팀")
     private String hostDepartment;

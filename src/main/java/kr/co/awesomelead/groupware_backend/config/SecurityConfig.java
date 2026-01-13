@@ -75,7 +75,6 @@ public class SecurityConfig {
                                         "/api/auth/reset-password/phone",
                                         "/api/auth/reset-password/email",
                                         "/api/auth/user",
-                                        "/api/admin/**", // 테스트용으로 어드민 경로도 열어놓음
                                         "/api/visits/**",
                                         "/api/edu-reports/attachments/{id}/download", // 테스트용으로 교육자료
                                         // 다운로드 열어놓음

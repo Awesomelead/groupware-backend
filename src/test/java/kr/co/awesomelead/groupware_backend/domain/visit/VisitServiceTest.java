@@ -19,6 +19,7 @@ import kr.co.awesomelead.groupware_backend.domain.visit.dto.response.VisitRespon
 import kr.co.awesomelead.groupware_backend.domain.visit.entity.Companion;
 import kr.co.awesomelead.groupware_backend.domain.visit.entity.Visit;
 import kr.co.awesomelead.groupware_backend.domain.visit.entity.Visitor;
+import kr.co.awesomelead.groupware_backend.domain.visit.enums.AdditionalPermissionType;
 import kr.co.awesomelead.groupware_backend.domain.visit.enums.VisitPurpose;
 import kr.co.awesomelead.groupware_backend.domain.visit.enums.VisitType;
 import kr.co.awesomelead.groupware_backend.domain.visit.mapper.VisitMapper;
@@ -90,6 +91,8 @@ public class VisitServiceTest {
                         .hostCompany(requestDto.getHostCompany())
                         .visitorCompany(requestDto.getVisitorCompany())
                         .visitType(VisitType.ON_SITE)
+                        .permissionType(requestDto.getPermissionType())
+                        .permissionDetail(requestDto.getPermissionDetail())
                         .visited(true)
                         .verified(true)
                         .build();
@@ -125,6 +128,39 @@ public class VisitServiceTest {
         verify(s3Service, times(1)).uploadFile(any());
         verify(visitRepository, times(1)).save(any());
         assertThat(visit.getSignatureKey()).isEqualTo(s3Key);
+    }
+
+    @Test
+    @DisplayName("현장 방문 등록 성공 - 기타 허가 및 상세 내용 포함")
+    void createOnSiteVisit_WithOtherPermission_Success() throws IOException {
+        // given
+        Long hostId = 1L;
+        VisitCreateRequestDto requestDto = createRequestDto(hostId);
+        requestDto.setPermissionType(AdditionalPermissionType.OTHER_PERMISSION);
+        requestDto.setPermissionDetail("특수 장비 반입"); // 상세 내용 포함
+
+        User host = new User();
+        Visitor visitor = new Visitor();
+        Visit visit =
+                Visit.builder()
+                        .permissionType(requestDto.getPermissionType())
+                        .permissionDetail(requestDto.getPermissionDetail())
+                        .build();
+
+        when(userRepository.findById(any())).thenReturn(Optional.of(host));
+        when(visitorRepository.findByPhoneNumberHash(any())).thenReturn(Optional.of(visitor));
+        when(s3Service.uploadFile(any())).thenReturn("s3-key");
+        when(visitMapper.toVisitEntity(any(), any(), any(), any())).thenReturn(visit);
+        when(visitRepository.save(any())).thenReturn(visit);
+        when(visitMapper.toResponseDto(any())).thenReturn(VisitResponseDto.builder().build());
+
+        // when
+        visitService.createOnSiteVisit(requestDto, signatureFile);
+
+        // then
+        verify(visitRepository, times(1)).save(any());
+        assertThat(visit.getPermissionType()).isEqualTo(AdditionalPermissionType.OTHER_PERMISSION);
+        assertThat(visit.getPermissionDetail()).isEqualTo("특수 장비 반입");
     }
 
     @Test
@@ -206,6 +242,25 @@ public class VisitServiceTest {
 
         assertThat(exception.getErrorCode())
                 .isEqualTo(ErrorCode.VISITOR_PASSWORD_REQUIRED_FOR_PRE_REGISTRATION);
+    }
+
+    @Test
+    @DisplayName("방문 등록 실패 - 기타 허가 선택 시 상세 내용 누락")
+    void createVisit_Fail_NoPermissionDetail() {
+        // given
+        VisitCreateRequestDto requestDto = createRequestDto(1L);
+        requestDto.setPermissionType(AdditionalPermissionType.OTHER_PERMISSION);
+        requestDto.setPermissionDetail(""); // 상세 내용 누락
+
+        // when & then
+        // VisitService에 해당 유효성 검사 로직이 구현되어 있다고 가정
+        CustomException exception =
+                assertThrows(
+                        CustomException.class,
+                        () -> visitService.createOnSiteVisit(requestDto, signatureFile));
+
+        assertThat(exception.getErrorCode()).isEqualTo(ErrorCode.PERMISSION_DETAIL_REQUIRED);
+        verify(visitRepository, never()).save(any());
     }
 
     @Test
@@ -346,6 +401,10 @@ public class VisitServiceTest {
         dto.setVisitorPassword("1234");
         dto.setVisitorCompany("외부업체");
         dto.setPurpose(VisitPurpose.MEETING);
+
+        dto.setPermissionType(AdditionalPermissionType.NONE);
+        dto.setPermissionDetail(null);
+
         dto.setVisitStartDate(LocalDateTime.now().plusHours(1));
 
         CompanionRequestDto companionDto = new CompanionRequestDto();

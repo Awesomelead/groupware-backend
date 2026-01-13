@@ -4,10 +4,12 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.ExampleObject;
+import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.util.List;
 import kr.co.awesomelead.groupware_backend.domain.payslip.dto.request.PayslipStatusRequestDto;
 import kr.co.awesomelead.groupware_backend.domain.payslip.dto.response.AdminPayslipDetailDto;
@@ -16,9 +18,11 @@ import kr.co.awesomelead.groupware_backend.domain.payslip.dto.response.EmployeeP
 import kr.co.awesomelead.groupware_backend.domain.payslip.dto.response.EmployeePayslipSummaryDto;
 import kr.co.awesomelead.groupware_backend.domain.payslip.enums.PayslipStatus;
 import kr.co.awesomelead.groupware_backend.domain.payslip.service.PayslipService;
+import kr.co.awesomelead.groupware_backend.domain.payslip.service.PayslipService.FileDownloadDto;
 import kr.co.awesomelead.groupware_backend.domain.user.dto.CustomUserDetails;
 import kr.co.awesomelead.groupware_backend.global.common.response.ApiResponse;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -32,6 +36,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RequestPart;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
+import org.springframework.web.util.UriUtils;
 
 @RestController
 @RequestMapping("/api/payslips")
@@ -348,4 +353,68 @@ public class PayslipController {
         return ResponseEntity.ok(ApiResponse.onSuccess(null));
     }
 
+    @Operation(summary = "급여명세서 파일 다운로드", description = "S3에 저장된 급여명세서 파일을 원본 파일명으로 다운로드합니다.")
+    @ApiResponses(
+        value = {
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                responseCode = "200",
+                description = "다운로드 성공",
+                content = @Content(mediaType = "application/octet-stream",
+                    schema = @Schema(type = "string", format = "binary"))),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                responseCode = "400",
+                description = "잘못된 요청 파라미터",
+                content = @Content(mediaType = "application/json",
+                    examples = @ExampleObject(value = """
+                        {
+                        "isSuccess": false,
+                        "code": "INVALID_FILE_PARAMETER",
+                        "message": "파일 키 또는 파일명이 유효하지 않습니다.",
+                        "result": null
+                        }
+                        """))),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                responseCode = "404",
+                description = "파일 존재하지 않음",
+                content = @Content(mediaType = "application/json",
+                    examples = @ExampleObject(value = """
+                        {
+                        "isSuccess": false,
+                        "code": "PAYSLIP_FILE_NOT_FOUND",
+                        "message": "S3 버킷에서 해당 파일을 찾을 수 없습니다.",
+                        "result": null
+                        }
+                        """))),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                responseCode = "500",
+                description = "서버 오류 (S3 통신 실패)",
+                content = @Content(mediaType = "application/json",
+                    examples = @ExampleObject(value = """
+                        {
+                        "isSuccess": false,
+                        "code": "S3_DOWNLOAD_ERROR",
+                        "message": "파일 다운로드 중 서버 오류가 발생했습니다.",
+                        "result": null
+                        }
+                        """)))
+        })
+    @GetMapping("/download")
+    public ResponseEntity<byte[]> downloadPayslip(
+        @Parameter(description = "S3에 저장된 파일 키", example = "payslip/2024/01/uuid-file.pdf")
+        @RequestParam String fileKey,
+        @Parameter(description = "사용자에게 보여줄 원본 파일명", example = "2024년_1월_급여명세서.pdf")
+        @RequestParam String fileName) { // 프론트에서 전달받은 파일명
+
+        FileDownloadDto downloadDto = payslipService.downloadPayslip(fileKey, fileName);
+
+        // 한글 파일명 깨짐 방지 및 HTTP 헤더 설정
+        String encodedFileName = UriUtils.encode(downloadDto.originalFileName(),
+            StandardCharsets.UTF_8);
+
+        return ResponseEntity.ok()
+            .contentType(MediaType.APPLICATION_OCTET_STREAM)
+            .header(HttpHeaders.CONTENT_DISPOSITION,
+                "attachment; filename=\"" + encodedFileName + "\"")
+            .body(downloadDto.fileData());
+    }
 }

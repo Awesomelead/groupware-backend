@@ -156,6 +156,19 @@ public class PayslipService {
         payslip.setStatus(requestDto.getStatus());
     }
 
+    public record FileDownloadDto(byte[] fileData, String originalFileName) {
+
+    }
+
+    public FileDownloadDto downloadPayslip(String fileKey, String originalFileName) {
+        byte[] fileData = s3Service.downloadFile(fileKey);
+
+        return new FileDownloadDto(
+            fileData,
+            originalFileName
+        );
+    }
+
     private void validateRejectionReason(String reason) {
         if (reason == null || reason.isBlank()) {
             throw new CustomException(ErrorCode.NO_REJECTION_REASON_PROVIDED);

@@ -2,7 +2,6 @@ package kr.co.awesomelead.groupware_backend.domain.visit.entity;
 
 import com.fasterxml.jackson.annotation.JsonBackReference;
 import com.fasterxml.jackson.annotation.JsonManagedReference;
-
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -15,22 +14,20 @@ import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToMany;
-
+import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 import kr.co.awesomelead.groupware_backend.domain.department.enums.Company;
 import kr.co.awesomelead.groupware_backend.domain.user.entity.User;
+import kr.co.awesomelead.groupware_backend.domain.visit.enums.AdditionalPermissionType;
 import kr.co.awesomelead.groupware_backend.domain.visit.enums.VisitPurpose;
 import kr.co.awesomelead.groupware_backend.domain.visit.enums.VisitType;
-
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
-
-import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.List;
 
 @Setter
 @Getter
@@ -62,9 +59,13 @@ public class Visit {
 
     private LocalDateTime visitEndDate; // 방문 종료 일시, null 가능
 
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false, length = 30)
     @Builder.Default
-    @Column(nullable = false)
-    private boolean additionalRequirements = false; // 보충적허가 필요여부 (기본값 false)
+    private AdditionalPermissionType permissionType = AdditionalPermissionType.NONE;
+
+    @Column(length = 200)
+    private String permissionDetail;
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 20)

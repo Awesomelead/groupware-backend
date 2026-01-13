@@ -30,6 +30,7 @@ public enum ErrorCode {
     IDENTITY_VERIFICATION_NOT_COMPLETED(HttpStatus.BAD_REQUEST, "본인인증이 완료되지 않았습니다."),
     IDENTITY_VERIFICATION_NOT_FOUND(HttpStatus.BAD_REQUEST, "해당 본인인증 정보를 찾을 수 없습니다."),
     NO_REJECTION_REASON_PROVIDED(HttpStatus.BAD_REQUEST, "반려 사유가 제공되지 않았습니다."),
+    PHONE_NUMBER_MISMATCH(HttpStatus.BAD_REQUEST, "입력한 전화번호가 계정의 전화번호와 일치하지 않습니다."),
 
     // 401 Unauthorized
     INVALID_TOKEN(HttpStatus.UNAUTHORIZED, "유효하지 않은 토큰입니다."),

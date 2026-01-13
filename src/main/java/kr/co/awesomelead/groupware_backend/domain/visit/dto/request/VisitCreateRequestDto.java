@@ -1,19 +1,23 @@
 package kr.co.awesomelead.groupware_backend.domain.visit.dto.request;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
-import java.time.LocalDateTime;
-import java.util.List;
+
 import kr.co.awesomelead.groupware_backend.domain.department.enums.Company;
 import kr.co.awesomelead.groupware_backend.domain.visit.enums.AdditionalPermissionType;
 import kr.co.awesomelead.groupware_backend.domain.visit.enums.VisitPurpose;
+
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+
+import java.time.LocalDateTime;
+import java.util.List;
 
 @Getter
 @Setter
@@ -39,17 +43,17 @@ public class VisitCreateRequestDto {
 
     @NotNull
     @Schema(
-        description = "방문 목적",
-        example = "MEETING",
-        required = true,
-        allowableValues = {
-            "CUSTOMER_INSPECTION",
-            "GOODS_DELIVERY",
-            "FACILITY_CONSTRUCTION",
-            "LOGISTICS",
-            "MEETING",
-            "OTHER"
-        })
+            description = "방문 목적",
+            example = "MEETING",
+            required = true,
+            allowableValues = {
+                "CUSTOMER_INSPECTION",
+                "GOODS_DELIVERY",
+                "FACILITY_CONSTRUCTION",
+                "LOGISTICS",
+                "MEETING",
+                "OTHER"
+            })
     private VisitPurpose purpose;
 
     @NotNull // 실제 데이터 검증을 위해 추가 권장
@@ -86,9 +90,9 @@ public class VisitCreateRequestDto {
 
     @Size(min = 4, max = 4, message = "비밀번호는 4자리여야 합니다.")
     @Schema(
-        description = "내방객 비밀번호 (4자리, 사전 예약 시 필수)",
-        example = "1234",
-        minLength = 4,
-        maxLength = 4)
+            description = "내방객 비밀번호 (4자리, 사전 예약 시 필수)",
+            example = "1234",
+            minLength = 4,
+            maxLength = 4)
     private String visitorPassword;
 }

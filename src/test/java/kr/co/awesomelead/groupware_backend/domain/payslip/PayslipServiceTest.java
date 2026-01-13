@@ -8,10 +8,6 @@ import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 
-import java.io.IOException;
-import java.time.LocalDate;
-import java.util.List;
-import java.util.Optional;
 import kr.co.awesomelead.groupware_backend.domain.payslip.dto.request.PayslipStatusRequestDto;
 import kr.co.awesomelead.groupware_backend.domain.payslip.dto.response.AdminPayslipSummaryDto;
 import kr.co.awesomelead.groupware_backend.domain.payslip.dto.response.EmployeePayslipDetailDto;
@@ -27,6 +23,7 @@ import kr.co.awesomelead.groupware_backend.domain.user.repository.UserRepository
 import kr.co.awesomelead.groupware_backend.global.error.CustomException;
 import kr.co.awesomelead.groupware_backend.global.error.ErrorCode;
 import kr.co.awesomelead.groupware_backend.global.infra.s3.S3Service;
+
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -37,20 +34,20 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.mock.web.MockMultipartFile;
 
+import java.io.IOException;
+import java.time.LocalDate;
+import java.util.List;
+import java.util.Optional;
+
 @ExtendWith(MockitoExtension.class)
 public class PayslipServiceTest {
 
-    @InjectMocks
-    private PayslipService payslipService;
+    @InjectMocks private PayslipService payslipService;
 
-    @Mock
-    private PayslipRepository payslipRepository;
-    @Mock
-    private UserRepository userRepository;
-    @Mock
-    private S3Service s3Service;
-    @Mock
-    private PayslipMapper payslipMapper;
+    @Mock private PayslipRepository payslipRepository;
+    @Mock private UserRepository userRepository;
+    @Mock private S3Service s3Service;
+    @Mock private PayslipMapper payslipMapper;
 
     private User admin;
     private User employee;
@@ -78,8 +75,9 @@ public class PayslipServiceTest {
 
                 // when & then
                 assertThatThrownBy(() -> payslipService.sendPayslip(List.of(), 1L))
-                    .isInstanceOf(CustomException.class)
-                    .hasFieldOrPropertyWithValue("errorCode", ErrorCode.NO_AUTHORITY_FOR_PAYSLIP);
+                        .isInstanceOf(CustomException.class)
+                        .hasFieldOrPropertyWithValue(
+                                "errorCode", ErrorCode.NO_AUTHORITY_FOR_PAYSLIP);
             }
         }
 
@@ -94,13 +92,14 @@ public class PayslipServiceTest {
                 admin.getAuthorities().add(Authority.MANAGE_EMPLOYEE_DATA); // 권한 부여
                 given(userRepository.findById(1L)).willReturn(Optional.of(admin));
 
-                MockMultipartFile txtFile = new MockMultipartFile(
-                    "payslipFiles", "test.txt", "text/plain", "content".getBytes());
+                MockMultipartFile txtFile =
+                        new MockMultipartFile(
+                                "payslipFiles", "test.txt", "text/plain", "content".getBytes());
 
                 // when & then
                 assertThatThrownBy(() -> payslipService.sendPayslip(List.of(txtFile), 1L))
-                    .isInstanceOf(CustomException.class)
-                    .hasFieldOrPropertyWithValue("errorCode", ErrorCode.ONLY_PDF_ALLOWED);
+                        .isInstanceOf(CustomException.class)
+                        .hasFieldOrPropertyWithValue("errorCode", ErrorCode.ONLY_PDF_ALLOWED);
             }
         }
 
@@ -115,12 +114,15 @@ public class PayslipServiceTest {
                 admin.getAuthorities().add(Authority.MANAGE_EMPLOYEE_DATA);
                 given(userRepository.findById(1L)).willReturn(Optional.of(admin));
 
-                MockMultipartFile pdfFile = new MockMultipartFile(
-                    "payslipFiles", "홍길동_20240101_급여명세서.pdf", "application/pdf",
-                    "pdf content".getBytes());
+                MockMultipartFile pdfFile =
+                        new MockMultipartFile(
+                                "payslipFiles",
+                                "홍길동_20240101_급여명세서.pdf",
+                                "application/pdf",
+                                "pdf content".getBytes());
 
                 given(userRepository.findByNameAndJoinDate("홍길동", LocalDate.of(2024, 1, 1)))
-                    .willReturn(Optional.of(employee));
+                        .willReturn(Optional.of(employee));
                 given(s3Service.uploadFile(pdfFile)).willReturn("s3-key");
 
                 // when
@@ -150,8 +152,9 @@ public class PayslipServiceTest {
 
                 // when & then
                 assertThatThrownBy(() -> payslipService.getPayslipsForAdmin(1L, null))
-                    .isInstanceOf(CustomException.class)
-                    .hasFieldOrPropertyWithValue("errorCode", ErrorCode.NO_AUTHORITY_FOR_PAYSLIP);
+                        .isInstanceOf(CustomException.class)
+                        .hasFieldOrPropertyWithValue(
+                                "errorCode", ErrorCode.NO_AUTHORITY_FOR_PAYSLIP);
             }
         }
 
@@ -167,11 +170,13 @@ public class PayslipServiceTest {
                 given(userRepository.findById(1L)).willReturn(Optional.of(adminUser));
 
                 List<Payslip> allPayslips = List.of(new Payslip(), new Payslip());
-                given(payslipRepository.findAllByStatusOptionalWithUser(null)).willReturn(
-                    allPayslips);
+                given(payslipRepository.findAllByStatusOptionalWithUser(null))
+                        .willReturn(allPayslips);
                 given(payslipMapper.toAdminPayslipSummaryDtoList(allPayslips))
-                    .willReturn(
-                        List.of(new AdminPayslipSummaryDto(), new AdminPayslipSummaryDto()));
+                        .willReturn(
+                                List.of(
+                                        new AdminPayslipSummaryDto(),
+                                        new AdminPayslipSummaryDto()));
 
                 // when
                 List<AdminPayslipSummaryDto> result = payslipService.getPayslipsForAdmin(1L, null);
@@ -199,8 +204,8 @@ public class PayslipServiceTest {
 
                 // when & then
                 assertThatThrownBy(() -> payslipService.getPayslip(1L, 999L))
-                    .isInstanceOf(CustomException.class)
-                    .hasFieldOrPropertyWithValue("errorCode", ErrorCode.PAYSLIP_NOT_FOUND);
+                        .isInstanceOf(CustomException.class)
+                        .hasFieldOrPropertyWithValue("errorCode", ErrorCode.PAYSLIP_NOT_FOUND);
             }
         }
 
@@ -220,9 +225,9 @@ public class PayslipServiceTest {
 
                 // when & then
                 assertThatThrownBy(() -> payslipService.getPayslip(intruderId, 100L))
-                    .isInstanceOf(CustomException.class)
-                    .hasFieldOrPropertyWithValue("errorCode",
-                        ErrorCode.NO_AUTHORITY_FOR_VIEW_PAYSLIP);
+                        .isInstanceOf(CustomException.class)
+                        .hasFieldOrPropertyWithValue(
+                                "errorCode", ErrorCode.NO_AUTHORITY_FOR_VIEW_PAYSLIP);
             }
         }
 
@@ -239,7 +244,7 @@ public class PayslipServiceTest {
 
                 given(payslipRepository.findById(100L)).willReturn(Optional.of(myPayslip));
                 given(payslipMapper.toEmployeePayslipDetailDto(myPayslip))
-                    .willReturn(EmployeePayslipDetailDto.builder().payslipId(100L).build());
+                        .willReturn(EmployeePayslipDetailDto.builder().payslipId(100L).build());
 
                 // when
                 EmployeePayslipDetailDto result = payslipService.getPayslip(1L, 100L);
@@ -251,7 +256,6 @@ public class PayslipServiceTest {
         }
     }
 
-
     @Nested
     @DisplayName("respondToPayslip 메서드는")
     class Describe_respondToPayslip {
@@ -261,8 +265,8 @@ public class PayslipServiceTest {
 
         @BeforeEach
         void setUp() {
-            payslip = Payslip.builder().id(100L).user(employee).status(PayslipStatus.PENDING)
-                .build();
+            payslip =
+                    Payslip.builder().id(100L).user(employee).status(PayslipStatus.PENDING).build();
             requestDto = new PayslipStatusRequestDto();
         }
 
@@ -279,10 +283,12 @@ public class PayslipServiceTest {
 
                 // when & then
                 assertThatThrownBy(
-                    () -> payslipService.respondToPayslip(anotherUserId, 100L, requestDto))
-                    .isInstanceOf(CustomException.class)
-                    .hasFieldOrPropertyWithValue("errorCode",
-                        ErrorCode.NO_AUTHORITY_FOR_VIEW_PAYSLIP);
+                                () ->
+                                        payslipService.respondToPayslip(
+                                                anotherUserId, 100L, requestDto))
+                        .isInstanceOf(CustomException.class)
+                        .hasFieldOrPropertyWithValue(
+                                "errorCode", ErrorCode.NO_AUTHORITY_FOR_VIEW_PAYSLIP);
             }
         }
 
@@ -300,10 +306,12 @@ public class PayslipServiceTest {
 
                 // when & then
                 assertThatThrownBy(
-                    () -> payslipService.respondToPayslip(employee.getId(), 100L, requestDto))
-                    .isInstanceOf(CustomException.class)
-                    .hasFieldOrPropertyWithValue("errorCode",
-                        ErrorCode.NO_REJECTION_REASON_PROVIDED);
+                                () ->
+                                        payslipService.respondToPayslip(
+                                                employee.getId(), 100L, requestDto))
+                        .isInstanceOf(CustomException.class)
+                        .hasFieldOrPropertyWithValue(
+                                "errorCode", ErrorCode.NO_REJECTION_REASON_PROVIDED);
             }
         }
 
@@ -328,5 +336,4 @@ public class PayslipServiceTest {
             }
         }
     }
-
 }

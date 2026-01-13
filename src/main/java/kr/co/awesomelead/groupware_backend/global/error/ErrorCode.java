@@ -2,7 +2,6 @@ package kr.co.awesomelead.groupware_backend.global.error;
 
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
-
 import org.springframework.http.HttpStatus;
 
 @Getter
@@ -17,7 +16,7 @@ public enum ErrorCode {
     PASSWORD_MISMATCH(HttpStatus.BAD_REQUEST, "비밀번호가 일치하지 않습니다."),
     VISIT_ALREADY_CHECKED_OUT(HttpStatus.BAD_REQUEST, "이미 체크아웃된 방문정보입니다."),
     VISITOR_PASSWORD_REQUIRED_FOR_PRE_REGISTRATION(
-            HttpStatus.BAD_REQUEST, "사전 방문 예약 시 내방객 비밀번호가 필요합니다."),
+        HttpStatus.BAD_REQUEST, "사전 방문 예약 시 내방객 비밀번호가 필요합니다."),
     DEPARTMENT_ID_REQUIRED(HttpStatus.BAD_REQUEST, "부서교육인 경우 부서 ID가 필요합니다."),
     ALREADY_MARKED_ATTENDANCE(HttpStatus.BAD_REQUEST, "이미 출석이 체크된 교육입니다."),
     NO_SIGNATURE_PROVIDED(HttpStatus.BAD_REQUEST, "서명이 제공되지 않았습니다."),
@@ -29,6 +28,7 @@ public enum ErrorCode {
     ONLY_PDF_ALLOWED(HttpStatus.BAD_REQUEST, "PDF 파일 형식만 업로드할 수 있습니다."),
     IDENTITY_VERIFICATION_NOT_COMPLETED(HttpStatus.BAD_REQUEST, "본인인증이 완료되지 않았습니다."),
     IDENTITY_VERIFICATION_NOT_FOUND(HttpStatus.BAD_REQUEST, "해당 본인인증 정보를 찾을 수 없습니다."),
+    NO_REJECTION_REASON_PROVIDED(HttpStatus.BAD_REQUEST, "반려 사유가 제공되지 않았습니다."),
 
     // 401 Unauthorized
     INVALID_TOKEN(HttpStatus.UNAUTHORIZED, "유효하지 않은 토큰입니다."),
@@ -42,6 +42,7 @@ public enum ErrorCode {
     NO_AUTHORITY_FOR_PAYSLIP(HttpStatus.UNAUTHORIZED, "급여명세서 발송 권한이 없습니다."),
     NO_AUTHORITY_FOR_REGISTRATION(HttpStatus.UNAUTHORIZED, "회원가입 승인 권한이 없습니다."),
     NO_AUTHORITY_FOR_ROLE_UPDATE(HttpStatus.UNAUTHORIZED, "사용자 역할 변경 권한이 없습니다."),
+    NO_AUTHORITY_FOR_VIEW_PAYSLIP(HttpStatus.UNAUTHORIZED, "급여명세서 조회 권한이 없습니다."),
 
     // 404 Not Found
     USER_NOT_FOUND(HttpStatus.NOT_FOUND, "해당 사용자를 찾을 수 없습니다."),
@@ -52,6 +53,7 @@ public enum ErrorCode {
     EDU_ATTACHMENT_NOT_FOUND(HttpStatus.NOT_FOUND, "해당 교육 첨부파일을 찾을 수 없습니다."),
     NOTICE_NOT_FOUND(HttpStatus.NOT_FOUND, "해당 공지사항을 찾을 수 없습니다."),
     NOTICE_ATTACHMENT_NOT_FOUND(HttpStatus.NOT_FOUND, "해당 공지사항 첨부파일을 찾을 수 없습니다."),
+    PAYSLIP_NOT_FOUND(HttpStatus.NOT_FOUND, "해당 급여명세서를 찾을 수 없습니다."),
 
     // 409 Conflict
     DUPLICATED_SIGNUP_REQUEST(HttpStatus.CONFLICT, "이미 처리된 가입 요청입니다."),

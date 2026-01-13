@@ -58,18 +58,20 @@ public class VisitCreateRequestDto {
 
     @NotNull // 실제 데이터 검증을 위해 추가 권장
     @Schema(
-        description = "보충적 허가 타입",
-        example = "NONE",
-        required = true,
-        allowableValues = {
-            "NONE",
-            "CONFINED_SPACE_ENTRY",
-            "HIGH_ALTITUDE_WORK",
-            "OTHER_PERMISSION"
-        })
+            description = "보충적 허가 타입",
+            example = "NONE",
+            required = true,
+            allowableValues = {
+                "NONE",
+                "CONFINED_SPACE_ENTRY",
+                "HIGH_ALTITUDE_WORK",
+                "OTHER_PERMISSION"
+            })
     private AdditionalPermissionType permissionType;
 
-    @Schema(description = "기타 허가 상세 내용 (permissionType이 OTHER_PERMISSION인 경우 필수)", example = "특수 장비 반입 허가 필요")
+    @Schema(
+            description = "기타 허가 상세 내용 (permissionType이 OTHER_PERMISSION인 경우 필수)",
+            example = "특수 장비 반입 허가 필요")
     private String permissionDetail;
 
     @NotNull

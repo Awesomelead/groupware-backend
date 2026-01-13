@@ -124,10 +124,10 @@ public class VisitController {
                                       }
                                     }
                                     """),
-                        @ExampleObject(
-                            name = "기타 허가 상세 내용 누락",
-                            value =
-                                """
+                                            @ExampleObject(
+                                                    name = "기타 허가 상세 내용 누락",
+                                                    value =
+                                                            """
                                     {
                                       "isSuccess": false,
                                       "code": "PERMISSION_DETAIL_REQUIRED",
@@ -291,10 +291,10 @@ public class VisitController {
                                       }
                                     }
                                     """),
-                        @ExampleObject(
-                            name = "기타 허가 상세 내용 누락",
-                            value =
-                                """
+                                            @ExampleObject(
+                                                    name = "기타 허가 상세 내용 누락",
+                                                    value =
+                                                            """
                                     {
                                       "isSuccess": false,
                                       "code": "PERMISSION_DETAIL_REQUIRED",

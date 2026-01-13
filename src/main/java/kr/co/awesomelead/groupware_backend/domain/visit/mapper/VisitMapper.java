@@ -1,6 +1,5 @@
 package kr.co.awesomelead.groupware_backend.domain.visit.mapper;
 
-import java.util.List;
 import kr.co.awesomelead.groupware_backend.domain.user.entity.User;
 import kr.co.awesomelead.groupware_backend.domain.visit.dto.request.CompanionRequestDto;
 import kr.co.awesomelead.groupware_backend.domain.visit.dto.request.VisitCreateRequestDto;
@@ -12,9 +11,12 @@ import kr.co.awesomelead.groupware_backend.domain.visit.entity.Companion;
 import kr.co.awesomelead.groupware_backend.domain.visit.entity.Visit;
 import kr.co.awesomelead.groupware_backend.domain.visit.entity.Visitor;
 import kr.co.awesomelead.groupware_backend.domain.visit.enums.VisitType;
+
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 import org.mapstruct.ReportingPolicy;
+
+import java.util.List;
 
 @Mapper(componentModel = "spring", unmappedTargetPolicy = ReportingPolicy.WARN)
 public interface VisitMapper {

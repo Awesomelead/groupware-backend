@@ -75,7 +75,6 @@ public class SecurityConfig {
                                         "/api/auth/reset-password/phone",
                                         "/api/auth/reset-password/email",
                                         "/api/auth/user",
-                                        "/api/visits/**",
                                         "/api/edu-reports/attachments/{id}/download", // 테스트용으로 교육자료
                                         // 다운로드 열어놓음
                                         "/api/test/**",
@@ -86,9 +85,12 @@ public class SecurityConfig {
                                         "/api/auth/logout",
                                         "/api/auth/reset-password", // 로그인 상태에서의 비번 변경
                                         "/api/admin/**", // 관리자 기능
-                                        "/api/visits/**" // 방문 관리
-                                        )
+                                        "/api/visits/department",
+                                        "/api/visits/employee/**",
+                                        "/api/visits/check-out")
                                 .authenticated()
+                                .requestMatchers("/api/visits/**")
+                                .permitAll()
                                 .anyRequest()
                                 .authenticated());
 

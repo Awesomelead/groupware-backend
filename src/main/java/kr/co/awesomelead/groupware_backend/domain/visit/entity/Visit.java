@@ -45,6 +45,7 @@ public class Visit {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 50)
     private Company hostCompany; // 내방객 방문 회사
 

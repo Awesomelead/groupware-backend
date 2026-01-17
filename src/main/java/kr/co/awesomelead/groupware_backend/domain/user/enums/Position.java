@@ -1,6 +1,7 @@
 package kr.co.awesomelead.groupware_backend.domain.user.enums;
 
 import com.fasterxml.jackson.annotation.JsonValue;
+
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 

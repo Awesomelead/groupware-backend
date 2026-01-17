@@ -1,5 +1,7 @@
 package kr.co.awesomelead.groupware_backend.domain.requesthistory.enums;
 
+import com.fasterxml.jackson.annotation.JsonValue;
+
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 
@@ -16,4 +18,9 @@ public enum RequestType {
     ETC("기타"); // 그 외 요청 사항
 
     private final String description;
+
+    @JsonValue
+    public String getDescription() {
+        return description;
+    }
 }

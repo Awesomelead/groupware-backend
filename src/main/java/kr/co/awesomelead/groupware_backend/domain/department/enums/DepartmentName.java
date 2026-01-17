@@ -1,5 +1,7 @@
 package kr.co.awesomelead.groupware_backend.domain.department.enums;
 
+import com.fasterxml.jackson.annotation.JsonValue;
+
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 
@@ -33,6 +35,11 @@ public enum DepartmentName {
     PRODUCTION_MANAGEMENT("생산관리부");
 
     private final String description;
+
+    @JsonValue
+    public String getDescription() {
+        return description;
+    }
 
     /** 한글 부서명으로 Enum 상수를 찾는 편의 메서드 */
     public static DepartmentName fromDescription(String description) {

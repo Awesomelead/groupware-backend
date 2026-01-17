@@ -19,7 +19,7 @@ public class DepartmentHierarchyResponseDto {
     @Schema(description = "부서 고유 ID", example = "1", required = true)
     private Long id;
 
-    @Schema(description = "부서명", example = "경영지원부", required = true)
+    @Schema(description = "부서명", example = "MANAGEMENT_SUPPORT", required = true)
     private DepartmentName name;
 
     @Schema(description = "하위 부서 목록 (재귀적 트리 구조)", required = true)

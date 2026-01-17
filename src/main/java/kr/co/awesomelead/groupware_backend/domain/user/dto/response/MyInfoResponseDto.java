@@ -6,6 +6,7 @@ import kr.co.awesomelead.groupware_backend.domain.department.enums.Company;
 import kr.co.awesomelead.groupware_backend.domain.department.enums.DepartmentName;
 import kr.co.awesomelead.groupware_backend.domain.user.entity.User;
 import kr.co.awesomelead.groupware_backend.domain.user.enums.JobType;
+import kr.co.awesomelead.groupware_backend.domain.user.enums.Position;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -55,7 +56,7 @@ public class MyInfoResponseDto {
     private JobType jobType;
 
     @Schema(description = "직급", example = "대리")
-    private String position;
+    private Position position;
 
     public static MyInfoResponseDto from(User user) {
         return MyInfoResponseDto.builder()

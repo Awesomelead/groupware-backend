@@ -14,6 +14,7 @@ import kr.co.awesomelead.groupware_backend.domain.department.repository.Departme
 import kr.co.awesomelead.groupware_backend.domain.user.entity.User;
 import kr.co.awesomelead.groupware_backend.domain.user.enums.Authority;
 import kr.co.awesomelead.groupware_backend.domain.user.enums.JobType;
+import kr.co.awesomelead.groupware_backend.domain.user.enums.Position;
 import kr.co.awesomelead.groupware_backend.domain.user.enums.Role;
 import kr.co.awesomelead.groupware_backend.domain.user.enums.Status;
 import kr.co.awesomelead.groupware_backend.domain.user.repository.UserRepository;
@@ -159,7 +160,7 @@ class AdminServiceTest {
         dto.setJobType(JobType.MANAGEMENT);
         dto.setDepartmentId(1L);
         dto.setHireDate(LocalDate.now());
-        dto.setPosition("사원");
+        dto.setPosition(Position.STAFF);
         return dto;
     }
 
@@ -185,7 +186,7 @@ class AdminServiceTest {
                 // then
                 assertThat(user.getRole()).isEqualTo(Role.ADMIN);
                 assertThat(user.hasAuthority(Authority.WRITE_NOTICE)).isEqualTo(true);
-                assertThat(user.hasAuthority(Authority.UPLOAD_ANNUAL_LEAVE)).isEqualTo(true);
+                assertThat(user.hasAuthority(Authority.MANAGE_EMPLOYEE_DATA)).isEqualTo(true);
             }
         }
 

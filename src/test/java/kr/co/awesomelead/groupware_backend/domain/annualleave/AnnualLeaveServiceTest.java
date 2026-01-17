@@ -81,7 +81,7 @@ public class AnnualLeaveServiceTest {
             @DisplayName("데이터를 파싱하여 저장하고 성공 결과를 반환한다")
             void it_returns_success_response() throws IOException {
                 // given
-                User admin = createMockUser(Authority.UPLOAD_ANNUAL_LEAVE); // 연차 발송 권한 추가
+                User admin = createMockUser(Authority.MANAGE_EMPLOYEE_DATA); // 연차 발송 권한 추가
                 given(userRepository.findById(loginUserId)).willReturn(Optional.of(admin));
 
                 MultipartFile mockFile = createMockExcelFile();
@@ -115,7 +115,7 @@ public class AnnualLeaveServiceTest {
             void it_throws_exception_and_stops_everything() throws IOException {
                 // given: 날짜 칸에 "날짜없음" 이라고 적힌 잘못된 엑셀 파일 준비
                 MultipartFile invalidFile = createMockExcelFileWithWrongDateFormat();
-                User admin = createMockUser(Authority.UPLOAD_ANNUAL_LEAVE);
+                User admin = createMockUser(Authority.MANAGE_EMPLOYEE_DATA);
                 given(userRepository.findById(loginUserId)).willReturn(Optional.of(admin));
 
                 // when & then
@@ -138,7 +138,7 @@ public class AnnualLeaveServiceTest {
             void it_adds_to_failures() throws IOException {
                 // given
                 given(userRepository.findById(loginUserId))
-                        .willReturn(Optional.of(createMockUser(Authority.UPLOAD_ANNUAL_LEAVE)));
+                        .willReturn(Optional.of(createMockUser(Authority.MANAGE_EMPLOYEE_DATA)));
                 given(userRepository.findByNameAndJoinDate(anyString(), any()))
                         .willReturn(Optional.empty()); // 유저 못 찾음
 
@@ -165,7 +165,7 @@ public class AnnualLeaveServiceTest {
                 // given
                 MultipartFile mockFile = org.mockito.Mockito.mock(MultipartFile.class);
 
-                User admin = createMockUser(Authority.UPLOAD_ANNUAL_LEAVE);
+                User admin = createMockUser(Authority.MANAGE_EMPLOYEE_DATA);
                 given(userRepository.findById(loginUserId)).willReturn(Optional.of(admin));
 
                 given(mockFile.getInputStream()).willThrow(new IOException("강제 발생 에러"));

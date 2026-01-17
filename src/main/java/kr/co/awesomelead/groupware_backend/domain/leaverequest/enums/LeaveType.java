@@ -1,5 +1,7 @@
 package kr.co.awesomelead.groupware_backend.domain.leaverequest.enums;
 
+import com.fasterxml.jackson.annotation.JsonValue;
+
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 
@@ -13,4 +15,9 @@ public enum LeaveType {
     OTHER("기타"); // 소분류 불필요 (NULL)
 
     private final String description;
+
+    @JsonValue
+    public String getDescription() {
+        return description;
+    }
 }

@@ -4,6 +4,7 @@ import io.swagger.v3.oas.annotations.media.Schema;
 
 import kr.co.awesomelead.groupware_backend.domain.department.enums.Company;
 import kr.co.awesomelead.groupware_backend.domain.user.enums.JobType;
+import kr.co.awesomelead.groupware_backend.domain.user.enums.Position;
 
 import lombok.Getter;
 import lombok.Setter;
@@ -29,11 +30,11 @@ public class UserApprovalRequestDto {
     @Schema(description = "부서 ID", example = "1")
     private Long departmentId;
 
-    @Schema(description = "직무 유형", example = "관리직")
+    @Schema(description = "직무 유형", example = "MANAGEMENT")
     private JobType jobType;
 
-    @Schema(description = "직급", example = "대리")
-    private String position;
+    @Schema(description = "직급", example = "ASSISTANT_MANAGER")
+    private Position position;
 
     @Schema(description = "입사일", example = "2025-09-22")
     private LocalDate hireDate;

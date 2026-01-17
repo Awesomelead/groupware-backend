@@ -1,5 +1,6 @@
 package kr.co.awesomelead.groupware_backend.domain.visit.enums;
 
+import com.fasterxml.jackson.annotation.JsonValue;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 
@@ -12,4 +13,9 @@ public enum AdditionalPermissionType {
     OTHER_PERMISSION("기타 허가");
 
     private final String description;
+
+    @JsonValue
+    public String getDescription() {
+        return description;
+    }
 }

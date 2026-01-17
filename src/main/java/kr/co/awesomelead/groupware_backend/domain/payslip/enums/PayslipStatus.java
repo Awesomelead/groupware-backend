@@ -1,5 +1,6 @@
 package kr.co.awesomelead.groupware_backend.domain.payslip.enums;
 
+import com.fasterxml.jackson.annotation.JsonValue;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 
@@ -11,4 +12,9 @@ public enum PayslipStatus {
     REJECTED("거절됨");
 
     private final String description;
+
+    @JsonValue
+    public String getDescription() {
+        return description;
+    }
 }

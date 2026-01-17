@@ -1,5 +1,6 @@
 package kr.co.awesomelead.groupware_backend.domain.education.enums;
 
+import com.fasterxml.jackson.annotation.JsonValue;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 
@@ -11,4 +12,9 @@ public enum EduType {
     DEPARTMENT("부서 교육"); // 특정 부서 대상 교육 (부서 ID 필수)
 
     private final String description;
+
+    @JsonValue
+    public String getDescription() {
+        return description;
+    }
 }

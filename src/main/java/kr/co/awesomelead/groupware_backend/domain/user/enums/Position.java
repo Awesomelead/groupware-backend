@@ -1,5 +1,6 @@
 package kr.co.awesomelead.groupware_backend.domain.user.enums;
 
+import com.fasterxml.jackson.annotation.JsonValue;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 
@@ -24,4 +25,9 @@ public enum Position {
     SECURITY_GUARD("경비원");
 
     private final String description;
+
+    @JsonValue
+    public String getDescription() {
+        return description;
+    }
 }

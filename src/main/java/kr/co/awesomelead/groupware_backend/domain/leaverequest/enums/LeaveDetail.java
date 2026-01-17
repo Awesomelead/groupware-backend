@@ -1,5 +1,6 @@
 package kr.co.awesomelead.groupware_backend.domain.leaverequest.enums;
 
+import com.fasterxml.jackson.annotation.JsonValue;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 
@@ -19,4 +20,9 @@ public enum LeaveDetail {
     PM("오후");
 
     private final String description;
+
+    @JsonValue
+    public String getDescription() {
+        return description;
+    }
 }

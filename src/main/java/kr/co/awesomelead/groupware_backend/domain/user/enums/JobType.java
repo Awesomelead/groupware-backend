@@ -1,5 +1,6 @@
 package kr.co.awesomelead.groupware_backend.domain.user.enums;
 
+import com.fasterxml.jackson.annotation.JsonValue;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 
@@ -14,4 +15,9 @@ public enum JobType {
     MANAGEMENT("관리직");
 
     private final String description;
+
+    @JsonValue
+    public String getDescription() {
+        return description;
+    }
 }

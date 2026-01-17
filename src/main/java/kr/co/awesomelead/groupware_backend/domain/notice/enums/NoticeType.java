@@ -1,5 +1,6 @@
 package kr.co.awesomelead.groupware_backend.domain.notice.enums;
 
+import com.fasterxml.jackson.annotation.JsonValue;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 
@@ -11,4 +12,9 @@ public enum NoticeType {
     ETC("기타");
 
     private final String description;
+
+    @JsonValue
+    public String getDescription() {
+        return description;
+    }
 }

@@ -1,18 +1,16 @@
 package kr.co.awesomelead.groupware_backend.domain.user.dto.response;
 
 import io.swagger.v3.oas.annotations.media.Schema;
-
+import java.time.LocalDate;
 import kr.co.awesomelead.groupware_backend.domain.department.enums.Company;
 import kr.co.awesomelead.groupware_backend.domain.department.enums.DepartmentName;
 import kr.co.awesomelead.groupware_backend.domain.user.entity.User;
 import kr.co.awesomelead.groupware_backend.domain.user.enums.JobType;
-
+import kr.co.awesomelead.groupware_backend.domain.user.enums.Position;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-
-import java.time.LocalDate;
 
 @Getter
 @Builder
@@ -55,24 +53,24 @@ public class MyInfoResponseDto {
     private JobType jobType;
 
     @Schema(description = "직급", example = "대리")
-    private String position;
+    private Position position;
 
     public static MyInfoResponseDto from(User user) {
         return MyInfoResponseDto.builder()
-                .id(user.getId())
-                .nameKor(user.getNameKor())
-                .nameEng(user.getNameEng())
-                .birthDate(user.getBirthDate())
-                .nationality(user.getNationality())
-                .registrationNumberFront(formatRegistrationNumber(user.getRegistrationNumber()))
-                .phoneNumber(user.getPhoneNumber())
-                .email(user.getEmail())
-                .workLocation(user.getWorkLocation())
-                .departmentName(
-                        user.getDepartment() != null ? user.getDepartment().getName() : null)
-                .jobType(user.getJobType())
-                .position(user.getPosition())
-                .build();
+            .id(user.getId())
+            .nameKor(user.getNameKor())
+            .nameEng(user.getNameEng())
+            .birthDate(user.getBirthDate())
+            .nationality(user.getNationality())
+            .registrationNumberFront(formatRegistrationNumber(user.getRegistrationNumber()))
+            .phoneNumber(user.getPhoneNumber())
+            .email(user.getEmail())
+            .workLocation(user.getWorkLocation())
+            .departmentName(
+                user.getDepartment() != null ? user.getDepartment().getName() : null)
+            .jobType(user.getJobType())
+            .position(user.getPosition())
+            .build();
     }
 
     // 주민등록번호를 "900101-1******" 형식으로 포맷팅

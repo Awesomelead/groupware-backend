@@ -9,6 +9,7 @@ import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
 
 import kr.co.awesomelead.groupware_backend.domain.department.enums.Company;
+import kr.co.awesomelead.groupware_backend.domain.visit.enums.AdditionalPermissionType;
 import kr.co.awesomelead.groupware_backend.domain.visit.enums.VisitPurpose;
 
 import lombok.Getter;
@@ -34,7 +35,7 @@ public class VisitCreateRequestDto {
     private String visitorPhone;
 
     @NotBlank
-    @Schema(description = "내방객 회사명", example = "어썸리드", required = true)
+    @Schema(description = "내방객 회사명", example = "어썸테크", required = true)
     private String visitorCompany;
 
     @Schema(description = "차량 번호", example = "12가3456")
@@ -55,6 +56,24 @@ public class VisitCreateRequestDto {
             })
     private VisitPurpose purpose;
 
+    @NotNull // 실제 데이터 검증을 위해 추가 권장
+    @Schema(
+            description = "보충적 허가 타입",
+            example = "NONE",
+            required = true,
+            allowableValues = {
+                "NONE",
+                "CONFINED_SPACE_ENTRY",
+                "HIGH_ALTITUDE_WORK",
+                "OTHER_PERMISSION"
+            })
+    private AdditionalPermissionType permissionType;
+
+    @Schema(
+            description = "기타 허가 상세 내용 (permissionType이 OTHER_PERMISSION인 경우 필수)",
+            example = "특수 장비 반입 허가 필요")
+    private String permissionDetail;
+
     @NotNull
     @Schema(description = "방문 시작 일시", example = "2025-01-15T14:00:00", required = true)
     private LocalDateTime visitStartDate;
@@ -63,8 +82,8 @@ public class VisitCreateRequestDto {
     @Schema(description = "담당자 ID", example = "1", required = true)
     private Long hostUserId;
 
-    @NotBlank
-    @Schema(description = "담당자 회사명 (클라이언트에서 자동 주입)", example = "어썸리드", required = true)
+    @NotNull
+    @Schema(description = "담당자 회사명 (클라이언트에서 자동 주입)", example = "AWESOME", required = true)
     private Company hostCompany;
 
     @Valid

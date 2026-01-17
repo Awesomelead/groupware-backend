@@ -18,6 +18,7 @@ import jakarta.persistence.OneToMany;
 
 import kr.co.awesomelead.groupware_backend.domain.department.enums.Company;
 import kr.co.awesomelead.groupware_backend.domain.user.entity.User;
+import kr.co.awesomelead.groupware_backend.domain.visit.enums.AdditionalPermissionType;
 import kr.co.awesomelead.groupware_backend.domain.visit.enums.VisitPurpose;
 import kr.co.awesomelead.groupware_backend.domain.visit.enums.VisitType;
 
@@ -63,9 +64,13 @@ public class Visit {
 
     private LocalDateTime visitEndDate; // 방문 종료 일시, null 가능
 
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false, length = 30)
     @Builder.Default
-    @Column(nullable = false)
-    private boolean additionalRequirements = false; // 보충적허가 필요여부 (기본값 false)
+    private AdditionalPermissionType permissionType = AdditionalPermissionType.NONE;
+
+    @Column(length = 200)
+    private String permissionDetail;
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 20)

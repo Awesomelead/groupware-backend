@@ -24,4 +24,7 @@ public class LoginResponseDto {
 
     @Schema(description = "영어 이름", example = "HONG GILDONG")
     private String nameEng;
+
+    @Schema(description = "직급", example = "대리")
+    private String position;
 }

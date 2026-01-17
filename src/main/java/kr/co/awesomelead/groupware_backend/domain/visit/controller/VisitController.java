@@ -89,6 +89,8 @@ public class VisitController {
                                     "visitorCompany": "어썸리드",
                                     "carNumber": "12가3456",
                                     "purpose": "MEETING",
+                                    "permissionType": "HIGH_ALTITUDE_WORK",
+                                    "permissionDetail": null,
                                     "visitStartDate": "2025-01-15T14:00:00",
                                     "visitEndDate": null,
                                     "hostUserId": 1,
@@ -120,6 +122,17 @@ public class VisitController {
                                         "visitorPhone": "올바른 전화번호 형식이 아닙니다.",
                                         "visitorPassword": "비밀번호는 4자리여야 합니다."
                                       }
+                                    }
+                                    """),
+                                            @ExampleObject(
+                                                    name = "기타 허가 상세 내용 누락",
+                                                    value =
+                                                            """
+                                    {
+                                      "isSuccess": false,
+                                      "code": "PERMISSION_DETAIL_REQUIRED",
+                                      "message": "기타 허가 선택 시 상세 내용 작성이 필수입니다.",
+                                      "result": null
                                     }
                                     """),
                                             @ExampleObject(
@@ -244,6 +257,8 @@ public class VisitController {
                                     "visitorCompany": "테스트회사",
                                     "carNumber": null,
                                     "purpose": "GOODS_DELIVERY",
+                                    "permissionType": "OTHER_PERMISSION",
+                                    "permissionDetail": "특수 장비 반입 허가 필요",
                                     "visitStartDate": "2025-01-15T10:00:00",
                                     "visitEndDate": null,
                                     "hostUserId": 2,
@@ -274,6 +289,17 @@ public class VisitController {
                                         "visitorName": "내방객 이름은 필수입니다.",
                                         "purpose": "방문 목적은 필수입니다."
                                       }
+                                    }
+                                    """),
+                                            @ExampleObject(
+                                                    name = "기타 허가 상세 내용 누락",
+                                                    value =
+                                                            """
+                                    {
+                                      "isSuccess": false,
+                                      "code": "PERMISSION_DETAIL_REQUIRED",
+                                      "message": "기타 허가 선택 시 상세 내용 작성이 필수입니다.",
+                                      "result": null
                                     }
                                     """),
                                             @ExampleObject(

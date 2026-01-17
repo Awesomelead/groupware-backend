@@ -490,7 +490,12 @@ public class AuthController {
                                   "code": "COMMON200",
                                   "message": "요청에 성공했습니다.",
                                   "result": {
-                                    "accessToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+                                    "accessToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+                                    "userId": 1,
+                                    "nameKor": "홍길동",
+                                    "nameEng": "GILDONG HONG",
+                                    "position": "대리"
+
                                   }
                                 }
                                 """))),
@@ -810,13 +815,13 @@ public class AuthController {
                                                 @ExampleObject(
                                                         value =
                                                                 """
-                            {
-                              "isSuccess": true,
-                              "code": "COMMON204",
-                              "message": "비밀번호가 성공적으로 재설정되었습니다.",
-                              "result": null
-                            }
-                            """))),
+                                {
+                                  "isSuccess": true,
+                                  "code": "COMMON204",
+                                  "message": "비밀번호가 성공적으로 재설정되었습니다.",
+                                  "result": null
+                                }
+                                """))),
                 @io.swagger.v3.oas.annotations.responses.ApiResponse(
                         responseCode = "400",
                         description = "잘못된 요청",
@@ -828,48 +833,48 @@ public class AuthController {
                                                     name = "입력값 검증 실패",
                                                     value =
                                                             """
-                                {
-                                  "isSuccess": false,
-                                  "code": "COMMON400",
-                                  "message": "입력값이 유효하지 않습니다.",
-                                  "result": {
-                                    "email": "유효한 이메일 형식이 아닙니다."
-                                  }
-                                }
-                                """),
+                                    {
+                                      "isSuccess": false,
+                                      "code": "COMMON400",
+                                      "message": "입력값이 유효하지 않습니다.",
+                                      "result": {
+                                        "email": "유효한 이메일 형식이 아닙니다."
+                                      }
+                                    }
+                                    """),
                                             @ExampleObject(
                                                     name = "전화번호 인증 미완료",
                                                     value =
                                                             """
-                                {
-                                  "isSuccess": false,
-                                  "code": "PHONE_NOT_VERIFIED",
-                                  "message": "전화번호 인증이 필요합니다.",
-                                  "result": null
-                                }
-                                """),
+                                    {
+                                      "isSuccess": false,
+                                      "code": "PHONE_NOT_VERIFIED",
+                                      "message": "전화번호 인증이 필요합니다.",
+                                      "result": null
+                                    }
+                                    """),
                                             @ExampleObject(
                                                     name = "전화번호 불일치",
                                                     value =
                                                             """
-                                {
-                                  "isSuccess": false,
-                                  "code": "PHONE_NUMBER_MISMATCH",
-                                  "message": "입력한 전화번호가 계정의 전화번호와 일치하지 않습니다.",
-                                  "result": null
-                                }
-                                """),
+                                    {
+                                      "isSuccess": false,
+                                      "code": "PHONE_NUMBER_MISMATCH",
+                                      "message": "입력한 전화번호가 계정의 전화번호와 일치하지 않습니다.",
+                                      "result": null
+                                    }
+                                    """),
                                             @ExampleObject(
                                                     name = "비밀번호 불일치",
                                                     value =
                                                             """
-                                {
-                                  "isSuccess": false,
-                                  "code": "PASSWORD_MISMATCH",
-                                  "message": "비밀번호가 일치하지 않습니다.",
-                                  "result": null
-                                }
-                                """)
+                                    {
+                                      "isSuccess": false,
+                                      "code": "PASSWORD_MISMATCH",
+                                      "message": "비밀번호가 일치하지 않습니다.",
+                                      "result": null
+                                    }
+                                    """)
                                         })),
                 @io.swagger.v3.oas.annotations.responses.ApiResponse(
                         responseCode = "404",
@@ -881,13 +886,13 @@ public class AuthController {
                                                 @ExampleObject(
                                                         value =
                                                                 """
-                            {
-                              "isSuccess": false,
-                              "code": "USER_NOT_FOUND",
-                              "message": "해당 사용자를 찾을 수 없습니다.",
-                              "result": null
-                            }
-                            """)))
+                                {
+                                  "isSuccess": false,
+                                  "code": "USER_NOT_FOUND",
+                                  "message": "해당 사용자를 찾을 수 없습니다.",
+                                  "result": null
+                                }
+                                """)))
             })
     @PatchMapping("/reset-password/phone")
     public ResponseEntity<ApiResponse<Void>> resetPasswordByPhone(

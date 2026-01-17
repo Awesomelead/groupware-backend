@@ -122,7 +122,11 @@ public class AuthService {
         // 7. 응답 생성
         LoginResponseDto loginResponseDto =
                 new LoginResponseDto(
-                        accessToken, user.getId(), user.getNameKor(), user.getNameEng());
+                        accessToken,
+                        user.getId(),
+                        user.getNameKor(),
+                        user.getNameEng(),
+                        user.getPosition());
 
         return new LoginiResultDto(loginResponseDto, refreshToken);
     }

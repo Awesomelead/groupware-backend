@@ -8,8 +8,6 @@ import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 
-import java.time.LocalDate;
-import java.util.Optional;
 import kr.co.awesomelead.groupware_backend.domain.aligo.service.PhoneAuthService;
 import kr.co.awesomelead.groupware_backend.domain.department.entity.Department;
 import kr.co.awesomelead.groupware_backend.domain.department.enums.Company;
@@ -24,6 +22,7 @@ import kr.co.awesomelead.groupware_backend.domain.user.enums.Status;
 import kr.co.awesomelead.groupware_backend.domain.user.repository.UserRepository;
 import kr.co.awesomelead.groupware_backend.global.error.CustomException;
 import kr.co.awesomelead.groupware_backend.global.error.ErrorCode;
+
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -34,21 +33,20 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.security.core.userdetails.UserDetails;
 
+import java.time.LocalDate;
+import java.util.Optional;
+
 @ExtendWith(MockitoExtension.class)
 @DisplayName("UserService 테스트")
 class UserServiceTest {
 
-    @Mock
-    private UserRepository userRepository;
+    @Mock private UserRepository userRepository;
 
-    @Mock
-    private PhoneAuthService phoneAuthService;
+    @Mock private PhoneAuthService phoneAuthService;
 
-    @Mock
-    private UserDetails userDetails;
+    @Mock private UserDetails userDetails;
 
-    @InjectMocks
-    private UserService userService;
+    @InjectMocks private UserService userService;
 
     private static final String TEST_EMAIL = "test@example.com";
     private static final String TEST_NAME_KOR = "김철수";
@@ -66,30 +64,30 @@ class UserServiceTest {
     // Helper method: 새로운 User 객체 생성
     private User createTestUser() {
         Department testDepartment =
-            Department.builder()
-                .id(1L)
-                .name(DepartmentName.CHUNGNAM_HQ)
-                .company(Company.AWESOME)
-                .build();
+                Department.builder()
+                        .id(1L)
+                        .name(DepartmentName.CHUNGNAM_HQ)
+                        .company(Company.AWESOME)
+                        .build();
 
         User user =
-            User.builder()
-                .id(1L)
-                .email(TEST_EMAIL)
-                .password("encodedPassword")
-                .nameKor(TEST_NAME_KOR)
-                .nameEng(TEST_NAME_ENG)
-                .nationality("대한민국")
-                .registrationNumber("9001011234567")
-                .phoneNumber(TEST_PHONE)
-                .birthDate(LocalDate.of(1990, 1, 1))
-                .jobType(JobType.MANAGEMENT)
-                .position(Position.ASSISTANT_MANAGER)
-                .role(Role.USER)
-                .status(Status.AVAILABLE)
-                .workLocation(Company.AWESOME)
-                .department(testDepartment)
-                .build();
+                User.builder()
+                        .id(1L)
+                        .email(TEST_EMAIL)
+                        .password("encodedPassword")
+                        .nameKor(TEST_NAME_KOR)
+                        .nameEng(TEST_NAME_ENG)
+                        .nationality("대한민국")
+                        .registrationNumber("9001011234567")
+                        .phoneNumber(TEST_PHONE)
+                        .birthDate(LocalDate.of(1990, 1, 1))
+                        .jobType(JobType.MANAGEMENT)
+                        .position(Position.ASSISTANT_MANAGER)
+                        .role(Role.USER)
+                        .status(Status.AVAILABLE)
+                        .workLocation(Company.AWESOME)
+                        .department(testDepartment)
+                        .build();
 
         // 전화번호 해시 설정
         user.setPhoneNumberHash(User.hashValue(TEST_PHONE));
@@ -137,8 +135,8 @@ class UserServiceTest {
 
             // when & then
             assertThatThrownBy(() -> userService.getMyInfo(userDetails))
-                .isInstanceOf(CustomException.class)
-                .hasFieldOrPropertyWithValue("errorCode", ErrorCode.USER_NOT_FOUND);
+                    .isInstanceOf(CustomException.class)
+                    .hasFieldOrPropertyWithValue("errorCode", ErrorCode.USER_NOT_FOUND);
 
             verify(userRepository).findByEmail(TEST_EMAIL);
         }
@@ -242,8 +240,8 @@ class UserServiceTest {
 
             // when & then
             assertThatThrownBy(() -> userService.updateMyInfo(userDetails, requestDto))
-                .isInstanceOf(CustomException.class)
-                .hasFieldOrPropertyWithValue("errorCode", ErrorCode.NAME_ENG_ALREADY_SAME);
+                    .isInstanceOf(CustomException.class)
+                    .hasFieldOrPropertyWithValue("errorCode", ErrorCode.NAME_ENG_ALREADY_SAME);
 
             verify(userRepository).findByEmail(TEST_EMAIL);
             verify(userRepository, never()).save(any());
@@ -260,8 +258,8 @@ class UserServiceTest {
 
             // when & then
             assertThatThrownBy(() -> userService.updateMyInfo(userDetails, requestDto))
-                .isInstanceOf(CustomException.class)
-                .hasFieldOrPropertyWithValue("errorCode", ErrorCode.PHONE_NUMBER_ALREADY_SAME);
+                    .isInstanceOf(CustomException.class)
+                    .hasFieldOrPropertyWithValue("errorCode", ErrorCode.PHONE_NUMBER_ALREADY_SAME);
 
             verify(userRepository).findByEmail(TEST_EMAIL);
             verify(phoneAuthService, never()).isPhoneVerified(anyString());
@@ -280,8 +278,8 @@ class UserServiceTest {
 
             // when & then
             assertThatThrownBy(() -> userService.updateMyInfo(userDetails, requestDto))
-                .isInstanceOf(CustomException.class)
-                .hasFieldOrPropertyWithValue("errorCode", ErrorCode.PHONE_NOT_VERIFIED);
+                    .isInstanceOf(CustomException.class)
+                    .hasFieldOrPropertyWithValue("errorCode", ErrorCode.PHONE_NOT_VERIFIED);
 
             verify(userRepository).findByEmail(TEST_EMAIL);
             verify(phoneAuthService).isPhoneVerified(NEW_PHONE);
@@ -302,9 +300,9 @@ class UserServiceTest {
 
             // when & then
             assertThatThrownBy(() -> userService.updateMyInfo(userDetails, requestDto))
-                .isInstanceOf(CustomException.class)
-                .hasFieldOrPropertyWithValue(
-                    "errorCode", ErrorCode.PHONE_NUMBER_ALREADY_EXISTS);
+                    .isInstanceOf(CustomException.class)
+                    .hasFieldOrPropertyWithValue(
+                            "errorCode", ErrorCode.PHONE_NUMBER_ALREADY_EXISTS);
 
             verify(userRepository).findByEmail(TEST_EMAIL);
             verify(phoneAuthService).isPhoneVerified(NEW_PHONE);
@@ -339,8 +337,8 @@ class UserServiceTest {
 
             // when & then
             assertThatThrownBy(() -> userService.updateMyInfo(userDetails, requestDto))
-                .isInstanceOf(CustomException.class)
-                .hasFieldOrPropertyWithValue("errorCode", ErrorCode.USER_NOT_FOUND);
+                    .isInstanceOf(CustomException.class)
+                    .hasFieldOrPropertyWithValue("errorCode", ErrorCode.USER_NOT_FOUND);
 
             verify(userRepository).findByEmail(TEST_EMAIL);
             verify(userRepository, never()).save(any());

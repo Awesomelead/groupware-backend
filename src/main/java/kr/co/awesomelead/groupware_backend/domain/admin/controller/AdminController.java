@@ -35,10 +35,11 @@ import org.springframework.web.bind.annotation.RestController;
                 """
             ## 관리자 전용 API
 
-            시스템 관리자 권한(`ROLE_ADMIN`)이 필요한 관리 기능을 제공합니다.
+            시스템 관리 권한이 필요한 기능을 제공합니다. 주로 사용자 승인 및 권한 관리를 담당합니다.
 
-            ### 주요 기능
-            - **회원가입 승인**: 신규 가입 요청을 검토하고 부서 및 직급을 부여하여 최종 승인합니다.
+            ### 권한 안내
+            - **회원가입 승인**: `ROLE_ADMIN` 이상의 권한이 필요합니다.
+            - **역할 변경**: `ROLE_ADMIN` 또는 `ROLE_MASTER_ADMIN` 권한이 필요합니다.
             """)
 public class AdminController {
 
@@ -46,7 +47,7 @@ public class AdminController {
 
     @Operation(
             summary = "회원가입 승인",
-            description = "대기 상태(PENDING)인 사용자의 정보를 수정/보완하여 최종 승인(AVAILABLE) 처리합니다.")
+            description = "대기 상태(PENDING)인 사용자의 부서 및 직급을 설정하고 최종 승인(AVAILABLE) 처리합니다.")
     @ApiResponses(
             value = {
                 @io.swagger.v3.oas.annotations.responses.ApiResponse(
@@ -60,30 +61,46 @@ public class AdminController {
                                                 @ExampleObject(
                                                         value =
                                                                 """
-                    {
-                      "isSuccess": true,
-                      "code": "COMMON200",
-                      "message": "요청에 성공했습니다.",
-                      "result": null
-                    }
-                    """))),
+                                {
+                                "isSuccess": true,
+                                "code": "COMMON200",
+                                "message": "요청에 성공했습니다.",
+                                "result": "1번 사용자의 회원가입이 성공적으로 승인되었습니다."
+                                }
+                                """))),
                 @io.swagger.v3.oas.annotations.responses.ApiResponse(
                         responseCode = "400",
-                        description = "승인 불가 (이미 승인된 사용자 등)",
+                        description = "잘못된 요청",
                         content =
                                 @Content(
                                         mediaType = "application/json",
-                                        examples =
-                                                @ExampleObject(
-                                                        value =
-                                                                """
-                    {
-                      "isSuccess": false,
-                      "code": "DUPLICATED_SIGNUP_REQUEST",
-                      "message": "이미 승인 처리가 완료된 사용자입니다.",
-                      "result": null
-                    }
-                    """))),
+                                        examples = {
+                                            @ExampleObject(
+                                                    name = "이미 승인된 사용자",
+                                                    value =
+                                                            """
+                                    {
+                                      "isSuccess": false,
+                                      "code": "DUPLICATED_SIGNUP_REQUEST",
+                                      "message": "이미 승인 처리가 완료된 사용자입니다.",
+                                      "result": null
+                                    }
+                                    """),
+                                            @ExampleObject(
+                                                    name = "입력값 검증 실패",
+                                                    value =
+                                                            """
+                                    {
+                                      "isSuccess": false,
+                                      "code": "COMMON400",
+                                      "message": "입력값이 유효하지 않습니다.",
+                                      "result": {
+                                        "departmentId": "부서 ID는 필수입니다.",
+                                        "position": "직급 정보가 누락되었습니다."
+                                      }
+                                    }
+                                    """)
+                                        })),
                 @io.swagger.v3.oas.annotations.responses.ApiResponse(
                         responseCode = "404",
                         description = "대상 없음",
@@ -94,17 +111,25 @@ public class AdminController {
                                             @ExampleObject(
                                                     name = "사용자 없음",
                                                     value =
-                                                            "{\"isSuccess\": false, \"code\":"
-                                                                    + " \"USER_NOT_FOUND\","
-                                                                    + " \"message\": \"해당 사용자를 찾을 수"
-                                                                    + " 없습니다.\"}"),
+                                                            """
+                                    {
+                                      "isSuccess": false,
+                                      "code": "USER_NOT_FOUND",
+                                      "message": "해당 사용자를 찾을 수 없습니다.",
+                                      "result": null
+                                    }
+                                    """),
                                             @ExampleObject(
                                                     name = "부서 없음",
                                                     value =
-                                                            "{\"isSuccess\": false, \"code\":"
-                                                                    + " \"DEPARTMENT_NOT_FOUND\","
-                                                                    + " \"message\": \"해당 부서를 찾을 수"
-                                                                    + " 없습니다.\"}")
+                                                            """
+                                    {
+                                      "isSuccess": false,
+                                      "code": "DEPARTMENT_NOT_FOUND",
+                                      "message": "해당 부서를 찾을 수 없습니다.",
+                                      "result": null
+                                    }
+                                    """)
                                         }))
             })
     @PatchMapping("/users/{userId}/approve")
@@ -123,9 +148,7 @@ public class AdminController {
 
     @Operation(
             summary = "사용자 역할(Role) 변경",
-            description =
-                    "특정 사용자의 역할을 변경하고, 역할에 따른 기본 권한(Authority)을 자동으로 부여/회수합니다. (ADMIN,"
-                            + " MASTER_ADMIN만 호출 가능)")
+            description = "특정 사용자의 역할을 변경합니다. 관리자(`ADMIN`) 또는 마스터 관리자(`MASTER_ADMIN`) 권한이 필요합니다.")
     @ApiResponses(
             value = {
                 @io.swagger.v3.oas.annotations.responses.ApiResponse(
@@ -139,31 +162,31 @@ public class AdminController {
                                                 @ExampleObject(
                                                         value =
                                                                 """
-                    {
-                      "isSuccess": true,
-                      "code": "COMMON200",
-                      "message": "요청에 성공했습니다.",
-                      "result": null
-                    }
-                    """))),
+                                {
+                                "isSuccess": true,
+                                "code": "COMMON200",
+                                "message": "요청에 성공했습니다.",
+                                "result": "5번 사용자의 역할이 관리자(으)로 성공적으로 변경되었습니다."
+                                }
+                                """))),
                 @io.swagger.v3.oas.annotations.responses.ApiResponse(
-                        responseCode = "401",
+                        responseCode = "403",
                         description = "권한 부족",
                         content =
                                 @Content(
                                         mediaType = "application/json",
                                         examples =
                                                 @ExampleObject(
-                                                        name = "권한 업데이트 권한 없음",
+                                                        name = "역할 변경 권한 없음",
                                                         value =
                                                                 """
-                    {
-                      "isSuccess": false,
-                      "code": "NO_AUTHORITY_FOR_ROLE_UPDATE",
-                      "message": "사용자 역할 변경 권한이 없습니다.",
-                      "result": null
-                    }
-                    """))),
+                                {
+                                "isSuccess": false,
+                                "code": "NO_AUTHORITY_FOR_ROLE_UPDATE",
+                                "message": "사용자 역할 변경 권한이 없습니다.",
+                                "result": null
+                                }
+                                """))),
                 @io.swagger.v3.oas.annotations.responses.ApiResponse(
                         responseCode = "404",
                         description = "사용자 없음",
@@ -174,13 +197,13 @@ public class AdminController {
                                                 @ExampleObject(
                                                         value =
                                                                 """
-                    {
-                      "isSuccess": false,
-                      "code": "USER_NOT_FOUND",
-                      "message": "해당 사용자를 찾을 수 없습니다.",
-                      "result": null
-                    }
-                    """)))
+                                {
+                                "isSuccess": false,
+                                "code": "USER_NOT_FOUND",
+                                "message": "해당 사용자를 찾을 수 없습니다.",
+                                "result": null
+                                }
+                                """)))
             })
     @PatchMapping("/users/{userId}/role")
     @PreAuthorize("hasAnyRole('ADMIN', 'MASTER_ADMIN')")

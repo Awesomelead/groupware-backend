@@ -1,5 +1,7 @@
 package kr.co.awesomelead.groupware_backend.domain.department.enums;
 
+import com.fasterxml.jackson.annotation.JsonValue;
+
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 
@@ -10,4 +12,9 @@ public enum Company {
     MARUI("마루이");
 
     private final String description;
+
+    @JsonValue
+    public String getDescription() {
+        return description;
+    }
 }

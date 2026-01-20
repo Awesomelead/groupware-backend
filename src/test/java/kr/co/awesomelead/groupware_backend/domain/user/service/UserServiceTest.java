@@ -16,6 +16,7 @@ import kr.co.awesomelead.groupware_backend.domain.user.dto.response.MyInfoRespon
 import kr.co.awesomelead.groupware_backend.domain.user.dto.response.UpdateMyInfoRequestDto;
 import kr.co.awesomelead.groupware_backend.domain.user.entity.User;
 import kr.co.awesomelead.groupware_backend.domain.user.enums.JobType;
+import kr.co.awesomelead.groupware_backend.domain.user.enums.Position;
 import kr.co.awesomelead.groupware_backend.domain.user.enums.Role;
 import kr.co.awesomelead.groupware_backend.domain.user.enums.Status;
 import kr.co.awesomelead.groupware_backend.domain.user.repository.UserRepository;
@@ -81,7 +82,7 @@ class UserServiceTest {
                         .phoneNumber(TEST_PHONE)
                         .birthDate(LocalDate.of(1990, 1, 1))
                         .jobType(JobType.MANAGEMENT)
-                        .position("대리")
+                        .position(Position.ASSISTANT_MANAGER)
                         .role(Role.USER)
                         .status(Status.AVAILABLE)
                         .workLocation(Company.AWESOME)
@@ -121,7 +122,7 @@ class UserServiceTest {
             assertThat(response.getWorkLocation()).isEqualTo(Company.AWESOME);
             assertThat(response.getDepartmentName()).isEqualTo(DepartmentName.CHUNGNAM_HQ);
             assertThat(response.getJobType()).isEqualTo(JobType.MANAGEMENT);
-            assertThat(response.getPosition()).isEqualTo("대리");
+            assertThat(response.getPosition()).isEqualTo(Position.ASSISTANT_MANAGER);
 
             verify(userRepository).findByEmail(TEST_EMAIL);
         }

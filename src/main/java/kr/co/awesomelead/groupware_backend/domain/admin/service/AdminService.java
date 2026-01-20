@@ -109,10 +109,10 @@ public class AdminService {
 
         if (role == Role.ADMIN) {
             targetUser.addAuthority(Authority.WRITE_NOTICE);
-            targetUser.addAuthority(Authority.UPLOAD_ANNUAL_LEAVE);
+            targetUser.addAuthority(Authority.MANAGE_EMPLOYEE_DATA);
         } else {
             targetUser.removeAuthority(Authority.WRITE_NOTICE);
-            targetUser.removeAuthority(Authority.UPLOAD_ANNUAL_LEAVE);
+            targetUser.removeAuthority(Authority.MANAGE_EMPLOYEE_DATA);
         }
 
         userRepository.save(targetUser);

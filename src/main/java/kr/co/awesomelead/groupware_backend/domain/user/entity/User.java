@@ -32,6 +32,7 @@ import kr.co.awesomelead.groupware_backend.domain.message.entity.Message;
 import kr.co.awesomelead.groupware_backend.domain.payslip.entity.Payslip;
 import kr.co.awesomelead.groupware_backend.domain.user.enums.Authority;
 import kr.co.awesomelead.groupware_backend.domain.user.enums.JobType;
+import kr.co.awesomelead.groupware_backend.domain.user.enums.Position;
 import kr.co.awesomelead.groupware_backend.domain.user.enums.Role;
 import kr.co.awesomelead.groupware_backend.domain.user.enums.Status;
 import kr.co.awesomelead.groupware_backend.domain.visit.entity.Visit;
@@ -107,8 +108,9 @@ public class User {
     @Column(length = 20)
     private JobType jobType; // 근무 직종
 
-    @Column(length = 20)
-    private String position; // 직급
+    @Enumerated(EnumType.STRING)
+    @Column(length = 30)
+    private Position position;
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 20)

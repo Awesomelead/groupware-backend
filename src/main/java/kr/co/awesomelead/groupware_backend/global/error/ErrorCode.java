@@ -26,8 +26,10 @@ public enum ErrorCode {
     SAME_AS_CURRENT_PASSWORD(HttpStatus.BAD_REQUEST, "새 비밀번호는 현재 비밀번호와 달라야 합니다."),
     FILE_UPLOAD_ERROR(HttpStatus.BAD_REQUEST, "파일 업로드 중 오류가 발생했습니다."),
     INVALID_BASE_DATE_FORMAT(HttpStatus.BAD_REQUEST, "유효하지 않은 기준일자 형식입니다. (yyyy-MM-dd)"),
+    ONLY_PDF_ALLOWED(HttpStatus.BAD_REQUEST, "PDF 파일 형식만 업로드할 수 있습니다."),
     IDENTITY_VERIFICATION_NOT_COMPLETED(HttpStatus.BAD_REQUEST, "본인인증이 완료되지 않았습니다."),
     IDENTITY_VERIFICATION_NOT_FOUND(HttpStatus.BAD_REQUEST, "해당 본인인증 정보를 찾을 수 없습니다."),
+    NO_REJECTION_REASON_PROVIDED(HttpStatus.BAD_REQUEST, "반려 사유가 제공되지 않았습니다."),
     PHONE_NUMBER_MISMATCH(HttpStatus.BAD_REQUEST, "입력한 전화번호가 계정의 전화번호와 일치하지 않습니다."),
     PHONE_NUMBER_ALREADY_EXISTS(HttpStatus.BAD_REQUEST, "이미 사용 중인 전화번호입니다."),
     NAME_ENG_ALREADY_SAME(HttpStatus.BAD_REQUEST, "입력한 영문 이름이 현재 영문 이름과 동일합니다."),
@@ -43,8 +45,10 @@ public enum ErrorCode {
     VISIT_ACCESS_DENIED(HttpStatus.UNAUTHORIZED, "해당 방문정보에 대한 접근 권한이 없습니다."),
     NO_AUTHORITY_FOR_NOTICE(HttpStatus.UNAUTHORIZED, "공지사항 작성 권한이 없습니다."),
     NO_AUTHORITY_FOR_ANNUAL_LEAVE(HttpStatus.UNAUTHORIZED, "연차 발송 권한이 없습니다."),
+    NO_AUTHORITY_FOR_PAYSLIP(HttpStatus.UNAUTHORIZED, "급여명세서 발송 권한이 없습니다."),
     NO_AUTHORITY_FOR_REGISTRATION(HttpStatus.UNAUTHORIZED, "회원가입 승인 권한이 없습니다."),
     NO_AUTHORITY_FOR_ROLE_UPDATE(HttpStatus.UNAUTHORIZED, "사용자 역할 변경 권한이 없습니다."),
+    NO_AUTHORITY_FOR_VIEW_PAYSLIP(HttpStatus.UNAUTHORIZED, "급여명세서 조회 권한이 없습니다."),
 
     // 404 Not Found
     USER_NOT_FOUND(HttpStatus.NOT_FOUND, "해당 사용자를 찾을 수 없습니다."),
@@ -55,6 +59,7 @@ public enum ErrorCode {
     EDU_ATTACHMENT_NOT_FOUND(HttpStatus.NOT_FOUND, "해당 교육 첨부파일을 찾을 수 없습니다."),
     NOTICE_NOT_FOUND(HttpStatus.NOT_FOUND, "해당 공지사항을 찾을 수 없습니다."),
     NOTICE_ATTACHMENT_NOT_FOUND(HttpStatus.NOT_FOUND, "해당 공지사항 첨부파일을 찾을 수 없습니다."),
+    PAYSLIP_NOT_FOUND(HttpStatus.NOT_FOUND, "해당 급여명세서를 찾을 수 없습니다."),
 
     // 409 Conflict
     DUPLICATED_SIGNUP_REQUEST(HttpStatus.CONFLICT, "이미 처리된 가입 요청입니다."),

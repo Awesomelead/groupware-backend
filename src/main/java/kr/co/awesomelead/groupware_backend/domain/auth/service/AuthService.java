@@ -107,8 +107,10 @@ public class AuthService {
         GrantedAuthority auth = iterator.next();
         String role = auth.getAuthority().replace("ROLE_", "");
 
-        // 4. Access Token 생성 (1시간 유효)
-        String accessToken = jwtUtil.createJwt(username, role, 60 * 60 * 1000L);
+        //        // 4. Access Token 생성 (1시간 유효)
+        //        String accessToken = jwtUtil.createJwt(username, role, 60 * 60 * 1000L);
+        // 4. Access Token 생성 (2분 유효) - 리다이렉트 테스트를 위함
+        String accessToken = jwtUtil.createJwt(username, role, 2 * 60 * 1000L);
 
         // 5. Refresh Token 생성 및 DB 저장
         String refreshToken = refreshTokenService.createAndSaveRefreshToken(username, role);

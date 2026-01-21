@@ -2,9 +2,9 @@ package kr.co.awesomelead.groupware_backend.domain.visit.entity;
 
 import com.fasterxml.jackson.annotation.JsonBackReference;
 import com.fasterxml.jackson.annotation.JsonManagedReference;
-
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
+import jakarta.persistence.Convert;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
@@ -15,23 +15,22 @@ import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToMany;
-
+import java.time.LocalDate;
+import java.util.ArrayList;
+import java.util.List;
 import kr.co.awesomelead.groupware_backend.domain.department.enums.Company;
 import kr.co.awesomelead.groupware_backend.domain.user.entity.User;
 import kr.co.awesomelead.groupware_backend.domain.visit.enums.AdditionalPermissionType;
 import kr.co.awesomelead.groupware_backend.domain.visit.enums.VisitPurpose;
+import kr.co.awesomelead.groupware_backend.domain.visit.enums.VisitStatus;
 import kr.co.awesomelead.groupware_backend.domain.visit.enums.VisitType;
-
+import kr.co.awesomelead.groupware_backend.global.encryption.PhoneNumberEncryptor;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
-
-import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.List;
 
 @Setter
 @Getter
@@ -45,24 +44,45 @@ public class Visit {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Enumerated(EnumType.STRING)
-    @Column(nullable = false, length = 50)
-    private Company hostCompany; // 내방객 방문 회사
+    // --- 내방객 정보  ---
+    @Column(nullable = false, length = 10)
+    private String visitorName;
+
+    @Convert(converter = PhoneNumberEncryptor.class)
+    @Column(nullable = false, length = 300)
+    private String visitorPhoneNumber;
+
+    @Column(nullable = false, length = 64)
+    private String phoneNumberHash; // 조회용 해시
 
     @Column(length = 50)
-    private String visitorCompany; // 내방객 소속 회사
+    private String visitorCompany;
+
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false, length = 50)
+    private Company hostCompany; // 내방객 방문 회사 (내방객 직접입력 X)
+
+    @Column(length = 20)
+    private String carNumber; // 차량 번호
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 30)
     private VisitPurpose purpose; // 방문 목적
 
-    @Column(length = 20)
-    private String carNumber; // 차량 번호
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false, length = 20)
+    @Builder.Default
+    private VisitStatus status;
+
+    // -- 방문 기간 --
+    @Column(nullable = false)
+    private LocalDate startDate; // 시작일
 
     @Column(nullable = false)
-    private LocalDateTime visitStartDate; // 방문 시작 일시
+    private LocalDate endDate; // 종료일 (하루면 시작일과 동일)
 
-    private LocalDateTime visitEndDate; // 방문 종료 일시, null 가능
+    @Column(nullable = false)
+    private boolean isLongTerm; // 장기 여부 (DTO 분리 시 활용)
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 30)
@@ -77,50 +97,23 @@ public class Visit {
     private VisitType visitType; // 방문 유형 (사전/현장)
 
     @Column(nullable = false)
-    private boolean visited; // 방문 여부
-
-    private String signatureKey; // 서명 키 (S3 key)
-
-    @Column(nullable = false)
-    private boolean agreement; // 방문자 동의 여부
-
-    @Column(nullable = false)
-    private boolean verified; // 방문자 신원 확인 여부
+    private boolean visited; // 방문 여부 (하루인 경우에만 유효)
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id")
     @JsonBackReference
-    private User user; // 담당 직원
+    private User host; // 담당 직원
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "visitor_id")
-    @JsonBackReference
-    private Visitor visitor; // 내방객
+    @Column(nullable = false, length = 4) // 4자리 비밀번호 가정
+    private String password;
 
     @Builder.Default
     @OneToMany(mappedBy = "visit", cascade = CascadeType.ALL, orphanRemoval = true)
     @JsonManagedReference
-    private List<Companion> companions = new ArrayList<>(); // 동행한 방문자들
-
-    // 연관관계 편의 메서드
-    public void addCompanion(Companion companion) {
-        this.companions.add(companion);
-        companion.setVisit(this);
-    }
+    private List<VisitRecord> records = new ArrayList<>();
 
     // 사전 예약 -> 방문 완료 처리 메서드
     public void completeVisit() {
         this.visited = true;
-        this.verified = true; // 신원 확인됨
-    }
-
-    public void checkIn() {
-        this.visited = true;
-        this.verified = true; // 신원 확인됨
-        this.visitStartDate = LocalDateTime.now(); // 실제 들어오는 시점의 시간을 기록
-    }
-
-    public void checkOut(LocalDateTime checkOutTime) {
-        this.visitEndDate = checkOutTime; // 실제 나가는 시점의 시간을 기록
     }
 }

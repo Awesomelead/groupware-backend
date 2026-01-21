@@ -2,7 +2,6 @@ package kr.co.awesomelead.groupware_backend.global.error;
 
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
-
 import org.springframework.http.HttpStatus;
 
 @Getter
@@ -17,7 +16,7 @@ public enum ErrorCode {
     PASSWORD_MISMATCH(HttpStatus.BAD_REQUEST, "비밀번호가 일치하지 않습니다."),
     VISIT_ALREADY_CHECKED_OUT(HttpStatus.BAD_REQUEST, "이미 체크아웃된 방문정보입니다."),
     VISITOR_PASSWORD_REQUIRED_FOR_PRE_REGISTRATION(
-            HttpStatus.BAD_REQUEST, "사전 방문 예약 시 내방객 비밀번호가 필요합니다."),
+        HttpStatus.BAD_REQUEST, "사전 방문 예약 시 내방객 비밀번호가 필요합니다."),
     DEPARTMENT_ID_REQUIRED(HttpStatus.BAD_REQUEST, "부서교육인 경우 부서 ID가 필요합니다."),
     ALREADY_MARKED_ATTENDANCE(HttpStatus.BAD_REQUEST, "이미 출석이 체크된 교육입니다."),
     NO_SIGNATURE_PROVIDED(HttpStatus.BAD_REQUEST, "서명이 제공되지 않았습니다."),
@@ -35,6 +34,7 @@ public enum ErrorCode {
     NAME_ENG_ALREADY_SAME(HttpStatus.BAD_REQUEST, "입력한 영문 이름이 현재 영문 이름과 동일합니다."),
     PHONE_NUMBER_ALREADY_SAME(HttpStatus.BAD_REQUEST, "입력한 전화번호가 현재 전화번호와 동일합니다."),
     PERMISSION_DETAIL_REQUIRED(HttpStatus.BAD_REQUEST, "기타 허가 선택 시 요구사항 작성이 필요합니다."),
+    ADDITIONAL_PERMISSION_REQUIRED(HttpStatus.BAD_REQUEST, "시설공사 목적의 방문 시 추가 허가가 필요합니다."),
 
     // 401 Unauthorized
     INVALID_TOKEN(HttpStatus.UNAUTHORIZED, "유효하지 않은 토큰입니다."),

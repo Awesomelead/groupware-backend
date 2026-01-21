@@ -15,8 +15,14 @@ import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToMany;
+import jakarta.persistence.PrePersist;
+import jakarta.persistence.PreUpdate;
+import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.time.LocalDate;
 import java.util.ArrayList;
+import java.util.Base64;
 import java.util.List;
 import kr.co.awesomelead.groupware_backend.domain.department.enums.Company;
 import kr.co.awesomelead.groupware_backend.domain.user.entity.User;
@@ -71,7 +77,6 @@ public class Visit {
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 20)
-    @Builder.Default
     private VisitStatus status;
 
     // -- 방문 기간 --
@@ -112,8 +117,26 @@ public class Visit {
     @JsonManagedReference
     private List<VisitRecord> records = new ArrayList<>();
 
-    // 사전 예약 -> 방문 완료 처리 메서드
-    public void completeVisit() {
-        this.visited = true;
+    @PrePersist
+    @PreUpdate
+    public void onPrePersist() {
+        // 전화번호 해시 생성
+        if (this.visitorPhoneNumber != null && this.phoneNumberHash == null) {
+            this.phoneNumberHash = hashValue(this.visitorPhoneNumber);
+        }
+
+    }
+
+    private String hashValue(String value) {
+        if (value == null || value.isEmpty()) {
+            return null;
+        }
+        try {
+            MessageDigest digest = MessageDigest.getInstance("SHA-256");
+            byte[] hash = digest.digest(value.getBytes(StandardCharsets.UTF_8));
+            return Base64.getEncoder().encodeToString(hash);
+        } catch (NoSuchAlgorithmException e) {
+            throw new RuntimeException("SHA-256 알고리즘 부재", e);
+        }
     }
 }

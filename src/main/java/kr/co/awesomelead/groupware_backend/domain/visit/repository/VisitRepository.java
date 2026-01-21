@@ -23,6 +23,16 @@ public interface VisitRepository extends JpaRepository<Visit, Long> {
         "JOIN FETCH u.department d")
     List<Visit> findAllWithUserAndDepartment();
 
+    @Query("SELECT v FROM Visit v " +
+        "JOIN FETCH v.user u " +
+        "JOIN FETCH u.department d " +
+        "WHERE (:departmentId IS NULL OR d.id = :departmentId) " +
+        "AND (:status IS NULL OR v.status = :status)")
+    List<Visit> findAllByFilters(
+        @Param("departmentId") Long departmentId,
+        @Param("status") VisitStatus status
+    );
+
     List<Visit> findByVisitorNameAndPhoneNumberHash(String name, String inputPhoneHash);
 
     List<Visit> findAllByIsLongTermTrueAndEndDateBeforeAndStatusNot(

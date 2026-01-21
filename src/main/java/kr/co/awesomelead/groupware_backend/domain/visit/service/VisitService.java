@@ -284,19 +284,12 @@ public class VisitService {
 
     // 직용원 방문 목록 조회
     @Transactional(readOnly = true)
-    public List<VisitListResponseDto> getVisitsForAdmin(Long userId, Long departmentId) {
-        // 1. 관리 권한 확인
+    public List<VisitListResponseDto> getVisitsForAdmin(Long userId, Long departmentId,
+        VisitStatus status) {
+        //관리 권한 확인
         validateAdminAuthority(userId);
 
-        // 2. 전체 조회 (실무에서는 여기에 페이징이나 검색 필터가 추가됩니다)
-        List<Visit> visits;
-        if (departmentId != null) {
-            // 특정 부서로 필터링
-            visits = visitRepository.findAllByDepartmentId(departmentId);
-        } else {
-            // 필터링 없이 전체 조회
-            visits = visitRepository.findAllWithUserAndDepartment();
-        }
+        List<Visit> visits = visitRepository.findAllByFilters(departmentId, status);
 
         return visitMapper.toVisitListResponseDtos(visits);
     }

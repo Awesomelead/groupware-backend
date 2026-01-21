@@ -18,6 +18,7 @@ import kr.co.awesomelead.groupware_backend.domain.visit.dto.response.MyVisitDeta
 import kr.co.awesomelead.groupware_backend.domain.visit.dto.response.MyVisitListResponseDto;
 import kr.co.awesomelead.groupware_backend.domain.visit.dto.response.VisitDetailResponseDto;
 import kr.co.awesomelead.groupware_backend.domain.visit.dto.response.VisitListResponseDto;
+import kr.co.awesomelead.groupware_backend.domain.visit.enums.VisitStatus;
 import kr.co.awesomelead.groupware_backend.domain.visit.service.VisitService;
 import kr.co.awesomelead.groupware_backend.global.common.response.ApiResponse;
 import lombok.RequiredArgsConstructor;
@@ -134,10 +135,11 @@ public class VisitController {
     @GetMapping("/admin/list")
     public ResponseEntity<ApiResponse<List<VisitListResponseDto>>> getAdminVisitList(
         @AuthenticationPrincipal CustomUserDetails userDetails,
-        @RequestParam(required = false) Long departmentId) {
+        @RequestParam(required = false) Long departmentId,
+        @RequestParam(required = false) VisitStatus status) {
 
         List<VisitListResponseDto> response = visitService.getVisitsForAdmin(userDetails.getId(),
-            departmentId);
+            departmentId, status);
         return ResponseEntity.ok(ApiResponse.onSuccess(response));
     }
 

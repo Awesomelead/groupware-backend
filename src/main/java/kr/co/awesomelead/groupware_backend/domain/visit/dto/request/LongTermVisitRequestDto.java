@@ -6,7 +6,6 @@ import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
 import java.time.LocalDate;
-import java.time.LocalTime;
 import kr.co.awesomelead.groupware_backend.domain.visit.enums.AdditionalPermissionType;
 import kr.co.awesomelead.groupware_backend.domain.visit.enums.VisitPurpose;
 import lombok.AccessLevel;
@@ -19,8 +18,8 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @AllArgsConstructor
 @Builder
-@Schema(description = "사전 하루 방문 신청 요청 DTO")
-public class OneDayVisitRequestDto implements VisitRequest {
+@Schema(description = "사전 장기 방문 신청 요청 DTO")
+public class LongTermVisitRequestDto implements VisitRequest {
 
     @NotBlank(message = "내방객 이름은 필수입니다.")
     @Schema(description = "내방객 이름", example = "홍길동")
@@ -42,17 +41,15 @@ public class OneDayVisitRequestDto implements VisitRequest {
     @Schema(description = "방문 목적", example = "고객 검수")
     private VisitPurpose purpose;
 
-    @NotNull(message = "방문일은 필수입니다.")
-    @Schema(description = "방문 날짜", example = "2026-02-01")
-    private LocalDate visitDate;
+    @NotNull(message = "시작일은 필수입니다.")
+    @Schema(description = "방문 시작일", example = "2024-07-01")
+    private LocalDate startDate;
 
-    @NotNull(message = "입실 예정 시간은 필수입니다.")
-    @Schema(description = "입실 예정 시간", example = "10:00")
-    private LocalTime entryTime;
+    @NotNull(message = "종료일은 필수입니다.")
+    @Schema(description = "방문 종료일", example = "2024-07-05")
+    private LocalDate endDate;
 
-    @NotNull(message = "퇴실 예정 시간은 필수입니다.")
-    @Schema(description = "퇴실 예정 시간", example = "18:00")
-    private LocalTime exitTime;
+    // 입퇴실 시간 X
 
     // 보충적 허가 관련
     @Schema(description = "보충적 허가 타입 (없을 시 NONE)", example = "해당 없음")

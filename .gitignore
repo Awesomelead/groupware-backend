@@ -40,3 +40,8 @@ echo "google-java-format*.jar*" >> .gitignore
 echo "*.jar.*" >> .gitignore
 
 src/main/resources/application-prod.yml
+
+# MapStruct & Querydsl Generated Sources
+**/generated/
+build/
+out/

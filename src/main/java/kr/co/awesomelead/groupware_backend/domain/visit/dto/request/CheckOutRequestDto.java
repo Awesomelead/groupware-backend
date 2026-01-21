@@ -1,12 +1,10 @@
 package kr.co.awesomelead.groupware_backend.domain.visit.dto.request;
 
 import io.swagger.v3.oas.annotations.media.Schema;
-
+import java.time.LocalDate;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-
-import java.time.LocalDateTime;
 
 @Getter
 @AllArgsConstructor
@@ -18,5 +16,5 @@ public class CheckOutRequestDto {
     private Long visitId;
 
     @Schema(description = "퇴실 시간", example = "2025-01-15T18:00:00", required = true)
-    private LocalDateTime checkOutTime;
+    private LocalDate checkOutTime;
 }

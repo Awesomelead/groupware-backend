@@ -107,9 +107,9 @@ public class Visit {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id")
     @JsonBackReference
-    private User host; // 담당 직원
+    private User user; // 담당 직원
 
-    @Column(nullable = false, length = 4) // 4자리 비밀번호 가정
+    @Column(nullable = false, length = 60) // 4자리 비밀번호 가정
     private String password;
 
     @Builder.Default

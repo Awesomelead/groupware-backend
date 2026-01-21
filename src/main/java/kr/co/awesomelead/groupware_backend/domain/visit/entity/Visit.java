@@ -21,6 +21,7 @@ import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.time.LocalDate;
+import java.time.LocalTime;
 import java.util.ArrayList;
 import java.util.Base64;
 import java.util.List;
@@ -51,7 +52,7 @@ public class Visit {
     private Long id;
 
     // --- 내방객 정보  ---
-    @Column(nullable = false, length = 10)
+    @Column(nullable = false, length = 50)
     private String visitorName;
 
     @Convert(converter = PhoneNumberEncryptor.class)
@@ -85,6 +86,12 @@ public class Visit {
 
     @Column(nullable = false)
     private LocalDate endDate; // 종료일 (하루면 시작일과 동일)
+
+    @Column
+    private LocalTime plannedEntryTime; // 신청 시 입실 예정 시간
+
+    @Column
+    private LocalTime plannedExitTime;  // 신청 시 퇴실 예정 시간
 
     @Column(nullable = false)
     private boolean isLongTerm; // 장기 여부 (DTO 분리 시 활용)
@@ -127,7 +134,7 @@ public class Visit {
 
     }
 
-    private String hashValue(String value) {
+    public static String hashValue(String value) {
         if (value == null || value.isEmpty()) {
             return null;
         }

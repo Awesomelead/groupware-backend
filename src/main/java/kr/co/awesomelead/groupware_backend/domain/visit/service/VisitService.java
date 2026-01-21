@@ -165,12 +165,12 @@ public class VisitService {
 
     private void validateLongTermPeriod(LocalDate startDate, LocalDate endDate) {
         if (endDate.isBefore(startDate)) {
-            throw new RuntimeException("종료일은 시작일보다 빠를 수 없습니다.");
+            throw new CustomException(ErrorCode.INVALID_VISIT_DATE_RANGE);
         }
         // 시작일 기준 정확히 3개월 뒤 날짜 계산
         LocalDate maxEndDate = startDate.plusMonths(3);
         if (endDate.isAfter(maxEndDate)) {
-            throw new RuntimeException("장기 방문은 최대 3개월까지만 신청 가능합니다.");
+            throw new CustomException(ErrorCode.LONG_TERM_PERIOD_EXCEEDED);
         }
     }
 
@@ -282,8 +282,6 @@ public class VisitService {
         return visitMapper.toMyVisitDetailResponseDto(visit);
     }
 
-    // 직원용 사전 장기방문 승인
-
     // 직용원 방문 목록 조회
     @Transactional(readOnly = true)
     public List<VisitListResponseDto> getVisitsForAdmin(Long userId, Long departmentId) {
@@ -337,6 +335,7 @@ public class VisitService {
         }
     }
 
+    // 직원용 사전 장기방문 승인
     @Transactional
     public void approveVisit(Long userId, Long visitId) {
         // 1. 관리 권한 확인 (MANAGEMENT 직군 & ACCESS_VISIT 권한)

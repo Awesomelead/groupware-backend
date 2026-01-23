@@ -304,6 +304,10 @@ public class VisitService {
             throw new CustomException(ErrorCode.INVALID_VISIT_STATUS); // "완료된 방문은 수정할 수 없습니다."
         }
 
+        if (visit.isVisited()) {
+            throw new CustomException(ErrorCode.INVALID_VISIT_STATUS);
+        }
+
         if (visit.isLongTerm()) {
             if (visit.getStatus() != VisitStatus.PENDING) {
                 throw new CustomException(

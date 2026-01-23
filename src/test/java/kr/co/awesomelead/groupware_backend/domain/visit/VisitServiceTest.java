@@ -24,6 +24,7 @@ import kr.co.awesomelead.groupware_backend.domain.visit.dto.request.CheckInReque
 import kr.co.awesomelead.groupware_backend.domain.visit.dto.request.CheckOutRequestDto;
 import kr.co.awesomelead.groupware_backend.domain.visit.dto.request.LongTermVisitRequestDto;
 import kr.co.awesomelead.groupware_backend.domain.visit.dto.request.MyVisitDetailRequestDto;
+import kr.co.awesomelead.groupware_backend.domain.visit.dto.request.MyVisitUpdateRequestDto;
 import kr.co.awesomelead.groupware_backend.domain.visit.dto.request.OnSiteVisitRequestDto;
 import kr.co.awesomelead.groupware_backend.domain.visit.dto.request.OneDayVisitRequestDto;
 import kr.co.awesomelead.groupware_backend.domain.visit.entity.Visit;
@@ -43,6 +44,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
+import org.mockito.Spy;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -52,6 +54,9 @@ import org.springframework.test.context.ActiveProfiles;
 @ActiveProfiles("test")
 public class VisitServiceTest {
 
+    @Spy
+    private VisitMapper visitMapper = org.mapstruct.factory.Mappers.getMapper(VisitMapper.class);
+
     @InjectMocks
     private VisitService visitService;
 
@@ -59,8 +64,6 @@ public class VisitServiceTest {
     private VisitRepository visitRepository;
     @Mock
     private UserRepository userRepository;
-    @Mock
-    private VisitMapper visitMapper;
     @Mock
     private S3Service s3Service;
     @Mock
@@ -271,6 +274,177 @@ public class VisitServiceTest {
     }
 
     @Nested
+    @DisplayName("updateMyVisit 메서드는")
+    class Describe_updateMyVisit {
+
+        private final Long VISIT_ID = 1L;
+        private final String PASSWORD = "password123";
+        private final String ENCODED_PASSWORD = "encoded_password";
+
+        @Nested
+        @DisplayName("존재하지 않는 방문 ID가 주어지면")
+        class Context_with_non_existent_id {
+
+            @Test
+            @DisplayName("VISIT_NOT_FOUND 예외를 던진다.")
+            void it_throws_visit_not_found() {
+                // given
+                MyVisitUpdateRequestDto dto = MyVisitUpdateRequestDto.builder()
+                    .password(PASSWORD).build();
+                given(visitRepository.findById(VISIT_ID)).willReturn(Optional.empty());
+
+                // when & then
+                assertThatThrownBy(() -> visitService.updateMyVisit(VISIT_ID, dto))
+                    .isInstanceOf(CustomException.class)
+                    .hasMessage("해당 방문정보를 찾을 수 없습니다.");
+            }
+        }
+
+        @Nested
+        @DisplayName("비밀번호가 일치하지 않으면")
+        class Context_with_invalid_password {
+
+            @Test
+            @DisplayName("INVALID_PASSWORD 예외를 던진다.")
+            void it_throws_invalid_password() {
+                // given
+                MyVisitUpdateRequestDto dto = MyVisitUpdateRequestDto.builder()
+                    .password(PASSWORD).build();
+                Visit visit = Visit.builder().password(ENCODED_PASSWORD).build();
+
+                given(visitRepository.findById(VISIT_ID)).willReturn(Optional.of(visit));
+                given(passwordEncoder.matches(PASSWORD, ENCODED_PASSWORD)).willReturn(false);
+
+                // when & then
+                assertThatThrownBy(() -> visitService.updateMyVisit(VISIT_ID, dto))
+                    .isInstanceOf(CustomException.class)
+                    .hasMessage("유효하지 않은 비밀번호입니다.");
+            }
+        }
+
+        @Nested
+        @DisplayName("수정 불가능한 상태(COMPLETED)인 경우")
+        class Context_with_completed_status {
+
+            @Test
+            @DisplayName("INVALID_VISIT_STATUS 예외를 던진다.")
+            void it_throws_invalid_status() {
+                // given
+                MyVisitUpdateRequestDto dto = MyVisitUpdateRequestDto.builder()
+                    .password(PASSWORD).build();
+                Visit visit = Visit.builder()
+                    .password(ENCODED_PASSWORD)
+                    .status(VisitStatus.COMPLETED) // 이미 완료된 상태
+                    .build();
+
+                given(visitRepository.findById(VISIT_ID)).willReturn(Optional.of(visit));
+                given(passwordEncoder.matches(PASSWORD, ENCODED_PASSWORD)).willReturn(true);
+
+                // when & then
+                assertThatThrownBy(() -> visitService.updateMyVisit(VISIT_ID, dto))
+                    .isInstanceOf(CustomException.class)
+                    .hasMessage("승인 가능한 상태가 아닙니다.");
+            }
+        }
+
+        @Nested
+        @DisplayName("정상적인 하루 방문 수정 요청이 오면")
+        class Context_with_valid_one_day_request {
+
+            @Test
+            @DisplayName("정보를 업데이트하고 날짜를 동기화한다.")
+            void it_updates_one_day_visit() {
+                // given
+                LocalDate newDate = LocalDate.now().plusDays(5);
+                MyVisitUpdateRequestDto dto = MyVisitUpdateRequestDto.builder()
+                    .password(PASSWORD)
+                    .startDate(newDate)
+                    .visitorName("수정된이름")
+                    .build();
+
+                Visit visit = Visit.builder()
+                    .password(ENCODED_PASSWORD)
+                    .startDate(newDate)
+                    .isLongTerm(false)
+                    .status(VisitStatus.NOT_VISITED)
+                    .build();
+
+                given(visitRepository.findById(VISIT_ID)).willReturn(Optional.of(visit));
+                given(passwordEncoder.matches(PASSWORD, ENCODED_PASSWORD)).willReturn(true);
+
+                // when
+                visitService.updateMyVisit(VISIT_ID, dto);
+
+                // then
+                assertThat(visit.getVisitorName()).isEqualTo("수정된이름");
+                assertThat(visit.getEndDate()).isEqualTo(visit.getStartDate());
+                assertThat(visit.getStartDate()).isEqualTo(newDate);
+            }
+        }
+
+        @Nested
+        @DisplayName("이미 승인된 장기 방문 건을 수정하면")
+        class Context_with_approved_long_term_update {
+
+            @Test
+            @DisplayName("INVALID_VISIT_STATUS 예외를 던진다.")
+            void it_throws_invalid_status_for_approved_long_term() {
+                // given
+                MyVisitUpdateRequestDto dto = MyVisitUpdateRequestDto.builder()
+                    .password(PASSWORD).build();
+                Visit visit = Visit.builder()
+                    .password(ENCODED_PASSWORD)
+                    .isLongTerm(true)
+                    .status(VisitStatus.APPROVED) // 장기는 PENDING일 때만 수정 가능
+                    .build();
+
+                given(visitRepository.findById(VISIT_ID)).willReturn(Optional.of(visit));
+                given(passwordEncoder.matches(PASSWORD, ENCODED_PASSWORD)).willReturn(true);
+
+                // when & then
+                assertThatThrownBy(() -> visitService.updateMyVisit(VISIT_ID, dto))
+                    .isInstanceOf(CustomException.class)
+                    .hasMessage("승인 가능한 상태가 아닙니다.");
+            }
+        }
+
+        @Nested
+        @DisplayName("대기 중인 장기 방문을 정상 수정하면")
+        class Context_with_valid_long_term_request {
+
+            @Test
+            @DisplayName("상태를 PENDING으로 유지/복귀시키고 기간을 검증한다.")
+            void it_updates_long_term_visit_and_resets_status() {
+                // given
+                LocalDate start = LocalDate.now().plusDays(1);
+                LocalDate end = start.plusMonths(2); // 2개월 (정상 범위)
+
+                MyVisitUpdateRequestDto dto = MyVisitUpdateRequestDto.builder()
+                    .password(PASSWORD)
+                    .startDate(start)
+                    .endDate(end)
+                    .build();
+
+                Visit visit = Visit.builder()
+                    .password(ENCODED_PASSWORD)
+                    .isLongTerm(true)
+                    .status(VisitStatus.PENDING)
+                    .build();
+
+                given(visitRepository.findById(VISIT_ID)).willReturn(Optional.of(visit));
+                given(passwordEncoder.matches(PASSWORD, ENCODED_PASSWORD)).willReturn(true);
+
+                // when
+                visitService.updateMyVisit(VISIT_ID, dto);
+
+                // then
+                assertThat(visit.getStatus()).isEqualTo(VisitStatus.PENDING);
+                verify(visitMapper).updateVisitFromDto(dto, visit);
+            }
+        }
+    }
+
+    @Nested
     @DisplayName("checkIn 메서드는")
     class Describe_checkIn {
 
@@ -394,11 +568,12 @@ public class VisitServiceTest {
 
         private final Long ADMIN_ID = 1L;
         private final Long VISIT_ID = 100L;
+        private final Long RECORD_ID = 10L;
+        private final LocalDateTime ENTRY_TIME = LocalDateTime.of(2026, 1, 22, 10, 0);
         private final LocalDateTime CHECK_OUT_TIME = LocalDateTime.of(2026, 1, 22, 18, 0);
 
         @BeforeEach
         void setUpAdmin() {
-            // 퇴실 처리를 하는 유저는 항상 관리 권한을 가진 것으로 가정 (공통 셋업)
             User admin = User.builder()
                 .id(ADMIN_ID)
                 .jobType(JobType.MANAGEMENT)
@@ -408,103 +583,128 @@ public class VisitServiceTest {
         }
 
         @Nested
-        @DisplayName("방문 상태가 IN_PROGRESS가 아니면")
-        class Context_not_in_progress {
+        @DisplayName("최초 퇴실 처리인 경우 (exitTime이 null)")
+        class Context_initial_checkout {
 
             @Test
-            @DisplayName("NOT_IN_PROGRESS 예외를 던진다.")
+            @DisplayName("방문 상태가 IN_PROGRESS가 아니면 NOT_IN_PROGRESS 예외를 던진다.")
             void it_throws_not_in_progress_exception() {
-                // given: 현재 상태가 APPROVED(입실 전 대기)인 상태
-                Visit visit = Visit.builder().status(VisitStatus.APPROVED).build();
-                given(visitRepository.findById(VISIT_ID)).willReturn(Optional.of(visit));
+                // given: 상태가 APPROVED(입실 전)인데 퇴실을 시도하는 경우
+                VisitRecord record = VisitRecord.builder().id(RECORD_ID).exitTime(null).build();
+                Visit visit = Visit.builder().status(VisitStatus.APPROVED)
+                    .records(new ArrayList<>(List.of(record))).build();
 
-                CheckOutRequestDto dto = new CheckOutRequestDto(VISIT_ID, CHECK_OUT_TIME);
+                given(visitRepository.findById(VISIT_ID)).willReturn(Optional.of(visit));
+                CheckOutRequestDto dto = new CheckOutRequestDto(VISIT_ID, RECORD_ID,
+                    CHECK_OUT_TIME);
 
                 // when & then
                 assertThatThrownBy(() -> visitService.checkOut(ADMIN_ID, dto))
                     .isInstanceOf(CustomException.class)
                     .hasMessage("현재 방문 상태가 '방문 중'이 아닙니다.");
             }
-        }
-
-        @Nested
-        @DisplayName("퇴실 처리가 안 된 입실 기록(VisitRecord)이 없으면")
-        class Context_no_active_record {
 
             @Test
-            @DisplayName("RECORD_NOT_FOUND 예외를 던진다.")
-            void it_throws_record_not_found_exception() {
-                // given: 상태는 IN_PROGRESS지만, 모든 레코드에 이미 exitTime이 있는 경우
-                VisitRecord completedRecord = VisitRecord.builder().exitTime(LocalDateTime.now())
-                    .build();
+            @DisplayName("하루 방문자라면 상태를 COMPLETED로 변경하고 시간을 기록한다.")
+            void it_changes_status_to_completed_for_one_day_visit() {
+                // given
+                VisitRecord record = VisitRecord.builder().id(RECORD_ID).entryTime(ENTRY_TIME)
+                    .exitTime(null).build();
                 Visit visit = Visit.builder()
+                    .isLongTerm(false)
                     .status(VisitStatus.IN_PROGRESS)
-                    .records(new ArrayList<>(List.of(completedRecord)))
+                    .records(new ArrayList<>(List.of(record)))
                     .build();
 
                 given(visitRepository.findById(VISIT_ID)).willReturn(Optional.of(visit));
-                CheckOutRequestDto dto = new CheckOutRequestDto(VISIT_ID, CHECK_OUT_TIME);
+                CheckOutRequestDto dto = new CheckOutRequestDto(VISIT_ID, RECORD_ID,
+                    CHECK_OUT_TIME);
+
+                // when
+                visitService.checkOut(ADMIN_ID, dto);
+
+                // then
+                assertThat(visit.getStatus()).isEqualTo(VisitStatus.COMPLETED);
+                assertThat(record.getExitTime()).isEqualTo(CHECK_OUT_TIME);
+            }
+
+            @Test
+            @DisplayName("장기 방문자라면 상태를 APPROVED로 변경하고 시간을 기록한다.")
+            void it_changes_status_to_approved_for_long_term_visit() {
+                // given
+                VisitRecord record = VisitRecord.builder().id(RECORD_ID).entryTime(ENTRY_TIME)
+                    .exitTime(null).build();
+                Visit visit = Visit.builder()
+                    .isLongTerm(true)
+                    .status(VisitStatus.IN_PROGRESS)
+                    .records(new ArrayList<>(List.of(record)))
+                    .build();
+
+                given(visitRepository.findById(VISIT_ID)).willReturn(Optional.of(visit));
+                CheckOutRequestDto dto = new CheckOutRequestDto(VISIT_ID, RECORD_ID,
+                    CHECK_OUT_TIME);
+
+                // when
+                visitService.checkOut(ADMIN_ID, dto);
+
+                // then
+                assertThat(visit.getStatus()).isEqualTo(VisitStatus.APPROVED);
+                assertThat(record.getExitTime()).isEqualTo(CHECK_OUT_TIME);
+            }
+        }
+
+        @Nested
+        @DisplayName("퇴실 시간 수정인 경우 (exitTime이 이미 존재)")
+        class Context_time_correction {
+
+            @Test
+            @DisplayName("방문 상태를 변경하지 않고 시간만 업데이트한다.")
+            void it_updates_only_time_without_changing_status() {
+                // given: 이미 COMPLETED 상태이고 퇴실 시간도 있는 경우
+                LocalDateTime oldExitTime = LocalDateTime.of(2026, 1, 22, 17, 0);
+                LocalDateTime newExitTime = LocalDateTime.of(2026, 1, 22, 19, 0);
+
+                VisitRecord record = VisitRecord.builder().id(RECORD_ID).entryTime(ENTRY_TIME)
+                    .exitTime(oldExitTime).build();
+                Visit visit = Visit.builder()
+                    .isLongTerm(false)
+                    .status(VisitStatus.COMPLETED)
+                    .records(new ArrayList<>(List.of(record)))
+                    .build();
+
+                given(visitRepository.findById(VISIT_ID)).willReturn(Optional.of(visit));
+                CheckOutRequestDto dto = new CheckOutRequestDto(VISIT_ID, RECORD_ID, newExitTime);
+
+                // when
+                visitService.checkOut(ADMIN_ID, dto);
+
+                // then
+                assertThat(visit.getStatus()).isEqualTo(VisitStatus.COMPLETED); // 상태 유지
+                assertThat(record.getExitTime()).isEqualTo(newExitTime); // 시간만 업데이트
+            }
+        }
+
+        @Nested
+        @DisplayName("검증 로직 작동 확인")
+        class Context_validations {
+
+            @Test
+            @DisplayName("퇴실 시간이 입실 시간보다 빠르면 INVALID_CHECKOUT_TIME 예외를 던진다.")
+            void it_throws_invalid_checkout_time() {
+                // given: 입실은 10시인데 퇴실을 09시로 요청한 경우
+                LocalDateTime invalidTime = ENTRY_TIME.minusHours(1);
+                VisitRecord record = VisitRecord.builder().id(RECORD_ID).entryTime(ENTRY_TIME)
+                    .exitTime(null).build();
+                Visit visit = Visit.builder().status(VisitStatus.IN_PROGRESS)
+                    .records(new ArrayList<>(List.of(record))).build();
+
+                given(visitRepository.findById(VISIT_ID)).willReturn(Optional.of(visit));
+                CheckOutRequestDto dto = new CheckOutRequestDto(VISIT_ID, RECORD_ID, invalidTime);
 
                 // when & then
                 assertThatThrownBy(() -> visitService.checkOut(ADMIN_ID, dto))
                     .isInstanceOf(CustomException.class)
-                    .hasMessage("해당 방문기록을 찾을 수 없습니다.");
-            }
-        }
-
-        @Nested
-        @DisplayName("장기 방문자가 정상적으로 퇴실하면")
-        class Context_long_term_visit_success {
-
-            @Test
-            @DisplayName("상태가 APPROVED(승인 완료)로 돌아가고 퇴실 시간이 기록된다.")
-            void it_changes_status_to_approved() {
-                // given
-                VisitRecord activeRecord = VisitRecord.builder().exitTime(null).build();
-                Visit visit = Visit.builder()
-                    .id(VISIT_ID)
-                    .isLongTerm(true) // 장기 방문
-                    .status(VisitStatus.IN_PROGRESS)
-                    .records(new ArrayList<>(List.of(activeRecord)))
-                    .build();
-
-                given(visitRepository.findById(VISIT_ID)).willReturn(Optional.of(visit));
-                CheckOutRequestDto dto = new CheckOutRequestDto(VISIT_ID, CHECK_OUT_TIME);
-
-                // when
-                visitService.checkOut(ADMIN_ID, dto);
-
-                // then
-                assertThat(visit.getStatus()).isEqualTo(VisitStatus.APPROVED); // 다시 승인 상태로
-                assertThat(activeRecord.getExitTime()).isEqualTo(CHECK_OUT_TIME);
-            }
-        }
-
-        @Nested
-        @DisplayName("하루 방문자가 정상적으로 퇴실하면")
-        class Context_one_day_visit_success {
-
-            @Test
-            @DisplayName("상태가 COMPLETED(방문 완료)로 변경되고 퇴실 시간이 기록된다.")
-            void it_changes_status_to_completed() {
-                // given
-                VisitRecord activeRecord = VisitRecord.builder().exitTime(null).build();
-                Visit visit = Visit.builder()
-                    .id(VISIT_ID)
-                    .isLongTerm(false) // 하루 방문
-                    .status(VisitStatus.IN_PROGRESS)
-                    .records(new ArrayList<>(List.of(activeRecord)))
-                    .build();
-
-                given(visitRepository.findById(VISIT_ID)).willReturn(Optional.of(visit));
-                CheckOutRequestDto dto = new CheckOutRequestDto(VISIT_ID, CHECK_OUT_TIME);
-
-                // when
-                visitService.checkOut(ADMIN_ID, dto);
-
-                // then
-                assertThat(visit.getStatus()).isEqualTo(VisitStatus.COMPLETED); // 최종 완료 상태로
-                assertThat(activeRecord.getExitTime()).isEqualTo(CHECK_OUT_TIME);
+                    .hasMessage("퇴실 시간은 입실 시간보다 빠를 수 없습니다.");
             }
         }
     }

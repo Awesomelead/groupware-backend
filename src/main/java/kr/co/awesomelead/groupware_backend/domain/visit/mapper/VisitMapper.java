@@ -75,8 +75,8 @@ public interface VisitMapper {
     @Mapping(target = "isLongTerm", constant = "false")
     @Mapping(target = "startDate", expression = "java(java.time.LocalDate.now())")
     @Mapping(target = "endDate", expression = "java(java.time.LocalDate.now())")
-    @Mapping(target = "plannedEntryTime", source = "dto.entryTime") // 추가
-    @Mapping(target = "plannedExitTime", source = "dto.exitTime")   // 추가
+    @Mapping(target = "plannedEntryTime", expression = "java(java.time.LocalTime.now())")
+    @Mapping(target = "plannedExitTime", ignore = true)   // 추가
     @Mapping(target = "hostCompany", source = "host.workLocation")
     @Mapping(target = "records", ignore = true)
     @Mapping(target = "phoneNumberHash", ignore = true)

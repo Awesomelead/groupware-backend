@@ -90,12 +90,9 @@ public class VisitService {
             .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
 
         String encodedPassword = passwordEncoder.encode(dto.getPassword());
-
         String signatureKey = s3Service.uploadFile(dto.getSignatureFile());
 
         Visit visit = visitMapper.toOnSiteVisit(dto, host, encodedPassword);
-        visit.setStartDate(LocalDate.now()); // 현장 방문은 입퇴실 날짜를 오늘로 설정
-        visit.setEndDate(LocalDate.now());
         syncAndValidatePermissions(visit, dto);
 
         VisitRecord record = VisitRecord.builder()

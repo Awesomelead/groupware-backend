@@ -56,15 +56,13 @@ public class VisitService {
     @Transactional
     public Long registerOneDayPreVisit(OneDayVisitRequestDto dto) {
 
-        validateVisitPermissions(dto);
-
         User host = userRepository.findById(dto.getHostId())
             .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
 
         String encodedPassword = passwordEncoder.encode(dto.getPassword());
 
         Visit visit = visitMapper.toOneDayVisit(dto, host, encodedPassword);
-        applyAndValidateVisitPermissions(visit, dto);
+        syncAndValidatePermissions(visit, dto);
 
         return visitRepository.save(visit).getId();
     }
@@ -73,7 +71,6 @@ public class VisitService {
     public Long registerLongTermPreVisit(LongTermVisitRequestDto dto) {
 
         validateLongTermPeriod(dto.getStartDate(), dto.getEndDate());
-        validateVisitPermissions(dto);
 
         User host = userRepository.findById(dto.getHostId())
             .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
@@ -81,14 +78,13 @@ public class VisitService {
         String encodedPassword = passwordEncoder.encode(dto.getPassword());
 
         Visit visit = visitMapper.toLongTermVisit(dto, host, encodedPassword);
-        applyAndValidateVisitPermissions(visit, dto);
+        syncAndValidatePermissions(visit, dto);
 
         return visitRepository.save(visit).getId();
     }
 
     @Transactional
     public Long registerOnSiteVisit(OnSiteVisitRequestDto dto) throws IOException {
-        validateVisitPermissions(dto);
 
         User host = userRepository.findById(dto.getHostId())
             .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
@@ -100,7 +96,7 @@ public class VisitService {
         Visit visit = visitMapper.toOnSiteVisit(dto, host, encodedPassword);
         visit.setStartDate(LocalDate.now()); // 현장 방문은 입퇴실 날짜를 오늘로 설정
         visit.setEndDate(LocalDate.now());
-        applyAndValidateVisitPermissions(visit, dto);
+        syncAndValidatePermissions(visit, dto);
 
         VisitRecord record = VisitRecord.builder()
             .visit(visit)
@@ -115,49 +111,36 @@ public class VisitService {
         return visitRepository.save(visit).getId();
     }
 
-    private void validateVisitPermissions(VisitRequest dto) {
-        // 1. null일 경우 NONE으로 간주하거나 변수에 할당
-        AdditionalPermissionType type = dto.getPermissionType();
-
-        // 2. 시설공사 시 허가 필수 체크
-        if (dto.getPurpose() == VisitPurpose.FACILITY_CONSTRUCTION) {
-            // type이 null이거나 NONE인 경우 모두 예외 처리
-            if (type == null || type == AdditionalPermissionType.NONE) {
-                throw new CustomException(ErrorCode.ADDITIONAL_PERMISSION_REQUIRED);
-            }
+    private void syncAndValidatePermissions(Visit visit, VisitRequest dto) {
+        // 1. 매퍼가 놓칠 수 있는 필드 바인딩 (수정 시 null 체크 포함)
+        if (dto.getPurpose() != null) {
+            visit.setPurpose(dto.getPurpose());
+        }
+        if (dto.getPermissionType() != null) {
+            visit.setPermissionType(dto.getPermissionType());
         }
 
-        // 3. '기타 허가' 선택 시 상세 내용 필수 체크
-        if (type == AdditionalPermissionType.OTHER_PERMISSION) {
-            // StringUtils.hasText()를 사용하면 null, 공백, 빈 문자열을 한 번에 체크 가능
-            if (!StringUtils.hasText(dto.getPermissionDetail())) {
-                throw new CustomException(ErrorCode.PERMISSION_DETAIL_REQUIRED);
-            }
-        }
-    }
-
-    private void applyAndValidateVisitPermissions(Visit visit, VisitRequest dto) {
-        // 1. 목적 매핑 (이미 매퍼에서 되었을 수 있지만 명시적으로 관리 가능)
-        visit.setPurpose(dto.getPurpose());
-
-        // 2. 목적이 시설 공사이면 보충적 허가 필수 여부 체크 및 매핑
-        if (visit.getPurpose() == VisitPurpose.FACILITY_CONSTRUCTION) {
-            if (dto.getPermissionType() == null
-                || dto.getPermissionType() == AdditionalPermissionType.NONE) {
-                throw new CustomException(ErrorCode.ADDITIONAL_PERMISSION_REQUIRED);
-            }
-        }
-        visit.setPermissionType(dto.getPermissionType());
-
-        // 3. 보충적 허가가 '기타 허가'이면 상세 내용 체크 및 매핑
-        if (visit.getPermissionType() == AdditionalPermissionType.OTHER_PERMISSION) {
-            if (!StringUtils.hasText(dto.getPermissionDetail())) {
-                throw new CustomException(ErrorCode.PERMISSION_DETAIL_REQUIRED);
-            }
-            visit.setPermissionDetail(dto.getPermissionDetail());
-        } else {
-            // 기타 허가가 아니면 기존에 들어있을지 모를 상세 내용을 null로 비워줌 (데이터 정합성)
+        // 2. '기타 허가'가 아닐 경우 기존 상세내용 초기화 (데이터 정합성)
+        if (visit.getPermissionType() != AdditionalPermissionType.OTHER_PERMISSION) {
             visit.setPermissionDetail(null);
+        } else if (StringUtils.hasText(dto.getPermissionDetail())) {
+            visit.setPermissionDetail(dto.getPermissionDetail());
+        }
+
+        // 3. 비즈니스 규칙 통합 검증 (엔티티의 최종 상태 기준)
+        // 규칙 1: 시설공사는 보충적 허가 필수
+        if (visit.getPurpose() == VisitPurpose.FACILITY_CONSTRUCTION) {
+            if (visit.getPermissionType() == null
+                || visit.getPermissionType() == AdditionalPermissionType.NONE) {
+                throw new CustomException(ErrorCode.ADDITIONAL_PERMISSION_REQUIRED);
+            }
+        }
+
+        // 규칙 2: '기타 허가' 선택 시 상세 내용 필수
+        if (visit.getPermissionType() == AdditionalPermissionType.OTHER_PERMISSION) {
+            if (!StringUtils.hasText(visit.getPermissionDetail())) {
+                throw new CustomException(ErrorCode.PERMISSION_DETAIL_REQUIRED);
+            }
         }
     }
 
@@ -207,8 +190,6 @@ public class VisitService {
         visit.getRecords().add(record);
 
         // 7. 방문 상태 업데이트
-        visit.setVisited(true);
-
         visit.setStatus(VisitStatus.IN_PROGRESS);
         visit.setVisited(true);
 
@@ -273,21 +254,23 @@ public class VisitService {
     public MyVisitDetailResponseDto getMyVisitDetail(Long visitId, MyVisitDetailRequestDto dto) {
         // 1. 존재 여부 확인
         Visit visit = visitRepository.findById(visitId)
-            .orElseThrow(() -> new RuntimeException("해당 방문 기록이 존재하지 않습니다."));
+            .orElseThrow(() -> new CustomException(ErrorCode.VISIT_NOT_FOUND));
 
-        // 2. 비밀번호 검증 (IDOR 방어 핵심 로직)
+        // 2. 비밀번호 검증
         if (!passwordEncoder.matches(dto.getPassword(), visit.getPassword())) {
-            throw new RuntimeException("비밀번호가 일치하지 않아 정보를 조회할 수 없습니다.");
+            throw new CustomException(ErrorCode.INVALID_PASSWORD);
         }
 
         // 3. 엔티티 -> DTO 변환 (시간 계산은 매퍼의 default 메서드가 처리)
         MyVisitDetailResponseDto responseDto = visitMapper.toMyVisitDetailResponseDto(visit);
 
-        responseDto.getRecords().forEach(record -> {
-            if (StringUtils.hasText(record.getSignatureUrl())) {
-                record.setSignatureUrl(s3Service.getFileUrl(record.getSignatureUrl()));
-            }
-        });
+        if (responseDto.getRecords() != null) {
+            responseDto.getRecords().forEach(record -> {
+                if (StringUtils.hasText(record.getSignatureUrl())) {
+                    record.setSignatureUrl(s3Service.getFileUrl(record.getSignatureUrl()));
+                }
+            });
+        }
         return responseDto;
     }
 
@@ -316,7 +299,7 @@ public class VisitService {
             visit.setEndDate(visit.getStartDate());
         }
 
-        applyAndValidateVisitPermissions(visit, dto);
+        syncAndValidatePermissions(visit, dto);
     }
 
     private void validateUpdateStatus(Visit visit) {
@@ -353,24 +336,21 @@ public class VisitService {
     // 직원용 방문 상세 조회
     @Transactional(readOnly = true)
     public VisitDetailResponseDto getVisitDetailForAdmin(Long userId, Long visitId) {
-        // 1. 관리 권한 확인
+
         validateAdminAuthority(userId);
 
-        // 2. 방문 건 조회
         Visit visit = visitRepository.findById(visitId)
             .orElseThrow(() -> new CustomException(ErrorCode.VISIT_NOT_FOUND));
 
-        // 3. DTO 변환
         VisitDetailResponseDto responseDto = visitMapper.toVisitDetailResponseDto(visit);
 
-        // 4. 서명 이미지 키를 S3 URL로 치환 (필요 시)
-        // 만약 Mapper에서 처리하지 못했다면 여기서 서명 URL들을 세팅해줍니다.
-        responseDto.getRecords().forEach(recordDto -> {
-            if (recordDto.getSignatureUrl() != null) {
-                String fullUrl = s3Service.getFileUrl(recordDto.getSignatureUrl());
-                // recordDto의 필드가 final이 아니라면 여기서 세팅
-            }
-        });
+        if (responseDto.getRecords() != null) {
+            responseDto.getRecords().forEach(recordDto -> {
+                if (StringUtils.hasText(recordDto.getSignatureUrl())) {
+                    recordDto.setSignatureUrl(s3Service.getFileUrl(recordDto.getSignatureUrl()));
+                }
+            });
+        }
 
         return responseDto;
     }

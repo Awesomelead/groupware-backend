@@ -5,7 +5,6 @@ import static kr.co.awesomelead.groupware_backend.domain.visit.entity.Visit.hash
 import java.io.IOException;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.time.LocalTime;
 import java.util.List;
 import kr.co.awesomelead.groupware_backend.domain.department.repository.DepartmentRepository;
 import kr.co.awesomelead.groupware_backend.domain.user.entity.User;
@@ -58,7 +57,6 @@ public class VisitService {
     public Long registerOneDayPreVisit(OneDayVisitRequestDto dto) {
 
         validateVisitPermissions(dto);
-        validateEntryAndExitTime(dto.getEntryTime(), dto.getExitTime());
 
         User host = userRepository.findById(dto.getHostId())
             .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
@@ -91,7 +89,6 @@ public class VisitService {
     @Transactional
     public Long registerOnSiteVisit(OnSiteVisitRequestDto dto) throws IOException {
         validateVisitPermissions(dto);
-        validateEntryAndExitTime(dto.getEntryTime(), dto.getExitTime());
 
         User host = userRepository.findById(dto.getHostId())
             .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
@@ -172,12 +169,6 @@ public class VisitService {
         LocalDate maxEndDate = startDate.plusMonths(3);
         if (endDate.isAfter(maxEndDate)) {
             throw new CustomException(ErrorCode.LONG_TERM_PERIOD_EXCEEDED);
-        }
-    }
-
-    private void validateEntryAndExitTime(LocalTime entryTime, LocalTime exitTime) {
-        if (exitTime.isBefore(entryTime)) {
-            throw new CustomException(ErrorCode.INVALID_TIME_RANGE);
         }
     }
 

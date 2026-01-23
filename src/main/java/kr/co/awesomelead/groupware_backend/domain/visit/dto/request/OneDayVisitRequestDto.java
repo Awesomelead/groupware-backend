@@ -1,6 +1,7 @@
 package kr.co.awesomelead.groupware_backend.domain.visit.dto.request;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+import jakarta.validation.constraints.AssertTrue;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Pattern;
@@ -70,4 +71,13 @@ public class OneDayVisitRequestDto implements VisitRequest {
     @Size(min = 4, max = 4, message = "비밀번호는 숫자 4자리여야 합니다.")
     @Schema(description = "조회용 비밀번호 (4자리)", example = "1234")
     private String password;
+
+    @AssertTrue(message = "퇴실 예정 시간은 입실 예정 시간보다 빨라야 합니다.")
+    @Schema(hidden = true)
+    public boolean isValidTimeRange() {
+        if (entryTime == null || exitTime == null) {
+            return true;
+        }
+        return exitTime.isAfter(entryTime);
+    }
 }

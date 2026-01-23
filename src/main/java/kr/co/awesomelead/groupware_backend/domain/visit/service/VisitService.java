@@ -5,7 +5,6 @@ import static kr.co.awesomelead.groupware_backend.domain.visit.entity.Visit.hash
 import java.io.IOException;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.time.LocalTime;
 import java.util.List;
 import kr.co.awesomelead.groupware_backend.domain.department.repository.DepartmentRepository;
 import kr.co.awesomelead.groupware_backend.domain.user.entity.User;
@@ -98,10 +97,8 @@ public class VisitService {
         String signatureKey = s3Service.uploadFile(dto.getSignatureFile());
 
         Visit visit = visitMapper.toOnSiteVisit(dto, host, encodedPassword);
-        visit.setStartDate(LocalDate.now());
+        visit.setStartDate(LocalDate.now()); // 현장 방문은 입퇴실 날짜를 오늘로 설정
         visit.setEndDate(LocalDate.now());
-        visit.setPlannedEntryTime(LocalTime.now());
-
         applyAndValidateVisitPermissions(visit, dto);
 
         VisitRecord record = VisitRecord.builder()

@@ -3,6 +3,7 @@ package kr.co.awesomelead.groupware_backend.domain.visit.dto.response;
 import io.swagger.v3.oas.annotations.media.Schema;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.List;
 import kr.co.awesomelead.groupware_backend.domain.department.enums.DepartmentName;
 import kr.co.awesomelead.groupware_backend.domain.visit.enums.VisitPurpose;
 import kr.co.awesomelead.groupware_backend.domain.visit.enums.VisitStatus;
@@ -49,5 +50,6 @@ public class MyVisitDetailResponseDto {
     @Schema(description = "퇴실 시간", example = "2024-07-01T16:30:00")
     private LocalDateTime exitTime;
 
-
+    @Schema(description = "입퇴실 및 서명 기록 리스트")
+    private List<VisitRecordResponseDto> records;
 }

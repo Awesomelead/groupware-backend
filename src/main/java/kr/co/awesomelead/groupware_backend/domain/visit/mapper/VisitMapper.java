@@ -100,17 +100,40 @@ public interface VisitMapper {
     @Mapping(target = "records", source = "records")
     MyVisitDetailResponseDto toMyVisitDetailResponseDto(Visit visit);
 
+    // VisitMapper.java
+
     default LocalDateTime getEntryTimeLogic(Visit visit) {
-        if (!visit.getRecords().isEmpty() && visit.getRecords().get(0).getEntryTime() != null) {
-            return visit.getRecords().get(0).getEntryTime();
+        // 1. 실제 입실 기록이 있으면 그 시간을 최우선 사용
+        if (visit.getRecords() != null && !visit.getRecords().isEmpty()) {
+            if (visit.getRecords().get(0).getEntryTime() != null) {
+                return visit.getRecords().get(0).getEntryTime();
+            }
         }
+
+        // 2. 예정 시간이 없으면 (장기 방문 등) null 혹은 날짜만 반환
+        if (visit.getPlannedEntryTime() == null) {
+            // 장기 방문이라면 시작 날짜의 정각(00:00)을 줄 수도 있고, null을 줄 수도 있습니다.
+            // 여기서는 안전하게 null을 반환하고 프론트에서 처리하게 하겠습니다.
+            return null;
+        }
+
+        // 3. 예정 시간이 있으면 날짜와 합쳐서 반환
         return LocalDateTime.of(visit.getStartDate(), visit.getPlannedEntryTime());
     }
 
     default LocalDateTime getExitTimeLogic(Visit visit) {
-        if (!visit.getRecords().isEmpty() && visit.getRecords().get(0).getExitTime() != null) {
-            return visit.getRecords().get(0).getExitTime();
+        // 1. 실제 퇴실 기록이 있으면 최우선 사용
+        if (visit.getRecords() != null && !visit.getRecords().isEmpty()) {
+            if (visit.getRecords().get(0).getExitTime() != null) {
+                return visit.getRecords().get(0).getExitTime();
+            }
         }
+
+        // 2. 예정 퇴실 시간이 없으면 null 반환
+        if (visit.getPlannedExitTime() == null) {
+            return null;
+        }
+
         return LocalDateTime.of(visit.getStartDate(), visit.getPlannedExitTime());
     }
 

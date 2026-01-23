@@ -2,21 +2,17 @@ package kr.co.awesomelead.groupware_backend.domain.auth.service;
 
 import jakarta.mail.MessagingException;
 import jakarta.mail.internet.MimeMessage;
-
+import java.security.SecureRandom;
+import java.util.concurrent.TimeUnit;
 import kr.co.awesomelead.groupware_backend.global.error.CustomException;
 import kr.co.awesomelead.groupware_backend.global.error.ErrorCode;
-
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.stereotype.Service;
-
-import java.security.SecureRandom;
-import java.util.concurrent.TimeUnit;
 
 @Slf4j
 @Service
@@ -24,7 +20,7 @@ import java.util.concurrent.TimeUnit;
 public class EmailAuthService {
 
     private final JavaMailSender mailSender;
-    private final RedisTemplate<String, String> redisTemplate;
+    private final StringRedisTemplate redisTemplate;
 
     @Value("${spring.mail.username}")
     private String fromEmail;
@@ -48,8 +44,8 @@ public class EmailAuthService {
         // Redis에 인증번호 저장 (5분 유효)
         String key = AUTH_CODE_PREFIX + email;
         redisTemplate
-                .opsForValue()
-                .set(key, authCode, AUTH_CODE_EXPIRATION_MINUTES, TimeUnit.MINUTES);
+            .opsForValue()
+            .set(key, authCode, AUTH_CODE_EXPIRATION_MINUTES, TimeUnit.MINUTES);
     }
 
     // 이메일 인증번호 검증
@@ -110,7 +106,7 @@ public class EmailAuthService {
         helper.setSubject("[어썸그룹] 이메일 인증번호");
 
         String htmlContent =
-                """
+            """
                 <!DOCTYPE html>
                 <html>
                 <head>
@@ -148,7 +144,7 @@ public class EmailAuthService {
                 </body>
                 </html>
                 """
-                        .formatted(authCode);
+                .formatted(authCode);
 
         helper.setText(htmlContent, true);
 

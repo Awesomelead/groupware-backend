@@ -42,6 +42,7 @@ public enum ErrorCode {
     INVALID_VISIT_STATUS(HttpStatus.BAD_REQUEST, "승인 가능한 상태가 아닙니다."),
     INVALID_VISIT_DATE_RANGE(HttpStatus.BAD_REQUEST, "종료일은 시작일보다 빠를 수 없습니다."),
     LONG_TERM_PERIOD_EXCEEDED(HttpStatus.BAD_REQUEST, "장기 방문은 최대 3개월까지만 신청 가능합니다."),
+    INVALID_CHECKOUT_TIME(HttpStatus.BAD_REQUEST, "퇴실 시간은 입실 시간보다 빠를 수 없습니다."),
 
     // 401 Unauthorized
     INVALID_TOKEN(HttpStatus.UNAUTHORIZED, "유효하지 않은 토큰입니다."),

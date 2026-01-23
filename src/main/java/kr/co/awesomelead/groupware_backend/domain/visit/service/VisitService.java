@@ -15,6 +15,7 @@ import kr.co.awesomelead.groupware_backend.domain.visit.dto.request.CheckInReque
 import kr.co.awesomelead.groupware_backend.domain.visit.dto.request.CheckOutRequestDto;
 import kr.co.awesomelead.groupware_backend.domain.visit.dto.request.LongTermVisitRequestDto;
 import kr.co.awesomelead.groupware_backend.domain.visit.dto.request.MyVisitDetailRequestDto;
+import kr.co.awesomelead.groupware_backend.domain.visit.dto.request.MyVisitUpdateRequestDto;
 import kr.co.awesomelead.groupware_backend.domain.visit.dto.request.OnSiteVisitRequestDto;
 import kr.co.awesomelead.groupware_backend.domain.visit.dto.request.OneDayVisitRequestDto;
 import kr.co.awesomelead.groupware_backend.domain.visit.dto.request.VisitRequest;
@@ -221,28 +222,32 @@ public class VisitService {
         Visit visit = visitRepository.findById(dto.getVisitId())
             .orElseThrow(() -> new CustomException(ErrorCode.VISIT_NOT_FOUND));
 
-        // 1. 현재 입실 중인지 확인
-        if (visit.getStatus() != VisitStatus.IN_PROGRESS) {
-            throw new CustomException(ErrorCode.NOT_IN_PROGRESS);
-        }
-
-        // 2. 퇴실 시간이 찍히지 않은 가장 최근 기록 찾기
         VisitRecord record = visit.getRecords().stream()
-            .filter(r -> r.getExitTime() == null)
+            .filter(r -> r.getId().equals(dto.getVisitRecordId()))
             .findFirst()
             .orElseThrow(() -> new CustomException(ErrorCode.RECORD_NOT_FOUND));
 
-        // 3. 퇴실 시간 기록
-        record.setExitTime(dto.getCheckOutTime());
+        boolean isInitialCheckOut = (record.getExitTime() == null);
 
-        // 4. 상태 변경 로직
-        if (visit.isLongTerm()) {
-            // 장기 방문자는 다시 '승인 완료(대기)' 상태로
-            visit.setStatus(VisitStatus.APPROVED);
-        } else {
-            // 하루/현장 방문자는 '방문 완료'로 종료
-            visit.setStatus(VisitStatus.COMPLETED);
+        // 상태 변경 로직
+        if (isInitialCheckOut) {
+            // 최초 퇴실 처리 시에는 입실을 한 상태인지 확인
+            if (visit.getStatus() != VisitStatus.IN_PROGRESS) {
+                throw new CustomException(ErrorCode.NOT_IN_PROGRESS);
+            }
+            if (visit.isLongTerm()) {
+                visit.setStatus(VisitStatus.APPROVED); // 다음 입실을 위해 다시 승인 상태로
+            } else {
+                visit.setStatus(VisitStatus.COMPLETED); // 단기 방문은 최종 완료
+            }
         }
+
+        if (dto.getCheckOutTime().isBefore(record.getEntryTime())) {
+            throw new CustomException(
+                ErrorCode.INVALID_CHECKOUT_TIME); // "퇴실 시간은 입실 시간보다 빠를 수 없습니다."
+        }
+
+        record.setExitTime(dto.getCheckOutTime());
 
         return visit.getId();
     }
@@ -276,8 +281,62 @@ public class VisitService {
         }
 
         // 3. 엔티티 -> DTO 변환 (시간 계산은 매퍼의 default 메서드가 처리)
-        return visitMapper.toMyVisitDetailResponseDto(visit);
+        MyVisitDetailResponseDto responseDto = visitMapper.toMyVisitDetailResponseDto(visit);
+
+        responseDto.getRecords().forEach(record -> {
+            if (StringUtils.hasText(record.getSignatureUrl())) {
+                record.setSignatureUrl(s3Service.getFileUrl(record.getSignatureUrl()));
+            }
+        });
+        return responseDto;
     }
+
+    @Transactional
+    public void updateMyVisit(Long visitId, MyVisitUpdateRequestDto dto) {
+
+        Visit visit = visitRepository.findById(visitId)
+            .orElseThrow(() -> new CustomException(ErrorCode.VISIT_NOT_FOUND));
+
+        if (!passwordEncoder.matches(dto.getPassword(), visit.getPassword())) {
+            throw new CustomException(ErrorCode.INVALID_PASSWORD);
+        }
+
+        // 수정 가능 상태 검증 (하루: NOT_VISITED, 장기: PENDING)
+        validateUpdateStatus(visit);
+
+        if (visit.isLongTerm()) {
+            validateLongTermPeriod(dto.getStartDate(), dto.getEndDate());
+            // 장기 방문은 수정 후 다시 승인 대기 상태로 변경
+            visit.setStatus(VisitStatus.PENDING);
+        }
+
+        visitMapper.updateVisitFromDto(dto, visit);
+
+        if (!visit.isLongTerm()) {
+            visit.setEndDate(visit.getStartDate());
+        }
+
+        applyAndValidateVisitPermissions(visit, dto);
+    }
+
+    private void validateUpdateStatus(Visit visit) {
+        if (visit.getStatus() == VisitStatus.COMPLETED) {
+            throw new CustomException(ErrorCode.INVALID_VISIT_STATUS); // "완료된 방문은 수정할 수 없습니다."
+        }
+
+        if (visit.isLongTerm()) {
+            if (visit.getStatus() != VisitStatus.PENDING) {
+                throw new CustomException(
+                    ErrorCode.INVALID_VISIT_STATUS); // "승인 대기 중일 때만 수정 가능합니다."
+            }
+        } else {
+            // 하루 방문은 입실 전(NOT_VISITED) 상태여야 함
+            if (visit.getStatus() != VisitStatus.NOT_VISITED) {
+                throw new CustomException(ErrorCode.INVALID_VISIT_STATUS); // "방문 전 상태에서만 수정 가능합니다."
+            }
+        }
+    }
+
 
     // 직용원 방문 목록 조회
     @Transactional(readOnly = true)
@@ -292,6 +351,7 @@ public class VisitService {
     }
 
     // 직원용 방문 상세 조회
+    @Transactional(readOnly = true)
     public VisitDetailResponseDto getVisitDetailForAdmin(Long userId, Long visitId) {
         // 1. 관리 권한 확인
         validateAdminAuthority(userId);

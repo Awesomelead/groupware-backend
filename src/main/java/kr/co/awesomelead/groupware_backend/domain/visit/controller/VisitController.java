@@ -11,6 +11,7 @@ import kr.co.awesomelead.groupware_backend.domain.visit.dto.request.CheckInReque
 import kr.co.awesomelead.groupware_backend.domain.visit.dto.request.CheckOutRequestDto;
 import kr.co.awesomelead.groupware_backend.domain.visit.dto.request.LongTermVisitRequestDto;
 import kr.co.awesomelead.groupware_backend.domain.visit.dto.request.MyVisitDetailRequestDto;
+import kr.co.awesomelead.groupware_backend.domain.visit.dto.request.MyVisitUpdateRequestDto;
 import kr.co.awesomelead.groupware_backend.domain.visit.dto.request.OnSiteVisitRequestDto;
 import kr.co.awesomelead.groupware_backend.domain.visit.dto.request.OneDayVisitRequestDto;
 import kr.co.awesomelead.groupware_backend.domain.visit.dto.request.VisitSearchRequestDto;
@@ -27,6 +28,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.ModelAttribute;
+import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -97,7 +99,7 @@ public class VisitController {
     }
 
     @Operation(summary = "방문자 퇴실 처리", description = "입실 중인 내방객의 퇴실 시간을 기록하고 방문 상태를 업데이트합니다.")
-    @PostMapping("/check-out")
+    @PatchMapping("/check-out")
     public ResponseEntity<ApiResponse<Long>> checkOut(
         @AuthenticationPrincipal CustomUserDetails userDetails,
         @Valid @RequestBody CheckOutRequestDto dto) {
@@ -129,6 +131,19 @@ public class VisitController {
 
         MyVisitDetailResponseDto response = visitService.getMyVisitDetail(visitId, dto);
         return ResponseEntity.ok(ApiResponse.onSuccess(response));
+    }
+
+    @Operation(
+        summary = "내 방문 정보 수정",
+        description = "방문 ID와 목록 조회 시 사용한 비밀번호를 통해 방문 정보를 수정합니다."
+    )
+    @PatchMapping("/{visitId}")
+    public ResponseEntity<ApiResponse<Void>> updateMyVisit(
+        @PathVariable Long visitId,
+        @Valid @RequestBody MyVisitUpdateRequestDto dto) {
+
+        visitService.updateMyVisit(visitId, dto);
+        return ResponseEntity.ok(ApiResponse.onNoContent("방문 정보가 수정되었습니다."));
     }
 
     @Operation(summary = "직원용 내방객 목록 조회", description = "관리 직군이 전체 내방객 목록을 조회합니다. 부서 ID로 필터링이 가능합니다.")

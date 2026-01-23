@@ -14,8 +14,8 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.ArrayList;
-import java.util.List;
 import java.util.Optional;
+import kr.co.awesomelead.groupware_backend.domain.department.enums.Company;
 import kr.co.awesomelead.groupware_backend.domain.user.entity.User;
 import kr.co.awesomelead.groupware_backend.domain.user.enums.Authority;
 import kr.co.awesomelead.groupware_backend.domain.user.enums.JobType;
@@ -69,9 +69,41 @@ public class VisitServiceTest {
     @Mock
     private PasswordEncoder passwordEncoder;
 
+    private static final Long HOST_ID = 1L;
+    private static final Long VISIT_ID = 100L;
+    private static final String PLAIN_PASSWORD = "1234";
+    private static final String ENCODED_PASSWORD = "encoded_password";
+
+    private User createHost() {
+        User host = User.builder()
+            .id(HOST_ID)
+            .nameKor("담당자")
+            .workLocation(Company.AWESOME)
+            .jobType(JobType.MANAGEMENT)
+            .build();
+        host.addAuthority(Authority.ACCESS_VISIT);
+        return host;
+    }
+
+    private Visit createBaseVisit(VisitStatus status, boolean isLongTerm) {
+        return Visit.builder()
+            .id(VISIT_ID)
+            .password(ENCODED_PASSWORD)
+            .status(status)
+            .isLongTerm(isLongTerm)
+            .records(new ArrayList<>())
+            .build();
+    }
+
     @Nested
     @DisplayName("registerOneDayPreVisit 메서드는")
     class Describe_registerOneDayPreVisit {
+
+        @BeforeEach
+        void setup() {
+            // 등록 로직은 항상 호스트를 찾으므로 공통 설정
+            given(userRepository.findById(any())).willReturn(Optional.of(createHost()));
+        }
 
         @Nested
         @DisplayName("방문목적이 '시설공사'인데, '보충적허가필요여부'가 없으면")
@@ -123,12 +155,8 @@ public class VisitServiceTest {
                 User mockHost = User.builder().id(dto.getHostId()).build();
                 String encodedPassword = "encoded_password_1234";
 
-                Visit mockVisit = Visit.builder()
-                    .id(1L)
-                    .visitorName(dto.getVisitorName())
-                    .purpose(dto.getPurpose())
-                    .user(mockHost)
-                    .build();
+                Visit mockVisit = createBaseVisit(VisitStatus.NOT_VISITED, false);
+                mockVisit.setPurpose(dto.getPurpose());
 
                 given(userRepository.findById(dto.getHostId())).willReturn(Optional.of(mockHost));
                 given(passwordEncoder.encode(dto.getPassword())).willReturn(encodedPassword);
@@ -139,7 +167,7 @@ public class VisitServiceTest {
                 Long resultId = visitService.registerOneDayPreVisit(dto);
 
                 // then
-                assertThat(resultId).isEqualTo(1L);
+                assertThat(resultId).isEqualTo(VISIT_ID);
                 verify(userRepository, times(1)).findById(dto.getHostId());
                 verify(passwordEncoder, times(1)).encode(dto.getPassword());
                 verify(visitRepository, times(1)).save(any(Visit.class));
@@ -250,10 +278,17 @@ public class VisitServiceTest {
                 .signatureFile(
                     new MockMultipartFile("file", "sig.png", "image/png", "test".getBytes()))
                 .purpose(VisitPurpose.MEETING)
+                .permissionType(AdditionalPermissionType.NONE)
                 .build();
 
-            User mockHost = User.builder().id(1L).build();
-            Visit mockVisit = Visit.builder().id(100L).records(new ArrayList<>()).build();
+            User mockHost = User.builder()
+                .id(1L)
+                .build();
+            Visit mockVisit = Visit.builder()
+                .id(100L)
+                .visited(true)
+                .records(new ArrayList<>())
+                .build();
 
             given(userRepository.findById(any())).willReturn(Optional.of(mockHost));
             given(passwordEncoder.encode(any())).willReturn("hash");
@@ -277,10 +312,6 @@ public class VisitServiceTest {
     @DisplayName("updateMyVisit 메서드는")
     class Describe_updateMyVisit {
 
-        private final Long VISIT_ID = 1L;
-        private final String PASSWORD = "password123";
-        private final String ENCODED_PASSWORD = "encoded_password";
-
         @Nested
         @DisplayName("존재하지 않는 방문 ID가 주어지면")
         class Context_with_non_existent_id {
@@ -290,7 +321,7 @@ public class VisitServiceTest {
             void it_throws_visit_not_found() {
                 // given
                 MyVisitUpdateRequestDto dto = MyVisitUpdateRequestDto.builder()
-                    .password(PASSWORD).build();
+                    .password(PLAIN_PASSWORD).build();
                 given(visitRepository.findById(VISIT_ID)).willReturn(Optional.empty());
 
                 // when & then
@@ -309,11 +340,11 @@ public class VisitServiceTest {
             void it_throws_invalid_password() {
                 // given
                 MyVisitUpdateRequestDto dto = MyVisitUpdateRequestDto.builder()
-                    .password(PASSWORD).build();
-                Visit visit = Visit.builder().password(ENCODED_PASSWORD).build();
+                    .password(PLAIN_PASSWORD).build();
+                Visit visit = createBaseVisit(VisitStatus.NOT_VISITED, false);
 
                 given(visitRepository.findById(VISIT_ID)).willReturn(Optional.of(visit));
-                given(passwordEncoder.matches(PASSWORD, ENCODED_PASSWORD)).willReturn(false);
+                given(passwordEncoder.matches(PLAIN_PASSWORD, ENCODED_PASSWORD)).willReturn(false);
 
                 // when & then
                 assertThatThrownBy(() -> visitService.updateMyVisit(VISIT_ID, dto))
@@ -331,14 +362,11 @@ public class VisitServiceTest {
             void it_throws_invalid_status() {
                 // given
                 MyVisitUpdateRequestDto dto = MyVisitUpdateRequestDto.builder()
-                    .password(PASSWORD).build();
-                Visit visit = Visit.builder()
-                    .password(ENCODED_PASSWORD)
-                    .status(VisitStatus.COMPLETED) // 이미 완료된 상태
-                    .build();
+                    .password(PLAIN_PASSWORD).build();
+                Visit visit = createBaseVisit(VisitStatus.COMPLETED, false);
 
                 given(visitRepository.findById(VISIT_ID)).willReturn(Optional.of(visit));
-                given(passwordEncoder.matches(PASSWORD, ENCODED_PASSWORD)).willReturn(true);
+                given(passwordEncoder.matches(PLAIN_PASSWORD, ENCODED_PASSWORD)).willReturn(true);
 
                 // when & then
                 assertThatThrownBy(() -> visitService.updateMyVisit(VISIT_ID, dto))
@@ -357,20 +385,16 @@ public class VisitServiceTest {
                 // given
                 LocalDate newDate = LocalDate.now().plusDays(5);
                 MyVisitUpdateRequestDto dto = MyVisitUpdateRequestDto.builder()
-                    .password(PASSWORD)
+                    .password(PLAIN_PASSWORD)
                     .startDate(newDate)
                     .visitorName("수정된이름")
                     .build();
 
-                Visit visit = Visit.builder()
-                    .password(ENCODED_PASSWORD)
-                    .startDate(newDate)
-                    .isLongTerm(false)
-                    .status(VisitStatus.NOT_VISITED)
-                    .build();
+                Visit visit = createBaseVisit(VisitStatus.NOT_VISITED, false);
+                visit.setStartDate(newDate);
 
                 given(visitRepository.findById(VISIT_ID)).willReturn(Optional.of(visit));
-                given(passwordEncoder.matches(PASSWORD, ENCODED_PASSWORD)).willReturn(true);
+                given(passwordEncoder.matches(PLAIN_PASSWORD, ENCODED_PASSWORD)).willReturn(true);
 
                 // when
                 visitService.updateMyVisit(VISIT_ID, dto);
@@ -391,15 +415,11 @@ public class VisitServiceTest {
             void it_throws_invalid_status_for_approved_long_term() {
                 // given
                 MyVisitUpdateRequestDto dto = MyVisitUpdateRequestDto.builder()
-                    .password(PASSWORD).build();
-                Visit visit = Visit.builder()
-                    .password(ENCODED_PASSWORD)
-                    .isLongTerm(true)
-                    .status(VisitStatus.APPROVED) // 장기는 PENDING일 때만 수정 가능
-                    .build();
+                    .password(PLAIN_PASSWORD).build();
+                Visit visit = createBaseVisit(VisitStatus.APPROVED, true);
 
                 given(visitRepository.findById(VISIT_ID)).willReturn(Optional.of(visit));
-                given(passwordEncoder.matches(PASSWORD, ENCODED_PASSWORD)).willReturn(true);
+                given(passwordEncoder.matches(PLAIN_PASSWORD, ENCODED_PASSWORD)).willReturn(true);
 
                 // when & then
                 assertThatThrownBy(() -> visitService.updateMyVisit(VISIT_ID, dto))
@@ -420,19 +440,15 @@ public class VisitServiceTest {
                 LocalDate end = start.plusMonths(2); // 2개월 (정상 범위)
 
                 MyVisitUpdateRequestDto dto = MyVisitUpdateRequestDto.builder()
-                    .password(PASSWORD)
+                    .password(PLAIN_PASSWORD)
                     .startDate(start)
                     .endDate(end)
                     .build();
 
-                Visit visit = Visit.builder()
-                    .password(ENCODED_PASSWORD)
-                    .isLongTerm(true)
-                    .status(VisitStatus.PENDING)
-                    .build();
+                Visit visit = createBaseVisit(VisitStatus.PENDING, true);
 
                 given(visitRepository.findById(VISIT_ID)).willReturn(Optional.of(visit));
-                given(passwordEncoder.matches(PASSWORD, ENCODED_PASSWORD)).willReturn(true);
+                given(passwordEncoder.matches(PLAIN_PASSWORD, ENCODED_PASSWORD)).willReturn(true);
 
                 // when
                 visitService.updateMyVisit(VISIT_ID, dto);
@@ -460,10 +476,10 @@ public class VisitServiceTest {
             void it_throws_invalid_password_exception() throws IOException {
                 // given
                 CheckInRequestDto dto = new CheckInRequestDto(1L, "wrong_pw", signatureFile);
-                Visit visit = Visit.builder().password("encoded_pw").build();
+                Visit visit = createBaseVisit(VisitStatus.NOT_VISITED, false);
 
                 given(visitRepository.findById(1L)).willReturn(Optional.of(visit));
-                given(passwordEncoder.matches("wrong_pw", "encoded_pw")).willReturn(false);
+                given(passwordEncoder.matches("wrong_pw", ENCODED_PASSWORD)).willReturn(false);
 
                 // when & then
                 assertThatThrownBy(() -> visitService.checkIn(dto))
@@ -482,14 +498,11 @@ public class VisitServiceTest {
                 // given
                 CheckInRequestDto dto = new CheckInRequestDto(1L, "1234", signatureFile);
                 // 어제 날짜로 예약된 하루 방문 건
-                Visit visit = Visit.builder()
-                    .isLongTerm(false)
-                    .startDate(LocalDate.now().minusDays(1))
-                    .password("encoded_pw")
-                    .build();
+                Visit visit = createBaseVisit(VisitStatus.NOT_VISITED, false);
+                visit.setStartDate(LocalDate.now().minusDays(1));
 
                 given(visitRepository.findById(1L)).willReturn(Optional.of(visit));
-                given(passwordEncoder.matches("1234", "encoded_pw")).willReturn(true);
+                given(passwordEncoder.matches(PLAIN_PASSWORD, ENCODED_PASSWORD)).willReturn(true);
 
                 // when & then
                 assertThatThrownBy(() -> visitService.checkIn(dto))
@@ -507,15 +520,12 @@ public class VisitServiceTest {
             void it_throws_visit_already_checked_out_exception() throws IOException {
                 // given
                 CheckInRequestDto dto = new CheckInRequestDto(1L, "1234", signatureFile);
-                Visit visit = Visit.builder()
-                    .isLongTerm(false)
-                    .startDate(LocalDate.now())
-                    .visited(true)
-                    .password("encoded_pw")
-                    .build();
+                Visit visit = createBaseVisit(VisitStatus.COMPLETED, false);
+                visit.setStartDate(LocalDate.now());
+                visit.setVisited(true);
 
                 given(visitRepository.findById(1L)).willReturn(Optional.of(visit));
-                given(passwordEncoder.matches("1234", "encoded_pw")).willReturn(true);
+                given(passwordEncoder.matches(PLAIN_PASSWORD, ENCODED_PASSWORD)).willReturn(true);
 
                 // when & then
                 assertThatThrownBy(() -> visitService.checkIn(dto))
@@ -533,24 +543,18 @@ public class VisitServiceTest {
             void it_check_in_successfully() throws IOException {
                 // given
                 CheckInRequestDto dto = new CheckInRequestDto(1L, "1234", signatureFile);
-                Visit visit = Visit.builder()
-                    .id(1L)
-                    .isLongTerm(false)
-                    .startDate(LocalDate.now()) // 오늘 날짜
-                    .visited(false)
-                    .password("encoded_pw")
-                    .records(new ArrayList<>())
-                    .build();
+                Visit visit = createBaseVisit(VisitStatus.NOT_VISITED, false);
+                visit.setStartDate(LocalDate.now());
 
                 given(visitRepository.findById(1L)).willReturn(Optional.of(visit));
-                given(passwordEncoder.matches("1234", "encoded_pw")).willReturn(true);
+                given(passwordEncoder.matches(PLAIN_PASSWORD, ENCODED_PASSWORD)).willReturn(true);
                 given(s3Service.uploadFile(any())).willReturn("s3-signature-key");
 
                 // when
                 Long resultId = visitService.checkIn(dto);
 
                 // then
-                assertThat(resultId).isEqualTo(1L);
+                assertThat(resultId).isEqualTo(VISIT_ID);
                 assertThat(visit.getStatus()).isEqualTo(VisitStatus.IN_PROGRESS);
                 assertThat(visit.isVisited()).isTrue();
                 assertThat(visit.getRecords()).hasSize(1);
@@ -591,8 +595,8 @@ public class VisitServiceTest {
             void it_throws_not_in_progress_exception() {
                 // given: 상태가 APPROVED(입실 전)인데 퇴실을 시도하는 경우
                 VisitRecord record = VisitRecord.builder().id(RECORD_ID).exitTime(null).build();
-                Visit visit = Visit.builder().status(VisitStatus.APPROVED)
-                    .records(new ArrayList<>(List.of(record))).build();
+                Visit visit = createBaseVisit(VisitStatus.APPROVED, false);
+                visit.getRecords().add(record);
 
                 given(visitRepository.findById(VISIT_ID)).willReturn(Optional.of(visit));
                 CheckOutRequestDto dto = new CheckOutRequestDto(VISIT_ID, RECORD_ID,
@@ -610,11 +614,9 @@ public class VisitServiceTest {
                 // given
                 VisitRecord record = VisitRecord.builder().id(RECORD_ID).entryTime(ENTRY_TIME)
                     .exitTime(null).build();
-                Visit visit = Visit.builder()
-                    .isLongTerm(false)
-                    .status(VisitStatus.IN_PROGRESS)
-                    .records(new ArrayList<>(List.of(record)))
-                    .build();
+
+                Visit visit = createBaseVisit(VisitStatus.IN_PROGRESS, false);
+                visit.getRecords().add(record);
 
                 given(visitRepository.findById(VISIT_ID)).willReturn(Optional.of(visit));
                 CheckOutRequestDto dto = new CheckOutRequestDto(VISIT_ID, RECORD_ID,
@@ -634,11 +636,8 @@ public class VisitServiceTest {
                 // given
                 VisitRecord record = VisitRecord.builder().id(RECORD_ID).entryTime(ENTRY_TIME)
                     .exitTime(null).build();
-                Visit visit = Visit.builder()
-                    .isLongTerm(true)
-                    .status(VisitStatus.IN_PROGRESS)
-                    .records(new ArrayList<>(List.of(record)))
-                    .build();
+                Visit visit = createBaseVisit(VisitStatus.IN_PROGRESS, true);
+                visit.getRecords().add(record);
 
                 given(visitRepository.findById(VISIT_ID)).willReturn(Optional.of(visit));
                 CheckOutRequestDto dto = new CheckOutRequestDto(VISIT_ID, RECORD_ID,
@@ -666,11 +665,8 @@ public class VisitServiceTest {
 
                 VisitRecord record = VisitRecord.builder().id(RECORD_ID).entryTime(ENTRY_TIME)
                     .exitTime(oldExitTime).build();
-                Visit visit = Visit.builder()
-                    .isLongTerm(false)
-                    .status(VisitStatus.COMPLETED)
-                    .records(new ArrayList<>(List.of(record)))
-                    .build();
+                Visit visit = createBaseVisit(VisitStatus.COMPLETED, false);
+                visit.getRecords().add(record);
 
                 given(visitRepository.findById(VISIT_ID)).willReturn(Optional.of(visit));
                 CheckOutRequestDto dto = new CheckOutRequestDto(VISIT_ID, RECORD_ID, newExitTime);
@@ -695,8 +691,8 @@ public class VisitServiceTest {
                 LocalDateTime invalidTime = ENTRY_TIME.minusHours(1);
                 VisitRecord record = VisitRecord.builder().id(RECORD_ID).entryTime(ENTRY_TIME)
                     .exitTime(null).build();
-                Visit visit = Visit.builder().status(VisitStatus.IN_PROGRESS)
-                    .records(new ArrayList<>(List.of(record))).build();
+                Visit visit = createBaseVisit(VisitStatus.IN_PROGRESS, false);
+                visit.getRecords().add(record);
 
                 given(visitRepository.findById(VISIT_ID)).willReturn(Optional.of(visit));
                 CheckOutRequestDto dto = new CheckOutRequestDto(VISIT_ID, RECORD_ID, invalidTime);
@@ -721,10 +717,8 @@ public class VisitServiceTest {
             @DisplayName("NOT_LONG_TERM_VISIT 예외를 던진다.")
             void it_throws_not_long_term_visit_exception() {
                 // given: 장기 방문이 아닌(isLongTerm=false) 방문 건
-                User admin = User.builder().jobType(JobType.MANAGEMENT).build();
-                admin.addAuthority(Authority.ACCESS_VISIT);
-                Visit oneDayVisit = Visit.builder().isLongTerm(false).status(VisitStatus.PENDING)
-                    .build();
+                User admin = createHost();
+                Visit oneDayVisit = createBaseVisit(VisitStatus.PENDING, false);
 
                 given(userRepository.findById(any())).willReturn(Optional.of(admin));
                 given(visitRepository.findById(any())).willReturn(Optional.of(oneDayVisit));
@@ -744,10 +738,8 @@ public class VisitServiceTest {
             @DisplayName("상태를 APPROVED로 변경한다.")
             void it_updates_status_to_approved() {
                 // given
-                User admin = User.builder().jobType(JobType.MANAGEMENT).build();
-                admin.addAuthority(Authority.ACCESS_VISIT);
-                Visit pendingVisit = Visit.builder().isLongTerm(true).status(VisitStatus.PENDING)
-                    .build();
+                User admin = createHost();
+                Visit pendingVisit = createBaseVisit(VisitStatus.PENDING, true);
 
                 given(userRepository.findById(any())).willReturn(Optional.of(admin));
                 given(visitRepository.findById(any())).willReturn(Optional.of(pendingVisit));
@@ -781,8 +773,8 @@ public class VisitServiceTest {
 
                 // when & then
                 assertThatThrownBy(() -> visitService.getMyVisitDetail(100L, dto))
-                    .isInstanceOf(RuntimeException.class) // 나중에 CustomException으로 바꾸면 좋습니다!
-                    .hasMessageContaining("비밀번호가 일치하지 않아");
+                    .isInstanceOf(CustomException.class)
+                    .hasMessageContaining("유효하지 않은 비밀번호입니다.");
             }
         }
     }

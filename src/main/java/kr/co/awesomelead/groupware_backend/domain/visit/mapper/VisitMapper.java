@@ -4,6 +4,7 @@ import java.time.LocalDateTime;
 import java.util.List;
 import kr.co.awesomelead.groupware_backend.domain.user.entity.User;
 import kr.co.awesomelead.groupware_backend.domain.visit.dto.request.LongTermVisitRequestDto;
+import kr.co.awesomelead.groupware_backend.domain.visit.dto.request.MyVisitUpdateRequestDto;
 import kr.co.awesomelead.groupware_backend.domain.visit.dto.request.OnSiteVisitRequestDto;
 import kr.co.awesomelead.groupware_backend.domain.visit.dto.request.OneDayVisitRequestDto;
 import kr.co.awesomelead.groupware_backend.domain.visit.dto.response.MyVisitDetailResponseDto;
@@ -15,9 +16,12 @@ import kr.co.awesomelead.groupware_backend.domain.visit.entity.Visit;
 import kr.co.awesomelead.groupware_backend.domain.visit.entity.VisitRecord;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
+import org.mapstruct.MappingTarget;
+import org.mapstruct.NullValuePropertyMappingStrategy;
 import org.mapstruct.ReportingPolicy;
 
-@Mapper(componentModel = "spring", unmappedTargetPolicy = ReportingPolicy.WARN)
+@Mapper(componentModel = "spring", unmappedTargetPolicy = ReportingPolicy.IGNORE,
+    nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE) // null은 무시!
 public interface VisitMapper {
 
     @Mapping(target = "id", ignore = true) // 생성 시 ID는 자동 생성되므로 무시
@@ -66,7 +70,7 @@ public interface VisitMapper {
     @Mapping(target = "user", source = "host")
     @Mapping(target = "password", source = "encodedPassword")
     @Mapping(target = "visitType", expression = "java(kr.co.awesomelead.groupware_backend.domain.visit.enums.VisitType.ON_SITE)")
-    @Mapping(target = "status", constant = "COMPLETED")
+    @Mapping(target = "status", expression = "java(kr.co.awesomelead.groupware_backend.domain.visit.enums.VisitStatus.IN_PROGRESS)")
     @Mapping(target = "visited", constant = "true") // 즉시 방문 처리
     @Mapping(target = "isLongTerm", constant = "false")
     @Mapping(target = "startDate", expression = "java(java.time.LocalDate.now())")
@@ -93,6 +97,7 @@ public interface VisitMapper {
     @Mapping(target = "departmentName", source = "user.department.name")
     @Mapping(target = "entryTime", expression = "java(getEntryTimeLogic(visit))")
     @Mapping(target = "exitTime", expression = "java(getExitTimeLogic(visit))")
+    @Mapping(target = "records", source = "records")
     MyVisitDetailResponseDto toMyVisitDetailResponseDto(Visit visit);
 
     default LocalDateTime getEntryTimeLogic(Visit visit) {
@@ -123,4 +128,11 @@ public interface VisitMapper {
     VisitRecordResponseDto toRecordResponseDto(VisitRecord record);
 
     List<VisitListResponseDto> toVisitListResponseDtos(List<Visit> visits);
+
+    @Mapping(target = "id", ignore = true)
+    @Mapping(target = "password", ignore = true)
+    @Mapping(target = "status", ignore = true) // 상태는 서비스 로직에서 직접 변경하므로 무시
+    @Mapping(target = "startDate", source = "startDate")
+    @Mapping(target = "endDate", source = "endDate")
+    void updateVisitFromDto(MyVisitUpdateRequestDto dto, @MappingTarget Visit visit);
 }

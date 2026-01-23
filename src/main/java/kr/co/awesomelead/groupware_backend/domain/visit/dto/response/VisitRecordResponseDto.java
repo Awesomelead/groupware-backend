@@ -5,8 +5,10 @@ import java.time.LocalDateTime;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
+import lombok.Setter;
 
 @Getter
+@Setter
 @Builder
 @AllArgsConstructor
 @Schema(description = "입퇴실 및 서명 기록 DTO")

@@ -22,5 +22,4 @@ public interface VisitRequest {
     Long getHostId();
 
     String getPassword();
-
 }

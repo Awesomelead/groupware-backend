@@ -9,12 +9,6 @@ import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 
-import java.io.IOException;
-import java.time.LocalDate;
-import java.time.LocalDateTime;
-import java.time.LocalTime;
-import java.util.ArrayList;
-import java.util.Optional;
 import kr.co.awesomelead.groupware_backend.domain.department.enums.Company;
 import kr.co.awesomelead.groupware_backend.domain.user.entity.User;
 import kr.co.awesomelead.groupware_backend.domain.user.enums.Authority;
@@ -37,6 +31,7 @@ import kr.co.awesomelead.groupware_backend.domain.visit.repository.VisitReposito
 import kr.co.awesomelead.groupware_backend.domain.visit.service.VisitService;
 import kr.co.awesomelead.groupware_backend.global.error.CustomException;
 import kr.co.awesomelead.groupware_backend.global.infra.s3.S3Service;
+
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -50,6 +45,13 @@ import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.test.context.ActiveProfiles;
 
+import java.io.IOException;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.LocalTime;
+import java.util.ArrayList;
+import java.util.Optional;
+
 @ExtendWith(MockitoExtension.class)
 @ActiveProfiles("test")
 public class VisitServiceTest {
@@ -57,17 +59,12 @@ public class VisitServiceTest {
     @Spy
     private VisitMapper visitMapper = org.mapstruct.factory.Mappers.getMapper(VisitMapper.class);
 
-    @InjectMocks
-    private VisitService visitService;
+    @InjectMocks private VisitService visitService;
 
-    @Mock
-    private VisitRepository visitRepository;
-    @Mock
-    private UserRepository userRepository;
-    @Mock
-    private S3Service s3Service;
-    @Mock
-    private PasswordEncoder passwordEncoder;
+    @Mock private VisitRepository visitRepository;
+    @Mock private UserRepository userRepository;
+    @Mock private S3Service s3Service;
+    @Mock private PasswordEncoder passwordEncoder;
 
     private static final Long HOST_ID = 1L;
     private static final Long VISIT_ID = 100L;
@@ -75,24 +72,25 @@ public class VisitServiceTest {
     private static final String ENCODED_PASSWORD = "encoded_password";
 
     private User createHost() {
-        User host = User.builder()
-            .id(HOST_ID)
-            .nameKor("담당자")
-            .workLocation(Company.AWESOME)
-            .jobType(JobType.MANAGEMENT)
-            .build();
+        User host =
+                User.builder()
+                        .id(HOST_ID)
+                        .nameKor("담당자")
+                        .workLocation(Company.AWESOME)
+                        .jobType(JobType.MANAGEMENT)
+                        .build();
         host.addAuthority(Authority.ACCESS_VISIT);
         return host;
     }
 
     private Visit createBaseVisit(VisitStatus status, boolean isLongTerm) {
         return Visit.builder()
-            .id(VISIT_ID)
-            .password(ENCODED_PASSWORD)
-            .status(status)
-            .isLongTerm(isLongTerm)
-            .records(new ArrayList<>())
-            .build();
+                .id(VISIT_ID)
+                .password(ENCODED_PASSWORD)
+                .status(status)
+                .isLongTerm(isLongTerm)
+                .records(new ArrayList<>())
+                .build();
     }
 
     @Nested
@@ -112,12 +110,12 @@ public class VisitServiceTest {
             @Test
             @DisplayName("ADDITIONAL_PERMISSION_REQUIRED 예외를 던진다.")
             void it_throws_additional_permission_required_exception() {
-                OneDayVisitRequestDto dto = createOneDayDto(
-                    VisitPurpose.FACILITY_CONSTRUCTION, null, null);
+                OneDayVisitRequestDto dto =
+                        createOneDayDto(VisitPurpose.FACILITY_CONSTRUCTION, null, null);
 
                 assertThatThrownBy(() -> visitService.registerOneDayPreVisit(dto))
-                    .isInstanceOf(CustomException.class)
-                    .hasMessage("시설공사 목적의 방문 시 추가 허가가 필요합니다.");
+                        .isInstanceOf(CustomException.class)
+                        .hasMessage("시설공사 목적의 방문 시 추가 허가가 필요합니다.");
             }
         }
 
@@ -128,14 +126,15 @@ public class VisitServiceTest {
             @Test
             @DisplayName("PERMISSION_DETAIL_REQUIRED 예외를 던진다.")
             void it_throws_permission_detail_required_exception() {
-                OneDayVisitRequestDto dto = createOneDayDto(
-                    VisitPurpose.FACILITY_CONSTRUCTION,
-                    AdditionalPermissionType.OTHER_PERMISSION,
-                    null);
+                OneDayVisitRequestDto dto =
+                        createOneDayDto(
+                                VisitPurpose.FACILITY_CONSTRUCTION,
+                                AdditionalPermissionType.OTHER_PERMISSION,
+                                null);
 
                 assertThatThrownBy(() -> visitService.registerOneDayPreVisit(dto))
-                    .isInstanceOf(CustomException.class)
-                    .hasMessage("기타 허가 선택 시 요구사항 작성이 필요합니다.");
+                        .isInstanceOf(CustomException.class)
+                        .hasMessage("기타 허가 선택 시 요구사항 작성이 필요합니다.");
             }
         }
 
@@ -147,10 +146,8 @@ public class VisitServiceTest {
             @DisplayName("방문 예약이 정상적으로 등록된다.")
             void it_registers_visit_successfully() {
                 // given
-                OneDayVisitRequestDto dto = createOneDayDto(
-                    VisitPurpose.MEETING,
-                    AdditionalPermissionType.NONE,
-                    null);
+                OneDayVisitRequestDto dto =
+                        createOneDayDto(VisitPurpose.MEETING, AdditionalPermissionType.NONE, null);
 
                 User mockHost = User.builder().id(dto.getHostId()).build();
                 String encodedPassword = "encoded_password_1234";
@@ -174,21 +171,21 @@ public class VisitServiceTest {
             }
         }
 
-        private OneDayVisitRequestDto createOneDayDto(VisitPurpose purpose,
-            AdditionalPermissionType type, String detail) {
+        private OneDayVisitRequestDto createOneDayDto(
+                VisitPurpose purpose, AdditionalPermissionType type, String detail) {
             return OneDayVisitRequestDto.builder()
-                .visitorName("홍길동")
-                .visitorPhoneNumber("01012345678")
-                .visitorCompany("테스트컴퍼니")
-                .purpose(purpose)
-                .permissionType(type)
-                .permissionDetail(detail)
-                .visitDate(LocalDate.now().plusDays(1))
-                .entryTime(LocalTime.of(10, 0))
-                .exitTime(LocalTime.of(18, 0))
-                .hostId(1L)
-                .password("1234")
-                .build();
+                    .visitorName("홍길동")
+                    .visitorPhoneNumber("01012345678")
+                    .visitorCompany("테스트컴퍼니")
+                    .purpose(purpose)
+                    .permissionType(type)
+                    .permissionDetail(detail)
+                    .visitDate(LocalDate.now().plusDays(1))
+                    .entryTime(LocalTime.of(10, 0))
+                    .exitTime(LocalTime.of(18, 0))
+                    .hostId(1L)
+                    .password("1234")
+                    .build();
         }
     }
 
@@ -204,15 +201,16 @@ public class VisitServiceTest {
             @DisplayName("종료일이 시작일보다 빠를 때 INVALID_VISIT_DATE_RANGE 예외를 던진다.")
             void it_throws_invalid_visit_date_range() {
                 // given: 시작일 1월 22일, 종료일 1월 21일 (과거)
-                LongTermVisitRequestDto dto = LongTermVisitRequestDto.builder()
-                    .startDate(LocalDate.of(2026, 1, 22))
-                    .endDate(LocalDate.of(2026, 1, 21))
-                    .build();
+                LongTermVisitRequestDto dto =
+                        LongTermVisitRequestDto.builder()
+                                .startDate(LocalDate.of(2026, 1, 22))
+                                .endDate(LocalDate.of(2026, 1, 21))
+                                .build();
 
                 // when & then
                 assertThatThrownBy(() -> visitService.registerLongTermPreVisit(dto))
-                    .isInstanceOf(CustomException.class)
-                    .hasMessage("종료일은 시작일보다 빠를 수 없습니다.");
+                        .isInstanceOf(CustomException.class)
+                        .hasMessage("종료일은 시작일보다 빠를 수 없습니다.");
             }
 
             @Test
@@ -220,15 +218,16 @@ public class VisitServiceTest {
             void it_throws_long_term_period_exceeded() {
                 // given: 3개월에서 딱 하루 더 신청 (1/22 ~ 4/23)
                 LocalDate startDate = LocalDate.of(2026, 1, 22);
-                LongTermVisitRequestDto dto = LongTermVisitRequestDto.builder()
-                    .startDate(startDate)
-                    .endDate(startDate.plusMonths(3).plusDays(1))
-                    .build();
+                LongTermVisitRequestDto dto =
+                        LongTermVisitRequestDto.builder()
+                                .startDate(startDate)
+                                .endDate(startDate.plusMonths(3).plusDays(1))
+                                .build();
 
                 // when & then
                 assertThatThrownBy(() -> visitService.registerLongTermPreVisit(dto))
-                    .isInstanceOf(CustomException.class)
-                    .hasMessage("장기 방문은 최대 3개월까지만 신청 가능합니다.");
+                        .isInstanceOf(CustomException.class)
+                        .hasMessage("장기 방문은 최대 3개월까지만 신청 가능합니다.");
             }
         }
 
@@ -241,20 +240,21 @@ public class VisitServiceTest {
             void it_proceeds_normally() {
                 // given: 1/22 ~ 4/22 (딱 3개월)
                 LocalDate startDate = LocalDate.of(2026, 1, 22);
-                LongTermVisitRequestDto dto = LongTermVisitRequestDto.builder()
-                    .hostId(1L)
-                    .password("1234")
-                    .startDate(startDate)
-                    .endDate(startDate.plusMonths(3))
-                    .purpose(VisitPurpose.MEETING)
-                    .build();
+                LongTermVisitRequestDto dto =
+                        LongTermVisitRequestDto.builder()
+                                .hostId(1L)
+                                .password("1234")
+                                .startDate(startDate)
+                                .endDate(startDate.plusMonths(3))
+                                .purpose(VisitPurpose.MEETING)
+                                .build();
 
                 // Mocking (정상 저장을 위해 필요한 최소한의 세팅)
-                given(userRepository.findById(any())).willReturn(
-                    Optional.of(User.builder().id(1L).build()));
+                given(userRepository.findById(any()))
+                        .willReturn(Optional.of(User.builder().id(1L).build()));
                 given(passwordEncoder.encode(any())).willReturn("hash");
-                given(visitMapper.toLongTermVisit(any(), any(), any())).willReturn(
-                    Visit.builder().id(1L).build());
+                given(visitMapper.toLongTermVisit(any(), any(), any()))
+                        .willReturn(Visit.builder().id(1L).build());
                 given(visitRepository.save(any())).willReturn(Visit.builder().id(1L).build());
 
                 // when & then
@@ -271,24 +271,21 @@ public class VisitServiceTest {
         @DisplayName("현장 방문 신청 시 VisitRecord가 즉시 생성되어 함께 저장된다.")
         void it_creates_visit_with_initial_record() throws IOException {
             // given
-            OnSiteVisitRequestDto dto = OnSiteVisitRequestDto.builder()
-                .visitorName("현장방문객")
-                .hostId(1L)
-                .password("1234")
-                .signatureFile(
-                    new MockMultipartFile("file", "sig.png", "image/png", "test".getBytes()))
-                .purpose(VisitPurpose.MEETING)
-                .permissionType(AdditionalPermissionType.NONE)
-                .build();
+            OnSiteVisitRequestDto dto =
+                    OnSiteVisitRequestDto.builder()
+                            .visitorName("현장방문객")
+                            .hostId(1L)
+                            .password("1234")
+                            .signatureFile(
+                                    new MockMultipartFile(
+                                            "file", "sig.png", "image/png", "test".getBytes()))
+                            .purpose(VisitPurpose.MEETING)
+                            .permissionType(AdditionalPermissionType.NONE)
+                            .build();
 
-            User mockHost = User.builder()
-                .id(1L)
-                .build();
-            Visit mockVisit = Visit.builder()
-                .id(100L)
-                .visited(true)
-                .records(new ArrayList<>())
-                .build();
+            User mockHost = User.builder().id(1L).build();
+            Visit mockVisit =
+                    Visit.builder().id(100L).visited(true).records(new ArrayList<>()).build();
 
             given(userRepository.findById(any())).willReturn(Optional.of(mockHost));
             given(passwordEncoder.encode(any())).willReturn("hash");
@@ -300,11 +297,15 @@ public class VisitServiceTest {
             visitService.registerOnSiteVisit(dto);
 
             // then
-            verify(visitRepository).save(argThat(visit -> {
-                assertThat(visit.getRecords()).hasSize(1);
-                assertThat(visit.getRecords().get(0).getSignatureKey()).isEqualTo("s3-key-123");
-                return true;
-            }));
+            verify(visitRepository)
+                    .save(
+                            argThat(
+                                    visit -> {
+                                        assertThat(visit.getRecords()).hasSize(1);
+                                        assertThat(visit.getRecords().get(0).getSignatureKey())
+                                                .isEqualTo("s3-key-123");
+                                        return true;
+                                    }));
         }
     }
 
@@ -320,14 +321,14 @@ public class VisitServiceTest {
             @DisplayName("VISIT_NOT_FOUND 예외를 던진다.")
             void it_throws_visit_not_found() {
                 // given
-                MyVisitUpdateRequestDto dto = MyVisitUpdateRequestDto.builder()
-                    .password(PLAIN_PASSWORD).build();
+                MyVisitUpdateRequestDto dto =
+                        MyVisitUpdateRequestDto.builder().password(PLAIN_PASSWORD).build();
                 given(visitRepository.findById(VISIT_ID)).willReturn(Optional.empty());
 
                 // when & then
                 assertThatThrownBy(() -> visitService.updateMyVisit(VISIT_ID, dto))
-                    .isInstanceOf(CustomException.class)
-                    .hasMessage("해당 방문정보를 찾을 수 없습니다.");
+                        .isInstanceOf(CustomException.class)
+                        .hasMessage("해당 방문정보를 찾을 수 없습니다.");
             }
         }
 
@@ -339,8 +340,8 @@ public class VisitServiceTest {
             @DisplayName("INVALID_PASSWORD 예외를 던진다.")
             void it_throws_invalid_password() {
                 // given
-                MyVisitUpdateRequestDto dto = MyVisitUpdateRequestDto.builder()
-                    .password(PLAIN_PASSWORD).build();
+                MyVisitUpdateRequestDto dto =
+                        MyVisitUpdateRequestDto.builder().password(PLAIN_PASSWORD).build();
                 Visit visit = createBaseVisit(VisitStatus.NOT_VISITED, false);
 
                 given(visitRepository.findById(VISIT_ID)).willReturn(Optional.of(visit));
@@ -348,8 +349,8 @@ public class VisitServiceTest {
 
                 // when & then
                 assertThatThrownBy(() -> visitService.updateMyVisit(VISIT_ID, dto))
-                    .isInstanceOf(CustomException.class)
-                    .hasMessage("유효하지 않은 비밀번호입니다.");
+                        .isInstanceOf(CustomException.class)
+                        .hasMessage("유효하지 않은 비밀번호입니다.");
             }
         }
 
@@ -361,8 +362,8 @@ public class VisitServiceTest {
             @DisplayName("INVALID_VISIT_STATUS 예외를 던진다.")
             void it_throws_invalid_status() {
                 // given
-                MyVisitUpdateRequestDto dto = MyVisitUpdateRequestDto.builder()
-                    .password(PLAIN_PASSWORD).build();
+                MyVisitUpdateRequestDto dto =
+                        MyVisitUpdateRequestDto.builder().password(PLAIN_PASSWORD).build();
                 Visit visit = createBaseVisit(VisitStatus.COMPLETED, false);
 
                 given(visitRepository.findById(VISIT_ID)).willReturn(Optional.of(visit));
@@ -370,8 +371,8 @@ public class VisitServiceTest {
 
                 // when & then
                 assertThatThrownBy(() -> visitService.updateMyVisit(VISIT_ID, dto))
-                    .isInstanceOf(CustomException.class)
-                    .hasMessage("승인 가능한 상태가 아닙니다.");
+                        .isInstanceOf(CustomException.class)
+                        .hasMessage("승인 가능한 상태가 아닙니다.");
             }
         }
 
@@ -384,11 +385,12 @@ public class VisitServiceTest {
             void it_updates_one_day_visit() {
                 // given
                 LocalDate newDate = LocalDate.now().plusDays(5);
-                MyVisitUpdateRequestDto dto = MyVisitUpdateRequestDto.builder()
-                    .password(PLAIN_PASSWORD)
-                    .startDate(newDate)
-                    .visitorName("수정된이름")
-                    .build();
+                MyVisitUpdateRequestDto dto =
+                        MyVisitUpdateRequestDto.builder()
+                                .password(PLAIN_PASSWORD)
+                                .startDate(newDate)
+                                .visitorName("수정된이름")
+                                .build();
 
                 Visit visit = createBaseVisit(VisitStatus.NOT_VISITED, false);
                 visit.setStartDate(newDate);
@@ -414,8 +416,8 @@ public class VisitServiceTest {
             @DisplayName("INVALID_VISIT_STATUS 예외를 던진다.")
             void it_throws_invalid_status_for_approved_long_term() {
                 // given
-                MyVisitUpdateRequestDto dto = MyVisitUpdateRequestDto.builder()
-                    .password(PLAIN_PASSWORD).build();
+                MyVisitUpdateRequestDto dto =
+                        MyVisitUpdateRequestDto.builder().password(PLAIN_PASSWORD).build();
                 Visit visit = createBaseVisit(VisitStatus.APPROVED, true);
 
                 given(visitRepository.findById(VISIT_ID)).willReturn(Optional.of(visit));
@@ -423,8 +425,8 @@ public class VisitServiceTest {
 
                 // when & then
                 assertThatThrownBy(() -> visitService.updateMyVisit(VISIT_ID, dto))
-                    .isInstanceOf(CustomException.class)
-                    .hasMessage("승인 가능한 상태가 아닙니다.");
+                        .isInstanceOf(CustomException.class)
+                        .hasMessage("승인 가능한 상태가 아닙니다.");
             }
         }
 
@@ -439,11 +441,12 @@ public class VisitServiceTest {
                 LocalDate start = LocalDate.now().plusDays(1);
                 LocalDate end = start.plusMonths(2); // 2개월 (정상 범위)
 
-                MyVisitUpdateRequestDto dto = MyVisitUpdateRequestDto.builder()
-                    .password(PLAIN_PASSWORD)
-                    .startDate(start)
-                    .endDate(end)
-                    .build();
+                MyVisitUpdateRequestDto dto =
+                        MyVisitUpdateRequestDto.builder()
+                                .password(PLAIN_PASSWORD)
+                                .startDate(start)
+                                .endDate(end)
+                                .build();
 
                 Visit visit = createBaseVisit(VisitStatus.PENDING, true);
 
@@ -464,8 +467,7 @@ public class VisitServiceTest {
     @DisplayName("checkIn 메서드는")
     class Describe_checkIn {
 
-        @Mock
-        private MockMultipartFile signatureFile;
+        @Mock private MockMultipartFile signatureFile;
 
         @Nested
         @DisplayName("비밀번호가 일치하지 않으면")
@@ -483,8 +485,8 @@ public class VisitServiceTest {
 
                 // when & then
                 assertThatThrownBy(() -> visitService.checkIn(dto))
-                    .isInstanceOf(CustomException.class)
-                    .hasMessage("유효하지 않은 비밀번호입니다.");
+                        .isInstanceOf(CustomException.class)
+                        .hasMessage("유효하지 않은 비밀번호입니다.");
             }
         }
 
@@ -506,8 +508,8 @@ public class VisitServiceTest {
 
                 // when & then
                 assertThatThrownBy(() -> visitService.checkIn(dto))
-                    .isInstanceOf(CustomException.class)
-                    .hasMessage("오늘 방문 일정이 아닙니다.");
+                        .isInstanceOf(CustomException.class)
+                        .hasMessage("오늘 방문 일정이 아닙니다.");
             }
         }
 
@@ -529,8 +531,8 @@ public class VisitServiceTest {
 
                 // when & then
                 assertThatThrownBy(() -> visitService.checkIn(dto))
-                    .isInstanceOf(CustomException.class)
-                    .hasMessage("이미 체크아웃된 방문정보입니다.");
+                        .isInstanceOf(CustomException.class)
+                        .hasMessage("이미 체크아웃된 방문정보입니다.");
             }
         }
 
@@ -558,8 +560,8 @@ public class VisitServiceTest {
                 assertThat(visit.getStatus()).isEqualTo(VisitStatus.IN_PROGRESS);
                 assertThat(visit.isVisited()).isTrue();
                 assertThat(visit.getRecords()).hasSize(1);
-                assertThat(visit.getRecords().get(0).getSignatureKey()).isEqualTo(
-                    "s3-signature-key");
+                assertThat(visit.getRecords().get(0).getSignatureKey())
+                        .isEqualTo("s3-signature-key");
 
                 verify(s3Service, times(1)).uploadFile(any());
             }
@@ -578,10 +580,7 @@ public class VisitServiceTest {
 
         @BeforeEach
         void setUpAdmin() {
-            User admin = User.builder()
-                .id(ADMIN_ID)
-                .jobType(JobType.MANAGEMENT)
-                .build();
+            User admin = User.builder().id(ADMIN_ID).jobType(JobType.MANAGEMENT).build();
             admin.addAuthority(Authority.ACCESS_VISIT);
             given(userRepository.findById(ADMIN_ID)).willReturn(Optional.of(admin));
         }
@@ -599,28 +598,32 @@ public class VisitServiceTest {
                 visit.getRecords().add(record);
 
                 given(visitRepository.findById(VISIT_ID)).willReturn(Optional.of(visit));
-                CheckOutRequestDto dto = new CheckOutRequestDto(VISIT_ID, RECORD_ID,
-                    CHECK_OUT_TIME);
+                CheckOutRequestDto dto =
+                        new CheckOutRequestDto(VISIT_ID, RECORD_ID, CHECK_OUT_TIME);
 
                 // when & then
                 assertThatThrownBy(() -> visitService.checkOut(ADMIN_ID, dto))
-                    .isInstanceOf(CustomException.class)
-                    .hasMessage("현재 방문 상태가 '방문 중'이 아닙니다.");
+                        .isInstanceOf(CustomException.class)
+                        .hasMessage("현재 방문 상태가 '방문 중'이 아닙니다.");
             }
 
             @Test
             @DisplayName("하루 방문자라면 상태를 COMPLETED로 변경하고 시간을 기록한다.")
             void it_changes_status_to_completed_for_one_day_visit() {
                 // given
-                VisitRecord record = VisitRecord.builder().id(RECORD_ID).entryTime(ENTRY_TIME)
-                    .exitTime(null).build();
+                VisitRecord record =
+                        VisitRecord.builder()
+                                .id(RECORD_ID)
+                                .entryTime(ENTRY_TIME)
+                                .exitTime(null)
+                                .build();
 
                 Visit visit = createBaseVisit(VisitStatus.IN_PROGRESS, false);
                 visit.getRecords().add(record);
 
                 given(visitRepository.findById(VISIT_ID)).willReturn(Optional.of(visit));
-                CheckOutRequestDto dto = new CheckOutRequestDto(VISIT_ID, RECORD_ID,
-                    CHECK_OUT_TIME);
+                CheckOutRequestDto dto =
+                        new CheckOutRequestDto(VISIT_ID, RECORD_ID, CHECK_OUT_TIME);
 
                 // when
                 visitService.checkOut(ADMIN_ID, dto);
@@ -634,14 +637,18 @@ public class VisitServiceTest {
             @DisplayName("장기 방문자라면 상태를 APPROVED로 변경하고 시간을 기록한다.")
             void it_changes_status_to_approved_for_long_term_visit() {
                 // given
-                VisitRecord record = VisitRecord.builder().id(RECORD_ID).entryTime(ENTRY_TIME)
-                    .exitTime(null).build();
+                VisitRecord record =
+                        VisitRecord.builder()
+                                .id(RECORD_ID)
+                                .entryTime(ENTRY_TIME)
+                                .exitTime(null)
+                                .build();
                 Visit visit = createBaseVisit(VisitStatus.IN_PROGRESS, true);
                 visit.getRecords().add(record);
 
                 given(visitRepository.findById(VISIT_ID)).willReturn(Optional.of(visit));
-                CheckOutRequestDto dto = new CheckOutRequestDto(VISIT_ID, RECORD_ID,
-                    CHECK_OUT_TIME);
+                CheckOutRequestDto dto =
+                        new CheckOutRequestDto(VISIT_ID, RECORD_ID, CHECK_OUT_TIME);
 
                 // when
                 visitService.checkOut(ADMIN_ID, dto);
@@ -663,8 +670,12 @@ public class VisitServiceTest {
                 LocalDateTime oldExitTime = LocalDateTime.of(2026, 1, 22, 17, 0);
                 LocalDateTime newExitTime = LocalDateTime.of(2026, 1, 22, 19, 0);
 
-                VisitRecord record = VisitRecord.builder().id(RECORD_ID).entryTime(ENTRY_TIME)
-                    .exitTime(oldExitTime).build();
+                VisitRecord record =
+                        VisitRecord.builder()
+                                .id(RECORD_ID)
+                                .entryTime(ENTRY_TIME)
+                                .exitTime(oldExitTime)
+                                .build();
                 Visit visit = createBaseVisit(VisitStatus.COMPLETED, false);
                 visit.getRecords().add(record);
 
@@ -689,8 +700,12 @@ public class VisitServiceTest {
             void it_throws_invalid_checkout_time() {
                 // given: 입실은 10시인데 퇴실을 09시로 요청한 경우
                 LocalDateTime invalidTime = ENTRY_TIME.minusHours(1);
-                VisitRecord record = VisitRecord.builder().id(RECORD_ID).entryTime(ENTRY_TIME)
-                    .exitTime(null).build();
+                VisitRecord record =
+                        VisitRecord.builder()
+                                .id(RECORD_ID)
+                                .entryTime(ENTRY_TIME)
+                                .exitTime(null)
+                                .build();
                 Visit visit = createBaseVisit(VisitStatus.IN_PROGRESS, false);
                 visit.getRecords().add(record);
 
@@ -699,8 +714,8 @@ public class VisitServiceTest {
 
                 // when & then
                 assertThatThrownBy(() -> visitService.checkOut(ADMIN_ID, dto))
-                    .isInstanceOf(CustomException.class)
-                    .hasMessage("퇴실 시간은 입실 시간보다 빠를 수 없습니다.");
+                        .isInstanceOf(CustomException.class)
+                        .hasMessage("퇴실 시간은 입실 시간보다 빠를 수 없습니다.");
             }
         }
     }
@@ -725,8 +740,8 @@ public class VisitServiceTest {
 
                 // when & then
                 assertThatThrownBy(() -> visitService.approveVisit(1L, 100L))
-                    .isInstanceOf(CustomException.class)
-                    .hasMessage("장기 방문 건이 아닙니다.");
+                        .isInstanceOf(CustomException.class)
+                        .hasMessage("장기 방문 건이 아닙니다.");
             }
         }
 
@@ -773,11 +788,9 @@ public class VisitServiceTest {
 
                 // when & then
                 assertThatThrownBy(() -> visitService.getMyVisitDetail(100L, dto))
-                    .isInstanceOf(CustomException.class)
-                    .hasMessageContaining("유효하지 않은 비밀번호입니다.");
+                        .isInstanceOf(CustomException.class)
+                        .hasMessageContaining("유효하지 않은 비밀번호입니다.");
             }
         }
     }
 }
-
-

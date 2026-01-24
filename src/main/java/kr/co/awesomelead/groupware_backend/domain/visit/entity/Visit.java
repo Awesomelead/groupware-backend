@@ -2,6 +2,7 @@ package kr.co.awesomelead.groupware_backend.domain.visit.entity;
 
 import com.fasterxml.jackson.annotation.JsonBackReference;
 import com.fasterxml.jackson.annotation.JsonManagedReference;
+
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Convert;
@@ -17,6 +18,22 @@ import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.PrePersist;
 import jakarta.persistence.PreUpdate;
+
+import kr.co.awesomelead.groupware_backend.domain.department.enums.Company;
+import kr.co.awesomelead.groupware_backend.domain.user.entity.User;
+import kr.co.awesomelead.groupware_backend.domain.visit.enums.AdditionalPermissionType;
+import kr.co.awesomelead.groupware_backend.domain.visit.enums.VisitPurpose;
+import kr.co.awesomelead.groupware_backend.domain.visit.enums.VisitStatus;
+import kr.co.awesomelead.groupware_backend.domain.visit.enums.VisitType;
+import kr.co.awesomelead.groupware_backend.global.encryption.PhoneNumberEncryptor;
+
+import lombok.AccessLevel;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
@@ -25,19 +42,6 @@ import java.time.LocalTime;
 import java.util.ArrayList;
 import java.util.Base64;
 import java.util.List;
-import kr.co.awesomelead.groupware_backend.domain.department.enums.Company;
-import kr.co.awesomelead.groupware_backend.domain.user.entity.User;
-import kr.co.awesomelead.groupware_backend.domain.visit.enums.AdditionalPermissionType;
-import kr.co.awesomelead.groupware_backend.domain.visit.enums.VisitPurpose;
-import kr.co.awesomelead.groupware_backend.domain.visit.enums.VisitStatus;
-import kr.co.awesomelead.groupware_backend.domain.visit.enums.VisitType;
-import kr.co.awesomelead.groupware_backend.global.encryption.PhoneNumberEncryptor;
-import lombok.AccessLevel;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
 
 @Setter
 @Getter
@@ -87,11 +91,9 @@ public class Visit {
     @Column(nullable = false)
     private LocalDate endDate; // 종료일 (하루면 시작일과 동일)
 
-    @Column
-    private LocalTime plannedEntryTime; // 신청 시 입실 예정 시간
+    @Column private LocalTime plannedEntryTime; // 신청 시 입실 예정 시간
 
-    @Column
-    private LocalTime plannedExitTime;  // 신청 시 퇴실 예정 시간
+    @Column private LocalTime plannedExitTime; // 신청 시 퇴실 예정 시간
 
     @Column(nullable = false)
     private boolean isLongTerm; // 장기 여부 (DTO 분리 시 활용)
@@ -131,7 +133,6 @@ public class Visit {
         if (this.visitorPhoneNumber != null && this.phoneNumberHash == null) {
             this.phoneNumberHash = hashValue(this.visitorPhoneNumber);
         }
-
     }
 
     public static String hashValue(String value) {

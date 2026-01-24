@@ -285,7 +285,13 @@ public class VisitService {
         validateUpdateStatus(visit);
 
         if (visit.isLongTerm()) {
-            validateLongTermPeriod(dto.getStartDate(), dto.getEndDate());
+
+            LocalDate effectiveStart =
+                (dto.getStartDate() != null) ? dto.getStartDate() : visit.getStartDate();
+            LocalDate effectiveEnd =
+                (dto.getEndDate() != null) ? dto.getEndDate() : visit.getEndDate();
+
+            validateLongTermPeriod(effectiveStart, effectiveEnd);
             // 장기 방문은 수정 후 다시 승인 대기 상태로 변경
             visit.setStatus(VisitStatus.PENDING);
         }
@@ -309,9 +315,9 @@ public class VisitService {
         }
 
         if (visit.isLongTerm()) {
-            if (visit.getStatus() != VisitStatus.PENDING) {
-                throw new CustomException(
-                    ErrorCode.INVALID_VISIT_STATUS); // "승인 대기 중일 때만 수정 가능합니다."
+            if (visit.getStatus() != VisitStatus.PENDING
+                && visit.getStatus() != VisitStatus.APPROVED) {
+                throw new CustomException(ErrorCode.INVALID_VISIT_STATUS);
             }
         } else {
             // 하루 방문은 입실 전(NOT_VISITED) 상태여야 함

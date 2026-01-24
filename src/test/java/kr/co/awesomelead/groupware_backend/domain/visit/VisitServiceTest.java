@@ -416,10 +416,11 @@ public class VisitServiceTest {
             @DisplayName("방문 기록이 없으면(visited=false) 정보를 업데이트하고 상태를 PENDING으로 변경한다.")
             void it_updates_and_resets_status_when_no_records() {
                 // given
-                MyVisitUpdateRequestDto dto = MyVisitUpdateRequestDto.builder()
-                    .password(PLAIN_PASSWORD)
-                    .visitorName("이름수정")
-                    .build();
+                MyVisitUpdateRequestDto dto =
+                        MyVisitUpdateRequestDto.builder()
+                                .password(PLAIN_PASSWORD)
+                                .visitorName("이름수정")
+                                .build();
 
                 Visit visit = createBaseVisit(VisitStatus.APPROVED, true);
                 visit.setStartDate(LocalDate.now());
@@ -441,8 +442,8 @@ public class VisitServiceTest {
             @DisplayName("이미 방문 기록이 존재하면(visited=true) INVALID_VISIT_STATUS 예외를 던진다.")
             void it_throws_exception_when_already_visited() {
                 // given
-                MyVisitUpdateRequestDto dto = MyVisitUpdateRequestDto.builder()
-                    .password(PLAIN_PASSWORD).build();
+                MyVisitUpdateRequestDto dto =
+                        MyVisitUpdateRequestDto.builder().password(PLAIN_PASSWORD).build();
 
                 Visit visit = createBaseVisit(VisitStatus.APPROVED, true);
                 visit.setVisited(true); // ★ 핵심: 이미 한 번이라도 입실했던 상태
@@ -452,8 +453,8 @@ public class VisitServiceTest {
 
                 // when & then
                 assertThatThrownBy(() -> visitService.updateMyVisit(VISIT_ID, dto))
-                    .isInstanceOf(CustomException.class)
-                    .hasMessage("승인 가능한 상태가 아닙니다."); // ErrorCode.INVALID_VISIT_STATUS
+                        .isInstanceOf(CustomException.class)
+                        .hasMessage("승인 가능한 상태가 아닙니다."); // ErrorCode.INVALID_VISIT_STATUS
             }
         }
     }

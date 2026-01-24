@@ -94,9 +94,9 @@ public class VisitController {
                                         @ExampleObject(
                                                 value =
                                                         "{\"isSuccess\": false, \"code\":"
-                                                            + " \"LONG_TERM_PERIOD_EXCEEDED\","
-                                                            + " \"message\": \"장기 방문은 최대 3개월까지"
-                                                            + " 가능합니다.\"}")))
+                                                                + " \"LONG_TERM_PERIOD_EXCEEDED\","
+                                                                + " \"message\": \"장기 방문은 최대 3개월까지"
+                                                                + " 가능합니다.\"}")))
     })
     @PostMapping("/pre-registration/long-term")
     public ResponseEntity<ApiResponse<Long>> registerLongTermPreVisit(

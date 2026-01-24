@@ -14,6 +14,9 @@ import lombok.Setter;
 @Schema(description = "입퇴실 및 서명 기록 DTO")
 public class VisitRecordResponseDto {
 
+    @Schema(description = "방문 기록 ID (PK)", example = "10")
+    private Long id;
+
     @Schema(description = "입실 시간", example = "2026-02-01 10:00:00")
     private LocalDateTime entryTime;
 

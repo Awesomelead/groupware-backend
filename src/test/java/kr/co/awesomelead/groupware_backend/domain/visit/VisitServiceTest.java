@@ -407,45 +407,22 @@ public class VisitServiceTest {
         }
 
         @Nested
-        @DisplayName("이미 승인된 장기 방문 건을 수정하면")
+        @DisplayName("이미 승인된 장기 방문 건을 수정할 때")
         class Context_with_approved_long_term_update {
 
             @Test
-            @DisplayName("INVALID_VISIT_STATUS 예외를 던진다.")
-            void it_throws_invalid_status_for_approved_long_term() {
+            @DisplayName("방문 기록이 없으면(visited=false) 정보를 업데이트하고 상태를 PENDING으로 변경한다.")
+            void it_updates_and_resets_status_when_no_records() {
                 // given
-                MyVisitUpdateRequestDto dto = MyVisitUpdateRequestDto.builder()
-                    .password(PLAIN_PASSWORD).build();
-                Visit visit = createBaseVisit(VisitStatus.APPROVED, true);
-
-                given(visitRepository.findById(VISIT_ID)).willReturn(Optional.of(visit));
-                given(passwordEncoder.matches(PLAIN_PASSWORD, ENCODED_PASSWORD)).willReturn(true);
-
-                // when & then
-                assertThatThrownBy(() -> visitService.updateMyVisit(VISIT_ID, dto))
-                    .isInstanceOf(CustomException.class)
-                    .hasMessage("승인 가능한 상태가 아닙니다.");
-            }
-        }
-
-        @Nested
-        @DisplayName("대기 중인 장기 방문을 정상 수정하면")
-        class Context_with_valid_long_term_request {
-
-            @Test
-            @DisplayName("상태를 PENDING으로 유지/복귀시키고 기간을 검증한다.")
-            void it_updates_long_term_visit_and_resets_status() {
-                // given
-                LocalDate start = LocalDate.now().plusDays(1);
-                LocalDate end = start.plusMonths(2); // 2개월 (정상 범위)
-
                 MyVisitUpdateRequestDto dto = MyVisitUpdateRequestDto.builder()
                     .password(PLAIN_PASSWORD)
-                    .startDate(start)
-                    .endDate(end)
+                    .visitorName("이름수정")
                     .build();
 
-                Visit visit = createBaseVisit(VisitStatus.PENDING, true);
+                Visit visit = createBaseVisit(VisitStatus.APPROVED, true);
+                visit.setStartDate(LocalDate.now());
+                visit.setEndDate(LocalDate.now().plusMonths(1));
+                visit.setVisited(false);
 
                 given(visitRepository.findById(VISIT_ID)).willReturn(Optional.of(visit));
                 given(passwordEncoder.matches(PLAIN_PASSWORD, ENCODED_PASSWORD)).willReturn(true);
@@ -454,8 +431,27 @@ public class VisitServiceTest {
                 visitService.updateMyVisit(VISIT_ID, dto);
 
                 // then
-                assertThat(visit.getStatus()).isEqualTo(VisitStatus.PENDING);
-                verify(visitMapper).updateVisitFromDto(dto, visit);
+                assertThat(visit.getVisitorName()).isEqualTo("이름수정");
+                assertThat(visit.getStatus()).isEqualTo(VisitStatus.PENDING); // 다시 대기 상태로!
+            }
+
+            @Test
+            @DisplayName("이미 방문 기록이 존재하면(visited=true) INVALID_VISIT_STATUS 예외를 던진다.")
+            void it_throws_exception_when_already_visited() {
+                // given
+                MyVisitUpdateRequestDto dto = MyVisitUpdateRequestDto.builder()
+                    .password(PLAIN_PASSWORD).build();
+
+                Visit visit = createBaseVisit(VisitStatus.APPROVED, true);
+                visit.setVisited(true); // ★ 핵심: 이미 한 번이라도 입실했던 상태
+
+                given(visitRepository.findById(VISIT_ID)).willReturn(Optional.of(visit));
+                given(passwordEncoder.matches(PLAIN_PASSWORD, ENCODED_PASSWORD)).willReturn(true);
+
+                // when & then
+                assertThatThrownBy(() -> visitService.updateMyVisit(VISIT_ID, dto))
+                    .isInstanceOf(CustomException.class)
+                    .hasMessage("승인 가능한 상태가 아닙니다."); // ErrorCode.INVALID_VISIT_STATUS
             }
         }
     }

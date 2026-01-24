@@ -1,7 +1,5 @@
 package kr.co.awesomelead.groupware_backend.domain.visit.mapper;
 
-import java.time.LocalDateTime;
-import java.util.List;
 import kr.co.awesomelead.groupware_backend.domain.user.entity.User;
 import kr.co.awesomelead.groupware_backend.domain.visit.dto.request.LongTermVisitRequestDto;
 import kr.co.awesomelead.groupware_backend.domain.visit.dto.request.MyVisitUpdateRequestDto;
@@ -14,14 +12,20 @@ import kr.co.awesomelead.groupware_backend.domain.visit.dto.response.VisitListRe
 import kr.co.awesomelead.groupware_backend.domain.visit.dto.response.VisitRecordResponseDto;
 import kr.co.awesomelead.groupware_backend.domain.visit.entity.Visit;
 import kr.co.awesomelead.groupware_backend.domain.visit.entity.VisitRecord;
+
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 import org.mapstruct.MappingTarget;
 import org.mapstruct.NullValuePropertyMappingStrategy;
 import org.mapstruct.ReportingPolicy;
 
-@Mapper(componentModel = "spring", unmappedTargetPolicy = ReportingPolicy.IGNORE,
-    nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE) // null은 무시!
+import java.time.LocalDateTime;
+import java.util.List;
+
+@Mapper(
+        componentModel = "spring",
+        unmappedTargetPolicy = ReportingPolicy.IGNORE,
+        nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE) // null은 무시!
 public interface VisitMapper {
 
     @Mapping(target = "id", ignore = true) // 생성 시 ID는 자동 생성되므로 무시
@@ -33,11 +37,17 @@ public interface VisitMapper {
     @Mapping(target = "user", source = "host") // 파라미터로 받은 User 객체를 매핑
     @Mapping(target = "password", source = "encodedPassword") // 암호화된 비밀번호 매핑
     @Mapping(target = "startDate", source = "dto.visitDate") // 시작일 = 방문일
-    @Mapping(target = "endDate", source = "dto.visitDate")   // 종료일 = 방문일
+    @Mapping(target = "endDate", source = "dto.visitDate") // 종료일 = 방문일
     @Mapping(target = "plannedEntryTime", source = "dto.entryTime") // 추가
-    @Mapping(target = "plannedExitTime", source = "dto.exitTime")   // 추가
-    @Mapping(target = "status", expression = "java(kr.co.awesomelead.groupware_backend.domain.visit.enums.VisitStatus.NOT_VISITED)")
-    @Mapping(target = "visitType", expression = "java(kr.co.awesomelead.groupware_backend.domain.visit.enums.VisitType.PRE_REGISTRATION)")
+    @Mapping(target = "plannedExitTime", source = "dto.exitTime") // 추가
+    @Mapping(
+            target = "status",
+            expression =
+                    "java(kr.co.awesomelead.groupware_backend.domain.visit.enums.VisitStatus.NOT_VISITED)")
+    @Mapping(
+            target = "visitType",
+            expression =
+                    "java(kr.co.awesomelead.groupware_backend.domain.visit.enums.VisitType.PRE_REGISTRATION)")
     @Mapping(target = "isLongTerm", constant = "false")
     @Mapping(target = "visited", constant = "false")
     @Mapping(target = "records", ignore = true)
@@ -56,10 +66,15 @@ public interface VisitMapper {
     // 장기 방문은 예정 시간이 없으므로 매핑에서 제외 (null로 들어감)
     @Mapping(target = "plannedEntryTime", ignore = true)
     @Mapping(target = "plannedExitTime", ignore = true)
-
-    @Mapping(target = "status", expression = "java(kr.co.awesomelead.groupware_backend.domain.visit.enums.VisitStatus.PENDING)")
+    @Mapping(
+            target = "status",
+            expression =
+                    "java(kr.co.awesomelead.groupware_backend.domain.visit.enums.VisitStatus.PENDING)")
     // 장기는 보통 '승인 대기'
-    @Mapping(target = "visitType", expression = "java(kr.co.awesomelead.groupware_backend.domain.visit.enums.VisitType.PRE_REGISTRATION)")
+    @Mapping(
+            target = "visitType",
+            expression =
+                    "java(kr.co.awesomelead.groupware_backend.domain.visit.enums.VisitType.PRE_REGISTRATION)")
     @Mapping(target = "records", ignore = true)
     @Mapping(target = "phoneNumberHash", ignore = true)
     @Mapping(target = "visited", constant = "false")
@@ -69,14 +84,20 @@ public interface VisitMapper {
     @Mapping(target = "id", ignore = true)
     @Mapping(target = "user", source = "host")
     @Mapping(target = "password", source = "encodedPassword")
-    @Mapping(target = "visitType", expression = "java(kr.co.awesomelead.groupware_backend.domain.visit.enums.VisitType.ON_SITE)")
-    @Mapping(target = "status", expression = "java(kr.co.awesomelead.groupware_backend.domain.visit.enums.VisitStatus.IN_PROGRESS)")
+    @Mapping(
+            target = "visitType",
+            expression =
+                    "java(kr.co.awesomelead.groupware_backend.domain.visit.enums.VisitType.ON_SITE)")
+    @Mapping(
+            target = "status",
+            expression =
+                    "java(kr.co.awesomelead.groupware_backend.domain.visit.enums.VisitStatus.IN_PROGRESS)")
     @Mapping(target = "visited", constant = "true") // 즉시 방문 처리
     @Mapping(target = "isLongTerm", constant = "false")
     @Mapping(target = "startDate", expression = "java(java.time.LocalDate.now())")
     @Mapping(target = "endDate", expression = "java(java.time.LocalDate.now())")
     @Mapping(target = "plannedEntryTime", expression = "java(java.time.LocalTime.now())")
-    @Mapping(target = "plannedExitTime", ignore = true)   // 추가
+    @Mapping(target = "plannedExitTime", ignore = true) // 추가
     @Mapping(target = "hostCompany", source = "host.workLocation")
     @Mapping(target = "records", ignore = true)
     @Mapping(target = "phoneNumberHash", ignore = true)
@@ -84,7 +105,6 @@ public interface VisitMapper {
     @Mapping(target = "permissionType", ignore = true)
     @Mapping(target = "permissionDetail", ignore = true)
     Visit toOnSiteVisit(OnSiteVisitRequestDto dto, User host, String encodedPassword);
-
 
     // MyVisitListResponseDto 매핑
     @Mapping(target = "visitId", source = "id")
@@ -143,11 +163,11 @@ public interface VisitMapper {
     @Mapping(target = "hostDepartmentName", source = "user.department.name")
     @Mapping(target = "hostName", source = "user.nameKor")
     @Mapping(target = "records", source = "records")
-        // VisitRecord -> VisitRecordResponseDto 변환 필요
+    // VisitRecord -> VisitRecordResponseDto 변환 필요
     VisitDetailResponseDto toVisitDetailResponseDto(Visit visit);
 
     @Mapping(target = "signatureUrl", source = "signatureKey")
-        // 키값을 URL로 변환하는 로직은 서비스나 커스텀 매퍼에서 처리 가능
+    // 키값을 URL로 변환하는 로직은 서비스나 커스텀 매퍼에서 처리 가능
     VisitRecordResponseDto toRecordResponseDto(VisitRecord record);
 
     List<VisitListResponseDto> toVisitListResponseDtos(List<Visit> visits);

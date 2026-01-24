@@ -85,7 +85,6 @@ public class SecurityConfig {
                         "/api/auth/logout",
                         "/api/auth/reset-password", // 로그인 상태에서의 비번 변경
                         "/api/admin/**", // 관리자 기능
-                        "/api/visits/admin/list",
                         "/api/visits/admin/**",
                         "/api/visits/check-out")
                     .authenticated()

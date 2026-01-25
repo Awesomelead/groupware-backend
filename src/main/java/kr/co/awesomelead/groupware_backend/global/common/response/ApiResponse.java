@@ -1,8 +1,6 @@
 package kr.co.awesomelead.groupware_backend.global.common.response;
 
-import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
-
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 
@@ -15,7 +13,7 @@ public class ApiResponse<T> {
     private final String code;
     private final String message;
 
-    @JsonInclude(JsonInclude.Include.NON_NULL)
+    // @JsonInclude(JsonInclude.Include.NON_NULL)
     private T result;
 
     // 성공 시 호출하는 정적 팩토리 메서드

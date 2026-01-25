@@ -4,6 +4,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -90,7 +91,7 @@ public class NoticeServiceTest {
         Notice notice = new Notice();
 
         when(userRepository.findById(anyLong())).thenReturn(Optional.of(author));
-        when(noticeMapper.toNoticeEntity(any())).thenReturn(notice);
+        when(noticeMapper.toNoticeEntity(any(), eq(author))).thenReturn(notice);
         when(s3Service.uploadFile(any())).thenReturn("s3-key-123");
         when(noticeRepository.save(any(Notice.class)))
             .thenAnswer(

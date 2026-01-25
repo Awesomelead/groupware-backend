@@ -1,7 +1,6 @@
 package kr.co.awesomelead.groupware_backend.domain.notice.service;
 
 import java.io.IOException;
-import java.time.LocalDateTime;
 import java.util.List;
 import kr.co.awesomelead.groupware_backend.domain.notice.dto.request.NoticeCreateRequestDto;
 import kr.co.awesomelead.groupware_backend.domain.notice.dto.request.NoticeUpdateRequestDto;
@@ -52,10 +51,7 @@ public class NoticeService {
         throws IOException {
         User author = validateAndGetAuthor(userId);
 
-        Notice notice = noticeMapper.toNoticeEntity(requestDto);
-        notice.setAuthor(author);
-        notice.setCreatedDate(LocalDateTime.now());
-        notice.setUpdatedDate(LocalDateTime.now());
+        Notice notice = noticeMapper.toNoticeEntity(requestDto, author);
 
         uploadFiles(files, notice);
 

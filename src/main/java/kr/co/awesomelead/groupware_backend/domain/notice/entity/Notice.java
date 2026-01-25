@@ -1,9 +1,9 @@
 package kr.co.awesomelead.groupware_backend.domain.notice.entity;
 
 import com.fasterxml.jackson.annotation.JsonBackReference;
-
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
+import jakarta.persistence.Convert;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EntityListeners;
 import jakarta.persistence.EnumType;
@@ -17,24 +17,28 @@ import jakarta.persistence.Lob;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
-
+import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
+import kr.co.awesomelead.groupware_backend.domain.department.enums.Company;
 import kr.co.awesomelead.groupware_backend.domain.notice.enums.NoticeType;
 import kr.co.awesomelead.groupware_backend.domain.user.entity.User;
-
+import kr.co.awesomelead.groupware_backend.global.util.CompanyListConverter;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 import lombok.Setter;
-
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.LastModifiedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 import org.springframework.util.StringUtils;
 
-import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.List;
-
 @Setter
 @Getter
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
 @Entity
 @Table(name = "notices")
 @EntityListeners(AuditingEntityListener.class)
@@ -68,15 +72,21 @@ public class Notice {
     @Column(nullable = false, updatable = false)
     private LocalDateTime createdDate;
 
-    @LastModifiedDate private LocalDateTime updatedDate;
+    @LastModifiedDate
+    private LocalDateTime updatedDate;
 
     // 조회수
+    @Builder.Default
     @Column(nullable = false)
     private int viewCount = 0;
 
     // 상단 고정 여부
     @Column(nullable = false)
     private boolean pinned = false;
+
+    @Convert(converter = CompanyListConverter.class)
+    @Column(name = "target_companies", columnDefinition = "TEXT")
+    private List<Company> targetCompanies = new ArrayList<>();
 
     // 첨부파일 리스트
     @OneToMany(mappedBy = "notice", cascade = CascadeType.ALL, orphanRemoval = true)

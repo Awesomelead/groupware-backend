@@ -1,12 +1,11 @@
 package kr.co.awesomelead.groupware_backend.domain.notice.dto.request;
 
 import io.swagger.v3.oas.annotations.media.Schema;
-
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
-
+import java.util.List;
+import kr.co.awesomelead.groupware_backend.domain.department.enums.Company;
 import kr.co.awesomelead.groupware_backend.domain.notice.enums.NoticeType;
-
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
@@ -28,13 +27,20 @@ public class NoticeCreateRequestDto {
 
     @NotNull(message = "공지 유형은 필수입니다.")
     @Schema(
-            description = "공지사항 유형",
-            example = "REGULAR",
-            required = true,
-            allowableValues = {"REGULAR", "MENU", "ETC"})
+        description = "공지사항 유형",
+        example = "REGULAR",
+        required = true,
+        allowableValues = {"REGULAR", "MENU", "ETC"})
     private NoticeType type;
 
     @Builder.Default
     @Schema(description = "상단 고정 여부", example = "false", defaultValue = "false")
     private Boolean pinned = false;
+
+    @NotNull(message = "공지 대상 회사는 최소 하나 이상 선택해야 합니다.")
+    @Schema(
+        description = "공지 대상 회사 목록 (중복 선택 가능)",
+        example = "[\"AWESOME\", \"MARUI\"]",
+        required = true)
+    private List<Company> targetCompanies;
 }

@@ -1,24 +1,32 @@
 package kr.co.awesomelead.groupware_backend.domain.visit.service;
 
-import kr.co.awesomelead.groupware_backend.domain.department.entity.Department;
-import kr.co.awesomelead.groupware_backend.domain.department.enums.DepartmentName;
+import static kr.co.awesomelead.groupware_backend.domain.visit.entity.Visit.hashValue;
+
 import kr.co.awesomelead.groupware_backend.domain.department.repository.DepartmentRepository;
 import kr.co.awesomelead.groupware_backend.domain.user.entity.User;
+import kr.co.awesomelead.groupware_backend.domain.user.enums.Authority;
+import kr.co.awesomelead.groupware_backend.domain.user.enums.JobType;
 import kr.co.awesomelead.groupware_backend.domain.user.repository.UserRepository;
+import kr.co.awesomelead.groupware_backend.domain.visit.dto.request.CheckInRequestDto;
 import kr.co.awesomelead.groupware_backend.domain.visit.dto.request.CheckOutRequestDto;
-import kr.co.awesomelead.groupware_backend.domain.visit.dto.request.VisitCreateRequestDto;
+import kr.co.awesomelead.groupware_backend.domain.visit.dto.request.LongTermVisitRequestDto;
+import kr.co.awesomelead.groupware_backend.domain.visit.dto.request.MyVisitDetailRequestDto;
+import kr.co.awesomelead.groupware_backend.domain.visit.dto.request.MyVisitUpdateRequestDto;
+import kr.co.awesomelead.groupware_backend.domain.visit.dto.request.OnSiteVisitRequestDto;
+import kr.co.awesomelead.groupware_backend.domain.visit.dto.request.OneDayVisitRequestDto;
+import kr.co.awesomelead.groupware_backend.domain.visit.dto.request.VisitRequest;
 import kr.co.awesomelead.groupware_backend.domain.visit.dto.request.VisitSearchRequestDto;
-import kr.co.awesomelead.groupware_backend.domain.visit.dto.response.MyVisitResponseDto;
+import kr.co.awesomelead.groupware_backend.domain.visit.dto.response.MyVisitDetailResponseDto;
+import kr.co.awesomelead.groupware_backend.domain.visit.dto.response.MyVisitListResponseDto;
 import kr.co.awesomelead.groupware_backend.domain.visit.dto.response.VisitDetailResponseDto;
-import kr.co.awesomelead.groupware_backend.domain.visit.dto.response.VisitResponseDto;
-import kr.co.awesomelead.groupware_backend.domain.visit.dto.response.VisitSummaryResponseDto;
+import kr.co.awesomelead.groupware_backend.domain.visit.dto.response.VisitListResponseDto;
 import kr.co.awesomelead.groupware_backend.domain.visit.entity.Visit;
-import kr.co.awesomelead.groupware_backend.domain.visit.entity.Visitor;
+import kr.co.awesomelead.groupware_backend.domain.visit.entity.VisitRecord;
 import kr.co.awesomelead.groupware_backend.domain.visit.enums.AdditionalPermissionType;
-import kr.co.awesomelead.groupware_backend.domain.visit.enums.VisitType;
+import kr.co.awesomelead.groupware_backend.domain.visit.enums.VisitPurpose;
+import kr.co.awesomelead.groupware_backend.domain.visit.enums.VisitStatus;
 import kr.co.awesomelead.groupware_backend.domain.visit.mapper.VisitMapper;
 import kr.co.awesomelead.groupware_backend.domain.visit.repository.VisitRepository;
-import kr.co.awesomelead.groupware_backend.domain.visit.repository.VisitorRepository;
 import kr.co.awesomelead.groupware_backend.global.error.CustomException;
 import kr.co.awesomelead.groupware_backend.global.error.ErrorCode;
 import kr.co.awesomelead.groupware_backend.global.infra.s3.S3Service;
@@ -26,13 +34,14 @@ import kr.co.awesomelead.groupware_backend.global.infra.s3.S3Service;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
-import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
-import java.util.ArrayList;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
 
 @Slf4j
@@ -41,218 +50,388 @@ import java.util.List;
 public class VisitService {
 
     private final VisitRepository visitRepository;
-    private final VisitorRepository visitorRepository;
     private final UserRepository userRepository;
     private final DepartmentRepository departmentRepository;
     private final VisitMapper visitMapper;
     private final S3Service s3Service;
+    private final PasswordEncoder passwordEncoder;
 
     @Transactional
-    public VisitResponseDto createPreVisit(
-            VisitCreateRequestDto requestDto, MultipartFile signatureFile) throws IOException {
-        return createVisitProcess(requestDto, signatureFile, VisitType.PRE_REGISTRATION);
-    }
+    public Long registerOneDayPreVisit(OneDayVisitRequestDto dto) {
 
-    @Transactional
-    public VisitResponseDto createOnSiteVisit(
-            VisitCreateRequestDto requestDto, MultipartFile signatureFile) throws IOException {
-        return createVisitProcess(requestDto, signatureFile, VisitType.ON_SITE);
-    }
-
-    private VisitResponseDto createVisitProcess(
-            VisitCreateRequestDto dto, MultipartFile signatureFile, VisitType type)
-            throws IOException {
-
-        if (signatureFile == null || signatureFile.isEmpty()) {
-            throw new CustomException(ErrorCode.NO_SIGNATURE_PROVIDED);
-        }
-
-        // 사전 방문 예약 시, 비밀번호 필수 체크
-        if (type == VisitType.PRE_REGISTRATION && !StringUtils.hasText(dto.getVisitorPassword())) {
-            throw new CustomException(ErrorCode.VISITOR_PASSWORD_REQUIRED_FOR_PRE_REGISTRATION);
-        }
-
-        if (dto.getPermissionType() == AdditionalPermissionType.OTHER_PERMISSION
-                && !StringUtils.hasText(dto.getPermissionDetail())) {
-            throw new CustomException(ErrorCode.PERMISSION_DETAIL_REQUIRED);
-        }
-
-        // 담당 직원 조회
         User host =
                 userRepository
-                        .findById(dto.getHostUserId())
+                        .findById(dto.getHostId())
                         .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
 
-        // 내방객 조회 혹은 생성
-        Visitor visitor = getOrCreateVisitor(dto, type);
+        String encodedPassword = passwordEncoder.encode(dto.getPassword());
 
-        String signatureKey = null;
-        try {
-            // 3. 서명 이미지 처리 (PNG 검증 및 S3 업로드)
-            if (signatureFile != null && !signatureFile.isEmpty()) {
-                validatePngFormat(signatureFile);
-                signatureKey = s3Service.uploadFile(signatureFile);
-            }
+        Visit visit = visitMapper.toOneDayVisit(dto, host, encodedPassword);
+        syncAndValidatePermissions(visit, dto);
 
-            // 4. 엔티티 생성 및 서명 키 설정
-            Visit visit = visitMapper.toVisitEntity(dto, host, visitor, type);
-            visit.setSignatureKey(signatureKey); // S3 키 저장
-
-            if (visit.getCompanions() != null) {
-                visit.getCompanions().forEach(companion -> companion.setVisit(visit));
-            }
-
-            // 5. DB 저장
-            Visit savedVisit = visitRepository.save(visit);
-            return visitMapper.toResponseDto(savedVisit);
-
-        } catch (Exception e) {
-            // 6. DB 저장 중 에러 발생 시 S3 파일 삭제 (고아 파일 방지)
-            deleteS3FileIfExist(signatureKey);
-            throw e;
-        }
+        return visitRepository.save(visit).getId();
     }
 
-    // PNG 형식 검증
-    private void validatePngFormat(MultipartFile file) {
-        String contentType = file.getContentType();
-        if (contentType == null || !contentType.equals("image/png")) {
-            throw new CustomException(ErrorCode.INVALID_SIGNATURE_FORMAT);
-        }
-    }
+    @Transactional
+    public Long registerLongTermPreVisit(LongTermVisitRequestDto dto) {
 
-    // S3 파일 삭제 헬퍼
-    private void deleteS3FileIfExist(String signatureKey) {
-        if (signatureKey != null) {
-            try {
-                s3Service.deleteFile(signatureKey);
-            } catch (Exception s3Ex) {
-                log.error("롤백 중 S3 파일 삭제 실패: {}", signatureKey);
-            }
-        }
-    }
+        validateLongTermPeriod(dto.getStartDate(), dto.getEndDate());
 
-    private Visitor getOrCreateVisitor(VisitCreateRequestDto dto, VisitType type) {
-
-        String phoneNumberHash = Visitor.hashPhoneNumber(dto.getVisitorPhone());
-
-        return visitorRepository
-                .findByPhoneNumberHash(phoneNumberHash)
-                .map(
-                        existingVisitor -> {
-                            // 기존 방문자가 있고, 사전 예약 시 새로운 비번이 들어왔다면 갱신
-                            if (type == VisitType.PRE_REGISTRATION
-                                    && StringUtils.hasText(dto.getVisitorPassword())) {
-                                existingVisitor.setPassword(dto.getVisitorPassword());
-                                return visitorRepository.save(existingVisitor);
-                            }
-                            return existingVisitor;
-                        })
-                .orElseGet(() -> visitorRepository.save(visitMapper.toVisitorEntity(dto)));
-    }
-
-    @Transactional(readOnly = true)
-    public List<VisitSummaryResponseDto> getMyVisits(VisitSearchRequestDto requestDto) {
-
-        String phoneNumberHash = Visitor.hashPhoneNumber(requestDto.getPhoneNumber());
-        Visitor visitor =
-                visitorRepository
-                        .findByPhoneNumberHash(phoneNumberHash)
-                        .orElseThrow(() -> new CustomException(ErrorCode.VISITOR_NOT_FOUND));
-
-        if (!visitor.getName().equals(requestDto.getName())
-                || !visitor.getPassword().equals(requestDto.getPassword())) {
-            throw new CustomException(ErrorCode.VISITOR_AUTHENTICATION_FAILED);
-        }
-
-        List<Visit> visits = visitRepository.findByVisitor(visitor);
-        return visitMapper.toVisitSummaryResponseDtoList(visits);
-    }
-
-    @Transactional(readOnly = true)
-    public MyVisitResponseDto getMyVisitDetail(Long visitId) {
-        Visit visit =
-                visitRepository
-                        .findById(visitId)
-                        .orElseThrow(() -> new CustomException(ErrorCode.VISIT_NOT_FOUND));
-
-        return visitMapper.toMyVisitResponseDto(visit);
-    }
-
-    @Transactional(readOnly = true)
-    public List<VisitSummaryResponseDto> getVisitsByDepartment(Long userId, Long departmentId) {
-
-        // 요청한 사용자 조회
-        User requestingUser =
+        User host =
                 userRepository
-                        .findById(userId)
+                        .findById(dto.getHostId())
                         .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
 
-        // 요청한 사용자의 부서명 조회
-        DepartmentName requestingUserDeptName = requestingUser.getDepartment().getName();
+        String encodedPassword = passwordEncoder.encode(dto.getPassword());
 
-        List<Visit> visits;
+        Visit visit = visitMapper.toLongTermVisit(dto, host, encodedPassword);
+        syncAndValidatePermissions(visit, dto);
 
-        // '경비' 부서인 경우 전체 조회
-        if (requestingUserDeptName == DepartmentName.SECURITY_DEPT || departmentId == null) {
-            visits = visitRepository.findAll();
-        } else {
-            // 특정 부서 ID가 넘어온 경우
-            Department targetDept =
-                    departmentRepository
-                            .findById(departmentId)
-                            .orElseThrow(() -> new CustomException(ErrorCode.DEPARTMENT_NOT_FOUND));
-
-            List<Long> allDeptIds = new ArrayList<>();
-            collectDepartmentIdsRecursive(targetDept, allDeptIds);
-
-            visits = visitRepository.findAllByDepartmentIdIn(allDeptIds);
-        }
-
-        return visitMapper.toVisitSummaryResponseDtoList(visits);
+        return visitRepository.save(visit).getId();
     }
 
-    private void collectDepartmentIdsRecursive(Department dept, List<Long> ids) {
-        ids.add(dept.getId()); // 내 ID 추가
-        for (Department child : dept.getChildren()) {
-            collectDepartmentIdsRecursive(child, ids); // 자식들의 ID도 재귀적으로 추가
+    @Transactional
+    public Long registerOnSiteVisit(OnSiteVisitRequestDto dto) throws IOException {
+
+        User host =
+                userRepository
+                        .findById(dto.getHostId())
+                        .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
+
+        String encodedPassword = passwordEncoder.encode(dto.getPassword());
+        String signatureKey = s3Service.uploadFile(dto.getSignatureFile());
+
+        Visit visit = visitMapper.toOnSiteVisit(dto, host, encodedPassword);
+        syncAndValidatePermissions(visit, dto);
+
+        VisitRecord record =
+                VisitRecord.builder()
+                        .visit(visit)
+                        .visitDate(LocalDate.now())
+                        .entryTime(LocalDateTime.now())
+                        .exitTime(null) // 현장 방문 시점에는 퇴실 시간이 없음
+                        .signatureKey(signatureKey)
+                        .build();
+
+        visit.getRecords().add(record);
+
+        return visitRepository.save(visit).getId();
+    }
+
+    private void syncAndValidatePermissions(Visit visit, VisitRequest dto) {
+        // 1. 매퍼가 놓칠 수 있는 필드 바인딩 (수정 시 null 체크 포함)
+        if (dto.getPurpose() != null) {
+            visit.setPurpose(dto.getPurpose());
+        }
+        if (dto.getPermissionType() != null) {
+            visit.setPermissionType(dto.getPermissionType());
+        }
+
+        // 2. '기타 허가'가 아닐 경우 기존 상세내용 초기화 (데이터 정합성)
+        if (visit.getPermissionType() != AdditionalPermissionType.OTHER_PERMISSION) {
+            visit.setPermissionDetail(null);
+        } else if (StringUtils.hasText(dto.getPermissionDetail())) {
+            visit.setPermissionDetail(dto.getPermissionDetail());
+        }
+
+        // 3. 비즈니스 규칙 통합 검증 (엔티티의 최종 상태 기준)
+        // 규칙 1: 시설공사는 보충적 허가 필수
+        if (visit.getPurpose() == VisitPurpose.FACILITY_CONSTRUCTION) {
+            if (visit.getPermissionType() == null
+                    || visit.getPermissionType() == AdditionalPermissionType.NONE) {
+                throw new CustomException(ErrorCode.ADDITIONAL_PERMISSION_REQUIRED);
+            }
+        }
+
+        // 규칙 2: '기타 허가' 선택 시 상세 내용 필수
+        if (visit.getPermissionType() == AdditionalPermissionType.OTHER_PERMISSION) {
+            if (!StringUtils.hasText(visit.getPermissionDetail())) {
+                throw new CustomException(ErrorCode.PERMISSION_DETAIL_REQUIRED);
+            }
         }
     }
 
+    private void validateLongTermPeriod(LocalDate startDate, LocalDate endDate) {
+        if (endDate.isBefore(startDate)) {
+            throw new CustomException(ErrorCode.INVALID_VISIT_DATE_RANGE);
+        }
+        // 시작일 기준 정확히 3개월 뒤 날짜 계산
+        LocalDate maxEndDate = startDate.plusMonths(3);
+        if (endDate.isAfter(maxEndDate)) {
+            throw new CustomException(ErrorCode.LONG_TERM_PERIOD_EXCEEDED);
+        }
+    }
+
+    // 방문처리
+    @Transactional
+    public Long checkIn(CheckInRequestDto dto) throws IOException {
+        // 1. 방문 신청 건 조회
+        Visit visit =
+                visitRepository
+                        .findById(dto.getVisitId())
+                        .orElseThrow(() -> new CustomException(ErrorCode.VISIT_NOT_FOUND));
+
+        // 2. 비밀번호 검증
+        if (!passwordEncoder.matches(dto.getPassword(), visit.getPassword())) {
+            throw new CustomException(ErrorCode.INVALID_PASSWORD);
+        }
+
+        // 3. 날짜 검증 (하루 방문의 경우 오늘 날짜인지 확인)
+        if (!visit.isLongTerm() && !visit.getStartDate().equals(LocalDate.now())) {
+            throw new CustomException(ErrorCode.NOT_VISIT_DATE); // "방문 예정일이 아닙니다" 에러
+        }
+
+        if (visit.isVisited()) {
+            throw new CustomException(ErrorCode.VISIT_ALREADY_CHECKED_OUT);
+        }
+
+        // 5. 서명 이미지 S3 업로드
+        String signatureKey = s3Service.uploadFile(dto.getSignatureFile());
+
+        // 6. 입실 기록(VisitRecord) 생성
+        VisitRecord record =
+                VisitRecord.builder()
+                        .visit(visit)
+                        .visitDate(LocalDate.now())
+                        .entryTime(LocalDateTime.now())
+                        .signatureKey(signatureKey)
+                        .build();
+
+        visit.getRecords().add(record);
+
+        // 7. 방문 상태 업데이트
+        visit.setStatus(VisitStatus.IN_PROGRESS);
+        visit.setVisited(true);
+
+        return visit.getId();
+    }
+
+    @Transactional
+    public Long checkOut(Long userId, CheckOutRequestDto dto) {
+        validateAdminAuthority(userId);
+
+        Visit visit =
+                visitRepository
+                        .findById(dto.getVisitId())
+                        .orElseThrow(() -> new CustomException(ErrorCode.VISIT_NOT_FOUND));
+
+        VisitRecord record =
+                visit.getRecords().stream()
+                        .filter(r -> r.getId().equals(dto.getVisitRecordId()))
+                        .findFirst()
+                        .orElseThrow(() -> new CustomException(ErrorCode.RECORD_NOT_FOUND));
+
+        boolean isInitialCheckOut = (record.getExitTime() == null);
+
+        // 상태 변경 로직
+        if (isInitialCheckOut) {
+            // 최초 퇴실 처리 시에는 입실을 한 상태인지 확인
+            if (visit.getStatus() != VisitStatus.IN_PROGRESS) {
+                throw new CustomException(ErrorCode.NOT_IN_PROGRESS);
+            }
+            if (visit.isLongTerm()) {
+                visit.setStatus(VisitStatus.APPROVED); // 다음 입실을 위해 다시 승인 상태로
+            } else {
+                visit.setStatus(VisitStatus.COMPLETED); // 단기 방문은 최종 완료
+            }
+        }
+
+        if (dto.getCheckOutTime().isBefore(record.getEntryTime())) {
+            throw new CustomException(
+                    ErrorCode.INVALID_CHECKOUT_TIME); // "퇴실 시간은 입실 시간보다 빠를 수 없습니다."
+        }
+
+        record.setExitTime(dto.getCheckOutTime());
+
+        return visit.getId();
+    }
+
+    // 내 방문 목록 조회
     @Transactional(readOnly = true)
-    public VisitDetailResponseDto getVisitDetailByEmployee(Long visitId) {
+    public List<MyVisitListResponseDto> getMyVisitList(VisitSearchRequestDto dto) {
+        String inputPhoneHash = hashValue(dto.getPhoneNumber());
+
+        List<Visit> visits =
+                visitRepository.findByVisitorNameAndPhoneNumberHash(dto.getName(), inputPhoneHash);
+
+        return visits.stream()
+                .filter(
+                        visit ->
+                                StringUtils.hasText(
+                                        visit.getPassword())) // 비밀번호가 있는 건만 대상 (현장 내방 제외)
+                .filter(
+                        visit ->
+                                passwordEncoder.matches(
+                                        dto.getPassword(), visit.getPassword())) // 비번 일치 확인
+                .map(visitMapper::toMyVisitListResponseDto)
+                .toList();
+    }
+
+    // 내 방문 상세 조회
+    @Transactional(readOnly = true)
+    public MyVisitDetailResponseDto getMyVisitDetail(Long visitId, MyVisitDetailRequestDto dto) {
+        // 1. 존재 여부 확인
+        Visit visit =
+                visitRepository
+                        .findById(visitId)
+                        .orElseThrow(() -> new CustomException(ErrorCode.VISIT_NOT_FOUND));
+
+        // 2. 비밀번호 검증
+        if (!passwordEncoder.matches(dto.getPassword(), visit.getPassword())) {
+            throw new CustomException(ErrorCode.INVALID_PASSWORD);
+        }
+
+        // 3. 엔티티 -> DTO 변환 (시간 계산은 매퍼의 default 메서드가 처리)
+        MyVisitDetailResponseDto responseDto = visitMapper.toMyVisitDetailResponseDto(visit);
+
+        if (responseDto.getRecords() != null) {
+            responseDto
+                    .getRecords()
+                    .forEach(
+                            record -> {
+                                if (StringUtils.hasText(record.getSignatureUrl())) {
+                                    record.setSignatureUrl(
+                                            s3Service.getFileUrl(record.getSignatureUrl()));
+                                }
+                            });
+        }
+        return responseDto;
+    }
+
+    @Transactional
+    public void updateMyVisit(Long visitId, MyVisitUpdateRequestDto dto) {
 
         Visit visit =
                 visitRepository
                         .findById(visitId)
                         .orElseThrow(() -> new CustomException(ErrorCode.VISIT_NOT_FOUND));
+
+        if (!passwordEncoder.matches(dto.getPassword(), visit.getPassword())) {
+            throw new CustomException(ErrorCode.INVALID_PASSWORD);
+        }
+
+        // 수정 가능 상태 검증 (하루: NOT_VISITED, 장기: PENDING)
+        validateUpdateStatus(visit);
+
+        if (visit.isLongTerm()) {
+
+            LocalDate effectiveStart =
+                    (dto.getStartDate() != null) ? dto.getStartDate() : visit.getStartDate();
+            LocalDate effectiveEnd =
+                    (dto.getEndDate() != null) ? dto.getEndDate() : visit.getEndDate();
+
+            validateLongTermPeriod(effectiveStart, effectiveEnd);
+            // 장기 방문은 수정 후 다시 승인 대기 상태로 변경
+            visit.setStatus(VisitStatus.PENDING);
+        }
+
+        visitMapper.updateVisitFromDto(dto, visit);
+
+        if (!visit.isLongTerm()) {
+            visit.setEndDate(visit.getStartDate());
+        }
+
+        syncAndValidatePermissions(visit, dto);
+    }
+
+    private void validateUpdateStatus(Visit visit) {
+        if (visit.getStatus() == VisitStatus.COMPLETED) {
+            throw new CustomException(ErrorCode.INVALID_VISIT_STATUS); // "완료된 방문은 수정할 수 없습니다."
+        }
+
+        if (visit.isVisited()) {
+            throw new CustomException(ErrorCode.INVALID_VISIT_STATUS);
+        }
+
+        if (visit.isLongTerm()) {
+            if (visit.getStatus() != VisitStatus.PENDING
+                    && visit.getStatus() != VisitStatus.APPROVED) {
+                throw new CustomException(ErrorCode.INVALID_VISIT_STATUS);
+            }
+        } else {
+            // 하루 방문은 입실 전(NOT_VISITED) 상태여야 함
+            if (visit.getStatus() != VisitStatus.NOT_VISITED) {
+                throw new CustomException(ErrorCode.INVALID_VISIT_STATUS); // "방문 전 상태에서만 수정 가능합니다."
+            }
+        }
+    }
+
+    // 직용원 방문 목록 조회
+    @Transactional(readOnly = true)
+    public List<VisitListResponseDto> getVisitsForAdmin(
+            Long userId, Long departmentId, VisitStatus status) {
+        // 관리 권한 확인
+        validateAdminAuthority(userId);
+
+        List<Visit> visits = visitRepository.findAllByFilters(departmentId, status);
+
+        return visitMapper.toVisitListResponseDtos(visits);
+    }
+
+    // 직원용 방문 상세 조회
+    @Transactional(readOnly = true)
+    public VisitDetailResponseDto getVisitDetailForAdmin(Long userId, Long visitId) {
+
+        validateAdminAuthority(userId);
+
+        Visit visit =
+                visitRepository
+                        .findById(visitId)
+                        .orElseThrow(() -> new CustomException(ErrorCode.VISIT_NOT_FOUND));
+
         VisitDetailResponseDto responseDto = visitMapper.toVisitDetailResponseDto(visit);
-        responseDto.setSignatureUrl(s3Service.getPresignedViewUrl(visit.getSignatureKey()));
+
+        if (responseDto.getRecords() != null) {
+            responseDto
+                    .getRecords()
+                    .forEach(
+                            recordDto -> {
+                                if (StringUtils.hasText(recordDto.getSignatureUrl())) {
+                                    recordDto.setSignatureUrl(
+                                            s3Service.getFileUrl(recordDto.getSignatureUrl()));
+                                }
+                            });
+        }
 
         return responseDto;
     }
 
-    // 사전 내방객의 현장 방문처리
-    // 해당 로직에서 현재시간으로 방문 시작시간을 갱신하는건 어떤지?
+    private void validateAdminAuthority(Long userId) {
+        User user =
+                userRepository
+                        .findById(userId)
+                        .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
+
+        // MANAGEMENT 직군이고 방문 관리 권한이 있는지 확인
+        if (user.getJobType() != JobType.MANAGEMENT || !user.hasAuthority(Authority.ACCESS_VISIT)) {
+            throw new CustomException(ErrorCode.VISIT_ACCESS_DENIED);
+        }
+    }
+
+    // 직원용 사전 장기방문 승인
     @Transactional
-    public void checkIn(Long visitId) {
+    public void approveVisit(Long userId, Long visitId) {
+        // 1. 관리 권한 확인 (MANAGEMENT 직군 & ACCESS_VISIT 권한)
+        validateAdminAuthority(userId);
+
+        // 2. 방문 신청 건 조회
         Visit visit =
                 visitRepository
                         .findById(visitId)
                         .orElseThrow(() -> new CustomException(ErrorCode.VISIT_NOT_FOUND));
-        visit.checkIn();
-    }
 
-    @Transactional
-    public void checkOut(CheckOutRequestDto requestDto) {
-        // 차후, 해당 기능에 대해 경비원만 혹은 특정 권한을 가진 사용자만 호출할 수 있도록 처리 필요!
-        Visit visit =
-                visitRepository
-                        .findById(requestDto.getVisitId())
-                        .orElseThrow(() -> new CustomException(ErrorCode.VISIT_NOT_FOUND));
-        if (visit.getVisitEndDate() != null) {
-            throw new CustomException(ErrorCode.VISIT_ALREADY_CHECKED_OUT);
+        // 3. 승인 가능한 상태인지 검증
+        // - 장기 방문이어야 함
+        // - 현재 상태가 PENDING(승인 대기)이어야 함
+        if (!visit.isLongTerm()) {
+            throw new CustomException(ErrorCode.NOT_LONG_TERM_VISIT); // "장기 방문 건이 아닙니다."
         }
-        visit.checkOut(requestDto.getCheckOutTime());
+
+        if (visit.getStatus() != VisitStatus.PENDING) {
+            throw new CustomException(ErrorCode.INVALID_VISIT_STATUS); // "승인 가능한 상태가 아닙니다."
+        }
+
+        // 4. 상태 업데이트: PENDING -> APPROVED
+        visit.setStatus(VisitStatus.APPROVED);
     }
 }

@@ -35,6 +35,16 @@ public enum ErrorCode {
     NAME_ENG_ALREADY_SAME(HttpStatus.BAD_REQUEST, "입력한 영문 이름이 현재 영문 이름과 동일합니다."),
     PHONE_NUMBER_ALREADY_SAME(HttpStatus.BAD_REQUEST, "입력한 전화번호가 현재 전화번호와 동일합니다."),
     PERMISSION_DETAIL_REQUIRED(HttpStatus.BAD_REQUEST, "기타 허가 선택 시 요구사항 작성이 필요합니다."),
+    ADDITIONAL_PERMISSION_REQUIRED(HttpStatus.BAD_REQUEST, "시설공사 목적의 방문 시 추가 허가가 필요합니다."),
+    INVALID_PASSWORD(HttpStatus.BAD_REQUEST, "유효하지 않은 비밀번호입니다."),
+    NOT_VISIT_DATE(HttpStatus.BAD_REQUEST, "오늘 방문 일정이 아닙니다."),
+    NOT_IN_PROGRESS(HttpStatus.BAD_REQUEST, "현재 방문 상태가 '방문 중'이 아닙니다."),
+    NOT_LONG_TERM_VISIT(HttpStatus.BAD_REQUEST, "장기 방문 건이 아닙니다."),
+    INVALID_VISIT_STATUS(HttpStatus.BAD_REQUEST, "승인 가능한 상태가 아닙니다."),
+    INVALID_VISIT_DATE_RANGE(HttpStatus.BAD_REQUEST, "종료일은 시작일보다 빠를 수 없습니다."),
+    INVALID_TIME_RANGE(HttpStatus.BAD_REQUEST, "퇴실 예정 시간은 입실 예정 시간보다 빠를 수 없습니다."),
+    LONG_TERM_PERIOD_EXCEEDED(HttpStatus.BAD_REQUEST, "장기 방문은 최대 3개월까지만 신청 가능합니다."),
+    INVALID_CHECKOUT_TIME(HttpStatus.BAD_REQUEST, "퇴실 시간은 입실 시간보다 빠를 수 없습니다."),
 
     // 401 Unauthorized
     INVALID_TOKEN(HttpStatus.UNAUTHORIZED, "유효하지 않은 토큰입니다."),
@@ -60,6 +70,7 @@ public enum ErrorCode {
     NOTICE_NOT_FOUND(HttpStatus.NOT_FOUND, "해당 공지사항을 찾을 수 없습니다."),
     NOTICE_ATTACHMENT_NOT_FOUND(HttpStatus.NOT_FOUND, "해당 공지사항 첨부파일을 찾을 수 없습니다."),
     PAYSLIP_NOT_FOUND(HttpStatus.NOT_FOUND, "해당 급여명세서를 찾을 수 없습니다."),
+    RECORD_NOT_FOUND(HttpStatus.NOT_FOUND, "해당 방문기록을 찾을 수 없습니다."),
 
     // 409 Conflict
     DUPLICATED_SIGNUP_REQUEST(HttpStatus.CONFLICT, "이미 처리된 가입 요청입니다."),

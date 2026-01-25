@@ -1,418 +1,792 @@
 package kr.co.awesomelead.groupware_backend.domain.visit;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.never;
+import static org.mockito.ArgumentMatchers.argThat;
+import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
 
 import kr.co.awesomelead.groupware_backend.domain.department.enums.Company;
 import kr.co.awesomelead.groupware_backend.domain.user.entity.User;
+import kr.co.awesomelead.groupware_backend.domain.user.enums.Authority;
+import kr.co.awesomelead.groupware_backend.domain.user.enums.JobType;
 import kr.co.awesomelead.groupware_backend.domain.user.repository.UserRepository;
+import kr.co.awesomelead.groupware_backend.domain.visit.dto.request.CheckInRequestDto;
 import kr.co.awesomelead.groupware_backend.domain.visit.dto.request.CheckOutRequestDto;
-import kr.co.awesomelead.groupware_backend.domain.visit.dto.request.CompanionRequestDto;
-import kr.co.awesomelead.groupware_backend.domain.visit.dto.request.VisitCreateRequestDto;
-import kr.co.awesomelead.groupware_backend.domain.visit.dto.request.VisitSearchRequestDto;
-import kr.co.awesomelead.groupware_backend.domain.visit.dto.response.VisitResponseDto;
-import kr.co.awesomelead.groupware_backend.domain.visit.entity.Companion;
+import kr.co.awesomelead.groupware_backend.domain.visit.dto.request.LongTermVisitRequestDto;
+import kr.co.awesomelead.groupware_backend.domain.visit.dto.request.MyVisitDetailRequestDto;
+import kr.co.awesomelead.groupware_backend.domain.visit.dto.request.MyVisitUpdateRequestDto;
+import kr.co.awesomelead.groupware_backend.domain.visit.dto.request.OnSiteVisitRequestDto;
+import kr.co.awesomelead.groupware_backend.domain.visit.dto.request.OneDayVisitRequestDto;
 import kr.co.awesomelead.groupware_backend.domain.visit.entity.Visit;
-import kr.co.awesomelead.groupware_backend.domain.visit.entity.Visitor;
+import kr.co.awesomelead.groupware_backend.domain.visit.entity.VisitRecord;
 import kr.co.awesomelead.groupware_backend.domain.visit.enums.AdditionalPermissionType;
 import kr.co.awesomelead.groupware_backend.domain.visit.enums.VisitPurpose;
-import kr.co.awesomelead.groupware_backend.domain.visit.enums.VisitType;
+import kr.co.awesomelead.groupware_backend.domain.visit.enums.VisitStatus;
 import kr.co.awesomelead.groupware_backend.domain.visit.mapper.VisitMapper;
 import kr.co.awesomelead.groupware_backend.domain.visit.repository.VisitRepository;
-import kr.co.awesomelead.groupware_backend.domain.visit.repository.VisitorRepository;
 import kr.co.awesomelead.groupware_backend.domain.visit.service.VisitService;
 import kr.co.awesomelead.groupware_backend.global.error.CustomException;
-import kr.co.awesomelead.groupware_backend.global.error.ErrorCode;
 import kr.co.awesomelead.groupware_backend.global.infra.s3.S3Service;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
+import org.mockito.Spy;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.mock.web.MockMultipartFile;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.test.context.ActiveProfiles;
-import org.springframework.test.util.ReflectionTestUtils;
-import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.util.List;
+import java.time.LocalTime;
+import java.util.ArrayList;
 import java.util.Optional;
 
 @ExtendWith(MockitoExtension.class)
 @ActiveProfiles("test")
 public class VisitServiceTest {
 
-    @Mock private VisitRepository visitRepository;
-    @Mock private VisitorRepository visitorRepository;
-    @Mock private UserRepository userRepository;
+    @Spy
+    private VisitMapper visitMapper = org.mapstruct.factory.Mappers.getMapper(VisitMapper.class);
+
     @InjectMocks private VisitService visitService;
-    @Mock private VisitMapper visitMapper;
 
+    @Mock private VisitRepository visitRepository;
+    @Mock private UserRepository userRepository;
     @Mock private S3Service s3Service;
+    @Mock private PasswordEncoder passwordEncoder;
 
-    private MockMultipartFile signatureFile;
+    private static final Long HOST_ID = 1L;
+    private static final Long VISIT_ID = 100L;
+    private static final String PLAIN_PASSWORD = "1234";
+    private static final String ENCODED_PASSWORD = "encoded_password";
 
-    @BeforeEach
-    void setUp() {
-        signatureFile =
-                new MockMultipartFile(
-                        "signatureFile", "test.png", "image/png", "test-signature".getBytes());
-    }
-
-    @Test
-    @DisplayName("현장 방문 등록 성공 테스트 - 동행자 포함")
-    void createOnSiteVisit_Success() throws IOException {
-        // given
-        Long hostId = 1L;
-        VisitCreateRequestDto requestDto = createRequestDto(hostId);
-
-        User host = new User();
-        ReflectionTestUtils.setField(host, "id", hostId);
-
-        Visitor visitor = new Visitor();
-        ReflectionTestUtils.setField(visitor, "id", 10L);
-        ReflectionTestUtils.setField(visitor, "phoneNumber", requestDto.getVisitorPhone());
-
-        String s3Key = "s3-signature-key-123";
-
-        Visit visit =
-                Visit.builder()
-                        .user(host)
-                        .visitor(visitor)
-                        .hostCompany(requestDto.getHostCompany())
-                        .visitorCompany(requestDto.getVisitorCompany())
-                        .visitType(VisitType.ON_SITE)
-                        .permissionType(requestDto.getPermissionType())
-                        .permissionDetail(requestDto.getPermissionDetail())
-                        .visited(true)
-                        .verified(true)
+    private User createHost() {
+        User host =
+                User.builder()
+                        .id(HOST_ID)
+                        .nameKor("담당자")
+                        .workLocation(Company.AWESOME)
+                        .jobType(JobType.MANAGEMENT)
                         .build();
-        // 동행자 수동 추가 (매퍼 동작 모킹용)
-        visit.addCompanion(Companion.builder().name("동행자1").build());
-
-        // Mock 설정
-        when(userRepository.findById(hostId)).thenReturn(Optional.of(host));
-        String phoneNumberHash = Visitor.hashPhoneNumber(requestDto.getVisitorPhone());
-        when(visitorRepository.findByPhoneNumberHash(phoneNumberHash))
-                .thenReturn(Optional.of(visitor));
-        when(s3Service.uploadFile(any(MultipartFile.class))).thenReturn(s3Key);
-        when(visitMapper.toVisitEntity(any(), any(), any(), any())).thenReturn(visit);
-        VisitResponseDto mockResponse =
-                VisitResponseDto.builder()
-                        .id(100L) // 실제 서비스 로직이 반환할 데이터와 유사하게 세팅
-                        .visitorName(requestDto.getVisitorName())
-                        .build();
-        when(visitMapper.toResponseDto(any())).thenReturn(mockResponse);
-
-        when(visitRepository.save(any(Visit.class)))
-                .thenAnswer(
-                        invocation -> {
-                            Visit v = invocation.getArgument(0);
-                            ReflectionTestUtils.setField(v, "id", 100L);
-                            return v;
-                        });
-
-        // when
-        visitService.createOnSiteVisit(requestDto, signatureFile);
-
-        // then
-        verify(s3Service, times(1)).uploadFile(any());
-        verify(visitRepository, times(1)).save(any());
-        assertThat(visit.getSignatureKey()).isEqualTo(s3Key);
+        host.addAuthority(Authority.ACCESS_VISIT);
+        return host;
     }
 
-    @Test
-    @DisplayName("현장 방문 등록 성공 - 기타 허가 및 상세 내용 포함")
-    void createOnSiteVisit_WithOtherPermission_Success() throws IOException {
-        // given
-        Long hostId = 1L;
-        VisitCreateRequestDto requestDto = createRequestDto(hostId);
-        requestDto.setPermissionType(AdditionalPermissionType.OTHER_PERMISSION);
-        requestDto.setPermissionDetail("특수 장비 반입"); // 상세 내용 포함
-
-        User host = new User();
-        Visitor visitor = new Visitor();
-        Visit visit =
-                Visit.builder()
-                        .permissionType(requestDto.getPermissionType())
-                        .permissionDetail(requestDto.getPermissionDetail())
-                        .build();
-
-        when(userRepository.findById(any())).thenReturn(Optional.of(host));
-        when(visitorRepository.findByPhoneNumberHash(any())).thenReturn(Optional.of(visitor));
-        when(s3Service.uploadFile(any())).thenReturn("s3-key");
-        when(visitMapper.toVisitEntity(any(), any(), any(), any())).thenReturn(visit);
-        when(visitRepository.save(any())).thenReturn(visit);
-        when(visitMapper.toResponseDto(any())).thenReturn(VisitResponseDto.builder().build());
-
-        // when
-        visitService.createOnSiteVisit(requestDto, signatureFile);
-
-        // then
-        verify(visitRepository, times(1)).save(any());
-        assertThat(visit.getPermissionType()).isEqualTo(AdditionalPermissionType.OTHER_PERMISSION);
-        assertThat(visit.getPermissionDetail()).isEqualTo("특수 장비 반입");
+    private Visit createBaseVisit(VisitStatus status, boolean isLongTerm) {
+        return Visit.builder()
+                .id(VISIT_ID)
+                .password(ENCODED_PASSWORD)
+                .status(status)
+                .isLongTerm(isLongTerm)
+                .records(new ArrayList<>())
+                .build();
     }
 
-    @Test
-    @DisplayName("현장 방문 등록 실패 - 담당 직원이 없는 경우")
-    void createOnSiteVisit_Fail_UserNotFound() {
-        // given
-        VisitCreateRequestDto requestDto = createRequestDto(99L);
-        when(userRepository.findById(99L)).thenReturn(Optional.empty());
+    @Nested
+    @DisplayName("registerOneDayPreVisit 메서드는")
+    class Describe_registerOneDayPreVisit {
 
-        // when & then
-        CustomException exception =
-                assertThrows(
-                        CustomException.class,
-                        () -> visitService.createOnSiteVisit(requestDto, signatureFile));
+        @BeforeEach
+        void setup() {
+            // 등록 로직은 항상 호스트를 찾으므로 공통 설정
+            given(userRepository.findById(any())).willReturn(Optional.of(createHost()));
+        }
 
-        assertThat(exception.getErrorCode()).isEqualTo(ErrorCode.USER_NOT_FOUND);
-        verify(visitRepository, never()).save(any());
+        @Nested
+        @DisplayName("방문목적이 '시설공사'인데, '보충적허가필요여부'가 없으면")
+        class Context_with_facility_construction_and_no_additional_permission_type {
+
+            @Test
+            @DisplayName("ADDITIONAL_PERMISSION_REQUIRED 예외를 던진다.")
+            void it_throws_additional_permission_required_exception() {
+                OneDayVisitRequestDto dto =
+                        createOneDayDto(VisitPurpose.FACILITY_CONSTRUCTION, null, null);
+
+                assertThatThrownBy(() -> visitService.registerOneDayPreVisit(dto))
+                        .isInstanceOf(CustomException.class)
+                        .hasMessage("시설공사 목적의 방문 시 추가 허가가 필요합니다.");
+            }
+        }
+
+        @Nested
+        @DisplayName("방문 목적이 '시설공사'이고, 허가 타입이 '기타 허가'인데 상세 내용이 없으면")
+        class Context_facility_construction_with_other_permission_but_no_detail {
+
+            @Test
+            @DisplayName("PERMISSION_DETAIL_REQUIRED 예외를 던진다.")
+            void it_throws_permission_detail_required_exception() {
+                OneDayVisitRequestDto dto =
+                        createOneDayDto(
+                                VisitPurpose.FACILITY_CONSTRUCTION,
+                                AdditionalPermissionType.OTHER_PERMISSION,
+                                null);
+
+                assertThatThrownBy(() -> visitService.registerOneDayPreVisit(dto))
+                        .isInstanceOf(CustomException.class)
+                        .hasMessage("기타 허가 선택 시 요구사항 작성이 필요합니다.");
+            }
+        }
+
+        @Nested
+        @DisplayName("정상적인 입력값이 주어지면")
+        class Context_with_valid_input {
+
+            @Test
+            @DisplayName("방문 예약이 정상적으로 등록된다.")
+            void it_registers_visit_successfully() {
+                // given
+                OneDayVisitRequestDto dto =
+                        createOneDayDto(VisitPurpose.MEETING, AdditionalPermissionType.NONE, null);
+
+                User mockHost = User.builder().id(dto.getHostId()).build();
+                String encodedPassword = "encoded_password_1234";
+
+                Visit mockVisit = createBaseVisit(VisitStatus.NOT_VISITED, false);
+                mockVisit.setPurpose(dto.getPurpose());
+
+                given(userRepository.findById(dto.getHostId())).willReturn(Optional.of(mockHost));
+                given(passwordEncoder.encode(dto.getPassword())).willReturn(encodedPassword);
+                given(visitMapper.toOneDayVisit(any(), any(), any())).willReturn(mockVisit);
+                given(visitRepository.save(any(Visit.class))).willReturn(mockVisit);
+
+                // when
+                Long resultId = visitService.registerOneDayPreVisit(dto);
+
+                // then
+                assertThat(resultId).isEqualTo(VISIT_ID);
+                verify(userRepository, times(1)).findById(dto.getHostId());
+                verify(passwordEncoder, times(1)).encode(dto.getPassword());
+                verify(visitRepository, times(1)).save(any(Visit.class));
+            }
+        }
+
+        private OneDayVisitRequestDto createOneDayDto(
+                VisitPurpose purpose, AdditionalPermissionType type, String detail) {
+            return OneDayVisitRequestDto.builder()
+                    .visitorName("홍길동")
+                    .visitorPhoneNumber("01012345678")
+                    .visitorCompany("테스트컴퍼니")
+                    .purpose(purpose)
+                    .permissionType(type)
+                    .permissionDetail(detail)
+                    .visitDate(LocalDate.now().plusDays(1))
+                    .entryTime(LocalTime.of(10, 0))
+                    .exitTime(LocalTime.of(18, 0))
+                    .hostId(1L)
+                    .password("1234")
+                    .build();
+        }
     }
 
-    @Test
-    @DisplayName("현장 방문 등록 실패 - 잘못된 파일 형식(PNG 아님)")
-    void createOnSiteVisit_Fail_InvalidFormat() {
-        // given
-        MockMultipartFile invalidFile =
-                new MockMultipartFile("signatureFile", "test.jpg", "image/jpeg", "test".getBytes());
-        VisitCreateRequestDto requestDto = createRequestDto(1L);
-        when(userRepository.findById(any())).thenReturn(Optional.of(new User()));
-        when(visitorRepository.findByPhoneNumberHash(any())).thenReturn(Optional.of(new Visitor()));
+    @Nested
+    @DisplayName("registerLongTermPreVisit 메서드는")
+    class Describe_registerLongTermPreVisit {
 
-        // when & then
-        CustomException exception =
-                assertThrows(
-                        CustomException.class,
-                        () -> visitService.createOnSiteVisit(requestDto, invalidFile));
+        @Nested
+        @DisplayName("날짜 범위가 유효하지 않으면")
+        class Context_with_invalid_date_range {
 
-        assertThat(exception.getErrorCode()).isEqualTo(ErrorCode.INVALID_SIGNATURE_FORMAT);
+            @Test
+            @DisplayName("종료일이 시작일보다 빠를 때 INVALID_VISIT_DATE_RANGE 예외를 던진다.")
+            void it_throws_invalid_visit_date_range() {
+                // given: 시작일 1월 22일, 종료일 1월 21일 (과거)
+                LongTermVisitRequestDto dto =
+                        LongTermVisitRequestDto.builder()
+                                .startDate(LocalDate.of(2026, 1, 22))
+                                .endDate(LocalDate.of(2026, 1, 21))
+                                .build();
+
+                // when & then
+                assertThatThrownBy(() -> visitService.registerLongTermPreVisit(dto))
+                        .isInstanceOf(CustomException.class)
+                        .hasMessage("종료일은 시작일보다 빠를 수 없습니다.");
+            }
+
+            @Test
+            @DisplayName("신청 기간이 3개월을 초과할 때 LONG_TERM_PERIOD_EXCEEDED 예외를 던진다.")
+            void it_throws_long_term_period_exceeded() {
+                // given: 3개월에서 딱 하루 더 신청 (1/22 ~ 4/23)
+                LocalDate startDate = LocalDate.of(2026, 1, 22);
+                LongTermVisitRequestDto dto =
+                        LongTermVisitRequestDto.builder()
+                                .startDate(startDate)
+                                .endDate(startDate.plusMonths(3).plusDays(1))
+                                .build();
+
+                // when & then
+                assertThatThrownBy(() -> visitService.registerLongTermPreVisit(dto))
+                        .isInstanceOf(CustomException.class)
+                        .hasMessage("장기 방문은 최대 3개월까지만 신청 가능합니다.");
+            }
+        }
+
+        @Nested
+        @DisplayName("날짜 범위가 정확히 3개월이면")
+        class Context_with_exact_three_months {
+
+            @Test
+            @DisplayName("예외를 던지지 않고 정상 진행한다.")
+            void it_proceeds_normally() {
+                // given: 1/22 ~ 4/22 (딱 3개월)
+                LocalDate startDate = LocalDate.of(2026, 1, 22);
+                LongTermVisitRequestDto dto =
+                        LongTermVisitRequestDto.builder()
+                                .hostId(1L)
+                                .password("1234")
+                                .startDate(startDate)
+                                .endDate(startDate.plusMonths(3))
+                                .purpose(VisitPurpose.MEETING)
+                                .build();
+
+                // Mocking (정상 저장을 위해 필요한 최소한의 세팅)
+                given(userRepository.findById(any()))
+                        .willReturn(Optional.of(User.builder().id(1L).build()));
+                given(passwordEncoder.encode(any())).willReturn("hash");
+                given(visitMapper.toLongTermVisit(any(), any(), any()))
+                        .willReturn(Visit.builder().id(1L).build());
+                given(visitRepository.save(any())).willReturn(Visit.builder().id(1L).build());
+
+                // when & then
+                assertDoesNotThrow(() -> visitService.registerLongTermPreVisit(dto));
+            }
+        }
     }
 
-    @Test
-    @DisplayName("사전 방문 예약 성공 - 비밀번호 포함")
-    void createPreVisit_Success() throws IOException {
-        // given
-        VisitCreateRequestDto requestDto = createRequestDto(1L);
-        requestDto.setVisitorPassword("1234"); // 비밀번호 설정
-        String s3Key = "pre-reg-signature-key";
+    @Nested
+    @DisplayName("registerOnSiteVisit 메서드는")
+    class Describe_registerOnSiteVisit {
 
-        User host = new User();
-        Visitor visitor = new Visitor();
-        Visit visit = Visit.builder().build();
+        @Test
+        @DisplayName("현장 방문 신청 시 VisitRecord가 즉시 생성되어 함께 저장된다.")
+        void it_creates_visit_with_initial_record() throws IOException {
+            // given
+            OnSiteVisitRequestDto dto =
+                    OnSiteVisitRequestDto.builder()
+                            .visitorName("현장방문객")
+                            .hostId(1L)
+                            .password("1234")
+                            .signatureFile(
+                                    new MockMultipartFile(
+                                            "file", "sig.png", "image/png", "test".getBytes()))
+                            .purpose(VisitPurpose.MEETING)
+                            .permissionType(AdditionalPermissionType.NONE)
+                            .build();
 
-        when(userRepository.findById(any())).thenReturn(Optional.of(host));
-        String phoneNumberHash = Visitor.hashPhoneNumber(requestDto.getVisitorPhone());
-        when(visitorRepository.findByPhoneNumberHash(phoneNumberHash))
-                .thenReturn(Optional.of(new Visitor()));
-        when(s3Service.uploadFile(any())).thenReturn(s3Key);
-        when(visitMapper.toVisitEntity(any(), any(), any(), any())).thenReturn(visit);
-        when(visitRepository.save(any())).thenReturn(visit);
+            User mockHost = User.builder().id(1L).build();
+            Visit mockVisit =
+                    Visit.builder().id(100L).visited(true).records(new ArrayList<>()).build();
 
-        // when
-        visitService.createPreVisit(requestDto, signatureFile);
+            given(userRepository.findById(any())).willReturn(Optional.of(mockHost));
+            given(passwordEncoder.encode(any())).willReturn("hash");
+            given(s3Service.uploadFile(any())).willReturn("s3-key-123");
+            given(visitMapper.toOnSiteVisit(any(), any(), any())).willReturn(mockVisit);
+            given(visitRepository.save(any())).willReturn(mockVisit);
 
-        // then
-        verify(s3Service, times(1)).uploadFile(any());
-        verify(visitRepository, times(1)).save(any());
+            // when
+            visitService.registerOnSiteVisit(dto);
+
+            // then
+            verify(visitRepository)
+                    .save(
+                            argThat(
+                                    visit -> {
+                                        assertThat(visit.getRecords()).hasSize(1);
+                                        assertThat(visit.getRecords().get(0).getSignatureKey())
+                                                .isEqualTo("s3-key-123");
+                                        return true;
+                                    }));
+        }
     }
 
-    @Test
-    @DisplayName("사전 방문 예약 실패 - 비밀번호 누락")
-    void createPreVisit_Fail_NoPassword() {
-        // given
-        VisitCreateRequestDto requestDto = createRequestDto(1L);
-        requestDto.setVisitorPassword(""); // 비밀번호 비움
+    @Nested
+    @DisplayName("updateMyVisit 메서드는")
+    class Describe_updateMyVisit {
 
-        // when & then
-        CustomException exception =
-                assertThrows(
-                        CustomException.class,
-                        () -> visitService.createPreVisit(requestDto, signatureFile));
+        @Nested
+        @DisplayName("존재하지 않는 방문 ID가 주어지면")
+        class Context_with_non_existent_id {
 
-        assertThat(exception.getErrorCode())
-                .isEqualTo(ErrorCode.VISITOR_PASSWORD_REQUIRED_FOR_PRE_REGISTRATION);
+            @Test
+            @DisplayName("VISIT_NOT_FOUND 예외를 던진다.")
+            void it_throws_visit_not_found() {
+                // given
+                MyVisitUpdateRequestDto dto =
+                        MyVisitUpdateRequestDto.builder().password(PLAIN_PASSWORD).build();
+                given(visitRepository.findById(VISIT_ID)).willReturn(Optional.empty());
+
+                // when & then
+                assertThatThrownBy(() -> visitService.updateMyVisit(VISIT_ID, dto))
+                        .isInstanceOf(CustomException.class)
+                        .hasMessage("해당 방문정보를 찾을 수 없습니다.");
+            }
+        }
+
+        @Nested
+        @DisplayName("비밀번호가 일치하지 않으면")
+        class Context_with_invalid_password {
+
+            @Test
+            @DisplayName("INVALID_PASSWORD 예외를 던진다.")
+            void it_throws_invalid_password() {
+                // given
+                MyVisitUpdateRequestDto dto =
+                        MyVisitUpdateRequestDto.builder().password(PLAIN_PASSWORD).build();
+                Visit visit = createBaseVisit(VisitStatus.NOT_VISITED, false);
+
+                given(visitRepository.findById(VISIT_ID)).willReturn(Optional.of(visit));
+                given(passwordEncoder.matches(PLAIN_PASSWORD, ENCODED_PASSWORD)).willReturn(false);
+
+                // when & then
+                assertThatThrownBy(() -> visitService.updateMyVisit(VISIT_ID, dto))
+                        .isInstanceOf(CustomException.class)
+                        .hasMessage("유효하지 않은 비밀번호입니다.");
+            }
+        }
+
+        @Nested
+        @DisplayName("수정 불가능한 상태(COMPLETED)인 경우")
+        class Context_with_completed_status {
+
+            @Test
+            @DisplayName("INVALID_VISIT_STATUS 예외를 던진다.")
+            void it_throws_invalid_status() {
+                // given
+                MyVisitUpdateRequestDto dto =
+                        MyVisitUpdateRequestDto.builder().password(PLAIN_PASSWORD).build();
+                Visit visit = createBaseVisit(VisitStatus.COMPLETED, false);
+
+                given(visitRepository.findById(VISIT_ID)).willReturn(Optional.of(visit));
+                given(passwordEncoder.matches(PLAIN_PASSWORD, ENCODED_PASSWORD)).willReturn(true);
+
+                // when & then
+                assertThatThrownBy(() -> visitService.updateMyVisit(VISIT_ID, dto))
+                        .isInstanceOf(CustomException.class)
+                        .hasMessage("승인 가능한 상태가 아닙니다.");
+            }
+        }
+
+        @Nested
+        @DisplayName("정상적인 하루 방문 수정 요청이 오면")
+        class Context_with_valid_one_day_request {
+
+            @Test
+            @DisplayName("정보를 업데이트하고 날짜를 동기화한다.")
+            void it_updates_one_day_visit() {
+                // given
+                LocalDate newDate = LocalDate.now().plusDays(5);
+                MyVisitUpdateRequestDto dto =
+                        MyVisitUpdateRequestDto.builder()
+                                .password(PLAIN_PASSWORD)
+                                .startDate(newDate)
+                                .visitorName("수정된이름")
+                                .build();
+
+                Visit visit = createBaseVisit(VisitStatus.NOT_VISITED, false);
+                visit.setStartDate(newDate);
+
+                given(visitRepository.findById(VISIT_ID)).willReturn(Optional.of(visit));
+                given(passwordEncoder.matches(PLAIN_PASSWORD, ENCODED_PASSWORD)).willReturn(true);
+
+                // when
+                visitService.updateMyVisit(VISIT_ID, dto);
+
+                // then
+                assertThat(visit.getVisitorName()).isEqualTo("수정된이름");
+                assertThat(visit.getEndDate()).isEqualTo(visit.getStartDate());
+                assertThat(visit.getStartDate()).isEqualTo(newDate);
+            }
+        }
+
+        @Nested
+        @DisplayName("이미 승인된 장기 방문 건을 수정할 때")
+        class Context_with_approved_long_term_update {
+
+            @Test
+            @DisplayName("방문 기록이 없으면(visited=false) 정보를 업데이트하고 상태를 PENDING으로 변경한다.")
+            void it_updates_and_resets_status_when_no_records() {
+                // given
+                MyVisitUpdateRequestDto dto =
+                        MyVisitUpdateRequestDto.builder()
+                                .password(PLAIN_PASSWORD)
+                                .visitorName("이름수정")
+                                .build();
+
+                Visit visit = createBaseVisit(VisitStatus.APPROVED, true);
+                visit.setStartDate(LocalDate.now());
+                visit.setEndDate(LocalDate.now().plusMonths(1));
+                visit.setVisited(false);
+
+                given(visitRepository.findById(VISIT_ID)).willReturn(Optional.of(visit));
+                given(passwordEncoder.matches(PLAIN_PASSWORD, ENCODED_PASSWORD)).willReturn(true);
+
+                // when
+                visitService.updateMyVisit(VISIT_ID, dto);
+
+                // then
+                assertThat(visit.getVisitorName()).isEqualTo("이름수정");
+                assertThat(visit.getStatus()).isEqualTo(VisitStatus.PENDING); // 다시 대기 상태로!
+            }
+
+            @Test
+            @DisplayName("이미 방문 기록이 존재하면(visited=true) INVALID_VISIT_STATUS 예외를 던진다.")
+            void it_throws_exception_when_already_visited() {
+                // given
+                MyVisitUpdateRequestDto dto =
+                        MyVisitUpdateRequestDto.builder().password(PLAIN_PASSWORD).build();
+
+                Visit visit = createBaseVisit(VisitStatus.APPROVED, true);
+                visit.setVisited(true); // ★ 핵심: 이미 한 번이라도 입실했던 상태
+
+                given(visitRepository.findById(VISIT_ID)).willReturn(Optional.of(visit));
+                given(passwordEncoder.matches(PLAIN_PASSWORD, ENCODED_PASSWORD)).willReturn(true);
+
+                // when & then
+                assertThatThrownBy(() -> visitService.updateMyVisit(VISIT_ID, dto))
+                        .isInstanceOf(CustomException.class)
+                        .hasMessage("승인 가능한 상태가 아닙니다."); // ErrorCode.INVALID_VISIT_STATUS
+            }
+        }
     }
 
-    @Test
-    @DisplayName("방문 등록 실패 - 기타 허가 선택 시 상세 내용 누락")
-    void createVisit_Fail_NoPermissionDetail() {
-        // given
-        VisitCreateRequestDto requestDto = createRequestDto(1L);
-        requestDto.setPermissionType(AdditionalPermissionType.OTHER_PERMISSION);
-        requestDto.setPermissionDetail(""); // 상세 내용 누락
+    @Nested
+    @DisplayName("checkIn 메서드는")
+    class Describe_checkIn {
 
-        // when & then
-        // VisitService에 해당 유효성 검사 로직이 구현되어 있다고 가정
-        CustomException exception =
-                assertThrows(
-                        CustomException.class,
-                        () -> visitService.createOnSiteVisit(requestDto, signatureFile));
+        @Mock private MockMultipartFile signatureFile;
 
-        assertThat(exception.getErrorCode()).isEqualTo(ErrorCode.PERMISSION_DETAIL_REQUIRED);
-        verify(visitRepository, never()).save(any());
+        @Nested
+        @DisplayName("비밀번호가 일치하지 않으면")
+        class Context_with_invalid_password {
+
+            @Test
+            @DisplayName("INVALID_PASSWORD 예외를 던진다.")
+            void it_throws_invalid_password_exception() throws IOException {
+                // given
+                CheckInRequestDto dto = new CheckInRequestDto(1L, "wrong_pw", signatureFile);
+                Visit visit = createBaseVisit(VisitStatus.NOT_VISITED, false);
+
+                given(visitRepository.findById(1L)).willReturn(Optional.of(visit));
+                given(passwordEncoder.matches("wrong_pw", ENCODED_PASSWORD)).willReturn(false);
+
+                // when & then
+                assertThatThrownBy(() -> visitService.checkIn(dto))
+                        .isInstanceOf(CustomException.class)
+                        .hasMessage("유효하지 않은 비밀번호입니다.");
+            }
+        }
+
+        @Nested
+        @DisplayName("하루 방문인데 방문 예정일이 오늘이 아니면")
+        class Context_with_invalid_visit_date {
+
+            @Test
+            @DisplayName("NOT_VISIT_DATE 예외를 던진다.")
+            void it_throws_not_visit_date_exception() throws IOException {
+                // given
+                CheckInRequestDto dto = new CheckInRequestDto(1L, "1234", signatureFile);
+                // 어제 날짜로 예약된 하루 방문 건
+                Visit visit = createBaseVisit(VisitStatus.NOT_VISITED, false);
+                visit.setStartDate(LocalDate.now().minusDays(1));
+
+                given(visitRepository.findById(1L)).willReturn(Optional.of(visit));
+                given(passwordEncoder.matches(PLAIN_PASSWORD, ENCODED_PASSWORD)).willReturn(true);
+
+                // when & then
+                assertThatThrownBy(() -> visitService.checkIn(dto))
+                        .isInstanceOf(CustomException.class)
+                        .hasMessage("오늘 방문 일정이 아닙니다.");
+            }
+        }
+
+        @Nested
+        @DisplayName("이미 방문 처리가 완료된 건(visited=true)이라면")
+        class Context_already_visited {
+
+            @Test
+            @DisplayName("VISIT_ALREADY_CHECKED_OUT 예외를 던진다.")
+            void it_throws_visit_already_checked_out_exception() throws IOException {
+                // given
+                CheckInRequestDto dto = new CheckInRequestDto(1L, "1234", signatureFile);
+                Visit visit = createBaseVisit(VisitStatus.COMPLETED, false);
+                visit.setStartDate(LocalDate.now());
+                visit.setVisited(true);
+
+                given(visitRepository.findById(1L)).willReturn(Optional.of(visit));
+                given(passwordEncoder.matches(PLAIN_PASSWORD, ENCODED_PASSWORD)).willReturn(true);
+
+                // when & then
+                assertThatThrownBy(() -> visitService.checkIn(dto))
+                        .isInstanceOf(CustomException.class)
+                        .hasMessage("이미 체크아웃된 방문정보입니다.");
+            }
+        }
+
+        @Nested
+        @DisplayName("모든 입력값이 정상적이고 조건에 맞으면")
+        class Context_with_valid_input {
+
+            @Test
+            @DisplayName("방문 상태를 IN_PROGRESS로 바꾸고 입실 기록을 생성한다.")
+            void it_check_in_successfully() throws IOException {
+                // given
+                CheckInRequestDto dto = new CheckInRequestDto(1L, "1234", signatureFile);
+                Visit visit = createBaseVisit(VisitStatus.NOT_VISITED, false);
+                visit.setStartDate(LocalDate.now());
+
+                given(visitRepository.findById(1L)).willReturn(Optional.of(visit));
+                given(passwordEncoder.matches(PLAIN_PASSWORD, ENCODED_PASSWORD)).willReturn(true);
+                given(s3Service.uploadFile(any())).willReturn("s3-signature-key");
+
+                // when
+                Long resultId = visitService.checkIn(dto);
+
+                // then
+                assertThat(resultId).isEqualTo(VISIT_ID);
+                assertThat(visit.getStatus()).isEqualTo(VisitStatus.IN_PROGRESS);
+                assertThat(visit.isVisited()).isTrue();
+                assertThat(visit.getRecords()).hasSize(1);
+                assertThat(visit.getRecords().get(0).getSignatureKey())
+                        .isEqualTo("s3-signature-key");
+
+                verify(s3Service, times(1)).uploadFile(any());
+            }
+        }
     }
 
-    @Test
-    @DisplayName("방문 등록 실패 - 서명 파일이 누락된 경우")
-    void createVisit_Fail_NoSignature() {
-        // given
-        VisitCreateRequestDto requestDto = createRequestDto(1L);
-        MockMultipartFile emptyFile =
-                new MockMultipartFile("signatureFile", "", "image/png", new byte[0]);
+    @Nested
+    @DisplayName("checkOut 메서드는")
+    class Describe_checkOut {
 
-        // when & then (서비스 로직에 서명 필수 체크 로직이 있다고 가정)
-        assertThrows(CustomException.class, () -> visitService.createOnSiteVisit(requestDto, null));
-        assertThrows(
-                CustomException.class, () -> visitService.createOnSiteVisit(requestDto, emptyFile));
+        private final Long ADMIN_ID = 1L;
+        private final Long VISIT_ID = 100L;
+        private final Long RECORD_ID = 10L;
+        private final LocalDateTime ENTRY_TIME = LocalDateTime.of(2026, 1, 22, 10, 0);
+        private final LocalDateTime CHECK_OUT_TIME = LocalDateTime.of(2026, 1, 22, 18, 0);
+
+        @BeforeEach
+        void setUpAdmin() {
+            User admin = User.builder().id(ADMIN_ID).jobType(JobType.MANAGEMENT).build();
+            admin.addAuthority(Authority.ACCESS_VISIT);
+            given(userRepository.findById(ADMIN_ID)).willReturn(Optional.of(admin));
+        }
+
+        @Nested
+        @DisplayName("최초 퇴실 처리인 경우 (exitTime이 null)")
+        class Context_initial_checkout {
+
+            @Test
+            @DisplayName("방문 상태가 IN_PROGRESS가 아니면 NOT_IN_PROGRESS 예외를 던진다.")
+            void it_throws_not_in_progress_exception() {
+                // given: 상태가 APPROVED(입실 전)인데 퇴실을 시도하는 경우
+                VisitRecord record = VisitRecord.builder().id(RECORD_ID).exitTime(null).build();
+                Visit visit = createBaseVisit(VisitStatus.APPROVED, false);
+                visit.getRecords().add(record);
+
+                given(visitRepository.findById(VISIT_ID)).willReturn(Optional.of(visit));
+                CheckOutRequestDto dto =
+                        new CheckOutRequestDto(VISIT_ID, RECORD_ID, CHECK_OUT_TIME);
+
+                // when & then
+                assertThatThrownBy(() -> visitService.checkOut(ADMIN_ID, dto))
+                        .isInstanceOf(CustomException.class)
+                        .hasMessage("현재 방문 상태가 '방문 중'이 아닙니다.");
+            }
+
+            @Test
+            @DisplayName("하루 방문자라면 상태를 COMPLETED로 변경하고 시간을 기록한다.")
+            void it_changes_status_to_completed_for_one_day_visit() {
+                // given
+                VisitRecord record =
+                        VisitRecord.builder()
+                                .id(RECORD_ID)
+                                .entryTime(ENTRY_TIME)
+                                .exitTime(null)
+                                .build();
+
+                Visit visit = createBaseVisit(VisitStatus.IN_PROGRESS, false);
+                visit.getRecords().add(record);
+
+                given(visitRepository.findById(VISIT_ID)).willReturn(Optional.of(visit));
+                CheckOutRequestDto dto =
+                        new CheckOutRequestDto(VISIT_ID, RECORD_ID, CHECK_OUT_TIME);
+
+                // when
+                visitService.checkOut(ADMIN_ID, dto);
+
+                // then
+                assertThat(visit.getStatus()).isEqualTo(VisitStatus.COMPLETED);
+                assertThat(record.getExitTime()).isEqualTo(CHECK_OUT_TIME);
+            }
+
+            @Test
+            @DisplayName("장기 방문자라면 상태를 APPROVED로 변경하고 시간을 기록한다.")
+            void it_changes_status_to_approved_for_long_term_visit() {
+                // given
+                VisitRecord record =
+                        VisitRecord.builder()
+                                .id(RECORD_ID)
+                                .entryTime(ENTRY_TIME)
+                                .exitTime(null)
+                                .build();
+                Visit visit = createBaseVisit(VisitStatus.IN_PROGRESS, true);
+                visit.getRecords().add(record);
+
+                given(visitRepository.findById(VISIT_ID)).willReturn(Optional.of(visit));
+                CheckOutRequestDto dto =
+                        new CheckOutRequestDto(VISIT_ID, RECORD_ID, CHECK_OUT_TIME);
+
+                // when
+                visitService.checkOut(ADMIN_ID, dto);
+
+                // then
+                assertThat(visit.getStatus()).isEqualTo(VisitStatus.APPROVED);
+                assertThat(record.getExitTime()).isEqualTo(CHECK_OUT_TIME);
+            }
+        }
+
+        @Nested
+        @DisplayName("퇴실 시간 수정인 경우 (exitTime이 이미 존재)")
+        class Context_time_correction {
+
+            @Test
+            @DisplayName("방문 상태를 변경하지 않고 시간만 업데이트한다.")
+            void it_updates_only_time_without_changing_status() {
+                // given: 이미 COMPLETED 상태이고 퇴실 시간도 있는 경우
+                LocalDateTime oldExitTime = LocalDateTime.of(2026, 1, 22, 17, 0);
+                LocalDateTime newExitTime = LocalDateTime.of(2026, 1, 22, 19, 0);
+
+                VisitRecord record =
+                        VisitRecord.builder()
+                                .id(RECORD_ID)
+                                .entryTime(ENTRY_TIME)
+                                .exitTime(oldExitTime)
+                                .build();
+                Visit visit = createBaseVisit(VisitStatus.COMPLETED, false);
+                visit.getRecords().add(record);
+
+                given(visitRepository.findById(VISIT_ID)).willReturn(Optional.of(visit));
+                CheckOutRequestDto dto = new CheckOutRequestDto(VISIT_ID, RECORD_ID, newExitTime);
+
+                // when
+                visitService.checkOut(ADMIN_ID, dto);
+
+                // then
+                assertThat(visit.getStatus()).isEqualTo(VisitStatus.COMPLETED); // 상태 유지
+                assertThat(record.getExitTime()).isEqualTo(newExitTime); // 시간만 업데이트
+            }
+        }
+
+        @Nested
+        @DisplayName("검증 로직 작동 확인")
+        class Context_validations {
+
+            @Test
+            @DisplayName("퇴실 시간이 입실 시간보다 빠르면 INVALID_CHECKOUT_TIME 예외를 던진다.")
+            void it_throws_invalid_checkout_time() {
+                // given: 입실은 10시인데 퇴실을 09시로 요청한 경우
+                LocalDateTime invalidTime = ENTRY_TIME.minusHours(1);
+                VisitRecord record =
+                        VisitRecord.builder()
+                                .id(RECORD_ID)
+                                .entryTime(ENTRY_TIME)
+                                .exitTime(null)
+                                .build();
+                Visit visit = createBaseVisit(VisitStatus.IN_PROGRESS, false);
+                visit.getRecords().add(record);
+
+                given(visitRepository.findById(VISIT_ID)).willReturn(Optional.of(visit));
+                CheckOutRequestDto dto = new CheckOutRequestDto(VISIT_ID, RECORD_ID, invalidTime);
+
+                // when & then
+                assertThatThrownBy(() -> visitService.checkOut(ADMIN_ID, dto))
+                        .isInstanceOf(CustomException.class)
+                        .hasMessage("퇴실 시간은 입실 시간보다 빠를 수 없습니다.");
+            }
+        }
     }
 
-    @Test
-    @DisplayName("현장 방문 등록 실패 - 잘못된 파일 형식(PNG 아님)")
-    void createVisit_Fail_InvalidFormat() {
-        // given
-        MockMultipartFile invalidFile =
-                new MockMultipartFile("signatureFile", "test.jpg", "image/jpeg", "test".getBytes());
-        VisitCreateRequestDto requestDto = createRequestDto(1L);
-        when(userRepository.findById(any())).thenReturn(Optional.of(new User()));
-        when(visitorRepository.findByPhoneNumberHash(any())).thenReturn(Optional.of(new Visitor()));
+    @Nested
+    @DisplayName("approveVisit 메서드는")
+    class Describe_approveVisit {
 
-        // when & then
-        CustomException exception =
-                assertThrows(
-                        CustomException.class,
-                        () -> visitService.createOnSiteVisit(requestDto, invalidFile));
+        @Nested
+        @DisplayName("장기 방문이 아닌 신청 건을 승인하려 하면")
+        class Context_with_not_long_term_visit {
 
-        assertThat(exception.getErrorCode()).isEqualTo(ErrorCode.INVALID_SIGNATURE_FORMAT);
+            @Test
+            @DisplayName("NOT_LONG_TERM_VISIT 예외를 던진다.")
+            void it_throws_not_long_term_visit_exception() {
+                // given: 장기 방문이 아닌(isLongTerm=false) 방문 건
+                User admin = createHost();
+                Visit oneDayVisit = createBaseVisit(VisitStatus.PENDING, false);
+
+                given(userRepository.findById(any())).willReturn(Optional.of(admin));
+                given(visitRepository.findById(any())).willReturn(Optional.of(oneDayVisit));
+
+                // when & then
+                assertThatThrownBy(() -> visitService.approveVisit(1L, 100L))
+                        .isInstanceOf(CustomException.class)
+                        .hasMessage("장기 방문 건이 아닙니다.");
+            }
+        }
+
+        @Nested
+        @DisplayName("정상적인 대기 상태의 장기 방문 건이면")
+        class Context_with_valid_pending_visit {
+
+            @Test
+            @DisplayName("상태를 APPROVED로 변경한다.")
+            void it_updates_status_to_approved() {
+                // given
+                User admin = createHost();
+                Visit pendingVisit = createBaseVisit(VisitStatus.PENDING, true);
+
+                given(userRepository.findById(any())).willReturn(Optional.of(admin));
+                given(visitRepository.findById(any())).willReturn(Optional.of(pendingVisit));
+
+                // when
+                visitService.approveVisit(1L, 100L);
+
+                // then
+                assertThat(pendingVisit.getStatus()).isEqualTo(VisitStatus.APPROVED);
+            }
+        }
     }
 
-    @Test
-    @DisplayName("내방객 리스트 조회 성공")
-    void getMyVisits_Success() {
-        // given
-        VisitSearchRequestDto searchDto = new VisitSearchRequestDto("방문객", "01012345678", "1234");
-        Visitor visitor = new Visitor();
-        ReflectionTestUtils.setField(visitor, "name", "방문객");
-        ReflectionTestUtils.setField(visitor, "password", "1234");
+    @Nested
+    @DisplayName("getMyVisitDetail 메서드는")
+    class Describe_getMyVisitDetail {
 
-        String phoneNumberHash = Visitor.hashPhoneNumber(searchDto.getPhoneNumber());
-        when(visitorRepository.findByPhoneNumberHash(phoneNumberHash))
-                .thenReturn(Optional.of(visitor));
-        when(visitRepository.findByVisitor(visitor)).thenReturn(List.of(Visit.builder().build()));
-        // when
-        visitService.getMyVisits(searchDto);
+        @Nested
+        @DisplayName("비밀번호가 일치하지 않으면")
+        class Context_with_wrong_password {
 
-        // then
-        verify(visitMapper).toVisitSummaryResponseDtoList(any());
-    }
+            @Test
+            @DisplayName("정보 조회를 거부하고 예외를 던진다.")
+            void it_throws_exception_for_wrong_password() {
+                // given
+                Visit visit = Visit.builder().password("encoded_pw").build();
+                MyVisitDetailRequestDto dto = new MyVisitDetailRequestDto("wrong_pw");
 
-    @Test
-    @DisplayName("내방객 리스트 조회 실패 - 인증 정보 불일치")
-    void getMyVisits_Fail_Authentication() {
-        // given
-        VisitSearchRequestDto searchDto =
-                new VisitSearchRequestDto("방문객", "01012345678", "wrong_pw");
-        Visitor visitor = new Visitor();
-        ReflectionTestUtils.setField(visitor, "name", "방문객");
-        ReflectionTestUtils.setField(visitor, "password", "1234"); // 실제 비번은 1234
+                given(visitRepository.findById(any())).willReturn(Optional.of(visit));
+                given(passwordEncoder.matches("wrong_pw", "encoded_pw")).willReturn(false);
 
-        when(visitorRepository.findByPhoneNumberHash(any())).thenReturn(Optional.of(visitor));
-
-        // when & then
-        CustomException exception =
-                assertThrows(CustomException.class, () -> visitService.getMyVisits(searchDto));
-
-        assertThat(exception.getErrorCode()).isEqualTo(ErrorCode.VISITOR_AUTHENTICATION_FAILED);
-    }
-
-    @Test
-    @DisplayName("현장 체크인 성공 - 방문 시작 시간 갱신 확인")
-    void checkIn_Success() {
-        // given
-        Long visitId = 100L;
-        Visit visit = Visit.builder().build(); // 초기 상태
-        when(visitRepository.findById(visitId)).thenReturn(Optional.of(visit));
-
-        // when
-        visitService.checkIn(visitId);
-
-        // then
-        assertThat(visit.getVisitStartDate()).isNotNull();
-    }
-
-    @Test
-    @DisplayName("퇴실 처리 성공")
-    void checkOut_Success() {
-        // given
-        Long visitId = 100L;
-        LocalDateTime checkOutTime = LocalDateTime.now();
-
-        CheckOutRequestDto requestDto = new CheckOutRequestDto(visitId, checkOutTime);
-
-        Visit visit = Visit.builder().build();
-        when(visitRepository.findById(visitId)).thenReturn(Optional.of(visit));
-
-        // when
-        visitService.checkOut(requestDto);
-
-        // then
-        assertThat(visit.getVisitEndDate()).isEqualTo(checkOutTime);
-    }
-
-    @Test
-    @DisplayName("퇴실 처리 실패 - 이미 퇴실한 경우")
-    void checkOut_Fail_AlreadyCheckedOut() {
-        // given
-        Long visitId = 100L;
-        LocalDateTime checkOutTime = LocalDateTime.now();
-
-        CheckOutRequestDto requestDto = new CheckOutRequestDto(visitId, checkOutTime);
-
-        Visit visit = Visit.builder().build();
-        // 이미 퇴실한 상태로 설정
-        ReflectionTestUtils.setField(visit, "visitEndDate", LocalDateTime.now().minusHours(1));
-
-        when(visitRepository.findById(visitId)).thenReturn(Optional.of(visit));
-
-        // when & then
-        CustomException exception =
-                assertThrows(CustomException.class, () -> visitService.checkOut(requestDto));
-
-        assertThat(exception.getErrorCode()).isEqualTo(ErrorCode.VISIT_ALREADY_CHECKED_OUT);
-    }
-
-    // 테스트 데이터 생성 헬퍼 메서드
-    private VisitCreateRequestDto createRequestDto(Long hostId) {
-        VisitCreateRequestDto dto = new VisitCreateRequestDto();
-        dto.setHostUserId(hostId);
-        dto.setHostCompany(Company.AWESOME);
-        dto.setVisitorName("방문객");
-        dto.setVisitorPhone("01012345678");
-        dto.setVisitorPassword("1234");
-        dto.setVisitorCompany("외부업체");
-        dto.setPurpose(VisitPurpose.MEETING);
-
-        dto.setPermissionType(AdditionalPermissionType.NONE);
-        dto.setPermissionDetail(null);
-
-        dto.setVisitStartDate(LocalDateTime.now().plusHours(1));
-
-        CompanionRequestDto companionDto = new CompanionRequestDto();
-        companionDto.setName("동행자1");
-        companionDto.setPhoneNumber("01099998888");
-        companionDto.setVisitorCompany("외부업체");
-        dto.setCompanions(List.of(companionDto));
-
-        return dto;
+                // when & then
+                assertThatThrownBy(() -> visitService.getMyVisitDetail(100L, dto))
+                        .isInstanceOf(CustomException.class)
+                        .hasMessageContaining("유효하지 않은 비밀번호입니다.");
+            }
+        }
     }
 }

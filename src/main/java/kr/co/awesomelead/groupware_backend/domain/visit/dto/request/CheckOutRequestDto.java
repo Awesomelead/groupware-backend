@@ -17,6 +17,9 @@ public class CheckOutRequestDto {
     @Schema(description = "방문 ID", example = "1", required = true)
     private Long visitId;
 
+    @Schema(description = "방문 기록 ID", example = "10", required = true)
+    private Long visitRecordId;
+
     @Schema(description = "퇴실 시간", example = "2025-01-15T18:00:00", required = true)
     private LocalDateTime checkOutTime;
 }

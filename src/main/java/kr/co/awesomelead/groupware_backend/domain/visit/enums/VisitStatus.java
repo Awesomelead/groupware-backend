@@ -13,12 +13,7 @@ public enum VisitStatus {
     NOT_VISITED("방문 전"), // 사전 하루 방문 신청 직후
     IN_PROGRESS("방문 중"), // 현재 방문 기간 내에 있으며, 아직 퇴실하지 않은 상태
     COMPLETED("방문 완료"); // 입실 처리가 완료되었거나 전체 기간이 종료됨
-
-    // 사전 하루 방문	NOT_VISITED (신청) → COMPLETED (퇴실 시)
-    // 사전 장기 방문	PENDING (신청) → APPROVED (승인) →  IN_PROGRESS(방문 중) → APPROVED (승인) → IN_PROGRESS(방문
-    // 중) → COMPLETED (기간 종료)
-    // 현장 방문	COMPLETED (신청과 동시에 입실되므로 바로 완료 또는 진행 중)
-
+    
     private final String description; // 한글 설명
 
     @JsonValue

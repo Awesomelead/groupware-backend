@@ -24,6 +24,7 @@ import kr.co.awesomelead.groupware_backend.domain.department.enums.Company;
 import kr.co.awesomelead.groupware_backend.domain.notice.enums.NoticeType;
 import kr.co.awesomelead.groupware_backend.domain.user.entity.User;
 import kr.co.awesomelead.groupware_backend.global.util.CompanyListConverter;
+import kr.co.awesomelead.groupware_backend.global.util.LongListConverter;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
@@ -84,7 +85,18 @@ public class Notice {
 
     @Convert(converter = CompanyListConverter.class)
     @Column(name = "target_companies", columnDefinition = "TEXT")
+    @Builder.Default
     private List<Company> targetCompanies = new ArrayList<>();
+
+    @Convert(converter = LongListConverter.class)
+    @Column(name = "target_departments", columnDefinition = "TEXT")
+    @Builder.Default
+    private List<Long> targetDepartments = new ArrayList<>();
+
+    @Convert(converter = LongListConverter.class)
+    @Column(name = "target_users", columnDefinition = "TEXT")
+    @Builder.Default
+    private List<Long> targetUsers = new ArrayList<>();
 
     // 첨부파일 리스트
     @Builder.Default

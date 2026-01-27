@@ -6,10 +6,14 @@ import com.querydsl.core.types.dsl.Expressions;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import java.util.List;
 import kr.co.awesomelead.groupware_backend.domain.department.enums.Company;
+import kr.co.awesomelead.groupware_backend.domain.notice.dto.request.NoticeSearchConditionDto;
 import kr.co.awesomelead.groupware_backend.domain.notice.dto.response.NoticeSummaryDto;
 import kr.co.awesomelead.groupware_backend.domain.notice.entity.QNotice;
 import kr.co.awesomelead.groupware_backend.domain.notice.enums.NoticeType;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.support.PageableExecutionUtils;
 import org.springframework.stereotype.Repository;
 import org.springframework.util.StringUtils;
 
@@ -19,9 +23,50 @@ public class NoticeQueryRepository {
 
     private final JPAQueryFactory queryFactory;
 
-    public List<NoticeSummaryDto> findNoticesWithFilters(NoticeType type, String keyword,
-        String searchType,
-        Company company) {
+    public Page<NoticeSummaryDto> findNoticesWithFilters(NoticeSearchConditionDto conditionDto,
+        Company company,
+        Pageable pageable) {
+        QNotice notice = QNotice.notice;
+
+        List<NoticeSummaryDto> result = queryFactory
+            .select(Projections.constructor(NoticeSummaryDto.class,
+                notice.id,
+                notice.type,
+                notice.title,
+                notice.pinned,
+                notice.updatedDate
+            ))
+            .from(notice)
+            .where(
+                typeEq(conditionDto.getType()),
+                searchKeyword(conditionDto.getKeyword(), conditionDto.getSearchType()),
+                companyContains(company)
+            )
+            .orderBy(notice.pinned.desc(), notice.updatedDate.desc())
+            .offset(pageable.getOffset())
+            .limit(pageable.getPageSize())
+            .fetch();
+
+        return PageableExecutionUtils.getPage(
+            result,
+            pageable,
+            () -> {
+                Long totalCount = queryFactory
+                    .select(notice.count())
+                    .from(notice)
+                    .where(
+                        typeEq(conditionDto.getType()),
+                        searchKeyword(conditionDto.getKeyword(), conditionDto.getSearchType()),
+                        companyContains(company)
+                    )
+                    .fetchOne();
+
+                return totalCount != null ? totalCount : 0L;
+            }
+        );
+    }
+
+    public List<NoticeSummaryDto> findTop3Notices(Company company) {
         QNotice notice = QNotice.notice;
 
         return queryFactory
@@ -29,15 +74,15 @@ public class NoticeQueryRepository {
                 notice.id,
                 notice.type,
                 notice.title,
+                notice.pinned,
                 notice.updatedDate
             ))
             .from(notice)
             .where(
-                typeEq(type),
-                searchKeyword(keyword, searchType),
                 companyContains(company)
             )
             .orderBy(notice.pinned.desc(), notice.updatedDate.desc())
+            .limit(3)
             .fetch();
     }
 
@@ -67,5 +112,6 @@ public class NoticeQueryRepository {
             default -> n.title.contains(keyword).or(n.content.contains(keyword));
         };
     }
+
 
 }

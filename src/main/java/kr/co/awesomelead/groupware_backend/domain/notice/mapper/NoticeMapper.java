@@ -15,7 +15,9 @@ import org.mapstruct.Mapping;
 @Mapper(componentModel = "spring")
 public interface NoticeMapper {
 
+    @Mapping(target = "id", ignore = true)
     @Mapping(target = "author", source = "author")
+    @Mapping(target = "attachments", ignore = true)
     Notice toNoticeEntity(NoticeCreateRequestDto dto, User author);
 
     NoticeSummaryDto toNoticeSummaryDto(Notice notice);

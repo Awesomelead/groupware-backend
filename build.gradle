@@ -93,7 +93,8 @@ sourceSets {
 
 tasks.withType(JavaCompile).configureEach {
     options.getGeneratedSourceOutputDirectory().set(file(querydslDir))
-    options.compilerArgs << "-Amapstruct.suppressGeneratorTimestamp=true" // 타임스탬프 억제로 중복 생성 감지 완화
+    options.compilerArgs << "-Amapstruct.suppressGeneratorTimestamp=true"
+    options.compilerArgs << "-parameters"
 }
 
 clean {

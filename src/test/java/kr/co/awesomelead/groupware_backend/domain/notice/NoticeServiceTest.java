@@ -11,8 +11,10 @@ import static org.mockito.Mockito.verify;
 import java.io.IOException;
 import java.util.List;
 import java.util.Optional;
+import kr.co.awesomelead.groupware_backend.domain.department.dto.response.UserSummaryResponseDto;
 import kr.co.awesomelead.groupware_backend.domain.department.entity.Department;
 import kr.co.awesomelead.groupware_backend.domain.department.enums.Company;
+import kr.co.awesomelead.groupware_backend.domain.department.service.DepartmentService;
 import kr.co.awesomelead.groupware_backend.domain.notice.dto.request.NoticeCreateRequestDto;
 import kr.co.awesomelead.groupware_backend.domain.notice.dto.request.NoticeSearchConditionDto;
 import kr.co.awesomelead.groupware_backend.domain.notice.dto.request.NoticeUpdateRequestDto;
@@ -24,6 +26,7 @@ import kr.co.awesomelead.groupware_backend.domain.notice.mapper.NoticeMapper;
 import kr.co.awesomelead.groupware_backend.domain.notice.respository.NoticeAttachmentRepository;
 import kr.co.awesomelead.groupware_backend.domain.notice.respository.NoticeQueryRepository;
 import kr.co.awesomelead.groupware_backend.domain.notice.respository.NoticeRepository;
+import kr.co.awesomelead.groupware_backend.domain.notice.respository.NoticeTargetRepository;
 import kr.co.awesomelead.groupware_backend.domain.notice.service.NoticeService;
 import kr.co.awesomelead.groupware_backend.domain.user.entity.User;
 import kr.co.awesomelead.groupware_backend.domain.user.enums.Authority;
@@ -44,7 +47,6 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.test.util.ReflectionTestUtils;
-import org.springframework.web.multipart.MultipartFile;
 
 @ExtendWith(MockitoExtension.class)
 @DisplayName("NoticeService 단위 테스트")
@@ -60,11 +62,15 @@ class NoticeServiceTest {
     @Mock
     private NoticeAttachmentRepository noticeAttachmentRepository;
     @Mock
+    private NoticeTargetRepository noticeTargetRepository;
+    @Mock
     private NoticeMapper noticeMapper;
     @Mock
     private S3Service s3Service;
     @Mock
     private UserRepository userRepository;
+    @Mock
+    private DepartmentService departmentService;
 
     private User adminUser;
     private User regularUser;
@@ -94,27 +100,37 @@ class NoticeServiceTest {
         class Context_with_valid_authority {
 
             @Test
-            @DisplayName("공지사항을 생성하고 ID를 반환한다")
-            void it_returns_notice_id() throws IOException {
+            @DisplayName("회사/부서/개인 타겟을 모두 취합하여 공지 대상을 생성한다")
+            void it_creates_notice_with_flattened_targets() throws IOException {
                 // given
-                NoticeCreateRequestDto dto = NoticeCreateRequestDto.builder().title("제목").build();
-                List<MultipartFile> files = List.of(
-                    new MockMultipartFile("file", "test.txt", "text/plain", "content".getBytes()));
+                NoticeCreateRequestDto dto = NoticeCreateRequestDto.builder()
+                    .title("제목")
+                    .targetCompanies(List.of(Company.AWESOME))
+                    .targetDepartmentIds(List.of(10L))
+                    .targetUserIds(List.of(99L))
+                    .build();
+
                 Notice notice = Notice.builder().build();
                 ReflectionTestUtils.setField(notice, "id", 100L);
 
                 given(userRepository.findById(1L)).willReturn(Optional.of(adminUser));
                 given(noticeMapper.toNoticeEntity(any(), any())).willReturn(notice);
-                given(s3Service.uploadFile(any())).willReturn("s3-key");
                 given(noticeRepository.save(any())).willReturn(notice);
 
+                given(userRepository.findAllIdsByCompany(Company.AWESOME)).willReturn(
+                    List.of(1L, 2L));
+                UserSummaryResponseDto deptUser = new UserSummaryResponseDto();
+                ReflectionTestUtils.setField(deptUser, "id", 3L);
+                given(departmentService.getUsersByDepartmentHierarchy(10L)).willReturn(
+                    List.of(deptUser));
+
                 // when
-                Long resultId = noticeService.createNotice(dto, files, 1L);
+                Long resultId = noticeService.createNotice(dto, null, 1L);
 
                 // then
                 assertThat(resultId).isEqualTo(100L);
-                verify(s3Service, times(1)).uploadFile(any());
-                verify(noticeRepository).save(any());
+                verify(noticeTargetRepository).saveAll(any());
+                verify(noticeRepository, times(1)).save(any());
             }
         }
 
@@ -143,19 +159,22 @@ class NoticeServiceTest {
         class Context_admin_user {
 
             @Test
-            @DisplayName("회사 필터 없이(null) 모든 공지를 조회한다")
-            void it_calls_repo_with_null_company() {
+            @DisplayName("권한 여부를 true로 설정하여 모든 공지를 조회한다")
+            void it_calls_repo_with_admin_authority() {
                 // given
                 Pageable pageable = PageRequest.of(0, 10);
+                NoticeSearchConditionDto condition = new NoticeSearchConditionDto();
                 given(userRepository.findById(1L)).willReturn(Optional.of(adminUser));
-                given(noticeQueryRepository.findNoticesWithFilters(any(), eq(null), any()))
+                given(noticeQueryRepository.findNoticesWithFilters(eq(condition), eq(1L), eq(true),
+                    any()))
                     .willReturn(Page.empty());
 
                 // when
-                noticeService.getNoticesByType(new NoticeSearchConditionDto(), 1L, pageable);
+                noticeService.getNoticesByType(condition, 1L, pageable);
 
                 // then
-                verify(noticeQueryRepository).findNoticesWithFilters(any(), eq(null), any());
+                verify(noticeQueryRepository).findNoticesWithFilters(eq(condition), eq(1L),
+                    eq(true), any());
             }
         }
 
@@ -167,18 +186,18 @@ class NoticeServiceTest {
             @DisplayName("해당 유저의 회사 필터를 적용하여 조회한다")
             void it_calls_repo_with_user_company() {
                 // given
+                NoticeSearchConditionDto condition = new NoticeSearchConditionDto();
                 given(userRepository.findById(2L)).willReturn(Optional.of(regularUser));
-                given(
-                    noticeQueryRepository.findNoticesWithFilters(any(), eq(Company.AWESOME), any()))
+                given(noticeQueryRepository.findNoticesWithFilters(eq(condition), eq(2L), eq(false),
+                    any()))
                     .willReturn(Page.empty());
 
                 // when
-                noticeService.getNoticesByType(new NoticeSearchConditionDto(), 2L,
-                    PageRequest.of(0, 10));
+                noticeService.getNoticesByType(condition, 2L, PageRequest.of(0, 10));
 
                 // then
-                verify(noticeQueryRepository).findNoticesWithFilters(any(), eq(Company.AWESOME),
-                    any());
+                verify(noticeQueryRepository).findNoticesWithFilters(eq(condition), eq(2L),
+                    eq(false), any());
             }
         }
     }
@@ -249,14 +268,13 @@ class NoticeServiceTest {
         void it_returns_top3_list() {
             // given
             given(userRepository.findById(1L)).willReturn(Optional.of(adminUser));
-            given(noticeQueryRepository.findTop3Notices(null)).willReturn(List.of());
-
+            given(noticeQueryRepository.findTop3Notices(eq(1L), eq(true))).willReturn(List.of());
             // when
             List<NoticeSummaryDto> result = noticeService.getTop3NoticesForHome(1L);
 
             // then
             assertThat(result).isNotNull();
-            verify(noticeQueryRepository).findTop3Notices(null);
+            verify(noticeQueryRepository).findTop3Notices(eq(1L), eq(true));
         }
     }
 }

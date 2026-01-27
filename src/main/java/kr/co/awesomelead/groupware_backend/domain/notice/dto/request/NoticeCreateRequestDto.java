@@ -30,7 +30,7 @@ public class NoticeCreateRequestDto {
         description = "공지사항 유형",
         example = "REGULAR",
         required = true,
-        allowableValues = {"REGULAR", "MENU", "ETC"})
+        allowableValues = {"상시공지", "식단표", "기타"})
     private NoticeType type;
 
     @Builder.Default

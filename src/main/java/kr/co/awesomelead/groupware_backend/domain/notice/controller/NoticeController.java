@@ -62,12 +62,14 @@ public class NoticeController {
 
     @Operation(summary = "공지 생성",
         description = """
-            새로운 공지를 생성합니다. 첨부파일을 포함할 수 있습니다.
-                        
-            **대상 회사(targetCompanies)**:\s
-            - `AWESOME`: 어썸리드 소속만 조회 가능
-            - `MARUI`: 마루이 소속만 조회 가능
-            - 둘 다 포함 시 전사 공지로 처리됩니다.
+                새로운 공지를 생성합니다. 첨부파일을 포함할 수 있습니다.
+                            
+                **공지 대상 설정 로직**:
+                1. **회사(targetCompanies)**: 선택된 회사 소속 전체 인원을 대상으로 합니다.
+                2. **부서(targetDepartmentIds)**: 선택된 부서 및 그 하위 부서의 모든 인원을 대상으로 합니다.
+                3. **개인(targetUserIds)**: 특정 유저를 직접 대상으로 지정합니다.
+                    
+            *위 세 조건은 **합집합(OR)**으로 계산되어 최종 공지 대상자(NoticeTarget)가 결정됩니다.*
             """)
     @ApiResponses(
         value = {
@@ -188,7 +190,14 @@ public class NoticeController {
 
     @Operation(
         summary = "공지 목록 조회",
-        description = "특정 유형의 공지 목록을 조회합니다. 페이징 정보(page, size)를 포함하며, 결과를 Page 객체로 반환합니다.")
+        description = """
+            사용자가 열람 가능한 공지 목록을 조회합니다. 
+                        
+            **필터링 원칙**:
+            - **일반 유저**: 공지 생성 시점에 대상자(NoticeTarget)로 포함된 공지만 노출됩니다.
+            - **관리자(ACCESS_NOTICE)**: 모든 공지를 제약 없이 조회할 수 있습니다.
+            - 페이징 및 조건 검색(제목, 내용 등)을 지원합니다.
+            """)
     @ApiResponses(
         value = {
             @io.swagger.v3.oas.annotations.responses.ApiResponse(

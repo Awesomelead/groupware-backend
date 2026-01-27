@@ -2,13 +2,13 @@ package kr.co.awesomelead.groupware_backend.domain.notice.respository;
 
 import com.querydsl.core.types.Projections;
 import com.querydsl.core.types.dsl.BooleanExpression;
-import com.querydsl.core.types.dsl.Expressions;
+import com.querydsl.jpa.JPAExpressions;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import java.util.List;
-import kr.co.awesomelead.groupware_backend.domain.department.enums.Company;
 import kr.co.awesomelead.groupware_backend.domain.notice.dto.request.NoticeSearchConditionDto;
 import kr.co.awesomelead.groupware_backend.domain.notice.dto.response.NoticeSummaryDto;
 import kr.co.awesomelead.groupware_backend.domain.notice.entity.QNotice;
+import kr.co.awesomelead.groupware_backend.domain.notice.entity.QNoticeTarget;
 import kr.co.awesomelead.groupware_backend.domain.notice.enums.NoticeType;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -23,12 +23,29 @@ public class NoticeQueryRepository {
 
     private final JPAQueryFactory queryFactory;
 
-    public Page<NoticeSummaryDto> findNoticesWithFilters(NoticeSearchConditionDto conditionDto,
-        Company company,
+    public Page<NoticeSummaryDto> findNoticesWithFilters(
+        NoticeSearchConditionDto conditionDto,
+        Long userId,
+        boolean hasAccessNotice,
         Pageable pageable) {
-        QNotice notice = QNotice.notice;
 
-        List<NoticeSummaryDto> result = queryFactory
+        QNotice notice = QNotice.notice;
+        QNoticeTarget noticeTarget = QNoticeTarget.noticeTarget;
+
+        var query = queryFactory
+            .from(notice);
+
+        if (!hasAccessNotice) {
+            query.innerJoin(noticeTarget).on(noticeTarget.notice.eq(notice))
+                .where(noticeTarget.user.id.eq(userId));
+        }
+
+        query.where(
+            typeEq(conditionDto.getType()),
+            searchKeyword(conditionDto.getKeyword(), conditionDto.getSearchType())
+        );
+
+        List<NoticeSummaryDto> result = query
             .select(Projections.constructor(NoticeSummaryDto.class,
                 notice.id,
                 notice.type,
@@ -36,37 +53,30 @@ public class NoticeQueryRepository {
                 notice.pinned,
                 notice.updatedDate
             ))
-            .from(notice)
-            .where(
-                typeEq(conditionDto.getType()),
-                searchKeyword(conditionDto.getKeyword(), conditionDto.getSearchType()),
-                companyContains(company)
-            )
             .orderBy(notice.pinned.desc(), notice.updatedDate.desc())
             .offset(pageable.getOffset())
             .limit(pageable.getPageSize())
             .fetch();
-
         return PageableExecutionUtils.getPage(
             result,
             pageable,
             () -> {
-                Long totalCount = queryFactory
+                Long total = queryFactory
                     .select(notice.count())
                     .from(notice)
                     .where(
+                        noticeAccessible(hasAccessNotice, userId),
                         typeEq(conditionDto.getType()),
-                        searchKeyword(conditionDto.getKeyword(), conditionDto.getSearchType()),
-                        companyContains(company)
+                        searchKeyword(conditionDto.getKeyword(), conditionDto.getSearchType())
                     )
                     .fetchOne();
-
-                return totalCount != null ? totalCount : 0L;
+                return total != null ? total : 0L;
             }
         );
     }
 
-    public List<NoticeSummaryDto> findTop3Notices(Company company) {
+    public List<NoticeSummaryDto> findTop3Notices(Long userId,
+        boolean hasAccessNotice) {
         QNotice notice = QNotice.notice;
 
         return queryFactory
@@ -79,24 +89,29 @@ public class NoticeQueryRepository {
             ))
             .from(notice)
             .where(
-                companyContains(company)
+                noticeAccessible(hasAccessNotice, userId)
             )
             .orderBy(notice.pinned.desc(), notice.updatedDate.desc())
             .limit(3)
             .fetch();
     }
 
-    private BooleanExpression typeEq(NoticeType type) {
-        return type != null ? QNotice.notice.type.eq(type) : null;
-    }
-
-    private BooleanExpression companyContains(Company company) {
-        if (company == null) {
-            return null;
+    private BooleanExpression noticeAccessible(boolean hasAccessNotice, Long userId) {
+        if (hasAccessNotice) {
+            return null; // 관리자는 필터링 없음
         }
 
-        return Expressions.stringTemplate("{0}", QNotice.notice.targetCompanies)
-            .contains(company.name());
+        // 내 ID가 타겟 테이블에 존재하는지 확인하는 서브쿼리
+        // (Join 방식이 아닌 exists 방식이 필요한 곳을 위해 남겨둠)
+        return QNotice.notice.id.in(
+            JPAExpressions.select(QNoticeTarget.noticeTarget.notice.id)
+                .from(QNoticeTarget.noticeTarget)
+                .where(QNoticeTarget.noticeTarget.user.id.eq(userId))
+        );
+    }
+
+    private BooleanExpression typeEq(NoticeType type) {
+        return type != null ? QNotice.notice.type.eq(type) : null;
     }
 
     private BooleanExpression searchKeyword(String keyword, String searchType) {

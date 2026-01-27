@@ -1,8 +1,12 @@
 package kr.co.awesomelead.groupware_backend.domain.notice.service;
 
 import java.io.IOException;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
+import kr.co.awesomelead.groupware_backend.domain.department.dto.response.UserSummaryResponseDto;
 import kr.co.awesomelead.groupware_backend.domain.department.enums.Company;
+import kr.co.awesomelead.groupware_backend.domain.department.service.DepartmentService;
 import kr.co.awesomelead.groupware_backend.domain.notice.dto.request.NoticeCreateRequestDto;
 import kr.co.awesomelead.groupware_backend.domain.notice.dto.request.NoticeSearchConditionDto;
 import kr.co.awesomelead.groupware_backend.domain.notice.dto.request.NoticeUpdateRequestDto;
@@ -10,10 +14,12 @@ import kr.co.awesomelead.groupware_backend.domain.notice.dto.response.NoticeDeta
 import kr.co.awesomelead.groupware_backend.domain.notice.dto.response.NoticeSummaryDto;
 import kr.co.awesomelead.groupware_backend.domain.notice.entity.Notice;
 import kr.co.awesomelead.groupware_backend.domain.notice.entity.NoticeAttachment;
+import kr.co.awesomelead.groupware_backend.domain.notice.entity.NoticeTarget;
 import kr.co.awesomelead.groupware_backend.domain.notice.mapper.NoticeMapper;
 import kr.co.awesomelead.groupware_backend.domain.notice.respository.NoticeAttachmentRepository;
 import kr.co.awesomelead.groupware_backend.domain.notice.respository.NoticeQueryRepository;
 import kr.co.awesomelead.groupware_backend.domain.notice.respository.NoticeRepository;
+import kr.co.awesomelead.groupware_backend.domain.notice.respository.NoticeTargetRepository;
 import kr.co.awesomelead.groupware_backend.domain.user.entity.User;
 import kr.co.awesomelead.groupware_backend.domain.user.enums.Authority;
 import kr.co.awesomelead.groupware_backend.domain.user.repository.UserRepository;
@@ -34,9 +40,11 @@ public class NoticeService {
     private final NoticeRepository noticeRepository;
     private final NoticeQueryRepository noticeQueryRepository;
     private final NoticeAttachmentRepository noticeAttachmentRepository;
+    private final NoticeTargetRepository noticeTargetRepository;
     private final NoticeMapper noticeMapper;
     private final S3Service s3Service;
     private final UserRepository userRepository;
+    private final DepartmentService departmentService;
 
     private User validateAndGetAuthor(Long userId) {
         User user =
@@ -57,10 +65,41 @@ public class NoticeService {
         User author = validateAndGetAuthor(userId);
 
         Notice notice = noticeMapper.toNoticeEntity(requestDto, author);
+        noticeRepository.save(notice);
+
+        Set<Long> finalTargetUserIds = new HashSet<>();
+
+        if (requestDto.getTargetCompanies() != null) {
+            for (Company company : requestDto.getTargetCompanies()) {
+                List<Long> companyUserIds = userRepository.findAllIdsByCompany(company);
+                finalTargetUserIds.addAll(companyUserIds);
+            }
+        }
+
+        if (requestDto.getTargetDepartmentIds() != null) {
+            for (Long deptId : requestDto.getTargetDepartmentIds()) {
+                List<UserSummaryResponseDto> deptUsers = departmentService.getUsersByDepartmentHierarchy(
+                    deptId);
+                deptUsers.forEach(u -> finalTargetUserIds.add(u.getId()));
+            }
+        }
+
+        if (requestDto.getTargetUserIds() != null) {
+            finalTargetUserIds.addAll(requestDto.getTargetUserIds());
+        }
+
+        List<NoticeTarget> targets = finalTargetUserIds.stream()
+            .map(targetId -> NoticeTarget.builder()
+                .notice(notice)
+                .user(userRepository.getReferenceById(targetId))
+                .build())
+            .toList();
+
+        noticeTargetRepository.saveAll(targets);
 
         uploadFiles(files, notice);
 
-        return noticeRepository.save(notice).getId();
+        return notice.getId();
     }
 
     @Transactional(readOnly = true)
@@ -71,11 +110,11 @@ public class NoticeService {
                 .findById(userId)
                 .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
         boolean hasAccessNotice = user.hasAuthority(Authority.ACCESS_NOTICE);
-        Company userCompany = user.getDepartment().getCompany();
 
         return noticeQueryRepository.findNoticesWithFilters(
             conditionDto,
-            hasAccessNotice ? null : userCompany,
+            userId,
+            hasAccessNotice,
             pageable);
     }
 
@@ -164,9 +203,11 @@ public class NoticeService {
             .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
 
         boolean hasAccessNotice = user.hasAuthority(Authority.ACCESS_NOTICE);
-        Company userCompany = user.getDepartment().getCompany();
 
-        return noticeQueryRepository.findTop3Notices(hasAccessNotice ? null : userCompany);
+        return noticeQueryRepository.findTop3Notices(
+            userId,
+            hasAccessNotice
+        );
     }
 
 }

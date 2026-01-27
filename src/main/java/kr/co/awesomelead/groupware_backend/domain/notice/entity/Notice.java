@@ -28,13 +28,11 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-import lombok.Setter;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.LastModifiedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 import org.springframework.util.StringUtils;
 
-@Setter
 @Getter
 @Builder
 @NoArgsConstructor
@@ -89,6 +87,7 @@ public class Notice {
     private List<Company> targetCompanies = new ArrayList<>();
 
     // 첨부파일 리스트
+    @Builder.Default
     @OneToMany(mappedBy = "notice", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<NoticeAttachment> attachments = new ArrayList<>();
 

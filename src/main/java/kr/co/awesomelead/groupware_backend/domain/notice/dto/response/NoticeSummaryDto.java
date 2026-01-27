@@ -24,6 +24,9 @@ public class NoticeSummaryDto {
     @Schema(description = "공지사항 제목", example = "2025년 1월 전체 회의 안내")
     private String title;
 
+    @Schema(description = "상단 고정 여부", example = "true") // 추가됨
+    private boolean isPinned;
+
     @Schema(description = "수정일시", example = "2025-01-10T14:30:00")
     private LocalDateTime updatedDate;
 }

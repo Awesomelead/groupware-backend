@@ -2,15 +2,17 @@ package kr.co.awesomelead.groupware_backend.domain.notice.service;
 
 import java.io.IOException;
 import java.util.List;
+import kr.co.awesomelead.groupware_backend.domain.department.enums.Company;
 import kr.co.awesomelead.groupware_backend.domain.notice.dto.request.NoticeCreateRequestDto;
+import kr.co.awesomelead.groupware_backend.domain.notice.dto.request.NoticeSearchConditionDto;
 import kr.co.awesomelead.groupware_backend.domain.notice.dto.request.NoticeUpdateRequestDto;
 import kr.co.awesomelead.groupware_backend.domain.notice.dto.response.NoticeDetailDto;
 import kr.co.awesomelead.groupware_backend.domain.notice.dto.response.NoticeSummaryDto;
 import kr.co.awesomelead.groupware_backend.domain.notice.entity.Notice;
 import kr.co.awesomelead.groupware_backend.domain.notice.entity.NoticeAttachment;
-import kr.co.awesomelead.groupware_backend.domain.notice.enums.NoticeType;
 import kr.co.awesomelead.groupware_backend.domain.notice.mapper.NoticeMapper;
 import kr.co.awesomelead.groupware_backend.domain.notice.respository.NoticeAttachmentRepository;
+import kr.co.awesomelead.groupware_backend.domain.notice.respository.NoticeQueryRepository;
 import kr.co.awesomelead.groupware_backend.domain.notice.respository.NoticeRepository;
 import kr.co.awesomelead.groupware_backend.domain.user.entity.User;
 import kr.co.awesomelead.groupware_backend.domain.user.enums.Authority;
@@ -19,6 +21,8 @@ import kr.co.awesomelead.groupware_backend.global.error.CustomException;
 import kr.co.awesomelead.groupware_backend.global.error.ErrorCode;
 import kr.co.awesomelead.groupware_backend.global.infra.s3.S3Service;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
@@ -28,6 +32,7 @@ import org.springframework.web.multipart.MultipartFile;
 public class NoticeService {
 
     private final NoticeRepository noticeRepository;
+    private final NoticeQueryRepository noticeQueryRepository;
     private final NoticeAttachmentRepository noticeAttachmentRepository;
     private final NoticeMapper noticeMapper;
     private final S3Service s3Service;
@@ -59,14 +64,19 @@ public class NoticeService {
     }
 
     @Transactional(readOnly = true)
-    public List<NoticeSummaryDto> getNoticesByType(NoticeType type) {
-        List<Notice> notices =
-            (type == null)
-                ? noticeRepository.findAllByOrderByPinnedDescUpdatedDateDesc() // 전체 정렬 조회
-                : noticeRepository.findByTypeOrderByPinnedDescUpdatedDateDesc(
-                    type); // 타입별 정렬 조회
+    public Page<NoticeSummaryDto> getNoticesByType(NoticeSearchConditionDto conditionDto,
+        Long userId, Pageable pageable) {
+        User user =
+            userRepository
+                .findById(userId)
+                .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
+        boolean hasAccessNotice = user.hasAuthority(Authority.ACCESS_NOTICE);
+        Company userCompany = user.getDepartment().getCompany();
 
-        return noticeMapper.toNoticeSummaryDtoList(notices);
+        return noticeQueryRepository.findNoticesWithFilters(
+            conditionDto,
+            hasAccessNotice ? null : userCompany,
+            pageable);
     }
 
     @Transactional(readOnly = true)
@@ -147,4 +157,16 @@ public class NoticeService {
             }
         }
     }
+
+    @Transactional(readOnly = true)
+    public List<NoticeSummaryDto> getTop3NoticesForHome(Long userId) {
+        User user = userRepository.findById(userId)
+            .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
+
+        boolean hasAccessNotice = user.hasAuthority(Authority.ACCESS_NOTICE);
+        Company userCompany = user.getDepartment().getCompany();
+
+        return noticeQueryRepository.findTop3Notices(hasAccessNotice ? null : userCompany);
+    }
+
 }

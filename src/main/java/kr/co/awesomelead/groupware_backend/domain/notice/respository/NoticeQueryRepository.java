@@ -11,6 +11,7 @@ import kr.co.awesomelead.groupware_backend.domain.notice.entity.QNotice;
 import kr.co.awesomelead.groupware_backend.domain.notice.entity.QNoticeTarget;
 import kr.co.awesomelead.groupware_backend.domain.notice.enums.NoticeSearchType;
 import kr.co.awesomelead.groupware_backend.domain.notice.enums.NoticeType;
+import kr.co.awesomelead.groupware_backend.domain.user.entity.QUser;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -32,9 +33,11 @@ public class NoticeQueryRepository {
 
         QNotice notice = QNotice.notice;
         QNoticeTarget noticeTarget = QNoticeTarget.noticeTarget;
+        QUser author = QUser.user;
 
         var query = queryFactory
-            .from(notice);
+            .from(notice)
+            .innerJoin(notice.author, author);
 
         if (!hasAccessNotice) {
             query.innerJoin(noticeTarget).on(noticeTarget.notice.eq(notice))
@@ -43,7 +46,7 @@ public class NoticeQueryRepository {
 
         query.where(
             typeEq(conditionDto.getType()),
-            searchKeyword(conditionDto.getKeyword(), conditionDto.getSearchType())
+            searchKeyword(conditionDto.getKeyword(), conditionDto.getSearchType(), author)
         );
 
         List<NoticeSummaryDto> result = query
@@ -65,10 +68,12 @@ public class NoticeQueryRepository {
                 Long total = queryFactory
                     .select(notice.count())
                     .from(notice)
+                    .innerJoin(notice.author, author)
                     .where(
                         noticeAccessible(hasAccessNotice, userId),
                         typeEq(conditionDto.getType()),
-                        searchKeyword(conditionDto.getKeyword(), conditionDto.getSearchType())
+                        searchKeyword(conditionDto.getKeyword(), conditionDto.getSearchType(),
+                            author)
                     )
                     .fetchOne();
                 return total != null ? total : 0L;
@@ -115,7 +120,8 @@ public class NoticeQueryRepository {
         return type != null ? QNotice.notice.type.eq(type) : null;
     }
 
-    private BooleanExpression searchKeyword(String keyword, NoticeSearchType searchType) {
+    private BooleanExpression searchKeyword(String keyword, NoticeSearchType searchType,
+        QUser author) {
         if (!StringUtils.hasText(keyword)) {
             return null;
         }
@@ -126,7 +132,7 @@ public class NoticeQueryRepository {
         return switch (type) {
             case TITLE -> n.title.contains(keyword);
             case CONTENT -> n.content.contains(keyword);
-            case AUTHOR -> n.author.nameKor.contains(keyword);
+            case AUTHOR -> author.nameKor.contains(keyword);
             default -> n.title.contains(keyword).or(n.content.contains(keyword));
         };
     }

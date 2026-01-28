@@ -9,6 +9,7 @@ import kr.co.awesomelead.groupware_backend.domain.notice.dto.request.NoticeSearc
 import kr.co.awesomelead.groupware_backend.domain.notice.dto.response.NoticeSummaryDto;
 import kr.co.awesomelead.groupware_backend.domain.notice.entity.QNotice;
 import kr.co.awesomelead.groupware_backend.domain.notice.entity.QNoticeTarget;
+import kr.co.awesomelead.groupware_backend.domain.notice.enums.NoticeSearchType;
 import kr.co.awesomelead.groupware_backend.domain.notice.enums.NoticeType;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -114,16 +115,18 @@ public class NoticeQueryRepository {
         return type != null ? QNotice.notice.type.eq(type) : null;
     }
 
-    private BooleanExpression searchKeyword(String keyword, String searchType) {
+    private BooleanExpression searchKeyword(String keyword, NoticeSearchType searchType) {
         if (!StringUtils.hasText(keyword)) {
             return null;
         }
         QNotice n = QNotice.notice;
 
-        return switch (searchType != null ? searchType : "ALL") {
-            case "TITLE" -> n.title.contains(keyword);
-            case "CONTENT" -> n.content.contains(keyword);
-            case "AUTHOR" -> n.author.nameKor.contains(keyword);
+        NoticeSearchType type = (searchType != null) ? searchType : NoticeSearchType.ALL;
+
+        return switch (type) {
+            case TITLE -> n.title.contains(keyword);
+            case CONTENT -> n.content.contains(keyword);
+            case AUTHOR -> n.author.nameKor.contains(keyword);
             default -> n.title.contains(keyword).or(n.content.contains(keyword));
         };
     }

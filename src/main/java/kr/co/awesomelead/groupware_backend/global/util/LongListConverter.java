@@ -2,10 +2,12 @@ package kr.co.awesomelead.groupware_backend.global.util;
 
 import jakarta.persistence.AttributeConverter;
 import jakarta.persistence.Converter;
+
+import org.springframework.util.StringUtils;
+
 import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
-import org.springframework.util.StringUtils;
 
 @Converter
 public class LongListConverter implements AttributeConverter<List<Long>, String> {
@@ -15,9 +17,7 @@ public class LongListConverter implements AttributeConverter<List<Long>, String>
         if (attribute == null || attribute.isEmpty()) {
             return "";
         }
-        return attribute.stream()
-            .map(String::valueOf)
-            .collect(Collectors.joining(","));
+        return attribute.stream().map(String::valueOf).collect(Collectors.joining(","));
     }
 
     @Override
@@ -25,8 +25,6 @@ public class LongListConverter implements AttributeConverter<List<Long>, String>
         if (!StringUtils.hasText(dbData)) {
             return List.of();
         }
-        return Arrays.stream(dbData.split(","))
-            .map(Long::valueOf)
-            .collect(Collectors.toList());
+        return Arrays.stream(dbData.split(",")).map(Long::valueOf).collect(Collectors.toList());
     }
 }

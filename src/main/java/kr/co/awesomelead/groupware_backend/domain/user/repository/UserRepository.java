@@ -1,14 +1,16 @@
 package kr.co.awesomelead.groupware_backend.domain.user.repository;
 
-import java.time.LocalDate;
-import java.util.List;
-import java.util.Optional;
 import kr.co.awesomelead.groupware_backend.domain.department.entity.Department;
 import kr.co.awesomelead.groupware_backend.domain.department.enums.Company;
 import kr.co.awesomelead.groupware_backend.domain.user.entity.User;
+
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
+
+import java.time.LocalDate;
+import java.util.List;
+import java.util.Optional;
 
 public interface UserRepository extends JpaRepository<User, Long> {
 
@@ -28,10 +30,10 @@ public interface UserRepository extends JpaRepository<User, Long> {
     Optional<User> findByPhoneNumberHash(String phoneNumberHash);
 
     @Query(
-        "SELECT u FROM User u WHERE (u.nameKor = :name OR u.nameEng = :name) AND u.hireDate ="
-            + " :joinDate")
+            "SELECT u FROM User u WHERE (u.nameKor = :name OR u.nameEng = :name) AND u.hireDate ="
+                    + " :joinDate")
     Optional<User> findByNameAndJoinDate(
-        @Param("name") String name, @Param("joinDate") LocalDate joinDate);
+            @Param("name") String name, @Param("joinDate") LocalDate joinDate);
 
     boolean existsByPhoneNumberHash(String phoneNumberHash);
 

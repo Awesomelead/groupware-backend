@@ -78,8 +78,8 @@ public class AdminService {
 
         // 현장직의 경우 기본 권한 부여
         if (requestDto.getJobType() == JobType.MANAGEMENT) {
-            user.addAuthority(Authority.WRITE_MESSAGE);
-            user.addAuthority(Authority.WRITE_EDUCATION);
+            user.addAuthority(Authority.ACCESS_MESSAGE);
+            user.addAuthority(Authority.ACCESS_EDUCATION);
         }
 
         userRepository.save(user);

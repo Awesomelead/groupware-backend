@@ -73,7 +73,9 @@ public class AdminService {
         if (requestDto.getJobType() == JobType.FIELD && requestDto.getRole() == Role.ADMIN) {
             throw new CustomException(ErrorCode.INVALID_JOB_TYPE_FOR_ADMIN_ROLE);
         }
-        user.setRole(requestDto.getRole());
+        if (requestDto.getRole() != null) {
+            user.setRole(requestDto.getRole());
+        }
         user.setPosition(requestDto.getPosition());
         user.setHireDate(requestDto.getHireDate());
         // 사용자의 상태를 AVAILABLE로 변경

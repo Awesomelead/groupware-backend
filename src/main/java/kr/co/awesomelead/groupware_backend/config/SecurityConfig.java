@@ -89,6 +89,8 @@ public class SecurityConfig {
                                         "/api/admin/**", // 관리자 기능
                                         "/api/visits/admin/**",
                                         "/api/visits/check-out")
+                                .authenticated()
+                                .anyRequest()
                                 .authenticated());
 
         http.addFilterBefore(

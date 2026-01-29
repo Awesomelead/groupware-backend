@@ -1,18 +1,15 @@
 package kr.co.awesomelead.groupware_backend.domain.visit.dto.response;
 
 import io.swagger.v3.oas.annotations.media.Schema;
-
+import java.time.LocalDate;
+import java.util.List;
 import kr.co.awesomelead.groupware_backend.domain.department.enums.DepartmentName;
 import kr.co.awesomelead.groupware_backend.domain.visit.enums.AdditionalPermissionType;
 import kr.co.awesomelead.groupware_backend.domain.visit.enums.VisitPurpose;
 import kr.co.awesomelead.groupware_backend.domain.visit.enums.VisitStatus;
-
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
-
-import java.time.LocalDate;
-import java.util.List;
 
 @Getter
 @Builder
@@ -55,6 +52,9 @@ public class VisitDetailResponseDto {
 
     @Schema(description = "방문 상태", example = "방문 중")
     private VisitStatus status;
+
+    @Schema(description = "반려 사유", example = "신분증 미지참")
+    private String rejectionReason;
 
     @Schema(description = "입퇴실 및 서명 기록 리스트")
     private List<VisitRecordResponseDto> records;

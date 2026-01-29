@@ -45,6 +45,9 @@ public enum ErrorCode {
     LONG_TERM_PERIOD_EXCEEDED(HttpStatus.BAD_REQUEST, "장기 방문은 최대 3개월까지만 신청 가능합니다."),
     INVALID_CHECKOUT_TIME(HttpStatus.BAD_REQUEST, "퇴실 시간은 입실 시간보다 빠를 수 없습니다."),
     INVALID_JOB_TYPE_FOR_ADMIN_ROLE(HttpStatus.BAD_REQUEST, "관리자 역할에는 관리직 직군만 할당할 수 있습니다."),
+    REJECTION_REASON_REQUIRED(
+        HttpStatus.BAD_REQUEST, "반려 시 반려 사유가 반드시 필요합니다."
+    ),
 
     // 401 Unauthorized
     INVALID_TOKEN(HttpStatus.UNAUTHORIZED, "유효하지 않은 토큰입니다."),

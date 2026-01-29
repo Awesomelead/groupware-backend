@@ -245,9 +245,10 @@ public class VisitController {
     @PostMapping("/admin/{visitId}/process")
     public ResponseEntity<ApiResponse<Void>> processVisit(
         @Parameter(hidden = true) @AuthenticationPrincipal CustomUserDetails userDetails,
-        @Parameter(description = "승인할 방문 ID", example = "1") @PathVariable("visitId") Long visitId,
-        @Parameter(description = "승인 요청 정보") @Valid @RequestBody VisitProcessRequestDto dto) {
+        @Parameter(description = "처리할 방문 ID", example = "1") @PathVariable("visitId") Long visitId,
+        @Parameter(description = "처리 요청 정보") @Valid @RequestBody VisitProcessRequestDto dto) {
         visitService.processVisit(userDetails.getId(), visitId, dto);
-        return ResponseEntity.ok(ApiResponse.onNoContent("방문 신청 승인이 완료되었습니다."));
+        return ResponseEntity.ok(ApiResponse.onNoContent(
+            "방문 신청에 대한 " + dto.getStatus().getDescription() + " 처리가 완료되었습니다."));
     }
 }

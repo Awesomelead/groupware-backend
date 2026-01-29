@@ -3,11 +3,15 @@ package kr.co.awesomelead.groupware_backend.domain.visit.dto.request;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotNull;
 import kr.co.awesomelead.groupware_backend.domain.visit.enums.VisitStatus;
+import lombok.AllArgsConstructor;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 @Getter
 @Setter
+@AllArgsConstructor
+@NoArgsConstructor
 @Schema(description = "방문 신청 처리 요청")
 public class VisitProcessRequestDto {
 

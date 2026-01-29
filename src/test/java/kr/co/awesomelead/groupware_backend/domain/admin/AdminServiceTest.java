@@ -185,7 +185,7 @@ class AdminServiceTest {
 
                 // then
                 assertThat(user.getRole()).isEqualTo(Role.ADMIN);
-                assertThat(user.hasAuthority(Authority.WRITE_NOTICE)).isEqualTo(true);
+                assertThat(user.hasAuthority(Authority.ACCESS_NOTICE)).isEqualTo(true);
                 assertThat(user.hasAuthority(Authority.MANAGE_EMPLOYEE_DATA)).isEqualTo(true);
             }
         }

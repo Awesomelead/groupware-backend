@@ -5,12 +5,15 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 
+import kr.co.awesomelead.groupware_backend.domain.department.enums.Company;
 import kr.co.awesomelead.groupware_backend.domain.notice.enums.NoticeType;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+
+import java.util.List;
 
 @Getter
 @AllArgsConstructor
@@ -27,14 +30,19 @@ public class NoticeCreateRequestDto {
     private String content;
 
     @NotNull(message = "공지 유형은 필수입니다.")
-    @Schema(
-            description = "공지사항 유형",
-            example = "REGULAR",
-            required = true,
-            allowableValues = {"REGULAR", "MENU", "ETC"})
+    @Schema(description = "공지 유형", example = "상시공지", required = true)
     private NoticeType type;
 
     @Builder.Default
     @Schema(description = "상단 고정 여부", example = "false", defaultValue = "false")
     private Boolean pinned = false;
+
+    @Schema(description = "공지 대상 회사 목록 (해당 회사의 전사 공지 시 활용)", example = "[\"AWESOME\"]")
+    private List<Company> targetCompanies;
+
+    @Schema(description = "공지 대상 부서 ID 목록 (부서 및 하위 부서원 자동 포함)", example = "[1, 5, 12]")
+    private List<Long> targetDepartmentIds;
+
+    @Schema(description = "공지 대상 특정 유저 ID 목록 (개별 지정 시 활용)", example = "[101, 205]")
+    private List<Long> targetUserIds;
 }

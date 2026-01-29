@@ -1,6 +1,7 @@
 package kr.co.awesomelead.groupware_backend.domain.user.repository;
 
 import kr.co.awesomelead.groupware_backend.domain.department.entity.Department;
+import kr.co.awesomelead.groupware_backend.domain.department.enums.Company;
 import kr.co.awesomelead.groupware_backend.domain.user.entity.User;
 
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -35,4 +36,7 @@ public interface UserRepository extends JpaRepository<User, Long> {
             @Param("name") String name, @Param("joinDate") LocalDate joinDate);
 
     boolean existsByPhoneNumberHash(String phoneNumberHash);
+
+    @Query("SELECT u.id FROM User u WHERE u.department.company = :company")
+    List<Long> findAllIdsByCompany(@Param("company") Company company);
 }

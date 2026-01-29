@@ -55,7 +55,7 @@ public class EduReportService {
                         .findById(id)
                         .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
 
-        if (!user.hasAuthority(Authority.WRITE_EDUCATION)) {
+        if (!user.hasAuthority(Authority.ACCESS_EDUCATION)) {
             throw new CustomException(ErrorCode.NO_AUTHORITY_FOR_EDU_REPORT);
         }
 
@@ -129,7 +129,7 @@ public class EduReportService {
                         .findById(id)
                         .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
 
-        if (!user.hasAuthority(Authority.WRITE_EDUCATION)) {
+        if (!user.hasAuthority(Authority.ACCESS_EDUCATION)) {
             throw new CustomException(ErrorCode.NO_AUTHORITY_FOR_EDU_REPORT);
         }
 

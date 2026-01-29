@@ -137,7 +137,7 @@ public class EduReportServiceTest {
                         .build();
 
         User user = createNormalUser();
-        user.addAuthority(Authority.WRITE_EDUCATION);
+        user.addAuthority(Authority.ACCESS_EDUCATION);
 
         when(userRepository.findById(1L)).thenReturn(Optional.of(user));
         when(eduMapper.toEduReportEntity(any(EduReportRequestDto.class), any()))
@@ -230,7 +230,7 @@ public class EduReportServiceTest {
                         .build();
 
         User user = createNormalUser();
-        user.addAuthority(Authority.WRITE_EDUCATION);
+        user.addAuthority(Authority.ACCESS_EDUCATION);
 
         when(userRepository.findById(1L)).thenReturn(Optional.of(user));
         when(departmentRepository.findById(999L)).thenReturn(Optional.empty());
@@ -368,7 +368,7 @@ public class EduReportServiceTest {
         Long reportId = 1L;
         Long userId = 99L; // 관리자 유저 아이디
         User adminUser = createAdminUser();
-        adminUser.addAuthority(Authority.WRITE_EDUCATION);
+        adminUser.addAuthority(Authority.ACCESS_EDUCATION);
 
         EduAttachment attachment1 =
                 EduAttachment.builder()
@@ -443,7 +443,7 @@ public class EduReportServiceTest {
         // given
         Long userId = 99L; // 관리자 유저 아이디
         User adminUser = createAdminUser();
-        adminUser.addAuthority(Authority.WRITE_EDUCATION);
+        adminUser.addAuthority(Authority.ACCESS_EDUCATION);
 
         when(userRepository.findById(userId)).thenReturn(Optional.of(adminUser));
         when(eduReportRepository.findById(10L)).thenReturn(Optional.empty());

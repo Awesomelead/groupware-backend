@@ -5,6 +5,7 @@ import kr.co.awesomelead.groupware_backend.domain.notice.dto.response.NoticeDeta
 import kr.co.awesomelead.groupware_backend.domain.notice.dto.response.NoticeSummaryDto;
 import kr.co.awesomelead.groupware_backend.domain.notice.entity.Notice;
 import kr.co.awesomelead.groupware_backend.domain.notice.entity.NoticeAttachment;
+import kr.co.awesomelead.groupware_backend.domain.user.entity.User;
 import kr.co.awesomelead.groupware_backend.global.infra.s3.S3Service;
 
 import org.mapstruct.Context;
@@ -16,7 +17,10 @@ import java.util.List;
 @Mapper(componentModel = "spring")
 public interface NoticeMapper {
 
-    Notice toNoticeEntity(NoticeCreateRequestDto dto);
+    @Mapping(target = "id", ignore = true)
+    @Mapping(target = "author", source = "author")
+    @Mapping(target = "attachments", ignore = true)
+    Notice toNoticeEntity(NoticeCreateRequestDto dto, User author);
 
     NoticeSummaryDto toNoticeSummaryDto(Notice notice);
 

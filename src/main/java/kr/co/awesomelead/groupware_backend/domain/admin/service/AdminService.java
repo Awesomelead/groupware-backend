@@ -11,9 +11,7 @@ import kr.co.awesomelead.groupware_backend.domain.user.enums.Status;
 import kr.co.awesomelead.groupware_backend.domain.user.repository.UserRepository;
 import kr.co.awesomelead.groupware_backend.global.error.CustomException;
 import kr.co.awesomelead.groupware_backend.global.error.ErrorCode;
-
 import lombok.RequiredArgsConstructor;
-
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -26,21 +24,21 @@ public class AdminService {
 
     @Transactional
     public void approveUserRegistration(
-            Long userId, UserApprovalRequestDto requestDto, Long adminId) {
+        Long userId, UserApprovalRequestDto requestDto, Long adminId) {
         //  관리자 권한 확인
         User admin =
-                userRepository
-                        .findById(adminId)
-                        .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
+            userRepository
+                .findById(adminId)
+                .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
         if (admin.getRole() != Role.ADMIN) {
             throw new CustomException(ErrorCode.NO_AUTHORITY_FOR_REGISTRATION);
         }
 
         // userId로 PENDING 상태의 사용자를 조회
         User user =
-                userRepository
-                        .findById(userId)
-                        .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
+            userRepository
+                .findById(userId)
+                .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
 
         if (user.getStatus() != Status.PENDING) {
             throw new CustomException(ErrorCode.DUPLICATED_SIGNUP_REQUEST);
@@ -63,27 +61,35 @@ public class AdminService {
         }
 
         Department department =
-                departmentRepository
-                        .findById(requestDto.getDepartmentId())
-                        .orElseThrow(() -> new CustomException(ErrorCode.DEPARTMENT_NOT_FOUND));
+            departmentRepository
+                .findById(requestDto.getDepartmentId())
+                .orElseThrow(() -> new CustomException(ErrorCode.DEPARTMENT_NOT_FOUND));
 
         // DTO의 정보로 사용자 엔티티를 설정
+        user.setWorkLocation(requestDto.getWorkLocation());
         user.setDepartment(department);
         user.setJobType(requestDto.getJobType());
+
+        if (requestDto.getJobType() == JobType.FIELD && requestDto.getRole() == Role.ADMIN) {
+            throw new CustomException(ErrorCode.INVALID_JOB_TYPE_FOR_ADMIN_ROLE);
+        }
+        user.setRole(requestDto.getRole());
         user.setPosition(requestDto.getPosition());
         user.setHireDate(requestDto.getHireDate());
-        user.setWorkLocation(requestDto.getWorkLocation());
-        user.setRole(Role.USER); // 승인 시 기본 역할을 USER로 설정
-
         // 사용자의 상태를 AVAILABLE로 변경
         user.setStatus(Status.AVAILABLE);
 
-        // 현장직의 경우 기본 권한 부여
+        // 관리직의 경우 기본 권한 부여
         if (requestDto.getJobType() == JobType.MANAGEMENT) {
             user.addAuthority(Authority.ACCESS_MESSAGE);
             user.addAuthority(Authority.ACCESS_EDUCATION);
         }
-
+        // ADMIN 역할인 경우 모든 권한 부여
+        if (requestDto.getRole() == Role.ADMIN) {
+            for (Authority authority : Authority.values()) {
+                user.addAuthority(authority);
+            }
+        }
         userRepository.save(user);
     }
 
@@ -91,18 +97,18 @@ public class AdminService {
     public void updateUserRole(Long userId, Role role, Long adminId) {
 
         User admin =
-                userRepository
-                        .findById(adminId)
-                        .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
+            userRepository
+                .findById(adminId)
+                .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
 
         if (admin.getRole() != Role.ADMIN && admin.getRole() != Role.MASTER_ADMIN) {
             throw new CustomException(ErrorCode.NO_AUTHORITY_FOR_ROLE_UPDATE);
         }
         // 1. 대상 사용자 조회
         User targetUser =
-                userRepository
-                        .findById(userId)
-                        .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
+            userRepository
+                .findById(userId)
+                .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
 
         // 2. 역할 업데이트
         targetUser.setRole(role);
@@ -122,9 +128,9 @@ public class AdminService {
     public void updateUserAuthority(Long userId, Authority authority, String action, Long adminId) {
         // 1. 관리자 권한 확인 (ADMIN 또는 MASTER_ADMIN만 가능)
         User admin =
-                userRepository
-                        .findById(adminId)
-                        .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
+            userRepository
+                .findById(adminId)
+                .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
 
         if (admin.getRole() != Role.ADMIN && admin.getRole() != Role.MASTER_ADMIN) {
             throw new CustomException(ErrorCode.NO_AUTHORITY_FOR_ROLE_UPDATE);
@@ -132,9 +138,9 @@ public class AdminService {
 
         // 2. 대상 사용자 조회
         User targetUser =
-                userRepository
-                        .findById(userId)
-                        .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
+            userRepository
+                .findById(userId)
+                .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
 
         // 3. 동작(Action)에 따른 권한 처리
         if ("ADD".equalsIgnoreCase(action)) {

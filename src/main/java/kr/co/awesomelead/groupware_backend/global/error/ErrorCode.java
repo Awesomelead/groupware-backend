@@ -2,6 +2,7 @@ package kr.co.awesomelead.groupware_backend.global.error;
 
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
+
 import org.springframework.http.HttpStatus;
 
 @Getter
@@ -16,7 +17,7 @@ public enum ErrorCode {
     PASSWORD_MISMATCH(HttpStatus.BAD_REQUEST, "비밀번호가 일치하지 않습니다."),
     VISIT_ALREADY_CHECKED_OUT(HttpStatus.BAD_REQUEST, "이미 체크아웃된 방문정보입니다."),
     VISITOR_PASSWORD_REQUIRED_FOR_PRE_REGISTRATION(
-        HttpStatus.BAD_REQUEST, "사전 방문 예약 시 내방객 비밀번호가 필요합니다."),
+            HttpStatus.BAD_REQUEST, "사전 방문 예약 시 내방객 비밀번호가 필요합니다."),
     DEPARTMENT_ID_REQUIRED(HttpStatus.BAD_REQUEST, "부서교육인 경우 부서 ID가 필요합니다."),
     ALREADY_MARKED_ATTENDANCE(HttpStatus.BAD_REQUEST, "이미 출석이 체크된 교육입니다."),
     NO_SIGNATURE_PROVIDED(HttpStatus.BAD_REQUEST, "서명이 제공되지 않았습니다."),
@@ -45,9 +46,7 @@ public enum ErrorCode {
     LONG_TERM_PERIOD_EXCEEDED(HttpStatus.BAD_REQUEST, "장기 방문은 최대 3개월까지만 신청 가능합니다."),
     INVALID_CHECKOUT_TIME(HttpStatus.BAD_REQUEST, "퇴실 시간은 입실 시간보다 빠를 수 없습니다."),
     INVALID_JOB_TYPE_FOR_ADMIN_ROLE(HttpStatus.BAD_REQUEST, "관리자 역할에는 관리직 직군만 할당할 수 있습니다."),
-    REJECTION_REASON_REQUIRED(
-        HttpStatus.BAD_REQUEST, "반려 시 반려 사유가 반드시 필요합니다."
-    ),
+    REJECTION_REASON_REQUIRED(HttpStatus.BAD_REQUEST, "반려 시 반려 사유가 반드시 필요합니다."),
 
     // 401 Unauthorized
     INVALID_TOKEN(HttpStatus.UNAUTHORIZED, "유효하지 않은 토큰입니다."),

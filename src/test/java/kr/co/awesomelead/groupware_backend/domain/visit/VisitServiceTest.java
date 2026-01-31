@@ -21,6 +21,7 @@ import kr.co.awesomelead.groupware_backend.domain.visit.dto.request.MyVisitDetai
 import kr.co.awesomelead.groupware_backend.domain.visit.dto.request.MyVisitUpdateRequestDto;
 import kr.co.awesomelead.groupware_backend.domain.visit.dto.request.OnSiteVisitRequestDto;
 import kr.co.awesomelead.groupware_backend.domain.visit.dto.request.OneDayVisitRequestDto;
+import kr.co.awesomelead.groupware_backend.domain.visit.dto.request.VisitProcessRequestDto;
 import kr.co.awesomelead.groupware_backend.domain.visit.entity.Visit;
 import kr.co.awesomelead.groupware_backend.domain.visit.entity.VisitRecord;
 import kr.co.awesomelead.groupware_backend.domain.visit.enums.AdditionalPermissionType;
@@ -717,49 +718,101 @@ public class VisitServiceTest {
     }
 
     @Nested
-    @DisplayName("approveVisit 메서드는")
-    class Describe_approveVisit {
+    @DisplayName("processVisit 메서드는")
+    class Describe_processVisit {
 
         @Nested
-        @DisplayName("장기 방문이 아닌 신청 건을 승인하려 하면")
+        @DisplayName("장기 방문이 아닌 신청 건을 처리하려 하면")
         class Context_with_not_long_term_visit {
 
             @Test
             @DisplayName("NOT_LONG_TERM_VISIT 예외를 던진다.")
             void it_throws_not_long_term_visit_exception() {
-                // given: 장기 방문이 아닌(isLongTerm=false) 방문 건
+                // given
                 User admin = createHost();
                 Visit oneDayVisit = createBaseVisit(VisitStatus.PENDING, false);
+                VisitProcessRequestDto dto = new VisitProcessRequestDto(VisitStatus.APPROVED, null);
 
                 given(userRepository.findById(any())).willReturn(Optional.of(admin));
                 given(visitRepository.findById(any())).willReturn(Optional.of(oneDayVisit));
 
                 // when & then
-                assertThatThrownBy(() -> visitService.approveVisit(1L, 100L))
+                assertThatThrownBy(() -> visitService.processVisit(1L, 100L, dto))
                         .isInstanceOf(CustomException.class)
                         .hasMessage("장기 방문 건이 아닙니다.");
             }
         }
 
         @Nested
-        @DisplayName("정상적인 대기 상태의 장기 방문 건이면")
-        class Context_with_valid_pending_visit {
+        @DisplayName("승인(APPROVED) 요청을 받으면")
+        class Context_with_approve_request {
 
             @Test
-            @DisplayName("상태를 APPROVED로 변경한다.")
+            @DisplayName("방문 상태를 APPROVED로 변경한다.")
             void it_updates_status_to_approved() {
                 // given
                 User admin = createHost();
                 Visit pendingVisit = createBaseVisit(VisitStatus.PENDING, true);
+                VisitProcessRequestDto dto = new VisitProcessRequestDto(VisitStatus.APPROVED, null);
 
                 given(userRepository.findById(any())).willReturn(Optional.of(admin));
                 given(visitRepository.findById(any())).willReturn(Optional.of(pendingVisit));
 
                 // when
-                visitService.approveVisit(1L, 100L);
+                visitService.processVisit(1L, 100L, dto);
 
                 // then
                 assertThat(pendingVisit.getStatus()).isEqualTo(VisitStatus.APPROVED);
+                assertThat(pendingVisit.getRejectionReason()).isNull();
+            }
+        }
+
+        @Nested
+        @DisplayName("반려(REJECTED) 요청을 사유와 함께 받으면")
+        class Context_with_reject_request {
+
+            @Test
+            @DisplayName("방문 상태를 REJECTED로 변경하고 사유를 기록한다.")
+            void it_updates_status_to_rejected_and_records_reason() {
+                // given
+                User admin = createHost();
+                Visit pendingVisit = createBaseVisit(VisitStatus.PENDING, true);
+                String reason = "방문 목적 부적합";
+                VisitProcessRequestDto dto =
+                        new VisitProcessRequestDto(VisitStatus.REJECTED, reason);
+
+                given(userRepository.findById(any())).willReturn(Optional.of(admin));
+                given(visitRepository.findById(any())).willReturn(Optional.of(pendingVisit));
+
+                // when
+                visitService.processVisit(1L, 100L, dto);
+
+                // then
+                assertThat(pendingVisit.getStatus()).isEqualTo(VisitStatus.REJECTED);
+                assertThat(pendingVisit.getRejectionReason()).isEqualTo(reason);
+            }
+        }
+
+        @Nested
+        @DisplayName("이미 처리된(PENDING이 아닌) 건을 처리하려 하면")
+        class Context_with_already_processed_visit {
+
+            @Test
+            @DisplayName("INVALID_VISIT_STATUS 예외를 던진다.")
+            void it_throws_invalid_visit_status_exception() {
+                // given
+                User admin = createHost();
+                Visit approvedVisit = createBaseVisit(VisitStatus.APPROVED, true);
+                VisitProcessRequestDto dto =
+                        new VisitProcessRequestDto(VisitStatus.REJECTED, "뒤늦은 반려");
+
+                given(userRepository.findById(any())).willReturn(Optional.of(admin));
+                given(visitRepository.findById(any())).willReturn(Optional.of(approvedVisit));
+
+                // when & then
+                assertThatThrownBy(() -> visitService.processVisit(1L, 100L, dto))
+                        .isInstanceOf(CustomException.class)
+                        .hasMessage("승인 가능한 상태가 아닙니다.");
             }
         }
     }

@@ -84,6 +84,7 @@ public class Notice {
     private int viewCount = 0;
 
     // 상단 고정 여부
+    @Builder.Default
     @Column(nullable = false)
     private boolean pinned = false;
 

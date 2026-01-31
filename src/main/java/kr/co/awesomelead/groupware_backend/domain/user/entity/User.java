@@ -112,9 +112,10 @@ public class User {
     @Column(length = 30)
     private Position position;
 
+    @Builder.Default
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 20)
-    private Role role; // 역할 (USER, ADMIN)
+    private Role role = Role.USER; // 역할 (USER, ADMIN)
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 20)

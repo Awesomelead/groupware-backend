@@ -56,6 +56,9 @@ public class VisitDetailResponseDto {
     @Schema(description = "방문 상태", example = "방문 중")
     private VisitStatus status;
 
+    @Schema(description = "반려 사유", example = "신분증 미지참")
+    private String rejectionReason;
+
     @Schema(description = "입퇴실 및 서명 기록 리스트")
     private List<VisitRecordResponseDto> records;
 }

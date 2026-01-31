@@ -68,22 +68,32 @@ public class AdminService {
                         .orElseThrow(() -> new CustomException(ErrorCode.DEPARTMENT_NOT_FOUND));
 
         // DTO의 정보로 사용자 엔티티를 설정
+        user.setWorkLocation(requestDto.getWorkLocation());
         user.setDepartment(department);
         user.setJobType(requestDto.getJobType());
+
+        if (requestDto.getJobType() == JobType.FIELD && requestDto.getRole() == Role.ADMIN) {
+            throw new CustomException(ErrorCode.INVALID_JOB_TYPE_FOR_ADMIN_ROLE);
+        }
+        if (requestDto.getRole() != null) {
+            user.setRole(requestDto.getRole());
+        }
         user.setPosition(requestDto.getPosition());
         user.setHireDate(requestDto.getHireDate());
-        user.setWorkLocation(requestDto.getWorkLocation());
-        user.setRole(Role.USER); // 승인 시 기본 역할을 USER로 설정
-
         // 사용자의 상태를 AVAILABLE로 변경
         user.setStatus(Status.AVAILABLE);
 
-        // 현장직의 경우 기본 권한 부여
+        // 관리직의 경우 기본 권한 부여
         if (requestDto.getJobType() == JobType.MANAGEMENT) {
             user.addAuthority(Authority.ACCESS_MESSAGE);
             user.addAuthority(Authority.ACCESS_EDUCATION);
         }
-
+        // ADMIN 역할인 경우 모든 권한 부여
+        if (requestDto.getRole() == Role.ADMIN) {
+            for (Authority authority : Authority.values()) {
+                user.addAuthority(authority);
+            }
+        }
         userRepository.save(user);
     }
 

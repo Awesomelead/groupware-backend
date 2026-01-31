@@ -41,6 +41,9 @@ public class MyVisitDetailResponseDto {
     @Schema(description = "방문 상태", example = "방문 전")
     private VisitStatus status;
 
+    @Schema(description = "반려 사유", example = "신분증 미지참")
+    private String rejectionReason;
+
     @Schema(description = "방문 시작일", example = "2024-07-01")
     private LocalDate startDate;
 

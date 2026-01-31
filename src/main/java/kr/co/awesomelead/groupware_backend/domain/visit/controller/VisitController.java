@@ -17,6 +17,7 @@ import kr.co.awesomelead.groupware_backend.domain.visit.dto.request.MyVisitDetai
 import kr.co.awesomelead.groupware_backend.domain.visit.dto.request.MyVisitUpdateRequestDto;
 import kr.co.awesomelead.groupware_backend.domain.visit.dto.request.OnSiteVisitRequestDto;
 import kr.co.awesomelead.groupware_backend.domain.visit.dto.request.OneDayVisitRequestDto;
+import kr.co.awesomelead.groupware_backend.domain.visit.dto.request.VisitProcessRequestDto;
 import kr.co.awesomelead.groupware_backend.domain.visit.dto.request.VisitSearchRequestDto;
 import kr.co.awesomelead.groupware_backend.domain.visit.dto.response.MyVisitDetailResponseDto;
 import kr.co.awesomelead.groupware_backend.domain.visit.dto.response.MyVisitListResponseDto;
@@ -237,7 +238,7 @@ public class VisitController {
         return ResponseEntity.ok(ApiResponse.onSuccess(response));
     }
 
-    @Operation(summary = "장기 방문 신청 승인", description = "관리 직군이 PENDING 상태인 장기 방문 신청을 승인합니다.")
+    @Operation(summary = "장기 방문 신청 처리", description = "관리 직군이 PENDING 상태인 장기 방문 신청을 승인 혹은 반려합니다.")
     @ApiResponses({
         @io.swagger.v3.oas.annotations.responses.ApiResponse(
                 responseCode = "200",
@@ -246,12 +247,15 @@ public class VisitController {
                 responseCode = "403",
                 description = "권한 부족")
     })
-    @PostMapping("/admin/{visitId}/approve")
-    public ResponseEntity<ApiResponse<Void>> approveVisit(
+    @PostMapping("/admin/{visitId}/process")
+    public ResponseEntity<ApiResponse<Void>> processVisit(
             @Parameter(hidden = true) @AuthenticationPrincipal CustomUserDetails userDetails,
-            @Parameter(description = "승인할 방문 ID", example = "1") @PathVariable("visitId")
-                    Long visitId) {
-        visitService.approveVisit(userDetails.getId(), visitId);
-        return ResponseEntity.ok(ApiResponse.onNoContent("방문 신청 승인이 완료되었습니다."));
+            @Parameter(description = "처리할 방문 ID", example = "1") @PathVariable("visitId")
+                    Long visitId,
+            @Parameter(description = "처리 요청 정보") @Valid @RequestBody VisitProcessRequestDto dto) {
+        visitService.processVisit(userDetails.getId(), visitId, dto);
+        return ResponseEntity.ok(
+                ApiResponse.onNoContent(
+                        "방문 신청에 대한 " + dto.getStatus().getDescription() + " 처리가 완료되었습니다."));
     }
 }

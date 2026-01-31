@@ -118,6 +118,7 @@ public interface VisitMapper {
     @Mapping(target = "entryTime", expression = "java(getEntryTimeLogic(visit))")
     @Mapping(target = "exitTime", expression = "java(getExitTimeLogic(visit))")
     @Mapping(target = "records", source = "records")
+    @Mapping(target = "rejectionReason", source = "rejectionReason")
     MyVisitDetailResponseDto toMyVisitDetailResponseDto(Visit visit);
 
     // VisitMapper.java

@@ -88,6 +88,37 @@ class AdminServiceTest {
         }
 
         @Nested
+        @DisplayName("현장직에 대해 ADMIN 권한을 주려고 하면")
+        class Context_with_field_job_and_admin_role {
+
+            @Test
+            @DisplayName("INVALID_JOB_TYPE_FOR_ADMIN_ROLE 에러를 던진다")
+            void it_throws_invalid_job_type_for_admin_role_exception() {
+                // given
+                Department department =
+                        Department.builder().id(1L).name(DepartmentName.SALES_DEPT).build();
+                User pendingUser = new User();
+                pendingUser.setStatus(Status.PENDING);
+
+                when(userRepository.findById(userId)).thenReturn(Optional.of(pendingUser));
+                when(departmentRepository.findById(any())).thenReturn(Optional.of(department));
+
+                UserApprovalRequestDto invalidRequestDto = createRequestDto();
+                invalidRequestDto.setJobType(JobType.FIELD);
+                invalidRequestDto.setRole(Role.ADMIN);
+
+                // when & then
+                assertThatThrownBy(
+                                () ->
+                                        adminService.approveUserRegistration(
+                                                userId, invalidRequestDto, adminId))
+                        .isInstanceOf(CustomException.class)
+                        .extracting("errorCode")
+                        .isEqualTo(ErrorCode.INVALID_JOB_TYPE_FOR_ADMIN_ROLE);
+            }
+        }
+
+        @Nested
         @DisplayName("이미 승인된 유저를 다시 승인하려 하면")
         class Context_with_already_available_user {
 

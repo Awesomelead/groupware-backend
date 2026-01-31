@@ -14,6 +14,7 @@ import kr.co.awesomelead.groupware_backend.domain.visit.dto.request.MyVisitDetai
 import kr.co.awesomelead.groupware_backend.domain.visit.dto.request.MyVisitUpdateRequestDto;
 import kr.co.awesomelead.groupware_backend.domain.visit.dto.request.OnSiteVisitRequestDto;
 import kr.co.awesomelead.groupware_backend.domain.visit.dto.request.OneDayVisitRequestDto;
+import kr.co.awesomelead.groupware_backend.domain.visit.dto.request.VisitProcessRequestDto;
 import kr.co.awesomelead.groupware_backend.domain.visit.dto.request.VisitRequest;
 import kr.co.awesomelead.groupware_backend.domain.visit.dto.request.VisitSearchRequestDto;
 import kr.co.awesomelead.groupware_backend.domain.visit.dto.response.MyVisitDetailResponseDto;
@@ -408,9 +409,9 @@ public class VisitService {
         }
     }
 
-    // 직원용 사전 장기방문 승인
+    // 직원용 사전 장기방문 승인 및 반려
     @Transactional
-    public void approveVisit(Long userId, Long visitId) {
+    public void processVisit(Long userId, Long visitId, VisitProcessRequestDto dto) {
         // 1. 관리 권한 확인 (MANAGEMENT 직군 & ACCESS_VISIT 권한)
         validateAdminAuthority(userId);
 
@@ -431,7 +432,13 @@ public class VisitService {
             throw new CustomException(ErrorCode.INVALID_VISIT_STATUS); // "승인 가능한 상태가 아닙니다."
         }
 
-        // 4. 상태 업데이트: PENDING -> APPROVED
-        visit.setStatus(VisitStatus.APPROVED);
+        // 4. 반려 시 사유 필수 검증
+        if (dto.getStatus() == VisitStatus.REJECTED
+                && !StringUtils.hasText(dto.getRejectionReason())) {
+            throw new CustomException(ErrorCode.REJECTION_REASON_REQUIRED);
+        }
+
+        // 5. 상태 변경 처리
+        visit.process(dto.getStatus(), dto.getRejectionReason());
     }
 }

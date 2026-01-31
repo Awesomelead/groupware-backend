@@ -121,6 +121,9 @@ public class Visit {
     @Column(nullable = false, length = 60) // 4자리 비밀번호 가정
     private String password;
 
+    @Column(length = 500)
+    private String rejectionReason;
+
     @Builder.Default
     @OneToMany(mappedBy = "visit", cascade = CascadeType.ALL, orphanRemoval = true)
     @JsonManagedReference
@@ -145,6 +148,15 @@ public class Visit {
             return Base64.getEncoder().encodeToString(hash);
         } catch (NoSuchAlgorithmException e) {
             throw new RuntimeException("SHA-256 알고리즘 부재", e);
+        }
+    }
+
+    public void process(VisitStatus newStatus, String reason) {
+        this.status = newStatus;
+        if (newStatus == VisitStatus.REJECTED) {
+            this.rejectionReason = reason;
+        } else {
+            this.rejectionReason = null; // 승인 시 혹시 남아있을 사유 초기화
         }
     }
 }

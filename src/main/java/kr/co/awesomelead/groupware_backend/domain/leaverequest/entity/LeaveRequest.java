@@ -1,6 +1,7 @@
 package kr.co.awesomelead.groupware_backend.domain.leaverequest.entity;
 
 import com.fasterxml.jackson.annotation.JsonBackReference;
+
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Convert;
@@ -15,7 +16,7 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToOne;
 import jakarta.persistence.Table;
-import java.time.LocalDateTime;
+
 import kr.co.awesomelead.groupware_backend.domain.approval.entity.ApprovalProcess;
 import kr.co.awesomelead.groupware_backend.domain.approval.enums.ApprovalStatus;
 import kr.co.awesomelead.groupware_backend.domain.department.entity.Department;
@@ -23,8 +24,11 @@ import kr.co.awesomelead.groupware_backend.domain.leaverequest.enums.LeaveDetail
 import kr.co.awesomelead.groupware_backend.domain.leaverequest.enums.LeaveType;
 import kr.co.awesomelead.groupware_backend.domain.user.entity.User;
 import kr.co.awesomelead.groupware_backend.global.encryption.Encryptor;
+
 import lombok.Getter;
 import lombok.Setter;
+
+import java.time.LocalDateTime;
 
 @Setter
 @Getter

@@ -1,5 +1,6 @@
 package kr.co.awesomelead.groupware_backend.domain.approval.entity;
 
+import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
@@ -10,38 +11,59 @@ import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
-
+import java.time.LocalDateTime;
 import kr.co.awesomelead.groupware_backend.domain.approval.enums.ApprovalStatus;
 import kr.co.awesomelead.groupware_backend.domain.user.entity.User;
-
+import lombok.AccessLevel;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 import lombok.Setter;
 
-import java.time.LocalDateTime;
-
 @Entity
-@Setter
 @Getter
-@Table(name = "approval_step")
+@Setter
+@Builder
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
+@AllArgsConstructor
+@Table(name = "approval_steps")
 public class ApprovalStep {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @GeneratedValue(strategy = GenerationType.AUTO)
     private Long id;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "approval_process_id")
-    private ApprovalProcess approvalProcess;
+    @JoinColumn(name = "approval_id", nullable = false)
+    private Approval approval; // 연결된 결재 문서 (결재)
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "approver_id")
+    @JoinColumn(name = "approver_id", nullable = false)
     private User approver; // 승인자
 
-    private int stepOrder; // 1차, 2차...
+    @Column(nullable = false)
+    private Integer sequence; // 단계 (1, 2, 3...)
 
     @Enumerated(EnumType.STRING)
-    private ApprovalStatus status = ApprovalStatus.WAITING; // 승인/반려/대기
+    @Column(nullable = false, length = 20)
+    private ApprovalStatus status; // 승인상태 (PENDING, APPROVED, REJECTED)
 
-    private LocalDateTime processedAt; // 처리 시간
-    private String comment; // 코멘트
+    private LocalDateTime processedAt; // 처리시간
+
+    @Column(length = 1000)
+    private String comment; // 의견 (반려 사유 등)
+
+
+    public void approve(String comment) {
+        this.status = ApprovalStatus.APPROVED;
+        this.comment = comment;
+        this.processedAt = LocalDateTime.now();
+    }
+
+    public void reject(String comment) {
+        this.status = ApprovalStatus.REJECTED;
+        this.comment = comment;
+        this.processedAt = LocalDateTime.now();
+    }
 }

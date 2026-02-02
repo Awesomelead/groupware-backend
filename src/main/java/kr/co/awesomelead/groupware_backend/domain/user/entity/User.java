@@ -2,7 +2,6 @@ package kr.co.awesomelead.groupware_backend.domain.user.entity;
 
 import com.fasterxml.jackson.annotation.JsonBackReference;
 import com.fasterxml.jackson.annotation.JsonManagedReference;
-
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.CollectionTable;
 import jakarta.persistence.Column;
@@ -22,7 +21,16 @@ import jakarta.persistence.OneToOne;
 import jakarta.persistence.PrePersist;
 import jakarta.persistence.PreUpdate;
 import jakarta.persistence.Table;
-
+import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
+import java.util.Base64;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 import kr.co.awesomelead.groupware_backend.domain.annualleave.entity.AnnualLeave;
 import kr.co.awesomelead.groupware_backend.domain.checksheet.entity.CheckSheet;
 import kr.co.awesomelead.groupware_backend.domain.department.entity.Department;
@@ -38,23 +46,11 @@ import kr.co.awesomelead.groupware_backend.domain.user.enums.Status;
 import kr.co.awesomelead.groupware_backend.domain.visit.entity.Visit;
 import kr.co.awesomelead.groupware_backend.global.encryption.PhoneNumberEncryptor;
 import kr.co.awesomelead.groupware_backend.global.encryption.RegistrationNumberEncryptor;
-
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
-
-import java.nio.charset.StandardCharsets;
-import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
-import java.time.LocalDate;
-import java.time.format.DateTimeFormatter;
-import java.util.ArrayList;
-import java.util.Base64;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
 
 @Entity
 @Getter
@@ -84,6 +80,18 @@ public class User {
 
     @Column(length = 30)
     private String nationality; // 국적
+
+    @Column(length = 500)
+    @Convert(converter = RegistrationNumberEncryptor.class)
+    private String zipcode;
+
+    @Column(nullable = false, length = 500)
+    @Convert(converter = RegistrationNumberEncryptor.class)
+    private String address1;
+
+    @Column(length = 500)
+    @Convert(converter = RegistrationNumberEncryptor.class)
+    private String address2;
 
     @Column(unique = true, nullable = false, length = 500)
     @Convert(converter = RegistrationNumberEncryptor.class)
@@ -128,10 +136,10 @@ public class User {
     private LocalDate birthDate; // 생년월일
 
     @OneToOne(
-            mappedBy = "user",
-            cascade = CascadeType.ALL,
-            orphanRemoval = true,
-            fetch = FetchType.LAZY)
+        mappedBy = "user",
+        cascade = CascadeType.ALL,
+        orphanRemoval = true,
+        fetch = FetchType.LAZY)
     @JsonManagedReference
     private AnnualLeave annualLeave;
 
@@ -243,12 +251,12 @@ public class User {
 
         // 3. 세기 판단 (그룹화)
         String century =
-                switch (genderDigit) {
-                    case '1', '2', '5', '6' -> "19";
-                    case '3', '4', '7', '8' -> "20";
-                    case '9', '0' -> "18"; // 혹시 모를 1800년대생 대비
-                    default -> "20"; // 기본값
-                };
+            switch (genderDigit) {
+                case '1', '2', '5', '6' -> "19";
+                case '3', '4', '7', '8' -> "20";
+                case '9', '0' -> "18"; // 혹시 모를 1800년대생 대비
+                default -> "20"; // 기본값
+            };
 
         // 4. LocalDate로 변환
         return LocalDate.parse(century + birthPart, DateTimeFormatter.ofPattern("yyyyMMdd"));

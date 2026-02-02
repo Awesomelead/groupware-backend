@@ -86,6 +86,9 @@ class AuthServiceTest {
         signupDto.setNameKor("김어썸");
         signupDto.setNameEng("Awesome Kim");
         signupDto.setNationality("대한민국");
+        signupDto.setZipcode("06234");
+        signupDto.setAddress1("서울특별시 강남구 테헤란로 123");
+        signupDto.setAddress2("어썸리드빌딩 5층");
         signupDto.setRegistrationNumber("950101-1234567");
         signupDto.setPhoneNumber("01012345678");
         signupDto.setCompany(Company.AWESOME);
@@ -96,6 +99,9 @@ class AuthServiceTest {
                         .nameKor(signupDto.getNameKor())
                         .nameEng(signupDto.getNameEng())
                         .nationality(signupDto.getNationality())
+                        .zipcode(signupDto.getZipcode())
+                        .address1(signupDto.getAddress1())
+                        .address2(signupDto.getAddress2())
                         .registrationNumber(signupDto.getRegistrationNumber())
                         .phoneNumber(signupDto.getPhoneNumber())
                         .workLocation(Company.AWESOME)
@@ -113,6 +119,9 @@ class AuthServiceTest {
                         .nameKor(signupDto.getNameKor())
                         .nameEng(signupDto.getNameEng())
                         .nationality(signupDto.getNationality())
+                        .zipcode(signupDto.getZipcode())
+                        .address1(signupDto.getAddress1())
+                        .address2(signupDto.getAddress2())
                         .registrationNumber(signupDto.getRegistrationNumber())
                         .phoneNumber(signupDto.getPhoneNumber())
                         .password("encodedPassword")

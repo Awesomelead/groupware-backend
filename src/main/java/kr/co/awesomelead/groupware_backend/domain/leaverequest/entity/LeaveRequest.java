@@ -1,7 +1,6 @@
 package kr.co.awesomelead.groupware_backend.domain.leaverequest.entity;
 
 import com.fasterxml.jackson.annotation.JsonBackReference;
-
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Convert;
@@ -16,19 +15,16 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToOne;
 import jakarta.persistence.Table;
-
+import java.time.LocalDateTime;
 import kr.co.awesomelead.groupware_backend.domain.approval.entity.ApprovalProcess;
 import kr.co.awesomelead.groupware_backend.domain.approval.enums.ApprovalStatus;
 import kr.co.awesomelead.groupware_backend.domain.department.entity.Department;
 import kr.co.awesomelead.groupware_backend.domain.leaverequest.enums.LeaveDetail;
 import kr.co.awesomelead.groupware_backend.domain.leaverequest.enums.LeaveType;
 import kr.co.awesomelead.groupware_backend.domain.user.entity.User;
-import kr.co.awesomelead.groupware_backend.global.encryption.PhoneNumberEncryptor;
-
+import kr.co.awesomelead.groupware_backend.global.encryption.Encryptor;
 import lombok.Getter;
 import lombok.Setter;
-
-import java.time.LocalDateTime;
 
 @Setter
 @Getter
@@ -61,7 +57,7 @@ public class LeaveRequest {
     private String reason; // 사유 (직접 작성)
 
     @Column(nullable = false, length = 300) // 길이 수정
-    @Convert(converter = PhoneNumberEncryptor.class)
+    @Convert(converter = Encryptor.class)
     private String emergencyPhoneNumber; // 비상연락망
 
     @Column(nullable = false, length = 20)

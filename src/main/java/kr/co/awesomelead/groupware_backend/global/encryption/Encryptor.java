@@ -2,15 +2,13 @@ package kr.co.awesomelead.groupware_backend.global.encryption;
 
 import jakarta.persistence.AttributeConverter;
 import jakarta.persistence.Converter;
-
 import lombok.RequiredArgsConstructor;
-
 import org.springframework.stereotype.Component;
 
 @Converter
 @Component
 @RequiredArgsConstructor
-public class RegistrationNumberEncryptor implements AttributeConverter<String, String> {
+public class Encryptor implements AttributeConverter<String, String> {
 
     private final AESEncryptor aesEncryptor;
 

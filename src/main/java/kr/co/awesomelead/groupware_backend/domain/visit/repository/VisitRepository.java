@@ -1,25 +1,28 @@
 package kr.co.awesomelead.groupware_backend.domain.visit.repository;
 
 import kr.co.awesomelead.groupware_backend.domain.visit.entity.Visit;
-import kr.co.awesomelead.groupware_backend.domain.visit.entity.Visitor;
+import kr.co.awesomelead.groupware_backend.domain.visit.enums.VisitStatus;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
+import java.time.LocalDate;
 import java.util.List;
 
 public interface VisitRepository extends JpaRepository<Visit, Long> {
-
-    List<Visit> findByVisitor(Visitor visitor);
 
     @Query(
             "SELECT v FROM Visit v "
                     + "JOIN FETCH v.user u "
                     + "JOIN FETCH u.department d "
-                    + "WHERE d.id = :departmentId")
-    List<Visit> findAllByDepartmentId(@Param("departmentId") Long departmentId);
+                    + "WHERE (:departmentId IS NULL OR d.id = :departmentId) "
+                    + "AND (:status IS NULL OR v.status = :status)")
+    List<Visit> findAllByFilters(
+            @Param("departmentId") Long departmentId, @Param("status") VisitStatus status);
 
-    @Query("SELECT v FROM Visit v JOIN v.user u WHERE u.department.id IN :departmentIds")
-    List<Visit> findAllByDepartmentIdIn(@Param("departmentIds") List<Long> departmentIds);
+    List<Visit> findByVisitorNameAndPhoneNumberHash(String name, String inputPhoneHash);
+
+    List<Visit> findAllByIsLongTermTrueAndEndDateBeforeAndStatusNot(
+            LocalDate date, VisitStatus status);
 }

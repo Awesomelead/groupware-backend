@@ -80,18 +80,16 @@ public class SecurityConfig {
                                         // 다운로드 열어놓음
                                         "/api/test/**",
                                         "/api/departments/hierarchy",
-                                        "/api/departments/{departmentId}/users")
+                                        "/api/departments/{departmentId}/users",
+                                        "/api/visits/**") // 내방객이 본인 방문기록 조회
                                 .permitAll()
                                 .requestMatchers(
                                         "/api/auth/logout",
                                         "/api/auth/reset-password", // 로그인 상태에서의 비번 변경
                                         "/api/admin/**", // 관리자 기능
-                                        "/api/visits/department",
-                                        "/api/visits/employee/**",
+                                        "/api/visits/admin/**",
                                         "/api/visits/check-out")
                                 .authenticated()
-                                .requestMatchers("/api/visits/**")
-                                .permitAll()
                                 .anyRequest()
                                 .authenticated());
 

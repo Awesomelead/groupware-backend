@@ -23,7 +23,7 @@ import kr.co.awesomelead.groupware_backend.domain.department.entity.Department;
 import kr.co.awesomelead.groupware_backend.domain.leaverequest.enums.LeaveDetail;
 import kr.co.awesomelead.groupware_backend.domain.leaverequest.enums.LeaveType;
 import kr.co.awesomelead.groupware_backend.domain.user.entity.User;
-import kr.co.awesomelead.groupware_backend.global.encryption.PhoneNumberEncryptor;
+import kr.co.awesomelead.groupware_backend.global.encryption.Encryptor;
 
 import lombok.Getter;
 import lombok.Setter;
@@ -61,7 +61,7 @@ public class LeaveRequest {
     private String reason; // 사유 (직접 작성)
 
     @Column(nullable = false, length = 300) // 길이 수정
-    @Convert(converter = PhoneNumberEncryptor.class)
+    @Convert(converter = Encryptor.class)
     private String emergencyPhoneNumber; // 비상연락망
 
     @Column(nullable = false, length = 20)

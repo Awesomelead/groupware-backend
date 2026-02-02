@@ -4,6 +4,7 @@ import com.fasterxml.jackson.annotation.JsonBackReference;
 
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
+import jakarta.persistence.Convert;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EntityListeners;
 import jakarta.persistence.EnumType;
@@ -18,11 +19,16 @@ import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
 
+import kr.co.awesomelead.groupware_backend.domain.department.enums.Company;
 import kr.co.awesomelead.groupware_backend.domain.notice.enums.NoticeType;
 import kr.co.awesomelead.groupware_backend.domain.user.entity.User;
+import kr.co.awesomelead.groupware_backend.global.util.CompanyListConverter;
+import kr.co.awesomelead.groupware_backend.global.util.LongListConverter;
 
+import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Getter;
-import lombok.Setter;
+import lombok.NoArgsConstructor;
 
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.LastModifiedDate;
@@ -33,8 +39,10 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
-@Setter
 @Getter
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
 @Entity
 @Table(name = "notices")
 @EntityListeners(AuditingEntityListener.class)
@@ -71,14 +79,32 @@ public class Notice {
     @LastModifiedDate private LocalDateTime updatedDate;
 
     // 조회수
+    @Builder.Default
     @Column(nullable = false)
     private int viewCount = 0;
 
     // 상단 고정 여부
+    @Builder.Default
     @Column(nullable = false)
     private boolean pinned = false;
 
+    @Convert(converter = CompanyListConverter.class)
+    @Column(name = "target_companies", columnDefinition = "TEXT")
+    @Builder.Default
+    private List<Company> targetCompanies = new ArrayList<>();
+
+    @Convert(converter = LongListConverter.class)
+    @Column(name = "target_departments", columnDefinition = "TEXT")
+    @Builder.Default
+    private List<Long> targetDepartments = new ArrayList<>();
+
+    @Convert(converter = LongListConverter.class)
+    @Column(name = "target_users", columnDefinition = "TEXT")
+    @Builder.Default
+    private List<Long> targetUsers = new ArrayList<>();
+
     // 첨부파일 리스트
+    @Builder.Default
     @OneToMany(mappedBy = "notice", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<NoticeAttachment> attachments = new ArrayList<>();
 

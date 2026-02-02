@@ -7,7 +7,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
 
 import java.security.SecureRandom;
@@ -20,7 +20,7 @@ public class PhoneAuthService {
 
     private final kr.co.awesomelead.groupware_backend.domain.aligo.service.AligoKakaoService
             aligoKakaoService;
-    private final RedisTemplate<String, String> redisTemplate;
+    private final StringRedisTemplate redisTemplate;
 
     private static final String AUTH_CODE_PREFIX = "auth:phone:";
     private static final int AUTH_CODE_EXPIRATION_MINUTES = 5;

@@ -36,8 +36,7 @@ import kr.co.awesomelead.groupware_backend.domain.user.enums.Position;
 import kr.co.awesomelead.groupware_backend.domain.user.enums.Role;
 import kr.co.awesomelead.groupware_backend.domain.user.enums.Status;
 import kr.co.awesomelead.groupware_backend.domain.visit.entity.Visit;
-import kr.co.awesomelead.groupware_backend.global.encryption.PhoneNumberEncryptor;
-import kr.co.awesomelead.groupware_backend.global.encryption.RegistrationNumberEncryptor;
+import kr.co.awesomelead.groupware_backend.global.encryption.Encryptor;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -85,15 +84,27 @@ public class User {
     @Column(length = 30)
     private String nationality; // 국적
 
+    @Column(length = 500)
+    @Convert(converter = Encryptor.class)
+    private String zipcode;
+
+    @Column(nullable = false, length = 500)
+    @Convert(converter = Encryptor.class)
+    private String address1;
+
+    @Column(length = 500)
+    @Convert(converter = Encryptor.class)
+    private String address2;
+
     @Column(unique = true, nullable = false, length = 500)
-    @Convert(converter = RegistrationNumberEncryptor.class)
+    @Convert(converter = Encryptor.class)
     private String registrationNumber; // 주민등록번호 또는 외국인번호
 
     @Column(nullable = false, length = 64, unique = true)
     private String registrationNumberHash; // 주민번호 SHA-256 해시 (조회용)
 
     @Column(nullable = false, length = 300)
-    @Convert(converter = PhoneNumberEncryptor.class)
+    @Convert(converter = Encryptor.class)
     private String phoneNumber; // 전화번호
 
     @Column(nullable = false, length = 64, unique = true)
@@ -112,9 +123,10 @@ public class User {
     @Column(length = 30)
     private Position position;
 
+    @Builder.Default
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 20)
-    private Role role; // 역할 (USER, ADMIN)
+    private Role role = Role.USER; // 역할 (USER, ADMIN)
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 20)

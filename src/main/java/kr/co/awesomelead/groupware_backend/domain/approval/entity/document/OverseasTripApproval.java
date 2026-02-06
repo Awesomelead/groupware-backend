@@ -4,11 +4,13 @@ import jakarta.persistence.CascadeType;
 import jakarta.persistence.DiscriminatorValue;
 import jakarta.persistence.Entity;
 import jakarta.persistence.OneToMany;
-import java.util.ArrayList;
-import java.util.List;
+
 import kr.co.awesomelead.groupware_backend.domain.approval.entity.Approval;
 import kr.co.awesomelead.groupware_backend.domain.approval.entity.detail.OverseasTripExpenseDetail;
 import kr.co.awesomelead.groupware_backend.domain.approval.enums.DocumentType;
+
+import java.util.ArrayList;
+import java.util.List;
 
 @Entity
 @DiscriminatorValue("OVERSEAS_TRIP")
@@ -22,9 +24,9 @@ public class OverseasTripApproval extends Approval {
     private Double exchangeRate; // 적용 환율
 
     // 가지급금 관련 필드
-    private Long advanceCash;   // 현금/개인카드
-    private Long advanceCard;   // 법인카드
-    private Long advanceTotal;  // 합계
+    private Long advanceCash; // 현금/개인카드
+    private Long advanceCard; // 법인카드
+    private Long advanceTotal; // 합계
     private Long advanceReturn; // 가지급금 반납
     private Long additionalClaim; // 추가 사용분 신청
 

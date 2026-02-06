@@ -35,6 +35,9 @@ public class ConverterTest {
         user.setNameKor("테스트");
         user.setNameEng("Test");
         user.setNationality("대한민국");
+        user.setZipcode("06234");
+        user.setAddress1("서울시 강남구 테헤란로 123");
+        user.setAddress2("어썸빌딩 5층");
         user.setRegistrationNumber("950101-1234567");
         user.setPhoneNumber(originalPhone);
         user.setRole(Role.USER);
@@ -72,6 +75,9 @@ public class ConverterTest {
         user.setNameKor("테스트2");
         user.setNameEng("Test2");
         user.setNationality("대한민국");
+        user.setZipcode("06234");
+        user.setAddress1("서울시 강남구 테헤란로 123");
+        user.setAddress2("어썸빌딩 5층");
         user.setRegistrationNumber(originalRegNum);
         user.setPhoneNumber("01087654321");
         user.setRole(Role.USER);
@@ -138,6 +144,9 @@ public class ConverterTest {
         user.setNameKor("테스트3");
         user.setNameEng("Test3");
         user.setNationality("대한민국");
+        user.setZipcode("06234");
+        user.setAddress1("서울시 강남구 테헤란로 123");
+        user.setAddress2("어썸빌딩 5층");
         user.setRegistrationNumber("960101-1234567");
         user.setPhoneNumber(originalPhone);
         user.setRole(Role.USER);

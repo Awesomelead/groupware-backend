@@ -30,9 +30,24 @@ public class SignupRequestDto {
     @NotBlank(message = "국적은 필수입니다.")
     private String nationality;
 
+    @Schema(description = "우편번호", example = "06234", required = true)
+    @NotBlank(message = "우편번호는 필수입니다.")
+    @Pattern(regexp = "^\\d{5}$", message = "우편번호는 5자리 숫자여야 합니다.")
+    private String zipcode;
+
+    @Schema(description = "기본 주소", example = "서울특별시 강남구 테헤란로 123", required = true)
+    @NotBlank(message = "기본 주소는 필수입니다.")
+    @Size(max = 200, message = "기본 주소는 200자를 초과할 수 없습니다.")
+    private String address1;
+
+    @Schema(description = "상세 주소", example = "어썸리드빌딩 5층", required = true)
+    @NotBlank(message = "상세 주소는 필수입니다.")
+    @Size(max = 100, message = "상세 주소는 100자를 초과할 수 없습니다.")
+    private String address2;
+
     @Schema(
             description = "근무 사업장",
-            example = "AWESOME",
+            example = "어썸리드",
             required = true,
             implementation = Company.class)
     @NotNull(message = "근무사업장은 필수입니다.")

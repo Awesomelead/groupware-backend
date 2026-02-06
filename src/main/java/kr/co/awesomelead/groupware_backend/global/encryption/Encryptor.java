@@ -10,7 +10,7 @@ import org.springframework.stereotype.Component;
 @Converter
 @Component
 @RequiredArgsConstructor
-public class RegistrationNumberEncryptor implements AttributeConverter<String, String> {
+public class Encryptor implements AttributeConverter<String, String> {
 
     private final AESEncryptor aesEncryptor;
 

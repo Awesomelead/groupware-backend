@@ -25,7 +25,7 @@ import kr.co.awesomelead.groupware_backend.domain.visit.enums.AdditionalPermissi
 import kr.co.awesomelead.groupware_backend.domain.visit.enums.VisitPurpose;
 import kr.co.awesomelead.groupware_backend.domain.visit.enums.VisitStatus;
 import kr.co.awesomelead.groupware_backend.domain.visit.enums.VisitType;
-import kr.co.awesomelead.groupware_backend.global.encryption.PhoneNumberEncryptor;
+import kr.co.awesomelead.groupware_backend.global.encryption.Encryptor;
 
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
@@ -59,7 +59,7 @@ public class Visit {
     @Column(nullable = false, length = 50)
     private String visitorName;
 
-    @Convert(converter = PhoneNumberEncryptor.class)
+    @Convert(converter = Encryptor.class)
     @Column(nullable = false, length = 300)
     private String visitorPhoneNumber;
 

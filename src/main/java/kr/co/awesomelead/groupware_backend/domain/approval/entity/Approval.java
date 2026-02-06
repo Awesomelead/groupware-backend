@@ -17,15 +17,16 @@ import jakarta.persistence.Lob;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
+import jakarta.persistence.Transient;
 import java.util.ArrayList;
 import java.util.List;
 import kr.co.awesomelead.groupware_backend.domain.approval.enums.ApprovalStatus;
+import kr.co.awesomelead.groupware_backend.domain.approval.enums.DocumentType;
 import kr.co.awesomelead.groupware_backend.domain.approval.enums.RetentionPeriod;
 import kr.co.awesomelead.groupware_backend.domain.department.entity.Department;
 import kr.co.awesomelead.groupware_backend.domain.user.entity.User;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
-import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -34,15 +35,15 @@ import lombok.Setter;
 @Getter
 @Setter
 @Inheritance(strategy = InheritanceType.JOINED) // 상속 조인 전략
-@DiscriminatorColumn(name = "approval_type")    // 문서 구분 컬럼
+@DiscriminatorColumn(name = "document_type")    // 문서 구분 컬럼
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @AllArgsConstructor
-@Builder
+// @Builder
 @Table(name = "approvals")
-public class Approval {
+public abstract class Approval {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.AUTO)
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
     @Column(nullable = false, length = 200)
@@ -68,11 +69,12 @@ public class Approval {
     @JoinColumn(name = "department_id", nullable = false, updatable = false)
     private Department draftDepartment; // 기안 시점의 부서 (스냅샷)
 
-    @Builder.Default
     @OneToMany(mappedBy = "approval", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<ApprovalParticipant> participants = new ArrayList<>(); // 참조 및 열람자
 
-    @Builder.Default
     @OneToMany(mappedBy = "approval", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<ApprovalAttachment> attachments = new ArrayList<>();
+
+    @Transient
+    public abstract DocumentType getDocumentType();
 }

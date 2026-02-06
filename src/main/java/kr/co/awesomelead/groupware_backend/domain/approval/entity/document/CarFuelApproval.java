@@ -8,6 +8,7 @@ import java.util.ArrayList;
 import java.util.List;
 import kr.co.awesomelead.groupware_backend.domain.approval.entity.Approval;
 import kr.co.awesomelead.groupware_backend.domain.approval.entity.detail.CarFuelDetail;
+import kr.co.awesomelead.groupware_backend.domain.approval.enums.DocumentType;
 
 @Entity
 @DiscriminatorValue("CAR_FUEL")
@@ -27,4 +28,9 @@ public class CarFuelApproval extends Approval {
 
     @OneToMany(mappedBy = "approval", cascade = CascadeType.ALL)
     private List<CarFuelDetail> details = new ArrayList<>();
+
+    @Override
+    public DocumentType getDocumentType() {
+        return DocumentType.CAR_FUEL;
+    }
 }

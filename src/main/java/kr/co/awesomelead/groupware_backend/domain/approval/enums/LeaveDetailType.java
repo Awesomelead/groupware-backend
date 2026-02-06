@@ -1,14 +1,13 @@
-package kr.co.awesomelead.groupware_backend.domain.leaverequest.enums;
+package kr.co.awesomelead.groupware_backend.domain.approval.enums;
 
 import com.fasterxml.jackson.annotation.JsonValue;
-
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 
 // 소분류 (상세 유형)
 @Getter
 @AllArgsConstructor
-public enum LeaveDetail {
+public enum LeaveDetailType {
     // 휴가(LEAVE) 관련
     ANNUAL("연차"),
     FAMILY_EVENT("경조"),

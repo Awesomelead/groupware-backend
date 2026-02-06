@@ -18,24 +18,27 @@ import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
 import jakarta.persistence.Transient;
-import java.util.ArrayList;
-import java.util.List;
+
 import kr.co.awesomelead.groupware_backend.domain.approval.enums.ApprovalStatus;
 import kr.co.awesomelead.groupware_backend.domain.approval.enums.DocumentType;
 import kr.co.awesomelead.groupware_backend.domain.approval.enums.RetentionPeriod;
 import kr.co.awesomelead.groupware_backend.domain.department.entity.Department;
 import kr.co.awesomelead.groupware_backend.domain.user.entity.User;
+
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
+import java.util.ArrayList;
+import java.util.List;
+
 @Entity
 @Getter
 @Setter
 @Inheritance(strategy = InheritanceType.JOINED) // 상속 조인 전략
-@DiscriminatorColumn(name = "document_type")    // 문서 구분 컬럼
+@DiscriminatorColumn(name = "document_type") // 문서 구분 컬럼
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @AllArgsConstructor
 // @Builder

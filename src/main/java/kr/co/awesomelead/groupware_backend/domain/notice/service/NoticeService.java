@@ -1,9 +1,5 @@
 package kr.co.awesomelead.groupware_backend.domain.notice.service;
 
-import java.io.IOException;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
 import kr.co.awesomelead.groupware_backend.domain.department.dto.response.UserSummaryResponseDto;
 import kr.co.awesomelead.groupware_backend.domain.department.enums.Company;
 import kr.co.awesomelead.groupware_backend.domain.department.service.DepartmentService;
@@ -26,12 +22,19 @@ import kr.co.awesomelead.groupware_backend.domain.user.repository.UserRepository
 import kr.co.awesomelead.groupware_backend.global.error.CustomException;
 import kr.co.awesomelead.groupware_backend.global.error.ErrorCode;
 import kr.co.awesomelead.groupware_backend.global.infra.s3.service.S3Service;
+
 import lombok.RequiredArgsConstructor;
+
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
+
+import java.io.IOException;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
 @Service
 @RequiredArgsConstructor
@@ -48,9 +51,9 @@ public class NoticeService {
 
     private User validateAndGetAuthor(Long userId) {
         User user =
-            userRepository
-                .findById(userId)
-                .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
+                userRepository
+                        .findById(userId)
+                        .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
 
         if (!user.hasAuthority(Authority.ACCESS_NOTICE)) {
             throw new CustomException(ErrorCode.NO_AUTHORITY_FOR_NOTICE);
@@ -60,8 +63,8 @@ public class NoticeService {
 
     @Transactional
     public Long createNotice(
-        NoticeCreateRequestDto requestDto, List<MultipartFile> files, Long userId)
-        throws IOException {
+            NoticeCreateRequestDto requestDto, List<MultipartFile> files, Long userId)
+            throws IOException {
         User author = validateAndGetAuthor(userId);
 
         Notice notice = noticeMapper.toNoticeEntity(requestDto, author);
@@ -79,7 +82,7 @@ public class NoticeService {
         if (requestDto.getTargetDepartmentIds() != null) {
             for (Long deptId : requestDto.getTargetDepartmentIds()) {
                 List<UserSummaryResponseDto> deptUsers =
-                    departmentService.getUsersByDepartmentHierarchy(deptId);
+                        departmentService.getUsersByDepartmentHierarchy(deptId);
                 deptUsers.forEach(u -> finalTargetUserIds.add(u.getId()));
             }
         }
@@ -89,14 +92,14 @@ public class NoticeService {
         }
 
         List<NoticeTarget> targets =
-            finalTargetUserIds.stream()
-                .map(
-                    targetId ->
-                        NoticeTarget.builder()
-                            .notice(notice)
-                            .user(userRepository.getReferenceById(targetId))
-                            .build())
-                .toList();
+                finalTargetUserIds.stream()
+                        .map(
+                                targetId ->
+                                        NoticeTarget.builder()
+                                                .notice(notice)
+                                                .user(userRepository.getReferenceById(targetId))
+                                                .build())
+                        .toList();
 
         noticeTargetRepository.saveAll(targets);
 
@@ -107,23 +110,23 @@ public class NoticeService {
 
     @Transactional(readOnly = true)
     public Page<NoticeSummaryDto> getNoticesByType(
-        NoticeSearchConditionDto conditionDto, Long userId, Pageable pageable) {
+            NoticeSearchConditionDto conditionDto, Long userId, Pageable pageable) {
         User user =
-            userRepository
-                .findById(userId)
-                .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
+                userRepository
+                        .findById(userId)
+                        .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
         boolean hasAccessNotice = user.hasAuthority(Authority.ACCESS_NOTICE);
 
         return noticeQueryRepository.findNoticesWithFilters(
-            conditionDto, userId, hasAccessNotice, pageable);
+                conditionDto, userId, hasAccessNotice, pageable);
     }
 
     @Transactional(readOnly = true)
     public NoticeDetailDto getNotice(Long noticeId) {
         Notice notice =
-            noticeRepository
-                .findByIdWithDetails(noticeId)
-                .orElseThrow(() -> new CustomException(ErrorCode.NOTICE_NOT_FOUND));
+                noticeRepository
+                        .findByIdWithDetails(noticeId)
+                        .orElseThrow(() -> new CustomException(ErrorCode.NOTICE_NOT_FOUND));
 
         // 조회수 증가
         notice.increaseViewCount();
@@ -137,9 +140,9 @@ public class NoticeService {
         validateAndGetAuthor(userId);
 
         Notice notice =
-            noticeRepository
-                .findByIdWithDetails(noticeId)
-                .orElseThrow(() -> new CustomException(ErrorCode.NOTICE_NOT_FOUND));
+                noticeRepository
+                        .findByIdWithDetails(noticeId)
+                        .orElseThrow(() -> new CustomException(ErrorCode.NOTICE_NOT_FOUND));
 
         // 첨부파일 S3에서 삭제
         for (NoticeAttachment attachment : notice.getAttachments()) {
@@ -152,25 +155,25 @@ public class NoticeService {
 
     @Transactional
     public Long updateNotice(
-        Long userId, Long noticeId, NoticeUpdateRequestDto dto, List<MultipartFile> newFiles)
-        throws IOException {
+            Long userId, Long noticeId, NoticeUpdateRequestDto dto, List<MultipartFile> newFiles)
+            throws IOException {
         validateAndGetAuthor(userId);
         Notice notice =
-            noticeRepository
-                .findByIdWithDetails(noticeId)
-                .orElseThrow(() -> new CustomException(ErrorCode.NOTICE_NOT_FOUND));
+                noticeRepository
+                        .findByIdWithDetails(noticeId)
+                        .orElseThrow(() -> new CustomException(ErrorCode.NOTICE_NOT_FOUND));
 
         notice.update(dto.getTitle(), dto.getContent(), dto.getPinned());
 
         if (dto.getAttachmentsIdsToRemove() != null) {
             for (Long attachmentId : dto.getAttachmentsIdsToRemove()) {
                 NoticeAttachment attachment =
-                    noticeAttachmentRepository
-                        .findById(attachmentId)
-                        .orElseThrow(
-                            () ->
-                                new CustomException(
-                                    ErrorCode.NOTICE_ATTACHMENT_NOT_FOUND));
+                        noticeAttachmentRepository
+                                .findById(attachmentId)
+                                .orElseThrow(
+                                        () ->
+                                                new CustomException(
+                                                        ErrorCode.NOTICE_ATTACHMENT_NOT_FOUND));
                 // S3에서 파일 삭제
                 s3Service.deleteFile(attachment.getS3Key());
                 // DB에서 첨부파일 삭제
@@ -200,9 +203,9 @@ public class NoticeService {
     @Transactional(readOnly = true)
     public List<NoticeSummaryDto> getTop3NoticesForHome(Long userId) {
         User user =
-            userRepository
-                .findById(userId)
-                .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
+                userRepository
+                        .findById(userId)
+                        .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
 
         boolean hasAccessNotice = user.hasAuthority(Authority.ACCESS_NOTICE);
 

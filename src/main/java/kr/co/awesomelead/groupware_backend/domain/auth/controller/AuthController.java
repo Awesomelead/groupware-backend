@@ -6,13 +6,12 @@ import io.swagger.v3.oas.annotations.media.ExampleObject;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
-import jakarta.servlet.http.HttpServletRequest;
-import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
 import kr.co.awesomelead.groupware_backend.domain.aligo.service.PhoneAuthService;
 import kr.co.awesomelead.groupware_backend.domain.auth.dto.request.DeleteUserRequestDto;
 import kr.co.awesomelead.groupware_backend.domain.auth.dto.request.FindEmailRequestDto;
 import kr.co.awesomelead.groupware_backend.domain.auth.dto.request.LoginRequestDto;
+import kr.co.awesomelead.groupware_backend.domain.auth.dto.request.LogoutRequestDto;
 import kr.co.awesomelead.groupware_backend.domain.auth.dto.request.ReissueRequestDto;
 import kr.co.awesomelead.groupware_backend.domain.auth.dto.request.ResetPasswordByEmailRequestDto;
 import kr.co.awesomelead.groupware_backend.domain.auth.dto.request.ResetPasswordByPhoneRequestDto;
@@ -31,11 +30,11 @@ import kr.co.awesomelead.groupware_backend.domain.auth.dto.response.SignupRespon
 import kr.co.awesomelead.groupware_backend.domain.auth.service.AuthService;
 import kr.co.awesomelead.groupware_backend.domain.auth.service.EmailAuthService;
 import kr.co.awesomelead.groupware_backend.domain.auth.service.IdentityVerificationService;
-import kr.co.awesomelead.groupware_backend.domain.auth.util.CookieUtil;
 import kr.co.awesomelead.groupware_backend.domain.user.dto.CustomUserDetails;
 import kr.co.awesomelead.groupware_backend.global.common.response.ApiResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
@@ -540,38 +539,95 @@ public class AuthController {
         return ResponseEntity.ok(ApiResponse.onSuccess(loginResponseDto));
     }
 
-    @Operation(summary = "로그아웃", description = "로그아웃을 합니다.")
+    @Operation(
+        summary = "로그아웃",
+        description = """
+            로그아웃을 수행합니다.
+            
+            - Authorization 헤더에 Bearer Access Token이 필요합니다.
+            - Request Body에 Refresh Token을 포함해야 합니다.
+            - 본인 소유의 Refresh Token만 로그아웃할 수 있습니다.
+            """
+    )
     @ApiResponses(
         value = {
+
             @io.swagger.v3.oas.annotations.responses.ApiResponse(
                 responseCode = "200",
                 description = "로그아웃 성공",
-                content =
-                @Content(
+                content = @Content(
                     mediaType = "application/json",
-                    examples =
-                    @ExampleObject(
-                        value =
+                    examples = @ExampleObject(
+                        value = """
+                            {
+                              "isSuccess": true,
+                              "code": "COMMON204",
+                              "message": "로그아웃되었습니다.",
+                              "result": null
+                            }
                             """
+                    )
+                )
+            ),
+
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                responseCode = "401",
+                description = "유효하지 않거나 만료된 토큰",
+                content = @Content(
+                    mediaType = "application/json",
+                    examples = {
+                        @ExampleObject(
+                            name = "Invalid Token",
+                            value = """
                                 {
-                                  "isSuccess": true,
-                                  "code": "COMMON204",
-                                  "message": "로그아웃되었습니다.",
+                                  "isSuccess": false,
+                                  "code": "INVALID_TOKEN",
+                                  "message": "유효하지 않은 토큰입니다.",
                                   "result": null
                                 }
-                                """)))
-        })
+                                """
+                        ),
+                        @ExampleObject(
+                            name = "Expired Token",
+                            value = """
+                                {
+                                  "isSuccess": false,
+                                  "code": "EXPIRED_TOKEN",
+                                  "message": "만료된 토큰입니다.",
+                                  "result": null
+                                }
+                                """
+                        )
+                    }
+                )
+            ),
+
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                responseCode = "403",
+                description = "본인 소유의 리프레시 토큰이 아님",
+                content = @Content(
+                    mediaType = "application/json",
+                    examples = @ExampleObject(
+                        value = """
+                            {
+                              "isSuccess": false,
+                              "code": "REFRESH_TOKEN_MISMATCH",
+                              "message": "해당 리프레시 토큰에 대한 권한이 없습니다.",
+                              "result": null
+                            }
+                            """
+                    )
+                )
+            )
+        }
+    )
     @PostMapping("/logout")
     public ResponseEntity<ApiResponse<Void>> logout(
-        HttpServletRequest request, HttpServletResponse response) {
-        // 1. 쿠키에서 Refresh Token 추출
-        String refreshToken = CookieUtil.getCookieValue(request, "refresh");
+        Authentication authentication,
+        @RequestBody LogoutRequestDto requestDto) {
 
-        // 2. DB에서 토큰 삭제 (Service 호출)
-        authService.logout(refreshToken);
-
-        // 3. 클라이언트 쿠키 만료 처리
-        response.addCookie(CookieUtil.createExpiredCookie("refresh"));
+        String email = authentication.getName();
+        authService.logout(email, requestDto.getRefreshToken());
 
         return ResponseEntity.ok(ApiResponse.onNoContent("로그아웃되었습니다."));
     }

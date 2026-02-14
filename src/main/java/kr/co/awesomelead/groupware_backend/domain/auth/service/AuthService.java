@@ -9,7 +9,6 @@ import kr.co.awesomelead.groupware_backend.domain.auth.dto.request.SignupRequest
 import kr.co.awesomelead.groupware_backend.domain.auth.dto.response.AuthTokensDto;
 import kr.co.awesomelead.groupware_backend.domain.auth.dto.response.FindEmailResponseDto;
 import kr.co.awesomelead.groupware_backend.domain.auth.dto.response.LoginResponseDto;
-import kr.co.awesomelead.groupware_backend.domain.auth.dto.response.LoginiResultDto;
 import kr.co.awesomelead.groupware_backend.domain.auth.dto.response.SignupResponseDto;
 import kr.co.awesomelead.groupware_backend.domain.auth.entity.RefreshToken;
 import kr.co.awesomelead.groupware_backend.domain.auth.util.JWTUtil;
@@ -90,7 +89,7 @@ public class AuthService {
         return new SignupResponseDto(savedUser.getId(), savedUser.getEmail());
     }
 
-    public LoginiResultDto login(LoginRequestDto requestDto) {
+    public LoginResponseDto login(LoginRequestDto requestDto) {
         // 1. 인증 처리
         UsernamePasswordAuthenticationToken authToken =
                 new UsernamePasswordAuthenticationToken(
@@ -107,10 +106,10 @@ public class AuthService {
         GrantedAuthority auth = iterator.next();
         String role = auth.getAuthority().replace("ROLE_", "");
 
-        // 4. Access Token 생성 (1시간 유효)
-        String accessToken = jwtUtil.createJwt(username, role, 60 * 60 * 1000L);
+        //        // 4. Access Token 생성 (1시간 유효)
+        //        String accessToken = jwtUtil.createJwt(username, role, 60 * 60 * 1000L);
         // 4. Access Token 생성 (2분 유효) - 리다이렉트 테스트를 위함
-        // String accessToken = jwtUtil.createJwt(username, role, 2 * 60 * 1000L);
+        String accessToken = jwtUtil.createJwt(username, role, 1 * 60 * 1000L);
 
         // 5. Refresh Token 생성 및 DB 저장
         String refreshToken = refreshTokenService.createAndSaveRefreshToken(username, role);
@@ -125,18 +124,23 @@ public class AuthService {
         LoginResponseDto loginResponseDto =
                 new LoginResponseDto(
                         accessToken,
+                        refreshToken,
                         user.getId(),
                         user.getNameKor(),
                         user.getNameEng(),
                         user.getPosition());
 
-        return new LoginiResultDto(loginResponseDto, refreshToken);
+        return loginResponseDto;
     }
 
-    public void logout(String refreshToken) {
-        if (refreshToken != null) {
-            refreshTokenService.deleteRefreshToken(refreshToken);
+    public void logout(String email, String refreshToken) {
+        RefreshToken token = refreshTokenService.validateRefreshToken(refreshToken);
+
+        if (!token.getEmail().equals(email)) {
+            throw new CustomException(ErrorCode.REFRESH_TOKEN_MISMATCH);
         }
+
+        refreshTokenService.deleteRefreshToken(refreshToken);
     }
 
     public AuthTokensDto reissue(String refreshToken) {

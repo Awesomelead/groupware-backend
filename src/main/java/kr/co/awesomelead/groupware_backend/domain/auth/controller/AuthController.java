@@ -7,14 +7,14 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 
-import jakarta.servlet.http.HttpServletRequest;
-import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
 
 import kr.co.awesomelead.groupware_backend.domain.aligo.service.PhoneAuthService;
 import kr.co.awesomelead.groupware_backend.domain.auth.dto.request.DeleteUserRequestDto;
 import kr.co.awesomelead.groupware_backend.domain.auth.dto.request.FindEmailRequestDto;
 import kr.co.awesomelead.groupware_backend.domain.auth.dto.request.LoginRequestDto;
+import kr.co.awesomelead.groupware_backend.domain.auth.dto.request.LogoutRequestDto;
+import kr.co.awesomelead.groupware_backend.domain.auth.dto.request.ReissueRequestDto;
 import kr.co.awesomelead.groupware_backend.domain.auth.dto.request.ResetPasswordByEmailRequestDto;
 import kr.co.awesomelead.groupware_backend.domain.auth.dto.request.ResetPasswordByPhoneRequestDto;
 import kr.co.awesomelead.groupware_backend.domain.auth.dto.request.ResetPasswordRequestDto;
@@ -28,20 +28,17 @@ import kr.co.awesomelead.groupware_backend.domain.auth.dto.response.AuthTokensDt
 import kr.co.awesomelead.groupware_backend.domain.auth.dto.response.FindEmailResponseDto;
 import kr.co.awesomelead.groupware_backend.domain.auth.dto.response.IdentityVerificationResponseDto;
 import kr.co.awesomelead.groupware_backend.domain.auth.dto.response.LoginResponseDto;
-import kr.co.awesomelead.groupware_backend.domain.auth.dto.response.LoginiResultDto;
-import kr.co.awesomelead.groupware_backend.domain.auth.dto.response.ReissueResponseDto;
 import kr.co.awesomelead.groupware_backend.domain.auth.dto.response.SignupResponseDto;
 import kr.co.awesomelead.groupware_backend.domain.auth.service.AuthService;
 import kr.co.awesomelead.groupware_backend.domain.auth.service.EmailAuthService;
 import kr.co.awesomelead.groupware_backend.domain.auth.service.IdentityVerificationService;
-import kr.co.awesomelead.groupware_backend.domain.auth.util.CookieUtil;
 import kr.co.awesomelead.groupware_backend.domain.user.dto.CustomUserDetails;
 import kr.co.awesomelead.groupware_backend.global.common.response.ApiResponse;
 
 import lombok.RequiredArgsConstructor;
 
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
@@ -491,6 +488,7 @@ public class AuthController {
                                   "message": "요청에 성공했습니다.",
                                   "result": {
                                     "accessToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+                                    "refreshToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ1...",
                                     "userId": 1,
                                     "nameKor": "홍길동",
                                     "nameEng": "GILDONG HONG",
@@ -538,18 +536,23 @@ public class AuthController {
             })
     @PostMapping("/login")
     public ResponseEntity<ApiResponse<LoginResponseDto>> login(
-            @RequestBody LoginRequestDto requestDto, HttpServletResponse response) {
+            @RequestBody LoginRequestDto requestDto) {
 
-        LoginiResultDto loginiResultDto = authService.login(requestDto);
+        LoginResponseDto loginResponseDto = authService.login(requestDto);
 
-        // Refresh Token은 쿠키로
-        response.addCookie(CookieUtil.createRefreshTokenCookie(loginiResultDto.getRefreshToken()));
-
-        // LoginResponseDto는 응답 본문으로
-        return ResponseEntity.ok(ApiResponse.onSuccess(loginiResultDto.getLoginResponse()));
+        return ResponseEntity.ok(ApiResponse.onSuccess(loginResponseDto));
     }
 
-    @Operation(summary = "로그아웃", description = "로그아웃을 합니다.")
+    @Operation(
+            summary = "로그아웃",
+            description =
+                    """
+            로그아웃을 수행합니다.
+
+            - Authorization 헤더에 Bearer Access Token이 필요합니다.
+            - Request Body에 Refresh Token을 포함해야 합니다.
+            - 본인 소유의 Refresh Token만 로그아웃할 수 있습니다.
+            """)
     @ApiResponses(
             value = {
                 @io.swagger.v3.oas.annotations.responses.ApiResponse(
@@ -562,25 +565,67 @@ public class AuthController {
                                                 @ExampleObject(
                                                         value =
                                                                 """
+                            {
+                              "isSuccess": true,
+                              "code": "COMMON204",
+                              "message": "로그아웃되었습니다.",
+                              "result": null
+                            }
+                            """))),
+                @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                        responseCode = "401",
+                        description = "유효하지 않거나 만료된 토큰",
+                        content =
+                                @Content(
+                                        mediaType = "application/json",
+                                        examples = {
+                                            @ExampleObject(
+                                                    name = "Invalid Token",
+                                                    value =
+                                                            """
                                 {
-                                  "isSuccess": true,
-                                  "code": "COMMON204",
-                                  "message": "로그아웃되었습니다.",
+                                  "isSuccess": false,
+                                  "code": "INVALID_TOKEN",
+                                  "message": "유효하지 않은 토큰입니다.",
                                   "result": null
                                 }
-                                """)))
+                                """),
+                                            @ExampleObject(
+                                                    name = "Expired Token",
+                                                    value =
+                                                            """
+                                {
+                                  "isSuccess": false,
+                                  "code": "EXPIRED_TOKEN",
+                                  "message": "만료된 토큰입니다.",
+                                  "result": null
+                                }
+                                """)
+                                        })),
+                @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                        responseCode = "403",
+                        description = "본인 소유의 리프레시 토큰이 아님",
+                        content =
+                                @Content(
+                                        mediaType = "application/json",
+                                        examples =
+                                                @ExampleObject(
+                                                        value =
+                                                                """
+                            {
+                              "isSuccess": false,
+                              "code": "REFRESH_TOKEN_MISMATCH",
+                              "message": "해당 리프레시 토큰에 대한 권한이 없습니다.",
+                              "result": null
+                            }
+                            """)))
             })
     @PostMapping("/logout")
     public ResponseEntity<ApiResponse<Void>> logout(
-            HttpServletRequest request, HttpServletResponse response) {
-        // 1. 쿠키에서 Refresh Token 추출
-        String refreshToken = CookieUtil.getCookieValue(request, "refresh");
+            Authentication authentication, @RequestBody LogoutRequestDto requestDto) {
 
-        // 2. DB에서 토큰 삭제 (Service 호출)
-        authService.logout(refreshToken);
-
-        // 3. 클라이언트 쿠키 만료 처리
-        response.addCookie(CookieUtil.createExpiredCookie("refresh"));
+        String email = authentication.getName();
+        authService.logout(email, requestDto.getRefreshToken());
 
         return ResponseEntity.ok(ApiResponse.onNoContent("로그아웃되었습니다."));
     }
@@ -604,6 +649,7 @@ public class AuthController {
                                   "message": "요청에 성공했습니다.",
                                   "result": {
                                     "accessToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+                                    "refreshToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
                                   }
                                 }
                                 """))),
@@ -639,25 +685,12 @@ public class AuthController {
                                         }))
             })
     @PostMapping("/reissue")
-    public ResponseEntity<ApiResponse<ReissueResponseDto>> reissue(
-            HttpServletRequest request, HttpServletResponse response) {
+    public ResponseEntity<ApiResponse<AuthTokensDto>> reissue(
+            @RequestBody ReissueRequestDto requestDto) {
 
-        // 1. 쿠키에서 Refresh Token 추출
-        String refreshToken = CookieUtil.getCookieValue(request, "refresh");
+        AuthTokensDto tokens = authService.reissue(requestDto.getRefreshToken());
 
-        if (refreshToken == null) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
-        }
-
-        // 2. 토큰 재발급 (Service)
-        AuthTokensDto tokens = authService.reissue(refreshToken);
-
-        // 3. 새로운 Refresh Token을 쿠키에 저장
-        response.addCookie(CookieUtil.createRefreshTokenCookie(tokens.getRefreshToken()));
-
-        // 4. 새로운 Access Token 응답
-        return ResponseEntity.ok(
-                ApiResponse.onSuccess(new ReissueResponseDto(tokens.getAccessToken())));
+        return ResponseEntity.ok(ApiResponse.onSuccess(tokens));
     }
 
     @Operation(summary = "아이디 찾기", description = "해시 기반 검색하여 휴대폰 번호로 아이디를 찾습니다.")

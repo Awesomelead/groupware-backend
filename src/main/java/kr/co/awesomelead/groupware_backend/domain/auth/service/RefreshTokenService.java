@@ -22,7 +22,7 @@ public class RefreshTokenService {
     private final JWTUtil jwtUtil;
 
     // Refresh Token의 유효 기간 (초 단위, 예: 7일)
-    private static final long REFRESH_TOKEN_VALIDITY_IN_SECONDS = 7 * 24 * 60 * 60;
+    private static final long REFRESH_TOKEN_VALIDITY_IN_SECONDS = 2 * 24 * 60 * 60;
 
     // private static final long REFRESH_TOKEN_VALIDITY_IN_SECONDS = 5 * 60;
 

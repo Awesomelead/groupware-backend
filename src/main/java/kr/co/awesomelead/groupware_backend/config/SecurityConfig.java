@@ -1,5 +1,7 @@
 package kr.co.awesomelead.groupware_backend.config;
 
+import jakarta.servlet.http.HttpServletResponse;
+
 import kr.co.awesomelead.groupware_backend.domain.auth.filter.JwtFilter;
 import kr.co.awesomelead.groupware_backend.domain.auth.util.JWTUtil;
 import kr.co.awesomelead.groupware_backend.domain.user.repository.UserRepository;
@@ -8,6 +10,7 @@ import lombok.RequiredArgsConstructor;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.MediaType;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
@@ -56,6 +59,25 @@ public class SecurityConfig {
         http.csrf((auth) -> auth.disable());
         http.formLogin((auth) -> auth.disable());
         http.httpBasic((auth) -> auth.disable());
+
+        // 인증 실패 시 401로 고정 (기본 403로 떨어지는 현상 방지)
+        http.exceptionHandling(
+                ex ->
+                        ex.authenticationEntryPoint(
+                                        (request, response, authException) -> {
+                                            response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+                                            response.setContentType(
+                                                    MediaType.APPLICATION_JSON_VALUE);
+                                            response.setCharacterEncoding("UTF-8");
+                                        })
+                                // 권한 부족(진짜 403 상황)도 명확히 403으로
+                                .accessDeniedHandler(
+                                        (request, response, accessDeniedException) -> {
+                                            response.setStatus(HttpServletResponse.SC_FORBIDDEN);
+                                            response.setContentType(
+                                                    MediaType.APPLICATION_JSON_VALUE);
+                                            response.setCharacterEncoding("UTF-8");
+                                        }));
 
         http.authorizeHttpRequests(
                 (auth) ->

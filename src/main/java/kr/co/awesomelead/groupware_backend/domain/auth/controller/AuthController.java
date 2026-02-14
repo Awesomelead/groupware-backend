@@ -6,7 +6,9 @@ import io.swagger.v3.oas.annotations.media.ExampleObject;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
+
 import jakarta.validation.Valid;
+
 import kr.co.awesomelead.groupware_backend.domain.aligo.service.PhoneAuthService;
 import kr.co.awesomelead.groupware_backend.domain.auth.dto.request.DeleteUserRequestDto;
 import kr.co.awesomelead.groupware_backend.domain.auth.dto.request.FindEmailRequestDto;
@@ -32,7 +34,9 @@ import kr.co.awesomelead.groupware_backend.domain.auth.service.EmailAuthService;
 import kr.co.awesomelead.groupware_backend.domain.auth.service.IdentityVerificationService;
 import kr.co.awesomelead.groupware_backend.domain.user.dto.CustomUserDetails;
 import kr.co.awesomelead.groupware_backend.global.common.response.ApiResponse;
+
 import lombok.RequiredArgsConstructor;
+
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -47,11 +51,11 @@ import org.springframework.web.bind.annotation.RestController;
 @RequestMapping("/api/auth")
 @RequiredArgsConstructor
 @Tag(
-    name = "Auth",
-    description =
-        """
+        name = "Auth",
+        description =
+                """
             ## 회원가입, 로그인, 로그아웃, 토큰 재발급 등 인증 관련 API
-            
+
             ### 사용되는 Enum 타입
             - **Company**: 근무 사업장 (AWESOME, MARUI)
             - **Role**: 사용자 역할 (USER, ADMIN)
@@ -66,23 +70,23 @@ public class AuthController {
 
     @Operation(summary = "휴대폰 인증번호 발송", description = "휴대폰 인증번호를 발송합니다.")
     @ApiResponses(
-        value = {
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(
-                responseCode = "200",
-                description = "인증번호 발송 성공",
-                content =
-                @Content(
-                    mediaType = "application/json",
-                    schema =
-                    @Schema(
-                        implementation =
-                            kr.co.awesomelead.groupware_backend
-                                .global.common.response
-                                .ApiResponse.class),
-                    examples =
-                    @ExampleObject(
-                        value =
-                            """
+            value = {
+                @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                        responseCode = "200",
+                        description = "인증번호 발송 성공",
+                        content =
+                                @Content(
+                                        mediaType = "application/json",
+                                        schema =
+                                                @Schema(
+                                                        implementation =
+                                                                kr.co.awesomelead.groupware_backend
+                                                                        .global.common.response
+                                                                        .ApiResponse.class),
+                                        examples =
+                                                @ExampleObject(
+                                                        value =
+                                                                """
                                 {
                                   "isSuccess": true,
                                   "code": "COMMON204",
@@ -90,16 +94,16 @@ public class AuthController {
                                   "result": null
                                 }
                                 """))),
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(
-                responseCode = "400",
-                description = "잘못된 요청",
-                content =
-                @Content(
-                    mediaType = "application/json",
-                    examples =
-                    @ExampleObject(
-                        value =
-                            """
+                @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                        responseCode = "400",
+                        description = "잘못된 요청",
+                        content =
+                                @Content(
+                                        mediaType = "application/json",
+                                        examples =
+                                                @ExampleObject(
+                                                        value =
+                                                                """
                                 {
                                   "isSuccess": false,
                                   "code": "COMMON400",
@@ -109,16 +113,16 @@ public class AuthController {
                                   }
                                 }
                                 """))),
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(
-                responseCode = "500",
-                description = "알림톡 전송 실패",
-                content =
-                @Content(
-                    mediaType = "application/json",
-                    examples =
-                    @ExampleObject(
-                        value =
-                            """
+                @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                        responseCode = "500",
+                        description = "알림톡 전송 실패",
+                        content =
+                                @Content(
+                                        mediaType = "application/json",
+                                        examples =
+                                                @ExampleObject(
+                                                        value =
+                                                                """
                                 {
                                   "isSuccess": false,
                                   "code": "ALIMTALK_SEND_FAILED",
@@ -126,27 +130,27 @@ public class AuthController {
                                   "result": null
                                 }
                                 """)))
-        })
+            })
     @PostMapping("/send-phone-code")
     public ResponseEntity<ApiResponse<Void>> sendAuthCode(
-        @Valid @RequestBody SendAuthCodeRequestDto requestDto) {
+            @Valid @RequestBody SendAuthCodeRequestDto requestDto) {
         phoneAuthService.sendAuthCode(requestDto.getPhoneNumber());
         return ResponseEntity.ok(ApiResponse.onNoContent("휴대폰 인증번호가 발송되었습니다."));
     }
 
     @Operation(summary = "휴대폰 인증번호 확인", description = "발송된 휴대폰 인증번호를 확인합니다.")
     @ApiResponses(
-        value = {
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(
-                responseCode = "200",
-                description = "인증 성공",
-                content =
-                @Content(
-                    mediaType = "application/json",
-                    examples =
-                    @ExampleObject(
-                        value =
-                            """
+            value = {
+                @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                        responseCode = "200",
+                        description = "인증 성공",
+                        content =
+                                @Content(
+                                        mediaType = "application/json",
+                                        examples =
+                                                @ExampleObject(
+                                                        value =
+                                                                """
                                 {
                                   "isSuccess": true,
                                   "code": "COMMON204",
@@ -154,17 +158,17 @@ public class AuthController {
                                   "result": null
                                 }
                                 """))),
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(
-                responseCode = "400",
-                description = "입력값 검증 실패 또는 인증번호 불일치",
-                content =
-                @Content(
-                    mediaType = "application/json",
-                    examples = {
-                        @ExampleObject(
-                            name = "입력값 검증 실패",
-                            value =
-                                """
+                @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                        responseCode = "400",
+                        description = "입력값 검증 실패 또는 인증번호 불일치",
+                        content =
+                                @Content(
+                                        mediaType = "application/json",
+                                        examples = {
+                                            @ExampleObject(
+                                                    name = "입력값 검증 실패",
+                                                    value =
+                                                            """
                                     {
                                       "isSuccess": false,
                                       "code": "COMMON400",
@@ -174,10 +178,10 @@ public class AuthController {
                                       }
                                     }
                                     """),
-                        @ExampleObject(
-                            name = "인증번호 불일치",
-                            value =
-                                """
+                                            @ExampleObject(
+                                                    name = "인증번호 불일치",
+                                                    value =
+                                                            """
                                     {
                                       "isSuccess": false,
                                       "code": "AUTH_CODE_MISMATCH",
@@ -185,17 +189,17 @@ public class AuthController {
                                       "result": null
                                     }
                                     """)
-                    })),
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(
-                responseCode = "401",
-                description = "인증번호 만료",
-                content =
-                @Content(
-                    mediaType = "application/json",
-                    examples =
-                    @ExampleObject(
-                        value =
-                            """
+                                        })),
+                @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                        responseCode = "401",
+                        description = "인증번호 만료",
+                        content =
+                                @Content(
+                                        mediaType = "application/json",
+                                        examples =
+                                                @ExampleObject(
+                                                        value =
+                                                                """
                                 {
                                   "isSuccess": false,
                                   "code": "AUTH_CODE_EXPIRED",
@@ -203,27 +207,27 @@ public class AuthController {
                                   "result": null
                                 }
                                 """)))
-        })
+            })
     @PostMapping("/verify-phone-code")
     public ResponseEntity<ApiResponse<Void>> verifyAuthCode(
-        @Valid @RequestBody VerifyAuthCodeRequestDto requestDto) {
+            @Valid @RequestBody VerifyAuthCodeRequestDto requestDto) {
         phoneAuthService.verifyAuthCode(requestDto.getPhoneNumber(), requestDto.getAuthCode());
         return ResponseEntity.ok(ApiResponse.onNoContent("휴대폰 인증이 완료되었습니다."));
     }
 
     @Operation(summary = "이메일 인증번호 발송", description = "이메일 인증번호를 발송합니다.")
     @ApiResponses(
-        value = {
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(
-                responseCode = "200",
-                description = "인증번호 발송 성공",
-                content =
-                @Content(
-                    mediaType = "application/json",
-                    examples =
-                    @ExampleObject(
-                        value =
-                            """
+            value = {
+                @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                        responseCode = "200",
+                        description = "인증번호 발송 성공",
+                        content =
+                                @Content(
+                                        mediaType = "application/json",
+                                        examples =
+                                                @ExampleObject(
+                                                        value =
+                                                                """
                                 {
                                   "isSuccess": true,
                                   "code": "COMMON204",
@@ -231,16 +235,16 @@ public class AuthController {
                                   "result": null
                                 }
                                 """))),
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(
-                responseCode = "400",
-                description = "잘못된 요청",
-                content =
-                @Content(
-                    mediaType = "application/json",
-                    examples =
-                    @ExampleObject(
-                        value =
-                            """
+                @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                        responseCode = "400",
+                        description = "잘못된 요청",
+                        content =
+                                @Content(
+                                        mediaType = "application/json",
+                                        examples =
+                                                @ExampleObject(
+                                                        value =
+                                                                """
                                 {
                                   "isSuccess": false,
                                   "code": "COMMON400",
@@ -250,16 +254,16 @@ public class AuthController {
                                   }
                                 }
                                 """))),
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(
-                responseCode = "500",
-                description = "이메일 전송 실패",
-                content =
-                @Content(
-                    mediaType = "application/json",
-                    examples =
-                    @ExampleObject(
-                        value =
-                            """
+                @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                        responseCode = "500",
+                        description = "이메일 전송 실패",
+                        content =
+                                @Content(
+                                        mediaType = "application/json",
+                                        examples =
+                                                @ExampleObject(
+                                                        value =
+                                                                """
                                 {
                                   "isSuccess": false,
                                   "code": "EMAIL_SEND_FAILED",
@@ -267,27 +271,27 @@ public class AuthController {
                                   "result": null
                                 }
                                 """)))
-        })
+            })
     @PostMapping("/send-email-code")
     public ResponseEntity<ApiResponse<Void>> sendEmailAuthCode(
-        @Valid @RequestBody SendEmailAuthCodeRequestDto requestDto) {
+            @Valid @RequestBody SendEmailAuthCodeRequestDto requestDto) {
         emailAuthService.sendAuthCode(requestDto.getEmail());
         return ResponseEntity.ok(ApiResponse.onNoContent("이메일 인증번호가 발송되었습니다."));
     }
 
     @Operation(summary = "이메일 인증번호 확인", description = "발송된 이메일 인증번호를 확인합니다.")
     @ApiResponses(
-        value = {
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(
-                responseCode = "200",
-                description = "인증 성공",
-                content =
-                @Content(
-                    mediaType = "application/json",
-                    examples =
-                    @ExampleObject(
-                        value =
-                            """
+            value = {
+                @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                        responseCode = "200",
+                        description = "인증 성공",
+                        content =
+                                @Content(
+                                        mediaType = "application/json",
+                                        examples =
+                                                @ExampleObject(
+                                                        value =
+                                                                """
                                 {
                                   "isSuccess": true,
                                   "code": "COMMON204",
@@ -295,17 +299,17 @@ public class AuthController {
                                   "result": null
                                 }
                                 """))),
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(
-                responseCode = "400",
-                description = "입력값 검증 실패 또는 인증번호 불일치",
-                content =
-                @Content(
-                    mediaType = "application/json",
-                    examples = {
-                        @ExampleObject(
-                            name = "입력값 검증 실패",
-                            value =
-                                """
+                @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                        responseCode = "400",
+                        description = "입력값 검증 실패 또는 인증번호 불일치",
+                        content =
+                                @Content(
+                                        mediaType = "application/json",
+                                        examples = {
+                                            @ExampleObject(
+                                                    name = "입력값 검증 실패",
+                                                    value =
+                                                            """
                                     {
                                       "isSuccess": false,
                                       "code": "COMMON400",
@@ -315,10 +319,10 @@ public class AuthController {
                                       }
                                     }
                                     """),
-                        @ExampleObject(
-                            name = "인증번호 불일치",
-                            value =
-                                """
+                                            @ExampleObject(
+                                                    name = "인증번호 불일치",
+                                                    value =
+                                                            """
                                     {
                                       "isSuccess": false,
                                       "code": "AUTH_CODE_MISMATCH",
@@ -326,17 +330,17 @@ public class AuthController {
                                       "result": null
                                     }
                                     """)
-                    })),
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(
-                responseCode = "401",
-                description = "인증번호 만료",
-                content =
-                @Content(
-                    mediaType = "application/json",
-                    examples =
-                    @ExampleObject(
-                        value =
-                            """
+                                        })),
+                @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                        responseCode = "401",
+                        description = "인증번호 만료",
+                        content =
+                                @Content(
+                                        mediaType = "application/json",
+                                        examples =
+                                                @ExampleObject(
+                                                        value =
+                                                                """
                                 {
                                   "isSuccess": false,
                                   "code": "AUTH_CODE_EXPIRED",
@@ -344,27 +348,27 @@ public class AuthController {
                                   "result": null
                                 }
                                 """)))
-        })
+            })
     @PostMapping("/verify-email-code")
     public ResponseEntity<ApiResponse<Void>> verifyEmailAuthCode(
-        @Valid @RequestBody VerifyEmailAuthCodeRequestDto requestDto) {
+            @Valid @RequestBody VerifyEmailAuthCodeRequestDto requestDto) {
         emailAuthService.verifyAuthCode(requestDto.getEmail(), requestDto.getAuthCode());
         return ResponseEntity.ok(ApiResponse.onNoContent("이메일 인증이 완료되었습니다."));
     }
 
     @Operation(summary = "회원가입", description = "회원가입을 요청합니다.")
     @ApiResponses(
-        value = {
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(
-                responseCode = "200",
-                description = "회원가입 요청 성공",
-                content =
-                @Content(
-                    mediaType = "application/json",
-                    examples =
-                    @ExampleObject(
-                        value =
-                            """
+            value = {
+                @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                        responseCode = "200",
+                        description = "회원가입 요청 성공",
+                        content =
+                                @Content(
+                                        mediaType = "application/json",
+                                        examples =
+                                                @ExampleObject(
+                                                        value =
+                                                                """
                                 {
                                   "isSuccess": true,
                                   "code": "COMMON204",
@@ -372,17 +376,17 @@ public class AuthController {
                                   "result": null
                                 }
                                 """))),
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(
-                responseCode = "400",
-                description = "입력값 검증 실패",
-                content =
-                @Content(
-                    mediaType = "application/json",
-                    examples = {
-                        @ExampleObject(
-                            name = "입력값 검증 실패",
-                            value =
-                                """
+                @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                        responseCode = "400",
+                        description = "입력값 검증 실패",
+                        content =
+                                @Content(
+                                        mediaType = "application/json",
+                                        examples = {
+                                            @ExampleObject(
+                                                    name = "입력값 검증 실패",
+                                                    value =
+                                                            """
                                     {
                                       "isSuccess": false,
                                       "code": "COMMON400",
@@ -392,10 +396,10 @@ public class AuthController {
                                       }
                                     }
                                     """),
-                        @ExampleObject(
-                            name = "비밀번호 불일치",
-                            value =
-                                """
+                                            @ExampleObject(
+                                                    name = "비밀번호 불일치",
+                                                    value =
+                                                            """
                                     {
                                       "isSuccess": false,
                                       "code": "PASSWORD_MISMATCH",
@@ -403,10 +407,10 @@ public class AuthController {
                                       "result": null
                                     }
                                     """),
-                        @ExampleObject(
-                            name = "전화번호 인증 미완료",
-                            value =
-                                """
+                                            @ExampleObject(
+                                                    name = "전화번호 인증 미완료",
+                                                    value =
+                                                            """
                                     {
                                       "isSuccess": false,
                                       "code": "PHONE_NOT_VERIFIED",
@@ -414,10 +418,10 @@ public class AuthController {
                                       "result": null
                                     }
                                     """),
-                        @ExampleObject(
-                            name = "이메일 인증 미완료",
-                            value =
-                                """
+                                            @ExampleObject(
+                                                    name = "이메일 인증 미완료",
+                                                    value =
+                                                            """
                                     {
                                       "isSuccess": false,
                                       "code": "EMAIL_NOT_VERIFIED",
@@ -425,18 +429,18 @@ public class AuthController {
                                       "result": null
                                     }
                                     """)
-                    })),
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(
-                responseCode = "409",
-                description = "중복된 정보",
-                content =
-                @Content(
-                    mediaType = "application/json",
-                    examples = {
-                        @ExampleObject(
-                            name = "이메일 중복",
-                            value =
-                                """
+                                        })),
+                @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                        responseCode = "409",
+                        description = "중복된 정보",
+                        content =
+                                @Content(
+                                        mediaType = "application/json",
+                                        examples = {
+                                            @ExampleObject(
+                                                    name = "이메일 중복",
+                                                    value =
+                                                            """
                                     {
                                       "isSuccess": false,
                                       "code": "DUPLICATE_LOGIN_ID",
@@ -444,10 +448,10 @@ public class AuthController {
                                       "result": null
                                     }
                                     """),
-                        @ExampleObject(
-                            name = "주민등록번호 중복",
-                            value =
-                                """
+                                            @ExampleObject(
+                                                    name = "주민등록번호 중복",
+                                                    value =
+                                                            """
                                     {
                                       "isSuccess": false,
                                       "code": "DUPLICATE_REGISTRATION_NUMBER",
@@ -455,29 +459,29 @@ public class AuthController {
                                       "result": null
                                     }
                                     """)
-                    }))
-        })
+                                        }))
+            })
     @PostMapping("/signup")
     public ResponseEntity<ApiResponse<SignupResponseDto>> signup(
-        @Valid @RequestBody SignupRequestDto joinDto) {
+            @Valid @RequestBody SignupRequestDto joinDto) {
         SignupResponseDto responseDto = authService.signup(joinDto);
         return ResponseEntity.ok(ApiResponse.onSuccess(responseDto));
     }
 
     @Operation(summary = "로그인", description = "로그인을 합니다.")
     @ApiResponses(
-        value = {
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(
-                responseCode = "200",
-                description = "로그인 성공",
-                content =
-                @Content(
-                    mediaType = "application/json",
-                    schema = @Schema(implementation = ApiResponse.class),
-                    examples =
-                    @ExampleObject(
-                        value =
-                            """
+            value = {
+                @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                        responseCode = "200",
+                        description = "로그인 성공",
+                        content =
+                                @Content(
+                                        mediaType = "application/json",
+                                        schema = @Schema(implementation = ApiResponse.class),
+                                        examples =
+                                                @ExampleObject(
+                                                        value =
+                                                                """
                                 {
                                   "isSuccess": true,
                                   "code": "COMMON200",
@@ -489,20 +493,20 @@ public class AuthController {
                                     "nameKor": "홍길동",
                                     "nameEng": "GILDONG HONG",
                                     "position": "대리"
-                                
+
                                   }
                                 }
                                 """))),
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(
-                responseCode = "400",
-                description = "입력값 검증 실패",
-                content =
-                @Content(
-                    mediaType = "application/json",
-                    examples =
-                    @ExampleObject(
-                        value =
-                            """
+                @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                        responseCode = "400",
+                        description = "입력값 검증 실패",
+                        content =
+                                @Content(
+                                        mediaType = "application/json",
+                                        examples =
+                                                @ExampleObject(
+                                                        value =
+                                                                """
                                 {
                                   "isSuccess": false,
                                   "code": "COMMON400",
@@ -512,16 +516,16 @@ public class AuthController {
                                   }
                                 }
                                 """))),
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(
-                responseCode = "401",
-                description = "로그인 실패 (인증 실패)",
-                content =
-                @Content(
-                    mediaType = "application/json",
-                    examples =
-                    @ExampleObject(
-                        value =
-                            """
+                @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                        responseCode = "401",
+                        description = "로그인 실패 (인증 실패)",
+                        content =
+                                @Content(
+                                        mediaType = "application/json",
+                                        examples =
+                                                @ExampleObject(
+                                                        value =
+                                                                """
                                 {
                                   "isSuccess": false,
                                   "code": "COMMON401",
@@ -529,10 +533,10 @@ public class AuthController {
                                   "result": null
                                 }
                                 """)))
-        })
+            })
     @PostMapping("/login")
     public ResponseEntity<ApiResponse<LoginResponseDto>> login(
-        @RequestBody LoginRequestDto requestDto) {
+            @RequestBody LoginRequestDto requestDto) {
 
         LoginResponseDto loginResponseDto = authService.login(requestDto);
 
@@ -540,91 +544,85 @@ public class AuthController {
     }
 
     @Operation(
-        summary = "로그아웃",
-        description = """
+            summary = "로그아웃",
+            description =
+                    """
             로그아웃을 수행합니다.
-            
+
             - Authorization 헤더에 Bearer Access Token이 필요합니다.
             - Request Body에 Refresh Token을 포함해야 합니다.
             - 본인 소유의 Refresh Token만 로그아웃할 수 있습니다.
-            """
-    )
+            """)
     @ApiResponses(
-        value = {
-
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(
-                responseCode = "200",
-                description = "로그아웃 성공",
-                content = @Content(
-                    mediaType = "application/json",
-                    examples = @ExampleObject(
-                        value = """
+            value = {
+                @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                        responseCode = "200",
+                        description = "로그아웃 성공",
+                        content =
+                                @Content(
+                                        mediaType = "application/json",
+                                        examples =
+                                                @ExampleObject(
+                                                        value =
+                                                                """
                             {
                               "isSuccess": true,
                               "code": "COMMON204",
                               "message": "로그아웃되었습니다.",
                               "result": null
                             }
-                            """
-                    )
-                )
-            ),
-
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(
-                responseCode = "401",
-                description = "유효하지 않거나 만료된 토큰",
-                content = @Content(
-                    mediaType = "application/json",
-                    examples = {
-                        @ExampleObject(
-                            name = "Invalid Token",
-                            value = """
+                            """))),
+                @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                        responseCode = "401",
+                        description = "유효하지 않거나 만료된 토큰",
+                        content =
+                                @Content(
+                                        mediaType = "application/json",
+                                        examples = {
+                                            @ExampleObject(
+                                                    name = "Invalid Token",
+                                                    value =
+                                                            """
                                 {
                                   "isSuccess": false,
                                   "code": "INVALID_TOKEN",
                                   "message": "유효하지 않은 토큰입니다.",
                                   "result": null
                                 }
-                                """
-                        ),
-                        @ExampleObject(
-                            name = "Expired Token",
-                            value = """
+                                """),
+                                            @ExampleObject(
+                                                    name = "Expired Token",
+                                                    value =
+                                                            """
                                 {
                                   "isSuccess": false,
                                   "code": "EXPIRED_TOKEN",
                                   "message": "만료된 토큰입니다.",
                                   "result": null
                                 }
-                                """
-                        )
-                    }
-                )
-            ),
-
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(
-                responseCode = "403",
-                description = "본인 소유의 리프레시 토큰이 아님",
-                content = @Content(
-                    mediaType = "application/json",
-                    examples = @ExampleObject(
-                        value = """
+                                """)
+                                        })),
+                @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                        responseCode = "403",
+                        description = "본인 소유의 리프레시 토큰이 아님",
+                        content =
+                                @Content(
+                                        mediaType = "application/json",
+                                        examples =
+                                                @ExampleObject(
+                                                        value =
+                                                                """
                             {
                               "isSuccess": false,
                               "code": "REFRESH_TOKEN_MISMATCH",
                               "message": "해당 리프레시 토큰에 대한 권한이 없습니다.",
                               "result": null
                             }
-                            """
-                    )
-                )
-            )
-        }
-    )
+                            """)))
+            })
     @PostMapping("/logout")
     public ResponseEntity<ApiResponse<Void>> logout(
-        Authentication authentication,
-        @RequestBody LogoutRequestDto requestDto) {
+            Authentication authentication, @RequestBody LogoutRequestDto requestDto) {
 
         String email = authentication.getName();
         authService.logout(email, requestDto.getRefreshToken());
@@ -634,17 +632,17 @@ public class AuthController {
 
     @Operation(summary = "토큰 재발급", description = "Refresh Token으로 Access Token을 재발급합니다.")
     @ApiResponses(
-        value = {
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(
-                responseCode = "200",
-                description = "토큰 재발급 성공",
-                content =
-                @Content(
-                    mediaType = "application/json",
-                    examples =
-                    @ExampleObject(
-                        value =
-                            """
+            value = {
+                @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                        responseCode = "200",
+                        description = "토큰 재발급 성공",
+                        content =
+                                @Content(
+                                        mediaType = "application/json",
+                                        examples =
+                                                @ExampleObject(
+                                                        value =
+                                                                """
                                 {
                                   "isSuccess": true,
                                   "code": "COMMON200",
@@ -655,17 +653,17 @@ public class AuthController {
                                   }
                                 }
                                 """))),
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(
-                responseCode = "401",
-                description = "토큰 만료 또는 유효하지 않음",
-                content =
-                @Content(
-                    mediaType = "application/json",
-                    examples = {
-                        @ExampleObject(
-                            name = "토큰 만료",
-                            value =
-                                """
+                @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                        responseCode = "401",
+                        description = "토큰 만료 또는 유효하지 않음",
+                        content =
+                                @Content(
+                                        mediaType = "application/json",
+                                        examples = {
+                                            @ExampleObject(
+                                                    name = "토큰 만료",
+                                                    value =
+                                                            """
                                     {
                                       "isSuccess": false,
                                       "code": "EXPIRED_TOKEN",
@@ -673,10 +671,10 @@ public class AuthController {
                                       "result": null
                                     }
                                     """),
-                        @ExampleObject(
-                            name = "유효하지 않은 토큰",
-                            value =
-                                """
+                                            @ExampleObject(
+                                                    name = "유효하지 않은 토큰",
+                                                    value =
+                                                            """
                                     {
                                       "isSuccess": false,
                                       "code": "INVALID_TOKEN",
@@ -684,31 +682,30 @@ public class AuthController {
                                       "result": null
                                     }
                                     """)
-                    }))
-        })
+                                        }))
+            })
     @PostMapping("/reissue")
     public ResponseEntity<ApiResponse<AuthTokensDto>> reissue(
-        @RequestBody ReissueRequestDto requestDto) {
+            @RequestBody ReissueRequestDto requestDto) {
 
         AuthTokensDto tokens = authService.reissue(requestDto.getRefreshToken());
 
-        return ResponseEntity.ok(
-            ApiResponse.onSuccess(tokens));
+        return ResponseEntity.ok(ApiResponse.onSuccess(tokens));
     }
 
     @Operation(summary = "아이디 찾기", description = "해시 기반 검색하여 휴대폰 번호로 아이디를 찾습니다.")
     @ApiResponses(
-        value = {
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(
-                responseCode = "200",
-                description = "아이디 찾기 성공",
-                content =
-                @Content(
-                    mediaType = "application/json",
-                    examples =
-                    @ExampleObject(
-                        value =
-                            """
+            value = {
+                @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                        responseCode = "200",
+                        description = "아이디 찾기 성공",
+                        content =
+                                @Content(
+                                        mediaType = "application/json",
+                                        examples =
+                                                @ExampleObject(
+                                                        value =
+                                                                """
                                 {
                                   "isSuccess": true,
                                   "code": "COMMON200",
@@ -718,16 +715,16 @@ public class AuthController {
                                   }
                                 }
                                 """))),
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(
-                responseCode = "400",
-                description = "전화번호 인증 미완료",
-                content =
-                @Content(
-                    mediaType = "application/json",
-                    examples =
-                    @ExampleObject(
-                        value =
-                            """
+                @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                        responseCode = "400",
+                        description = "전화번호 인증 미완료",
+                        content =
+                                @Content(
+                                        mediaType = "application/json",
+                                        examples =
+                                                @ExampleObject(
+                                                        value =
+                                                                """
                                 {
                                   "isSuccess": false,
                                   "code": "PHONE_NOT_VERIFIED",
@@ -735,16 +732,16 @@ public class AuthController {
                                   "result": null
                                 }
                                 """))),
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(
-                responseCode = "404",
-                description = "사용자를 찾을 수 없음",
-                content =
-                @Content(
-                    mediaType = "application/json",
-                    examples =
-                    @ExampleObject(
-                        value =
-                            """
+                @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                        responseCode = "404",
+                        description = "사용자를 찾을 수 없음",
+                        content =
+                                @Content(
+                                        mediaType = "application/json",
+                                        examples =
+                                                @ExampleObject(
+                                                        value =
+                                                                """
                                 {
                                   "isSuccess": false,
                                   "code": "USER_NOT_FOUND",
@@ -752,30 +749,30 @@ public class AuthController {
                                   "result": null
                                 }
                                 """)))
-        })
+            })
     @PostMapping("/find-email")
     public ResponseEntity<ApiResponse<FindEmailResponseDto>> findEmail(
-        @Valid @RequestBody FindEmailRequestDto requestDto) {
+            @Valid @RequestBody FindEmailRequestDto requestDto) {
 
         FindEmailResponseDto response =
-            authService.findEmail(requestDto.getName(), requestDto.getPhoneNumber());
+                authService.findEmail(requestDto.getName(), requestDto.getPhoneNumber());
 
         return ResponseEntity.ok(ApiResponse.onSuccess(response));
     }
 
     @Operation(summary = "이메일로 비밀번호 재설정", description = "이메일 인증을 완료한 후, 비밀번호 재설정합니다.")
     @ApiResponses(
-        value = {
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(
-                responseCode = "200",
-                description = "비밀번호 재설정 성공",
-                content =
-                @Content(
-                    mediaType = "application/json",
-                    examples =
-                    @ExampleObject(
-                        value =
-                            """
+            value = {
+                @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                        responseCode = "200",
+                        description = "비밀번호 재설정 성공",
+                        content =
+                                @Content(
+                                        mediaType = "application/json",
+                                        examples =
+                                                @ExampleObject(
+                                                        value =
+                                                                """
                                 {
                                   "isSuccess": true,
                                   "code": "COMMON204",
@@ -783,17 +780,17 @@ public class AuthController {
                                   "result": null
                                 }
                                 """))),
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(
-                responseCode = "400",
-                description = "이메일 인증 미완료 또는 비밀번호 불일치",
-                content =
-                @Content(
-                    mediaType = "application/json",
-                    examples = {
-                        @ExampleObject(
-                            name = "이메일 인증 미완료",
-                            value =
-                                """
+                @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                        responseCode = "400",
+                        description = "이메일 인증 미완료 또는 비밀번호 불일치",
+                        content =
+                                @Content(
+                                        mediaType = "application/json",
+                                        examples = {
+                                            @ExampleObject(
+                                                    name = "이메일 인증 미완료",
+                                                    value =
+                                                            """
                                     {
                                       "isSuccess": false,
                                       "code": "EMAIL_NOT_VERIFIED",
@@ -801,10 +798,10 @@ public class AuthController {
                                       "result": null
                                     }
                                     """),
-                        @ExampleObject(
-                            name = "비밀번호 불일치",
-                            value =
-                                """
+                                            @ExampleObject(
+                                                    name = "비밀번호 불일치",
+                                                    value =
+                                                            """
                                     {
                                       "isSuccess": false,
                                       "code": "PASSWORD_MISMATCH",
@@ -812,17 +809,17 @@ public class AuthController {
                                       "result": null
                                     }
                                     """)
-                    })),
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(
-                responseCode = "404",
-                description = "사용자를 찾을 수 없음",
-                content =
-                @Content(
-                    mediaType = "application/json",
-                    examples =
-                    @ExampleObject(
-                        value =
-                            """
+                                        })),
+                @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                        responseCode = "404",
+                        description = "사용자를 찾을 수 없음",
+                        content =
+                                @Content(
+                                        mediaType = "application/json",
+                                        examples =
+                                                @ExampleObject(
+                                                        value =
+                                                                """
                                 {
                                   "isSuccess": false,
                                   "code": "USER_NOT_FOUND",
@@ -830,27 +827,27 @@ public class AuthController {
                                   "result": null
                                 }
                                 """)))
-        })
+            })
     @PatchMapping("/reset-password/email")
     public ResponseEntity<ApiResponse<Void>> resetPasswordByEmail(
-        @Valid @RequestBody ResetPasswordByEmailRequestDto requestDto) {
+            @Valid @RequestBody ResetPasswordByEmailRequestDto requestDto) {
         authService.resetPasswordByEmail(requestDto);
         return ResponseEntity.ok(ApiResponse.onNoContent("비밀번호가 성공적으로 재설정되었습니다."));
     }
 
     @Operation(summary = "휴대폰으로 비밀번호 재설정", description = "이메일과 휴대폰 인증을 완료한 후, 비밀번호를 재설정합니다.")
     @ApiResponses(
-        value = {
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(
-                responseCode = "200",
-                description = "비밀번호 재설정 성공",
-                content =
-                @Content(
-                    mediaType = "application/json",
-                    examples =
-                    @ExampleObject(
-                        value =
-                            """
+            value = {
+                @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                        responseCode = "200",
+                        description = "비밀번호 재설정 성공",
+                        content =
+                                @Content(
+                                        mediaType = "application/json",
+                                        examples =
+                                                @ExampleObject(
+                                                        value =
+                                                                """
                                 {
                                   "isSuccess": true,
                                   "code": "COMMON204",
@@ -858,17 +855,17 @@ public class AuthController {
                                   "result": null
                                 }
                                 """))),
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(
-                responseCode = "400",
-                description = "잘못된 요청",
-                content =
-                @Content(
-                    mediaType = "application/json",
-                    examples = {
-                        @ExampleObject(
-                            name = "입력값 검증 실패",
-                            value =
-                                """
+                @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                        responseCode = "400",
+                        description = "잘못된 요청",
+                        content =
+                                @Content(
+                                        mediaType = "application/json",
+                                        examples = {
+                                            @ExampleObject(
+                                                    name = "입력값 검증 실패",
+                                                    value =
+                                                            """
                                     {
                                       "isSuccess": false,
                                       "code": "COMMON400",
@@ -878,10 +875,10 @@ public class AuthController {
                                       }
                                     }
                                     """),
-                        @ExampleObject(
-                            name = "전화번호 인증 미완료",
-                            value =
-                                """
+                                            @ExampleObject(
+                                                    name = "전화번호 인증 미완료",
+                                                    value =
+                                                            """
                                     {
                                       "isSuccess": false,
                                       "code": "PHONE_NOT_VERIFIED",
@@ -889,10 +886,10 @@ public class AuthController {
                                       "result": null
                                     }
                                     """),
-                        @ExampleObject(
-                            name = "전화번호 불일치",
-                            value =
-                                """
+                                            @ExampleObject(
+                                                    name = "전화번호 불일치",
+                                                    value =
+                                                            """
                                     {
                                       "isSuccess": false,
                                       "code": "PHONE_NUMBER_MISMATCH",
@@ -900,10 +897,10 @@ public class AuthController {
                                       "result": null
                                     }
                                     """),
-                        @ExampleObject(
-                            name = "비밀번호 불일치",
-                            value =
-                                """
+                                            @ExampleObject(
+                                                    name = "비밀번호 불일치",
+                                                    value =
+                                                            """
                                     {
                                       "isSuccess": false,
                                       "code": "PASSWORD_MISMATCH",
@@ -911,17 +908,17 @@ public class AuthController {
                                       "result": null
                                     }
                                     """)
-                    })),
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(
-                responseCode = "404",
-                description = "사용자를 찾을 수 없음",
-                content =
-                @Content(
-                    mediaType = "application/json",
-                    examples =
-                    @ExampleObject(
-                        value =
-                            """
+                                        })),
+                @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                        responseCode = "404",
+                        description = "사용자를 찾을 수 없음",
+                        content =
+                                @Content(
+                                        mediaType = "application/json",
+                                        examples =
+                                                @ExampleObject(
+                                                        value =
+                                                                """
                                 {
                                   "isSuccess": false,
                                   "code": "USER_NOT_FOUND",
@@ -929,27 +926,27 @@ public class AuthController {
                                   "result": null
                                 }
                                 """)))
-        })
+            })
     @PatchMapping("/reset-password/phone")
     public ResponseEntity<ApiResponse<Void>> resetPasswordByPhone(
-        @Valid @RequestBody ResetPasswordByPhoneRequestDto requestDto) {
+            @Valid @RequestBody ResetPasswordByPhoneRequestDto requestDto) {
         authService.resetPasswordByPhone(requestDto);
         return ResponseEntity.ok(ApiResponse.onNoContent("비밀번호가 성공적으로 재설정되었습니다."));
     }
 
     @Operation(summary = "로그인 후 비밀번호 재설정", description = "로그인 한 사용자가 비밀번호 재설정합니다.")
     @ApiResponses(
-        value = {
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(
-                responseCode = "200",
-                description = "비밀번호 변경 성공",
-                content =
-                @Content(
-                    mediaType = "application/json",
-                    examples =
-                    @ExampleObject(
-                        value =
-                            """
+            value = {
+                @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                        responseCode = "200",
+                        description = "비밀번호 변경 성공",
+                        content =
+                                @Content(
+                                        mediaType = "application/json",
+                                        examples =
+                                                @ExampleObject(
+                                                        value =
+                                                                """
                                 {
                                   "isSuccess": true,
                                   "code": "COMMON204",
@@ -957,17 +954,17 @@ public class AuthController {
                                   "result": null
                                 }
                                 """))),
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(
-                responseCode = "400",
-                description = "비밀번호 불일치 또는 현재 비밀번호와 동일",
-                content =
-                @Content(
-                    mediaType = "application/json",
-                    examples = {
-                        @ExampleObject(
-                            name = "비밀번호 확인 불일치",
-                            value =
-                                """
+                @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                        responseCode = "400",
+                        description = "비밀번호 불일치 또는 현재 비밀번호와 동일",
+                        content =
+                                @Content(
+                                        mediaType = "application/json",
+                                        examples = {
+                                            @ExampleObject(
+                                                    name = "비밀번호 확인 불일치",
+                                                    value =
+                                                            """
                                     {
                                       "isSuccess": false,
                                       "code": "PASSWORD_MISMATCH",
@@ -975,10 +972,10 @@ public class AuthController {
                                       "result": null
                                     }
                                     """),
-                        @ExampleObject(
-                            name = "현재 비밀번호 불일치",
-                            value =
-                                """
+                                            @ExampleObject(
+                                                    name = "현재 비밀번호 불일치",
+                                                    value =
+                                                            """
                                     {
                                       "isSuccess": false,
                                       "code": "CURRENT_PASSWORD_MISMATCH",
@@ -986,10 +983,10 @@ public class AuthController {
                                       "result": null
                                     }
                                     """),
-                        @ExampleObject(
-                            name = "새 비밀번호가 현재 비밀번호와 동일",
-                            value =
-                                """
+                                            @ExampleObject(
+                                                    name = "새 비밀번호가 현재 비밀번호와 동일",
+                                                    value =
+                                                            """
                                     {
                                       "isSuccess": false,
                                       "code": "SAME_AS_CURRENT_PASSWORD",
@@ -997,17 +994,17 @@ public class AuthController {
                                       "result": null
                                     }
                                     """)
-                    })),
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(
-                responseCode = "404",
-                description = "사용자를 찾을 수 없음",
-                content =
-                @Content(
-                    mediaType = "application/json",
-                    examples =
-                    @ExampleObject(
-                        value =
-                            """
+                                        })),
+                @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                        responseCode = "404",
+                        description = "사용자를 찾을 수 없음",
+                        content =
+                                @Content(
+                                        mediaType = "application/json",
+                                        examples =
+                                                @ExampleObject(
+                                                        value =
+                                                                """
                                 {
                                   "isSuccess": false,
                                   "code": "USER_NOT_FOUND",
@@ -1015,11 +1012,11 @@ public class AuthController {
                                   "result": null
                                 }
                                 """)))
-        })
+            })
     @PatchMapping("/reset-password")
     public ResponseEntity<ApiResponse<Void>> resetPassword(
-        @Valid @RequestBody ResetPasswordRequestDto requestDto,
-        @AuthenticationPrincipal CustomUserDetails userDetails) {
+            @Valid @RequestBody ResetPasswordRequestDto requestDto,
+            @AuthenticationPrincipal CustomUserDetails userDetails) {
         authService.resetPassword(requestDto, userDetails.getId());
         return ResponseEntity.ok(ApiResponse.onNoContent("비밀번호가 성공적으로 변경되었습니다."));
     }
@@ -1027,25 +1024,25 @@ public class AuthController {
     @Operation(summary = "[테스트] 계정 삭제", description = "입력한 이메일로 해당 계정을 삭제합니다.")
     @DeleteMapping("/user")
     public ResponseEntity<ApiResponse<Void>> deleteUser(
-        @RequestBody DeleteUserRequestDto requestDto) {
+            @RequestBody DeleteUserRequestDto requestDto) {
         authService.deleteUser(requestDto.getEmail());
         return ResponseEntity.ok(ApiResponse.onNoContent("계정이 성공적으로 삭제되었습니다."));
     }
 
     @Operation(summary = "본인인증 확인", description = "포트원 본인인증 결과를 확인하고 인증 정보를 반환합니다.")
     @ApiResponses(
-        value = {
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(
-                responseCode = "200",
-                description = "본인인증 확인 성공",
-                content =
-                @Content(
-                    mediaType = "application/json",
-                    schema = @Schema(implementation = ApiResponse.class),
-                    examples =
-                    @ExampleObject(
-                        value =
-                            """
+            value = {
+                @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                        responseCode = "200",
+                        description = "본인인증 확인 성공",
+                        content =
+                                @Content(
+                                        mediaType = "application/json",
+                                        schema = @Schema(implementation = ApiResponse.class),
+                                        examples =
+                                                @ExampleObject(
+                                                        value =
+                                                                """
                                 {
                                   "isSuccess": true,
                                   "code": "COMMON200",
@@ -1060,17 +1057,17 @@ public class AuthController {
                                   }
                                 }
                                 """))),
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(
-                responseCode = "400",
-                description = "잘못된 요청",
-                content =
-                @Content(
-                    mediaType = "application/json",
-                    examples = {
-                        @ExampleObject(
-                            name = "입력값 검증 실패",
-                            value =
-                                """
+                @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                        responseCode = "400",
+                        description = "잘못된 요청",
+                        content =
+                                @Content(
+                                        mediaType = "application/json",
+                                        examples = {
+                                            @ExampleObject(
+                                                    name = "입력값 검증 실패",
+                                                    value =
+                                                            """
                                     {
                                       "isSuccess": false,
                                       "code": "COMMON400",
@@ -1080,10 +1077,10 @@ public class AuthController {
                                       }
                                     }
                                     """),
-                        @ExampleObject(
-                            name = "본인인증 미완료",
-                            value =
-                                """
+                                            @ExampleObject(
+                                                    name = "본인인증 미완료",
+                                                    value =
+                                                            """
                                     {
                                       "isSuccess": false,
                                       "code": "IDENTITY_VERIFICATION_NOT_COMPLETED",
@@ -1091,10 +1088,10 @@ public class AuthController {
                                       "result": null
                                     }
                                     """),
-                        @ExampleObject(
-                            name = "유효하지 않은 인증 ID",
-                            value =
-                                """
+                                            @ExampleObject(
+                                                    name = "유효하지 않은 인증 ID",
+                                                    value =
+                                                            """
                                     {
                                       "isSuccess": false,
                                       "code": "IDENTITY_VERIFICATION_NOT_FOUND",
@@ -1102,17 +1099,17 @@ public class AuthController {
                                       "result": null
                                     }
                                     """)
-                    })),
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(
-                responseCode = "500",
-                description = "서버 오류",
-                content =
-                @Content(
-                    mediaType = "application/json",
-                    examples =
-                    @ExampleObject(
-                        value =
-                            """
+                                        })),
+                @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                        responseCode = "500",
+                        description = "서버 오류",
+                        content =
+                                @Content(
+                                        mediaType = "application/json",
+                                        examples =
+                                                @ExampleObject(
+                                                        value =
+                                                                """
                                 {
                                   "isSuccess": false,
                                   "code": "IDENTITY_VERIFICATION_FAILED",
@@ -1120,13 +1117,13 @@ public class AuthController {
                                   "result": null
                                 }
                                 """)))
-        })
+            })
     @PostMapping("/verify-identity")
     public ResponseEntity<ApiResponse<IdentityVerificationResponseDto>> verifyIdentity(
-        @Valid @RequestBody VerifyIdentityRequestDto requestDto) {
+            @Valid @RequestBody VerifyIdentityRequestDto requestDto) {
 
         IdentityVerificationResponseDto response =
-            identityVerificationService.verifyIdentity(requestDto.getIdentityVerificationId());
+                identityVerificationService.verifyIdentity(requestDto.getIdentityVerificationId());
 
         return ResponseEntity.ok(ApiResponse.onSuccess(response));
     }

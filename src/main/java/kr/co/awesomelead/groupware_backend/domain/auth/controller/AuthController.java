@@ -13,6 +13,7 @@ import kr.co.awesomelead.groupware_backend.domain.aligo.service.PhoneAuthService
 import kr.co.awesomelead.groupware_backend.domain.auth.dto.request.DeleteUserRequestDto;
 import kr.co.awesomelead.groupware_backend.domain.auth.dto.request.FindEmailRequestDto;
 import kr.co.awesomelead.groupware_backend.domain.auth.dto.request.LoginRequestDto;
+import kr.co.awesomelead.groupware_backend.domain.auth.dto.request.ReissueRequestDto;
 import kr.co.awesomelead.groupware_backend.domain.auth.dto.request.ResetPasswordByEmailRequestDto;
 import kr.co.awesomelead.groupware_backend.domain.auth.dto.request.ResetPasswordByPhoneRequestDto;
 import kr.co.awesomelead.groupware_backend.domain.auth.dto.request.ResetPasswordRequestDto;
@@ -26,7 +27,6 @@ import kr.co.awesomelead.groupware_backend.domain.auth.dto.response.AuthTokensDt
 import kr.co.awesomelead.groupware_backend.domain.auth.dto.response.FindEmailResponseDto;
 import kr.co.awesomelead.groupware_backend.domain.auth.dto.response.IdentityVerificationResponseDto;
 import kr.co.awesomelead.groupware_backend.domain.auth.dto.response.LoginResponseDto;
-import kr.co.awesomelead.groupware_backend.domain.auth.dto.response.ReissueResponseDto;
 import kr.co.awesomelead.groupware_backend.domain.auth.dto.response.SignupResponseDto;
 import kr.co.awesomelead.groupware_backend.domain.auth.service.AuthService;
 import kr.co.awesomelead.groupware_backend.domain.auth.service.EmailAuthService;
@@ -35,7 +35,6 @@ import kr.co.awesomelead.groupware_backend.domain.auth.util.CookieUtil;
 import kr.co.awesomelead.groupware_backend.domain.user.dto.CustomUserDetails;
 import kr.co.awesomelead.groupware_backend.global.common.response.ApiResponse;
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -596,6 +595,7 @@ public class AuthController {
                                   "message": "요청에 성공했습니다.",
                                   "result": {
                                     "accessToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+                                    "refreshToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
                                   }
                                 }
                                 """))),
@@ -631,25 +631,13 @@ public class AuthController {
                     }))
         })
     @PostMapping("/reissue")
-    public ResponseEntity<ApiResponse<ReissueResponseDto>> reissue(
-        HttpServletRequest request, HttpServletResponse response) {
+    public ResponseEntity<ApiResponse<AuthTokensDto>> reissue(
+        @RequestBody ReissueRequestDto requestDto) {
 
-        // 1. 쿠키에서 Refresh Token 추출
-        String refreshToken = CookieUtil.getCookieValue(request, "refresh");
+        AuthTokensDto tokens = authService.reissue(requestDto.getRefreshToken());
 
-        if (refreshToken == null) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
-        }
-
-        // 2. 토큰 재발급 (Service)
-        AuthTokensDto tokens = authService.reissue(refreshToken);
-
-        // 3. 새로운 Refresh Token을 쿠키에 저장
-        response.addCookie(CookieUtil.createRefreshTokenCookie(tokens.getRefreshToken()));
-
-        // 4. 새로운 Access Token 응답
         return ResponseEntity.ok(
-            ApiResponse.onSuccess(new ReissueResponseDto(tokens.getAccessToken())));
+            ApiResponse.onSuccess(tokens));
     }
 
     @Operation(summary = "아이디 찾기", description = "해시 기반 검색하여 휴대폰 번호로 아이디를 찾습니다.")

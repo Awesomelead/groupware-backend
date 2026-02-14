@@ -1,5 +1,7 @@
 package kr.co.awesomelead.groupware_backend.domain.auth.service;
 
+import java.util.Collection;
+import java.util.Iterator;
 import kr.co.awesomelead.groupware_backend.domain.aligo.service.PhoneAuthService;
 import kr.co.awesomelead.groupware_backend.domain.auth.dto.request.LoginRequestDto;
 import kr.co.awesomelead.groupware_backend.domain.auth.dto.request.ResetPasswordByEmailRequestDto;
@@ -9,7 +11,6 @@ import kr.co.awesomelead.groupware_backend.domain.auth.dto.request.SignupRequest
 import kr.co.awesomelead.groupware_backend.domain.auth.dto.response.AuthTokensDto;
 import kr.co.awesomelead.groupware_backend.domain.auth.dto.response.FindEmailResponseDto;
 import kr.co.awesomelead.groupware_backend.domain.auth.dto.response.LoginResponseDto;
-import kr.co.awesomelead.groupware_backend.domain.auth.dto.response.LoginiResultDto;
 import kr.co.awesomelead.groupware_backend.domain.auth.dto.response.SignupResponseDto;
 import kr.co.awesomelead.groupware_backend.domain.auth.entity.RefreshToken;
 import kr.co.awesomelead.groupware_backend.domain.auth.util.JWTUtil;
@@ -18,10 +19,8 @@ import kr.co.awesomelead.groupware_backend.domain.user.mapper.UserMapper;
 import kr.co.awesomelead.groupware_backend.domain.user.repository.UserRepository;
 import kr.co.awesomelead.groupware_backend.global.error.CustomException;
 import kr.co.awesomelead.groupware_backend.global.error.ErrorCode;
-
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
@@ -29,9 +28,6 @@ import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
-import java.util.Collection;
-import java.util.Iterator;
 
 @Slf4j
 @Service
@@ -90,11 +86,11 @@ public class AuthService {
         return new SignupResponseDto(savedUser.getId(), savedUser.getEmail());
     }
 
-    public LoginiResultDto login(LoginRequestDto requestDto) {
+    public LoginResponseDto login(LoginRequestDto requestDto) {
         // 1. 인증 처리
         UsernamePasswordAuthenticationToken authToken =
-                new UsernamePasswordAuthenticationToken(
-                        requestDto.getEmail(), requestDto.getPassword(), null);
+            new UsernamePasswordAuthenticationToken(
+                requestDto.getEmail(), requestDto.getPassword(), null);
 
         Authentication authentication = authenticationManager.authenticate(authToken);
 
@@ -117,20 +113,21 @@ public class AuthService {
 
         // 6. 사용자 정보 조회
         User user =
-                userRepository
-                        .findByEmail(username)
-                        .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
+            userRepository
+                .findByEmail(username)
+                .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
 
         // 7. 응답 생성
         LoginResponseDto loginResponseDto =
-                new LoginResponseDto(
-                        accessToken,
-                        user.getId(),
-                        user.getNameKor(),
-                        user.getNameEng(),
-                        user.getPosition());
+            new LoginResponseDto(
+                accessToken,
+                refreshToken,
+                user.getId(),
+                user.getNameKor(),
+                user.getNameEng(),
+                user.getPosition());
 
-        return new LoginiResultDto(loginResponseDto, refreshToken);
+        return loginResponseDto;
     }
 
     public void logout(String refreshToken) {
@@ -168,9 +165,9 @@ public class AuthService {
         // 2. 해시로 사용자 찾기
         String phoneNumberHash = User.hashValue(phoneNumber);
         User user =
-                userRepository
-                        .findByPhoneNumberHash(phoneNumberHash)
-                        .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
+            userRepository
+                .findByPhoneNumberHash(phoneNumberHash)
+                .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
 
         // 3. 이름 검증
         if (!user.getNameKor().equals(name)) {
@@ -206,9 +203,9 @@ public class AuthService {
         }
         // 3. 이메일로 사용자 찾기
         User user =
-                userRepository
-                        .findByEmail(requestDto.getEmail())
-                        .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
+            userRepository
+                .findByEmail(requestDto.getEmail())
+                .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
 
         // 4. 해당 유저의 비밀번호 변경
         user.setPassword(bCryptPasswordEncoder.encode(requestDto.getNewPassword()));
@@ -224,9 +221,9 @@ public class AuthService {
 
         // 1. 이메일로 사용자 조회
         User user =
-                userRepository
-                        .findByEmail(requestDto.getEmail())
-                        .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
+            userRepository
+                .findByEmail(requestDto.getEmail())
+                .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
 
         // 2. 휴대폰 인증 여부 확인
         if (!phoneAuthService.isPhoneVerified(requestDto.getPhoneNumber())) {
@@ -262,9 +259,9 @@ public class AuthService {
 
         // 2. 사용자 조회
         User user =
-                userRepository
-                        .findById(userId)
-                        .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
+            userRepository
+                .findById(userId)
+                .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
 
         // 3. 현재 비밀번호 확인
         if (!bCryptPasswordEncoder.matches(requestDto.getCurrentPassword(), user.getPassword())) {
@@ -288,9 +285,9 @@ public class AuthService {
     public void deleteUser(String email) {
         // 1. 사용자 찾기
         User user =
-                userRepository
-                        .findByEmail(email)
-                        .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
+            userRepository
+                .findByEmail(email)
+                .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
 
         // 2. 해당 사용자 계정 삭제
         userRepository.delete(user);

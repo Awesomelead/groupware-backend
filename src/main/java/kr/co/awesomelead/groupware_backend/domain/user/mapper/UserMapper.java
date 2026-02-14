@@ -31,7 +31,6 @@ public interface UserMapper {
     @Mapping(target = "annualLeave", ignore = true)
     @Mapping(target = "visits", ignore = true)
     @Mapping(target = "checkSheets", ignore = true)
-    @Mapping(target = "leaveRequests", ignore = true)
     @Mapping(target = "payslips", ignore = true)
     @Mapping(target = "sentMessages", ignore = true)
     @Mapping(target = "receivedMessages", ignore = true)

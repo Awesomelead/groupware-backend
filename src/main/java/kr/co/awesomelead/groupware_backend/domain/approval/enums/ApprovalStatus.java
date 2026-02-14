@@ -1,5 +1,7 @@
 package kr.co.awesomelead.groupware_backend.domain.approval.enums;
 
+import com.fasterxml.jackson.annotation.JsonValue;
+
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 
@@ -13,4 +15,9 @@ public enum ApprovalStatus {
     CANCELED("취소"); // 기안자가 상신을 취소함 (선택 사항)
 
     private final String description;
+
+    @JsonValue
+    public String getDescription() {
+        return description;
+    }
 }

@@ -47,6 +47,10 @@ public enum ErrorCode {
     INVALID_JOB_TYPE_FOR_ADMIN_ROLE(HttpStatus.BAD_REQUEST, "관리자 역할에는 관리직 직군만 할당할 수 있습니다."),
     REJECTION_REASON_REQUIRED(HttpStatus.BAD_REQUEST, "반려 시 반려 사유가 반드시 필요합니다."),
     INVALID_APPROVAL_STEP(HttpStatus.BAD_REQUEST, "결재선은 최소 한 명이 필요합니다."),
+    ALREADY_PROCESSED_STEP(HttpStatus.BAD_REQUEST, "이미 처리된 결재 단계입니다."),
+    NOT_YOUR_TURN(HttpStatus.BAD_REQUEST, "아직 본인의 결재 순서가 아닙니다."),
+    NOT_APPROVER(HttpStatus.FORBIDDEN, "해당 결재 문서의 결재 대상자가 아닙니다."),
+    APPROVAL_NOT_FOUND(HttpStatus.NOT_FOUND, "해당 결재 문서를 찾을 수 없습니다."),
 
     // 401 Unauthorized
     INVALID_TOKEN(HttpStatus.UNAUTHORIZED, "유효하지 않은 토큰입니다."),

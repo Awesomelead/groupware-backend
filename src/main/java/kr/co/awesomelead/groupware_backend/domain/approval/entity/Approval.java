@@ -18,21 +18,18 @@ import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
 import jakarta.persistence.Transient;
-
+import java.util.ArrayList;
+import java.util.List;
 import kr.co.awesomelead.groupware_backend.domain.approval.enums.ApprovalStatus;
 import kr.co.awesomelead.groupware_backend.domain.approval.enums.DocumentType;
 import kr.co.awesomelead.groupware_backend.domain.approval.enums.RetentionPeriod;
 import kr.co.awesomelead.groupware_backend.domain.department.entity.Department;
 import kr.co.awesomelead.groupware_backend.domain.user.entity.User;
-
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
-
-import java.util.ArrayList;
-import java.util.List;
 
 @Entity
 @Getter
@@ -73,6 +70,9 @@ public abstract class Approval {
     private Department draftDepartment; // 기안 시점의 부서 (스냅샷)
 
     @OneToMany(mappedBy = "approval", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<ApprovalStep> steps = new ArrayList<>();
+
+    @OneToMany(mappedBy = "approval", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<ApprovalParticipant> participants = new ArrayList<>(); // 참조 및 열람자
 
     @OneToMany(mappedBy = "approval", cascade = CascadeType.ALL, orphanRemoval = true)
@@ -80,4 +80,11 @@ public abstract class Approval {
 
     @Transient
     public abstract DocumentType getDocumentType();
+
+    public void addStep(ApprovalStep step) {
+        this.steps.add(step);
+        if (step.getApproval() != this) {
+            step.setApproval(this);
+        }
+    }
 }

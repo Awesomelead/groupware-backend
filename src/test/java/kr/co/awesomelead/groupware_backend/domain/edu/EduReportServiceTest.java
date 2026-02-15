@@ -33,7 +33,7 @@ import kr.co.awesomelead.groupware_backend.domain.user.enums.Status;
 import kr.co.awesomelead.groupware_backend.domain.user.repository.UserRepository;
 import kr.co.awesomelead.groupware_backend.global.error.CustomException;
 import kr.co.awesomelead.groupware_backend.global.error.ErrorCode;
-import kr.co.awesomelead.groupware_backend.global.infra.s3.S3Service;
+import kr.co.awesomelead.groupware_backend.global.infra.s3.service.S3Service;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;

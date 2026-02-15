@@ -12,7 +12,7 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 
-import kr.co.awesomelead.groupware_backend.domain.approval.enums.ApprovalStatus;
+import kr.co.awesomelead.groupware_backend.domain.approval.enums.ParticipantType;
 import kr.co.awesomelead.groupware_backend.domain.user.entity.User;
 
 import lombok.AccessLevel;
@@ -22,50 +22,28 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
-import java.time.LocalDateTime;
-
 @Entity
 @Getter
 @Setter
 @Builder
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @AllArgsConstructor
-@Table(name = "approval_steps")
-public class ApprovalStep {
+@Table(name = "approval_participants")
+public class ApprovalParticipant {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.AUTO)
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "approval_id", nullable = false)
-    private Approval approval; // 연결된 결재 문서 (결재)
+    private Approval approval; // 연결된 결재 문서
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "approver_id", nullable = false)
-    private User approver; // 승인자
-
-    @Column(nullable = false)
-    private Integer sequence; // 단계 (1, 2, 3...)
+    @JoinColumn(name = "user_id", nullable = false)
+    private User user; // 참여하는 유저
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 20)
-    private ApprovalStatus status; // 승인상태 (PENDING, APPROVED, REJECTED)
-
-    private LocalDateTime processedAt; // 처리시간
-
-    @Column(length = 1000)
-    private String comment; // 의견 (반려 사유 등)
-
-    public void approve(String comment) {
-        this.status = ApprovalStatus.APPROVED;
-        this.comment = comment;
-        this.processedAt = LocalDateTime.now();
-    }
-
-    public void reject(String comment) {
-        this.status = ApprovalStatus.REJECTED;
-        this.comment = comment;
-        this.processedAt = LocalDateTime.now();
-    }
+    private ParticipantType participantType; // 참여 유형 (REFERRER, VIEWER)
 }

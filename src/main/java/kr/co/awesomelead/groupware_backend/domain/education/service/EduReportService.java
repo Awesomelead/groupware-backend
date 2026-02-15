@@ -20,7 +20,7 @@ import kr.co.awesomelead.groupware_backend.domain.user.enums.Role;
 import kr.co.awesomelead.groupware_backend.domain.user.repository.UserRepository;
 import kr.co.awesomelead.groupware_backend.global.error.CustomException;
 import kr.co.awesomelead.groupware_backend.global.error.ErrorCode;
-import kr.co.awesomelead.groupware_backend.global.infra.s3.S3Service;
+import kr.co.awesomelead.groupware_backend.global.infra.s3.service.S3Service;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;

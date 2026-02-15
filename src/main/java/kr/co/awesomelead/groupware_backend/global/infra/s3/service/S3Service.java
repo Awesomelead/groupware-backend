@@ -1,4 +1,4 @@
-package kr.co.awesomelead.groupware_backend.global.infra.s3;
+package kr.co.awesomelead.groupware_backend.global.infra.s3.service;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;

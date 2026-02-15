@@ -6,7 +6,7 @@ import kr.co.awesomelead.groupware_backend.domain.notice.dto.response.NoticeSumm
 import kr.co.awesomelead.groupware_backend.domain.notice.entity.Notice;
 import kr.co.awesomelead.groupware_backend.domain.notice.entity.NoticeAttachment;
 import kr.co.awesomelead.groupware_backend.domain.user.entity.User;
-import kr.co.awesomelead.groupware_backend.global.infra.s3.S3Service;
+import kr.co.awesomelead.groupware_backend.global.infra.s3.service.S3Service;
 
 import org.mapstruct.Context;
 import org.mapstruct.Mapper;

@@ -43,7 +43,7 @@ public class ApprovalService {
         // 3. 공통 필수 정보 세팅 (스냅샷 포함)
         approval.setDrafter(drafter);
         approval.setDraftDepartment(drafter.getDepartment()); // 기안 당시 부서 고정
-        approval.setStatus(ApprovalStatus.PENDING);           // 최초 상태는 대기
+        approval.setStatus(ApprovalStatus.PENDING); // 최초 상태는 대기
 
         // 4. 연관관계 맵핑 (결재선, 참조자, 첨부파일)
         setupApprovalSteps(approval, dto.getApprovalSteps());
@@ -104,5 +104,25 @@ public class ApprovalService {
             attachment.setApproval(approval); // 외래키 연결
             approval.getAttachments().add(attachment);
         }
+    }
+
+    public void approveApproval(Long approvalId, Long approverId, String comment) {
+        Approval approval = approvalRepository.findById(approvalId)
+            .orElseThrow(() -> new CustomException(ErrorCode.APPROVAL_NOT_FOUND));
+
+        User approver = userRepository.findById(approverId)
+            .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
+
+        approval.approve(approver, comment);
+    }
+
+    public void rejectApproval(Long approvalId, Long approverId, String comment) {
+        Approval approval = approvalRepository.findById(approvalId)
+            .orElseThrow(() -> new CustomException(ErrorCode.APPROVAL_NOT_FOUND));
+
+        User approver = userRepository.findById(approverId)
+            .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
+
+        approval.reject(approver, comment);
     }
 }

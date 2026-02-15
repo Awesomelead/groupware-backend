@@ -16,15 +16,19 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.Lob;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToMany;
+import jakarta.persistence.OrderBy;
 import jakarta.persistence.Table;
 import jakarta.persistence.Transient;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 import kr.co.awesomelead.groupware_backend.domain.approval.enums.ApprovalStatus;
 import kr.co.awesomelead.groupware_backend.domain.approval.enums.DocumentType;
 import kr.co.awesomelead.groupware_backend.domain.approval.enums.RetentionPeriod;
 import kr.co.awesomelead.groupware_backend.domain.department.entity.Department;
 import kr.co.awesomelead.groupware_backend.domain.user.entity.User;
+import kr.co.awesomelead.groupware_backend.global.error.CustomException;
+import kr.co.awesomelead.groupware_backend.global.error.ErrorCode;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -70,6 +74,7 @@ public abstract class Approval {
     private Department draftDepartment; // 기안 시점의 부서 (스냅샷)
 
     @OneToMany(mappedBy = "approval", cascade = CascadeType.ALL, orphanRemoval = true)
+    @OrderBy("sequence ASC")
     private List<ApprovalStep> steps = new ArrayList<>();
 
     @OneToMany(mappedBy = "approval", cascade = CascadeType.ALL, orphanRemoval = true)
@@ -86,5 +91,64 @@ public abstract class Approval {
         if (step.getApproval() != this) {
             step.setApproval(this);
         }
+    }
+
+    public void approve(User approver, String comment) {
+        ApprovalStep myStep = findMyStep(approver);
+        validateStepPending(myStep);
+        validateMyTurn(myStep);
+
+        myStep.approve(comment);
+
+        // 다음 단계가 있으면 WAITING → PENDING 전환
+        activateNextStep(myStep.getSequence());
+
+        // 모든 step이 APPROVED이면 문서 전체 승인 처리
+        boolean allApproved = steps.stream()
+            .allMatch(s -> s.getStatus() == ApprovalStatus.APPROVED);
+        if (allApproved) {
+            this.status = ApprovalStatus.APPROVED;
+        }
+    }
+
+    public void reject(User approver, String comment) {
+        ApprovalStep myStep = findMyStep(approver);
+        validateStepPending(myStep);
+        validateMyTurn(myStep);
+
+        myStep.reject(comment);
+        this.status = ApprovalStatus.REJECTED;
+    }
+
+    private ApprovalStep findMyStep(User approver) {
+        return steps.stream()
+            .filter(s -> s.getApprover().getId().equals(approver.getId()))
+            .findFirst()
+            .orElseThrow(() -> new CustomException(ErrorCode.NOT_APPROVER));
+    }
+
+    private void validateStepPending(ApprovalStep step) {
+        if (step.getStatus() != ApprovalStatus.PENDING) {
+            throw new CustomException(ErrorCode.ALREADY_PROCESSED_STEP);
+        }
+    }
+
+    private void validateMyTurn(ApprovalStep myStep) {
+        ApprovalStep currentStep = steps.stream()
+            .filter(s -> s.getStatus() == ApprovalStatus.PENDING)
+            .min(Comparator.comparingInt(ApprovalStep::getSequence))
+            .orElseThrow(() -> new CustomException(ErrorCode.ALREADY_PROCESSED_STEP));
+
+        if (!currentStep.getId().equals(myStep.getId())) {
+            throw new CustomException(ErrorCode.NOT_YOUR_TURN);
+        }
+    }
+
+    private void activateNextStep(int approvedSequence) {
+        steps.stream()
+            .filter(s -> s.getSequence() > approvedSequence
+                && s.getStatus() == ApprovalStatus.WAITING)
+            .min(Comparator.comparingInt(ApprovalStep::getSequence))
+            .ifPresent(next -> next.setStatus(ApprovalStatus.PENDING));
     }
 }

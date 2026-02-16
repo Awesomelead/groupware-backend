@@ -68,6 +68,8 @@ jobs:
             DB_USERNAME=${{ secrets.DB_USERNAME }}
             DB_PASSWORD=${{ secrets.DB_PASSWORD }}
             JWT_SECRET=${{ secrets.JWT_SECRET }}
+            JWT_ACCESS_VALIDATION=${{ secrets.JWT_ACCESS_VALIDATION }}
+            JWT_REFRESH_VALIDATION=${{ secrets.JWT_REFRESH_VALIDATION }}
             AWS_S3_ACCESS_KEY=${{ secrets.AWS_S3_ACCESS_KEY }}
             AWS_S3_SECRET_KEY=${{ secrets.AWS_S3_SECRET_KEY }}
             AWS_S3_BUCKET=${{ secrets.AWS_S3_BUCKET }}

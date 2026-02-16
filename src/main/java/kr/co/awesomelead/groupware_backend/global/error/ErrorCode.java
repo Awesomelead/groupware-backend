@@ -16,7 +16,7 @@ public enum ErrorCode {
     PASSWORD_MISMATCH(HttpStatus.BAD_REQUEST, "비밀번호가 일치하지 않습니다."),
     VISIT_ALREADY_CHECKED_OUT(HttpStatus.BAD_REQUEST, "이미 체크아웃된 방문정보입니다."),
     VISITOR_PASSWORD_REQUIRED_FOR_PRE_REGISTRATION(
-        HttpStatus.BAD_REQUEST, "사전 방문 예약 시 내방객 비밀번호가 필요합니다."),
+            HttpStatus.BAD_REQUEST, "사전 방문 예약 시 내방객 비밀번호가 필요합니다."),
     DEPARTMENT_ID_REQUIRED(HttpStatus.BAD_REQUEST, "부서교육인 경우 부서 ID가 필요합니다."),
     ALREADY_MARKED_ATTENDANCE(HttpStatus.BAD_REQUEST, "이미 출석이 체크된 교육입니다."),
     NO_SIGNATURE_PROVIDED(HttpStatus.BAD_REQUEST, "서명이 제공되지 않았습니다."),
@@ -51,6 +51,7 @@ public enum ErrorCode {
     NOT_YOUR_TURN(HttpStatus.BAD_REQUEST, "아직 본인의 결재 순서가 아닙니다."),
     NOT_APPROVER(HttpStatus.FORBIDDEN, "해당 결재 문서의 결재 대상자가 아닙니다."),
     APPROVAL_NOT_FOUND(HttpStatus.NOT_FOUND, "해당 결재 문서를 찾을 수 없습니다."),
+    INVALID_LEAVE_DETAIL_TYPE(HttpStatus.BAD_REQUEST, "휴가 유형에 맞지 않는 소분류입니다."),
 
     // 401 Unauthorized
     INVALID_TOKEN(HttpStatus.UNAUTHORIZED, "유효하지 않은 토큰입니다."),

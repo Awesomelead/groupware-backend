@@ -8,7 +8,7 @@ import kr.co.awesomelead.groupware_backend.domain.education.entity.EduAttachment
 import kr.co.awesomelead.groupware_backend.domain.education.entity.EduAttendance;
 import kr.co.awesomelead.groupware_backend.domain.education.entity.EduReport;
 import kr.co.awesomelead.groupware_backend.domain.user.entity.User;
-import kr.co.awesomelead.groupware_backend.global.infra.s3.S3Service;
+import kr.co.awesomelead.groupware_backend.global.infra.s3.service.S3Service;
 
 import org.mapstruct.Context;
 import org.mapstruct.Mapper;

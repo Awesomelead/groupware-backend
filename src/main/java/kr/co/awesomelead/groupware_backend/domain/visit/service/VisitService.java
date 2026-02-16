@@ -30,7 +30,7 @@ import kr.co.awesomelead.groupware_backend.domain.visit.mapper.VisitMapper;
 import kr.co.awesomelead.groupware_backend.domain.visit.repository.VisitRepository;
 import kr.co.awesomelead.groupware_backend.global.error.CustomException;
 import kr.co.awesomelead.groupware_backend.global.error.ErrorCode;
-import kr.co.awesomelead.groupware_backend.global.infra.s3.S3Service;
+import kr.co.awesomelead.groupware_backend.global.infra.s3.service.S3Service;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;

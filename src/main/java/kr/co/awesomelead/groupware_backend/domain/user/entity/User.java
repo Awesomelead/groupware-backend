@@ -27,7 +27,6 @@ import kr.co.awesomelead.groupware_backend.domain.annualleave.entity.AnnualLeave
 import kr.co.awesomelead.groupware_backend.domain.checksheet.entity.CheckSheet;
 import kr.co.awesomelead.groupware_backend.domain.department.entity.Department;
 import kr.co.awesomelead.groupware_backend.domain.department.enums.Company;
-import kr.co.awesomelead.groupware_backend.domain.leaverequest.entity.LeaveRequest;
 import kr.co.awesomelead.groupware_backend.domain.message.entity.Message;
 import kr.co.awesomelead.groupware_backend.domain.payslip.entity.Payslip;
 import kr.co.awesomelead.groupware_backend.domain.user.enums.Authority;
@@ -155,11 +154,6 @@ public class User {
     @OneToMany(mappedBy = "user", fetch = FetchType.LAZY)
     @JsonManagedReference
     private List<CheckSheet> checkSheets = new ArrayList<>();
-
-    @Builder.Default
-    @OneToMany(mappedBy = "user", fetch = FetchType.LAZY)
-    @JsonManagedReference
-    private List<LeaveRequest> leaveRequests = new ArrayList<>();
 
     @Builder.Default
     @OneToMany(mappedBy = "user", fetch = FetchType.LAZY)

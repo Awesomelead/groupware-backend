@@ -21,6 +21,7 @@ import kr.co.awesomelead.groupware_backend.global.error.ErrorCode;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
@@ -45,6 +46,9 @@ public class AuthService {
     private final AuthenticationManager authenticationManager;
     private final JWTUtil jwtUtil;
     private final RefreshTokenService refreshTokenService;
+
+    @Value("${spring.jwt.access-validation}")
+    private long accessTokenValidation;
 
     @Transactional
     public SignupResponseDto signup(SignupRequestDto joinDto) {
@@ -106,10 +110,8 @@ public class AuthService {
         GrantedAuthority auth = iterator.next();
         String role = auth.getAuthority().replace("ROLE_", "");
 
-        //        // 4. Access Token 생성 (1시간 유효)
-        //        String accessToken = jwtUtil.createJwt(username, role, 60 * 60 * 1000L);
-        // 4. Access Token 생성 (2분 유효) - 리다이렉트 테스트를 위함
-        String accessToken = jwtUtil.createJwt(username, role, 1 * 60 * 1000L);
+        // 4. Access Token 생성
+        String accessToken = jwtUtil.createJwt(username, role, accessTokenValidation);
 
         // 5. Refresh Token 생성 및 DB 저장
         String refreshToken = refreshTokenService.createAndSaveRefreshToken(username, role);
@@ -151,8 +153,8 @@ public class AuthService {
         String username = jwtUtil.getUsername(storedToken.getTokenValue());
         String role = jwtUtil.getRole(storedToken.getTokenValue());
 
-        // 3. 새로운 Access Token 생성 (1시간 유효)
-        String newAccessToken = jwtUtil.createJwt(username, role, 60 * 60 * 1000L);
+        // 3. 새로운 Access Token 생성
+        String newAccessToken = jwtUtil.createJwt(username, role, accessTokenValidation);
 
         // 4. 새로운 Refresh Token 생성 및 DB 업데이트
         String newRefreshToken = refreshTokenService.createAndSaveRefreshToken(username, role);

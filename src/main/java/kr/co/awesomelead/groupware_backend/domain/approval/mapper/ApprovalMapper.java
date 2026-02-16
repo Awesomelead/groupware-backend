@@ -21,10 +21,7 @@ import org.mapstruct.ReportingPolicy;
 import org.mapstruct.SubclassExhaustiveStrategy;
 import org.mapstruct.SubclassMapping;
 
-@Mapper(
-    componentModel = "spring",
-    unmappedTargetPolicy = ReportingPolicy.IGNORE
-)
+@Mapper(componentModel = "spring", unmappedTargetPolicy = ReportingPolicy.IGNORE)
 public interface ApprovalMapper {
 
     @BeanMapping(subclassExhaustiveStrategy = SubclassExhaustiveStrategy.RUNTIME_EXCEPTION)
@@ -36,30 +33,45 @@ public interface ApprovalMapper {
     @SubclassMapping(source = BasicApprovalCreateRequestDto.class, target = BasicApproval.class)
     Approval toEntity(ApprovalCreateRequestDto dto);
 
-    @Mapping(target = "drafter", ignore = true)        // 서비스에서 세션 정보로 주입
-    @Mapping(target = "draftDepartment", ignore = true) // 서비스에서 스냅샷으로 주입
-    @Mapping(target = "participants", ignore = true)    // 별도 로직 처리
+    @Mapping(target = "drafter", ignore = true)
+    @Mapping(target = "draftDepartment", ignore = true)
+    @Mapping(target = "participants", ignore = true)
     @Mapping(target = "attachments", ignore = true)
-        // 별도 로직 처리
+    @Mapping(target = "steps", ignore = true)
     LeaveApproval toLeaveEntity(LeaveApprovalCreateRequestDto dto);
 
     @Mapping(target = "drafter", ignore = true)
     @Mapping(target = "draftDepartment", ignore = true)
+    @Mapping(target = "participants", ignore = true)
+    @Mapping(target = "attachments", ignore = true)
+    @Mapping(target = "steps", ignore = true)
     CarFuelApproval toCarFuelEntity(CarFuelApprovalCreateRequestDto dto);
 
     @Mapping(target = "drafter", ignore = true)
     @Mapping(target = "draftDepartment", ignore = true)
+    @Mapping(target = "participants", ignore = true)
+    @Mapping(target = "attachments", ignore = true)
+    @Mapping(target = "steps", ignore = true)
     ExpenseDraftApproval toExpenseEntity(ExpenseDraftApprovalCreateRequestDto dto);
 
     @Mapping(target = "drafter", ignore = true)
     @Mapping(target = "draftDepartment", ignore = true)
+    @Mapping(target = "participants", ignore = true)
+    @Mapping(target = "attachments", ignore = true)
+    @Mapping(target = "steps", ignore = true)
     OverseasTripApproval toOverseasEntity(OverseasTripApprovalCreateRequestDto dto);
 
     @Mapping(target = "drafter", ignore = true)
     @Mapping(target = "draftDepartment", ignore = true)
+    @Mapping(target = "participants", ignore = true)
+    @Mapping(target = "attachments", ignore = true)
+    @Mapping(target = "steps", ignore = true)
     WelfareExpenseApproval toWelfareEntity(WelfareExpenseApprovalCreateRequestDto dto);
 
     @Mapping(target = "drafter", ignore = true)
     @Mapping(target = "draftDepartment", ignore = true)
+    @Mapping(target = "participants", ignore = true)
+    @Mapping(target = "attachments", ignore = true)
+    @Mapping(target = "steps", ignore = true)
     BasicApproval toBasicEntity(BasicApprovalCreateRequestDto dto);
 }

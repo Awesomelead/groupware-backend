@@ -17,18 +17,15 @@ import lombok.Setter;
 
 @Getter
 @Setter
-@JsonTypeInfo(
-    use = JsonTypeInfo.Id.NAME,
-    include = JsonTypeInfo.As.EXISTING_PROPERTY,
-    property = "documentType", // 클라이언트가 보내는 JSON의 이 필드값으로 하위 클래스 판단
-    visible = true
-)
+@JsonTypeInfo(use = JsonTypeInfo.Id.NAME, include = JsonTypeInfo.As.EXISTING_PROPERTY, property = "documentType",
+    visible = true)
 @JsonSubTypes({
-    @JsonSubTypes.Type(value = LeaveApprovalCreateRequestDto.class, name = "LEAVE"),
-    @JsonSubTypes.Type(value = CarFuelApprovalCreateRequestDto.class, name = "CAR_FUEL"),
-    @JsonSubTypes.Type(value = ExpenseDraftApprovalCreateRequestDto.class, name = "EXPENSE_DRAFT"),
-    @JsonSubTypes.Type(value = OverseasTripApprovalCreateRequestDto.class, name = "OVERSEAS_TRIP"),
-    @JsonSubTypes.Type(value = BasicApprovalCreateRequestDto.class, name = "BASIC")
+    @JsonSubTypes.Type(value = LeaveApprovalCreateRequestDto.class, name = "근태신청서"),
+    @JsonSubTypes.Type(value = CarFuelApprovalCreateRequestDto.class, name = "차량유류정산지출결의"),
+    @JsonSubTypes.Type(value = ExpenseDraftApprovalCreateRequestDto.class, name = "기안및지출결의"),
+    @JsonSubTypes.Type(value = OverseasTripApprovalCreateRequestDto.class, name = "국외출장여비정산서"),
+    @JsonSubTypes.Type(value = BasicApprovalCreateRequestDto.class, name = "기본양식"),
+    @JsonSubTypes.Type(value = WelfareExpenseApprovalCreateRequestDto.class, name = "기안및지출결의_복리후생")
 })
 @Schema(description = "전자결재 생성 요청 공통 DTO")
 public abstract class ApprovalCreateRequestDto {
@@ -36,11 +33,11 @@ public abstract class ApprovalCreateRequestDto {
     @Schema(description = "결재 제목", example = "2026년 3월 하계 휴가 신청의 건")
     @NotBlank(message = "제목은 필수입니다.")
     @Size(max = 200)
-    private String title;          // 제목
+    private String title; // 제목
 
     @Schema(description = "결재 본문 (HTML 형식)", example = "<p>2026년 3월 2일부터 3일까지 연차 휴가 신청드립니다.</p>")
     @NotBlank(message = "본문 내용은 필수입니다.")
-    private String content;        // 에디터 본문 (HTML)
+    private String content; // 에디터 본문 (HTML)
 
     @Schema(description = "문서 종류", example = "LEAVE")
     @NotNull(message = "문서 종류를 선택해주세요.")

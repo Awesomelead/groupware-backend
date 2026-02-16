@@ -3,6 +3,8 @@ package kr.co.awesomelead.groupware_backend.domain.approval.entity.document;
 import jakarta.persistence.DiscriminatorValue;
 import jakarta.persistence.Entity;
 
+import kr.co.awesomelead.groupware_backend.domain.approval.enums.DocumentType;
+
 import lombok.Getter;
 import lombok.Setter;
 
@@ -12,5 +14,8 @@ import lombok.Setter;
 @Setter
 public class WelfareExpenseApproval extends ExpenseDraftApproval {
 
-    private String agreementDepartment; // 합의부서/수신부서
+    @Override
+    public DocumentType getDocumentType() {
+        return DocumentType.WELFARE_EXPENSE;
+    }
 }

@@ -49,7 +49,7 @@ public class ApprovalStep {
     private Integer sequence; // 단계 (1, 2, 3...)
 
     @Enumerated(EnumType.STRING)
-    @Column(nullable = false, length = 20)
+    @Column(nullable = false, columnDefinition = "ENUM('WAITING','PENDING','APPROVED','REJECTED','CANCELED')")
     private ApprovalStatus status; // 승인상태 (PENDING, APPROVED, REJECTED)
 
     private LocalDateTime processedAt; // 처리시간

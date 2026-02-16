@@ -58,11 +58,11 @@ public abstract class Approval {
     private String content; // 에디터 본문 (HTML 문자열 저장)
 
     @Enumerated(EnumType.STRING)
-    @Column(nullable = false, length = 20)
+    @Column(nullable = false, columnDefinition = "ENUM('WAITING','PENDING','APPROVED','REJECTED','CANCELED')")
     private ApprovalStatus status; // 상태: PENDING, APPROVED, REJECTED 등
 
     @Enumerated(EnumType.STRING)
-    @Column(nullable = false, length = 20)
+    @Column(nullable = false, columnDefinition = "ENUM('FIVE_YEARS','PERMANENT')")
     private RetentionPeriod retentionPeriod; // 보존년한 (Enum 권장)
 
     @ManyToOne(fetch = FetchType.LAZY)
@@ -105,7 +105,7 @@ public abstract class Approval {
 
         // 모든 step이 APPROVED이면 문서 전체 승인 처리
         boolean allApproved = steps.stream()
-            .allMatch(s -> s.getStatus() == ApprovalStatus.APPROVED);
+                .allMatch(s -> s.getStatus() == ApprovalStatus.APPROVED);
         if (allApproved) {
             this.status = ApprovalStatus.APPROVED;
         }
@@ -122,9 +122,9 @@ public abstract class Approval {
 
     private ApprovalStep findMyStep(User approver) {
         return steps.stream()
-            .filter(s -> s.getApprover().getId().equals(approver.getId()))
-            .findFirst()
-            .orElseThrow(() -> new CustomException(ErrorCode.NOT_APPROVER));
+                .filter(s -> s.getApprover().getId().equals(approver.getId()))
+                .findFirst()
+                .orElseThrow(() -> new CustomException(ErrorCode.NOT_APPROVER));
     }
 
     private void validateStepPending(ApprovalStep step) {
@@ -135,9 +135,9 @@ public abstract class Approval {
 
     private void validateMyTurn(ApprovalStep myStep) {
         ApprovalStep currentStep = steps.stream()
-            .filter(s -> s.getStatus() == ApprovalStatus.PENDING)
-            .min(Comparator.comparingInt(ApprovalStep::getSequence))
-            .orElseThrow(() -> new CustomException(ErrorCode.ALREADY_PROCESSED_STEP));
+                .filter(s -> s.getStatus() == ApprovalStatus.PENDING)
+                .min(Comparator.comparingInt(ApprovalStep::getSequence))
+                .orElseThrow(() -> new CustomException(ErrorCode.ALREADY_PROCESSED_STEP));
 
         if (!currentStep.getId().equals(myStep.getId())) {
             throw new CustomException(ErrorCode.NOT_YOUR_TURN);
@@ -146,9 +146,9 @@ public abstract class Approval {
 
     private void activateNextStep(int approvedSequence) {
         steps.stream()
-            .filter(s -> s.getSequence() > approvedSequence
-                && s.getStatus() == ApprovalStatus.WAITING)
-            .min(Comparator.comparingInt(ApprovalStep::getSequence))
-            .ifPresent(next -> next.setStatus(ApprovalStatus.PENDING));
+                .filter(s -> s.getSequence() > approvedSequence
+                        && s.getStatus() == ApprovalStatus.WAITING)
+                .min(Comparator.comparingInt(ApprovalStep::getSequence))
+                .ifPresent(next -> next.setStatus(ApprovalStatus.PENDING));
     }
 }

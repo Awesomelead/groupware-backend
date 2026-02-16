@@ -89,7 +89,6 @@ public class SecurityConfig {
                                         "/api/auth/signup",
                                         "/api/auth/reissue",
                                         "/api/auth/user",
-                                        "/api/reissue",
                                         "/api/auth/verify-phone-code",
                                         "/api/auth/verify-identity",
                                         "/api/auth/verify-email-code",

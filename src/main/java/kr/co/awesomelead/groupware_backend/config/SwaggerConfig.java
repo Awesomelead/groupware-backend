@@ -15,7 +15,7 @@ public class SwaggerConfig {
 
     @Bean
     public OpenAPI openAPI() {
-        Info info = new Info().title("어썸그룹웨어 API").version("v1.0.0").description("어썸그룹웨어 API 입니다");
+        Info info = new Info().title("어썸리드 API").version("v1.0.0").description("어썸리드 API 입니다");
 
         // JWT 인증 스키마 정의
         SecurityScheme securityScheme =

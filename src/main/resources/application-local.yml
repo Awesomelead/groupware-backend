@@ -10,6 +10,8 @@ spring:
 
   jwt:
     secret: ${JWT_SECRET}
+    access-validation: ${ACCESS_VALIDATION}
+    refresh-validation: ${REFRESH_VALIDATION}
   jpa:
     hibernate:
       ddl-auto: update

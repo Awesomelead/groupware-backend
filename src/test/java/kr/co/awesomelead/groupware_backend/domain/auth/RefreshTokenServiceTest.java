@@ -17,6 +17,7 @@ import kr.co.awesomelead.groupware_backend.domain.auth.util.JWTUtil;
 import kr.co.awesomelead.groupware_backend.global.error.CustomException;
 import kr.co.awesomelead.groupware_backend.global.error.ErrorCode;
 
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -24,6 +25,7 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.test.util.ReflectionTestUtils;
 
 import java.time.LocalDateTime;
 import java.util.Optional;
@@ -37,6 +39,14 @@ class RefreshTokenServiceTest {
 
     @InjectMocks private RefreshTokenService refreshTokenService;
 
+    private static final long REFRESH_TOKEN_VALIDATION_MILLIS = 2 * 24 * 60 * 60 * 1000L;
+
+    @BeforeEach
+    void setUp() {
+        ReflectionTestUtils.setField(
+                refreshTokenService, "refreshTokenValidation", REFRESH_TOKEN_VALIDATION_MILLIS);
+    }
+
     @Test
     @DisplayName("Refresh Token 생성 성공 - 기존 토큰 없음")
     void createAndSaveRefreshToken_Success_NoExistingToken() {
@@ -48,6 +58,8 @@ class RefreshTokenServiceTest {
         when(jwtUtil.createJwt(anyString(), anyString(), anyLong()))
                 .thenReturn(generatedTokenValue);
         when(refreshTokenRepository.findByEmail(email)).thenReturn(Optional.empty());
+
+        LocalDateTime before = LocalDateTime.now();
 
         // when
         String resultToken = refreshTokenService.createAndSaveRefreshToken(email, role);
@@ -66,6 +78,7 @@ class RefreshTokenServiceTest {
         assertThat(savedToken.getEmail()).isEqualTo(email);
         assertThat(savedToken.getTokenValue()).isEqualTo(generatedTokenValue);
         assertThat(savedToken.getExpirationDate()).isAfter(LocalDateTime.now());
+        verify(jwtUtil, times(1)).createJwt(email, role, REFRESH_TOKEN_VALIDATION_MILLIS);
     }
 
     @Test
@@ -98,6 +111,7 @@ class RefreshTokenServiceTest {
         verify(refreshTokenRepository, never()).save(any());
         assertThat(existingToken.getTokenValue()).isEqualTo(newGeneratedTokenValue);
         assertThat(existingToken.getExpirationDate()).isAfter(LocalDateTime.now());
+        verify(jwtUtil, times(1)).createJwt(email, role, REFRESH_TOKEN_VALIDATION_MILLIS);
     }
 
     @Test

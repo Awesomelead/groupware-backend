@@ -6,6 +6,7 @@ import io.swagger.v3.oas.models.info.Info;
 import io.swagger.v3.oas.models.security.SecurityRequirement;
 import io.swagger.v3.oas.models.security.SecurityScheme;
 import io.swagger.v3.oas.models.servers.Server;
+
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
@@ -18,23 +19,23 @@ public class SwaggerConfig {
 
         // JWT 인증 스키마 정의
         SecurityScheme securityScheme =
-            new SecurityScheme()
-                .type(SecurityScheme.Type.HTTP)
-                .scheme("bearer")
-                .bearerFormat("JWT")
-                .in(SecurityScheme.In.HEADER)
-                .name("Authorization");
+                new SecurityScheme()
+                        .type(SecurityScheme.Type.HTTP)
+                        .scheme("bearer")
+                        .bearerFormat("JWT")
+                        .in(SecurityScheme.In.HEADER)
+                        .name("Authorization");
 
         // Security Requirement 정의
         SecurityRequirement securityRequirement =
-            new SecurityRequirement().addList("Bearer Authentication");
+                new SecurityRequirement().addList("Bearer Authentication");
 
         return new OpenAPI()
-            .components(
-                new Components()
-                    .addSecuritySchemes("Bearer Authentication", securityScheme))
-            .addSecurityItem(securityRequirement)
-            .addServersItem(new Server().url("/"))
-            .info(info);
+                .components(
+                        new Components()
+                                .addSecuritySchemes("Bearer Authentication", securityScheme))
+                .addSecurityItem(securityRequirement)
+                .addServersItem(new Server().url("/"))
+                .info(info);
     }
 }

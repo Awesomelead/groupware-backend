@@ -11,21 +11,19 @@ import jakarta.validation.constraints.Size;
 import java.util.List;
 import kr.co.awesomelead.groupware_backend.domain.approval.enums.DocumentType;
 import kr.co.awesomelead.groupware_backend.domain.approval.enums.ParticipantType;
-import kr.co.awesomelead.groupware_backend.domain.approval.enums.RetentionPeriod;
 import lombok.Getter;
 import lombok.Setter;
 
 @Getter
 @Setter
-@JsonTypeInfo(use = JsonTypeInfo.Id.NAME, include = JsonTypeInfo.As.EXISTING_PROPERTY, property = "documentType",
-    visible = true)
+@JsonTypeInfo(use = JsonTypeInfo.Id.NAME, include = JsonTypeInfo.As.EXISTING_PROPERTY, property = "documentType", visible = true)
 @JsonSubTypes({
-    @JsonSubTypes.Type(value = LeaveApprovalCreateRequestDto.class, name = "근태신청서"),
-    @JsonSubTypes.Type(value = CarFuelApprovalCreateRequestDto.class, name = "차량유류정산지출결의"),
-    @JsonSubTypes.Type(value = ExpenseDraftApprovalCreateRequestDto.class, name = "기안및지출결의"),
-    @JsonSubTypes.Type(value = OverseasTripApprovalCreateRequestDto.class, name = "국외출장여비정산서"),
-    @JsonSubTypes.Type(value = BasicApprovalCreateRequestDto.class, name = "기본양식"),
-    @JsonSubTypes.Type(value = WelfareExpenseApprovalCreateRequestDto.class, name = "기안및지출결의_복리후생")
+        @JsonSubTypes.Type(value = LeaveApprovalCreateRequestDto.class, name = "근태신청서"),
+        @JsonSubTypes.Type(value = CarFuelApprovalCreateRequestDto.class, name = "차량유류정산지출결의"),
+        @JsonSubTypes.Type(value = ExpenseDraftApprovalCreateRequestDto.class, name = "기안및지출결의"),
+        @JsonSubTypes.Type(value = OverseasTripApprovalCreateRequestDto.class, name = "국외출장여비정산서"),
+        @JsonSubTypes.Type(value = BasicApprovalCreateRequestDto.class, name = "기본양식"),
+        @JsonSubTypes.Type(value = WelfareExpenseApprovalCreateRequestDto.class, name = "기안및지출결의_복리후생")
 })
 @Schema(description = "전자결재 생성 요청 공통 DTO")
 public abstract class ApprovalCreateRequestDto {
@@ -42,10 +40,6 @@ public abstract class ApprovalCreateRequestDto {
     @Schema(description = "문서 종류", example = "LEAVE")
     @NotNull(message = "문서 종류를 선택해주세요.")
     private DocumentType documentType; // 문서 종류 (Enum)
-
-    @Schema(description = "보존년한", example = "FIVE_YEARS")
-    @NotNull(message = "보존년한을 선택해주세요.")
-    private RetentionPeriod retentionPeriod; // 보존년한
 
     @Schema(description = "결재선 리스트 (순서 중요)")
     @NotEmpty(message = "결재선은 최소 1명 이상 지정해야 합니다.")

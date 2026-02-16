@@ -39,7 +39,7 @@ public class ApprovalService {
     public Long createApproval(ApprovalCreateRequestDto dto, Long drafterId) {
         // 1. 기안자 정보 및 부서 스냅샷 확보
         User drafter = userRepository.findById(drafterId)
-            .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
+                .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
 
         // 2. 근태신청서인 경우 LeaveType-LeaveDetailType 검증
         if (dto instanceof LeaveApprovalCreateRequestDto leaveDto) {
@@ -57,6 +57,7 @@ public class ApprovalService {
         approval.setDrafter(drafter);
         approval.setDraftDepartment(drafter.getDepartment()); // 기안 당시 부서 고정
         approval.setStatus(ApprovalStatus.PENDING); // 최초 상태는 대기
+        approval.setRetentionPeriod(approval.getDocumentType().getRetentionPeriod()); // 문서 종류별 고정
 
         // 4. 상세 내역의 양방향 관계 설정 (details → approval)
         setupDetails(approval);
@@ -74,10 +75,10 @@ public class ApprovalService {
         if (approval instanceof CarFuelApproval carFuel && carFuel.getDetails() != null) {
             carFuel.getDetails().forEach(d -> d.setApproval(carFuel));
         } else if (approval instanceof OverseasTripApproval overseas
-            && overseas.getDetails() != null) {
+                && overseas.getDetails() != null) {
             overseas.getDetails().forEach(d -> d.setApproval(overseas));
         } else if (approval instanceof ExpenseDraftApproval expense
-            && expense.getDetails() != null) {
+                && expense.getDetails() != null) {
             // WelfareExpenseApproval도 ExpenseDraftApproval을 상속하므로 여기서 처리됨
             expense.getDetails().forEach(d -> d.setApproval(expense));
         }
@@ -90,14 +91,14 @@ public class ApprovalService {
 
         for (StepRequestDto stepDto : steps) {
             User approver = userRepository.findById(stepDto.getApproverId())
-                .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
+                    .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
 
             ApprovalStep step = ApprovalStep.builder()
-                .approval(approval)
-                .approver(approver)
-                .sequence(stepDto.getSequence())
-                .status(ApprovalStatus.PENDING) // 모든 단계의 초기 상태는 PENDING
-                .build();
+                    .approval(approval)
+                    .approver(approver)
+                    .sequence(stepDto.getSequence())
+                    .status(ApprovalStatus.PENDING) // 모든 단계의 초기 상태는 PENDING
+                    .build();
 
             approval.getSteps().add(step); // 부모 엔티티 리스트에 추가 (CascadeType.ALL 작동)
         }
@@ -110,13 +111,13 @@ public class ApprovalService {
 
         for (ParticipantRequestDto partDto : participants) {
             User user = userRepository.findById(partDto.getUserId())
-                .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
+                    .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
 
             ApprovalParticipant participant = ApprovalParticipant.builder()
-                .approval(approval)
-                .user(user)
-                .participantType(partDto.getParticipantType())
-                .build();
+                    .approval(approval)
+                    .user(user)
+                    .participantType(partDto.getParticipantType())
+                    .build();
 
             approval.getParticipants().add(participant);
         }
@@ -137,20 +138,20 @@ public class ApprovalService {
 
     public void approveApproval(Long approvalId, Long approverId, String comment) {
         Approval approval = approvalRepository.findById(approvalId)
-            .orElseThrow(() -> new CustomException(ErrorCode.APPROVAL_NOT_FOUND));
+                .orElseThrow(() -> new CustomException(ErrorCode.APPROVAL_NOT_FOUND));
 
         User approver = userRepository.findById(approverId)
-            .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
+                .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
 
         approval.approve(approver, comment);
     }
 
     public void rejectApproval(Long approvalId, Long approverId, String comment) {
         Approval approval = approvalRepository.findById(approvalId)
-            .orElseThrow(() -> new CustomException(ErrorCode.APPROVAL_NOT_FOUND));
+                .orElseThrow(() -> new CustomException(ErrorCode.APPROVAL_NOT_FOUND));
 
         User approver = userRepository.findById(approverId)
-            .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
+                .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
 
         approval.reject(approver, comment);
     }

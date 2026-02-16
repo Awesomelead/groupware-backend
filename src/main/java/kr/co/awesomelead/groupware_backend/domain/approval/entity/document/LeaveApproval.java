@@ -10,8 +10,13 @@ import kr.co.awesomelead.groupware_backend.domain.approval.enums.LeaveType;
 
 import java.time.LocalDateTime;
 
+import lombok.Getter;
+import lombok.Setter;
+
 @Entity
 @DiscriminatorValue("LEAVE")
+@Getter
+@Setter
 public class LeaveApproval extends Approval {
 
     private LocalDateTime startDate;

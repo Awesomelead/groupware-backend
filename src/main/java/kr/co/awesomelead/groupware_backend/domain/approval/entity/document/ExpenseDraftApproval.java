@@ -12,8 +12,13 @@ import kr.co.awesomelead.groupware_backend.domain.approval.enums.DocumentType;
 import java.util.ArrayList;
 import java.util.List;
 
+import lombok.Getter;
+import lombok.Setter;
+
 @Entity
 @DiscriminatorValue("EXPENSE_DRAFT")
+@Getter
+@Setter
 public class ExpenseDraftApproval extends Approval {
 
     @OneToMany(mappedBy = "approval", cascade = CascadeType.ALL)

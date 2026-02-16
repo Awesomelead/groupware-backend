@@ -12,8 +12,13 @@ import kr.co.awesomelead.groupware_backend.domain.approval.enums.DocumentType;
 import java.util.ArrayList;
 import java.util.List;
 
+import lombok.Getter;
+import lombok.Setter;
+
 @Entity
 @DiscriminatorValue("CAR_FUEL")
+@Getter
+@Setter
 public class CarFuelApproval extends Approval {
 
     private String agreementDepartment;

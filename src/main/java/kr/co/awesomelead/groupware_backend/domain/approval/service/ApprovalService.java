@@ -4,10 +4,14 @@ import java.util.List;
 import kr.co.awesomelead.groupware_backend.domain.approval.dto.request.ApprovalCreateRequestDto;
 import kr.co.awesomelead.groupware_backend.domain.approval.dto.request.ApprovalCreateRequestDto.ParticipantRequestDto;
 import kr.co.awesomelead.groupware_backend.domain.approval.dto.request.ApprovalCreateRequestDto.StepRequestDto;
+import kr.co.awesomelead.groupware_backend.domain.approval.dto.request.LeaveApprovalCreateRequestDto;
 import kr.co.awesomelead.groupware_backend.domain.approval.entity.Approval;
 import kr.co.awesomelead.groupware_backend.domain.approval.entity.ApprovalAttachment;
 import kr.co.awesomelead.groupware_backend.domain.approval.entity.ApprovalParticipant;
 import kr.co.awesomelead.groupware_backend.domain.approval.entity.ApprovalStep;
+import kr.co.awesomelead.groupware_backend.domain.approval.entity.document.CarFuelApproval;
+import kr.co.awesomelead.groupware_backend.domain.approval.entity.document.ExpenseDraftApproval;
+import kr.co.awesomelead.groupware_backend.domain.approval.entity.document.OverseasTripApproval;
 import kr.co.awesomelead.groupware_backend.domain.approval.enums.ApprovalStatus;
 import kr.co.awesomelead.groupware_backend.domain.approval.mapper.ApprovalMapper;
 import kr.co.awesomelead.groupware_backend.domain.approval.repository.ApprovalAttachmentRepository;
@@ -37,7 +41,16 @@ public class ApprovalService {
         User drafter = userRepository.findById(drafterId)
             .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
 
-        // 2. MapStruct를 이용한 다형성 엔티티 생성
+        // 2. 근태신청서인 경우 LeaveType-LeaveDetailType 검증
+        if (dto instanceof LeaveApprovalCreateRequestDto leaveDto) {
+            try {
+                leaveDto.getLeaveType().validateDetailType(leaveDto.getLeaveDetailType());
+            } catch (IllegalArgumentException e) {
+                throw new CustomException(ErrorCode.INVALID_LEAVE_DETAIL_TYPE);
+            }
+        }
+
+        // 3. MapStruct를 이용한 다형성 엔티티 생성
         Approval approval = approvalMapper.toEntity(dto);
 
         // 3. 공통 필수 정보 세팅 (스냅샷 포함)
@@ -45,13 +58,29 @@ public class ApprovalService {
         approval.setDraftDepartment(drafter.getDepartment()); // 기안 당시 부서 고정
         approval.setStatus(ApprovalStatus.PENDING); // 최초 상태는 대기
 
-        // 4. 연관관계 맵핑 (결재선, 참조자, 첨부파일)
+        // 4. 상세 내역의 양방향 관계 설정 (details → approval)
+        setupDetails(approval);
+
+        // 5. 연관관계 맵핑 (결재선, 참조자, 첨부파일)
         setupApprovalSteps(approval, dto.getApprovalSteps());
         setupParticipants(approval, dto.getParticipants());
         setupAttachments(approval, dto.getAttachmentIds());
 
-        // 5. 최종 저장
+        // 6. 최종 저장
         return approvalRepository.save(approval).getId();
+    }
+
+    private void setupDetails(Approval approval) {
+        if (approval instanceof CarFuelApproval carFuel && carFuel.getDetails() != null) {
+            carFuel.getDetails().forEach(d -> d.setApproval(carFuel));
+        } else if (approval instanceof OverseasTripApproval overseas
+            && overseas.getDetails() != null) {
+            overseas.getDetails().forEach(d -> d.setApproval(overseas));
+        } else if (approval instanceof ExpenseDraftApproval expense
+            && expense.getDetails() != null) {
+            // WelfareExpenseApproval도 ExpenseDraftApproval을 상속하므로 여기서 처리됨
+            expense.getDetails().forEach(d -> d.setApproval(expense));
+        }
     }
 
     private void setupApprovalSteps(Approval approval, List<StepRequestDto> steps) {

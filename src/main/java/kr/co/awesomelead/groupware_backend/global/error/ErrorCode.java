@@ -52,6 +52,7 @@ public enum ErrorCode {
     NOT_APPROVER(HttpStatus.FORBIDDEN, "해당 결재 문서의 결재 대상자가 아닙니다."),
     APPROVAL_NOT_FOUND(HttpStatus.NOT_FOUND, "해당 결재 문서를 찾을 수 없습니다."),
     INVALID_LEAVE_DETAIL_TYPE(HttpStatus.BAD_REQUEST, "휴가 유형에 맞지 않는 소분류입니다."),
+    DUPLICATE_APPROVER(HttpStatus.BAD_REQUEST, "동일한 결재자가 중복되어 있습니다."),
 
     // 401 Unauthorized
     INVALID_TOKEN(HttpStatus.UNAUTHORIZED, "유효하지 않은 토큰입니다."),

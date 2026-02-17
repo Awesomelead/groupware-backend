@@ -277,6 +277,26 @@ public class ApprovalTest {
                         .isInstanceOf(CustomException.class)
                         .hasFieldOrPropertyWithValue("errorCode", ErrorCode.INVALID_LEAVE_DETAIL_TYPE);
             }
+
+            @Test
+            @DisplayName("동일 결재자가 중복된 경우 DUPLICATE_APPROVER 예외 발생")
+            void duplicateApprover_Fail() {
+                BasicApprovalCreateRequestDto dto = new BasicApprovalCreateRequestDto();
+                dto.setTitle("테스트");
+                dto.setContent("본문");
+
+                ApprovalCreateRequestDto.StepRequestDto step1 = new ApprovalCreateRequestDto.StepRequestDto();
+                step1.setApproverId(APPROVER_ID);
+                step1.setSequence(1);
+                ApprovalCreateRequestDto.StepRequestDto step2 = new ApprovalCreateRequestDto.StepRequestDto();
+                step2.setApproverId(APPROVER_ID);
+                step2.setSequence(2);
+                dto.setApprovalSteps(List.of(step1, step2));
+
+                assertThatThrownBy(() -> approvalService.createApproval(dto, DRAFTER_ID))
+                        .isInstanceOf(CustomException.class)
+                        .hasFieldOrPropertyWithValue("errorCode", ErrorCode.DUPLICATE_APPROVER);
+            }
         }
     }
 

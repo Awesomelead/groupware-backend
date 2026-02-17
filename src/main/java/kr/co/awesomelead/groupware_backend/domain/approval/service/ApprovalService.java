@@ -89,6 +89,15 @@ public class ApprovalService {
             throw new CustomException(ErrorCode.INVALID_APPROVAL_STEP);
         }
 
+        // 동일 결재자 중복 검증
+        long distinctCount = steps.stream()
+                .map(StepRequestDto::getApproverId)
+                .distinct()
+                .count();
+        if (distinctCount < steps.size()) {
+            throw new CustomException(ErrorCode.DUPLICATE_APPROVER);
+        }
+
         for (StepRequestDto stepDto : steps) {
             User approver = userRepository.findById(stepDto.getApproverId())
                     .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));

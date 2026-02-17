@@ -31,6 +31,7 @@ public interface ApprovalMapper {
     @SubclassMapping(source = ExpenseDraftApprovalCreateRequestDto.class, target = ExpenseDraftApproval.class)
     @SubclassMapping(source = OverseasTripApprovalCreateRequestDto.class, target = OverseasTripApproval.class)
     @SubclassMapping(source = BasicApprovalCreateRequestDto.class, target = BasicApproval.class)
+    @Mapping(target = "retentionPeriod", ignore = true)
     Approval toEntity(ApprovalCreateRequestDto dto);
 
     @Mapping(target = "drafter", ignore = true)
@@ -38,6 +39,7 @@ public interface ApprovalMapper {
     @Mapping(target = "participants", ignore = true)
     @Mapping(target = "attachments", ignore = true)
     @Mapping(target = "steps", ignore = true)
+    @Mapping(target = "retentionPeriod", ignore = true)
     LeaveApproval toLeaveEntity(LeaveApprovalCreateRequestDto dto);
 
     @Mapping(target = "drafter", ignore = true)
@@ -45,6 +47,7 @@ public interface ApprovalMapper {
     @Mapping(target = "participants", ignore = true)
     @Mapping(target = "attachments", ignore = true)
     @Mapping(target = "steps", ignore = true)
+    @Mapping(target = "retentionPeriod", ignore = true)
     CarFuelApproval toCarFuelEntity(CarFuelApprovalCreateRequestDto dto);
 
     @Mapping(target = "drafter", ignore = true)
@@ -52,6 +55,7 @@ public interface ApprovalMapper {
     @Mapping(target = "participants", ignore = true)
     @Mapping(target = "attachments", ignore = true)
     @Mapping(target = "steps", ignore = true)
+    @Mapping(target = "retentionPeriod", ignore = true)
     ExpenseDraftApproval toExpenseEntity(ExpenseDraftApprovalCreateRequestDto dto);
 
     @Mapping(target = "drafter", ignore = true)
@@ -59,6 +63,7 @@ public interface ApprovalMapper {
     @Mapping(target = "participants", ignore = true)
     @Mapping(target = "attachments", ignore = true)
     @Mapping(target = "steps", ignore = true)
+    @Mapping(target = "retentionPeriod", ignore = true)
     OverseasTripApproval toOverseasEntity(OverseasTripApprovalCreateRequestDto dto);
 
     @Mapping(target = "drafter", ignore = true)
@@ -66,6 +71,7 @@ public interface ApprovalMapper {
     @Mapping(target = "participants", ignore = true)
     @Mapping(target = "attachments", ignore = true)
     @Mapping(target = "steps", ignore = true)
+    @Mapping(target = "retentionPeriod", ignore = true)
     WelfareExpenseApproval toWelfareEntity(WelfareExpenseApprovalCreateRequestDto dto);
 
     @Mapping(target = "drafter", ignore = true)
@@ -73,5 +79,6 @@ public interface ApprovalMapper {
     @Mapping(target = "participants", ignore = true)
     @Mapping(target = "attachments", ignore = true)
     @Mapping(target = "steps", ignore = true)
+    @Mapping(target = "retentionPeriod", ignore = true)
     BasicApproval toBasicEntity(BasicApprovalCreateRequestDto dto);
 }

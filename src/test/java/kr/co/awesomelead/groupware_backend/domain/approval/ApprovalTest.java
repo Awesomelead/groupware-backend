@@ -229,6 +229,54 @@ public class ApprovalTest {
                         .isInstanceOf(CustomException.class)
                         .hasFieldOrPropertyWithValue("errorCode", ErrorCode.USER_NOT_FOUND);
             }
+
+            @Test
+            @DisplayName("휴가 유형에 허용되지 않는 소분류 지정 시 INVALID_LEAVE_DETAIL_TYPE 예외 발생")
+            void leaveWithWrongDetailType_Fail() {
+                LeaveApprovalCreateRequestDto dto = new LeaveApprovalCreateRequestDto();
+                setCommonFields(dto, DocumentType.LEAVE);
+                dto.setStartDate(LocalDateTime.now().plusDays(1));
+                dto.setEndDate(LocalDateTime.now().plusDays(2));
+                dto.setLeaveType(LeaveType.LEAVE);
+                dto.setLeaveDetailType(LeaveDetailType.AM); // LEAVE에 AM은 허용 안됨
+                dto.setReason("테스트");
+
+                assertThatThrownBy(() -> approvalService.createApproval(dto, DRAFTER_ID))
+                        .isInstanceOf(CustomException.class)
+                        .hasFieldOrPropertyWithValue("errorCode", ErrorCode.INVALID_LEAVE_DETAIL_TYPE);
+            }
+
+            @Test
+            @DisplayName("휴가 유형에 소분류 미지정 시 INVALID_LEAVE_DETAIL_TYPE 예외 발생")
+            void leaveWithNullDetailType_Fail() {
+                LeaveApprovalCreateRequestDto dto = new LeaveApprovalCreateRequestDto();
+                setCommonFields(dto, DocumentType.LEAVE);
+                dto.setStartDate(LocalDateTime.now().plusDays(1));
+                dto.setEndDate(LocalDateTime.now().plusDays(2));
+                dto.setLeaveType(LeaveType.LEAVE);
+                dto.setLeaveDetailType(null); // LEAVE는 소분류 필수
+                dto.setReason("테스트");
+
+                assertThatThrownBy(() -> approvalService.createApproval(dto, DRAFTER_ID))
+                        .isInstanceOf(CustomException.class)
+                        .hasFieldOrPropertyWithValue("errorCode", ErrorCode.INVALID_LEAVE_DETAIL_TYPE);
+            }
+
+            @Test
+            @DisplayName("교육 유형에 소분류 지정 시 INVALID_LEAVE_DETAIL_TYPE 예외 발생")
+            void educationWithDetailType_Fail() {
+                LeaveApprovalCreateRequestDto dto = new LeaveApprovalCreateRequestDto();
+                setCommonFields(dto, DocumentType.LEAVE);
+                dto.setStartDate(LocalDateTime.now().plusDays(1));
+                dto.setEndDate(LocalDateTime.now().plusDays(2));
+                dto.setLeaveType(LeaveType.EDUCATION);
+                dto.setLeaveDetailType(LeaveDetailType.ANNUAL); // EDUCATION은 소분류 null이어야 함
+                dto.setReason("테스트");
+
+                assertThatThrownBy(() -> approvalService.createApproval(dto, DRAFTER_ID))
+                        .isInstanceOf(CustomException.class)
+                        .hasFieldOrPropertyWithValue("errorCode", ErrorCode.INVALID_LEAVE_DETAIL_TYPE);
+            }
         }
     }
 

@@ -1,13 +1,17 @@
 package kr.co.awesomelead.groupware_backend.domain.approval.dto.request;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
-import java.time.LocalDateTime;
+
 import kr.co.awesomelead.groupware_backend.domain.approval.enums.LeaveDetailType;
 import kr.co.awesomelead.groupware_backend.domain.approval.enums.LeaveType;
+
 import lombok.Getter;
 import lombok.Setter;
+
+import java.time.LocalDateTime;
 
 @Getter
 @Setter

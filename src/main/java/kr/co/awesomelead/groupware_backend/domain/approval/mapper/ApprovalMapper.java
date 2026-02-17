@@ -14,6 +14,7 @@ import kr.co.awesomelead.groupware_backend.domain.approval.entity.document.Expen
 import kr.co.awesomelead.groupware_backend.domain.approval.entity.document.LeaveApproval;
 import kr.co.awesomelead.groupware_backend.domain.approval.entity.document.OverseasTripApproval;
 import kr.co.awesomelead.groupware_backend.domain.approval.entity.document.WelfareExpenseApproval;
+
 import org.mapstruct.BeanMapping;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
@@ -27,9 +28,15 @@ public interface ApprovalMapper {
     @BeanMapping(subclassExhaustiveStrategy = SubclassExhaustiveStrategy.RUNTIME_EXCEPTION)
     @SubclassMapping(source = LeaveApprovalCreateRequestDto.class, target = LeaveApproval.class)
     @SubclassMapping(source = CarFuelApprovalCreateRequestDto.class, target = CarFuelApproval.class)
-    @SubclassMapping(source = WelfareExpenseApprovalCreateRequestDto.class, target = WelfareExpenseApproval.class)
-    @SubclassMapping(source = ExpenseDraftApprovalCreateRequestDto.class, target = ExpenseDraftApproval.class)
-    @SubclassMapping(source = OverseasTripApprovalCreateRequestDto.class, target = OverseasTripApproval.class)
+    @SubclassMapping(
+            source = WelfareExpenseApprovalCreateRequestDto.class,
+            target = WelfareExpenseApproval.class)
+    @SubclassMapping(
+            source = ExpenseDraftApprovalCreateRequestDto.class,
+            target = ExpenseDraftApproval.class)
+    @SubclassMapping(
+            source = OverseasTripApprovalCreateRequestDto.class,
+            target = OverseasTripApproval.class)
     @SubclassMapping(source = BasicApprovalCreateRequestDto.class, target = BasicApproval.class)
     @Mapping(target = "retentionPeriod", ignore = true)
     Approval toEntity(ApprovalCreateRequestDto dto);

@@ -2,28 +2,37 @@ package kr.co.awesomelead.groupware_backend.domain.approval.dto.request;
 
 import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
+
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
-import java.util.List;
+
 import kr.co.awesomelead.groupware_backend.domain.approval.enums.DocumentType;
 import kr.co.awesomelead.groupware_backend.domain.approval.enums.ParticipantType;
+
 import lombok.Getter;
 import lombok.Setter;
 
+import java.util.List;
+
 @Getter
 @Setter
-@JsonTypeInfo(use = JsonTypeInfo.Id.NAME, include = JsonTypeInfo.As.EXISTING_PROPERTY, property = "documentType", visible = true)
+@JsonTypeInfo(
+        use = JsonTypeInfo.Id.NAME,
+        include = JsonTypeInfo.As.EXISTING_PROPERTY,
+        property = "documentType",
+        visible = true)
 @JsonSubTypes({
-        @JsonSubTypes.Type(value = LeaveApprovalCreateRequestDto.class, name = "근태신청서"),
-        @JsonSubTypes.Type(value = CarFuelApprovalCreateRequestDto.class, name = "차량유류정산지출결의"),
-        @JsonSubTypes.Type(value = ExpenseDraftApprovalCreateRequestDto.class, name = "기안및지출결의"),
-        @JsonSubTypes.Type(value = OverseasTripApprovalCreateRequestDto.class, name = "국외출장여비정산서"),
-        @JsonSubTypes.Type(value = BasicApprovalCreateRequestDto.class, name = "기본양식"),
-        @JsonSubTypes.Type(value = WelfareExpenseApprovalCreateRequestDto.class, name = "기안및지출결의_복리후생")
+    @JsonSubTypes.Type(value = LeaveApprovalCreateRequestDto.class, name = "근태신청서"),
+    @JsonSubTypes.Type(value = CarFuelApprovalCreateRequestDto.class, name = "차량유류정산지출결의"),
+    @JsonSubTypes.Type(value = ExpenseDraftApprovalCreateRequestDto.class, name = "기안및지출결의"),
+    @JsonSubTypes.Type(value = OverseasTripApprovalCreateRequestDto.class, name = "국외출장여비정산서"),
+    @JsonSubTypes.Type(value = BasicApprovalCreateRequestDto.class, name = "기본양식"),
+    @JsonSubTypes.Type(value = WelfareExpenseApprovalCreateRequestDto.class, name = "기안및지출결의_복리후생")
 })
 @Schema(description = "전자결재 생성 요청 공통 DTO")
 public abstract class ApprovalCreateRequestDto {
@@ -80,5 +89,4 @@ public abstract class ApprovalCreateRequestDto {
         @NotNull(message = "참여 유형을 선택해주세요.")
         private ParticipantType participantType; // REFERRER, VIEWER
     }
-
 }

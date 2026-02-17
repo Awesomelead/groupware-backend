@@ -2,6 +2,7 @@ package kr.co.awesomelead.groupware_backend.global.error;
 
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
+
 import org.springframework.http.HttpStatus;
 
 @Getter

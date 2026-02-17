@@ -11,10 +11,10 @@ import kr.co.awesomelead.groupware_backend.domain.approval.enums.DocumentType;
 import kr.co.awesomelead.groupware_backend.domain.approval.enums.LeaveDetailType;
 import kr.co.awesomelead.groupware_backend.domain.approval.enums.LeaveType;
 
-import java.time.LocalDateTime;
-
 import lombok.Getter;
 import lombok.Setter;
+
+import java.time.LocalDateTime;
 
 @Entity
 @DiscriminatorValue("LEAVE")
@@ -30,8 +30,11 @@ public class LeaveApproval extends Approval {
     private LeaveType leaveType;
 
     @Enumerated(EnumType.STRING)
-    @Column(columnDefinition = "ENUM('ANNUAL','FAMILY_EVENT','MENSTRUAL','PAID','UNPAID','AM','PM')")
+    @Column(
+            columnDefinition =
+                    "ENUM('ANNUAL','FAMILY_EVENT','MENSTRUAL','PAID','UNPAID','AM','PM')")
     private LeaveDetailType leaveDetailType;
+
     private String reason; // 신청 사유
     private String emergencyContact; // 비상 연락처
 

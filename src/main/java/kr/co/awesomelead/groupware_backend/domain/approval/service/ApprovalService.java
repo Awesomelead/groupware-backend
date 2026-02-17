@@ -1,6 +1,5 @@
 package kr.co.awesomelead.groupware_backend.domain.approval.service;
 
-import java.util.List;
 import kr.co.awesomelead.groupware_backend.domain.approval.dto.request.ApprovalCreateRequestDto;
 import kr.co.awesomelead.groupware_backend.domain.approval.dto.request.ApprovalCreateRequestDto.ParticipantRequestDto;
 import kr.co.awesomelead.groupware_backend.domain.approval.dto.request.ApprovalCreateRequestDto.StepRequestDto;
@@ -20,10 +19,14 @@ import kr.co.awesomelead.groupware_backend.domain.user.entity.User;
 import kr.co.awesomelead.groupware_backend.domain.user.repository.UserRepository;
 import kr.co.awesomelead.groupware_backend.global.error.CustomException;
 import kr.co.awesomelead.groupware_backend.global.error.ErrorCode;
+
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.util.List;
 
 @Service
 @Transactional
@@ -38,8 +41,10 @@ public class ApprovalService {
 
     public Long createApproval(ApprovalCreateRequestDto dto, Long drafterId) {
         // 1. 기안자 정보 및 부서 스냅샷 확보
-        User drafter = userRepository.findById(drafterId)
-                .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
+        User drafter =
+                userRepository
+                        .findById(drafterId)
+                        .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
 
         // 2. 근태신청서인 경우 LeaveType-LeaveDetailType 검증
         if (dto instanceof LeaveApprovalCreateRequestDto leaveDto) {
@@ -90,24 +95,24 @@ public class ApprovalService {
         }
 
         // 동일 결재자 중복 검증
-        long distinctCount = steps.stream()
-                .map(StepRequestDto::getApproverId)
-                .distinct()
-                .count();
+        long distinctCount = steps.stream().map(StepRequestDto::getApproverId).distinct().count();
         if (distinctCount < steps.size()) {
             throw new CustomException(ErrorCode.DUPLICATE_APPROVER);
         }
 
         for (StepRequestDto stepDto : steps) {
-            User approver = userRepository.findById(stepDto.getApproverId())
-                    .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
+            User approver =
+                    userRepository
+                            .findById(stepDto.getApproverId())
+                            .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
 
-            ApprovalStep step = ApprovalStep.builder()
-                    .approval(approval)
-                    .approver(approver)
-                    .sequence(stepDto.getSequence())
-                    .status(ApprovalStatus.PENDING) // 모든 단계의 초기 상태는 PENDING
-                    .build();
+            ApprovalStep step =
+                    ApprovalStep.builder()
+                            .approval(approval)
+                            .approver(approver)
+                            .sequence(stepDto.getSequence())
+                            .status(ApprovalStatus.PENDING) // 모든 단계의 초기 상태는 PENDING
+                            .build();
 
             approval.getSteps().add(step); // 부모 엔티티 리스트에 추가 (CascadeType.ALL 작동)
         }
@@ -119,14 +124,17 @@ public class ApprovalService {
         }
 
         for (ParticipantRequestDto partDto : participants) {
-            User user = userRepository.findById(partDto.getUserId())
-                    .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
+            User user =
+                    userRepository
+                            .findById(partDto.getUserId())
+                            .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
 
-            ApprovalParticipant participant = ApprovalParticipant.builder()
-                    .approval(approval)
-                    .user(user)
-                    .participantType(partDto.getParticipantType())
-                    .build();
+            ApprovalParticipant participant =
+                    ApprovalParticipant.builder()
+                            .approval(approval)
+                            .user(user)
+                            .participantType(partDto.getParticipantType())
+                            .build();
 
             approval.getParticipants().add(participant);
         }
@@ -146,21 +154,29 @@ public class ApprovalService {
     }
 
     public void approveApproval(Long approvalId, Long approverId, String comment) {
-        Approval approval = approvalRepository.findById(approvalId)
-                .orElseThrow(() -> new CustomException(ErrorCode.APPROVAL_NOT_FOUND));
+        Approval approval =
+                approvalRepository
+                        .findById(approvalId)
+                        .orElseThrow(() -> new CustomException(ErrorCode.APPROVAL_NOT_FOUND));
 
-        User approver = userRepository.findById(approverId)
-                .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
+        User approver =
+                userRepository
+                        .findById(approverId)
+                        .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
 
         approval.approve(approver, comment);
     }
 
     public void rejectApproval(Long approvalId, Long approverId, String comment) {
-        Approval approval = approvalRepository.findById(approvalId)
-                .orElseThrow(() -> new CustomException(ErrorCode.APPROVAL_NOT_FOUND));
+        Approval approval =
+                approvalRepository
+                        .findById(approvalId)
+                        .orElseThrow(() -> new CustomException(ErrorCode.APPROVAL_NOT_FOUND));
 
-        User approver = userRepository.findById(approverId)
-                .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
+        User approver =
+                userRepository
+                        .findById(approverId)
+                        .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
 
         approval.reject(approver, comment);
     }

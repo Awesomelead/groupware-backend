@@ -25,6 +25,7 @@ import kr.co.awesomelead.groupware_backend.domain.approval.enums.DocumentType;
 import kr.co.awesomelead.groupware_backend.domain.approval.enums.RetentionPeriod;
 import kr.co.awesomelead.groupware_backend.domain.department.entity.Department;
 import kr.co.awesomelead.groupware_backend.domain.user.entity.User;
+import kr.co.awesomelead.groupware_backend.global.common.entity.BaseTimeEntity;
 import kr.co.awesomelead.groupware_backend.global.error.CustomException;
 import kr.co.awesomelead.groupware_backend.global.error.ErrorCode;
 
@@ -47,7 +48,7 @@ import java.util.List;
 @AllArgsConstructor
 // @Builder
 @Table(name = "approvals")
-public abstract class Approval {
+public abstract class Approval extends BaseTimeEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -56,14 +57,15 @@ public abstract class Approval {
     @Column(nullable = false, length = 200)
     private String title; // 제목
 
+    @Column(length = 255)
+    private String documentNumber; // 문서 번호 (예: 환경안전부 20250407-754)
+
     @Lob
     @Column(columnDefinition = "TEXT", nullable = false)
     private String content; // 에디터 본문 (HTML 문자열 저장)
 
     @Enumerated(EnumType.STRING)
-    @Column(
-            nullable = false,
-            columnDefinition = "ENUM('WAITING','PENDING','APPROVED','REJECTED','CANCELED')")
+    @Column(nullable = false, columnDefinition = "ENUM('WAITING','PENDING','APPROVED','REJECTED','CANCELED')")
     private ApprovalStatus status; // 상태: PENDING, APPROVED, REJECTED 등
 
     @Enumerated(EnumType.STRING)
@@ -109,8 +111,7 @@ public abstract class Approval {
         activateNextStep(myStep.getSequence());
 
         // 모든 step이 APPROVED이면 문서 전체 승인 처리
-        boolean allApproved =
-                steps.stream().allMatch(s -> s.getStatus() == ApprovalStatus.APPROVED);
+        boolean allApproved = steps.stream().allMatch(s -> s.getStatus() == ApprovalStatus.APPROVED);
         if (allApproved) {
             this.status = ApprovalStatus.APPROVED;
         }
@@ -139,11 +140,10 @@ public abstract class Approval {
     }
 
     private void validateMyTurn(ApprovalStep myStep) {
-        ApprovalStep currentStep =
-                steps.stream()
-                        .filter(s -> s.getStatus() == ApprovalStatus.PENDING)
-                        .min(Comparator.comparingInt(ApprovalStep::getSequence))
-                        .orElseThrow(() -> new CustomException(ErrorCode.ALREADY_PROCESSED_STEP));
+        ApprovalStep currentStep = steps.stream()
+                .filter(s -> s.getStatus() == ApprovalStatus.PENDING)
+                .min(Comparator.comparingInt(ApprovalStep::getSequence))
+                .orElseThrow(() -> new CustomException(ErrorCode.ALREADY_PROCESSED_STEP));
 
         if (!currentStep.getId().equals(myStep.getId())) {
             throw new CustomException(ErrorCode.NOT_YOUR_TURN);
@@ -153,9 +153,8 @@ public abstract class Approval {
     private void activateNextStep(int approvedSequence) {
         steps.stream()
                 .filter(
-                        s ->
-                                s.getSequence() > approvedSequence
-                                        && s.getStatus() == ApprovalStatus.WAITING)
+                        s -> s.getSequence() > approvedSequence
+                                && s.getStatus() == ApprovalStatus.WAITING)
                 .min(Comparator.comparingInt(ApprovalStep::getSequence))
                 .ifPresent(next -> next.setStatus(ApprovalStatus.PENDING));
     }

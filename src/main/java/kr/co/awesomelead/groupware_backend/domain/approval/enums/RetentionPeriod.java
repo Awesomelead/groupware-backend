@@ -8,7 +8,7 @@ import lombok.Getter;
 @Getter
 @AllArgsConstructor
 public enum RetentionPeriod {
-    FIVE_YEAR("5년"),
+    FIVE_YEARS("5년"),
     PERMANENT("영구");
 
     private final String description;

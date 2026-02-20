@@ -36,6 +36,9 @@ out/
 ### VS Code ###
 .vscode/
 
+### Agent Workflows ###
+.agent/
+
 echo "google-java-format*.jar*" >> .gitignore
 echo "*.jar.*" >> .gitignore
 

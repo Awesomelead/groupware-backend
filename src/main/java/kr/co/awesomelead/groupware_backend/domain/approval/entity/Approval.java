@@ -19,6 +19,7 @@ import jakarta.persistence.OneToMany;
 import jakarta.persistence.OrderBy;
 import jakarta.persistence.Table;
 import jakarta.persistence.Transient;
+import org.hibernate.annotations.BatchSize;
 
 import kr.co.awesomelead.groupware_backend.domain.approval.enums.ApprovalStatus;
 import kr.co.awesomelead.groupware_backend.domain.approval.enums.DocumentType;
@@ -80,13 +81,16 @@ public abstract class Approval extends BaseTimeEntity {
     @JoinColumn(name = "department_id", nullable = false, updatable = false)
     private Department draftDepartment; // 기안 시점의 부서 (스냅샷)
 
+    @BatchSize(size = 100)
     @OneToMany(mappedBy = "approval", cascade = CascadeType.ALL, orphanRemoval = true)
     @OrderBy("sequence ASC")
     private List<ApprovalStep> steps = new ArrayList<>();
 
+    @BatchSize(size = 100)
     @OneToMany(mappedBy = "approval", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<ApprovalParticipant> participants = new ArrayList<>(); // 참조 및 열람자
 
+    @BatchSize(size = 100)
     @OneToMany(mappedBy = "approval", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<ApprovalAttachment> attachments = new ArrayList<>();
 
@@ -157,5 +161,16 @@ public abstract class Approval extends BaseTimeEntity {
                                 && s.getStatus() == ApprovalStatus.WAITING)
                 .min(Comparator.comparingInt(ApprovalStep::getSequence))
                 .ifPresent(next -> next.setStatus(ApprovalStatus.PENDING));
+    }
+
+    public ApprovalStatus getDisplayStatus(Long viewerId) {
+        if (this.status == ApprovalStatus.PENDING) {
+            boolean isMyTurn = this.steps.stream()
+                    .anyMatch(s -> s.getApprover().getId().equals(viewerId) && s.getStatus() == ApprovalStatus.PENDING);
+            if (!isMyTurn) {
+                return ApprovalStatus.IN_PROGRESS;
+            }
+        }
+        return this.status;
     }
 }

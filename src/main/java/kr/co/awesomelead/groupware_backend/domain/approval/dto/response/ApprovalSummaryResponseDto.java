@@ -1,9 +1,11 @@
 package kr.co.awesomelead.groupware_backend.domain.approval.dto.response;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import kr.co.awesomelead.groupware_backend.domain.approval.entity.Approval;
 import kr.co.awesomelead.groupware_backend.domain.approval.entity.ApprovalStep;
 import kr.co.awesomelead.groupware_backend.domain.approval.enums.ApprovalStatus;
+
 import lombok.Getter;
 
 import java.time.LocalDateTime;
@@ -49,9 +51,10 @@ public class ApprovalSummaryResponseDto {
         StringBuilder sb = new StringBuilder("[");
         sb.append(this.drafterName);
 
-        List<ApprovalStep> sortedSteps = approval.getSteps().stream()
-                .sorted((s1, s2) -> Integer.compare(s1.getSequence(), s2.getSequence()))
-                .collect(Collectors.toList());
+        List<ApprovalStep> sortedSteps =
+                approval.getSteps().stream()
+                        .sorted((s1, s2) -> Integer.compare(s1.getSequence(), s2.getSequence()))
+                        .collect(Collectors.toList());
 
         for (ApprovalStep step : sortedSteps) {
             sb.append(" > ").append(step.getApprover().getDisplayName());
@@ -64,8 +67,10 @@ public class ApprovalSummaryResponseDto {
 
         // 최종 승인 또는 반려인 경우 마지막 단계의 처리일을 완료일로 세팅
         if (this.status == ApprovalStatus.APPROVED || this.status == ApprovalStatus.REJECTED) {
-            this.completedDate = sortedSteps.isEmpty() ? null
-                    : sortedSteps.get(sortedSteps.size() - 1).getProcessedAt();
+            this.completedDate =
+                    sortedSteps.isEmpty()
+                            ? null
+                            : sortedSteps.get(sortedSteps.size() - 1).getProcessedAt();
         } else {
             this.completedDate = null;
         }

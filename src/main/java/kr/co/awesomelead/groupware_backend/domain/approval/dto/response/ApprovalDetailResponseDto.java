@@ -1,8 +1,10 @@
 package kr.co.awesomelead.groupware_backend.domain.approval.dto.response;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import kr.co.awesomelead.groupware_backend.domain.approval.enums.ApprovalStatus;
 import kr.co.awesomelead.groupware_backend.domain.approval.enums.DocumentType;
+
 import lombok.Builder;
 import lombok.Getter;
 

@@ -1,8 +1,10 @@
 package kr.co.awesomelead.groupware_backend.domain.user.enums;
 
 import com.fasterxml.jackson.annotation.JsonValue;
-import java.util.Arrays;
+
 import lombok.Getter;
+
+import java.util.Arrays;
 
 @Getter
 public enum Role {
@@ -29,11 +31,11 @@ public enum Role {
         String normalized = value.trim();
 
         return Arrays.stream(values())
-            .filter(
-                role ->
-                    role.name().equalsIgnoreCase(normalized)
-                        || role.getDescription().equals(normalized))
-            .findFirst()
-            .orElseThrow(() -> new IllegalArgumentException("알 수 없는 역할: " + value));
+                .filter(
+                        role ->
+                                role.name().equalsIgnoreCase(normalized)
+                                        || role.getDescription().equals(normalized))
+                .findFirst()
+                .orElseThrow(() -> new IllegalArgumentException("알 수 없는 역할: " + value));
     }
 }

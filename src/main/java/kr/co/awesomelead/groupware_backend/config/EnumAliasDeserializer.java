@@ -10,7 +10,8 @@ import com.fasterxml.jackson.databind.exc.InvalidFormatException;
 
 import java.io.IOException;
 
-public class EnumAliasDeserializer extends JsonDeserializer<Object> implements ContextualDeserializer {
+public class EnumAliasDeserializer extends JsonDeserializer<Object>
+        implements ContextualDeserializer {
 
     private final Class<?> targetType;
 
@@ -29,7 +30,8 @@ public class EnumAliasDeserializer extends JsonDeserializer<Object> implements C
             return null;
         }
         if (targetType == null || !targetType.isEnum()) {
-            throw InvalidFormatException.from(p, "Enum target type is not resolved", source, Object.class);
+            throw InvalidFormatException.from(
+                    p, "Enum target type is not resolved", source, Object.class);
         }
         try {
             return EnumAliasSupport.parseEnum(targetType, source);
@@ -39,7 +41,8 @@ public class EnumAliasDeserializer extends JsonDeserializer<Object> implements C
     }
 
     @Override
-    public JsonDeserializer<?> createContextual(DeserializationContext ctxt, BeanProperty property) {
+    public JsonDeserializer<?> createContextual(
+            DeserializationContext ctxt, BeanProperty property) {
         JavaType javaType = property != null ? property.getType() : ctxt.getContextualType();
         if (javaType == null) {
             return this;

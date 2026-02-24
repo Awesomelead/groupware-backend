@@ -2,6 +2,7 @@ package kr.co.awesomelead.groupware_backend.domain.notice.controller;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.media.ArraySchema;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Encoding;
 import io.swagger.v3.oas.annotations.media.ExampleObject;
@@ -33,6 +34,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestPart;
 import org.springframework.web.bind.annotation.RestController;
@@ -422,114 +424,84 @@ public class NoticeController {
         return ResponseEntity.ok().body(ApiResponse.onNoContent());
     }
 
-    @Operation(summary = "공지 수정", description = "특정 공지를 수정합니다. 새로운 첨부파일 추가 및 기존 첨부파일 삭제가 가능합니다.")
-    @ApiResponses(
-        value = {
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(
-                responseCode = "200",
-                description = "수정 성공",
-                content =
+    @Operation(
+        summary = "공지 수정",
+        description = "특정 공지를 수정합니다. JSON(내용만) 또는 multipart(내용+파일) 수정을 지원합니다.",
+        requestBody =
+        @io.swagger.v3.oas.annotations.parameters.RequestBody(
+            required = true,
+            content = {
                 @Content(
-                    mediaType = "application/json",
-                    schema = @Schema(implementation = ApiResponse.class),
-                    examples =
-                    @ExampleObject(
-                        value =
-                            """
-                                {
-                                  "isSuccess": true,
-                                  "code": "COMMON200",
-                                  "message": "요청에 성공했습니다.",
-                                  "result": 1
-                                }
-                                """))),
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(
-                responseCode = "400",
-                description = "잘못된 요청",
-                content =
-                @Content(
-                    mediaType = "application/json",
-                    examples =
-                    @ExampleObject(
-                        name = "입력값 검증 실패",
-                        value =
-                            """
-                                {
-                                  "isSuccess": false,
-                                  "code": "COMMON400",
-                                  "message": "입력값이 유효하지 않습니다.",
-                                  "result": { "title": "제목은 필수입니다." }
-                                }
-                                """))),
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(
-                responseCode = "401",
-                description = "권한 없음",
-                content =
-                @Content(
-                    mediaType = "application/json",
-                    examples =
-                    @ExampleObject(
-                        name = "수정 권한 없음",
-                        value =
-                            """
-                                {
-                                  "isSuccess": false,
-                                  "code": "NO_AUTHORITY_FOR_NOTICE",
-                                  "message": "공지사항 작성 권한이 없습니다.",
-                                  "result": null
-                                }
-                                """))),
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(
-                responseCode = "404",
-                description = "대상 찾을 수 없음",
-                content =
-                @Content(
-                    mediaType = "application/json",
+                    mediaType = MediaType.APPLICATION_JSON_VALUE,
+                    schema = @Schema(implementation = NoticeUpdateRequestDto.class),
                     examples = {
                         @ExampleObject(
-                            name = "사용자 없음",
+                            name = "JSON 요청 예시",
                             value =
-                                "{\"isSuccess\": false, \"code\":"
-                                    + " \"USER_NOT_FOUND\","
-                                    + " \"message\": \"해당 사용자를 찾을 수"
-                                    + " 없습니다.\" }"),
+                                """
+                                    {
+                                      "title": "2025년 2월 전체 회의 안내 (수정)",
+                                      "content": "회의 시간이 오후 3시로 변경되었습니다.",
+                                      "pinned": true,
+                                      "attachmentsIdsToRemove": [1]
+                                    }
+                                    """)
+                    }),
+                @Content(
+                    mediaType = MediaType.MULTIPART_FORM_DATA_VALUE,
+                    schema = @Schema(implementation = NoticeUpdateMultipartRequestDoc.class),
+                    encoding = {
+                        @Encoding(name = "notice", contentType = MediaType.APPLICATION_JSON_VALUE),
+                        @Encoding(name = "files", contentType = "image/*,application/pdf")
+                    },
+                    examples = {
                         @ExampleObject(
-                            name = "공지사항 없음",
+                            name = "Multipart 요청 예시",
                             value =
-                                "{ \"isSuccess\": false, \"code\":"
-                                    + " \"NOTICE_NOT_FOUND\","
-                                    + " \"message\": \"해당 공지사항을 찾을 수"
-                                    + " 없습니다.\" }"),
-                        @ExampleObject(
-                            name = "첨부파일 없음",
-                            value =
-                                "{ \"isSuccess\": false, \"code\":"
-                                    + " \"NOTICE_ATTACHMENT_NOT_FOUND\","
-                                    + " \"message\": \"해당 공지사항 첨부파일을 찾을"
-                                    + " 수 없습니다.\" }")
-                    }))
+                                """
+                                    {
+                                      "notice": {
+                                        "title": "2025년 2월 전체 회의 안내 (수정)",
+                                        "content": "회의 시간이 오후 3시로 변경되었습니다.",
+                                        "pinned": true,
+                                        "attachmentsIdsToRemove": [1]
+                                      },
+                                      "files": ["(binary)"]
+                                    }
+                                    """)
+                    })
+            }))
+    @ApiResponses(
+        value = {
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "수정 성공"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "잘못된 요청"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "403", description = "권한 없음"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "대상 찾을 수 없음")
         })
-    @PatchMapping("/{noticeId}")
-    public ResponseEntity<ApiResponse<Long>> updateNotice(
+    @PatchMapping(value = "/{noticeId}", consumes = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<ApiResponse<Long>> updateNoticeJson(
         @Parameter(hidden = true) @AuthenticationPrincipal CustomUserDetails userDetails,
-        @Parameter(description = "수정할 공지사항 ID", example = "1", required = true) @PathVariable
-        Long noticeId,
-        @Parameter(
-            description = "공지사항 수정 정보 (JSON)",
-            required = true,
-            schema = @Schema(implementation = NoticeUpdateRequestDto.class))
-        @RequestPart(value = "notice")
-        @Valid
-        NoticeUpdateRequestDto dto,
-        @Parameter(description = "새로 추가할 첨부 파일 목록")
-        @RequestPart(value = "files", required = false)
-        List<MultipartFile> files)
+        @Parameter(description = "수정할 공지사항 ID", example = "1", required = true) @PathVariable Long noticeId,
+        @Valid @RequestBody NoticeUpdateRequestDto dto)
+        throws IOException {
+
+        Long updatedId = noticeService.updateNotice(userDetails.getId(), noticeId, dto, null);
+        return ResponseEntity.ok(ApiResponse.onSuccess(updatedId));
+    }
+
+    @Operation(hidden = true) // 중복 문서 노출 방지
+    @PatchMapping(value = "/{noticeId}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ResponseEntity<ApiResponse<Long>> updateNoticeMultipart(
+        @Parameter(hidden = true) @AuthenticationPrincipal CustomUserDetails userDetails,
+        @PathVariable Long noticeId,
+        @Valid @RequestPart("notice") NoticeUpdateRequestDto dto,
+        @RequestPart(value = "files", required = false) List<MultipartFile> files)
         throws IOException {
 
         Long updatedId = noticeService.updateNotice(userDetails.getId(), noticeId, dto, files);
-
         return ResponseEntity.ok(ApiResponse.onSuccess(updatedId));
     }
+
 
     @Operation(
         summary = "홈 화면용 상위 공지 조회",
@@ -586,3 +558,14 @@ public class NoticeController {
         return ResponseEntity.ok(ApiResponse.onSuccess(notices));
     }
 }
+
+@Schema(name = "NoticeUpdateMultipartRequest")
+class NoticeUpdateMultipartRequestDoc {
+
+    @Schema(description = "공지 수정 정보(JSON 파트)")
+    public NoticeUpdateRequestDto notice;
+
+    @ArraySchema(schema = @Schema(type = "string", format = "binary"))
+    public List<String> files;
+}
+

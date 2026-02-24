@@ -30,7 +30,7 @@ public class AdminService {
             userRepository
                 .findById(adminId)
                 .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
-        if (admin.getRole() != Role.ADMIN) {
+        if (admin.getRole() != Role.MASTER_ADMIN && admin.getRole() != Role.ADMIN) {
             throw new CustomException(ErrorCode.NO_AUTHORITY_FOR_REGISTRATION);
         }
 

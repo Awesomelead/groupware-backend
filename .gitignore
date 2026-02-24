@@ -36,10 +36,17 @@ out/
 ### VS Code ###
 .vscode/
 
+### Agent Workflows ###
+.agent/
+
 echo "google-java-format*.jar*" >> .gitignore
 echo "*.jar.*" >> .gitignore
 
 src/main/resources/application-prod.yml
+
+# Environment Variables
+.env
+.env.local
 
 # MapStruct & Querydsl Generated Sources
 **/generated/

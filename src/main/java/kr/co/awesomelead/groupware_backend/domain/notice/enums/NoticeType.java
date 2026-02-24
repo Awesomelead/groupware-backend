@@ -18,4 +18,17 @@ public enum NoticeType {
     public String getDescription() {
         return description;
     }
+
+    public static NoticeType from(String value) {
+        if (value == null) {
+            throw new IllegalArgumentException("type is null");
+        }
+        String v = value.trim();
+        for (NoticeType t : values()) {
+            if (t.name().equalsIgnoreCase(v) || t.getDescription().equals(v)) {
+                return t;
+            }
+        }
+        throw new IllegalArgumentException("Unknown NoticeType: " + value);
+    }
 }

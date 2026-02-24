@@ -9,11 +9,16 @@ import kr.co.awesomelead.groupware_backend.domain.approval.entity.Approval;
 import kr.co.awesomelead.groupware_backend.domain.approval.entity.detail.OverseasTripExpenseDetail;
 import kr.co.awesomelead.groupware_backend.domain.approval.enums.DocumentType;
 
+import lombok.Getter;
+import lombok.Setter;
+
 import java.util.ArrayList;
 import java.util.List;
 
 @Entity
 @DiscriminatorValue("OVERSEAS_TRIP")
+@Getter
+@Setter
 public class OverseasTripApproval extends Approval {
 
     private String companion; // 동행자

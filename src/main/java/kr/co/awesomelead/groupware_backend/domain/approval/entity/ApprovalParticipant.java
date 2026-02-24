@@ -44,6 +44,6 @@ public class ApprovalParticipant {
     private User user; // 참여하는 유저
 
     @Enumerated(EnumType.STRING)
-    @Column(nullable = false, length = 20)
+    @Column(nullable = false, columnDefinition = "ENUM('REFERRER','VIEWER')")
     private ParticipantType participantType; // 참여 유형 (REFERRER, VIEWER)
 }

@@ -2,6 +2,7 @@ package kr.co.awesomelead.groupware_backend.config;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
+import com.fasterxml.jackson.databind.module.SimpleModule;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 
 import org.springframework.context.annotation.Bean;
@@ -23,6 +24,9 @@ public class AppConfig {
     public ObjectMapper objectMapper() {
         ObjectMapper mapper = new ObjectMapper();
         mapper.registerModule(new JavaTimeModule());
+        SimpleModule enumAliasModule = new SimpleModule();
+        enumAliasModule.addDeserializer((Class) Enum.class, new EnumAliasDeserializer());
+        mapper.registerModule(enumAliasModule);
         mapper.disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
 
         return mapper;

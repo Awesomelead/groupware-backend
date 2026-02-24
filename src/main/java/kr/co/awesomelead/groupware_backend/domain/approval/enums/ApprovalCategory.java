@@ -7,9 +7,11 @@ import lombok.Getter;
 
 @Getter
 @AllArgsConstructor
-public enum RetentionPeriod {
-    FIVE_YEARS("5년"),
-    PERMANENT("영구");
+public enum ApprovalCategory {
+    ALL("전체"),
+    IN_PROGRESS("결재진행"),
+    REFERENCE("참조문서"),
+    DRAFT("내 작성");
 
     private final String description;
 

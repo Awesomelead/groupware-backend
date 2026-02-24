@@ -47,23 +47,30 @@ public enum ErrorCode {
     INVALID_CHECKOUT_TIME(HttpStatus.BAD_REQUEST, "퇴실 시간은 입실 시간보다 빠를 수 없습니다."),
     INVALID_JOB_TYPE_FOR_ADMIN_ROLE(HttpStatus.BAD_REQUEST, "관리자 역할에는 관리직 직군만 할당할 수 있습니다."),
     REJECTION_REASON_REQUIRED(HttpStatus.BAD_REQUEST, "반려 시 반려 사유가 반드시 필요합니다."),
+    INVALID_APPROVAL_STEP(HttpStatus.BAD_REQUEST, "결재선은 최소 한 명이 필요합니다."),
+    ALREADY_PROCESSED_STEP(HttpStatus.BAD_REQUEST, "이미 처리된 결재 단계입니다."),
+    NOT_YOUR_TURN(HttpStatus.BAD_REQUEST, "아직 본인의 결재 순서가 아닙니다."),
+    NOT_APPROVER(HttpStatus.FORBIDDEN, "해당 결재 문서의 결재 대상자가 아닙니다."),
+    APPROVAL_NOT_FOUND(HttpStatus.NOT_FOUND, "해당 결재 문서를 찾을 수 없습니다."),
+    INVALID_LEAVE_DETAIL_TYPE(HttpStatus.BAD_REQUEST, "휴가 유형에 맞지 않는 소분류입니다."),
+    DUPLICATE_APPROVER(HttpStatus.BAD_REQUEST, "동일한 결재자가 중복되어 있습니다."),
 
     // 401 Unauthorized
     INVALID_TOKEN(HttpStatus.UNAUTHORIZED, "유효하지 않은 토큰입니다."),
     EXPIRED_TOKEN(HttpStatus.UNAUTHORIZED, "만료된 토큰입니다."),
     AUTH_CODE_EXPIRED(HttpStatus.UNAUTHORIZED, "인증번호가 만료되었습니다."),
     VISITOR_AUTHENTICATION_FAILED(HttpStatus.UNAUTHORIZED, "내방객 인증에 실패했습니다."),
-    NO_AUTHORITY_FOR_EDU_REPORT(HttpStatus.UNAUTHORIZED, "교육 보고서 관리 권한이 없습니다."),
-    VISIT_ACCESS_DENIED(HttpStatus.UNAUTHORIZED, "해당 방문정보에 대한 접근 권한이 없습니다."),
-    NO_AUTHORITY_FOR_NOTICE(HttpStatus.UNAUTHORIZED, "공지사항 작성 권한이 없습니다."),
-    NO_AUTHORITY_FOR_ANNUAL_LEAVE(HttpStatus.UNAUTHORIZED, "연차 발송 권한이 없습니다."),
-    NO_AUTHORITY_FOR_PAYSLIP(HttpStatus.UNAUTHORIZED, "급여명세서 발송 권한이 없습니다."),
-    NO_AUTHORITY_FOR_REGISTRATION(HttpStatus.UNAUTHORIZED, "회원가입 승인 권한이 없습니다."),
-    NO_AUTHORITY_FOR_ROLE_UPDATE(HttpStatus.UNAUTHORIZED, "사용자 역할 변경 권한이 없습니다."),
-    NO_AUTHORITY_FOR_VIEW_PAYSLIP(HttpStatus.UNAUTHORIZED, "급여명세서 조회 권한이 없습니다."),
 
     // 403
     REFRESH_TOKEN_MISMATCH(HttpStatus.FORBIDDEN, "해당 리프레시 토큰에 대한 권한이 없습니다."),
+    NO_AUTHORITY_FOR_EDU_REPORT(HttpStatus.FORBIDDEN, "교육 보고서 관리 권한이 없습니다."),
+    VISIT_ACCESS_DENIED(HttpStatus.FORBIDDEN, "해당 방문정보에 대한 접근 권한이 없습니다."),
+    NO_AUTHORITY_FOR_NOTICE(HttpStatus.FORBIDDEN, "공지사항 작성 권한이 없습니다."),
+    NO_AUTHORITY_FOR_ANNUAL_LEAVE(HttpStatus.FORBIDDEN, "연차 발송 권한이 없습니다."),
+    NO_AUTHORITY_FOR_PAYSLIP(HttpStatus.FORBIDDEN, "급여명세서 발송 권한이 없습니다."),
+    NO_AUTHORITY_FOR_REGISTRATION(HttpStatus.FORBIDDEN, "회원가입 승인 권한이 없습니다."),
+    NO_AUTHORITY_FOR_ROLE_UPDATE(HttpStatus.FORBIDDEN, "사용자 역할 변경 권한이 없습니다."),
+    NO_AUTHORITY_FOR_VIEW_PAYSLIP(HttpStatus.FORBIDDEN, "급여명세서 조회 권한이 없습니다."),
 
     // 404 Not Found
     USER_NOT_FOUND(HttpStatus.NOT_FOUND, "해당 사용자를 찾을 수 없습니다."),

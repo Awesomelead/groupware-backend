@@ -1,15 +1,13 @@
 package kr.co.awesomelead.groupware_backend.domain.auth.dto.request;
 
 import io.swagger.v3.oas.annotations.media.Schema;
-
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
-
 import kr.co.awesomelead.groupware_backend.domain.department.enums.Company;
-
+import kr.co.awesomelead.groupware_backend.domain.fcm.enums.DeviceType;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -45,18 +43,11 @@ public class SignupRequestDto {
     @Size(max = 100, message = "상세 주소는 100자를 초과할 수 없습니다.")
     private String address2;
 
-    @Schema(
-            description = "근무 사업장",
-            example = "어썸리드",
-            required = true,
-            implementation = Company.class)
+    @Schema(description = "근무 사업장", example = "어썸리드", required = true, implementation = Company.class)
     @NotNull(message = "근무사업장은 필수입니다.")
     private Company company;
 
-    @Schema(
-            description = "주민등록번호 또는 외국인등록번호 (하이픈 제외 13자리)",
-            example = "9001011234567",
-            required = true)
+    @Schema(description = "주민등록번호 또는 외국인등록번호 (하이픈 제외 13자리)", example = "9001011234567", required = true)
     @NotBlank(message = "주민등록번호(또는 외국인번호)는 필수입니다.")
     @Pattern(regexp = "^\\d{6}[1-8]\\d{6}$", message = "주민등록번호 형식(13자리 숫자)이 올바르지 않습니다.")
     private String registrationNumber;
@@ -74,12 +65,17 @@ public class SignupRequestDto {
     @Schema(description = "비밀번호 (영문, 숫자, 특수문자 포함 8자 이상)", example = "test1234!", required = true)
     @NotBlank(message = "비밀번호는 필수입니다.")
     @Size(min = 8, message = "비밀번호는 최소 8자 이상이어야 합니다.")
-    @Pattern(
-            regexp = "^(?=.*[a-zA-Z])(?=.*[!@#$%^*+=-])(?=.*[0-9]).{8,64}$",
-            message = "비밀번호는 영문, 숫자, 특수문자를 모두 포함해야 합니다.")
+    @Pattern(regexp = "^(?=.*[a-zA-Z])(?=.*[!@#$%^*+=-])(?=.*[0-9]).{8,64}$", message = "비밀번호는 영문, 숫자, 특수문자를 모두 포함해야 합니다.")
     private String password;
 
     @Schema(description = "비밀번호 확인", example = "test1234!", required = true)
     @NotBlank(message = "비밀번호 확인은 필수입니다.")
     private String passwordConfirm;
+
+    // FCM (선택 필드 — 없으면 FCM 등록 건너뜀)
+    @Schema(description = "FCM 토큰 (Firebase SDK에서 발급, 선택)", example = "dY3jk2...firebase-token")
+    private String fcmToken;
+
+    @Schema(description = "디바이스 유형 (선택)", example = "ANDROID", implementation = DeviceType.class)
+    private DeviceType deviceType;
 }

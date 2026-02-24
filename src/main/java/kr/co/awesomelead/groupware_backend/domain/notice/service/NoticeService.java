@@ -118,7 +118,7 @@ public class NoticeService {
             conditionDto, userId, hasAccessNotice, pageable);
     }
 
-    @Transactional(readOnly = true)
+    @Transactional
     public NoticeDetailDto getNotice(Long noticeId) {
         Notice notice =
             noticeRepository

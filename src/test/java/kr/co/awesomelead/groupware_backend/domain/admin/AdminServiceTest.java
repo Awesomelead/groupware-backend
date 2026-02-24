@@ -7,6 +7,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import kr.co.awesomelead.groupware_backend.domain.admin.dto.request.UserApprovalRequestDto;
+import kr.co.awesomelead.groupware_backend.domain.admin.enums.AuthorityAction;
 import kr.co.awesomelead.groupware_backend.domain.admin.service.AdminService;
 import kr.co.awesomelead.groupware_backend.domain.department.entity.Department;
 import kr.co.awesomelead.groupware_backend.domain.department.enums.DepartmentName;
@@ -32,6 +33,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.time.LocalDate;
+import java.util.List;
 import java.util.Optional;
 
 @ExtendWith(MockitoExtension.class)
@@ -257,6 +259,128 @@ class AdminServiceTest {
                         .extracting("errorCode")
                         .isEqualTo(ErrorCode.USER_NOT_FOUND);
             }
+        }
+    }
+
+    @Nested
+    @DisplayName("updateUserAuthority 메서드는")
+    class Describe_updateUserAuthority {
+
+        @Test
+        @DisplayName("관리자가 여러 권한을 ADD 하면 모두 추가된다")
+        void it_adds_multiple_authorities() {
+            // given
+            User targetUser = User.builder().id(userId).role(Role.USER).build();
+            when(userRepository.findById(userId)).thenReturn(Optional.of(targetUser));
+
+            List<Authority> authorities = List.of(Authority.ACCESS_NOTICE, Authority.ACCESS_VISIT);
+
+            // when
+            adminService.updateUserAuthority(userId, authorities, AuthorityAction.ADD, adminId);
+
+            // then
+            assertThat(targetUser.hasAuthority(Authority.ACCESS_NOTICE)).isEqualTo(true);
+            assertThat(targetUser.hasAuthority(Authority.ACCESS_VISIT)).isEqualTo(true);
+            verify(userRepository).save(targetUser);
+        }
+
+        @Test
+        @DisplayName("관리자가 여러 권한을 REMOVE 하면 모두 제거된다")
+        void it_removes_multiple_authorities() {
+            // given
+            User targetUser = User.builder().id(userId).role(Role.USER).build();
+            targetUser.addAuthority(Authority.ACCESS_NOTICE);
+            targetUser.addAuthority(Authority.ACCESS_VISIT);
+            when(userRepository.findById(userId)).thenReturn(Optional.of(targetUser));
+
+            List<Authority> authorities = List.of(Authority.ACCESS_NOTICE, Authority.ACCESS_VISIT);
+
+            // when
+            adminService.updateUserAuthority(userId, authorities, AuthorityAction.REMOVE, adminId);
+
+            // then
+            assertThat(targetUser.hasAuthority(Authority.ACCESS_NOTICE)).isEqualTo(false);
+            assertThat(targetUser.hasAuthority(Authority.ACCESS_VISIT)).isEqualTo(false);
+            verify(userRepository).save(targetUser);
+        }
+
+        @Test
+        @DisplayName("이미 가진 권한을 ADD 하면 AUTHORITY_ALREADY_ASSIGNED 에러를 던진다")
+        void it_throws_when_adding_already_assigned_authority() {
+            // given
+            User targetUser = User.builder().id(userId).role(Role.USER).build();
+            targetUser.addAuthority(Authority.ACCESS_NOTICE);
+            when(userRepository.findById(userId)).thenReturn(Optional.of(targetUser));
+
+            // when & then
+            assertThatThrownBy(
+                            () ->
+                                    adminService.updateUserAuthority(
+                                            userId,
+                                            List.of(Authority.ACCESS_NOTICE),
+                                            AuthorityAction.ADD,
+                                            adminId))
+                    .isInstanceOf(CustomException.class)
+                    .extracting("errorCode")
+                    .isEqualTo(ErrorCode.AUTHORITY_ALREADY_ASSIGNED);
+        }
+
+        @Test
+        @DisplayName("없는 권한을 REMOVE 하면 AUTHORITY_NOT_ASSIGNED 에러를 던진다")
+        void it_throws_when_removing_not_assigned_authority() {
+            // given
+            User targetUser = User.builder().id(userId).role(Role.USER).build();
+            when(userRepository.findById(userId)).thenReturn(Optional.of(targetUser));
+
+            // when & then
+            assertThatThrownBy(
+                            () ->
+                                    adminService.updateUserAuthority(
+                                            userId,
+                                            List.of(Authority.ACCESS_NOTICE),
+                                            AuthorityAction.REMOVE,
+                                            adminId))
+                    .isInstanceOf(CustomException.class)
+                    .extracting("errorCode")
+                    .isEqualTo(ErrorCode.AUTHORITY_NOT_ASSIGNED);
+        }
+
+        @Test
+        @DisplayName("권한 목록이 비어 있으면 INVALID_ARGUMENT 에러를 던진다")
+        void it_throws_when_authority_list_is_empty() {
+            // given
+            User targetUser = User.builder().id(userId).role(Role.USER).build();
+            when(userRepository.findById(userId)).thenReturn(Optional.of(targetUser));
+
+            // when & then
+            assertThatThrownBy(
+                            () ->
+                                    adminService.updateUserAuthority(
+                                            userId, List.of(), AuthorityAction.ADD, adminId))
+                    .isInstanceOf(CustomException.class)
+                    .extracting("errorCode")
+                    .isEqualTo(ErrorCode.INVALID_ARGUMENT);
+        }
+
+        @Test
+        @DisplayName("관리자 권한이 없는 유저가 권한 수정을 시도하면 NO_AUTHORITY_FOR_ROLE_UPDATE 에러를 던진다")
+        void it_throws_when_requester_is_not_admin() {
+            // given
+            User normalUser = new User();
+            normalUser.setRole(Role.USER);
+            when(userRepository.findById(adminId)).thenReturn(Optional.of(normalUser));
+
+            // when & then
+            assertThatThrownBy(
+                            () ->
+                                    adminService.updateUserAuthority(
+                                            userId,
+                                            List.of(Authority.ACCESS_NOTICE),
+                                            AuthorityAction.ADD,
+                                            adminId))
+                    .isInstanceOf(CustomException.class)
+                    .extracting("errorCode")
+                    .isEqualTo(ErrorCode.NO_AUTHORITY_FOR_ROLE_UPDATE);
         }
     }
 }

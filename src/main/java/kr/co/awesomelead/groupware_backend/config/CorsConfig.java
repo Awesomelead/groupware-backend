@@ -20,8 +20,6 @@ public class CorsConfig implements WebMvcConfigurer {
 
     @Override
     public void addFormatters(FormatterRegistry registry) {
-        registry.addConverter(new StringToRoleConverter());
-        registry.addConverter(new StringToNoticeTypeConverter());
-        registry.addConverter(new StringToNoticeSearchTypeConverter());
+        registry.addConverterFactory(new StringToEnumAliasConverterFactory());
     }
 }

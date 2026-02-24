@@ -32,7 +32,7 @@ public class AdminService {
                 userRepository
                         .findById(adminId)
                         .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
-        if (admin.getRole() != Role.ADMIN) {
+        if (admin.getRole() != Role.MASTER_ADMIN && admin.getRole() != Role.ADMIN) {
             throw new CustomException(ErrorCode.NO_AUTHORITY_FOR_REGISTRATION);
         }
 
@@ -116,13 +116,12 @@ public class AdminService {
 
         // 2. 역할 업데이트
         targetUser.setRole(role);
+        targetUser.getAuthorities().clear();
 
-        if (role == Role.ADMIN) {
-            targetUser.addAuthority(Authority.ACCESS_NOTICE);
-            targetUser.addAuthority(Authority.MANAGE_EMPLOYEE_DATA);
-        } else {
-            targetUser.removeAuthority(Authority.ACCESS_NOTICE);
-            targetUser.removeAuthority(Authority.MANAGE_EMPLOYEE_DATA);
+        if (role == Role.MASTER_ADMIN || role == Role.ADMIN) {
+            for (Authority authority : Authority.values()) {
+                targetUser.addAuthority(authority);
+            }
         }
 
         userRepository.save(targetUser);

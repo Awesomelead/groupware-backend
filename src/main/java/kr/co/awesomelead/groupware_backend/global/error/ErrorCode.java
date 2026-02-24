@@ -60,17 +60,17 @@ public enum ErrorCode {
     EXPIRED_TOKEN(HttpStatus.UNAUTHORIZED, "만료된 토큰입니다."),
     AUTH_CODE_EXPIRED(HttpStatus.UNAUTHORIZED, "인증번호가 만료되었습니다."),
     VISITOR_AUTHENTICATION_FAILED(HttpStatus.UNAUTHORIZED, "내방객 인증에 실패했습니다."),
-    NO_AUTHORITY_FOR_EDU_REPORT(HttpStatus.UNAUTHORIZED, "교육 보고서 관리 권한이 없습니다."),
-    VISIT_ACCESS_DENIED(HttpStatus.UNAUTHORIZED, "해당 방문정보에 대한 접근 권한이 없습니다."),
-    NO_AUTHORITY_FOR_NOTICE(HttpStatus.UNAUTHORIZED, "공지사항 작성 권한이 없습니다."),
-    NO_AUTHORITY_FOR_ANNUAL_LEAVE(HttpStatus.UNAUTHORIZED, "연차 발송 권한이 없습니다."),
-    NO_AUTHORITY_FOR_PAYSLIP(HttpStatus.UNAUTHORIZED, "급여명세서 발송 권한이 없습니다."),
-    NO_AUTHORITY_FOR_REGISTRATION(HttpStatus.UNAUTHORIZED, "회원가입 승인 권한이 없습니다."),
-    NO_AUTHORITY_FOR_ROLE_UPDATE(HttpStatus.UNAUTHORIZED, "사용자 역할 변경 권한이 없습니다."),
-    NO_AUTHORITY_FOR_VIEW_PAYSLIP(HttpStatus.UNAUTHORIZED, "급여명세서 조회 권한이 없습니다."),
 
     // 403
     REFRESH_TOKEN_MISMATCH(HttpStatus.FORBIDDEN, "해당 리프레시 토큰에 대한 권한이 없습니다."),
+    NO_AUTHORITY_FOR_EDU_REPORT(HttpStatus.FORBIDDEN, "교육 보고서 관리 권한이 없습니다."),
+    VISIT_ACCESS_DENIED(HttpStatus.FORBIDDEN, "해당 방문정보에 대한 접근 권한이 없습니다."),
+    NO_AUTHORITY_FOR_NOTICE(HttpStatus.FORBIDDEN, "공지사항 작성 권한이 없습니다."),
+    NO_AUTHORITY_FOR_ANNUAL_LEAVE(HttpStatus.FORBIDDEN, "연차 발송 권한이 없습니다."),
+    NO_AUTHORITY_FOR_PAYSLIP(HttpStatus.FORBIDDEN, "급여명세서 발송 권한이 없습니다."),
+    NO_AUTHORITY_FOR_REGISTRATION(HttpStatus.FORBIDDEN, "회원가입 승인 권한이 없습니다."),
+    NO_AUTHORITY_FOR_ROLE_UPDATE(HttpStatus.FORBIDDEN, "사용자 역할 변경 권한이 없습니다."),
+    NO_AUTHORITY_FOR_VIEW_PAYSLIP(HttpStatus.FORBIDDEN, "급여명세서 조회 권한이 없습니다."),
 
     // 404 Not Found
     USER_NOT_FOUND(HttpStatus.NOT_FOUND, "해당 사용자를 찾을 수 없습니다."),

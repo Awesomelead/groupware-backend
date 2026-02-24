@@ -121,7 +121,7 @@ public class NoticeService {
                 conditionDto, userId, hasAccessNotice, pageable);
     }
 
-    @Transactional(readOnly = true)
+    @Transactional
     public NoticeDetailDto getNotice(Long noticeId) {
         Notice notice =
                 noticeRepository
@@ -148,6 +148,9 @@ public class NoticeService {
         for (NoticeAttachment attachment : notice.getAttachments()) {
             s3Service.deleteFile(attachment.getS3Key());
         }
+
+        // FK 자식 먼저 삭제
+        noticeTargetRepository.deleteByNoticeId(noticeId);
 
         // 공지사항 삭제 (첨부파일도 함께 삭제됨 - CascadeType.ALL)
         noticeRepository.delete(notice);

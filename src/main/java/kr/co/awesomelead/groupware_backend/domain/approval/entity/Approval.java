@@ -25,6 +25,7 @@ import kr.co.awesomelead.groupware_backend.domain.approval.enums.DocumentType;
 import kr.co.awesomelead.groupware_backend.domain.approval.enums.RetentionPeriod;
 import kr.co.awesomelead.groupware_backend.domain.department.entity.Department;
 import kr.co.awesomelead.groupware_backend.domain.user.entity.User;
+import kr.co.awesomelead.groupware_backend.global.common.entity.BaseTimeEntity;
 import kr.co.awesomelead.groupware_backend.global.error.CustomException;
 import kr.co.awesomelead.groupware_backend.global.error.ErrorCode;
 
@@ -33,6 +34,8 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+
+import org.hibernate.annotations.BatchSize;
 
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -47,7 +50,7 @@ import java.util.List;
 @AllArgsConstructor
 // @Builder
 @Table(name = "approvals")
-public abstract class Approval {
+public abstract class Approval extends BaseTimeEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -55,6 +58,9 @@ public abstract class Approval {
 
     @Column(nullable = false, length = 200)
     private String title; // 제목
+
+    @Column(length = 255)
+    private String documentNumber; // 문서 번호 (예: 환경안전부 20250407-754)
 
     @Lob
     @Column(columnDefinition = "TEXT", nullable = false)
@@ -78,13 +84,16 @@ public abstract class Approval {
     @JoinColumn(name = "department_id", nullable = false, updatable = false)
     private Department draftDepartment; // 기안 시점의 부서 (스냅샷)
 
+    @BatchSize(size = 100)
     @OneToMany(mappedBy = "approval", cascade = CascadeType.ALL, orphanRemoval = true)
     @OrderBy("sequence ASC")
     private List<ApprovalStep> steps = new ArrayList<>();
 
+    @BatchSize(size = 100)
     @OneToMany(mappedBy = "approval", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<ApprovalParticipant> participants = new ArrayList<>(); // 참조 및 열람자
 
+    @BatchSize(size = 100)
     @OneToMany(mappedBy = "approval", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<ApprovalAttachment> attachments = new ArrayList<>();
 
@@ -158,5 +167,20 @@ public abstract class Approval {
                                         && s.getStatus() == ApprovalStatus.WAITING)
                 .min(Comparator.comparingInt(ApprovalStep::getSequence))
                 .ifPresent(next -> next.setStatus(ApprovalStatus.PENDING));
+    }
+
+    public ApprovalStatus getDisplayStatus(Long viewerId) {
+        if (this.status == ApprovalStatus.PENDING) {
+            boolean isMyTurn =
+                    this.steps.stream()
+                            .anyMatch(
+                                    s ->
+                                            s.getApprover().getId().equals(viewerId)
+                                                    && s.getStatus() == ApprovalStatus.PENDING);
+            if (!isMyTurn) {
+                return ApprovalStatus.IN_PROGRESS;
+            }
+        }
+        return this.status;
     }
 }

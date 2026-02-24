@@ -3,7 +3,10 @@ package kr.co.awesomelead.groupware_backend.domain.approval.service;
 import kr.co.awesomelead.groupware_backend.domain.approval.dto.request.ApprovalCreateRequestDto;
 import kr.co.awesomelead.groupware_backend.domain.approval.dto.request.ApprovalCreateRequestDto.ParticipantRequestDto;
 import kr.co.awesomelead.groupware_backend.domain.approval.dto.request.ApprovalCreateRequestDto.StepRequestDto;
+import kr.co.awesomelead.groupware_backend.domain.approval.dto.request.ApprovalListRequestDto;
 import kr.co.awesomelead.groupware_backend.domain.approval.dto.request.LeaveApprovalCreateRequestDto;
+import kr.co.awesomelead.groupware_backend.domain.approval.dto.response.ApprovalDetailResponseDto;
+import kr.co.awesomelead.groupware_backend.domain.approval.dto.response.ApprovalSummaryResponseDto;
 import kr.co.awesomelead.groupware_backend.domain.approval.entity.Approval;
 import kr.co.awesomelead.groupware_backend.domain.approval.entity.ApprovalAttachment;
 import kr.co.awesomelead.groupware_backend.domain.approval.entity.ApprovalParticipant;
@@ -12,33 +15,42 @@ import kr.co.awesomelead.groupware_backend.domain.approval.entity.document.CarFu
 import kr.co.awesomelead.groupware_backend.domain.approval.entity.document.ExpenseDraftApproval;
 import kr.co.awesomelead.groupware_backend.domain.approval.entity.document.OverseasTripApproval;
 import kr.co.awesomelead.groupware_backend.domain.approval.enums.ApprovalStatus;
+import kr.co.awesomelead.groupware_backend.domain.approval.enums.ParticipantType;
 import kr.co.awesomelead.groupware_backend.domain.approval.mapper.ApprovalMapper;
 import kr.co.awesomelead.groupware_backend.domain.approval.repository.ApprovalAttachmentRepository;
 import kr.co.awesomelead.groupware_backend.domain.approval.repository.ApprovalRepository;
 import kr.co.awesomelead.groupware_backend.domain.user.entity.User;
+import kr.co.awesomelead.groupware_backend.domain.user.enums.Role;
 import kr.co.awesomelead.groupware_backend.domain.user.repository.UserRepository;
 import kr.co.awesomelead.groupware_backend.global.error.CustomException;
 import kr.co.awesomelead.groupware_backend.global.error.ErrorCode;
+import kr.co.awesomelead.groupware_backend.global.infra.s3.service.S3Service;
 
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 
+import org.springframework.data.domain.Page;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
 import java.util.List;
 
 @Service
-@Transactional
+@Transactional(readOnly = true)
 @RequiredArgsConstructor
-@Slf4j
 public class ApprovalService {
 
     private final ApprovalRepository approvalRepository;
     private final UserRepository userRepository;
     private final ApprovalAttachmentRepository attachmentRepository;
+    private final kr.co.awesomelead.groupware_backend.domain.approval.repository.querydsl
+                    .ApprovalQueryRepository
+            approvalQueryRepository;
     private final ApprovalMapper approvalMapper;
+    private final S3Service s3Service;
 
+    @Transactional
     public Long createApproval(ApprovalCreateRequestDto dto, Long drafterId) {
         // 1. 기안자 정보 및 부서 스냅샷 확보
         User drafter =
@@ -72,8 +84,30 @@ public class ApprovalService {
         setupParticipants(approval, dto.getParticipants());
         setupAttachments(approval, dto.getAttachmentIds());
 
-        // 6. 최종 저장
-        return approvalRepository.save(approval).getId();
+        // 6. DB에 먼저 저장하여 PK(id) 채번
+        approvalRepository.save(approval);
+
+        // 7. 채번된 PK를 이용하여 문서 번호 생성 및 업데이트
+        generateDocumentNumber(approval);
+
+        return approval.getId();
+    }
+
+    private void generateDocumentNumber(Approval approval) {
+        String today = LocalDate.now().format(DateTimeFormatter.ofPattern("yyyyMMdd"));
+        String docTypeName = approval.getDocumentType().getDescription();
+        String deptName = approval.getDraftDepartment().getName().getDescription();
+        Long pkId = approval.getId(); // 방금 저장하여 발급된 PK
+
+        // BASIC(기본양식)인 경우 문서종류 문자열을 생략
+        String documentNumber;
+        if (kr.co.awesomelead.groupware_backend.domain.approval.enums.DocumentType.BASIC.equals(
+                approval.getDocumentType())) {
+            documentNumber = String.format("%s %s-%03d", deptName, today, pkId);
+        } else {
+            documentNumber = String.format("%s %s %s-%03d", docTypeName, deptName, today, pkId);
+        }
+        approval.setDocumentNumber(documentNumber);
     }
 
     private void setupDetails(Approval approval) {
@@ -153,6 +187,7 @@ public class ApprovalService {
         }
     }
 
+    @Transactional
     public void approveApproval(Long approvalId, Long approverId, String comment) {
         Approval approval =
                 approvalRepository
@@ -167,6 +202,7 @@ public class ApprovalService {
         approval.approve(approver, comment);
     }
 
+    @Transactional
     public void rejectApproval(Long approvalId, Long approverId, String comment) {
         Approval approval =
                 approvalRepository
@@ -179,5 +215,60 @@ public class ApprovalService {
                         .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
 
         approval.reject(approver, comment);
+    }
+
+    public Page<ApprovalSummaryResponseDto> getApprovalList(
+            ApprovalListRequestDto condition, Long userId) {
+
+        User user =
+                userRepository
+                        .findById(userId)
+                        .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
+
+        return approvalQueryRepository.findApprovalsByCondition(
+                condition, userId, user.getRole().name());
+    }
+
+    public ApprovalDetailResponseDto getApprovalDetail(Long approvalId, Long userId) {
+
+        Approval approval =
+                approvalRepository
+                        .findById(approvalId)
+                        .orElseThrow(() -> new CustomException(ErrorCode.APPROVAL_NOT_FOUND));
+
+        User user =
+                userRepository
+                        .findById(userId)
+                        .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
+
+        // 권한 검증: 관리자이거나, 해당 문서의 기안자/결재선/참조자에 포함되어 있어야 조회 가능
+        boolean isAdmin = user.getRole() == Role.ADMIN || user.getRole() == Role.MASTER_ADMIN;
+        boolean isDrafter = approval.getDrafter().getId().equals(userId);
+        boolean isApprover =
+                approval.getSteps().stream()
+                        .anyMatch(step -> step.getApprover().getId().equals(userId));
+        boolean isParticipant =
+                approval.getParticipants().stream()
+                        .anyMatch(
+                                part -> {
+                                    if (part.getUser().getId().equals(userId)) {
+                                        // 참조자(REFERRER)는 상신 직후 바로 조회 가능
+                                        if (part.getParticipantType() == ParticipantType.REFERRER) {
+                                            return true;
+                                        }
+                                        // 열람권자(VIEWER)는 최종 승인(APPROVED)된 문서만 조회 가능
+                                        if (part.getParticipantType() == ParticipantType.VIEWER) {
+                                            return approval.getStatus() == ApprovalStatus.APPROVED;
+                                        }
+                                    }
+                                    return false;
+                                });
+
+        if (!isAdmin && !isDrafter && !isApprover && !isParticipant) {
+            throw new CustomException(ErrorCode.NOT_APPROVER);
+        }
+
+        // Entity -> DTO 매핑
+        return approvalMapper.toDetailResponseDto(approval, userId, s3Service);
     }
 }

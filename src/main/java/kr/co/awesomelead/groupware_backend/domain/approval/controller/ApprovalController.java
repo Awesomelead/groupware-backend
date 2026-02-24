@@ -11,15 +11,21 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 
 import kr.co.awesomelead.groupware_backend.domain.approval.dto.request.ApprovalCreateRequestDto;
+import kr.co.awesomelead.groupware_backend.domain.approval.dto.request.ApprovalListRequestDto;
 import kr.co.awesomelead.groupware_backend.domain.approval.dto.request.ApprovalProcessRequestDto;
+import kr.co.awesomelead.groupware_backend.domain.approval.dto.response.ApprovalDetailResponseDto;
+import kr.co.awesomelead.groupware_backend.domain.approval.dto.response.ApprovalSummaryResponseDto;
 import kr.co.awesomelead.groupware_backend.domain.approval.service.ApprovalService;
 import kr.co.awesomelead.groupware_backend.domain.user.dto.CustomUserDetails;
 import kr.co.awesomelead.groupware_backend.global.common.response.ApiResponse;
 
 import lombok.RequiredArgsConstructor;
 
+import org.springframework.data.domain.Page;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -373,5 +379,111 @@ public class ApprovalController {
         approvalService.rejectApproval(id, userDetails.getId(), requestDto.getComment());
 
         return ResponseEntity.ok(ApiResponse.onSuccess(null));
+    }
+
+    @Operation(
+            summary = "결재 문서 목록 조회 (필터 및 페이징)",
+            description =
+                    """
+        다양한 조건(Category, Status, 양식)에 따라 전자결재 문서 목록을 조회합니다.
+
+        **Category 유형**:
+        - `ALL`: 전체 문서 (관리자는 조건 없이 시스템 내 모든 문서 조회, 일반 사용자는 자신과 연관된 전체 문서)
+        - `IN_PROGRESS`: 결재 진행 중이거나 반려된 문서 중 내가 결재선에 포함되어 있는 문서
+        - `REFERENCE`: 내가 참조자(REFERRER)이거나 열람권자(VIEWER)인 문서
+        - `DRAFT`: 내가 기안한 사상 문서
+
+        **Category 별 하위 Status 필터**:
+        - IN_PROGRESS -> `WAITING` (내 결재 대기), `APPROVED` (내가 이미 결재함), `REJECTED` (결재선 중 누군가 반려함)
+        - REFERENCE -> `REFERENCE` (기안 시 참조됨), `READ` (완료 후 열람 권한 획득)
+        - DRAFT -> `WAITING` (결재가 끝나지 않음), `APPROVED` (기결 완료됨), `REJECTED` (반려됨/취소함)
+
+        (Status에 ALL을 전달하거나 제외하면 해당 Category의 묶음 전체를 조회합니다.)
+        """)
+    @ApiResponses(
+            value = {
+                @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                        responseCode = "200",
+                        description = "조회 성공",
+                        content =
+                                @Content(
+                                        mediaType = "application/json",
+                                        schema = @Schema(implementation = ApiResponse.class),
+                                        examples =
+                                                @ExampleObject(
+                                                        value =
+                                                                """
+            {
+              "isSuccess": true,
+              "code": "COMMON200",
+              "message": "요청에 성공했습니다.",
+              "result": {
+                "content": [
+                  {
+                    "id": 1,
+                    "documentNumber": "기본양식 개발팀 20250407-123",
+                    "drafterName": "홍길동",
+                    "title": "비품 구매 요청",
+                    "status": "PENDING",
+                    "approvalLine": "[홍길동 > 김팀장 > 이본부장]",
+                    "draftDate": "2025-04-07T10:00:00",
+                    "completedDate": null
+                  }
+                ],
+                "pageable": { ... },
+                "totalElements": 1,
+                "totalPages": 1,
+                "last": true
+              }
+            }
+            """)))
+            })
+    @GetMapping
+    public ResponseEntity<ApiResponse<Page<ApprovalSummaryResponseDto>>> getApprovalList(
+            @ModelAttribute ApprovalListRequestDto condition,
+            @Parameter(hidden = true) @AuthenticationPrincipal CustomUserDetails userDetails) {
+
+        Page<ApprovalSummaryResponseDto> result =
+                approvalService.getApprovalList(condition, userDetails.getId());
+
+        return ResponseEntity.ok(ApiResponse.onSuccess(result));
+    }
+
+    @Operation(
+            summary = "결재 문서 단건 상세 조회",
+            description =
+                    """
+        요청한 ID에 해당하는 결재 문서의 상세 정보(결재선 이력, 참조자 이력, 문서 양식별 상세 필드 등)를 조회합니다.
+        해당 문서에 대한 조회 권한(기안자, 결재자, 참조자 혹은 관리자)이 없는 경우 403 예외가 발생합니다.
+        """)
+    @ApiResponses(
+            value = {
+                @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                        responseCode = "200",
+                        description = "조회 성공",
+                        content =
+                                @Content(
+                                        mediaType = "application/json",
+                                        schema = @Schema(implementation = ApiResponse.class))),
+                @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                        responseCode = "403",
+                        description = "조회 권한 없음",
+                        content = @Content(mediaType = "application/json")),
+                @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                        responseCode = "404",
+                        description = "문서를 찾을 수 없음",
+                        content = @Content(mediaType = "application/json"))
+            })
+    @GetMapping("/{id}")
+    public ResponseEntity<ApiResponse<ApprovalDetailResponseDto>> getApprovalDetail(
+            @Parameter(description = "상세 조회할 결재 문서 ID", required = true, example = "1")
+                    @PathVariable
+                    Long id,
+            @Parameter(hidden = true) @AuthenticationPrincipal CustomUserDetails userDetails) {
+
+        ApprovalDetailResponseDto result =
+                approvalService.getApprovalDetail(id, userDetails.getId());
+
+        return ResponseEntity.ok(ApiResponse.onSuccess(result));
     }
 }

@@ -1,18 +1,17 @@
 package kr.co.awesomelead.groupware_backend.domain.approval.dto.response;
 
 import io.swagger.v3.oas.annotations.media.Schema;
-
-import kr.co.awesomelead.groupware_backend.domain.approval.entity.Approval;
-import kr.co.awesomelead.groupware_backend.domain.approval.entity.ApprovalStep;
-import kr.co.awesomelead.groupware_backend.domain.approval.enums.ApprovalStatus;
-
-import lombok.Getter;
-
 import java.time.LocalDateTime;
-import java.util.List;
-import java.util.stream.Collectors;
+import kr.co.awesomelead.groupware_backend.domain.approval.enums.ApprovalStatus;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
 
 @Getter
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
 @Schema(description = "전자결재 문서 목록 요약 응답 DTO")
 public class ApprovalSummaryResponseDto {
 
@@ -40,39 +39,4 @@ public class ApprovalSummaryResponseDto {
     @Schema(description = "완료일(최종 승인/반려일)", example = "2025-04-08T15:30:00")
     private LocalDateTime completedDate;
 
-    public ApprovalSummaryResponseDto(Approval approval, Long viewerId) {
-        this.id = approval.getId();
-        this.documentNumber = approval.getDocumentNumber();
-        this.drafterName = approval.getDrafter().getDisplayName();
-        this.title = approval.getTitle();
-        this.status = approval.getDisplayStatus(viewerId);
-
-        // [작성자 > 승인자1 > 승인자2 ...] 형태로 결재라인 문자열 조합
-        StringBuilder sb = new StringBuilder("[");
-        sb.append(this.drafterName);
-
-        List<ApprovalStep> sortedSteps =
-                approval.getSteps().stream()
-                        .sorted((s1, s2) -> Integer.compare(s1.getSequence(), s2.getSequence()))
-                        .collect(Collectors.toList());
-
-        for (ApprovalStep step : sortedSteps) {
-            sb.append(" > ").append(step.getApprover().getDisplayName());
-        }
-        sb.append("]");
-        this.approvalLine = sb.toString();
-
-        // 시간 정보 가공 (임시로 생성일=draftDate 로 간주)
-        this.draftDate = approval.getCreatedAt();
-
-        // 최종 승인 또는 반려인 경우 마지막 단계의 처리일을 완료일로 세팅
-        if (this.status == ApprovalStatus.APPROVED || this.status == ApprovalStatus.REJECTED) {
-            this.completedDate =
-                    sortedSteps.isEmpty()
-                            ? null
-                            : sortedSteps.get(sortedSteps.size() - 1).getProcessedAt();
-        } else {
-            this.completedDate = null;
-        }
-    }
 }

@@ -19,6 +19,7 @@ import kr.co.awesomelead.groupware_backend.domain.approval.enums.ApprovalCategor
 import kr.co.awesomelead.groupware_backend.domain.approval.enums.ApprovalStatus;
 import kr.co.awesomelead.groupware_backend.domain.approval.enums.DocumentType;
 import kr.co.awesomelead.groupware_backend.domain.approval.enums.ParticipantType;
+import kr.co.awesomelead.groupware_backend.domain.approval.mapper.ApprovalMapper;
 import kr.co.awesomelead.groupware_backend.domain.user.enums.Role;
 
 import lombok.RequiredArgsConstructor;
@@ -38,6 +39,7 @@ import java.util.stream.Collectors;
 public class ApprovalQueryRepository {
 
     private final JPAQueryFactory queryFactory;
+    private final ApprovalMapper approvalMapper;
 
     public Page<ApprovalSummaryResponseDto> findApprovalsByCondition(
             ApprovalListRequestDto condition, Long userId, String userRole) {
@@ -50,35 +52,31 @@ public class ApprovalQueryRepository {
         BooleanExpression docTypeExpression = eqDocumentType(condition.getDocumentType());
 
         // 3. 메인 쿼리 작성 (N+1 최적화를 위해 컬렉션은 지연 로딩 후 application 단에서 가공하거나, 엔티티로 한번에 로딩)
-        JPAQuery<Approval> query =
-                queryFactory
-                        .selectFrom(approval)
-                        .where(categoryExpression, docTypeExpression)
-                        .orderBy(approval.createdAt.desc())
-                        .distinct();
+        JPAQuery<Approval> query = queryFactory
+                .selectFrom(approval)
+                .where(categoryExpression, docTypeExpression)
+                .orderBy(approval.createdAt.desc())
+                .distinct();
 
         // 4. 페이징 적용된 엔티티 조회
-        List<Approval> approvals =
-                query.offset(pageable.getOffset()).limit(pageable.getPageSize()).fetch();
+        List<Approval> approvals = query.offset(pageable.getOffset()).limit(pageable.getPageSize()).fetch();
 
         // 5. 전체 카운트 조회
-        long totalCount =
-                Optional.ofNullable(
-                                queryFactory
-                                        .select(approval.countDistinct())
-                                        .from(approval)
-                                        .where(categoryExpression, docTypeExpression)
-                                        .fetchOne())
-                        .orElse(0L);
+        long totalCount = Optional.ofNullable(
+                queryFactory
+                        .select(approval.countDistinct())
+                        .from(approval)
+                        .where(categoryExpression, docTypeExpression)
+                        .fetchOne())
+                .orElse(0L);
 
-        // 6. DTO 변환 (컬렉션 필드들은 엔티티 변환 시점에 Lazy Loading 발생. properties/yml 설정의
-        // default_batch_fetch_size 로 1번의 IN 쿼리로 최적화됨)
-        List<ApprovalSummaryResponseDto> dtoList =
+        // 6. DTO 변환
+        return new PageImpl<>(
                 approvals.stream()
-                        .map(approval -> new ApprovalSummaryResponseDto(approval, userId))
-                        .collect(Collectors.toList());
-
-        return new PageImpl<>(dtoList, pageable, totalCount == 0L ? 0 : totalCount);
+                        .map(approval -> approvalMapper.toSummaryResponseDto(approval, userId))
+                        .collect(Collectors.toList()),
+                pageable,
+                totalCount == 0L ? 0 : totalCount);
     }
 
     /** 카테고리(ALL, IN_PROGRESS, REFERENCE, DRAFT) 및 Status 하위 필터에 따른 동적 쿼리 조합 */
@@ -98,15 +96,17 @@ public class ApprovalQueryRepository {
         };
     }
 
-    /** 1. ALL (전체) 카테고리 조건 - ADMIN/MASTER_ADMIN 이면 모든 문서 조회 - USER 이면 (결재진행 + 참조 + 내작성) 전체 합집합 */
+    /**
+     * 1. ALL (전체) 카테고리 조건 - ADMIN/MASTER_ADMIN 이면 모든 문서 조회 - USER 이면 (결재진행 + 참조 +
+     * 내작성) 전체 합집합
+     */
     private BooleanExpression getAllCategoryExpression(Long userId, String userRole) {
         if (Role.ADMIN.name().equals(userRole) || Role.MASTER_ADMIN.name().equals(userRole)) {
             return null; // 조건 없이 전체 풀 스캔
         }
 
         // 일반 유저인 경우 연관된 모든 문서 (기안자이거나, 결재선에 포함되거나, 참조자에 포함됨)
-        return approval.drafter
-                .id
+        return approval.drafter.id
                 .eq(userId) // 내 작성
                 .or(approval.steps.any().approver.id.eq(userId)) // 결재 진행 연관
                 .or(approval.participants.any().user.id.eq(userId)); // 참조/열람 연관
@@ -124,28 +124,21 @@ public class ApprovalQueryRepository {
         return switch (status) {
             case WAITING -> baseCondition.and(
                     approval.steps
-                            .any()
-                            .approver
-                            .id
+                            .any().approver.id
                             .eq(userId)
                             .and(approval.steps.any().status.eq(ApprovalStatus.PENDING))); // 내 차례
             case APPROVED -> baseCondition.and(
                     approval.steps
-                            .any()
-                            .approver
-                            .id
+                            .any().approver.id
                             .eq(userId)
                             .and(
                                     approval.steps
-                                            .any()
-                                            .status
+                                            .any().status
                                             .eq(ApprovalStatus.APPROVED))); // 내가 기결함
             case REJECTED -> baseCondition.and(
                     // 내 단계가 반려거나, 혹은 다른 단계에서 반려/회수되어 문서가 결국 반려/취소 상태인 경우
                     approval.steps
-                            .any()
-                            .approver
-                            .id
+                            .any().approver.id
                             .eq(userId)
                             .and(approval.steps.any().status.eq(ApprovalStatus.REJECTED))
                             .or(
@@ -159,27 +152,20 @@ public class ApprovalQueryRepository {
     private BooleanExpression getReferenceCategoryExpression(
             ApprovalStatus status, ParticipantType participantType, Long userId) {
         // 1. 참조자(REFERRER)인 경우: 상신 직후부터 전체 노출
-        BooleanExpression isReferrer =
-                approval.participants
-                        .any()
-                        .user
-                        .id
-                        .eq(userId)
-                        .and(
-                                approval.participants
-                                        .any()
-                                        .participantType
-                                        .eq(ParticipantType.REFERRER));
+        BooleanExpression isReferrer = approval.participants
+                .any().user.id
+                .eq(userId)
+                .and(
+                        approval.participants
+                                .any().participantType
+                                .eq(ParticipantType.REFERRER));
 
         // 2. 열람권자(VIEWER)인 경우: 최종 승인(APPROVED)된 문서만 노출
-        BooleanExpression isViewerAndApproved =
-                approval.participants
-                        .any()
-                        .user
-                        .id
-                        .eq(userId)
-                        .and(approval.participants.any().participantType.eq(ParticipantType.VIEWER))
-                        .and(approval.status.eq(ApprovalStatus.APPROVED));
+        BooleanExpression isViewerAndApproved = approval.participants
+                .any().user.id
+                .eq(userId)
+                .and(approval.participants.any().participantType.eq(ParticipantType.VIEWER))
+                .and(approval.status.eq(ApprovalStatus.APPROVED));
 
         // ROLE(ParticipantType) 필터가 명시된 경우 해당 역할만 필터링
         if (participantType == ParticipantType.REFERRER) {

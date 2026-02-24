@@ -1,6 +1,8 @@
 package kr.co.awesomelead.groupware_backend.domain.admin.service;
 
+import java.util.List;
 import kr.co.awesomelead.groupware_backend.domain.admin.dto.request.UserApprovalRequestDto;
+import kr.co.awesomelead.groupware_backend.domain.admin.enums.AuthorityAction;
 import kr.co.awesomelead.groupware_backend.domain.department.entity.Department;
 import kr.co.awesomelead.groupware_backend.domain.department.repository.DepartmentRepository;
 import kr.co.awesomelead.groupware_backend.domain.user.entity.User;
@@ -11,9 +13,7 @@ import kr.co.awesomelead.groupware_backend.domain.user.enums.Status;
 import kr.co.awesomelead.groupware_backend.domain.user.repository.UserRepository;
 import kr.co.awesomelead.groupware_backend.global.error.CustomException;
 import kr.co.awesomelead.groupware_backend.global.error.ErrorCode;
-
 import lombok.RequiredArgsConstructor;
-
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -26,21 +26,21 @@ public class AdminService {
 
     @Transactional
     public void approveUserRegistration(
-            Long userId, UserApprovalRequestDto requestDto, Long adminId) {
+        Long userId, UserApprovalRequestDto requestDto, Long adminId) {
         //  관리자 권한 확인
         User admin =
-                userRepository
-                        .findById(adminId)
-                        .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
+            userRepository
+                .findById(adminId)
+                .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
         if (admin.getRole() != Role.MASTER_ADMIN && admin.getRole() != Role.ADMIN) {
             throw new CustomException(ErrorCode.NO_AUTHORITY_FOR_REGISTRATION);
         }
 
         // userId로 PENDING 상태의 사용자를 조회
         User user =
-                userRepository
-                        .findById(userId)
-                        .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
+            userRepository
+                .findById(userId)
+                .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
 
         if (user.getStatus() != Status.PENDING) {
             throw new CustomException(ErrorCode.DUPLICATED_SIGNUP_REQUEST);
@@ -63,9 +63,9 @@ public class AdminService {
         }
 
         Department department =
-                departmentRepository
-                        .findById(requestDto.getDepartmentId())
-                        .orElseThrow(() -> new CustomException(ErrorCode.DEPARTMENT_NOT_FOUND));
+            departmentRepository
+                .findById(requestDto.getDepartmentId())
+                .orElseThrow(() -> new CustomException(ErrorCode.DEPARTMENT_NOT_FOUND));
 
         // DTO의 정보로 사용자 엔티티를 설정
         user.setWorkLocation(requestDto.getWorkLocation());
@@ -101,18 +101,18 @@ public class AdminService {
     public void updateUserRole(Long userId, Role role, Long adminId) {
 
         User admin =
-                userRepository
-                        .findById(adminId)
-                        .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
+            userRepository
+                .findById(adminId)
+                .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
 
         if (admin.getRole() != Role.ADMIN && admin.getRole() != Role.MASTER_ADMIN) {
             throw new CustomException(ErrorCode.NO_AUTHORITY_FOR_ROLE_UPDATE);
         }
         // 1. 대상 사용자 조회
         User targetUser =
-                userRepository
-                        .findById(userId)
-                        .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
+            userRepository
+                .findById(userId)
+                .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
 
         // 2. 역할 업데이트
         targetUser.setRole(role);
@@ -128,12 +128,14 @@ public class AdminService {
     }
 
     @Transactional
-    public void updateUserAuthority(Long userId, Authority authority, String action, Long adminId) {
+    public void updateUserAuthority(Long userId, List<Authority> authorities,
+        AuthorityAction action,
+        Long adminId) {
         // 1. 관리자 권한 확인 (ADMIN 또는 MASTER_ADMIN만 가능)
         User admin =
-                userRepository
-                        .findById(adminId)
-                        .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
+            userRepository
+                .findById(adminId)
+                .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
 
         if (admin.getRole() != Role.ADMIN && admin.getRole() != Role.MASTER_ADMIN) {
             throw new CustomException(ErrorCode.NO_AUTHORITY_FOR_ROLE_UPDATE);
@@ -141,17 +143,33 @@ public class AdminService {
 
         // 2. 대상 사용자 조회
         User targetUser =
-                userRepository
-                        .findById(userId)
-                        .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
+            userRepository
+                .findById(userId)
+                .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
 
-        // 3. 동작(Action)에 따른 권한 처리
-        if ("ADD".equalsIgnoreCase(action)) {
-            targetUser.addAuthority(authority);
-        } else if ("REMOVE".equalsIgnoreCase(action)) {
-            targetUser.removeAuthority(authority);
-        } else {
-            throw new CustomException(ErrorCode.INVALID_ARGUMENT); // 잘못된 액션 요청
+        // 3. 요청 유효성 검사
+        if (authorities == null || authorities.isEmpty()) {
+            throw new CustomException(ErrorCode.INVALID_ARGUMENT);
+        }
+
+        // 4. 동작(Action)에 따른 권한 처리
+        switch (action) {
+            case ADD -> {
+                for (Authority authority : authorities) {
+                    if (targetUser.hasAuthority(authority)) {
+                        throw new CustomException(ErrorCode.AUTHORITY_ALREADY_ASSIGNED);
+                    }
+                }
+                authorities.forEach(targetUser::addAuthority);
+            }
+            case REMOVE -> {
+                for (Authority authority : authorities) {
+                    if (!targetUser.hasAuthority(authority)) {
+                        throw new CustomException(ErrorCode.AUTHORITY_NOT_ASSIGNED);
+                    }
+                }
+                authorities.forEach(targetUser::removeAuthority);
+            }
         }
 
         userRepository.save(targetUser);

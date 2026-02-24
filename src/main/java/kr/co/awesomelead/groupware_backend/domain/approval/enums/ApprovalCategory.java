@@ -9,9 +9,9 @@ import lombok.Getter;
 @AllArgsConstructor
 public enum ApprovalCategory {
     ALL("전체"),
-    IN_PROGRESS("결재 진행"),
-    REFERENCE("참조/열람"),
-    DRAFT("내 기안");
+    IN_PROGRESS("결재진행"),
+    REFERENCE("참조문서"),
+    DRAFT("내 작성");
 
     private final String description;
 

@@ -1,8 +1,5 @@
 package kr.co.awesomelead.groupware_backend.domain.approval.mapper;
 
-import java.util.Comparator;
-import java.util.List;
-import java.util.stream.Collectors;
 import kr.co.awesomelead.groupware_backend.domain.approval.dto.request.ApprovalCreateRequestDto;
 import kr.co.awesomelead.groupware_backend.domain.approval.dto.request.BasicApprovalCreateRequestDto;
 import kr.co.awesomelead.groupware_backend.domain.approval.dto.request.CarFuelApprovalCreateRequestDto;
@@ -23,6 +20,7 @@ import kr.co.awesomelead.groupware_backend.domain.approval.entity.document.Leave
 import kr.co.awesomelead.groupware_backend.domain.approval.entity.document.OverseasTripApproval;
 import kr.co.awesomelead.groupware_backend.domain.approval.entity.document.WelfareExpenseApproval;
 import kr.co.awesomelead.groupware_backend.global.infra.s3.service.S3Service;
+
 import org.mapstruct.AfterMapping;
 import org.mapstruct.BeanMapping;
 import org.mapstruct.Context;
@@ -33,15 +31,25 @@ import org.mapstruct.ReportingPolicy;
 import org.mapstruct.SubclassExhaustiveStrategy;
 import org.mapstruct.SubclassMapping;
 
+import java.util.Comparator;
+import java.util.List;
+import java.util.stream.Collectors;
+
 @Mapper(componentModel = "spring", unmappedTargetPolicy = ReportingPolicy.IGNORE)
 public interface ApprovalMapper {
 
     @BeanMapping(subclassExhaustiveStrategy = SubclassExhaustiveStrategy.RUNTIME_EXCEPTION)
     @SubclassMapping(source = LeaveApprovalCreateRequestDto.class, target = LeaveApproval.class)
     @SubclassMapping(source = CarFuelApprovalCreateRequestDto.class, target = CarFuelApproval.class)
-    @SubclassMapping(source = WelfareExpenseApprovalCreateRequestDto.class, target = WelfareExpenseApproval.class)
-    @SubclassMapping(source = ExpenseDraftApprovalCreateRequestDto.class, target = ExpenseDraftApproval.class)
-    @SubclassMapping(source = OverseasTripApprovalCreateRequestDto.class, target = OverseasTripApproval.class)
+    @SubclassMapping(
+            source = WelfareExpenseApprovalCreateRequestDto.class,
+            target = WelfareExpenseApproval.class)
+    @SubclassMapping(
+            source = ExpenseDraftApprovalCreateRequestDto.class,
+            target = ExpenseDraftApproval.class)
+    @SubclassMapping(
+            source = OverseasTripApprovalCreateRequestDto.class,
+            target = OverseasTripApproval.class)
     @SubclassMapping(source = BasicApprovalCreateRequestDto.class, target = BasicApproval.class)
     @Mapping(target = "retentionPeriod", ignore = true)
     Approval toEntity(ApprovalCreateRequestDto dto);
@@ -102,7 +110,7 @@ public interface ApprovalMapper {
     @Mapping(target = "approvalSteps", source = "approval.steps")
     @Mapping(target = "documentDetails", ignore = true)
     ApprovalDetailResponseDto toDetailResponseDto(
-        Approval approval, @Context Long viewerId, @Context S3Service s3Service);
+            Approval approval, @Context Long viewerId, @Context S3Service s3Service);
 
     @Mapping(target = "approverId", source = "approver.id")
     @Mapping(target = "approverName", source = "approver.displayName")
@@ -113,31 +121,34 @@ public interface ApprovalMapper {
     @Mapping(target = "userName", source = "user.displayName")
     @Mapping(target = "departmentName", source = "user.department.name.description")
     ApprovalDetailResponseDto.ApprovalParticipantDetailDto toParticipantDetailDto(
-        ApprovalParticipant participant);
+            ApprovalParticipant participant);
 
-    @Mapping(target = "fileUrl", expression = "java(s3Service.getPresignedViewUrl(attachment.getS3Key()))")
+    @Mapping(
+            target = "fileUrl",
+            expression = "java(s3Service.getPresignedViewUrl(attachment.getS3Key()))")
     ApprovalDetailResponseDto.ApprovalAttachmentDetailDto toAttachmentDetailDto(
-        ApprovalAttachment attachment, @Context S3Service s3Service);
+            ApprovalAttachment attachment, @Context S3Service s3Service);
 
     @Mapping(target = "status", expression = "java(approval.getDisplayStatus(viewerId))")
     @Mapping(target = "drafterName", source = "approval.drafter.displayName")
     @Mapping(target = "draftDate", source = "approval.createdAt")
     @Mapping(target = "approvalLine", ignore = true) // AfterMapping에서 처리
     @Mapping(target = "completedDate", ignore = true)
-        // AfterMapping에서 처리
+    // AfterMapping에서 처리
     ApprovalSummaryResponseDto toSummaryResponseDto(Approval approval, @Context Long viewerId);
 
     @AfterMapping
     default void afterToSummaryResponseDto(
-        Approval approval,
-        @MappingTarget ApprovalSummaryResponseDto.ApprovalSummaryResponseDtoBuilder builder) {
+            Approval approval,
+            @MappingTarget ApprovalSummaryResponseDto.ApprovalSummaryResponseDtoBuilder builder) {
         // [작성자 > 승인자1 > 승인자2 ...] 형태로 결재라인 문자열 조합
         StringBuilder sb = new StringBuilder("[");
         sb.append(approval.getDrafter().getDisplayName());
 
-        List<ApprovalStep> sortedSteps = approval.getSteps().stream()
-            .sorted(Comparator.comparingInt(ApprovalStep::getSequence))
-            .collect(Collectors.toList());
+        List<ApprovalStep> sortedSteps =
+                approval.getSteps().stream()
+                        .sorted(Comparator.comparingInt(ApprovalStep::getSequence))
+                        .collect(Collectors.toList());
 
         for (ApprovalStep step : sortedSteps) {
             sb.append(" > ").append(step.getApprover().getDisplayName());
@@ -147,9 +158,11 @@ public interface ApprovalMapper {
 
         // 최종 승인 또는 반려인 경우 마지막 단계의 처리일을 완료일로 세팅
         if (approval.getStatus()
-            == kr.co.awesomelead.groupware_backend.domain.approval.enums.ApprovalStatus.APPROVED
-            || approval.getStatus()
-            == kr.co.awesomelead.groupware_backend.domain.approval.enums.ApprovalStatus.REJECTED) {
+                        == kr.co.awesomelead.groupware_backend.domain.approval.enums.ApprovalStatus
+                                .APPROVED
+                || approval.getStatus()
+                        == kr.co.awesomelead.groupware_backend.domain.approval.enums.ApprovalStatus
+                                .REJECTED) {
             if (!sortedSteps.isEmpty()) {
                 builder.completedDate(sortedSteps.get(sortedSteps.size() - 1).getProcessedAt());
             }

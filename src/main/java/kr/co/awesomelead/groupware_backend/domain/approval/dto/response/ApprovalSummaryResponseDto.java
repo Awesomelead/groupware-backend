@@ -1,12 +1,15 @@
 package kr.co.awesomelead.groupware_backend.domain.approval.dto.response;
 
 import io.swagger.v3.oas.annotations.media.Schema;
-import java.time.LocalDateTime;
+
 import kr.co.awesomelead.groupware_backend.domain.approval.enums.ApprovalStatus;
+
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+
+import java.time.LocalDateTime;
 
 @Getter
 @Builder
@@ -38,5 +41,4 @@ public class ApprovalSummaryResponseDto {
 
     @Schema(description = "완료일(최종 승인/반려일)", example = "2025-04-08T15:30:00")
     private LocalDateTime completedDate;
-
 }

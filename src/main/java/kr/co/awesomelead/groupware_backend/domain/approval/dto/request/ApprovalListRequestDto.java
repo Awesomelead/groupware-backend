@@ -21,7 +21,9 @@ public class ApprovalListRequestDto {
     @Schema(description = "상태 필터 (ALL 필터링은 null 또는 생략)", example = "WAITING")
     private ApprovalStatus status;
 
-    @Schema(description = "참여자 유형 필터 (REFERENCE 카테고리에서 REFERRER 또는 VIEWER 구분용)", example = "REFERRER")
+    @Schema(
+            description = "참여자 유형 필터 (REFERENCE 카테고리에서 REFERRER 또는 VIEWER 구분용)",
+            example = "REFERRER")
     private ParticipantType participantType;
 
     @Schema(description = "결재 양식 서브 필터", example = "BASIC")

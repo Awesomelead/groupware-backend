@@ -1,6 +1,7 @@
 package kr.co.awesomelead.groupware_backend.config;
 
 import org.springframework.context.annotation.Configuration;
+import org.springframework.format.FormatterRegistry;
 import org.springframework.web.servlet.config.annotation.CorsRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 
@@ -15,5 +16,10 @@ public class CorsConfig implements WebMvcConfigurer {
                 .allowedHeaders("*")
                 .allowCredentials(false) // Swagger UI는 인증쿠키를 보내지 않으므로 false 권장
                 .maxAge(3600);
+    }
+
+    @Override
+    public void addFormatters(FormatterRegistry registry) {
+        registry.addConverter(new StringToRoleConverter());
     }
 }

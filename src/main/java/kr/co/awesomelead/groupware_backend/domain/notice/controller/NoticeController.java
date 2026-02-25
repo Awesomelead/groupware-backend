@@ -35,7 +35,6 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestPart;
 import org.springframework.web.bind.annotation.RestController;
@@ -431,30 +430,11 @@ public class NoticeController {
 
     @Operation(
             summary = "공지 수정",
-            description = "특정 공지를 수정합니다. JSON(내용만) 또는 multipart(내용+파일) 수정을 지원합니다.",
+            description = "특정 공지를 수정합니다. multipart/form-data 기반으로 내용 수정 및 첨부파일 추가/삭제를 처리합니다.",
             requestBody =
                     @io.swagger.v3.oas.annotations.parameters.RequestBody(
                             required = true,
                             content = {
-                                @Content(
-                                        mediaType = MediaType.APPLICATION_JSON_VALUE,
-                                        schema =
-                                                @Schema(
-                                                        implementation =
-                                                                NoticeUpdateRequestDto.class),
-                                        examples = {
-                                            @ExampleObject(
-                                                    name = "JSON 요청 예시",
-                                                    value =
-                                                            """
-                                    {
-                                      "title": "2025년 2월 전체 회의 안내 (수정)",
-                                      "content": "회의 시간이 오후 3시로 변경되었습니다.",
-                                      "pinned": true,
-                                      "attachmentsIdsToRemove": [1]
-                                    }
-                                    """)
-                                        }),
                                 @Content(
                                         mediaType = MediaType.MULTIPART_FORM_DATA_VALUE,
                                         schema =
@@ -472,7 +452,20 @@ public class NoticeController {
                                         },
                                         examples = {
                                             @ExampleObject(
-                                                    name = "Multipart 요청 예시",
+                                                    name = "내용만 수정",
+                                                    value =
+                                                            """
+                                    {
+                                      "notice": {
+                                        "title": "2025년 2월 전체 회의 안내 (수정)",
+                                        "content": "회의 시간이 오후 3시로 변경되었습니다.",
+                                        "pinned": true,
+                                        "attachmentsIdsToRemove": [1]
+                                      }
+                                    }
+                                    """),
+                                            @ExampleObject(
+                                                    name = "내용 + 첨부파일 추가",
                                                     value =
                                                             """
                                     {
@@ -502,23 +495,11 @@ public class NoticeController {
                         responseCode = "404",
                         description = "대상 찾을 수 없음")
             })
-    @PatchMapping(value = "/{noticeId}", consumes = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<ApiResponse<Long>> updateNoticeJson(
+    @PatchMapping(value = "/{noticeId}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ResponseEntity<ApiResponse<Long>> updateNotice(
             @Parameter(hidden = true) @AuthenticationPrincipal CustomUserDetails userDetails,
             @Parameter(description = "수정할 공지사항 ID", example = "1", required = true) @PathVariable
                     Long noticeId,
-            @Valid @RequestBody NoticeUpdateRequestDto dto)
-            throws IOException {
-
-        Long updatedId = noticeService.updateNotice(userDetails.getId(), noticeId, dto, null);
-        return ResponseEntity.ok(ApiResponse.onSuccess(updatedId));
-    }
-
-    @Operation(hidden = true) // 중복 문서 노출 방지
-    @PatchMapping(value = "/{noticeId}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    public ResponseEntity<ApiResponse<Long>> updateNoticeMultipart(
-            @Parameter(hidden = true) @AuthenticationPrincipal CustomUserDetails userDetails,
-            @PathVariable Long noticeId,
             @Valid @RequestPart("notice") NoticeUpdateRequestDto dto,
             @RequestPart(value = "files", required = false) List<MultipartFile> files)
             throws IOException {

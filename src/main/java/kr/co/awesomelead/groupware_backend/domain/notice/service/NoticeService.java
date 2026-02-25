@@ -193,9 +193,22 @@ public class NoticeService {
     private void uploadFiles(List<MultipartFile> files, Notice notice) throws IOException {
         if (files != null && !files.isEmpty()) {
             for (MultipartFile file : files) {
+                if (file == null || file.isEmpty()) {
+                    continue;
+                }
+
+                String originalFileName = file.getOriginalFilename();
+                if (originalFileName == null || originalFileName.isBlank()) {
+                    continue;
+                }
+
+                if ("blob".equalsIgnoreCase(originalFileName.trim())) {
+                    continue;
+                }
+
                 String s3Key = s3Service.uploadFile(file);
                 NoticeAttachment attachment = new NoticeAttachment();
-                attachment.setOriginalFileName(file.getOriginalFilename());
+                attachment.setOriginalFileName(originalFileName);
                 attachment.setS3Key(s3Key);
                 attachment.setFileSize(file.getSize());
                 notice.addAttachment(attachment);

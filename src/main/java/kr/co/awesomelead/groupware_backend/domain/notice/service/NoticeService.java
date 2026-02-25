@@ -172,7 +172,7 @@ public class NoticeService {
             for (Long attachmentId : dto.getAttachmentsIdsToRemove()) {
                 NoticeAttachment attachment =
                         noticeAttachmentRepository
-                                .findById(attachmentId)
+                                .findByIdAndNoticeId(attachmentId, noticeId)
                                 .orElseThrow(
                                         () ->
                                                 new CustomException(

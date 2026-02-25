@@ -54,6 +54,8 @@ public enum ErrorCode {
     APPROVAL_NOT_FOUND(HttpStatus.NOT_FOUND, "해당 결재 문서를 찾을 수 없습니다."),
     INVALID_LEAVE_DETAIL_TYPE(HttpStatus.BAD_REQUEST, "휴가 유형에 맞지 않는 소분류입니다."),
     DUPLICATE_APPROVER(HttpStatus.BAD_REQUEST, "동일한 결재자가 중복되어 있습니다."),
+    AUTHORITY_ALREADY_ASSIGNED(HttpStatus.BAD_REQUEST, "이미 부여된 권한입니다."),
+    AUTHORITY_NOT_ASSIGNED(HttpStatus.BAD_REQUEST, "부여되지 않은 권한은 제거할 수 없습니다."),
 
     // 401 Unauthorized
     INVALID_TOKEN(HttpStatus.UNAUTHORIZED, "유효하지 않은 토큰입니다."),

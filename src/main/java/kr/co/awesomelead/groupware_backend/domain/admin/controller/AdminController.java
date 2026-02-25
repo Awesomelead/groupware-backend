@@ -2,6 +2,8 @@ package kr.co.awesomelead.groupware_backend.domain.admin.controller;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.enums.Explode;
+import io.swagger.v3.oas.annotations.enums.ParameterStyle;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.ExampleObject;
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -9,8 +11,10 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 
 import kr.co.awesomelead.groupware_backend.domain.admin.dto.request.UserApprovalRequestDto;
+import kr.co.awesomelead.groupware_backend.domain.admin.enums.AuthorityAction;
 import kr.co.awesomelead.groupware_backend.domain.admin.service.AdminService;
 import kr.co.awesomelead.groupware_backend.domain.user.dto.CustomUserDetails;
+import kr.co.awesomelead.groupware_backend.domain.user.enums.Authority;
 import kr.co.awesomelead.groupware_backend.domain.user.enums.Role;
 import kr.co.awesomelead.groupware_backend.global.common.response.ApiResponse;
 
@@ -25,6 +29,8 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+
+import java.util.List;
 
 @RestController
 @RequestMapping("/api/admin")
@@ -217,5 +223,130 @@ public class AdminController {
         return ResponseEntity.ok(
                 ApiResponse.onSuccess(
                         userId + "번 사용자의 역할이 " + role.getDescription() + "(으)로 성공적으로 변경되었습니다."));
+    }
+
+    @Operation(
+            summary = "사용자 세부 권한 변경",
+            description =
+                    "특정 사용자에게 여러 권한을 일괄 추가(ADD)하거나 제거(REMOVE)합니다. ADMIN 또는 MASTER_ADMIN만 가능합니다.")
+    @ApiResponses(
+            value = {
+                @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                        responseCode = "200",
+                        description = "권한 변경 성공",
+                        content =
+                                @Content(
+                                        mediaType = "application/json",
+                                        schema = @Schema(implementation = ApiResponse.class),
+                                        examples =
+                                                @ExampleObject(
+                                                        value =
+                                                                """
+                                {
+                                "isSuccess": true,
+                                "code": "COMMON200",
+                                "message": "요청에 성공했습니다.",
+                                "result": "권한이 성공적으로 변경되었습니다."
+                                }
+                                """))),
+                @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                        responseCode = "400",
+                        description = "잘못된 요청 파라미터",
+                        content =
+                                @Content(
+                                        mediaType = "application/json",
+                                        examples = {
+                                            @ExampleObject(
+                                                    name = "입력값 검증 실패",
+                                                    value =
+                                                            """
+                                    {
+                                    "isSuccess": false,
+                                    "code": "COMMON400",
+                                    "message": "입력값이 유효하지 않습니다.",
+                                    "result": null
+                                    }
+                                    """),
+                                            @ExampleObject(
+                                                    name = "이미 부여된 권한 추가",
+                                                    value =
+                                                            """
+                                    {
+                                    "isSuccess": false,
+                                    "code": "AUTHORITY_ALREADY_ASSIGNED",
+                                    "message": "이미 부여된 권한입니다.",
+                                    "result": null
+                                    }
+                                    """),
+                                            @ExampleObject(
+                                                    name = "없는 권한 제거",
+                                                    value =
+                                                            """
+                                    {
+                                    "isSuccess": false,
+                                    "code": "AUTHORITY_NOT_ASSIGNED",
+                                    "message": "부여되지 않은 권한은 제거할 수 없습니다.",
+                                    "result": null
+                                    }
+                                    """)
+                                        })),
+                @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                        responseCode = "403",
+                        description = "권한 부족",
+                        content =
+                                @Content(
+                                        mediaType = "application/json",
+                                        examples =
+                                                @ExampleObject(
+                                                        value =
+                                                                """
+                                {
+                                "isSuccess": false,
+                                "code": "NO_AUTHORITY_FOR_ROLE_UPDATE",
+                                "message": "사용자 역할 변경 권한이 없습니다.",
+                                "result": null
+                                }
+                                """))),
+                @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                        responseCode = "404",
+                        description = "사용자 없음",
+                        content =
+                                @Content(
+                                        mediaType = "application/json",
+                                        examples =
+                                                @ExampleObject(
+                                                        value =
+                                                                """
+                                {
+                                "isSuccess": false,
+                                "code": "USER_NOT_FOUND",
+                                "message": "해당 사용자를 찾을 수 없습니다.",
+                                "result": null
+                                }
+                                """)))
+            })
+    @PatchMapping("/users/{userId}/authority")
+    public ResponseEntity<ApiResponse<String>> updateUserAuthority(
+            @Parameter(description = "권한 변경 대상 사용자 ID", example = "22", required = true)
+                    @PathVariable
+                    Long userId,
+            @Parameter(
+                            name = "authorities",
+                            description = "변경할 권한 목록 (복수 선택 가능, 영문/한글 설명값 모두 입력 가능)",
+                            style = ParameterStyle.FORM,
+                            explode = Explode.TRUE)
+                    @RequestParam
+                    List<Authority> authorities,
+            @Parameter(
+                            description = "권한 변경 동작 (ADD/REMOVE 또는 추가/제거)",
+                            example = "추가",
+                            required = true,
+                            schema = @Schema(implementation = AuthorityAction.class))
+                    @RequestParam
+                    AuthorityAction action,
+            @Parameter(hidden = true) @AuthenticationPrincipal CustomUserDetails userDetails) {
+
+        adminService.updateUserAuthority(userId, authorities, action, userDetails.getId());
+        return ResponseEntity.ok(ApiResponse.onSuccess("권한이 성공적으로 변경되었습니다."));
     }
 }

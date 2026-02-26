@@ -389,4 +389,82 @@ class UserServiceTest {
             verify(myInfoUpdateRequestRepository, never()).save(any());
         }
     }
+
+    @Nested
+    @DisplayName("내 정보 수정 요청 취소")
+    class CancelMyInfoUpdateRequestTest {
+
+        @Test
+        @DisplayName("성공: 본인 요청이 PENDING이면 취소된다")
+        void cancelMyInfoUpdateRequest_success() {
+            // given
+            User testUser = createTestUser();
+            MyInfoUpdateRequest request =
+                    MyInfoUpdateRequest.builder()
+                            .id(10L)
+                            .user(testUser)
+                            .status(MyInfoUpdateRequestStatus.PENDING)
+                            .build();
+
+            given(userRepository.findByEmail(TEST_EMAIL)).willReturn(Optional.of(testUser));
+            given(myInfoUpdateRequestRepository.findById(10L)).willReturn(Optional.of(request));
+
+            // when
+            userService.cancelMyInfoUpdateRequest(userDetails, 10L);
+
+            // then
+            assertThat(request.getStatus()).isEqualTo(MyInfoUpdateRequestStatus.CANCELED);
+            verify(myInfoUpdateRequestRepository).save(request);
+        }
+
+        @Test
+        @DisplayName("실패: 다른 사용자의 요청은 취소할 수 없다")
+        void cancelMyInfoUpdateRequest_forbidden() {
+            // given
+            User me = createTestUser();
+            User other = createTestUser();
+            other.setId(99L);
+            MyInfoUpdateRequest request =
+                    MyInfoUpdateRequest.builder()
+                            .id(10L)
+                            .user(other)
+                            .status(MyInfoUpdateRequestStatus.PENDING)
+                            .build();
+
+            given(userRepository.findByEmail(TEST_EMAIL)).willReturn(Optional.of(me));
+            given(myInfoUpdateRequestRepository.findById(10L)).willReturn(Optional.of(request));
+
+            // when & then
+            assertThatThrownBy(() -> userService.cancelMyInfoUpdateRequest(userDetails, 10L))
+                    .isInstanceOf(CustomException.class)
+                    .hasFieldOrPropertyWithValue(
+                            "errorCode", ErrorCode.NO_AUTHORITY_FOR_MY_INFO_UPDATE_CANCEL);
+
+            verify(myInfoUpdateRequestRepository, never()).save(any());
+        }
+
+        @Test
+        @DisplayName("실패: PENDING이 아니면 취소할 수 없다")
+        void cancelMyInfoUpdateRequest_notCancelable() {
+            // given
+            User me = createTestUser();
+            MyInfoUpdateRequest request =
+                    MyInfoUpdateRequest.builder()
+                            .id(10L)
+                            .user(me)
+                            .status(MyInfoUpdateRequestStatus.APPROVED)
+                            .build();
+
+            given(userRepository.findByEmail(TEST_EMAIL)).willReturn(Optional.of(me));
+            given(myInfoUpdateRequestRepository.findById(10L)).willReturn(Optional.of(request));
+
+            // when & then
+            assertThatThrownBy(() -> userService.cancelMyInfoUpdateRequest(userDetails, 10L))
+                    .isInstanceOf(CustomException.class)
+                    .hasFieldOrPropertyWithValue(
+                            "errorCode", ErrorCode.MY_INFO_UPDATE_REQUEST_NOT_CANCELABLE);
+
+            verify(myInfoUpdateRequestRepository, never()).save(any());
+        }
+    }
 }

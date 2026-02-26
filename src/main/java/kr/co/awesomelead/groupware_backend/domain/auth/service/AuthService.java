@@ -12,6 +12,8 @@ import kr.co.awesomelead.groupware_backend.domain.auth.dto.response.LoginRespons
 import kr.co.awesomelead.groupware_backend.domain.auth.dto.response.SignupResponseDto;
 import kr.co.awesomelead.groupware_backend.domain.auth.entity.RefreshToken;
 import kr.co.awesomelead.groupware_backend.domain.auth.util.JWTUtil;
+import kr.co.awesomelead.groupware_backend.domain.approval.entity.Approval;
+import kr.co.awesomelead.groupware_backend.domain.approval.repository.ApprovalRepository;
 import kr.co.awesomelead.groupware_backend.domain.user.entity.User;
 import kr.co.awesomelead.groupware_backend.domain.user.mapper.UserMapper;
 import kr.co.awesomelead.groupware_backend.domain.user.repository.UserRepository;
@@ -30,8 +32,11 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.PersistenceContext;
 import java.util.Collection;
 import java.util.Iterator;
+import java.util.List;
 
 @Slf4j
 @Service
@@ -46,6 +51,9 @@ public class AuthService {
     private final AuthenticationManager authenticationManager;
     private final JWTUtil jwtUtil;
     private final RefreshTokenService refreshTokenService;
+    private final ApprovalRepository approvalRepository;
+
+    @PersistenceContext private EntityManager entityManager;
 
     @Value("${spring.jwt.access-validation}")
     private long accessTokenValidation;
@@ -289,18 +297,66 @@ public class AuthService {
         log.info("비밀번호 변경 완료 - 사용자 ID: {}", userId);
     }
 
-    // 계정 삭제 (테스트)
+    // 계정 삭제
     @Transactional
-    public void deleteUser(String email) {
-        // 1. 사용자 찾기
+    public void deleteUser(Long userId) {
         User user =
                 userRepository
-                        .findByEmail(email)
+                        .findById(userId)
                         .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
 
-        // 2. 해당 사용자 계정 삭제
+        // 1) 토큰 및 사용자 직접 참조 데이터 정리
+        deleteByQuery("delete from RefreshToken rt where rt.email = :email", "email", user.getEmail());
+        deleteByQuery("delete from MyInfoUpdateRequest r where r.reviewedBy.id = :userId", "userId", userId);
+        deleteByQuery("delete from MyInfoUpdateRequest r where r.user.id = :userId", "userId", userId);
+        deleteByQuery("delete from RequestHistory rh where rh.user.id = :userId", "userId", userId);
+        deleteByQuery("delete from EduAttendance ea where ea.user.id = :userId", "userId", userId);
+        deleteByQuery("delete from CheckSheet cs where cs.user.id = :userId", "userId", userId);
+        deleteByQuery("delete from Payslip p where p.user.id = :userId", "userId", userId);
+        deleteByQuery("delete from AnnualLeave al where al.user.id = :userId", "userId", userId);
+        deleteByQuery("delete from VisitRecord vr where vr.visit.user.id = :userId", "userId", userId);
+        deleteByQuery("delete from Visit v where v.user.id = :userId", "userId", userId);
+        deleteByQuery("delete from NoticeTarget nt where nt.user.id = :userId", "userId", userId);
+        deleteByQuery(
+                "delete from MessageAttachment ma where ma.message.sender.id = :userId or ma.message.receiver.id = :userId",
+                "userId",
+                userId);
+        deleteByQuery(
+                "delete from Message m where m.sender.id = :userId or m.receiver.id = :userId",
+                "userId",
+                userId);
+        deleteByQuery("delete from ApprovalParticipant ap where ap.user.id = :userId", "userId", userId);
+        deleteByQuery("delete from ApprovalStep aps where aps.approver.id = :userId", "userId", userId);
+        deleteByQuery(
+                "delete from SavedApprovalLineDetail sld where sld.approver.id = :userId",
+                "userId",
+                userId);
+        deleteByQuery(
+                "delete from SavedApprovalLineDetail sld where sld.savedLine.user.id = :userId",
+                "userId",
+                userId);
+        deleteByQuery("delete from SavedApprovalLine sl where sl.user.id = :userId", "userId", userId);
+        deleteByQuery("delete from NoticeTarget nt where nt.notice.author.id = :userId", "userId", userId);
+        deleteByQuery(
+                "delete from NoticeAttachment na where na.notice.author.id = :userId",
+                "userId",
+                userId);
+        deleteByQuery("delete from Notice n where n.author.id = :userId", "userId", userId);
+
+        // 2) 사용자가 기안한 결재 문서 삭제 (JOINED 상속 + 자식 테이블 동시 정리)
+        List<Approval> draftedApprovals = approvalRepository.findAllByDrafterId(userId);
+        if (!draftedApprovals.isEmpty()) {
+            approvalRepository.deleteAll(draftedApprovals);
+        }
+
+        // 3) 권한 테이블 정리 후 사용자 삭제
+        user.getAuthorities().clear();
         userRepository.delete(user);
 
-        log.info("계정 삭제 완료 - 이메일: {}", email);
+        log.info("계정 삭제 완료 - userId: {}, email: {}", userId, user.getEmail());
+    }
+
+    private void deleteByQuery(String query, String paramName, Object value) {
+        entityManager.createQuery(query).setParameter(paramName, value).executeUpdate();
     }
 }

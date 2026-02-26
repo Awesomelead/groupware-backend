@@ -7,17 +7,21 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import kr.co.awesomelead.groupware_backend.domain.admin.dto.request.UserApprovalRequestDto;
+import kr.co.awesomelead.groupware_backend.domain.admin.dto.response.MyInfoUpdateRequestSummaryResponseDto;
 import kr.co.awesomelead.groupware_backend.domain.admin.enums.AuthorityAction;
 import kr.co.awesomelead.groupware_backend.domain.admin.service.AdminService;
 import kr.co.awesomelead.groupware_backend.domain.department.entity.Department;
 import kr.co.awesomelead.groupware_backend.domain.department.enums.DepartmentName;
 import kr.co.awesomelead.groupware_backend.domain.department.repository.DepartmentRepository;
+import kr.co.awesomelead.groupware_backend.domain.user.entity.MyInfoUpdateRequest;
 import kr.co.awesomelead.groupware_backend.domain.user.entity.User;
 import kr.co.awesomelead.groupware_backend.domain.user.enums.Authority;
 import kr.co.awesomelead.groupware_backend.domain.user.enums.JobType;
+import kr.co.awesomelead.groupware_backend.domain.user.enums.MyInfoUpdateRequestStatus;
 import kr.co.awesomelead.groupware_backend.domain.user.enums.Position;
 import kr.co.awesomelead.groupware_backend.domain.user.enums.Role;
 import kr.co.awesomelead.groupware_backend.domain.user.enums.Status;
+import kr.co.awesomelead.groupware_backend.domain.user.repository.MyInfoUpdateRequestRepository;
 import kr.co.awesomelead.groupware_backend.domain.user.repository.UserRepository;
 import kr.co.awesomelead.groupware_backend.global.error.CustomException;
 import kr.co.awesomelead.groupware_backend.global.error.ErrorCode;
@@ -42,6 +46,7 @@ class AdminServiceTest {
 
     @Mock private UserRepository userRepository;
     @Mock private DepartmentRepository departmentRepository;
+    @Mock private MyInfoUpdateRequestRepository myInfoUpdateRequestRepository;
     @InjectMocks private AdminService adminService;
     private final Long adminId = 100L;
     private final Long userId = 1L;
@@ -381,6 +386,100 @@ class AdminServiceTest {
                     .isInstanceOf(CustomException.class)
                     .extracting("errorCode")
                     .isEqualTo(ErrorCode.NO_AUTHORITY_FOR_ROLE_UPDATE);
+        }
+    }
+
+    @Nested
+    @DisplayName("개인정보 수정 요청 승인/반려 메서드는")
+    class Describe_myInfoUpdateApproval {
+
+        @Test
+        @DisplayName("관리자가 승인하면 요청 상태가 APPROVED로 바뀌고 사용자 정보가 반영된다")
+        void approveMyInfoUpdate_success() {
+            // given
+            User targetUser =
+                    User.builder().id(userId).nameEng("OLD").phoneNumber("01011112222").build();
+            targetUser.setPhoneNumberHash(User.hashValue("01011112222"));
+            MyInfoUpdateRequest request =
+                    MyInfoUpdateRequest.builder()
+                            .id(10L)
+                            .user(targetUser)
+                            .requestedNameEng("NEW")
+                            .requestedPhoneNumber("01099998888")
+                            .requestedPhoneNumberHash(User.hashValue("01099998888"))
+                            .status(MyInfoUpdateRequestStatus.PENDING)
+                            .build();
+
+            when(userRepository.findById(userId)).thenReturn(Optional.of(targetUser));
+            when(myInfoUpdateRequestRepository.findFirstByUserIdAndStatusOrderByCreatedAtDesc(
+                            userId, MyInfoUpdateRequestStatus.PENDING))
+                    .thenReturn(Optional.of(request));
+            when(userRepository.existsByPhoneNumberHash(User.hashValue("01099998888")))
+                    .thenReturn(false);
+
+            // when
+            adminService.approveMyInfoUpdate(userId, adminId);
+
+            // then
+            assertThat(targetUser.getNameEng()).isEqualTo("NEW");
+            assertThat(targetUser.getPhoneNumber()).isEqualTo("01099998888");
+            assertThat(request.getStatus()).isEqualTo(MyInfoUpdateRequestStatus.APPROVED);
+            verify(userRepository).save(targetUser);
+            verify(myInfoUpdateRequestRepository).save(request);
+        }
+
+        @Test
+        @DisplayName("관리자가 반려하면 요청 상태가 REJECTED로 바뀐다")
+        void rejectMyInfoUpdate_success() {
+            // given
+            User targetUser = User.builder().id(userId).build();
+            MyInfoUpdateRequest request =
+                    MyInfoUpdateRequest.builder()
+                            .id(10L)
+                            .user(targetUser)
+                            .status(MyInfoUpdateRequestStatus.PENDING)
+                            .build();
+
+            when(userRepository.findById(userId)).thenReturn(Optional.of(targetUser));
+            when(myInfoUpdateRequestRepository.findFirstByUserIdAndStatusOrderByCreatedAtDesc(
+                            userId, MyInfoUpdateRequestStatus.PENDING))
+                    .thenReturn(Optional.of(request));
+
+            // when
+            adminService.rejectMyInfoUpdate(userId, "증빙 불충분", adminId);
+
+            // then
+            assertThat(request.getStatus()).isEqualTo(MyInfoUpdateRequestStatus.REJECTED);
+            assertThat(request.getRejectReason()).isEqualTo("증빙 불충분");
+            verify(myInfoUpdateRequestRepository).save(request);
+        }
+
+        @Test
+        @DisplayName("대기 요청 목록 조회 시 PENDING 요청 목록을 반환한다")
+        void getPendingMyInfoUpdateRequests_success() {
+            // given
+            User targetUser =
+                    User.builder().id(userId).nameKor("홍길동").email("hong@test.com").build();
+            MyInfoUpdateRequest request =
+                    MyInfoUpdateRequest.builder()
+                            .id(77L)
+                            .user(targetUser)
+                            .requestedNameEng("HONG")
+                            .status(MyInfoUpdateRequestStatus.PENDING)
+                            .build();
+            when(myInfoUpdateRequestRepository.findAllByStatusWithUser(
+                            MyInfoUpdateRequestStatus.PENDING))
+                    .thenReturn(List.of(request));
+
+            // when
+            List<MyInfoUpdateRequestSummaryResponseDto> result =
+                    adminService.getPendingMyInfoUpdateRequests(adminId);
+
+            // then
+            assertThat(result.size()).isEqualTo(1);
+            assertThat(result.get(0).getRequestId()).isEqualTo(77L);
+            assertThat(result.get(0).getUserId()).isEqualTo(userId);
+            assertThat(result.get(0).getRequestedNameEng()).isEqualTo("HONG");
         }
     }
 }

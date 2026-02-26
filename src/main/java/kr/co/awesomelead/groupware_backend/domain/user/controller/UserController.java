@@ -17,6 +17,7 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -271,5 +272,84 @@ public class UserController {
         @Valid @RequestBody UpdateMyInfoRequestDto requestDto) {
         MyInfoResponseDto response = userService.updateMyInfo(userDetails, requestDto);
         return ResponseEntity.ok(ApiResponse.onSuccess(response));
+    }
+
+    @Operation(summary = "내 정보 수정 요청 취소", description = "본인이 생성한 개인정보 수정 요청(PENDING) 1건을 취소합니다.")
+    @ApiResponses(
+        value = {
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                responseCode = "200",
+                description = "취소 성공",
+                content =
+                @Content(
+                    mediaType = "application/json",
+                    examples =
+                    @ExampleObject(
+                        value =
+                            """
+                                {
+                                  "isSuccess": true,
+                                  "code": "COMMON200",
+                                  "message": "요청에 성공했습니다.",
+                                  "result": "개인정보 수정 요청이 취소되었습니다."
+                                }
+                                """))),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                responseCode = "400",
+                description = "잘못된 요청",
+                content =
+                @Content(
+                    mediaType = "application/json",
+                    examples =
+                    @ExampleObject(
+                        value =
+                            """
+                                {
+                                  "isSuccess": false,
+                                  "code": "MY_INFO_UPDATE_REQUEST_NOT_CANCELABLE",
+                                  "message": "대기 상태 요청만 취소할 수 있습니다.",
+                                  "result": null
+                                }
+                                """))),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                responseCode = "403",
+                description = "권한 없음",
+                content =
+                @Content(
+                    mediaType = "application/json",
+                    examples =
+                    @ExampleObject(
+                        value =
+                            """
+                                {
+                                  "isSuccess": false,
+                                  "code": "NO_AUTHORITY_FOR_MY_INFO_UPDATE_CANCEL",
+                                  "message": "본인의 개인정보 수정 요청만 취소할 수 있습니다.",
+                                  "result": null
+                                }
+                                """))),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                responseCode = "404",
+                description = "대상 없음",
+                content =
+                @Content(
+                    mediaType = "application/json",
+                    examples =
+                    @ExampleObject(
+                        value =
+                            """
+                                {
+                                  "isSuccess": false,
+                                  "code": "MY_INFO_UPDATE_REQUEST_NOT_FOUND",
+                                  "message": "해당 개인정보 수정 요청을 찾을 수 없습니다.",
+                                  "result": null
+                                }
+                                """)))
+        })
+    @PatchMapping("/me/my-info/requests/{requestId}/cancel")
+    public ResponseEntity<ApiResponse<String>> cancelMyInfoUpdateRequest(
+        @AuthenticationPrincipal UserDetails userDetails, @PathVariable Long requestId) {
+        userService.cancelMyInfoUpdateRequest(userDetails, requestId);
+        return ResponseEntity.ok(ApiResponse.onSuccess("개인정보 수정 요청이 취소되었습니다."));
     }
 }

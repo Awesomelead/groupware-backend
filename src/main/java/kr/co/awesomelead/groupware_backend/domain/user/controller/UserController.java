@@ -169,7 +169,9 @@ public class UserController {
 
     @Operation(
         summary = "내 정보 수정",
-        description = "영문 이름과 전화번호를 수정합니다. 전화번호 변경 시 알리고 알림톡 인증이 필요합니다.")
+        description =
+                "내 정보 수정 요청을 생성합니다. 요청은 관리자 승인 후 반영됩니다. "
+                        + "수정 가능 필드: 영문 이름, 전화번호, 우편번호, 주소1, 주소2")
     @ApiResponses(
         value = {
             @io.swagger.v3.oas.annotations.responses.ApiResponse(
@@ -186,20 +188,10 @@ public class UserController {
                                 {
                                   "isSuccess": true,
                                   "code": "COMMON200",
-                                  "message": "성공",
+                                  "message": "요청에 성공했습니다.",
                                   "result": {
                                     "id": 1,
-                                    "nameKor": "김철수",
-                                    "nameEng": "Kim Chulsoo Updated",
-                                    "birthDate": "1990-01-01",
-                                    "nationality": "대한민국",
-                                    "registrationNumberFront": "900101-1******",
-                                    "phoneNumber": "01098765432",
-                                    "email": "timber@example.com",
-                                    "workLocation": "AWESOME",
-                                    "departmentName": "CHUNGNAM_HQ",
-                                    "jobType": "MANAGEMENT",
-                                    "position": "대리"
+                                    "nameKor": "김철수"
                                   }
                                 }
                                 """))),
@@ -211,37 +203,24 @@ public class UserController {
                     mediaType = "application/json",
                     examples = {
                         @ExampleObject(
-                            name = "입력값 검증 실패",
+                            name = "변경 항목 없음",
                             value =
                                 """
                                     {
                                       "isSuccess": false,
-                                      "code": "COMMON400",
-                                      "message": "입력값이 유효하지 않습니다.",
-                                      "result": {
-                                        "phoneNumber": "전화번호는 '-' 없이 10~11자리 숫자로 입력해주세요."
-                                      }
-                                    }
-                                    """),
-                        @ExampleObject(
-                            name = "영문 이름 동일",
-                            value =
-                                """
-                                    {
-                                      "isSuccess": false,
-                                      "code": "NAME_ENG_ALREADY_SAME",
-                                      "message": "입력한 영문 이름이 현재 영문 이름과 동일합니다.",
+                                      "code": "MY_INFO_UPDATE_NO_CHANGES",
+                                      "message": "변경 요청할 내 정보가 없습니다.",
                                       "result": null
                                     }
                                     """),
                         @ExampleObject(
-                            name = "전화번호 동일",
+                            name = "이미 대기중인 요청 존재",
                             value =
                                 """
                                     {
                                       "isSuccess": false,
-                                      "code": "PHONE_NUMBER_ALREADY_SAME",
-                                      "message": "입력한 전화번호가 현재 전화번호와 동일합니다.",
+                                      "code": "MY_INFO_UPDATE_ALREADY_PENDING",
+                                      "message": "이미 처리 대기 중인 개인정보 수정 요청이 있습니다.",
                                       "result": null
                                     }
                                     """),

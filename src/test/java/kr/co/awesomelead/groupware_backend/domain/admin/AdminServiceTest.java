@@ -6,9 +6,6 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-import java.time.LocalDate;
-import java.util.List;
-import java.util.Optional;
 import kr.co.awesomelead.groupware_backend.domain.admin.dto.request.UserApprovalRequestDto;
 import kr.co.awesomelead.groupware_backend.domain.admin.dto.response.MyInfoUpdateRequestSummaryResponseDto;
 import kr.co.awesomelead.groupware_backend.domain.admin.enums.AuthorityAction;
@@ -28,6 +25,7 @@ import kr.co.awesomelead.groupware_backend.domain.user.repository.MyInfoUpdateRe
 import kr.co.awesomelead.groupware_backend.domain.user.repository.UserRepository;
 import kr.co.awesomelead.groupware_backend.global.error.CustomException;
 import kr.co.awesomelead.groupware_backend.global.error.ErrorCode;
+
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -38,18 +36,18 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import java.time.LocalDate;
+import java.util.List;
+import java.util.Optional;
+
 @ExtendWith(MockitoExtension.class)
 @DisplayName("AdminService 클래스의")
 class AdminServiceTest {
 
-    @Mock
-    private UserRepository userRepository;
-    @Mock
-    private DepartmentRepository departmentRepository;
-    @Mock
-    private MyInfoUpdateRequestRepository myInfoUpdateRequestRepository;
-    @InjectMocks
-    private AdminService adminService;
+    @Mock private UserRepository userRepository;
+    @Mock private DepartmentRepository departmentRepository;
+    @Mock private MyInfoUpdateRequestRepository myInfoUpdateRequestRepository;
+    @InjectMocks private AdminService adminService;
     private final Long adminId = 100L;
     private final Long userId = 1L;
     private final UserApprovalRequestDto requestDto = createRequestDto();
@@ -75,7 +73,7 @@ class AdminServiceTest {
             void it_updates_user_info_and_status() {
                 // given
                 Department department =
-                    Department.builder().id(1L).name(DepartmentName.SALES_DEPT).build();
+                        Department.builder().id(1L).name(DepartmentName.SALES_DEPT).build();
                 User pendingUser = new User();
                 pendingUser.setId(userId);
                 pendingUser.setStatus(Status.PENDING);
@@ -105,7 +103,7 @@ class AdminServiceTest {
             void it_throws_invalid_job_type_for_admin_role_exception() {
                 // given
                 Department department =
-                    Department.builder().id(1L).name(DepartmentName.SALES_DEPT).build();
+                        Department.builder().id(1L).name(DepartmentName.SALES_DEPT).build();
                 User pendingUser = new User();
                 pendingUser.setStatus(Status.PENDING);
 
@@ -118,12 +116,12 @@ class AdminServiceTest {
 
                 // when & then
                 assertThatThrownBy(
-                    () ->
-                        adminService.approveUserRegistration(
-                            userId, invalidRequestDto, adminId))
-                    .isInstanceOf(CustomException.class)
-                    .extracting("errorCode")
-                    .isEqualTo(ErrorCode.INVALID_JOB_TYPE_FOR_ADMIN_ROLE);
+                                () ->
+                                        adminService.approveUserRegistration(
+                                                userId, invalidRequestDto, adminId))
+                        .isInstanceOf(CustomException.class)
+                        .extracting("errorCode")
+                        .isEqualTo(ErrorCode.INVALID_JOB_TYPE_FOR_ADMIN_ROLE);
             }
         }
 
@@ -141,12 +139,12 @@ class AdminServiceTest {
 
                 // when & then
                 assertThatThrownBy(
-                    () ->
-                        adminService.approveUserRegistration(
-                            userId, requestDto, adminId))
-                    .isInstanceOf(CustomException.class)
-                    .extracting("errorCode")
-                    .isEqualTo(ErrorCode.DUPLICATED_SIGNUP_REQUEST);
+                                () ->
+                                        adminService.approveUserRegistration(
+                                                userId, requestDto, adminId))
+                        .isInstanceOf(CustomException.class)
+                        .extracting("errorCode")
+                        .isEqualTo(ErrorCode.DUPLICATED_SIGNUP_REQUEST);
             }
         }
 
@@ -162,12 +160,12 @@ class AdminServiceTest {
 
                 // when & then
                 assertThatThrownBy(
-                    () ->
-                        adminService.approveUserRegistration(
-                            userId, requestDto, adminId))
-                    .isInstanceOf(CustomException.class)
-                    .extracting("errorCode")
-                    .isEqualTo(ErrorCode.USER_NOT_FOUND);
+                                () ->
+                                        adminService.approveUserRegistration(
+                                                userId, requestDto, adminId))
+                        .isInstanceOf(CustomException.class)
+                        .extracting("errorCode")
+                        .isEqualTo(ErrorCode.USER_NOT_FOUND);
             }
         }
 
@@ -185,12 +183,12 @@ class AdminServiceTest {
 
                 // when & then
                 assertThatThrownBy(
-                    () ->
-                        adminService.approveUserRegistration(
-                            userId, requestDto, adminId))
-                    .isInstanceOf(CustomException.class)
-                    .extracting("errorCode")
-                    .isEqualTo(ErrorCode.NO_AUTHORITY_FOR_REGISTRATION);
+                                () ->
+                                        adminService.approveUserRegistration(
+                                                userId, requestDto, adminId))
+                        .isInstanceOf(CustomException.class)
+                        .extracting("errorCode")
+                        .isEqualTo(ErrorCode.NO_AUTHORITY_FOR_REGISTRATION);
             }
         }
     }
@@ -244,9 +242,9 @@ class AdminServiceTest {
 
                 // when & then
                 assertThatThrownBy(() -> adminService.updateUserRole(1L, Role.ADMIN, adminId))
-                    .isInstanceOf(CustomException.class)
-                    .extracting("errorCode")
-                    .isEqualTo(ErrorCode.NO_AUTHORITY_FOR_ROLE_UPDATE);
+                        .isInstanceOf(CustomException.class)
+                        .extracting("errorCode")
+                        .isEqualTo(ErrorCode.NO_AUTHORITY_FOR_ROLE_UPDATE);
             }
         }
 
@@ -262,9 +260,9 @@ class AdminServiceTest {
 
                 // when & then
                 assertThatThrownBy(() -> adminService.updateUserRole(1L, Role.ADMIN, adminId))
-                    .isInstanceOf(CustomException.class)
-                    .extracting("errorCode")
-                    .isEqualTo(ErrorCode.USER_NOT_FOUND);
+                        .isInstanceOf(CustomException.class)
+                        .extracting("errorCode")
+                        .isEqualTo(ErrorCode.USER_NOT_FOUND);
             }
         }
     }
@@ -321,15 +319,15 @@ class AdminServiceTest {
 
             // when & then
             assertThatThrownBy(
-                () ->
-                    adminService.updateUserAuthority(
-                        userId,
-                        List.of(Authority.ACCESS_NOTICE),
-                        AuthorityAction.ADD,
-                        adminId))
-                .isInstanceOf(CustomException.class)
-                .extracting("errorCode")
-                .isEqualTo(ErrorCode.AUTHORITY_ALREADY_ASSIGNED);
+                            () ->
+                                    adminService.updateUserAuthority(
+                                            userId,
+                                            List.of(Authority.ACCESS_NOTICE),
+                                            AuthorityAction.ADD,
+                                            adminId))
+                    .isInstanceOf(CustomException.class)
+                    .extracting("errorCode")
+                    .isEqualTo(ErrorCode.AUTHORITY_ALREADY_ASSIGNED);
         }
 
         @Test
@@ -341,15 +339,15 @@ class AdminServiceTest {
 
             // when & then
             assertThatThrownBy(
-                () ->
-                    adminService.updateUserAuthority(
-                        userId,
-                        List.of(Authority.ACCESS_NOTICE),
-                        AuthorityAction.REMOVE,
-                        adminId))
-                .isInstanceOf(CustomException.class)
-                .extracting("errorCode")
-                .isEqualTo(ErrorCode.AUTHORITY_NOT_ASSIGNED);
+                            () ->
+                                    adminService.updateUserAuthority(
+                                            userId,
+                                            List.of(Authority.ACCESS_NOTICE),
+                                            AuthorityAction.REMOVE,
+                                            adminId))
+                    .isInstanceOf(CustomException.class)
+                    .extracting("errorCode")
+                    .isEqualTo(ErrorCode.AUTHORITY_NOT_ASSIGNED);
         }
 
         @Test
@@ -361,12 +359,12 @@ class AdminServiceTest {
 
             // when & then
             assertThatThrownBy(
-                () ->
-                    adminService.updateUserAuthority(
-                        userId, List.of(), AuthorityAction.ADD, adminId))
-                .isInstanceOf(CustomException.class)
-                .extracting("errorCode")
-                .isEqualTo(ErrorCode.INVALID_ARGUMENT);
+                            () ->
+                                    adminService.updateUserAuthority(
+                                            userId, List.of(), AuthorityAction.ADD, adminId))
+                    .isInstanceOf(CustomException.class)
+                    .extracting("errorCode")
+                    .isEqualTo(ErrorCode.INVALID_ARGUMENT);
         }
 
         @Test
@@ -379,15 +377,15 @@ class AdminServiceTest {
 
             // when & then
             assertThatThrownBy(
-                () ->
-                    adminService.updateUserAuthority(
-                        userId,
-                        List.of(Authority.ACCESS_NOTICE),
-                        AuthorityAction.ADD,
-                        adminId))
-                .isInstanceOf(CustomException.class)
-                .extracting("errorCode")
-                .isEqualTo(ErrorCode.NO_AUTHORITY_FOR_ROLE_UPDATE);
+                            () ->
+                                    adminService.updateUserAuthority(
+                                            userId,
+                                            List.of(Authority.ACCESS_NOTICE),
+                                            AuthorityAction.ADD,
+                                            adminId))
+                    .isInstanceOf(CustomException.class)
+                    .extracting("errorCode")
+                    .isEqualTo(ErrorCode.NO_AUTHORITY_FOR_ROLE_UPDATE);
         }
     }
 
@@ -399,25 +397,25 @@ class AdminServiceTest {
         @DisplayName("관리자가 승인하면 요청 상태가 APPROVED로 바뀌고 사용자 정보가 반영된다")
         void approveMyInfoUpdate_success() {
             // given
-            User targetUser = User.builder().id(userId).nameEng("OLD").phoneNumber("01011112222")
-                .build();
+            User targetUser =
+                    User.builder().id(userId).nameEng("OLD").phoneNumber("01011112222").build();
             targetUser.setPhoneNumberHash(User.hashValue("01011112222"));
             MyInfoUpdateRequest request =
-                MyInfoUpdateRequest.builder()
-                    .id(10L)
-                    .user(targetUser)
-                    .requestedNameEng("NEW")
-                    .requestedPhoneNumber("01099998888")
-                    .requestedPhoneNumberHash(User.hashValue("01099998888"))
-                    .status(MyInfoUpdateRequestStatus.PENDING)
-                    .build();
+                    MyInfoUpdateRequest.builder()
+                            .id(10L)
+                            .user(targetUser)
+                            .requestedNameEng("NEW")
+                            .requestedPhoneNumber("01099998888")
+                            .requestedPhoneNumberHash(User.hashValue("01099998888"))
+                            .status(MyInfoUpdateRequestStatus.PENDING)
+                            .build();
 
             when(userRepository.findById(userId)).thenReturn(Optional.of(targetUser));
             when(myInfoUpdateRequestRepository.findFirstByUserIdAndStatusOrderByCreatedAtDesc(
-                userId, MyInfoUpdateRequestStatus.PENDING))
-                .thenReturn(Optional.of(request));
-            when(userRepository.existsByPhoneNumberHash(User.hashValue("01099998888"))).thenReturn(
-                false);
+                            userId, MyInfoUpdateRequestStatus.PENDING))
+                    .thenReturn(Optional.of(request));
+            when(userRepository.existsByPhoneNumberHash(User.hashValue("01099998888")))
+                    .thenReturn(false);
 
             // when
             adminService.approveMyInfoUpdate(userId, adminId);
@@ -436,16 +434,16 @@ class AdminServiceTest {
             // given
             User targetUser = User.builder().id(userId).build();
             MyInfoUpdateRequest request =
-                MyInfoUpdateRequest.builder()
-                    .id(10L)
-                    .user(targetUser)
-                    .status(MyInfoUpdateRequestStatus.PENDING)
-                    .build();
+                    MyInfoUpdateRequest.builder()
+                            .id(10L)
+                            .user(targetUser)
+                            .status(MyInfoUpdateRequestStatus.PENDING)
+                            .build();
 
             when(userRepository.findById(userId)).thenReturn(Optional.of(targetUser));
             when(myInfoUpdateRequestRepository.findFirstByUserIdAndStatusOrderByCreatedAtDesc(
-                userId, MyInfoUpdateRequestStatus.PENDING))
-                .thenReturn(Optional.of(request));
+                            userId, MyInfoUpdateRequestStatus.PENDING))
+                    .thenReturn(Optional.of(request));
 
             // when
             adminService.rejectMyInfoUpdate(userId, "증빙 불충분", adminId);
@@ -460,7 +458,8 @@ class AdminServiceTest {
         @DisplayName("대기 요청 목록 조회 시 PENDING 요청 목록을 반환한다")
         void getPendingMyInfoUpdateRequests_success() {
             // given
-            User targetUser = User.builder().id(userId).nameKor("홍길동").email("hong@test.com").build();
+            User targetUser =
+                    User.builder().id(userId).nameKor("홍길동").email("hong@test.com").build();
             MyInfoUpdateRequest request =
                     MyInfoUpdateRequest.builder()
                             .id(77L)

@@ -1,17 +1,20 @@
 package kr.co.awesomelead.groupware_backend.domain.user.dto.response;
 
 import io.swagger.v3.oas.annotations.media.Schema;
-import java.time.LocalDate;
-import java.util.List;
+
 import kr.co.awesomelead.groupware_backend.domain.department.enums.Company;
 import kr.co.awesomelead.groupware_backend.domain.department.enums.DepartmentName;
 import kr.co.awesomelead.groupware_backend.domain.user.entity.User;
 import kr.co.awesomelead.groupware_backend.domain.user.enums.JobType;
 import kr.co.awesomelead.groupware_backend.domain.user.enums.Position;
+
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+
+import java.time.LocalDate;
+import java.util.List;
 
 @Getter
 @Builder
@@ -76,35 +79,40 @@ public class MyInfoResponseDto {
 
     public static MyInfoResponseDto from(User user) {
         return MyInfoResponseDto.builder()
-            .id(user.getId())
-            .nameKor(user.getNameKor())
-            .nameEng(user.getNameEng())
-            .birthDate(user.getBirthDate())
-            .nationality(user.getNationality())
-            .zipcode(user.getZipcode())
-            .address1(user.getAddress1())
-            .address2(user.getAddress2())
-            .registrationNumberFront(formatRegistrationNumber(user.getRegistrationNumber()))
-            .phoneNumber(user.getPhoneNumber())
-            .email(user.getEmail())
-            .workLocation(user.getWorkLocation())
-            .departmentName(
-                user.getDepartment() != null ? user.getDepartment().getName() : null)
-            .position(user.getPosition())
-            .jobType(user.getJobType())
-            .authorities(
-                java.util.Arrays.stream(
-                        kr.co.awesomelead.groupware_backend.domain.user.enums.Authority.values())
-                    .map(a -> MyInfoAuthorityItemDto.builder()
-                        .code(a.name())
-                        .label(a.getDescription())
-                        .enabled(user.getAuthorities() != null && user.getAuthorities().contains(a))
-                        .build())
-                    .toList()
-            )
-            .hireDate(user.getHireDate())
-            .resignationDate(user.getResignationDate())
-            .build();
+                .id(user.getId())
+                .nameKor(user.getNameKor())
+                .nameEng(user.getNameEng())
+                .birthDate(user.getBirthDate())
+                .nationality(user.getNationality())
+                .zipcode(user.getZipcode())
+                .address1(user.getAddress1())
+                .address2(user.getAddress2())
+                .registrationNumberFront(formatRegistrationNumber(user.getRegistrationNumber()))
+                .phoneNumber(user.getPhoneNumber())
+                .email(user.getEmail())
+                .workLocation(user.getWorkLocation())
+                .departmentName(
+                        user.getDepartment() != null ? user.getDepartment().getName() : null)
+                .position(user.getPosition())
+                .jobType(user.getJobType())
+                .authorities(
+                        java.util.Arrays.stream(
+                                        kr.co.awesomelead.groupware_backend.domain.user.enums
+                                                .Authority.values())
+                                .map(
+                                        a ->
+                                                MyInfoAuthorityItemDto.builder()
+                                                        .code(a.name())
+                                                        .label(a.getDescription())
+                                                        .enabled(
+                                                                user.getAuthorities() != null
+                                                                        && user.getAuthorities()
+                                                                                .contains(a))
+                                                        .build())
+                                .toList())
+                .hireDate(user.getHireDate())
+                .resignationDate(user.getResignationDate())
+                .build();
     }
 
     // 주민등록번호를 "900101-1******" 형식으로 포맷팅

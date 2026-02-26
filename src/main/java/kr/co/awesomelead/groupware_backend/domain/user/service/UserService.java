@@ -10,8 +10,10 @@ import kr.co.awesomelead.groupware_backend.domain.user.repository.MyInfoUpdateRe
 import kr.co.awesomelead.groupware_backend.domain.user.repository.UserRepository;
 import kr.co.awesomelead.groupware_backend.global.error.CustomException;
 import kr.co.awesomelead.groupware_backend.global.error.ErrorCode;
+
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -29,9 +31,9 @@ public class UserService {
     @Transactional(readOnly = true)
     public MyInfoResponseDto getMyInfo(UserDetails userDetails) {
         User user =
-            userRepository
-                .findByEmail(userDetails.getUsername())
-                .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
+                userRepository
+                        .findByEmail(userDetails.getUsername())
+                        .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
 
         return MyInfoResponseDto.from(user);
     }
@@ -39,14 +41,14 @@ public class UserService {
     // 내 정보 수정
     @Transactional
     public MyInfoResponseDto updateMyInfo(
-        UserDetails userDetails, UpdateMyInfoRequestDto requestDto) {
+            UserDetails userDetails, UpdateMyInfoRequestDto requestDto) {
         User user =
-            userRepository
-                .findByEmail(userDetails.getUsername())
-                .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
+                userRepository
+                        .findByEmail(userDetails.getUsername())
+                        .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
 
         if (myInfoUpdateRequestRepository.existsByUserIdAndStatus(
-            user.getId(), MyInfoUpdateRequestStatus.PENDING)) {
+                user.getId(), MyInfoUpdateRequestStatus.PENDING)) {
             throw new CustomException(ErrorCode.MY_INFO_UPDATE_ALREADY_PENDING);
         }
 
@@ -99,24 +101,24 @@ public class UserService {
         }
 
         if (requestedNameEng == null
-            && requestedPhoneNumber == null
-            && requestedZipcode == null
-            && requestedAddress1 == null
-            && requestedAddress2 == null) {
+                && requestedPhoneNumber == null
+                && requestedZipcode == null
+                && requestedAddress1 == null
+                && requestedAddress2 == null) {
             throw new CustomException(ErrorCode.MY_INFO_UPDATE_NO_CHANGES);
         }
 
         MyInfoUpdateRequest request =
-            MyInfoUpdateRequest.builder()
-                .user(user)
-                .requestedNameEng(requestedNameEng)
-                .requestedPhoneNumber(requestedPhoneNumber)
-                .requestedPhoneNumberHash(requestedPhoneNumberHash)
-                .requestedZipcode(requestedZipcode)
-                .requestedAddress1(requestedAddress1)
-                .requestedAddress2(requestedAddress2)
-                .status(MyInfoUpdateRequestStatus.PENDING)
-                .build();
+                MyInfoUpdateRequest.builder()
+                        .user(user)
+                        .requestedNameEng(requestedNameEng)
+                        .requestedPhoneNumber(requestedPhoneNumber)
+                        .requestedPhoneNumberHash(requestedPhoneNumberHash)
+                        .requestedZipcode(requestedZipcode)
+                        .requestedAddress1(requestedAddress1)
+                        .requestedAddress2(requestedAddress2)
+                        .status(MyInfoUpdateRequestStatus.PENDING)
+                        .build();
         myInfoUpdateRequestRepository.save(request);
 
         if (requestedPhoneNumber != null) {
@@ -131,14 +133,17 @@ public class UserService {
     @Transactional
     public void cancelMyInfoUpdateRequest(UserDetails userDetails, Long requestId) {
         User user =
-            userRepository
-                .findByEmail(userDetails.getUsername())
-                .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
+                userRepository
+                        .findByEmail(userDetails.getUsername())
+                        .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
 
         MyInfoUpdateRequest request =
-            myInfoUpdateRequestRepository
-                .findById(requestId)
-                .orElseThrow(() -> new CustomException(ErrorCode.MY_INFO_UPDATE_REQUEST_NOT_FOUND));
+                myInfoUpdateRequestRepository
+                        .findById(requestId)
+                        .orElseThrow(
+                                () ->
+                                        new CustomException(
+                                                ErrorCode.MY_INFO_UPDATE_REQUEST_NOT_FOUND));
 
         if (!request.getUser().getId().equals(user.getId())) {
             throw new CustomException(ErrorCode.NO_AUTHORITY_FOR_MY_INFO_UPDATE_CANCEL);

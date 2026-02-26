@@ -88,4 +88,8 @@ public class MyInfoUpdateRequest extends BaseTimeEntity {
         this.reviewedAt = LocalDateTime.now();
         this.rejectReason = reason;
     }
+
+    public void cancel() {
+        this.status = MyInfoUpdateRequestStatus.CANCELED;
+    }
 }

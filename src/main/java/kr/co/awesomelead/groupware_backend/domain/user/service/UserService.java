@@ -128,6 +128,31 @@ public class UserService {
         return MyInfoResponseDto.from(user);
     }
 
+    @Transactional
+    public void cancelMyInfoUpdateRequest(UserDetails userDetails, Long requestId) {
+        User user =
+            userRepository
+                .findByEmail(userDetails.getUsername())
+                .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
+
+        MyInfoUpdateRequest request =
+            myInfoUpdateRequestRepository
+                .findById(requestId)
+                .orElseThrow(() -> new CustomException(ErrorCode.MY_INFO_UPDATE_REQUEST_NOT_FOUND));
+
+        if (!request.getUser().getId().equals(user.getId())) {
+            throw new CustomException(ErrorCode.NO_AUTHORITY_FOR_MY_INFO_UPDATE_CANCEL);
+        }
+
+        if (request.getStatus() != MyInfoUpdateRequestStatus.PENDING) {
+            throw new CustomException(ErrorCode.MY_INFO_UPDATE_REQUEST_NOT_CANCELABLE);
+        }
+
+        request.cancel();
+        myInfoUpdateRequestRepository.save(request);
+        log.info("내 정보 수정 요청 취소 - 사용자 ID: {}, 요청 ID: {}", user.getId(), requestId);
+    }
+
     private boolean hasText(String value) {
         return value != null && !value.isBlank();
     }

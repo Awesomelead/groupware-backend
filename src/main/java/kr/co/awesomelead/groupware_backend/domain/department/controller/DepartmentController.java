@@ -9,6 +9,7 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 
 import kr.co.awesomelead.groupware_backend.domain.department.dto.response.DepartmentHierarchyResponseDto;
+import kr.co.awesomelead.groupware_backend.domain.department.dto.response.OrganizationRootTreeResponseDto;
 import kr.co.awesomelead.groupware_backend.domain.department.dto.response.UserSummaryResponseDto;
 import kr.co.awesomelead.groupware_backend.domain.department.enums.Company;
 import kr.co.awesomelead.groupware_backend.domain.department.service.DepartmentService;
@@ -46,6 +47,67 @@ import java.util.List;
 public class DepartmentController {
 
     private final DepartmentService departmentService;
+
+    @Operation(summary = "조직도 트리 조회", description = "충남사업본부 기준 부서 트리와 회사 전체 선택 옵션을 함께 조회합니다.")
+    @ApiResponses(
+            value = {
+                @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                        responseCode = "200",
+                        description = "조직도 조회 성공",
+                        content =
+                                @Content(
+                                        mediaType = "application/json",
+                                        schema = @Schema(implementation = ApiResponse.class),
+                                        examples =
+                                                @ExampleObject(
+                                                        value =
+                                                                """
+                                {
+                                  "isSuccess": true,
+                                  "code": "COMMON200",
+                                  "message": "요청에 성공했습니다.",
+                                  "result": {
+                                    "rootDepartment": {
+                                      "id": 1,
+                                      "code": "CHUNGNAM_HQ",
+                                      "label": "충남사업본부",
+                                      "users": [],
+                                      "children": [
+                                        {
+                                          "id": 12,
+                                          "code": "MANAGEMENT_SUPPORT",
+                                          "label": "경영지원부",
+                                          "users": [
+                                            {
+                                              "id": 17,
+                                              "name": "고영민",
+                                              "position": "사원",
+                                              "status": "AVAILABLE"
+                                            }
+                                          ],
+                                          "children": []
+                                        }
+                                      ]
+                                    },
+                                    "companyOptions": [
+                                      {
+                                        "company": "어썸리드",
+                                        "companyName": "어썸리드"
+                                      },
+                                      {
+                                        "company": "마루이",
+                                        "companyName": "마루이"
+                                      }
+                                    ]
+                                  }
+                                }
+                                """)))
+            })
+    @GetMapping("/organization-tree")
+    public ResponseEntity<ApiResponse<OrganizationRootTreeResponseDto>> getOrganizationTree() {
+        OrganizationRootTreeResponseDto result = departmentService.getOrganizationTree();
+        return ResponseEntity.ok(ApiResponse.onSuccess(result));
+    }
 
     @Operation(summary = "부서 계층 구조 조회", description = "회사의 전체 부서 구조를 트리 형태로 조회합니다.")
     @ApiResponses(

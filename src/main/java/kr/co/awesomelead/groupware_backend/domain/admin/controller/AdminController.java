@@ -10,7 +10,9 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 
+import jakarta.validation.Valid;
 import kr.co.awesomelead.groupware_backend.domain.admin.dto.request.UserApprovalRequestDto;
+import kr.co.awesomelead.groupware_backend.domain.admin.dto.request.MyInfoUpdateRejectRequestDto;
 import kr.co.awesomelead.groupware_backend.domain.admin.enums.AuthorityAction;
 import kr.co.awesomelead.groupware_backend.domain.admin.service.AdminService;
 import kr.co.awesomelead.groupware_backend.domain.user.dto.CustomUserDetails;
@@ -348,5 +350,181 @@ public class AdminController {
 
         adminService.updateUserAuthority(userId, authorities, action, userDetails.getId());
         return ResponseEntity.ok(ApiResponse.onSuccess("권한이 성공적으로 변경되었습니다."));
+    }
+
+    @Operation(
+            summary = "내 정보 수정 요청 승인",
+            description = "해당 사용자(userId)의 최신 PENDING 개인정보 수정 요청 1건을 승인하고 실제 사용자 정보에 반영합니다.")
+    @ApiResponses(
+            value = {
+                @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                        responseCode = "200",
+                        description = "승인 성공",
+                        content =
+                                @Content(
+                                        mediaType = "application/json",
+                                        examples =
+                                                @ExampleObject(
+                                                        value =
+                                                                """
+                                {
+                                  "isSuccess": true,
+                                  "code": "COMMON200",
+                                  "message": "요청에 성공했습니다.",
+                                  "result": "22번 사용자의 개인정보 수정 요청이 승인되었습니다."
+                                }
+                                """))),
+                @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                        responseCode = "403",
+                        description = "권한 없음",
+                        content =
+                                @Content(
+                                        mediaType = "application/json",
+                                        examples =
+                                                @ExampleObject(
+                                                        value =
+                                                                """
+                                {
+                                  "isSuccess": false,
+                                  "code": "NO_AUTHORITY_FOR_MY_INFO_UPDATE_APPROVAL",
+                                  "message": "개인정보 수정 승인 권한이 없습니다.",
+                                  "result": null
+                                }
+                                """))),
+                @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                        responseCode = "404",
+                        description = "요청 또는 사용자 없음",
+                        content =
+                                @Content(
+                                        mediaType = "application/json",
+                                        examples = {
+                                            @ExampleObject(
+                                                    name = "사용자 없음",
+                                                    value =
+                                                            """
+                                    {
+                                      "isSuccess": false,
+                                      "code": "USER_NOT_FOUND",
+                                      "message": "해당 사용자를 찾을 수 없습니다.",
+                                      "result": null
+                                    }
+                                    """),
+                                            @ExampleObject(
+                                                    name = "요청 없음",
+                                                    value =
+                                                            """
+                                    {
+                                      "isSuccess": false,
+                                      "code": "MY_INFO_UPDATE_REQUEST_NOT_FOUND",
+                                      "message": "해당 개인정보 수정 요청을 찾을 수 없습니다.",
+                                      "result": null
+                                    }
+                                    """)
+                                        }))
+            })
+    @PatchMapping("/users/{userId}/my-info/approve")
+    public ResponseEntity<ApiResponse<String>> approveMyInfoUpdate(
+            @Parameter(description = "승인 대상 사용자 ID", required = true, example = "22") @PathVariable
+                    Long userId,
+            @Parameter(hidden = true) @AuthenticationPrincipal CustomUserDetails userDetails) {
+        adminService.approveMyInfoUpdate(userId, userDetails.getId());
+        return ResponseEntity.ok(ApiResponse.onSuccess(userId + "번 사용자의 개인정보 수정 요청이 승인되었습니다."));
+    }
+
+    @Operation(
+            summary = "내 정보 수정 요청 반려",
+            description = "해당 사용자(userId)의 최신 PENDING 개인정보 수정 요청 1건을 반려합니다.")
+    @ApiResponses(
+            value = {
+                @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                        responseCode = "200",
+                        description = "반려 성공",
+                        content =
+                                @Content(
+                                        mediaType = "application/json",
+                                        examples =
+                                                @ExampleObject(
+                                                        value =
+                                                                """
+                                {
+                                  "isSuccess": true,
+                                  "code": "COMMON200",
+                                  "message": "요청에 성공했습니다.",
+                                  "result": "22번 사용자의 개인정보 수정 요청이 반려되었습니다."
+                                }
+                                """))),
+                @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                        responseCode = "400",
+                        description = "잘못된 요청",
+                        content =
+                                @Content(
+                                        mediaType = "application/json",
+                                        examples =
+                                                @ExampleObject(
+                                                        value =
+                                                                """
+                                {
+                                  "isSuccess": false,
+                                  "code": "MY_INFO_UPDATE_REJECT_REASON_REQUIRED",
+                                  "message": "반려 사유를 입력해주세요.",
+                                  "result": null
+                                }
+                                """))),
+                @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                        responseCode = "403",
+                        description = "권한 없음",
+                        content =
+                                @Content(
+                                        mediaType = "application/json",
+                                        examples =
+                                                @ExampleObject(
+                                                        value =
+                                                                """
+                                {
+                                  "isSuccess": false,
+                                  "code": "NO_AUTHORITY_FOR_MY_INFO_UPDATE_APPROVAL",
+                                  "message": "개인정보 수정 승인 권한이 없습니다.",
+                                  "result": null
+                                }
+                                """))),
+                @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                        responseCode = "404",
+                        description = "요청 또는 사용자 없음",
+                        content =
+                                @Content(
+                                        mediaType = "application/json",
+                                        examples = {
+                                            @ExampleObject(
+                                                    name = "사용자 없음",
+                                                    value =
+                                                            """
+                                    {
+                                      "isSuccess": false,
+                                      "code": "USER_NOT_FOUND",
+                                      "message": "해당 사용자를 찾을 수 없습니다.",
+                                      "result": null
+                                    }
+                                    """),
+                                            @ExampleObject(
+                                                    name = "요청 없음",
+                                                    value =
+                                                            """
+                                    {
+                                      "isSuccess": false,
+                                      "code": "MY_INFO_UPDATE_REQUEST_NOT_FOUND",
+                                      "message": "해당 개인정보 수정 요청을 찾을 수 없습니다.",
+                                      "result": null
+                                    }
+                                    """)
+                                        }))
+            })
+    @PatchMapping("/users/{userId}/my-info/reject")
+    public ResponseEntity<ApiResponse<String>> rejectMyInfoUpdate(
+            @Parameter(description = "반려 대상 사용자 ID", required = true, example = "22") @PathVariable
+                    Long userId,
+            @Valid @RequestBody MyInfoUpdateRejectRequestDto requestDto,
+            @Parameter(hidden = true) @AuthenticationPrincipal CustomUserDetails userDetails) {
+        adminService.rejectMyInfoUpdate(userId, requestDto.getReason(), userDetails.getId());
+        return ResponseEntity.ok(ApiResponse.onSuccess(userId + "번 사용자의 개인정보 수정 요청이 반려되었습니다."));
     }
 }

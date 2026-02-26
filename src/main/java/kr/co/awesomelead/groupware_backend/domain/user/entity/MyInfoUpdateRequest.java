@@ -28,7 +28,7 @@ import lombok.Setter;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-@Table(name = "personal_info_update_requests")
+@Table(name = "my_info_update_requests")
 public class MyInfoUpdateRequest extends BaseTimeEntity {
 
     @Id

@@ -8,8 +8,10 @@ import static org.mockito.Mockito.when;
 
 import kr.co.awesomelead.groupware_backend.domain.admin.dto.request.UserApprovalRequestDto;
 import kr.co.awesomelead.groupware_backend.domain.admin.dto.response.MyInfoUpdateRequestSummaryResponseDto;
+import kr.co.awesomelead.groupware_backend.domain.admin.dto.response.PendingUserSummaryResponseDto;
 import kr.co.awesomelead.groupware_backend.domain.admin.enums.AuthorityAction;
 import kr.co.awesomelead.groupware_backend.domain.admin.service.AdminService;
+import kr.co.awesomelead.groupware_backend.domain.aligo.service.PhoneAuthService;
 import kr.co.awesomelead.groupware_backend.domain.department.entity.Department;
 import kr.co.awesomelead.groupware_backend.domain.department.enums.DepartmentName;
 import kr.co.awesomelead.groupware_backend.domain.department.repository.DepartmentRepository;
@@ -47,6 +49,7 @@ class AdminServiceTest {
     @Mock private UserRepository userRepository;
     @Mock private DepartmentRepository departmentRepository;
     @Mock private MyInfoUpdateRequestRepository myInfoUpdateRequestRepository;
+    @Mock private PhoneAuthService phoneAuthService;
     @InjectMocks private AdminService adminService;
     private final Long adminId = 100L;
     private final Long userId = 1L;
@@ -190,6 +193,55 @@ class AdminServiceTest {
                         .extracting("errorCode")
                         .isEqualTo(ErrorCode.NO_AUTHORITY_FOR_REGISTRATION);
             }
+        }
+    }
+
+    @Nested
+    @DisplayName("getPendingSignupUsers 메서드는")
+    class Describe_getPendingSignupUsers {
+
+        @Test
+        @DisplayName("관리자가 조회하면 PENDING 사용자 목록을 반환한다")
+        void it_returns_pending_users() {
+            // given
+            Department department =
+                    Department.builder().id(1L).name(DepartmentName.MANAGEMENT_SUPPORT).build();
+            User pendingUser =
+                    User.builder()
+                            .id(21L)
+                            .nameKor("홍길동")
+                            .status(Status.PENDING)
+                            .department(department)
+                            .build();
+            when(userRepository.findAllByStatusWithDepartment(Status.PENDING))
+                    .thenReturn(List.of(pendingUser));
+
+            // when
+            List<PendingUserSummaryResponseDto> result =
+                    adminService.getPendingSignupUsers(adminId);
+
+            // then
+            assertThat(result.size()).isEqualTo(1);
+            assertThat(result.get(0).getUserId()).isEqualTo(21L);
+            assertThat(result.get(0).getNameKor()).isEqualTo("홍길동");
+            assertThat(result.get(0).getDepartmentName())
+                    .isEqualTo(DepartmentName.MANAGEMENT_SUPPORT);
+            assertThat(result.get(0).getStatus()).isEqualTo(Status.PENDING);
+        }
+
+        @Test
+        @DisplayName("관리자 권한이 없는 사용자가 조회하면 NO_AUTHORITY_FOR_REGISTRATION 에러를 던진다")
+        void it_throws_when_requester_is_not_admin() {
+            // given
+            User normalUser = new User();
+            normalUser.setRole(Role.USER);
+            when(userRepository.findById(adminId)).thenReturn(Optional.of(normalUser));
+
+            // when & then
+            assertThatThrownBy(() -> adminService.getPendingSignupUsers(adminId))
+                    .isInstanceOf(CustomException.class)
+                    .extracting("errorCode")
+                    .isEqualTo(ErrorCode.NO_AUTHORITY_FOR_REGISTRATION);
         }
     }
 

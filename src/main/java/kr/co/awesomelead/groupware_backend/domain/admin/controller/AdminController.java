@@ -15,6 +15,7 @@ import jakarta.validation.Valid;
 import kr.co.awesomelead.groupware_backend.domain.admin.dto.request.MyInfoUpdateRejectRequestDto;
 import kr.co.awesomelead.groupware_backend.domain.admin.dto.request.UserApprovalRequestDto;
 import kr.co.awesomelead.groupware_backend.domain.admin.dto.response.MyInfoUpdateRequestSummaryResponseDto;
+import kr.co.awesomelead.groupware_backend.domain.admin.dto.response.PendingUserSummaryResponseDto;
 import kr.co.awesomelead.groupware_backend.domain.admin.enums.AuthorityAction;
 import kr.co.awesomelead.groupware_backend.domain.admin.service.AdminService;
 import kr.co.awesomelead.groupware_backend.domain.user.dto.CustomUserDetails;
@@ -55,6 +56,92 @@ import java.util.List;
 public class AdminController {
 
     private final AdminService adminService;
+
+    @Operation(summary = "회원가입 승인 대기 목록 조회", description = "승인 대기(PENDING) 사용자 목록을 조회합니다.")
+    @ApiResponses(
+            value = {
+                @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                        responseCode = "200",
+                        description = "조회 성공",
+                        content =
+                                @Content(
+                                        mediaType = "application/json",
+                                        examples =
+                                                @ExampleObject(
+                                                        value =
+                                                                """
+                                {
+                                  "isSuccess": true,
+                                  "code": "COMMON200",
+                                  "message": "요청에 성공했습니다.",
+                                  "result": [
+                                    {
+                                      "userId": 21,
+                                      "nameKor": "홍길동",
+                                      "nameEng": "HONG GILDONG",
+                                      "birthDate": "1990-01-01",
+                                      "nationality": "대한민국",
+                                      "zipcode": "06234",
+                                      "address1": "서울특별시 강남구 테헤란로 123",
+                                      "address2": "어썸리드빌딩 5층",
+                                      "registrationNumber": "9001011234567",
+                                      "phoneNumber": "01012345678",
+                                      "email": "hong@test.com",
+                                      "workLocation": "어썸리드",
+                                      "departmentName": "경영지원부",
+                                      "position": "사원",
+                                      "jobType": "관리직",
+                                      "authorities": ["메세지 작성"],
+                                      "hireDate": "2025-09-22",
+                                      "resignationDate": null,
+                                      "role": "일반 사용자",
+                                      "status": "PENDING"
+                                    }
+                                  ]
+                                }
+                                """))),
+                @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                        responseCode = "401",
+                        description = "인증 실패",
+                        content =
+                                @Content(
+                                        mediaType = "application/json",
+                                        examples =
+                                                @ExampleObject(
+                                                        value =
+                                                                """
+                                {
+                                  "isSuccess": false,
+                                  "code": "USER_NOT_FOUND",
+                                  "message": "해당 사용자를 찾을 수 없습니다.",
+                                  "result": null
+                                }
+                                """))),
+                @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                        responseCode = "403",
+                        description = "권한 없음",
+                        content =
+                                @Content(
+                                        mediaType = "application/json",
+                                        examples =
+                                                @ExampleObject(
+                                                        value =
+                                                                """
+                                {
+                                  "isSuccess": false,
+                                  "code": "NO_AUTHORITY_FOR_REGISTRATION",
+                                  "message": "회원가입 승인 권한이 없습니다.",
+                                  "result": null
+                                }
+                                """)))
+            })
+    @GetMapping("/users/pending")
+    public ResponseEntity<ApiResponse<List<PendingUserSummaryResponseDto>>> getPendingUsers(
+            @Parameter(hidden = true) @AuthenticationPrincipal CustomUserDetails userDetails) {
+        List<PendingUserSummaryResponseDto> result =
+                adminService.getPendingSignupUsers(userDetails.getId());
+        return ResponseEntity.ok(ApiResponse.onSuccess(result));
+    }
 
     @Operation(
             summary = "회원가입 승인",
@@ -148,7 +235,75 @@ public class AdminController {
             @Parameter(description = "승인할 사용자의 ID", example = "1", required = true)
                     @PathVariable("userId")
                     Long userId,
-            @Parameter(description = "사용자 승인 정보 (부서 ID, 직급 등)", required = true) @RequestBody
+            @io.swagger.v3.oas.annotations.parameters.RequestBody(
+                            description = "사용자 승인 정보",
+                            required = true,
+                            content =
+                                    @Content(
+                                            mediaType = "application/json",
+                                            schema =
+                                                    @Schema(
+                                                            implementation =
+                                                                    UserApprovalRequestDto.class),
+                                            examples = {
+                                                @ExampleObject(
+                                                        name = "권한 1개 선택 예시",
+                                                        value =
+                                                                """
+                                {
+                                  "nameKor": "홍길동",
+                                  "nameEng": "HONG GILDONG",
+                                  "birthDate": "1990-01-01",
+                                  "nationality": "대한민국",
+                                  "zipcode": "06234",
+                                  "address1": "서울특별시 강남구 테헤란로 123",
+                                  "address2": "어썸리드빌딩 5층",
+                                  "registrationNumber": "9001011234567",
+                                  "phoneNumber": "01099998888",
+                                  "workLocation": "어썸리드",
+                                  "departmentId": 1,
+                                  "position": "사원",
+                                  "jobType": "관리직",
+                                  "authorities": ["메세지 작성"],
+                                  "hireDate": "2025-09-22",
+                                  "resignationDate": null,
+                                  "role": "일반 사용자"
+                                }
+                                """),
+                                                @ExampleObject(
+                                                        name = "권한 5개 선택 예시",
+                                                        value =
+                                                                """
+                                {
+                                  "nameKor": "홍길동",
+                                  "nameEng": "HONG GILDONG",
+                                  "birthDate": "1990-01-01",
+                                  "nationality": "대한민국",
+                                  "zipcode": "06234",
+                                  "address1": "서울특별시 강남구 테헤란로 123",
+                                  "address2": "어썸리드빌딩 5층",
+                                  "registrationNumber": "9001011234567",
+                                  "phoneNumber": "01099998888",
+                                  "workLocation": "어썸리드",
+                                  "departmentId": 1,
+                                  "position": "사원",
+                                  "jobType": "관리직",
+                                  "authorities": [
+                                    "메세지 작성",
+                                    "교육 작성",
+                                    "공지 작성",
+                                    "방문자 관리 접근",
+                                    "사원 데이터 관리"
+                                  ],
+                                  "hireDate": "2025-09-22",
+                                  "resignationDate": null,
+                                  "role": "일반 사용자"
+                                }
+                                """)
+                                            }))
+                    @Parameter(description = "사용자 승인 정보 (부서 ID, 직급 등)", required = true)
+                    @Valid
+                    @RequestBody
                     UserApprovalRequestDto requestDto,
             @Parameter(hidden = true) @AuthenticationPrincipal CustomUserDetails userDetails) {
 

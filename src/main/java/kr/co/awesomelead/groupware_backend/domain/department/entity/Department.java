@@ -47,7 +47,7 @@ public class Department {
     private DepartmentName name;
 
     @Enumerated(EnumType.STRING)
-    @Column(nullable = false, length = 20)
+    @Column(nullable = true, length = 20)
     private Company company; // 소속 회사 (AWESOME, MARUI)
 
     @ManyToOne(fetch = FetchType.LAZY)

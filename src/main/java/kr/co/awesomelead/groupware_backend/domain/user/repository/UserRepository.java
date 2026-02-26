@@ -3,6 +3,7 @@ package kr.co.awesomelead.groupware_backend.domain.user.repository;
 import kr.co.awesomelead.groupware_backend.domain.department.entity.Department;
 import kr.co.awesomelead.groupware_backend.domain.department.enums.Company;
 import kr.co.awesomelead.groupware_backend.domain.user.entity.User;
+import kr.co.awesomelead.groupware_backend.domain.user.enums.Status;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
@@ -39,4 +40,9 @@ public interface UserRepository extends JpaRepository<User, Long> {
 
     @Query("SELECT u.id FROM User u WHERE u.department.company = :company")
     List<Long> findAllIdsByCompany(@Param("company") Company company);
+
+    @Query(
+            "SELECT u FROM User u LEFT JOIN FETCH u.department d WHERE u.status = :status ORDER BY"
+                    + " u.id DESC")
+    List<User> findAllByStatusWithDepartment(@Param("status") Status status);
 }

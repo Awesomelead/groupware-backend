@@ -3,6 +3,7 @@ package kr.co.awesomelead.groupware_backend.domain.admin.service;
 import kr.co.awesomelead.groupware_backend.domain.admin.dto.request.UserApprovalRequestDto;
 import kr.co.awesomelead.groupware_backend.domain.admin.dto.response.MyInfoUpdateRequestSummaryResponseDto;
 import kr.co.awesomelead.groupware_backend.domain.admin.enums.AuthorityAction;
+import kr.co.awesomelead.groupware_backend.domain.aligo.service.PhoneAuthService;
 import kr.co.awesomelead.groupware_backend.domain.department.entity.Department;
 import kr.co.awesomelead.groupware_backend.domain.department.repository.DepartmentRepository;
 import kr.co.awesomelead.groupware_backend.domain.user.entity.MyInfoUpdateRequest;
@@ -31,6 +32,7 @@ public class AdminService {
     private final UserRepository userRepository;
     private final DepartmentRepository departmentRepository;
     private final MyInfoUpdateRequestRepository myInfoUpdateRequestRepository;
+    private final PhoneAuthService phoneAuthService;
 
     @Transactional
     public void approveUserRegistration(
@@ -62,12 +64,43 @@ public class AdminService {
             user.setNameEng(requestDto.getNameEng());
         }
 
-        if (requestDto.getPhoneNumber() != null) {
-            user.updatePhoneNumber(requestDto.getPhoneNumber());
-        }
-
         if (requestDto.getNationality() != null) {
             user.setNationality(requestDto.getNationality());
+        }
+
+        if (hasText(requestDto.getZipcode())) {
+            user.setZipcode(requestDto.getZipcode().trim());
+        }
+        if (hasText(requestDto.getAddress1())) {
+            user.setAddress1(requestDto.getAddress1().trim());
+        }
+        if (hasText(requestDto.getAddress2())) {
+            user.setAddress2(requestDto.getAddress2().trim());
+        }
+
+        if (hasText(requestDto.getRegistrationNumber())) {
+            String newRegNo = requestDto.getRegistrationNumber().trim();
+            if (!newRegNo.equals(user.getRegistrationNumber())
+                    && userRepository.existsByRegistrationNumber(newRegNo)) {
+                throw new CustomException(ErrorCode.DUPLICATE_REGISTRATION_NUMBER);
+            }
+            user.updateRegistrationNumber(newRegNo);
+        }
+
+        if (hasText(requestDto.getPhoneNumber())) {
+            String newPhone = requestDto.getPhoneNumber().trim();
+            String newPhoneHash = User.hashValue(newPhone);
+
+            if (!newPhoneHash.equals(user.getPhoneNumberHash())) {
+                if (!phoneAuthService.isPhoneVerified(newPhone)) {
+                    throw new CustomException(ErrorCode.PHONE_NOT_VERIFIED);
+                }
+                if (userRepository.existsByPhoneNumberHash(newPhoneHash)) {
+                    throw new CustomException(ErrorCode.PHONE_NUMBER_ALREADY_EXISTS);
+                }
+                user.updatePhoneNumber(newPhone);
+                phoneAuthService.clearVerification(newPhone);
+            }
         }
 
         Department department =
@@ -88,18 +121,27 @@ public class AdminService {
         }
         user.setPosition(requestDto.getPosition());
         user.setHireDate(requestDto.getHireDate());
+        if (requestDto.getBirthDate() != null) {
+            user.setBirthDate(requestDto.getBirthDate());
+        }
+        user.setResignationDate(requestDto.getResignationDate());
         // 사용자의 상태를 AVAILABLE로 변경
         user.setStatus(Status.AVAILABLE);
 
-        // 관리직의 경우 기본 권한 부여
-        if (requestDto.getJobType() == JobType.MANAGEMENT) {
-            user.addAuthority(Authority.ACCESS_MESSAGE);
-            user.addAuthority(Authority.ACCESS_EDUCATION);
-        }
-        // ADMIN 역할인 경우 모든 권한 부여
-        if (requestDto.getRole() == Role.ADMIN) {
-            for (Authority authority : Authority.values()) {
-                user.addAuthority(authority);
+        if (requestDto.getAuthorities() != null) {
+            user.getAuthorities().clear();
+            requestDto.getAuthorities().forEach(user::addAuthority);
+        } else {
+            // 관리직의 경우 기본 권한 부여
+            if (requestDto.getJobType() == JobType.MANAGEMENT) {
+                user.addAuthority(Authority.ACCESS_MESSAGE);
+                user.addAuthority(Authority.ACCESS_EDUCATION);
+            }
+            // ADMIN 역할인 경우 모든 권한 부여
+            if (requestDto.getRole() == Role.ADMIN) {
+                for (Authority authority : Authority.values()) {
+                    user.addAuthority(authority);
+                }
             }
         }
         userRepository.save(user);
@@ -273,6 +315,10 @@ public class AdminService {
                 .stream()
                 .map(MyInfoUpdateRequestSummaryResponseDto::from)
                 .toList();
+    }
+
+    private boolean hasText(String value) {
+        return value != null && !value.isBlank();
     }
 
     private void validateMyInfoApprovalAuthority(User admin) {

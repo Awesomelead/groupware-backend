@@ -69,13 +69,13 @@ public class DepartmentController {
                                   "result": {
                                     "rootDepartment": {
                                       "id": 1,
-                                      "name": "충남사업본부",
+                                      "code": "CHUNGNAM_HQ",
                                       "label": "충남사업본부",
                                       "users": [],
                                       "children": [
                                         {
                                           "id": 12,
-                                          "name": "경영지원부",
+                                          "code": "MANAGEMENT_SUPPORT",
                                           "label": "경영지원부",
                                           "users": [
                                             {

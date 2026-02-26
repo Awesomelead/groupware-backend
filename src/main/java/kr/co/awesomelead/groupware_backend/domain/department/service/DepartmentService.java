@@ -123,7 +123,7 @@ public class DepartmentService {
 
         return OrganizationDepartmentNodeResponseDto.builder()
                 .id(department.getId())
-                .name(department.getName())
+                .code(department.getName().name())
                 .label(department.getName().getDescription())
                 .company(department.getCompany())
                 .users(users)

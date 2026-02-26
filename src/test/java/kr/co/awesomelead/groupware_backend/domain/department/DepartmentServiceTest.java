@@ -182,7 +182,7 @@ public class DepartmentServiceTest {
 
         // then
         assertThat(result.getRootDepartment()).isNotNull();
-        assertThat(result.getRootDepartment().getName()).isEqualTo(DepartmentName.CHUNGNAM_HQ);
+        assertThat(result.getRootDepartment().getCode()).isEqualTo("CHUNGNAM_HQ");
         assertThat(result.getRootDepartment().getChildren()).isNotEmpty();
         assertThat(result.getRootDepartment().getChildren().get(0).getChildren().get(0).getUsers())
                 .hasSize(1);

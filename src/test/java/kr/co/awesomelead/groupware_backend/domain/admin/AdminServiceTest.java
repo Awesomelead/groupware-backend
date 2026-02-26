@@ -10,6 +10,7 @@ import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
 import kr.co.awesomelead.groupware_backend.domain.admin.dto.request.UserApprovalRequestDto;
+import kr.co.awesomelead.groupware_backend.domain.admin.dto.response.MyInfoUpdateRequestSummaryResponseDto;
 import kr.co.awesomelead.groupware_backend.domain.admin.enums.AuthorityAction;
 import kr.co.awesomelead.groupware_backend.domain.admin.service.AdminService;
 import kr.co.awesomelead.groupware_backend.domain.department.entity.Department;
@@ -453,6 +454,33 @@ class AdminServiceTest {
             assertThat(request.getStatus()).isEqualTo(MyInfoUpdateRequestStatus.REJECTED);
             assertThat(request.getRejectReason()).isEqualTo("증빙 불충분");
             verify(myInfoUpdateRequestRepository).save(request);
+        }
+
+        @Test
+        @DisplayName("대기 요청 목록 조회 시 PENDING 요청 목록을 반환한다")
+        void getPendingMyInfoUpdateRequests_success() {
+            // given
+            User targetUser = User.builder().id(userId).nameKor("홍길동").email("hong@test.com").build();
+            MyInfoUpdateRequest request =
+                    MyInfoUpdateRequest.builder()
+                            .id(77L)
+                            .user(targetUser)
+                            .requestedNameEng("HONG")
+                            .status(MyInfoUpdateRequestStatus.PENDING)
+                            .build();
+            when(myInfoUpdateRequestRepository.findAllByStatusWithUser(
+                            MyInfoUpdateRequestStatus.PENDING))
+                    .thenReturn(List.of(request));
+
+            // when
+            List<MyInfoUpdateRequestSummaryResponseDto> result =
+                    adminService.getPendingMyInfoUpdateRequests(adminId);
+
+            // then
+            assertThat(result.size()).isEqualTo(1);
+            assertThat(result.get(0).getRequestId()).isEqualTo(77L);
+            assertThat(result.get(0).getUserId()).isEqualTo(userId);
+            assertThat(result.get(0).getRequestedNameEng()).isEqualTo("HONG");
         }
     }
 }

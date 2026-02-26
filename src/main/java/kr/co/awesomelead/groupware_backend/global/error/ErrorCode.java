@@ -59,6 +59,7 @@ public enum ErrorCode {
     MY_INFO_UPDATE_NO_CHANGES(HttpStatus.BAD_REQUEST, "변경 요청할 내 정보가 없습니다."),
     MY_INFO_UPDATE_ALREADY_PENDING(HttpStatus.BAD_REQUEST, "이미 처리 대기 중인 개인정보 수정 요청이 있습니다."),
     MY_INFO_UPDATE_REJECT_REASON_REQUIRED(HttpStatus.BAD_REQUEST, "반려 사유를 입력해주세요."),
+    MY_INFO_UPDATE_REQUEST_NOT_CANCELABLE(HttpStatus.BAD_REQUEST, "대기 상태 요청만 취소할 수 있습니다."),
 
     // 401 Unauthorized
     INVALID_TOKEN(HttpStatus.UNAUTHORIZED, "유효하지 않은 토큰입니다."),
@@ -77,6 +78,7 @@ public enum ErrorCode {
     NO_AUTHORITY_FOR_ROLE_UPDATE(HttpStatus.FORBIDDEN, "사용자 역할 변경 권한이 없습니다."),
     NO_AUTHORITY_FOR_VIEW_PAYSLIP(HttpStatus.FORBIDDEN, "급여명세서 조회 권한이 없습니다."),
     NO_AUTHORITY_FOR_MY_INFO_UPDATE_APPROVAL(HttpStatus.FORBIDDEN, "개인정보 수정 승인 권한이 없습니다."),
+    NO_AUTHORITY_FOR_MY_INFO_UPDATE_CANCEL(HttpStatus.FORBIDDEN, "본인의 개인정보 수정 요청만 취소할 수 있습니다."),
 
     // 404 Not Found
     USER_NOT_FOUND(HttpStatus.NOT_FOUND, "해당 사용자를 찾을 수 없습니다."),

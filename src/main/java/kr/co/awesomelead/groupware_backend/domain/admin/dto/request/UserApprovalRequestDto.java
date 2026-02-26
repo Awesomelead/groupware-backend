@@ -1,6 +1,7 @@
 package kr.co.awesomelead.groupware_backend.domain.admin.dto.request;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.media.ArraySchema;
 
 import jakarta.validation.constraints.NotNull;
 
@@ -63,7 +64,9 @@ public class UserApprovalRequestDto {
     @NotNull(message = "직무 유형은 필수 항목입니다.")
     private JobType jobType;
 
-    @Schema(description = "권한부여 목록", implementation = Authority.class)
+    @ArraySchema(
+            schema = @Schema(implementation = Authority.class),
+            arraySchema = @Schema(description = "권한부여 목록 (반드시 배열 형태로 전달)"))
     private List<Authority> authorities;
 
     @Schema(description = "입사일", example = "2025-09-22")

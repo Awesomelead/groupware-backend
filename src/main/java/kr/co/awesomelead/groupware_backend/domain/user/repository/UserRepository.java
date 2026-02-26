@@ -11,6 +11,7 @@ import org.springframework.data.repository.query.Param;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
+import kr.co.awesomelead.groupware_backend.domain.user.enums.Status;
 
 public interface UserRepository extends JpaRepository<User, Long> {
 
@@ -39,4 +40,9 @@ public interface UserRepository extends JpaRepository<User, Long> {
 
     @Query("SELECT u.id FROM User u WHERE u.department.company = :company")
     List<Long> findAllIdsByCompany(@Param("company") Company company);
+
+    @Query(
+            "SELECT u FROM User u LEFT JOIN FETCH u.department d WHERE u.status = :status ORDER BY"
+                    + " u.id DESC")
+    List<User> findAllByStatusWithDepartment(@Param("status") Status status);
 }

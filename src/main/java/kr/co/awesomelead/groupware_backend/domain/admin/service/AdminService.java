@@ -2,6 +2,7 @@ package kr.co.awesomelead.groupware_backend.domain.admin.service;
 
 import kr.co.awesomelead.groupware_backend.domain.admin.dto.request.UserApprovalRequestDto;
 import kr.co.awesomelead.groupware_backend.domain.admin.dto.response.MyInfoUpdateRequestSummaryResponseDto;
+import kr.co.awesomelead.groupware_backend.domain.admin.dto.response.PendingUserSummaryResponseDto;
 import kr.co.awesomelead.groupware_backend.domain.admin.enums.AuthorityAction;
 import kr.co.awesomelead.groupware_backend.domain.aligo.service.PhoneAuthService;
 import kr.co.awesomelead.groupware_backend.domain.department.entity.Department;
@@ -42,9 +43,7 @@ public class AdminService {
                 userRepository
                         .findById(adminId)
                         .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
-        if (admin.getRole() != Role.MASTER_ADMIN && admin.getRole() != Role.ADMIN) {
-            throw new CustomException(ErrorCode.NO_AUTHORITY_FOR_REGISTRATION);
-        }
+        validateRegistrationAuthority(admin);
 
         // userId로 PENDING 상태의 사용자를 조회
         User user =
@@ -145,6 +144,19 @@ public class AdminService {
             }
         }
         userRepository.save(user);
+    }
+
+    @Transactional(readOnly = true)
+    public List<PendingUserSummaryResponseDto> getPendingSignupUsers(Long adminId) {
+        User admin =
+                userRepository
+                        .findById(adminId)
+                        .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
+        validateRegistrationAuthority(admin);
+
+        return userRepository.findAllByStatusWithDepartment(Status.PENDING).stream()
+                .map(PendingUserSummaryResponseDto::from)
+                .toList();
     }
 
     @Transactional
@@ -319,6 +331,12 @@ public class AdminService {
 
     private boolean hasText(String value) {
         return value != null && !value.isBlank();
+    }
+
+    private void validateRegistrationAuthority(User admin) {
+        if (admin.getRole() != Role.ADMIN && admin.getRole() != Role.MASTER_ADMIN) {
+            throw new CustomException(ErrorCode.NO_AUTHORITY_FOR_REGISTRATION);
+        }
     }
 
     private void validateMyInfoApprovalAuthority(User admin) {

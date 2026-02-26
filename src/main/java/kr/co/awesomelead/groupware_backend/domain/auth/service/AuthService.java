@@ -326,7 +326,7 @@ public class AuthService {
         deleteByQuery("delete from NoticeTarget nt where nt.user.id = :userId", "userId", userId);
         deleteByQuery(
                 "delete from MessageAttachment ma where ma.message.sender.id = :userId or"
-                    + " ma.message.receiver.id = :userId",
+                        + " ma.message.receiver.id = :userId",
                 "userId",
                 userId);
         deleteByQuery(

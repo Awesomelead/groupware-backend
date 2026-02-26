@@ -12,6 +12,7 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 
 import kr.co.awesomelead.groupware_backend.domain.department.dto.response.DepartmentHierarchyResponseDto;
+import kr.co.awesomelead.groupware_backend.domain.department.dto.response.OrganizationRootTreeResponseDto;
 import kr.co.awesomelead.groupware_backend.domain.department.dto.response.UserSummaryResponseDto;
 import kr.co.awesomelead.groupware_backend.domain.department.entity.Department;
 import kr.co.awesomelead.groupware_backend.domain.department.enums.Company;
@@ -20,6 +21,7 @@ import kr.co.awesomelead.groupware_backend.domain.department.repository.Departme
 import kr.co.awesomelead.groupware_backend.domain.department.service.DepartmentService;
 import kr.co.awesomelead.groupware_backend.domain.user.entity.User;
 import kr.co.awesomelead.groupware_backend.domain.user.mapper.UserMapper;
+import kr.co.awesomelead.groupware_backend.domain.user.enums.Status;
 import kr.co.awesomelead.groupware_backend.domain.user.repository.UserRepository;
 import kr.co.awesomelead.groupware_backend.global.error.CustomException;
 import kr.co.awesomelead.groupware_backend.global.error.ErrorCode;
@@ -93,6 +95,7 @@ public class DepartmentServiceTest {
                         .build();
         awesomeProdDept.getChildren().add(chamberDept);
         awesomeProdDept.getChildren().add(partDept);
+
     }
 
     @Test
@@ -150,5 +153,41 @@ public class DepartmentServiceTest {
         assertThatThrownBy(() -> departmentService.getUsersByDepartmentHierarchy(999L))
                 .isInstanceOf(CustomException.class)
                 .hasFieldOrPropertyWithValue("errorCode", ErrorCode.DEPARTMENT_NOT_FOUND);
+    }
+
+    @Test
+    @DisplayName("조직도 트리 조회 성공 - 부서 트리와 회사 전체 선택 옵션을 반환한다")
+    void getOrganizationTree_Success() {
+        // given
+        User availableUser =
+                User.builder()
+                        .id(17L)
+                        .nameKor("고영민")
+                        .status(Status.AVAILABLE)
+                        .department(chamberDept)
+                        .build();
+        User suspendedUser =
+                User.builder()
+                        .id(18L)
+                        .nameKor("휴직자")
+                        .status(Status.SUSPENDED)
+                        .department(chamberDept)
+                        .build();
+        chamberDept.setUsers(new ArrayList<>(List.of(availableUser, suspendedUser)));
+
+        given(departmentRepository.findByParentIsNull()).willReturn(List.of(rootDept));
+
+        // when
+        OrganizationRootTreeResponseDto result = departmentService.getOrganizationTree();
+
+        // then
+        assertThat(result.getRootDepartment()).isNotNull();
+        assertThat(result.getRootDepartment().getName()).isEqualTo(DepartmentName.CHUNGNAM_HQ);
+        assertThat(result.getRootDepartment().getChildren()).isNotEmpty();
+        assertThat(result.getRootDepartment().getChildren().get(0).getChildren().get(0).getUsers())
+                .hasSize(1);
+        assertThat(result.getCompanyOptions()).hasSize(2);
+        assertThat(result.getCompanyOptions().get(0).getCompany()).isEqualTo(Company.AWESOME);
+        assertThat(result.getCompanyOptions().get(1).getCompany()).isEqualTo(Company.MARUI);
     }
 }

@@ -301,9 +301,9 @@ public class AdminController {
                                 }
                                 """)
                                             }))
-            @Parameter(description = "사용자 승인 정보 (부서 ID, 직급 등)", required = true)
-            @Valid
-            @RequestBody
+                    @Parameter(description = "사용자 승인 정보 (부서 ID, 직급 등)", required = true)
+                    @Valid
+                    @RequestBody
                     UserApprovalRequestDto requestDto,
             @Parameter(hidden = true) @AuthenticationPrincipal CustomUserDetails userDetails) {
 

@@ -60,7 +60,8 @@ public class DepartmentService {
                                                 .orElseThrow(
                                                         () ->
                                                                 new CustomException(
-                                                                        ErrorCode.DEPARTMENT_NOT_FOUND)));
+                                                                        ErrorCode
+                                                                                .DEPARTMENT_NOT_FOUND)));
 
         List<OrganizationCompanyOptionResponseDto> companyOptions =
                 Arrays.stream(Company.values())
@@ -107,7 +108,8 @@ public class DepartmentService {
         }
     }
 
-    private OrganizationDepartmentNodeResponseDto toOrganizationDepartmentNode(Department department) {
+    private OrganizationDepartmentNodeResponseDto toOrganizationDepartmentNode(
+            Department department) {
         List<OrganizationUserNodeResponseDto> users =
                 department.getUsers().stream()
                         .filter(user -> user.getStatus() == Status.AVAILABLE)

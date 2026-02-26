@@ -10,8 +10,8 @@ import kr.co.awesomelead.groupware_backend.domain.admin.dto.request.UserApproval
 import kr.co.awesomelead.groupware_backend.domain.admin.dto.response.MyInfoUpdateRequestSummaryResponseDto;
 import kr.co.awesomelead.groupware_backend.domain.admin.dto.response.PendingUserSummaryResponseDto;
 import kr.co.awesomelead.groupware_backend.domain.admin.enums.AuthorityAction;
-import kr.co.awesomelead.groupware_backend.domain.aligo.service.PhoneAuthService;
 import kr.co.awesomelead.groupware_backend.domain.admin.service.AdminService;
+import kr.co.awesomelead.groupware_backend.domain.aligo.service.PhoneAuthService;
 import kr.co.awesomelead.groupware_backend.domain.department.entity.Department;
 import kr.co.awesomelead.groupware_backend.domain.department.enums.DepartmentName;
 import kr.co.awesomelead.groupware_backend.domain.department.repository.DepartmentRepository;
@@ -217,13 +217,15 @@ class AdminServiceTest {
                     .thenReturn(List.of(pendingUser));
 
             // when
-            List<PendingUserSummaryResponseDto> result = adminService.getPendingSignupUsers(adminId);
+            List<PendingUserSummaryResponseDto> result =
+                    adminService.getPendingSignupUsers(adminId);
 
             // then
             assertThat(result.size()).isEqualTo(1);
             assertThat(result.get(0).getUserId()).isEqualTo(21L);
             assertThat(result.get(0).getNameKor()).isEqualTo("홍길동");
-            assertThat(result.get(0).getDepartmentName()).isEqualTo(DepartmentName.MANAGEMENT_SUPPORT);
+            assertThat(result.get(0).getDepartmentName())
+                    .isEqualTo(DepartmentName.MANAGEMENT_SUPPORT);
             assertThat(result.get(0).getStatus()).isEqualTo(Status.PENDING);
         }
 

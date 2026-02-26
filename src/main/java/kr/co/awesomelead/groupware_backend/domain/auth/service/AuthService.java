@@ -1,6 +1,11 @@
 package kr.co.awesomelead.groupware_backend.domain.auth.service;
 
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.PersistenceContext;
+
 import kr.co.awesomelead.groupware_backend.domain.aligo.service.PhoneAuthService;
+import kr.co.awesomelead.groupware_backend.domain.approval.entity.Approval;
+import kr.co.awesomelead.groupware_backend.domain.approval.repository.ApprovalRepository;
 import kr.co.awesomelead.groupware_backend.domain.auth.dto.request.LoginRequestDto;
 import kr.co.awesomelead.groupware_backend.domain.auth.dto.request.ResetPasswordByEmailRequestDto;
 import kr.co.awesomelead.groupware_backend.domain.auth.dto.request.ResetPasswordByPhoneRequestDto;
@@ -12,8 +17,6 @@ import kr.co.awesomelead.groupware_backend.domain.auth.dto.response.LoginRespons
 import kr.co.awesomelead.groupware_backend.domain.auth.dto.response.SignupResponseDto;
 import kr.co.awesomelead.groupware_backend.domain.auth.entity.RefreshToken;
 import kr.co.awesomelead.groupware_backend.domain.auth.util.JWTUtil;
-import kr.co.awesomelead.groupware_backend.domain.approval.entity.Approval;
-import kr.co.awesomelead.groupware_backend.domain.approval.repository.ApprovalRepository;
 import kr.co.awesomelead.groupware_backend.domain.user.entity.User;
 import kr.co.awesomelead.groupware_backend.domain.user.mapper.UserMapper;
 import kr.co.awesomelead.groupware_backend.domain.user.repository.UserRepository;
@@ -32,8 +35,6 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import jakarta.persistence.EntityManager;
-import jakarta.persistence.PersistenceContext;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;
@@ -306,27 +307,36 @@ public class AuthService {
                         .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
 
         // 1) 토큰 및 사용자 직접 참조 데이터 정리
-        deleteByQuery("delete from RefreshToken rt where rt.email = :email", "email", user.getEmail());
-        deleteByQuery("delete from MyInfoUpdateRequest r where r.reviewedBy.id = :userId", "userId", userId);
-        deleteByQuery("delete from MyInfoUpdateRequest r where r.user.id = :userId", "userId", userId);
+        deleteByQuery(
+                "delete from RefreshToken rt where rt.email = :email", "email", user.getEmail());
+        deleteByQuery(
+                "delete from MyInfoUpdateRequest r where r.reviewedBy.id = :userId",
+                "userId",
+                userId);
+        deleteByQuery(
+                "delete from MyInfoUpdateRequest r where r.user.id = :userId", "userId", userId);
         deleteByQuery("delete from RequestHistory rh where rh.user.id = :userId", "userId", userId);
         deleteByQuery("delete from EduAttendance ea where ea.user.id = :userId", "userId", userId);
         deleteByQuery("delete from CheckSheet cs where cs.user.id = :userId", "userId", userId);
         deleteByQuery("delete from Payslip p where p.user.id = :userId", "userId", userId);
         deleteByQuery("delete from AnnualLeave al where al.user.id = :userId", "userId", userId);
-        deleteByQuery("delete from VisitRecord vr where vr.visit.user.id = :userId", "userId", userId);
+        deleteByQuery(
+                "delete from VisitRecord vr where vr.visit.user.id = :userId", "userId", userId);
         deleteByQuery("delete from Visit v where v.user.id = :userId", "userId", userId);
         deleteByQuery("delete from NoticeTarget nt where nt.user.id = :userId", "userId", userId);
         deleteByQuery(
-                "delete from MessageAttachment ma where ma.message.sender.id = :userId or ma.message.receiver.id = :userId",
+                "delete from MessageAttachment ma where ma.message.sender.id = :userId or"
+                    + " ma.message.receiver.id = :userId",
                 "userId",
                 userId);
         deleteByQuery(
                 "delete from Message m where m.sender.id = :userId or m.receiver.id = :userId",
                 "userId",
                 userId);
-        deleteByQuery("delete from ApprovalParticipant ap where ap.user.id = :userId", "userId", userId);
-        deleteByQuery("delete from ApprovalStep aps where aps.approver.id = :userId", "userId", userId);
+        deleteByQuery(
+                "delete from ApprovalParticipant ap where ap.user.id = :userId", "userId", userId);
+        deleteByQuery(
+                "delete from ApprovalStep aps where aps.approver.id = :userId", "userId", userId);
         deleteByQuery(
                 "delete from SavedApprovalLineDetail sld where sld.approver.id = :userId",
                 "userId",
@@ -335,8 +345,12 @@ public class AuthService {
                 "delete from SavedApprovalLineDetail sld where sld.savedLine.user.id = :userId",
                 "userId",
                 userId);
-        deleteByQuery("delete from SavedApprovalLine sl where sl.user.id = :userId", "userId", userId);
-        deleteByQuery("delete from NoticeTarget nt where nt.notice.author.id = :userId", "userId", userId);
+        deleteByQuery(
+                "delete from SavedApprovalLine sl where sl.user.id = :userId", "userId", userId);
+        deleteByQuery(
+                "delete from NoticeTarget nt where nt.notice.author.id = :userId",
+                "userId",
+                userId);
         deleteByQuery(
                 "delete from NoticeAttachment na where na.notice.author.id = :userId",
                 "userId",

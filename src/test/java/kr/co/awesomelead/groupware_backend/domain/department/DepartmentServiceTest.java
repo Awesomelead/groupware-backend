@@ -20,8 +20,8 @@ import kr.co.awesomelead.groupware_backend.domain.department.enums.DepartmentNam
 import kr.co.awesomelead.groupware_backend.domain.department.repository.DepartmentRepository;
 import kr.co.awesomelead.groupware_backend.domain.department.service.DepartmentService;
 import kr.co.awesomelead.groupware_backend.domain.user.entity.User;
-import kr.co.awesomelead.groupware_backend.domain.user.mapper.UserMapper;
 import kr.co.awesomelead.groupware_backend.domain.user.enums.Status;
+import kr.co.awesomelead.groupware_backend.domain.user.mapper.UserMapper;
 import kr.co.awesomelead.groupware_backend.domain.user.repository.UserRepository;
 import kr.co.awesomelead.groupware_backend.global.error.CustomException;
 import kr.co.awesomelead.groupware_backend.global.error.ErrorCode;
@@ -95,7 +95,6 @@ public class DepartmentServiceTest {
                         .build();
         awesomeProdDept.getChildren().add(chamberDept);
         awesomeProdDept.getChildren().add(partDept);
-
     }
 
     @Test

@@ -1,9 +1,11 @@
 package kr.co.awesomelead.groupware_backend.domain.department.dto.response;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import kr.co.awesomelead.groupware_backend.domain.user.entity.User;
 import kr.co.awesomelead.groupware_backend.domain.user.enums.Position;
 import kr.co.awesomelead.groupware_backend.domain.user.enums.Status;
+
 import lombok.Builder;
 import lombok.Getter;
 

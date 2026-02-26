@@ -1,7 +1,9 @@
 package kr.co.awesomelead.groupware_backend.domain.department.dto.response;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import kr.co.awesomelead.groupware_backend.domain.department.enums.Company;
+
 import lombok.Builder;
 import lombok.Getter;
 

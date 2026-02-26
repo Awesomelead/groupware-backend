@@ -1,8 +1,7 @@
 package kr.co.awesomelead.groupware_backend.domain.admin.dto.response;
 
 import io.swagger.v3.oas.annotations.media.Schema;
-import java.time.LocalDate;
-import java.util.List;
+
 import kr.co.awesomelead.groupware_backend.domain.department.enums.Company;
 import kr.co.awesomelead.groupware_backend.domain.department.enums.DepartmentName;
 import kr.co.awesomelead.groupware_backend.domain.user.entity.User;
@@ -11,8 +10,12 @@ import kr.co.awesomelead.groupware_backend.domain.user.enums.JobType;
 import kr.co.awesomelead.groupware_backend.domain.user.enums.Position;
 import kr.co.awesomelead.groupware_backend.domain.user.enums.Role;
 import kr.co.awesomelead.groupware_backend.domain.user.enums.Status;
+
 import lombok.Builder;
 import lombok.Getter;
+
+import java.time.LocalDate;
+import java.util.List;
 
 @Getter
 @Builder
@@ -93,11 +96,14 @@ public class PendingUserSummaryResponseDto {
                 .phoneNumber(user.getPhoneNumber())
                 .email(user.getEmail())
                 .workLocation(user.getWorkLocation())
-                .departmentName(user.getDepartment() != null ? user.getDepartment().getName() : null)
+                .departmentName(
+                        user.getDepartment() != null ? user.getDepartment().getName() : null)
                 .position(user.getPosition())
                 .jobType(user.getJobType())
                 .authorities(
-                        user.getAuthorities() == null ? List.of() : user.getAuthorities().stream().toList())
+                        user.getAuthorities() == null
+                                ? List.of()
+                                : user.getAuthorities().stream().toList())
                 .hireDate(user.getHireDate())
                 .resignationDate(user.getResignationDate())
                 .role(user.getRole())

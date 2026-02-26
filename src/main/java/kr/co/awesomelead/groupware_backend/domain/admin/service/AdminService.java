@@ -2,6 +2,7 @@ package kr.co.awesomelead.groupware_backend.domain.admin.service;
 
 import java.util.List;
 import kr.co.awesomelead.groupware_backend.domain.admin.dto.request.UserApprovalRequestDto;
+import kr.co.awesomelead.groupware_backend.domain.admin.dto.response.MyInfoUpdateRequestSummaryResponseDto;
 import kr.co.awesomelead.groupware_backend.domain.admin.enums.AuthorityAction;
 import kr.co.awesomelead.groupware_backend.domain.department.entity.Department;
 import kr.co.awesomelead.groupware_backend.domain.department.repository.DepartmentRepository;
@@ -247,6 +248,21 @@ public class AdminService {
 
         request.reject(admin, reason.trim());
         myInfoUpdateRequestRepository.save(request);
+    }
+
+    @Transactional(readOnly = true)
+    public List<MyInfoUpdateRequestSummaryResponseDto> getPendingMyInfoUpdateRequests(Long adminId) {
+        User admin =
+            userRepository
+                .findById(adminId)
+                .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
+        validateMyInfoApprovalAuthority(admin);
+
+        return myInfoUpdateRequestRepository
+            .findAllByStatusWithUser(MyInfoUpdateRequestStatus.PENDING)
+            .stream()
+            .map(MyInfoUpdateRequestSummaryResponseDto::from)
+            .toList();
     }
 
     private void validateMyInfoApprovalAuthority(User admin) {

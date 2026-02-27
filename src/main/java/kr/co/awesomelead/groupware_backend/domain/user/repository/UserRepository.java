@@ -46,6 +46,20 @@ public interface UserRepository extends JpaRepository<User, Long> {
             + " u.id DESC")
     List<User> findAllByStatusWithDepartment(@Param("status") Status status);
 
-    @Query("SELECT u FROM User u LEFT JOIN FETCH u.department d ORDER BY u.id DESC")
-    Page<User> findAllWithDepartment(Pageable pageable);
+    @Query(
+            value =
+                    "SELECT u FROM User u LEFT JOIN FETCH u.department d "
+                            + "WHERE (:keyword IS NULL OR :keyword = '' "
+                            + "OR lower(u.nameKor) LIKE lower(concat('%', :keyword, '%')) "
+                            + "OR lower(u.nameEng) LIKE lower(concat('%', :keyword, '%')) "
+                            + "OR lower(u.email) LIKE lower(concat('%', :keyword, '%'))) "
+                            + "ORDER BY u.id DESC",
+            countQuery =
+                    "SELECT count(u) FROM User u "
+                            + "WHERE (:keyword IS NULL OR :keyword = '' "
+                            + "OR lower(u.nameKor) LIKE lower(concat('%', :keyword, '%')) "
+                            + "OR lower(u.nameEng) LIKE lower(concat('%', :keyword, '%')) "
+                            + "OR lower(u.email) LIKE lower(concat('%', :keyword, '%')))")
+    Page<User> findAllWithDepartmentAndKeyword(
+            @Param("keyword") String keyword, Pageable pageable);
 }

@@ -109,10 +109,13 @@ public class AdminController {
     @GetMapping("/users")
     public ResponseEntity<ApiResponse<Page<AdminUserSummaryResponseDto>>> getUsers(
         @Parameter(hidden = true) @AuthenticationPrincipal CustomUserDetails userDetails,
+        @Parameter(description = "이름/이메일 검색어", required = false, example = "홍길동")
+        @RequestParam(required = false)
+        String keyword,
         @ParameterObject @PageableDefault(page = 0, size = 20) Pageable pageable) {
 
         Page<AdminUserSummaryResponseDto> result =
-            adminService.getUsers(userDetails.getId(), pageable);
+            adminService.getUsers(userDetails.getId(), keyword, pageable);
 
         return ResponseEntity.ok(ApiResponse.onSuccess(result));
     }

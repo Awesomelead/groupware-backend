@@ -163,7 +163,8 @@ public class AdminService {
     }
 
     @Transactional(readOnly = true)
-    public Page<AdminUserSummaryResponseDto> getUsers(Long adminId, Pageable pageable) {
+    public Page<AdminUserSummaryResponseDto> getUsers(
+            Long adminId, String keyword, Pageable pageable) {
         User admin = userRepository.findById(adminId)
             .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
         validateRegistrationAuthority(admin);
@@ -174,7 +175,9 @@ public class AdminService {
                 .stream()
                 .collect(Collectors.toSet());
 
-        return userRepository.findAllWithDepartment(pageable)
+        String normalizedKeyword = hasText(keyword) ? keyword.trim() : null;
+
+        return userRepository.findAllWithDepartmentAndKeyword(normalizedKeyword, pageable)
             .map(
                 u -> AdminUserSummaryResponseDto.from(u, pendingMyInfoUserIds.contains(u.getId())));
     }

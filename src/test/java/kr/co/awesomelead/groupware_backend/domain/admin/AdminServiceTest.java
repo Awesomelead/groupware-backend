@@ -266,13 +266,15 @@ class AdminServiceTest {
 
             Pageable pageable = PageRequest.of(0, 20);
             Page<User> userPage = new PageImpl<>(List.of(user), pageable, 1);
-            when(userRepository.findAllWithDepartment(pageable)).thenReturn(userPage);
+            when(userRepository.findAllWithDepartmentAndKeyword("홍길동", pageable))
+                    .thenReturn(userPage);
             when(myInfoUpdateRequestRepository.findDistinctUserIdsByStatus(
                             MyInfoUpdateRequestStatus.PENDING))
                     .thenReturn(List.of(17L));
 
             // when
-            Page<AdminUserSummaryResponseDto> result = adminService.getUsers(adminId, pageable);
+            Page<AdminUserSummaryResponseDto> result =
+                    adminService.getUsers(adminId, "홍길동", pageable);
 
             // then
             assertThat(result.getTotalElements()).isEqualTo(1L);
@@ -290,7 +292,7 @@ class AdminServiceTest {
             when(userRepository.findById(adminId)).thenReturn(Optional.of(normalUser));
 
             // when & then
-            assertThatThrownBy(() -> adminService.getUsers(adminId, PageRequest.of(0, 20)))
+            assertThatThrownBy(() -> adminService.getUsers(adminId, null, PageRequest.of(0, 20)))
                     .isInstanceOf(CustomException.class)
                     .extracting("errorCode")
                     .isEqualTo(ErrorCode.NO_AUTHORITY_FOR_REGISTRATION);

@@ -17,7 +17,7 @@ public class AdminUserSummaryResponseDto {
     @Schema(description = "사용자 ID", example = "17")
     private Long userId;
 
-    @Schema(description = "한글 이름", example = "고영민")
+    @Schema(description = "한글 이름", example = "홍길동")
     private String nameKor;
 
     @Schema(description = "직급")

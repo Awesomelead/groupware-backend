@@ -80,7 +80,7 @@ public class DepartmentController {
                                           "users": [
                                             {
                                               "id": 17,
-                                              "name": "고영민",
+                                              "name": "홍길동",
                                               "position": "사원",
                                               "status": "AVAILABLE"
                                             }

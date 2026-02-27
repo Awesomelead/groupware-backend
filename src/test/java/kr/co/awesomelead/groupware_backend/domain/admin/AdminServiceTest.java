@@ -38,6 +38,10 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 
 import java.time.LocalDate;
 import java.util.List;
@@ -259,19 +263,21 @@ class AdminServiceTest {
             User user = User.builder().id(17L).nameKor("고영민").department(department).build();
             user.setStatus(Status.AVAILABLE);
 
-            when(userRepository.findAllWithDepartment()).thenReturn(List.of(user));
+            Pageable pageable = PageRequest.of(0, 20);
+            Page<User> userPage = new PageImpl<>(List.of(user), pageable, 1);
+            when(userRepository.findAllWithDepartment(pageable)).thenReturn(userPage);
             when(myInfoUpdateRequestRepository.findDistinctUserIdsByStatus(
                             MyInfoUpdateRequestStatus.PENDING))
                     .thenReturn(List.of(17L));
 
             // when
-            List<AdminUserSummaryResponseDto> result = adminService.getUsers(adminId);
+            Page<AdminUserSummaryResponseDto> result = adminService.getUsers(adminId, pageable);
 
             // then
-            assertThat(result.size()).isEqualTo(1);
-            assertThat(result.get(0).getUserId()).isEqualTo(17L);
-            assertThat(result.get(0).isHasPendingMyInfoRequest()).isEqualTo(true);
-            assertThat(result.get(0).getSignupStatus()).isEqualTo(Status.AVAILABLE);
+            assertThat(result.getTotalElements()).isEqualTo(1L);
+            assertThat(result.getContent().get(0).getUserId()).isEqualTo(17L);
+            assertThat(result.getContent().get(0).isHasPendingMyInfoRequest()).isEqualTo(true);
+            assertThat(result.getContent().get(0).getSignupStatus()).isEqualTo(Status.AVAILABLE);
         }
 
         @Test
@@ -283,7 +289,7 @@ class AdminServiceTest {
             when(userRepository.findById(adminId)).thenReturn(Optional.of(normalUser));
 
             // when & then
-            assertThatThrownBy(() -> adminService.getUsers(adminId))
+            assertThatThrownBy(() -> adminService.getUsers(adminId, PageRequest.of(0, 20)))
                     .isInstanceOf(CustomException.class)
                     .extracting("errorCode")
                     .isEqualTo(ErrorCode.NO_AUTHORITY_FOR_REGISTRATION);

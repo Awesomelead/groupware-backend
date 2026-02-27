@@ -13,6 +13,7 @@ import jakarta.validation.Valid;
 import java.util.List;
 import kr.co.awesomelead.groupware_backend.domain.admin.dto.request.MyInfoUpdateRejectRequestDto;
 import kr.co.awesomelead.groupware_backend.domain.admin.dto.request.UserApprovalRequestDto;
+import kr.co.awesomelead.groupware_backend.domain.admin.dto.response.AdminUserDetailResponseDto;
 import kr.co.awesomelead.groupware_backend.domain.admin.dto.response.AdminUserSummaryResponseDto;
 import kr.co.awesomelead.groupware_backend.domain.admin.dto.response.MyInfoUpdateRequestSummaryResponseDto;
 import kr.co.awesomelead.groupware_backend.domain.admin.dto.response.PendingUserSummaryResponseDto;
@@ -113,6 +114,98 @@ public class AdminController {
         Page<AdminUserSummaryResponseDto> result =
             adminService.getUsers(userDetails.getId(), pageable);
 
+        return ResponseEntity.ok(ApiResponse.onSuccess(result));
+    }
+
+    @Operation(summary = "직원 상세 조회", description = "직원 관리 화면용 사용자 상세 정보를 조회합니다.")
+    @ApiResponses(
+        value = {
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                responseCode = "200",
+                description = "조회 성공",
+                content =
+                @Content(
+                    mediaType = "application/json",
+                    examples =
+                    @ExampleObject(
+                        value =
+                            """
+                                {
+                                  "isSuccess": true,
+                                  "code": "COMMON200",
+                                  "message": "요청에 성공했습니다.",
+                                  "result": {
+                                    "userId": 17,
+                                    "nameKor": "홍길동",
+                                    "nameEng": "HONG GILDONG",
+                                    "birthDate": "2000-01-01",
+                                    "nationality": "대한민국",
+                                    "zipcode": "06234",
+                                    "address1": "서울특별시 강남구 테헤란로 123",
+                                    "address2": "어썸리드빌딩 5층",
+                                    "registrationNumber": "0001013123456",
+                                    "phoneNumber": "01012345678",
+                                    "email": "hg@gmail.com",
+                                    "workLocation": "어썸리드",
+                                    "departmentId": 11,
+                                    "departmentName": "경영지원부",
+                                    "position": "사원",
+                                    "jobType": "관리직",
+                                    "authorities": [
+                                      { "code": "ACCESS_MESSAGE", "label": "메세지 작성", "enabled": true },
+                                      { "code": "ACCESS_EDUCATION", "label": "교육 작성", "enabled": false }
+                                    ],
+                                    "hireDate": "2025-09-22",
+                                    "resignationDate": null,
+                                    "role": "일반 사용자",
+                                    "signupStatus": "AVAILABLE",
+                                    "hasPendingMyInfoRequest": false
+                                  }
+                                }
+                                """))),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                responseCode = "403",
+                description = "권한 없음",
+                content =
+                @Content(
+                    mediaType = "application/json",
+                    examples =
+                    @ExampleObject(
+                        value =
+                            """
+                                {
+                                  "isSuccess": false,
+                                  "code": "NO_AUTHORITY_FOR_REGISTRATION",
+                                  "message": "회원가입 승인 권한이 없습니다.",
+                                  "result": null
+                                }
+                                """))),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                responseCode = "404",
+                description = "사용자 없음",
+                content =
+                @Content(
+                    mediaType = "application/json",
+                    examples =
+                    @ExampleObject(
+                        value =
+                            """
+                                {
+                                  "isSuccess": false,
+                                  "code": "USER_NOT_FOUND",
+                                  "message": "해당 사용자를 찾을 수 없습니다.",
+                                  "result": null
+                                }
+                                """)))
+        })
+    @GetMapping("/users/{userId}")
+    public ResponseEntity<ApiResponse<AdminUserDetailResponseDto>> getUserDetail(
+        @Parameter(description = "상세 조회할 사용자 ID", required = true, example = "17")
+        @PathVariable
+        Long userId,
+        @Parameter(hidden = true) @AuthenticationPrincipal CustomUserDetails userDetails) {
+        AdminUserDetailResponseDto result =
+            adminService.getUserDetail(userDetails.getId(), userId);
         return ResponseEntity.ok(ApiResponse.onSuccess(result));
     }
 

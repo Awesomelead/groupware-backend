@@ -4,6 +4,7 @@ import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 import kr.co.awesomelead.groupware_backend.domain.admin.dto.request.UserApprovalRequestDto;
+import kr.co.awesomelead.groupware_backend.domain.admin.dto.response.AdminUserDetailResponseDto;
 import kr.co.awesomelead.groupware_backend.domain.admin.dto.response.AdminUserSummaryResponseDto;
 import kr.co.awesomelead.groupware_backend.domain.admin.dto.response.MyInfoUpdateRequestSummaryResponseDto;
 import kr.co.awesomelead.groupware_backend.domain.admin.dto.response.PendingUserSummaryResponseDto;
@@ -176,6 +177,26 @@ public class AdminService {
         return userRepository.findAllWithDepartment(pageable)
             .map(
                 u -> AdminUserSummaryResponseDto.from(u, pendingMyInfoUserIds.contains(u.getId())));
+    }
+
+    @Transactional(readOnly = true)
+    public AdminUserDetailResponseDto getUserDetail(Long adminId, Long userId) {
+        User admin =
+                userRepository
+                        .findById(adminId)
+                        .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
+        validateRegistrationAuthority(admin);
+
+        User user =
+                userRepository
+                        .findById(userId)
+                        .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
+
+        boolean hasPendingMyInfoRequest =
+                myInfoUpdateRequestRepository.existsByUserIdAndStatus(
+                        userId, MyInfoUpdateRequestStatus.PENDING);
+
+        return AdminUserDetailResponseDto.from(user, hasPendingMyInfoRequest);
     }
 
 

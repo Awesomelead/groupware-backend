@@ -6,6 +6,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import kr.co.awesomelead.groupware_backend.domain.admin.dto.request.AdminUserUpdateRequestDto;
 import kr.co.awesomelead.groupware_backend.domain.admin.dto.request.UserApprovalRequestDto;
 import kr.co.awesomelead.groupware_backend.domain.admin.dto.response.AdminUserDetailResponseDto;
 import kr.co.awesomelead.groupware_backend.domain.admin.dto.response.AdminUserSummaryResponseDto;
@@ -15,6 +16,7 @@ import kr.co.awesomelead.groupware_backend.domain.admin.enums.AuthorityAction;
 import kr.co.awesomelead.groupware_backend.domain.admin.service.AdminService;
 import kr.co.awesomelead.groupware_backend.domain.aligo.service.PhoneAuthService;
 import kr.co.awesomelead.groupware_backend.domain.department.entity.Department;
+import kr.co.awesomelead.groupware_backend.domain.department.enums.Company;
 import kr.co.awesomelead.groupware_backend.domain.department.enums.DepartmentName;
 import kr.co.awesomelead.groupware_backend.domain.department.repository.DepartmentRepository;
 import kr.co.awesomelead.groupware_backend.domain.user.entity.MyInfoUpdateRequest;
@@ -47,8 +49,6 @@ import org.springframework.data.domain.Pageable;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
-import kr.co.awesomelead.groupware_backend.domain.admin.dto.request.AdminUserUpdateRequestDto;
-import kr.co.awesomelead.groupware_backend.domain.department.enums.Company;
 
 @ExtendWith(MockitoExtension.class)
 @DisplayName("AdminService 클래스의")
@@ -388,7 +388,8 @@ class AdminServiceTest {
         @DisplayName("관리자가 직원 정보를 수정하면 반영된다")
         void it_updates_user_info_successfully() {
             // given
-            User targetUser = User.builder().id(17L).nameKor("기존이름").phoneNumber("01011112222").build();
+            User targetUser =
+                    User.builder().id(17L).nameKor("기존이름").phoneNumber("01011112222").build();
             targetUser.setPhoneNumberHash(User.hashValue("01011112222"));
             Department department =
                     Department.builder().id(11L).name(DepartmentName.MANAGEMENT_SUPPORT).build();

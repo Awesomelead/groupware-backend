@@ -1,11 +1,13 @@
 package kr.co.awesomelead.groupware_backend.domain.admin.dto.response;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import kr.co.awesomelead.groupware_backend.domain.department.enums.DepartmentName;
 import kr.co.awesomelead.groupware_backend.domain.user.entity.User;
 import kr.co.awesomelead.groupware_backend.domain.user.enums.JobType;
 import kr.co.awesomelead.groupware_backend.domain.user.enums.Position;
 import kr.co.awesomelead.groupware_backend.domain.user.enums.Status;
+
 import lombok.Builder;
 import lombok.Getter;
 
@@ -41,7 +43,8 @@ public class AdminUserSummaryResponseDto {
                 .nameKor(user.getNameKor())
                 .position(user.getPosition())
                 .jobType(user.getJobType())
-                .departmentName(user.getDepartment() != null ? user.getDepartment().getName() : null)
+                .departmentName(
+                        user.getDepartment() != null ? user.getDepartment().getName() : null)
                 .signupStatus(user.getStatus())
                 .hasPendingMyInfoRequest(hasPendingMyInfoRequest)
                 .build();

@@ -266,7 +266,8 @@ class AdminServiceTest {
 
             Pageable pageable = PageRequest.of(0, 20);
             Page<User> userPage = new PageImpl<>(List.of(user), pageable, 1);
-            when(userRepository.findAllWithDepartmentAndKeyword("홍길동", pageable))
+            when(userRepository.findAllWithDepartmentAndKeyword(
+                            "홍길동", Position.STAFF, 11L, JobType.MANAGEMENT, Role.USER, pageable))
                     .thenReturn(userPage);
             when(myInfoUpdateRequestRepository.findDistinctUserIdsByStatus(
                             MyInfoUpdateRequestStatus.PENDING))
@@ -274,7 +275,14 @@ class AdminServiceTest {
 
             // when
             Page<AdminUserSummaryResponseDto> result =
-                    adminService.getUsers(adminId, "홍길동", pageable);
+                    adminService.getUsers(
+                            adminId,
+                            "홍길동",
+                            Position.STAFF,
+                            11L,
+                            JobType.MANAGEMENT,
+                            Role.USER,
+                            pageable);
 
             // then
             assertThat(result.getTotalElements()).isEqualTo(1L);
@@ -292,7 +300,16 @@ class AdminServiceTest {
             when(userRepository.findById(adminId)).thenReturn(Optional.of(normalUser));
 
             // when & then
-            assertThatThrownBy(() -> adminService.getUsers(adminId, null, PageRequest.of(0, 20)))
+            assertThatThrownBy(
+                            () ->
+                                    adminService.getUsers(
+                                            adminId,
+                                            null,
+                                            null,
+                                            null,
+                                            null,
+                                            null,
+                                            PageRequest.of(0, 20)))
                     .isInstanceOf(CustomException.class)
                     .extracting("errorCode")
                     .isEqualTo(ErrorCode.NO_AUTHORITY_FOR_REGISTRATION);

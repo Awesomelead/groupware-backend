@@ -17,6 +17,7 @@ import kr.co.awesomelead.groupware_backend.domain.user.entity.User;
 import kr.co.awesomelead.groupware_backend.domain.user.enums.Authority;
 import kr.co.awesomelead.groupware_backend.domain.user.enums.JobType;
 import kr.co.awesomelead.groupware_backend.domain.user.enums.MyInfoUpdateRequestStatus;
+import kr.co.awesomelead.groupware_backend.domain.user.enums.Position;
 import kr.co.awesomelead.groupware_backend.domain.user.enums.Role;
 import kr.co.awesomelead.groupware_backend.domain.user.enums.Status;
 import kr.co.awesomelead.groupware_backend.domain.user.repository.MyInfoUpdateRequestRepository;
@@ -164,7 +165,13 @@ public class AdminService {
 
     @Transactional(readOnly = true)
     public Page<AdminUserSummaryResponseDto> getUsers(
-            Long adminId, String keyword, Pageable pageable) {
+            Long adminId,
+            String keyword,
+            Position position,
+            Long departmentId,
+            JobType jobType,
+            Role role,
+            Pageable pageable) {
         User admin = userRepository.findById(adminId)
             .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
         validateRegistrationAuthority(admin);
@@ -177,7 +184,8 @@ public class AdminService {
 
         String normalizedKeyword = hasText(keyword) ? keyword.trim() : null;
 
-        return userRepository.findAllWithDepartmentAndKeyword(normalizedKeyword, pageable)
+        return userRepository.findAllWithDepartmentAndKeyword(
+                        normalizedKeyword, position, departmentId, jobType, role, pageable)
             .map(
                 u -> AdminUserSummaryResponseDto.from(u, pendingMyInfoUserIds.contains(u.getId())));
     }

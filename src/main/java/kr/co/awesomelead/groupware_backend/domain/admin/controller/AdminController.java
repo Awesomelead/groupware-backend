@@ -21,6 +21,8 @@ import kr.co.awesomelead.groupware_backend.domain.admin.enums.AuthorityAction;
 import kr.co.awesomelead.groupware_backend.domain.admin.service.AdminService;
 import kr.co.awesomelead.groupware_backend.domain.user.dto.CustomUserDetails;
 import kr.co.awesomelead.groupware_backend.domain.user.enums.Authority;
+import kr.co.awesomelead.groupware_backend.domain.user.enums.JobType;
+import kr.co.awesomelead.groupware_backend.domain.user.enums.Position;
 import kr.co.awesomelead.groupware_backend.domain.user.enums.Role;
 import kr.co.awesomelead.groupware_backend.global.common.response.ApiResponse;
 import lombok.RequiredArgsConstructor;
@@ -109,13 +111,26 @@ public class AdminController {
     @GetMapping("/users")
     public ResponseEntity<ApiResponse<Page<AdminUserSummaryResponseDto>>> getUsers(
         @Parameter(hidden = true) @AuthenticationPrincipal CustomUserDetails userDetails,
-        @Parameter(description = "이름/이메일 검색어", required = false, example = "홍길동")
+        @Parameter(description = "한글/영어 이름 or 이메일 검색어", required = false, example = "홍길동")
         @RequestParam(required = false)
         String keyword,
+        @Parameter(description = "직급 필터", required = false, example = "사원")
+        @RequestParam(required = false)
+        Position position,
+        @Parameter(description = "부서 ID 필터", required = false, example = "11")
+        @RequestParam(required = false)
+        Long departmentId,
+        @Parameter(description = "근무직종 필터", required = false, example = "관리직")
+        @RequestParam(required = false)
+        JobType jobType,
+        @Parameter(description = "역할 필터", required = false, example = "일반 사용자")
+        @RequestParam(required = false)
+        Role role,
         @ParameterObject @PageableDefault(page = 0, size = 20) Pageable pageable) {
 
         Page<AdminUserSummaryResponseDto> result =
-            adminService.getUsers(userDetails.getId(), keyword, pageable);
+            adminService.getUsers(
+                userDetails.getId(), keyword, position, departmentId, jobType, role, pageable);
 
         return ResponseEntity.ok(ApiResponse.onSuccess(result));
     }

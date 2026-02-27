@@ -6,6 +6,9 @@ import java.util.Optional;
 import kr.co.awesomelead.groupware_backend.domain.department.entity.Department;
 import kr.co.awesomelead.groupware_backend.domain.department.enums.Company;
 import kr.co.awesomelead.groupware_backend.domain.user.entity.User;
+import kr.co.awesomelead.groupware_backend.domain.user.enums.JobType;
+import kr.co.awesomelead.groupware_backend.domain.user.enums.Position;
+import kr.co.awesomelead.groupware_backend.domain.user.enums.Role;
 import kr.co.awesomelead.groupware_backend.domain.user.enums.Status;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -53,13 +56,26 @@ public interface UserRepository extends JpaRepository<User, Long> {
                             + "OR lower(u.nameKor) LIKE lower(concat('%', :keyword, '%')) "
                             + "OR lower(u.nameEng) LIKE lower(concat('%', :keyword, '%')) "
                             + "OR lower(u.email) LIKE lower(concat('%', :keyword, '%'))) "
+                            + "AND (:position IS NULL OR u.position = :position) "
+                            + "AND (:departmentId IS NULL OR u.department.id = :departmentId) "
+                            + "AND (:jobType IS NULL OR u.jobType = :jobType) "
+                            + "AND (:role IS NULL OR u.role = :role) "
                             + "ORDER BY u.id DESC",
             countQuery =
                     "SELECT count(u) FROM User u "
                             + "WHERE (:keyword IS NULL OR :keyword = '' "
                             + "OR lower(u.nameKor) LIKE lower(concat('%', :keyword, '%')) "
                             + "OR lower(u.nameEng) LIKE lower(concat('%', :keyword, '%')) "
-                            + "OR lower(u.email) LIKE lower(concat('%', :keyword, '%')))")
+                            + "OR lower(u.email) LIKE lower(concat('%', :keyword, '%'))) "
+                            + "AND (:position IS NULL OR u.position = :position) "
+                            + "AND (:departmentId IS NULL OR u.department.id = :departmentId) "
+                            + "AND (:jobType IS NULL OR u.jobType = :jobType) "
+                            + "AND (:role IS NULL OR u.role = :role)")
     Page<User> findAllWithDepartmentAndKeyword(
-            @Param("keyword") String keyword, Pageable pageable);
+            @Param("keyword") String keyword,
+            @Param("position") Position position,
+            @Param("departmentId") Long departmentId,
+            @Param("jobType") JobType jobType,
+            @Param("role") Role role,
+            Pageable pageable);
 }

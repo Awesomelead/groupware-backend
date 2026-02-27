@@ -1,6 +1,9 @@
 package kr.co.awesomelead.groupware_backend.domain.admin.service;
 
+import kr.co.awesomelead.groupware_backend.domain.admin.dto.request.AdminUserUpdateRequestDto;
 import kr.co.awesomelead.groupware_backend.domain.admin.dto.request.UserApprovalRequestDto;
+import kr.co.awesomelead.groupware_backend.domain.admin.dto.response.AdminUserDetailResponseDto;
+import kr.co.awesomelead.groupware_backend.domain.admin.dto.response.AdminUserSummaryResponseDto;
 import kr.co.awesomelead.groupware_backend.domain.admin.dto.response.MyInfoUpdateRequestSummaryResponseDto;
 import kr.co.awesomelead.groupware_backend.domain.admin.dto.response.PendingUserSummaryResponseDto;
 import kr.co.awesomelead.groupware_backend.domain.admin.enums.AuthorityAction;
@@ -12,6 +15,7 @@ import kr.co.awesomelead.groupware_backend.domain.user.entity.User;
 import kr.co.awesomelead.groupware_backend.domain.user.enums.Authority;
 import kr.co.awesomelead.groupware_backend.domain.user.enums.JobType;
 import kr.co.awesomelead.groupware_backend.domain.user.enums.MyInfoUpdateRequestStatus;
+import kr.co.awesomelead.groupware_backend.domain.user.enums.Position;
 import kr.co.awesomelead.groupware_backend.domain.user.enums.Role;
 import kr.co.awesomelead.groupware_backend.domain.user.enums.Status;
 import kr.co.awesomelead.groupware_backend.domain.user.repository.MyInfoUpdateRequestRepository;
@@ -21,10 +25,14 @@ import kr.co.awesomelead.groupware_backend.global.error.ErrorCode;
 
 import lombok.RequiredArgsConstructor;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -157,6 +165,159 @@ public class AdminService {
         return userRepository.findAllByStatusWithDepartment(Status.PENDING).stream()
                 .map(PendingUserSummaryResponseDto::from)
                 .toList();
+    }
+
+    @Transactional(readOnly = true)
+    public Page<AdminUserSummaryResponseDto> getUsers(
+            Long adminId,
+            String keyword,
+            Position position,
+            Long departmentId,
+            JobType jobType,
+            Role role,
+            Pageable pageable) {
+        User admin =
+                userRepository
+                        .findById(adminId)
+                        .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
+        validateRegistrationAuthority(admin);
+
+        Set<Long> pendingMyInfoUserIds =
+                myInfoUpdateRequestRepository
+                        .findDistinctUserIdsByStatus(MyInfoUpdateRequestStatus.PENDING)
+                        .stream()
+                        .collect(Collectors.toSet());
+
+        String normalizedKeyword = hasText(keyword) ? keyword.trim() : null;
+
+        return userRepository
+                .findAllWithDepartmentAndKeyword(
+                        normalizedKeyword, position, departmentId, jobType, role, pageable)
+                .map(
+                        u ->
+                                AdminUserSummaryResponseDto.from(
+                                        u, pendingMyInfoUserIds.contains(u.getId())));
+    }
+
+    @Transactional(readOnly = true)
+    public AdminUserDetailResponseDto getUserDetail(Long adminId, Long userId) {
+        User admin =
+                userRepository
+                        .findById(adminId)
+                        .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
+        validateRegistrationAuthority(admin);
+
+        User user =
+                userRepository
+                        .findById(userId)
+                        .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
+
+        boolean hasPendingMyInfoRequest =
+                myInfoUpdateRequestRepository.existsByUserIdAndStatus(
+                        userId, MyInfoUpdateRequestStatus.PENDING);
+
+        return AdminUserDetailResponseDto.from(user, hasPendingMyInfoRequest);
+    }
+
+    @Transactional
+    public void updateUserInfo(Long userId, AdminUserUpdateRequestDto requestDto, Long adminId) {
+        User admin =
+                userRepository
+                        .findById(adminId)
+                        .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
+        validateRegistrationAuthority(admin);
+
+        User user =
+                userRepository
+                        .findById(userId)
+                        .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
+
+        if (requestDto.getNameKor() != null) {
+            user.setNameKor(requestDto.getNameKor());
+        }
+        if (requestDto.getNameEng() != null) {
+            user.setNameEng(requestDto.getNameEng());
+        }
+        if (requestDto.getNationality() != null) {
+            user.setNationality(requestDto.getNationality());
+        }
+        if (requestDto.getBirthDate() != null) {
+            user.setBirthDate(requestDto.getBirthDate());
+        }
+        if (hasText(requestDto.getZipcode())) {
+            user.setZipcode(requestDto.getZipcode().trim());
+        }
+        if (hasText(requestDto.getAddress1())) {
+            user.setAddress1(requestDto.getAddress1().trim());
+        }
+        if (hasText(requestDto.getAddress2())) {
+            user.setAddress2(requestDto.getAddress2().trim());
+        }
+
+        if (hasText(requestDto.getRegistrationNumber())) {
+            String newRegNo = requestDto.getRegistrationNumber().trim();
+            if (!newRegNo.equals(user.getRegistrationNumber())
+                    && userRepository.existsByRegistrationNumber(newRegNo)) {
+                throw new CustomException(ErrorCode.DUPLICATE_REGISTRATION_NUMBER);
+            }
+            user.updateRegistrationNumber(newRegNo);
+        }
+
+        if (hasText(requestDto.getPhoneNumber())) {
+            String newPhone = requestDto.getPhoneNumber().trim();
+            String newPhoneHash = User.hashValue(newPhone);
+
+            if (!newPhoneHash.equals(user.getPhoneNumberHash())) {
+                if (!phoneAuthService.isPhoneVerified(newPhone)) {
+                    throw new CustomException(ErrorCode.PHONE_NOT_VERIFIED);
+                }
+                if (userRepository.existsByPhoneNumberHash(newPhoneHash)) {
+                    throw new CustomException(ErrorCode.PHONE_NUMBER_ALREADY_EXISTS);
+                }
+                user.updatePhoneNumber(newPhone);
+                phoneAuthService.clearVerification(newPhone);
+            }
+        }
+
+        if (requestDto.getWorkLocation() != null) {
+            user.setWorkLocation(requestDto.getWorkLocation());
+        }
+        if (requestDto.getDepartmentId() != null) {
+            Department department =
+                    departmentRepository
+                            .findById(requestDto.getDepartmentId())
+                            .orElseThrow(() -> new CustomException(ErrorCode.DEPARTMENT_NOT_FOUND));
+            user.setDepartment(department);
+        }
+        if (requestDto.getPosition() != null) {
+            user.setPosition(requestDto.getPosition());
+        }
+        if (requestDto.getJobType() != null) {
+            user.setJobType(requestDto.getJobType());
+        }
+        if (requestDto.getRole() != null) {
+            user.setRole(requestDto.getRole());
+        }
+
+        JobType finalJobType = user.getJobType();
+        Role finalRole = user.getRole();
+        if (finalJobType == JobType.FIELD && finalRole == Role.ADMIN) {
+            throw new CustomException(ErrorCode.INVALID_JOB_TYPE_FOR_ADMIN_ROLE);
+        }
+
+        if (requestDto.getAuthorities() != null) {
+            user.getAuthorities().clear();
+            requestDto.getAuthorities().forEach(user::addAuthority);
+        }
+
+        if (requestDto.getHireDate() != null) {
+            user.setHireDate(requestDto.getHireDate());
+        }
+        if (requestDto.getResignationDate() != null) {
+            user.setResignationDate(requestDto.getResignationDate());
+        }
+
+        userRepository.save(user);
     }
 
     @Transactional

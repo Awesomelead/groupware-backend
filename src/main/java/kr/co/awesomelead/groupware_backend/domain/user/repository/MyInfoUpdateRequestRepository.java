@@ -22,4 +22,7 @@ public interface MyInfoUpdateRequestRepository extends JpaRepository<MyInfoUpdat
                     + "WHERE r.status = :status ORDER BY r.createdAt DESC")
     List<MyInfoUpdateRequest> findAllByStatusWithUser(
             @Param("status") MyInfoUpdateRequestStatus status);
+
+    @Query("SELECT DISTINCT r.user.id FROM MyInfoUpdateRequest r WHERE r.status = :status")
+    List<Long> findDistinctUserIdsByStatus(@Param("status") MyInfoUpdateRequestStatus status);
 }

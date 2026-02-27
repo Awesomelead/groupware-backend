@@ -47,6 +47,8 @@ import org.springframework.data.domain.Pageable;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
+import kr.co.awesomelead.groupware_backend.domain.admin.dto.request.AdminUserUpdateRequestDto;
+import kr.co.awesomelead.groupware_backend.domain.department.enums.Company;
 
 @ExtendWith(MockitoExtension.class)
 @DisplayName("AdminService 클래스의")
@@ -375,6 +377,68 @@ class AdminServiceTest {
                     .isInstanceOf(CustomException.class)
                     .extracting("errorCode")
                     .isEqualTo(ErrorCode.NO_AUTHORITY_FOR_REGISTRATION);
+        }
+    }
+
+    @Nested
+    @DisplayName("updateUserInfo 메서드는")
+    class Describe_updateUserInfo {
+
+        @Test
+        @DisplayName("관리자가 직원 정보를 수정하면 반영된다")
+        void it_updates_user_info_successfully() {
+            // given
+            User targetUser = User.builder().id(17L).nameKor("기존이름").phoneNumber("01011112222").build();
+            targetUser.setPhoneNumberHash(User.hashValue("01011112222"));
+            Department department =
+                    Department.builder().id(11L).name(DepartmentName.MANAGEMENT_SUPPORT).build();
+
+            when(userRepository.findById(17L)).thenReturn(Optional.of(targetUser));
+            when(departmentRepository.findById(11L)).thenReturn(Optional.of(department));
+            when(phoneAuthService.isPhoneVerified("01099998888")).thenReturn(true);
+            when(userRepository.existsByPhoneNumberHash(User.hashValue("01099998888")))
+                    .thenReturn(false);
+
+            AdminUserUpdateRequestDto dto = new AdminUserUpdateRequestDto();
+            dto.setNameKor("홍길동");
+            dto.setPhoneNumber("01099998888");
+            dto.setDepartmentId(11L);
+            dto.setWorkLocation(Company.AWESOME);
+            dto.setPosition(Position.STAFF);
+            dto.setJobType(JobType.MANAGEMENT);
+            dto.setRole(Role.USER);
+            dto.setAuthorities(List.of(Authority.ACCESS_MESSAGE));
+
+            // when
+            adminService.updateUserInfo(17L, dto, adminId);
+
+            // then
+            assertThat(targetUser.getNameKor()).isEqualTo("홍길동");
+            assertThat(targetUser.getPhoneNumber()).isEqualTo("01099998888");
+            assertThat(targetUser.getDepartment().getId()).isEqualTo(11L);
+            assertThat(targetUser.getWorkLocation()).isEqualTo(Company.AWESOME);
+            assertThat(targetUser.hasAuthority(Authority.ACCESS_MESSAGE)).isEqualTo(true);
+            verify(phoneAuthService).clearVerification("01099998888");
+            verify(userRepository).save(targetUser);
+        }
+
+        @Test
+        @DisplayName("전화번호 인증이 안된 상태로 번호를 바꾸면 PHONE_NOT_VERIFIED 에러를 던진다")
+        void it_throws_when_phone_not_verified() {
+            // given
+            User targetUser = User.builder().id(17L).phoneNumber("01011112222").build();
+            targetUser.setPhoneNumberHash(User.hashValue("01011112222"));
+            when(userRepository.findById(17L)).thenReturn(Optional.of(targetUser));
+            when(phoneAuthService.isPhoneVerified("01099998888")).thenReturn(false);
+
+            AdminUserUpdateRequestDto dto = new AdminUserUpdateRequestDto();
+            dto.setPhoneNumber("01099998888");
+
+            // when & then
+            assertThatThrownBy(() -> adminService.updateUserInfo(17L, dto, adminId))
+                    .isInstanceOf(CustomException.class)
+                    .extracting("errorCode")
+                    .isEqualTo(ErrorCode.PHONE_NOT_VERIFIED);
         }
     }
 

@@ -11,6 +11,7 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import java.util.List;
+import kr.co.awesomelead.groupware_backend.domain.admin.dto.request.AdminUserUpdateRequestDto;
 import kr.co.awesomelead.groupware_backend.domain.admin.dto.request.MyInfoUpdateRejectRequestDto;
 import kr.co.awesomelead.groupware_backend.domain.admin.dto.request.UserApprovalRequestDto;
 import kr.co.awesomelead.groupware_backend.domain.admin.dto.response.AdminUserDetailResponseDto;
@@ -225,6 +226,115 @@ public class AdminController {
         AdminUserDetailResponseDto result =
             adminService.getUserDetail(userDetails.getId(), userId);
         return ResponseEntity.ok(ApiResponse.onSuccess(result));
+    }
+
+    @Operation(summary = "직원 정보 수정", description = "관리자가 직원 정보를 수정합니다. 이메일은 수정할 수 없습니다.")
+    @ApiResponses(
+            value = {
+                @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                        responseCode = "200",
+                        description = "수정 성공",
+                        content =
+                                @Content(
+                                        mediaType = "application/json",
+                                        examples =
+                                                @ExampleObject(
+                                                        value =
+                                                                """
+                                {
+                                  "isSuccess": true,
+                                  "code": "COMMON200",
+                                  "message": "요청에 성공했습니다.",
+                                  "result": "직원 정보가 성공적으로 수정되었습니다."
+                                }
+                                """))),
+                @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                        responseCode = "400",
+                        description = "잘못된 요청",
+                        content =
+                                @Content(
+                                        mediaType = "application/json",
+                                        examples = {
+                                            @ExampleObject(
+                                                    name = "전화번호 인증 필요",
+                                                    value =
+                                                            """
+                                    {
+                                      "isSuccess": false,
+                                      "code": "PHONE_NOT_VERIFIED",
+                                      "message": "전화번호 인증이 필요합니다.",
+                                      "result": null
+                                    }
+                                    """),
+                                            @ExampleObject(
+                                                    name = "잘못된 직무/역할 조합",
+                                                    value =
+                                                            """
+                                    {
+                                      "isSuccess": false,
+                                      "code": "INVALID_JOB_TYPE_FOR_ADMIN_ROLE",
+                                      "message": "현장직은 관리자 권한을 가질 수 없습니다.",
+                                      "result": null
+                                    }
+                                    """)
+                                        })),
+                @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                        responseCode = "403",
+                        description = "권한 없음",
+                        content =
+                                @Content(
+                                        mediaType = "application/json",
+                                        examples =
+                                                @ExampleObject(
+                                                        value =
+                                                                """
+                                {
+                                  "isSuccess": false,
+                                  "code": "NO_AUTHORITY_FOR_REGISTRATION",
+                                  "message": "회원가입 승인 권한이 없습니다.",
+                                  "result": null
+                                }
+                                """))),
+                @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                        responseCode = "404",
+                        description = "사용자/부서 없음",
+                        content =
+                                @Content(
+                                        mediaType = "application/json",
+                                        examples = {
+                                            @ExampleObject(
+                                                    name = "사용자 없음",
+                                                    value =
+                                                            """
+                                    {
+                                      "isSuccess": false,
+                                      "code": "USER_NOT_FOUND",
+                                      "message": "해당 사용자를 찾을 수 없습니다.",
+                                      "result": null
+                                    }
+                                    """),
+                                            @ExampleObject(
+                                                    name = "부서 없음",
+                                                    value =
+                                                            """
+                                    {
+                                      "isSuccess": false,
+                                      "code": "DEPARTMENT_NOT_FOUND",
+                                      "message": "해당 부서를 찾을 수 없습니다.",
+                                      "result": null
+                                    }
+                                    """)
+                                        }))
+            })
+    @PatchMapping("/users/{userId}")
+    public ResponseEntity<ApiResponse<String>> updateUserInfo(
+            @Parameter(description = "수정할 사용자 ID", required = true, example = "17")
+                    @PathVariable
+                    Long userId,
+            @Valid @RequestBody AdminUserUpdateRequestDto requestDto,
+            @Parameter(hidden = true) @AuthenticationPrincipal CustomUserDetails userDetails) {
+        adminService.updateUserInfo(userId, requestDto, userDetails.getId());
+        return ResponseEntity.ok(ApiResponse.onSuccess("직원 정보가 성공적으로 수정되었습니다."));
     }
 
     @Operation(summary = "회원가입 승인 대기 목록 조회", description = "승인 대기(PENDING) 사용자 목록을 조회합니다.")

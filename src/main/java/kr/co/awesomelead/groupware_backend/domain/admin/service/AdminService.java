@@ -3,6 +3,7 @@ package kr.co.awesomelead.groupware_backend.domain.admin.service;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
+import kr.co.awesomelead.groupware_backend.domain.admin.dto.request.AdminUserUpdateRequestDto;
 import kr.co.awesomelead.groupware_backend.domain.admin.dto.request.UserApprovalRequestDto;
 import kr.co.awesomelead.groupware_backend.domain.admin.dto.response.AdminUserDetailResponseDto;
 import kr.co.awesomelead.groupware_backend.domain.admin.dto.response.AdminUserSummaryResponseDto;
@@ -208,6 +209,107 @@ public class AdminService {
                         userId, MyInfoUpdateRequestStatus.PENDING);
 
         return AdminUserDetailResponseDto.from(user, hasPendingMyInfoRequest);
+    }
+
+    @Transactional
+    public void updateUserInfo(Long userId, AdminUserUpdateRequestDto requestDto, Long adminId) {
+        User admin =
+                userRepository
+                        .findById(adminId)
+                        .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
+        validateRegistrationAuthority(admin);
+
+        User user =
+                userRepository
+                        .findById(userId)
+                        .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
+
+        if (requestDto.getNameKor() != null) {
+            user.setNameKor(requestDto.getNameKor());
+        }
+        if (requestDto.getNameEng() != null) {
+            user.setNameEng(requestDto.getNameEng());
+        }
+        if (requestDto.getNationality() != null) {
+            user.setNationality(requestDto.getNationality());
+        }
+        if (requestDto.getBirthDate() != null) {
+            user.setBirthDate(requestDto.getBirthDate());
+        }
+        if (hasText(requestDto.getZipcode())) {
+            user.setZipcode(requestDto.getZipcode().trim());
+        }
+        if (hasText(requestDto.getAddress1())) {
+            user.setAddress1(requestDto.getAddress1().trim());
+        }
+        if (hasText(requestDto.getAddress2())) {
+            user.setAddress2(requestDto.getAddress2().trim());
+        }
+
+        if (hasText(requestDto.getRegistrationNumber())) {
+            String newRegNo = requestDto.getRegistrationNumber().trim();
+            if (!newRegNo.equals(user.getRegistrationNumber())
+                    && userRepository.existsByRegistrationNumber(newRegNo)) {
+                throw new CustomException(ErrorCode.DUPLICATE_REGISTRATION_NUMBER);
+            }
+            user.updateRegistrationNumber(newRegNo);
+        }
+
+        if (hasText(requestDto.getPhoneNumber())) {
+            String newPhone = requestDto.getPhoneNumber().trim();
+            String newPhoneHash = User.hashValue(newPhone);
+
+            if (!newPhoneHash.equals(user.getPhoneNumberHash())) {
+                if (!phoneAuthService.isPhoneVerified(newPhone)) {
+                    throw new CustomException(ErrorCode.PHONE_NOT_VERIFIED);
+                }
+                if (userRepository.existsByPhoneNumberHash(newPhoneHash)) {
+                    throw new CustomException(ErrorCode.PHONE_NUMBER_ALREADY_EXISTS);
+                }
+                user.updatePhoneNumber(newPhone);
+                phoneAuthService.clearVerification(newPhone);
+            }
+        }
+
+        if (requestDto.getWorkLocation() != null) {
+            user.setWorkLocation(requestDto.getWorkLocation());
+        }
+        if (requestDto.getDepartmentId() != null) {
+            Department department =
+                    departmentRepository
+                            .findById(requestDto.getDepartmentId())
+                            .orElseThrow(() -> new CustomException(ErrorCode.DEPARTMENT_NOT_FOUND));
+            user.setDepartment(department);
+        }
+        if (requestDto.getPosition() != null) {
+            user.setPosition(requestDto.getPosition());
+        }
+        if (requestDto.getJobType() != null) {
+            user.setJobType(requestDto.getJobType());
+        }
+        if (requestDto.getRole() != null) {
+            user.setRole(requestDto.getRole());
+        }
+
+        JobType finalJobType = user.getJobType();
+        Role finalRole = user.getRole();
+        if (finalJobType == JobType.FIELD && finalRole == Role.ADMIN) {
+            throw new CustomException(ErrorCode.INVALID_JOB_TYPE_FOR_ADMIN_ROLE);
+        }
+
+        if (requestDto.getAuthorities() != null) {
+            user.getAuthorities().clear();
+            requestDto.getAuthorities().forEach(user::addAuthority);
+        }
+
+        if (requestDto.getHireDate() != null) {
+            user.setHireDate(requestDto.getHireDate());
+        }
+        if (requestDto.getResignationDate() != null) {
+            user.setResignationDate(requestDto.getResignationDate());
+        }
+
+        userRepository.save(user);
     }
 
 

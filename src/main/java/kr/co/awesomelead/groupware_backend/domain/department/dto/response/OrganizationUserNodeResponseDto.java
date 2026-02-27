@@ -17,7 +17,7 @@ public class OrganizationUserNodeResponseDto {
     @Schema(description = "사용자 ID", example = "17")
     private Long id;
 
-    @Schema(description = "사용자명", example = "고영민")
+    @Schema(description = "사용자명", example = "홍길동")
     private String name;
 
     @Schema(description = "직급", example = "대리")

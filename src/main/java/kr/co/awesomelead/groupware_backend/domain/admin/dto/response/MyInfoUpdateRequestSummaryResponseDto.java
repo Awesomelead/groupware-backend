@@ -21,10 +21,10 @@ public class MyInfoUpdateRequestSummaryResponseDto {
     @Schema(description = "요청자 사용자 ID", example = "17")
     private Long userId;
 
-    @Schema(description = "요청자 한글 이름", example = "고영민")
+    @Schema(description = "요청자 한글 이름", example = "홍길동")
     private String nameKor;
 
-    @Schema(description = "요청자 이메일", example = "ko07073@gmail.com")
+    @Schema(description = "요청자 이메일", example = "hong@test.com")
     private String email;
 
     @Schema(description = "요청 영문 이름", example = "KO YEONGMIN")

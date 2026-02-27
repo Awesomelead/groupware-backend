@@ -12,19 +12,28 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 
 import jakarta.validation.Valid;
 
+import kr.co.awesomelead.groupware_backend.domain.admin.dto.request.AdminUserUpdateRequestDto;
 import kr.co.awesomelead.groupware_backend.domain.admin.dto.request.MyInfoUpdateRejectRequestDto;
 import kr.co.awesomelead.groupware_backend.domain.admin.dto.request.UserApprovalRequestDto;
+import kr.co.awesomelead.groupware_backend.domain.admin.dto.response.AdminUserDetailResponseDto;
+import kr.co.awesomelead.groupware_backend.domain.admin.dto.response.AdminUserSummaryResponseDto;
 import kr.co.awesomelead.groupware_backend.domain.admin.dto.response.MyInfoUpdateRequestSummaryResponseDto;
 import kr.co.awesomelead.groupware_backend.domain.admin.dto.response.PendingUserSummaryResponseDto;
 import kr.co.awesomelead.groupware_backend.domain.admin.enums.AuthorityAction;
 import kr.co.awesomelead.groupware_backend.domain.admin.service.AdminService;
 import kr.co.awesomelead.groupware_backend.domain.user.dto.CustomUserDetails;
 import kr.co.awesomelead.groupware_backend.domain.user.enums.Authority;
+import kr.co.awesomelead.groupware_backend.domain.user.enums.JobType;
+import kr.co.awesomelead.groupware_backend.domain.user.enums.Position;
 import kr.co.awesomelead.groupware_backend.domain.user.enums.Role;
 import kr.co.awesomelead.groupware_backend.global.common.response.ApiResponse;
 
 import lombok.RequiredArgsConstructor;
 
+import org.springdoc.core.annotations.ParameterObject;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -56,6 +65,285 @@ import java.util.List;
 public class AdminController {
 
     private final AdminService adminService;
+
+    @Operation(summary = "직원 목록 조회", description = "직원 관리 화면용 사용자 목록을 조회합니다.")
+    @ApiResponses(
+            value = {
+                @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                        responseCode = "200",
+                        description = "조회 성공",
+                        content =
+                                @Content(
+                                        mediaType = "application/json",
+                                        examples =
+                                                @ExampleObject(
+                                                        value =
+                                                                """
+                                {
+                                  "isSuccess": true,
+                                  "code": "COMMON200",
+                                  "message": "요청에 성공했습니다.",
+                                  "result": [
+                                    {
+                                      "userId": 17,
+                                      "nameKor": "홍길동",
+                                      "position": "사원",
+                                      "jobType": "관리직",
+                                      "departmentName": "경영지원부",
+                                      "signupStatus": "AVAILABLE",
+                                      "hasPendingMyInfoRequest": true
+                                    }
+                                  ]
+                                }
+                                """))),
+                @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                        responseCode = "403",
+                        description = "권한 없음",
+                        content =
+                                @Content(
+                                        mediaType = "application/json",
+                                        examples =
+                                                @ExampleObject(
+                                                        value =
+                                                                """
+                                {
+                                  "isSuccess": false,
+                                  "code": "NO_AUTHORITY_FOR_REGISTRATION",
+                                  "message": "회원가입 승인 권한이 없습니다.",
+                                  "result": null
+                                }
+                                """)))
+            })
+    @GetMapping("/users")
+    public ResponseEntity<ApiResponse<Page<AdminUserSummaryResponseDto>>> getUsers(
+            @Parameter(hidden = true) @AuthenticationPrincipal CustomUserDetails userDetails,
+            @Parameter(description = "한글/영어 이름 or 이메일 검색어", required = false, example = "홍길동")
+                    @RequestParam(required = false)
+                    String keyword,
+            @Parameter(description = "직급 필터", required = false, example = "사원")
+                    @RequestParam(required = false)
+                    Position position,
+            @Parameter(description = "부서 ID 필터", required = false, example = "11")
+                    @RequestParam(required = false)
+                    Long departmentId,
+            @Parameter(description = "근무직종 필터", required = false, example = "관리직")
+                    @RequestParam(required = false)
+                    JobType jobType,
+            @Parameter(description = "역할 필터", required = false, example = "일반 사용자")
+                    @RequestParam(required = false)
+                    Role role,
+            @ParameterObject @PageableDefault(page = 0, size = 20) Pageable pageable) {
+
+        Page<AdminUserSummaryResponseDto> result =
+                adminService.getUsers(
+                        userDetails.getId(),
+                        keyword,
+                        position,
+                        departmentId,
+                        jobType,
+                        role,
+                        pageable);
+
+        return ResponseEntity.ok(ApiResponse.onSuccess(result));
+    }
+
+    @Operation(summary = "직원 상세 조회", description = "직원 관리 화면용 사용자 상세 정보를 조회합니다.")
+    @ApiResponses(
+            value = {
+                @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                        responseCode = "200",
+                        description = "조회 성공",
+                        content =
+                                @Content(
+                                        mediaType = "application/json",
+                                        examples =
+                                                @ExampleObject(
+                                                        value =
+                                                                """
+                                {
+                                  "isSuccess": true,
+                                  "code": "COMMON200",
+                                  "message": "요청에 성공했습니다.",
+                                  "result": {
+                                    "userId": 17,
+                                    "nameKor": "홍길동",
+                                    "nameEng": "HONG GILDONG",
+                                    "birthDate": "2000-01-01",
+                                    "nationality": "대한민국",
+                                    "zipcode": "06234",
+                                    "address1": "서울특별시 강남구 테헤란로 123",
+                                    "address2": "어썸리드빌딩 5층",
+                                    "registrationNumber": "0001013123456",
+                                    "phoneNumber": "01012345678",
+                                    "email": "hg@gmail.com",
+                                    "workLocation": "어썸리드",
+                                    "departmentId": 11,
+                                    "departmentName": "경영지원부",
+                                    "position": "사원",
+                                    "jobType": "관리직",
+                                    "authorities": [
+                                      { "code": "ACCESS_MESSAGE", "label": "메세지 작성", "enabled": true },
+                                      { "code": "ACCESS_EDUCATION", "label": "교육 작성", "enabled": false }
+                                    ],
+                                    "hireDate": "2025-09-22",
+                                    "resignationDate": null,
+                                    "role": "일반 사용자",
+                                    "signupStatus": "AVAILABLE",
+                                    "hasPendingMyInfoRequest": false
+                                  }
+                                }
+                                """))),
+                @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                        responseCode = "403",
+                        description = "권한 없음",
+                        content =
+                                @Content(
+                                        mediaType = "application/json",
+                                        examples =
+                                                @ExampleObject(
+                                                        value =
+                                                                """
+                                {
+                                  "isSuccess": false,
+                                  "code": "NO_AUTHORITY_FOR_REGISTRATION",
+                                  "message": "회원가입 승인 권한이 없습니다.",
+                                  "result": null
+                                }
+                                """))),
+                @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                        responseCode = "404",
+                        description = "사용자 없음",
+                        content =
+                                @Content(
+                                        mediaType = "application/json",
+                                        examples =
+                                                @ExampleObject(
+                                                        value =
+                                                                """
+                                {
+                                  "isSuccess": false,
+                                  "code": "USER_NOT_FOUND",
+                                  "message": "해당 사용자를 찾을 수 없습니다.",
+                                  "result": null
+                                }
+                                """)))
+            })
+    @GetMapping("/users/{userId}")
+    public ResponseEntity<ApiResponse<AdminUserDetailResponseDto>> getUserDetail(
+            @Parameter(description = "상세 조회할 사용자 ID", required = true, example = "17") @PathVariable
+                    Long userId,
+            @Parameter(hidden = true) @AuthenticationPrincipal CustomUserDetails userDetails) {
+        AdminUserDetailResponseDto result = adminService.getUserDetail(userDetails.getId(), userId);
+        return ResponseEntity.ok(ApiResponse.onSuccess(result));
+    }
+
+    @Operation(summary = "직원 정보 수정", description = "관리자가 직원 정보를 수정합니다. 이메일은 수정할 수 없습니다.")
+    @ApiResponses(
+            value = {
+                @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                        responseCode = "200",
+                        description = "수정 성공",
+                        content =
+                                @Content(
+                                        mediaType = "application/json",
+                                        examples =
+                                                @ExampleObject(
+                                                        value =
+                                                                """
+                                {
+                                  "isSuccess": true,
+                                  "code": "COMMON200",
+                                  "message": "요청에 성공했습니다.",
+                                  "result": "직원 정보가 성공적으로 수정되었습니다."
+                                }
+                                """))),
+                @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                        responseCode = "400",
+                        description = "잘못된 요청",
+                        content =
+                                @Content(
+                                        mediaType = "application/json",
+                                        examples = {
+                                            @ExampleObject(
+                                                    name = "전화번호 인증 필요",
+                                                    value =
+                                                            """
+                                    {
+                                      "isSuccess": false,
+                                      "code": "PHONE_NOT_VERIFIED",
+                                      "message": "전화번호 인증이 필요합니다.",
+                                      "result": null
+                                    }
+                                    """),
+                                            @ExampleObject(
+                                                    name = "잘못된 직무/역할 조합",
+                                                    value =
+                                                            """
+                                    {
+                                      "isSuccess": false,
+                                      "code": "INVALID_JOB_TYPE_FOR_ADMIN_ROLE",
+                                      "message": "현장직은 관리자 권한을 가질 수 없습니다.",
+                                      "result": null
+                                    }
+                                    """)
+                                        })),
+                @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                        responseCode = "403",
+                        description = "권한 없음",
+                        content =
+                                @Content(
+                                        mediaType = "application/json",
+                                        examples =
+                                                @ExampleObject(
+                                                        value =
+                                                                """
+                                {
+                                  "isSuccess": false,
+                                  "code": "NO_AUTHORITY_FOR_REGISTRATION",
+                                  "message": "회원가입 승인 권한이 없습니다.",
+                                  "result": null
+                                }
+                                """))),
+                @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                        responseCode = "404",
+                        description = "사용자/부서 없음",
+                        content =
+                                @Content(
+                                        mediaType = "application/json",
+                                        examples = {
+                                            @ExampleObject(
+                                                    name = "사용자 없음",
+                                                    value =
+                                                            """
+                                    {
+                                      "isSuccess": false,
+                                      "code": "USER_NOT_FOUND",
+                                      "message": "해당 사용자를 찾을 수 없습니다.",
+                                      "result": null
+                                    }
+                                    """),
+                                            @ExampleObject(
+                                                    name = "부서 없음",
+                                                    value =
+                                                            """
+                                    {
+                                      "isSuccess": false,
+                                      "code": "DEPARTMENT_NOT_FOUND",
+                                      "message": "해당 부서를 찾을 수 없습니다.",
+                                      "result": null
+                                    }
+                                    """)
+                                        }))
+            })
+    @PatchMapping("/users/{userId}")
+    public ResponseEntity<ApiResponse<String>> updateUserInfo(
+            @Parameter(description = "수정할 사용자 ID", required = true, example = "17") @PathVariable
+                    Long userId,
+            @Valid @RequestBody AdminUserUpdateRequestDto requestDto,
+            @Parameter(hidden = true) @AuthenticationPrincipal CustomUserDetails userDetails) {
+        adminService.updateUserInfo(userId, requestDto, userDetails.getId());
+        return ResponseEntity.ok(ApiResponse.onSuccess("직원 정보가 성공적으로 수정되었습니다."));
+    }
 
     @Operation(summary = "회원가입 승인 대기 목록 조회", description = "승인 대기(PENDING) 사용자 목록을 조회합니다.")
     @ApiResponses(

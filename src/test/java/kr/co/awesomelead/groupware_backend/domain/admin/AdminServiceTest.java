@@ -6,13 +6,17 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import kr.co.awesomelead.groupware_backend.domain.admin.dto.request.AdminUserUpdateRequestDto;
 import kr.co.awesomelead.groupware_backend.domain.admin.dto.request.UserApprovalRequestDto;
+import kr.co.awesomelead.groupware_backend.domain.admin.dto.response.AdminUserDetailResponseDto;
+import kr.co.awesomelead.groupware_backend.domain.admin.dto.response.AdminUserSummaryResponseDto;
 import kr.co.awesomelead.groupware_backend.domain.admin.dto.response.MyInfoUpdateRequestSummaryResponseDto;
 import kr.co.awesomelead.groupware_backend.domain.admin.dto.response.PendingUserSummaryResponseDto;
 import kr.co.awesomelead.groupware_backend.domain.admin.enums.AuthorityAction;
 import kr.co.awesomelead.groupware_backend.domain.admin.service.AdminService;
 import kr.co.awesomelead.groupware_backend.domain.aligo.service.PhoneAuthService;
 import kr.co.awesomelead.groupware_backend.domain.department.entity.Department;
+import kr.co.awesomelead.groupware_backend.domain.department.enums.Company;
 import kr.co.awesomelead.groupware_backend.domain.department.enums.DepartmentName;
 import kr.co.awesomelead.groupware_backend.domain.department.repository.DepartmentRepository;
 import kr.co.awesomelead.groupware_backend.domain.user.entity.MyInfoUpdateRequest;
@@ -37,6 +41,10 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 
 import java.time.LocalDate;
 import java.util.List;
@@ -242,6 +250,196 @@ class AdminServiceTest {
                     .isInstanceOf(CustomException.class)
                     .extracting("errorCode")
                     .isEqualTo(ErrorCode.NO_AUTHORITY_FOR_REGISTRATION);
+        }
+    }
+
+    @Nested
+    @DisplayName("getUsers 메서드는")
+    class Describe_getUsers {
+
+        @Test
+        @DisplayName("관리자가 조회하면 직원 목록과 수정요청 뱃지 여부를 반환한다")
+        void it_returns_users_with_pending_my_info_badge() {
+            // given
+            Department department =
+                    Department.builder().id(1L).name(DepartmentName.MANAGEMENT_SUPPORT).build();
+            User user = User.builder().id(17L).nameKor("고영민").department(department).build();
+            user.setStatus(Status.AVAILABLE);
+
+            Pageable pageable = PageRequest.of(0, 20);
+            Page<User> userPage = new PageImpl<>(List.of(user), pageable, 1);
+            when(userRepository.findAllWithDepartmentAndKeyword(
+                            "홍길동", Position.STAFF, 11L, JobType.MANAGEMENT, Role.USER, pageable))
+                    .thenReturn(userPage);
+            when(myInfoUpdateRequestRepository.findDistinctUserIdsByStatus(
+                            MyInfoUpdateRequestStatus.PENDING))
+                    .thenReturn(List.of(17L));
+
+            // when
+            Page<AdminUserSummaryResponseDto> result =
+                    adminService.getUsers(
+                            adminId,
+                            "홍길동",
+                            Position.STAFF,
+                            11L,
+                            JobType.MANAGEMENT,
+                            Role.USER,
+                            pageable);
+
+            // then
+            assertThat(result.getTotalElements()).isEqualTo(1L);
+            assertThat(result.getContent().get(0).getUserId()).isEqualTo(17L);
+            assertThat(result.getContent().get(0).isHasPendingMyInfoRequest()).isEqualTo(true);
+            assertThat(result.getContent().get(0).getSignupStatus()).isEqualTo(Status.AVAILABLE);
+        }
+
+        @Test
+        @DisplayName("권한 없는 사용자가 조회하면 NO_AUTHORITY_FOR_REGISTRATION 에러를 던진다")
+        void it_throws_when_requester_is_not_admin() {
+            // given
+            User normalUser = new User();
+            normalUser.setRole(Role.USER);
+            when(userRepository.findById(adminId)).thenReturn(Optional.of(normalUser));
+
+            // when & then
+            assertThatThrownBy(
+                            () ->
+                                    adminService.getUsers(
+                                            adminId,
+                                            null,
+                                            null,
+                                            null,
+                                            null,
+                                            null,
+                                            PageRequest.of(0, 20)))
+                    .isInstanceOf(CustomException.class)
+                    .extracting("errorCode")
+                    .isEqualTo(ErrorCode.NO_AUTHORITY_FOR_REGISTRATION);
+        }
+    }
+
+    @Nested
+    @DisplayName("getUserDetail 메서드는")
+    class Describe_getUserDetail {
+
+        @Test
+        @DisplayName("관리자가 조회하면 사용자 상세를 반환한다")
+        void it_returns_user_detail() {
+            // given
+            Department department =
+                    Department.builder().id(11L).name(DepartmentName.MANAGEMENT_SUPPORT).build();
+            User user =
+                    User.builder()
+                            .id(17L)
+                            .nameKor("고영민")
+                            .department(department)
+                            .role(Role.USER)
+                            .build();
+
+            when(userRepository.findById(17L)).thenReturn(Optional.of(user));
+            when(myInfoUpdateRequestRepository.existsByUserIdAndStatus(
+                            17L, MyInfoUpdateRequestStatus.PENDING))
+                    .thenReturn(true);
+
+            // when
+            AdminUserDetailResponseDto result = adminService.getUserDetail(adminId, 17L);
+
+            // then
+            assertThat(result.getUserId()).isEqualTo(17L);
+            assertThat(result.getDepartmentId()).isEqualTo(11L);
+            assertThat(result.getDepartmentName()).isEqualTo(DepartmentName.MANAGEMENT_SUPPORT);
+            assertThat(result.isHasPendingMyInfoRequest()).isEqualTo(true);
+        }
+
+        @Test
+        @DisplayName("상세 조회 대상이 없으면 USER_NOT_FOUND 에러를 던진다")
+        void it_throws_when_target_user_not_found() {
+            // given
+            when(userRepository.findById(17L)).thenReturn(Optional.empty());
+
+            // when & then
+            assertThatThrownBy(() -> adminService.getUserDetail(adminId, 17L))
+                    .isInstanceOf(CustomException.class)
+                    .extracting("errorCode")
+                    .isEqualTo(ErrorCode.USER_NOT_FOUND);
+        }
+
+        @Test
+        @DisplayName("권한 없는 사용자가 조회하면 NO_AUTHORITY_FOR_REGISTRATION 에러를 던진다")
+        void it_throws_when_requester_is_not_admin() {
+            // given
+            User normalUser = new User();
+            normalUser.setRole(Role.USER);
+            when(userRepository.findById(adminId)).thenReturn(Optional.of(normalUser));
+
+            // when & then
+            assertThatThrownBy(() -> adminService.getUserDetail(adminId, 17L))
+                    .isInstanceOf(CustomException.class)
+                    .extracting("errorCode")
+                    .isEqualTo(ErrorCode.NO_AUTHORITY_FOR_REGISTRATION);
+        }
+    }
+
+    @Nested
+    @DisplayName("updateUserInfo 메서드는")
+    class Describe_updateUserInfo {
+
+        @Test
+        @DisplayName("관리자가 직원 정보를 수정하면 반영된다")
+        void it_updates_user_info_successfully() {
+            // given
+            User targetUser =
+                    User.builder().id(17L).nameKor("기존이름").phoneNumber("01011112222").build();
+            targetUser.setPhoneNumberHash(User.hashValue("01011112222"));
+            Department department =
+                    Department.builder().id(11L).name(DepartmentName.MANAGEMENT_SUPPORT).build();
+
+            when(userRepository.findById(17L)).thenReturn(Optional.of(targetUser));
+            when(departmentRepository.findById(11L)).thenReturn(Optional.of(department));
+            when(phoneAuthService.isPhoneVerified("01099998888")).thenReturn(true);
+            when(userRepository.existsByPhoneNumberHash(User.hashValue("01099998888")))
+                    .thenReturn(false);
+
+            AdminUserUpdateRequestDto dto = new AdminUserUpdateRequestDto();
+            dto.setNameKor("홍길동");
+            dto.setPhoneNumber("01099998888");
+            dto.setDepartmentId(11L);
+            dto.setWorkLocation(Company.AWESOME);
+            dto.setPosition(Position.STAFF);
+            dto.setJobType(JobType.MANAGEMENT);
+            dto.setRole(Role.USER);
+            dto.setAuthorities(List.of(Authority.ACCESS_MESSAGE));
+
+            // when
+            adminService.updateUserInfo(17L, dto, adminId);
+
+            // then
+            assertThat(targetUser.getNameKor()).isEqualTo("홍길동");
+            assertThat(targetUser.getPhoneNumber()).isEqualTo("01099998888");
+            assertThat(targetUser.getDepartment().getId()).isEqualTo(11L);
+            assertThat(targetUser.getWorkLocation()).isEqualTo(Company.AWESOME);
+            assertThat(targetUser.hasAuthority(Authority.ACCESS_MESSAGE)).isEqualTo(true);
+            verify(phoneAuthService).clearVerification("01099998888");
+            verify(userRepository).save(targetUser);
+        }
+
+        @Test
+        @DisplayName("전화번호 인증이 안된 상태로 번호를 바꾸면 PHONE_NOT_VERIFIED 에러를 던진다")
+        void it_throws_when_phone_not_verified() {
+            // given
+            User targetUser = User.builder().id(17L).phoneNumber("01011112222").build();
+            targetUser.setPhoneNumberHash(User.hashValue("01011112222"));
+            when(userRepository.findById(17L)).thenReturn(Optional.of(targetUser));
+            when(phoneAuthService.isPhoneVerified("01099998888")).thenReturn(false);
+
+            AdminUserUpdateRequestDto dto = new AdminUserUpdateRequestDto();
+            dto.setPhoneNumber("01099998888");
+
+            // when & then
+            assertThatThrownBy(() -> adminService.updateUserInfo(17L, dto, adminId))
+                    .isInstanceOf(CustomException.class)
+                    .extracting("errorCode")
+                    .isEqualTo(ErrorCode.PHONE_NOT_VERIFIED);
         }
     }
 

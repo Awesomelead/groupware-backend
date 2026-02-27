@@ -45,4 +45,7 @@ public interface UserRepository extends JpaRepository<User, Long> {
             "SELECT u FROM User u LEFT JOIN FETCH u.department d WHERE u.status = :status ORDER BY"
                     + " u.id DESC")
     List<User> findAllByStatusWithDepartment(@Param("status") Status status);
+
+    @Query("SELECT u FROM User u LEFT JOIN FETCH u.department d ORDER BY u.id DESC")
+    List<User> findAllWithDepartment();
 }

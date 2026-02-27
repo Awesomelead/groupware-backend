@@ -1,6 +1,7 @@
 package kr.co.awesomelead.groupware_backend.domain.admin.service;
 
 import kr.co.awesomelead.groupware_backend.domain.admin.dto.request.UserApprovalRequestDto;
+import kr.co.awesomelead.groupware_backend.domain.admin.dto.response.AdminUserSummaryResponseDto;
 import kr.co.awesomelead.groupware_backend.domain.admin.dto.response.MyInfoUpdateRequestSummaryResponseDto;
 import kr.co.awesomelead.groupware_backend.domain.admin.dto.response.PendingUserSummaryResponseDto;
 import kr.co.awesomelead.groupware_backend.domain.admin.enums.AuthorityAction;
@@ -25,6 +26,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -156,6 +159,25 @@ public class AdminService {
 
         return userRepository.findAllByStatusWithDepartment(Status.PENDING).stream()
                 .map(PendingUserSummaryResponseDto::from)
+                .toList();
+    }
+
+    @Transactional(readOnly = true)
+    public List<AdminUserSummaryResponseDto> getUsers(Long adminId) {
+        User admin =
+                userRepository
+                        .findById(adminId)
+                        .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
+        validateRegistrationAuthority(admin);
+
+        Set<Long> pendingMyInfoUserIds =
+                myInfoUpdateRequestRepository
+                        .findDistinctUserIdsByStatus(MyInfoUpdateRequestStatus.PENDING)
+                        .stream()
+                        .collect(Collectors.toSet());
+
+        return userRepository.findAllWithDepartment().stream()
+                .map(u -> AdminUserSummaryResponseDto.from(u, pendingMyInfoUserIds.contains(u.getId())))
                 .toList();
     }
 

@@ -7,6 +7,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import kr.co.awesomelead.groupware_backend.domain.admin.dto.request.UserApprovalRequestDto;
+import kr.co.awesomelead.groupware_backend.domain.admin.dto.response.AdminUserSummaryResponseDto;
 import kr.co.awesomelead.groupware_backend.domain.admin.dto.response.MyInfoUpdateRequestSummaryResponseDto;
 import kr.co.awesomelead.groupware_backend.domain.admin.dto.response.PendingUserSummaryResponseDto;
 import kr.co.awesomelead.groupware_backend.domain.admin.enums.AuthorityAction;
@@ -239,6 +240,50 @@ class AdminServiceTest {
 
             // when & then
             assertThatThrownBy(() -> adminService.getPendingSignupUsers(adminId))
+                    .isInstanceOf(CustomException.class)
+                    .extracting("errorCode")
+                    .isEqualTo(ErrorCode.NO_AUTHORITY_FOR_REGISTRATION);
+        }
+    }
+
+    @Nested
+    @DisplayName("getUsers 메서드는")
+    class Describe_getUsers {
+
+        @Test
+        @DisplayName("관리자가 조회하면 직원 목록과 수정요청 뱃지 여부를 반환한다")
+        void it_returns_users_with_pending_my_info_badge() {
+            // given
+            Department department =
+                    Department.builder().id(1L).name(DepartmentName.MANAGEMENT_SUPPORT).build();
+            User user = User.builder().id(17L).nameKor("고영민").department(department).build();
+            user.setStatus(Status.AVAILABLE);
+
+            when(userRepository.findAllWithDepartment()).thenReturn(List.of(user));
+            when(myInfoUpdateRequestRepository.findDistinctUserIdsByStatus(
+                            MyInfoUpdateRequestStatus.PENDING))
+                    .thenReturn(List.of(17L));
+
+            // when
+            List<AdminUserSummaryResponseDto> result = adminService.getUsers(adminId);
+
+            // then
+            assertThat(result.size()).isEqualTo(1);
+            assertThat(result.get(0).getUserId()).isEqualTo(17L);
+            assertThat(result.get(0).isHasPendingMyInfoRequest()).isEqualTo(true);
+            assertThat(result.get(0).getSignupStatus()).isEqualTo(Status.AVAILABLE);
+        }
+
+        @Test
+        @DisplayName("권한 없는 사용자가 조회하면 NO_AUTHORITY_FOR_REGISTRATION 에러를 던진다")
+        void it_throws_when_requester_is_not_admin() {
+            // given
+            User normalUser = new User();
+            normalUser.setRole(Role.USER);
+            when(userRepository.findById(adminId)).thenReturn(Optional.of(normalUser));
+
+            // when & then
+            assertThatThrownBy(() -> adminService.getUsers(adminId))
                     .isInstanceOf(CustomException.class)
                     .extracting("errorCode")
                     .isEqualTo(ErrorCode.NO_AUTHORITY_FOR_REGISTRATION);

@@ -78,14 +78,6 @@ public enum ErrorCode {
 
     // 403
     REFRESH_TOKEN_MISMATCH(HttpStatus.FORBIDDEN, "해당 리프레시 토큰에 대한 권한이 없습니다."),
-    NO_AUTHORITY_FOR_EDU_REPORT(HttpStatus.FORBIDDEN, "교육 보고서 관리 권한이 없습니다."),
-    VISIT_ACCESS_DENIED(HttpStatus.FORBIDDEN, "해당 방문정보에 대한 접근 권한이 없습니다."),
-    NO_AUTHORITY_FOR_NOTICE(HttpStatus.FORBIDDEN, "공지사항 작성 권한이 없습니다."),
-    NO_AUTHORITY_FOR_ANNUAL_LEAVE(HttpStatus.FORBIDDEN, "연차 발송 권한이 없습니다."),
-    NO_AUTHORITY_FOR_PAYSLIP(HttpStatus.FORBIDDEN, "급여명세서 발송 권한이 없습니다."),
-    NO_AUTHORITY_FOR_REGISTRATION(HttpStatus.FORBIDDEN, "회원가입 승인 권한이 없습니다."),
-    NO_AUTHORITY_FOR_ROLE_UPDATE(HttpStatus.FORBIDDEN, "사용자 역할 변경 권한이 없습니다."),
-    NO_AUTHORITY_FOR_VIEW_PAYSLIP(HttpStatus.FORBIDDEN, "급여명세서 조회 권한이 없습니다."),
     NO_AUTHORITY_FOR_MY_INFO_UPDATE_APPROVAL(HttpStatus.FORBIDDEN, "개인정보 수정 승인 권한이 없습니다."),
     NO_AUTHORITY_FOR_MY_INFO_UPDATE_CANCEL(HttpStatus.FORBIDDEN, "본인의 개인정보 수정 요청만 취소할 수 있습니다."),
 

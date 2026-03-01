@@ -125,7 +125,6 @@ public class AuthService {
         User user = userRepository
             .findByEmail(username)
             .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
-
         // 7. 응답 생성
         LoginResponseDto loginResponseDto = new LoginResponseDto(
             accessToken,
@@ -135,14 +134,28 @@ public class AuthService {
             user.getNameEng(),
             user.getPosition());
 
+        // 8. FCM 토큰 등록 (선택)
+        if (requestDto.getFcmToken() != null && !requestDto.getFcmToken().isBlank()
+            && requestDto.getDeviceType() != null) {
+            fcmTokenService.registerToken(
+                user.getId(), requestDto.getFcmToken(), requestDto.getDeviceType());
+        }
+
         return loginResponseDto;
     }
 
-    public void logout(String email, String refreshToken) {
+    public void logout(String email, String refreshToken, String fcmToken) {
         RefreshToken token = refreshTokenService.validateRefreshToken(refreshToken);
 
         if (!token.getEmail().equals(email)) {
             throw new CustomException(ErrorCode.REFRESH_TOKEN_MISMATCH);
+        }
+
+        // 1. FCM 토큰 삭제 (선택)
+        if (fcmToken != null && !fcmToken.isBlank()) {
+            User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
+            fcmTokenService.deleteToken(user.getId(), fcmToken);
         }
 
         refreshTokenService.deleteRefreshToken(refreshToken);

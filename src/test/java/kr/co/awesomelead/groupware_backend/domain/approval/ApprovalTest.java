@@ -7,6 +7,12 @@ import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Optional;
 import kr.co.awesomelead.groupware_backend.domain.approval.dto.request.ApprovalCreateRequestDto;
 import kr.co.awesomelead.groupware_backend.domain.approval.dto.request.ApprovalCreateRequestDto.StepRequestDto;
 import kr.co.awesomelead.groupware_backend.domain.approval.dto.request.ApprovalListRequestDto;
@@ -46,7 +52,6 @@ import kr.co.awesomelead.groupware_backend.domain.user.repository.UserRepository
 import kr.co.awesomelead.groupware_backend.global.error.CustomException;
 import kr.co.awesomelead.groupware_backend.global.error.ErrorCode;
 import kr.co.awesomelead.groupware_backend.global.infra.s3.service.S3Service;
-
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -61,30 +66,30 @@ import org.mockito.quality.Strictness;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 
-import java.time.LocalDate;
-import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
-
 @ExtendWith(MockitoExtension.class)
 @DisplayName("ApprovalService 단위 테스트")
 public class ApprovalTest {
 
-    @InjectMocks private ApprovalService approvalService;
+    @InjectMocks
+    private ApprovalService approvalService;
 
-    @Mock private ApprovalRepository approvalRepository;
+    @Mock
+    private ApprovalRepository approvalRepository;
 
-    @Mock private UserRepository userRepository;
+    @Mock
+    private UserRepository userRepository;
 
-    @Mock private ApprovalAttachmentRepository attachmentRepository;
+    @Mock
+    private ApprovalAttachmentRepository attachmentRepository;
 
-    @Mock private ApprovalQueryRepository approvalQueryRepository;
+    @Mock
+    private ApprovalQueryRepository approvalQueryRepository;
 
-    @Mock private ApprovalMapper approvalMapper;
+    @Mock
+    private ApprovalMapper approvalMapper;
 
-    @Mock private S3Service s3Service;
+    @Mock
+    private S3Service s3Service;
 
     private User drafter;
     private Department department;
@@ -93,12 +98,11 @@ public class ApprovalTest {
 
     @BeforeEach
     void setUp() {
-        department =
-                Department.builder()
-                        .id(10L)
-                        .name(DepartmentName.SALES_DEPT)
-                        .company(Company.AWESOME)
-                        .build();
+        department = Department.builder()
+            .id(10L)
+            .name(DepartmentName.SALES_DEPT)
+            .company(Company.AWESOME)
+            .build();
         drafter = User.builder().id(DRAFTER_ID).nameKor("진형").department(department).build();
     }
 
@@ -114,7 +118,7 @@ public class ApprovalTest {
             void setupSuccess() {
                 given(userRepository.findById(DRAFTER_ID)).willReturn(Optional.of(drafter));
                 given(userRepository.findById(APPROVER_ID))
-                        .willReturn(Optional.of(User.builder().id(APPROVER_ID).build()));
+                    .willReturn(Optional.of(User.builder().id(APPROVER_ID).build()));
             }
 
             @Test
@@ -155,7 +159,7 @@ public class ApprovalTest {
                 dto.setAccountNumber("111-222");
                 dto.setAccountHolder("진형");
                 dto.setDetails(
-                        List.of(new CarFuelApprovalCreateRequestDto.CarFuelDetailRequestDto()));
+                    List.of(new CarFuelApprovalCreateRequestDto.CarFuelDetailRequestDto()));
 
                 prepareMockAndVerify(new CarFuelApproval(), dto);
             }
@@ -163,13 +167,11 @@ public class ApprovalTest {
             @Test
             @DisplayName("지출결의(EXPENSE_DRAFT) 상신 성공")
             void createExpenseDraft_Success() {
-                ExpenseDraftApprovalCreateRequestDto dto =
-                        new ExpenseDraftApprovalCreateRequestDto();
+                ExpenseDraftApprovalCreateRequestDto dto = new ExpenseDraftApprovalCreateRequestDto();
                 setCommonFields(dto, DocumentType.EXPENSE_DRAFT);
                 dto.setDetails(
-                        List.of(
-                                new ExpenseDraftApprovalCreateRequestDto
-                                        .ExpenseDraftDetailRequestDto()));
+                    List.of(
+                        new ExpenseDraftApprovalCreateRequestDto.ExpenseDraftDetailRequestDto()));
 
                 prepareMockAndVerify(new ExpenseDraftApproval(), dto);
             }
@@ -177,13 +179,11 @@ public class ApprovalTest {
             @Test
             @DisplayName("복리후생 지출결의(WELFARE_EXPENSE) 상신 성공")
             void createWelfareExpense_Success() {
-                WelfareExpenseApprovalCreateRequestDto dto =
-                        new WelfareExpenseApprovalCreateRequestDto();
+                WelfareExpenseApprovalCreateRequestDto dto = new WelfareExpenseApprovalCreateRequestDto();
                 setCommonFields(dto, DocumentType.WELFARE_EXPENSE);
                 dto.setDetails(
-                        List.of(
-                                new ExpenseDraftApprovalCreateRequestDto
-                                        .ExpenseDraftDetailRequestDto()));
+                    List.of(
+                        new ExpenseDraftApprovalCreateRequestDto.ExpenseDraftDetailRequestDto()));
 
                 prepareMockAndVerify(new WelfareExpenseApproval(), dto);
             }
@@ -191,17 +191,15 @@ public class ApprovalTest {
             @Test
             @DisplayName("국외출장정산(OVERSEAS_TRIP) 상신 성공")
             void createOverseasTrip_Success() {
-                OverseasTripApprovalCreateRequestDto dto =
-                        new OverseasTripApprovalCreateRequestDto();
+                OverseasTripApprovalCreateRequestDto dto = new OverseasTripApprovalCreateRequestDto();
                 setCommonFields(dto, DocumentType.OVERSEAS_TRIP);
                 dto.setDestination("미국");
                 dto.setCurrencyUnit("USD");
                 dto.setExchangeRate(1300.0);
                 dto.setAdvanceTotal(1000000L);
                 dto.setDetails(
-                        List.of(
-                                new OverseasTripApprovalCreateRequestDto
-                                        .OverseasTripExpenseDetailRequestDto()));
+                    List.of(
+                        new OverseasTripApprovalCreateRequestDto.OverseasTripExpenseDetailRequestDto()));
 
                 prepareMockAndVerify(new OverseasTripApproval(), dto);
             }
@@ -224,11 +222,10 @@ public class ApprovalTest {
                 given(userRepository.findById(DRAFTER_ID)).willReturn(Optional.empty());
 
                 assertThatThrownBy(
-                                () ->
-                                        approvalService.createApproval(
-                                                new BasicApprovalCreateRequestDto(), DRAFTER_ID))
-                        .isInstanceOf(CustomException.class)
-                        .hasFieldOrPropertyWithValue("errorCode", ErrorCode.USER_NOT_FOUND);
+                    () -> approvalService.createApproval(
+                        new BasicApprovalCreateRequestDto(), DRAFTER_ID))
+                    .isInstanceOf(CustomException.class)
+                    .hasFieldOrPropertyWithValue("errorCode", ErrorCode.USER_NOT_FOUND);
             }
 
             @Test
@@ -239,8 +236,9 @@ public class ApprovalTest {
                 dto.setApprovalSteps(null); // 또는 List.of()
 
                 assertThatThrownBy(() -> approvalService.createApproval(dto, DRAFTER_ID))
-                        .isInstanceOf(CustomException.class)
-                        .hasFieldOrPropertyWithValue("errorCode", ErrorCode.INVALID_APPROVAL_STEP);
+                    .isInstanceOf(CustomException.class)
+                    .hasFieldOrPropertyWithValue("errorCode",
+                        ErrorCode.INVALID_APPROVAL_STEP);
             }
 
             @Test
@@ -253,8 +251,8 @@ public class ApprovalTest {
                 setCommonFields(dto, DocumentType.BASIC);
 
                 assertThatThrownBy(() -> approvalService.createApproval(dto, DRAFTER_ID))
-                        .isInstanceOf(CustomException.class)
-                        .hasFieldOrPropertyWithValue("errorCode", ErrorCode.USER_NOT_FOUND);
+                    .isInstanceOf(CustomException.class)
+                    .hasFieldOrPropertyWithValue("errorCode", ErrorCode.USER_NOT_FOUND);
             }
 
             @Test
@@ -269,9 +267,9 @@ public class ApprovalTest {
                 dto.setReason("테스트");
 
                 assertThatThrownBy(() -> approvalService.createApproval(dto, DRAFTER_ID))
-                        .isInstanceOf(CustomException.class)
-                        .hasFieldOrPropertyWithValue(
-                                "errorCode", ErrorCode.INVALID_LEAVE_DETAIL_TYPE);
+                    .isInstanceOf(CustomException.class)
+                    .hasFieldOrPropertyWithValue(
+                        "errorCode", ErrorCode.INVALID_LEAVE_DETAIL_TYPE);
             }
 
             @Test
@@ -286,9 +284,9 @@ public class ApprovalTest {
                 dto.setReason("테스트");
 
                 assertThatThrownBy(() -> approvalService.createApproval(dto, DRAFTER_ID))
-                        .isInstanceOf(CustomException.class)
-                        .hasFieldOrPropertyWithValue(
-                                "errorCode", ErrorCode.INVALID_LEAVE_DETAIL_TYPE);
+                    .isInstanceOf(CustomException.class)
+                    .hasFieldOrPropertyWithValue(
+                        "errorCode", ErrorCode.INVALID_LEAVE_DETAIL_TYPE);
             }
 
             @Test
@@ -303,9 +301,9 @@ public class ApprovalTest {
                 dto.setReason("테스트");
 
                 assertThatThrownBy(() -> approvalService.createApproval(dto, DRAFTER_ID))
-                        .isInstanceOf(CustomException.class)
-                        .hasFieldOrPropertyWithValue(
-                                "errorCode", ErrorCode.INVALID_LEAVE_DETAIL_TYPE);
+                    .isInstanceOf(CustomException.class)
+                    .hasFieldOrPropertyWithValue(
+                        "errorCode", ErrorCode.INVALID_LEAVE_DETAIL_TYPE);
             }
 
             @Test
@@ -315,19 +313,17 @@ public class ApprovalTest {
                 dto.setTitle("테스트");
                 dto.setContent("본문");
 
-                ApprovalCreateRequestDto.StepRequestDto step1 =
-                        new ApprovalCreateRequestDto.StepRequestDto();
+                ApprovalCreateRequestDto.StepRequestDto step1 = new ApprovalCreateRequestDto.StepRequestDto();
                 step1.setApproverId(APPROVER_ID);
                 step1.setSequence(1);
-                ApprovalCreateRequestDto.StepRequestDto step2 =
-                        new ApprovalCreateRequestDto.StepRequestDto();
+                ApprovalCreateRequestDto.StepRequestDto step2 = new ApprovalCreateRequestDto.StepRequestDto();
                 step2.setApproverId(APPROVER_ID);
                 step2.setSequence(2);
                 dto.setApprovalSteps(List.of(step1, step2));
 
                 assertThatThrownBy(() -> approvalService.createApproval(dto, DRAFTER_ID))
-                        .isInstanceOf(CustomException.class)
-                        .hasFieldOrPropertyWithValue("errorCode", ErrorCode.DUPLICATE_APPROVER);
+                    .isInstanceOf(CustomException.class)
+                    .hasFieldOrPropertyWithValue("errorCode", ErrorCode.DUPLICATE_APPROVER);
             }
         }
     }
@@ -355,9 +351,8 @@ public class ApprovalTest {
             @DisplayName("단일 결재선 승인 시 문서 상태가 APPROVED로 변경된다")
             void singleStepApprove_DocumentApproved() {
                 // given
-                BasicApproval approval =
-                        createApprovalWithSteps(
-                                createStep(1L, approver, 1, ApprovalStatus.PENDING));
+                BasicApproval approval = createApprovalWithSteps(
+                    createStep(1L, approver, 1, ApprovalStatus.PENDING));
 
                 given(approvalRepository.findById(APPROVAL_ID)).willReturn(Optional.of(approval));
                 given(userRepository.findById(APPROVER_ID)).willReturn(Optional.of(approver));
@@ -367,7 +362,7 @@ public class ApprovalTest {
 
                 // then
                 assertThat(approval.getSteps().get(0).getStatus())
-                        .isEqualTo(ApprovalStatus.APPROVED);
+                    .isEqualTo(ApprovalStatus.APPROVED);
                 assertThat(approval.getSteps().get(0).getComment()).isEqualTo("승인합니다.");
                 assertThat(approval.getSteps().get(0).getProcessedAt()).isNotNull();
                 assertThat(approval.getStatus()).isEqualTo(ApprovalStatus.APPROVED);
@@ -377,10 +372,9 @@ public class ApprovalTest {
             @DisplayName("다중 결재선에서 첫 번째 승인 시 다음 단계가 PENDING으로 전환된다")
             void multiStepApprove_NextStepBecomesPending() {
                 // given
-                BasicApproval approval =
-                        createApprovalWithSteps(
-                                createStep(1L, approver, 1, ApprovalStatus.PENDING),
-                                createStep(2L, secondApprover, 2, ApprovalStatus.WAITING));
+                BasicApproval approval = createApprovalWithSteps(
+                    createStep(1L, approver, 1, ApprovalStatus.PENDING),
+                    createStep(2L, secondApprover, 2, ApprovalStatus.WAITING));
 
                 given(approvalRepository.findById(APPROVAL_ID)).willReturn(Optional.of(approval));
                 given(userRepository.findById(APPROVER_ID)).willReturn(Optional.of(approver));
@@ -390,9 +384,9 @@ public class ApprovalTest {
 
                 // then
                 assertThat(approval.getSteps().get(0).getStatus())
-                        .isEqualTo(ApprovalStatus.APPROVED);
+                    .isEqualTo(ApprovalStatus.APPROVED);
                 assertThat(approval.getSteps().get(1).getStatus())
-                        .isEqualTo(ApprovalStatus.PENDING);
+                    .isEqualTo(ApprovalStatus.PENDING);
                 assertThat(approval.getStatus()).isEqualTo(ApprovalStatus.PENDING); // 아직 전체 승인 아님
             }
 
@@ -400,22 +394,21 @@ public class ApprovalTest {
             @DisplayName("다중 결재선에서 마지막 승인 시 문서 상태가 APPROVED로 변경된다")
             void multiStepLastApprove_DocumentApproved() {
                 // given
-                BasicApproval approval =
-                        createApprovalWithSteps(
-                                createStep(1L, approver, 1, ApprovalStatus.APPROVED), // 이미 승인
-                                createStep(2L, secondApprover, 2, ApprovalStatus.PENDING) // 현재 차례
-                                );
+                BasicApproval approval = createApprovalWithSteps(
+                    createStep(1L, approver, 1, ApprovalStatus.APPROVED), // 이미 승인
+                    createStep(2L, secondApprover, 2, ApprovalStatus.PENDING) // 현재 차례
+                );
 
                 given(approvalRepository.findById(APPROVAL_ID)).willReturn(Optional.of(approval));
                 given(userRepository.findById(SECOND_APPROVER_ID))
-                        .willReturn(Optional.of(secondApprover));
+                    .willReturn(Optional.of(secondApprover));
 
                 // when
                 approvalService.approveApproval(APPROVAL_ID, SECOND_APPROVER_ID, "최종 승인");
 
                 // then
                 assertThat(approval.getSteps().get(1).getStatus())
-                        .isEqualTo(ApprovalStatus.APPROVED);
+                    .isEqualTo(ApprovalStatus.APPROVED);
                 assertThat(approval.getStatus()).isEqualTo(ApprovalStatus.APPROVED);
             }
         }
@@ -431,28 +424,25 @@ public class ApprovalTest {
                 given(approvalRepository.findById(APPROVAL_ID)).willReturn(Optional.empty());
 
                 assertThatThrownBy(
-                                () ->
-                                        approvalService.approveApproval(
-                                                APPROVAL_ID, APPROVER_ID, "승인"))
-                        .isInstanceOf(CustomException.class)
-                        .hasFieldOrPropertyWithValue("errorCode", ErrorCode.APPROVAL_NOT_FOUND);
+                    () -> approvalService.approveApproval(
+                        APPROVAL_ID, APPROVER_ID, "승인"))
+                    .isInstanceOf(CustomException.class)
+                    .hasFieldOrPropertyWithValue("errorCode", ErrorCode.APPROVAL_NOT_FOUND);
             }
 
             @Test
             @DisplayName("결재자를 찾을 수 없는 경우 USER_NOT_FOUND 예외 발생")
             void approverNotFound_Fail() {
-                BasicApproval approval =
-                        createApprovalWithSteps(
-                                createStep(1L, approver, 1, ApprovalStatus.PENDING));
+                BasicApproval approval = createApprovalWithSteps(
+                    createStep(1L, approver, 1, ApprovalStatus.PENDING));
                 given(approvalRepository.findById(APPROVAL_ID)).willReturn(Optional.of(approval));
                 given(userRepository.findById(APPROVER_ID)).willReturn(Optional.empty());
 
                 assertThatThrownBy(
-                                () ->
-                                        approvalService.approveApproval(
-                                                APPROVAL_ID, APPROVER_ID, "승인"))
-                        .isInstanceOf(CustomException.class)
-                        .hasFieldOrPropertyWithValue("errorCode", ErrorCode.USER_NOT_FOUND);
+                    () -> approvalService.approveApproval(
+                        APPROVAL_ID, APPROVER_ID, "승인"))
+                    .isInstanceOf(CustomException.class)
+                    .hasFieldOrPropertyWithValue("errorCode", ErrorCode.USER_NOT_FOUND);
             }
 
             @Test
@@ -461,56 +451,51 @@ public class ApprovalTest {
                 Long STRANGER_ID = 999L;
                 User stranger = User.builder().id(STRANGER_ID).nameKor("외부인").build();
 
-                BasicApproval approval =
-                        createApprovalWithSteps(
-                                createStep(1L, approver, 1, ApprovalStatus.PENDING));
+                BasicApproval approval = createApprovalWithSteps(
+                    createStep(1L, approver, 1, ApprovalStatus.PENDING));
                 given(approvalRepository.findById(APPROVAL_ID)).willReturn(Optional.of(approval));
                 given(userRepository.findById(STRANGER_ID)).willReturn(Optional.of(stranger));
 
                 assertThatThrownBy(
-                                () ->
-                                        approvalService.approveApproval(
-                                                APPROVAL_ID, STRANGER_ID, "승인"))
-                        .isInstanceOf(CustomException.class)
-                        .hasFieldOrPropertyWithValue("errorCode", ErrorCode.NOT_APPROVER);
+                    () -> approvalService.approveApproval(
+                        APPROVAL_ID, STRANGER_ID, "승인"))
+                    .isInstanceOf(CustomException.class)
+                    .hasFieldOrPropertyWithValue("errorCode", ErrorCode.NOT_APPROVER);
             }
 
             @Test
             @DisplayName("이미 처리된 결재 단계를 다시 승인 시 ALREADY_PROCESSED_STEP 예외 발생")
             void alreadyProcessedStep_Fail() {
-                BasicApproval approval =
-                        createApprovalWithSteps(
-                                createStep(1L, approver, 1, ApprovalStatus.APPROVED) // 이미 승인됨
-                                );
+                BasicApproval approval = createApprovalWithSteps(
+                    createStep(1L, approver, 1, ApprovalStatus.APPROVED) // 이미 승인됨
+                );
                 given(approvalRepository.findById(APPROVAL_ID)).willReturn(Optional.of(approval));
                 given(userRepository.findById(APPROVER_ID)).willReturn(Optional.of(approver));
 
                 assertThatThrownBy(
-                                () ->
-                                        approvalService.approveApproval(
-                                                APPROVAL_ID, APPROVER_ID, "재승인 시도"))
-                        .isInstanceOf(CustomException.class)
-                        .hasFieldOrPropertyWithValue("errorCode", ErrorCode.ALREADY_PROCESSED_STEP);
+                    () -> approvalService.approveApproval(
+                        APPROVAL_ID, APPROVER_ID, "재승인 시도"))
+                    .isInstanceOf(CustomException.class)
+                    .hasFieldOrPropertyWithValue("errorCode",
+                        ErrorCode.ALREADY_PROCESSED_STEP);
             }
 
             @Test
             @DisplayName("자기 순서가 아닌 결재자가 승인 시 NOT_YOUR_TURN 예외 발생")
             void notYourTurn_Fail() {
-                BasicApproval approval =
-                        createApprovalWithSteps(
-                                createStep(1L, approver, 1, ApprovalStatus.PENDING), // 1번이 현재 차례
-                                createStep(2L, secondApprover, 2, ApprovalStatus.PENDING) // 2번은 아직
-                                );
+                BasicApproval approval = createApprovalWithSteps(
+                    createStep(1L, approver, 1, ApprovalStatus.PENDING), // 1번이 현재 차례
+                    createStep(2L, secondApprover, 2, ApprovalStatus.PENDING) // 2번은 아직
+                );
                 given(approvalRepository.findById(APPROVAL_ID)).willReturn(Optional.of(approval));
                 given(userRepository.findById(SECOND_APPROVER_ID))
-                        .willReturn(Optional.of(secondApprover));
+                    .willReturn(Optional.of(secondApprover));
 
                 assertThatThrownBy(
-                                () ->
-                                        approvalService.approveApproval(
-                                                APPROVAL_ID, SECOND_APPROVER_ID, "승인"))
-                        .isInstanceOf(CustomException.class)
-                        .hasFieldOrPropertyWithValue("errorCode", ErrorCode.NOT_YOUR_TURN);
+                    () -> approvalService.approveApproval(
+                        APPROVAL_ID, SECOND_APPROVER_ID, "승인"))
+                    .isInstanceOf(CustomException.class)
+                    .hasFieldOrPropertyWithValue("errorCode", ErrorCode.NOT_YOUR_TURN);
             }
         }
     }
@@ -538,9 +523,8 @@ public class ApprovalTest {
             @DisplayName("반려 시 해당 step이 REJECTED, 문서 전체 상태가 REJECTED로 변경된다")
             void rejectApproval_DocumentRejected() {
                 // given
-                BasicApproval approval =
-                        createApprovalWithSteps(
-                                createStep(1L, approver, 1, ApprovalStatus.PENDING));
+                BasicApproval approval = createApprovalWithSteps(
+                    createStep(1L, approver, 1, ApprovalStatus.PENDING));
 
                 given(approvalRepository.findById(APPROVAL_ID)).willReturn(Optional.of(approval));
                 given(userRepository.findById(APPROVER_ID)).willReturn(Optional.of(approver));
@@ -550,7 +534,7 @@ public class ApprovalTest {
 
                 // then
                 assertThat(approval.getSteps().get(0).getStatus())
-                        .isEqualTo(ApprovalStatus.REJECTED);
+                    .isEqualTo(ApprovalStatus.REJECTED);
                 assertThat(approval.getSteps().get(0).getComment()).isEqualTo("보완 필요합니다.");
                 assertThat(approval.getSteps().get(0).getProcessedAt()).isNotNull();
                 assertThat(approval.getStatus()).isEqualTo(ApprovalStatus.REJECTED);
@@ -560,10 +544,9 @@ public class ApprovalTest {
             @DisplayName("다중 결재선에서 첫 번째 결재자가 반려 시 문서 전체가 즉시 REJECTED된다")
             void multiStepReject_DocumentImmediatelyRejected() {
                 // given
-                BasicApproval approval =
-                        createApprovalWithSteps(
-                                createStep(1L, approver, 1, ApprovalStatus.PENDING),
-                                createStep(2L, secondApprover, 2, ApprovalStatus.WAITING));
+                BasicApproval approval = createApprovalWithSteps(
+                    createStep(1L, approver, 1, ApprovalStatus.PENDING),
+                    createStep(2L, secondApprover, 2, ApprovalStatus.WAITING));
 
                 given(approvalRepository.findById(APPROVAL_ID)).willReturn(Optional.of(approval));
                 given(userRepository.findById(APPROVER_ID)).willReturn(Optional.of(approver));
@@ -573,9 +556,9 @@ public class ApprovalTest {
 
                 // then
                 assertThat(approval.getSteps().get(0).getStatus())
-                        .isEqualTo(ApprovalStatus.REJECTED);
+                    .isEqualTo(ApprovalStatus.REJECTED);
                 assertThat(approval.getSteps().get(1).getStatus())
-                        .isEqualTo(ApprovalStatus.WAITING); // 그대로
+                    .isEqualTo(ApprovalStatus.WAITING); // 그대로
                 assertThat(approval.getStatus()).isEqualTo(ApprovalStatus.REJECTED);
             }
         }
@@ -591,11 +574,10 @@ public class ApprovalTest {
                 given(approvalRepository.findById(APPROVAL_ID)).willReturn(Optional.empty());
 
                 assertThatThrownBy(
-                                () ->
-                                        approvalService.rejectApproval(
-                                                APPROVAL_ID, APPROVER_ID, "반려"))
-                        .isInstanceOf(CustomException.class)
-                        .hasFieldOrPropertyWithValue("errorCode", ErrorCode.APPROVAL_NOT_FOUND);
+                    () -> approvalService.rejectApproval(
+                        APPROVAL_ID, APPROVER_ID, "반려"))
+                    .isInstanceOf(CustomException.class)
+                    .hasFieldOrPropertyWithValue("errorCode", ErrorCode.APPROVAL_NOT_FOUND);
             }
 
             @Test
@@ -604,37 +586,33 @@ public class ApprovalTest {
                 Long STRANGER_ID = 999L;
                 User stranger = User.builder().id(STRANGER_ID).nameKor("외부인").build();
 
-                BasicApproval approval =
-                        createApprovalWithSteps(
-                                createStep(1L, approver, 1, ApprovalStatus.PENDING));
+                BasicApproval approval = createApprovalWithSteps(
+                    createStep(1L, approver, 1, ApprovalStatus.PENDING));
                 given(approvalRepository.findById(APPROVAL_ID)).willReturn(Optional.of(approval));
                 given(userRepository.findById(STRANGER_ID)).willReturn(Optional.of(stranger));
 
                 assertThatThrownBy(
-                                () ->
-                                        approvalService.rejectApproval(
-                                                APPROVAL_ID, STRANGER_ID, "반려"))
-                        .isInstanceOf(CustomException.class)
-                        .hasFieldOrPropertyWithValue("errorCode", ErrorCode.NOT_APPROVER);
+                    () -> approvalService.rejectApproval(
+                        APPROVAL_ID, STRANGER_ID, "반려"))
+                    .isInstanceOf(CustomException.class)
+                    .hasFieldOrPropertyWithValue("errorCode", ErrorCode.NOT_APPROVER);
             }
 
             @Test
             @DisplayName("자기 순서가 아닌 결재자가 반려 시 NOT_YOUR_TURN 예외 발생")
             void notYourTurn_Fail() {
-                BasicApproval approval =
-                        createApprovalWithSteps(
-                                createStep(1L, approver, 1, ApprovalStatus.PENDING),
-                                createStep(2L, secondApprover, 2, ApprovalStatus.PENDING));
+                BasicApproval approval = createApprovalWithSteps(
+                    createStep(1L, approver, 1, ApprovalStatus.PENDING),
+                    createStep(2L, secondApprover, 2, ApprovalStatus.PENDING));
                 given(approvalRepository.findById(APPROVAL_ID)).willReturn(Optional.of(approval));
                 given(userRepository.findById(SECOND_APPROVER_ID))
-                        .willReturn(Optional.of(secondApprover));
+                    .willReturn(Optional.of(secondApprover));
 
                 assertThatThrownBy(
-                                () ->
-                                        approvalService.rejectApproval(
-                                                APPROVAL_ID, SECOND_APPROVER_ID, "반려"))
-                        .isInstanceOf(CustomException.class)
-                        .hasFieldOrPropertyWithValue("errorCode", ErrorCode.NOT_YOUR_TURN);
+                    () -> approvalService.rejectApproval(
+                        APPROVAL_ID, SECOND_APPROVER_ID, "반려"))
+                    .isInstanceOf(CustomException.class)
+                    .hasFieldOrPropertyWithValue("errorCode", ErrorCode.NOT_YOUR_TURN);
             }
         }
     }
@@ -650,24 +628,24 @@ public class ApprovalTest {
             ApprovalListRequestDto condition = new ApprovalListRequestDto();
             User user = User.builder().id(DRAFTER_ID).role(Role.USER).build();
 
-            ApprovalSummaryResponseDto mockSummary =
-                    org.mockito.Mockito.mock(ApprovalSummaryResponseDto.class);
+            ApprovalSummaryResponseDto mockSummary = org.mockito.Mockito
+                .mock(ApprovalSummaryResponseDto.class);
             Page<ApprovalSummaryResponseDto> expectedPage = new PageImpl<>(List.of(mockSummary));
 
             given(userRepository.findById(DRAFTER_ID)).willReturn(Optional.of(user));
             given(
-                            approvalQueryRepository.findApprovalsByCondition(
-                                    condition, DRAFTER_ID, Role.USER.name()))
-                    .willReturn(expectedPage);
+                approvalQueryRepository.findApprovalsByCondition(
+                    condition, DRAFTER_ID, Role.USER.name()))
+                .willReturn(expectedPage);
 
             // when
-            Page<ApprovalSummaryResponseDto> result =
-                    approvalService.getApprovalList(condition, DRAFTER_ID);
+            Page<ApprovalSummaryResponseDto> result = approvalService.getApprovalList(condition,
+                DRAFTER_ID);
 
             // then
             assertThat(result).isEqualTo(expectedPage);
             verify(approvalQueryRepository)
-                    .findApprovalsByCondition(condition, DRAFTER_ID, Role.USER.name());
+                .findApprovalsByCondition(condition, DRAFTER_ID, Role.USER.name());
         }
 
         @Test
@@ -676,11 +654,10 @@ public class ApprovalTest {
             given(userRepository.findById(DRAFTER_ID)).willReturn(Optional.empty());
 
             assertThatThrownBy(
-                            () ->
-                                    approvalService.getApprovalList(
-                                            new ApprovalListRequestDto(), DRAFTER_ID))
-                    .isInstanceOf(CustomException.class)
-                    .hasFieldOrPropertyWithValue("errorCode", ErrorCode.USER_NOT_FOUND);
+                () -> approvalService.getApprovalList(
+                    new ApprovalListRequestDto(), DRAFTER_ID))
+                .isInstanceOf(CustomException.class)
+                .hasFieldOrPropertyWithValue("errorCode", ErrorCode.USER_NOT_FOUND);
         }
     }
 
@@ -706,13 +683,13 @@ public class ApprovalTest {
             given(approvalRepository.findById(approvalId)).willReturn(Optional.of(approval));
             given(userRepository.findById(DRAFTER_ID)).willReturn(Optional.of(user));
             given(
-                            approvalMapper.toDetailResponseDto(
-                                    any(Approval.class), any(Long.class), any(S3Service.class)))
-                    .willReturn(ApprovalDetailResponseDto.builder().id(approvalId).build());
+                approvalMapper.toDetailResponseDto(
+                    any(Approval.class), any(Long.class), any(S3Service.class)))
+                .willReturn(ApprovalDetailResponseDto.builder().id(approvalId).build());
 
             // when
-            ApprovalDetailResponseDto result =
-                    approvalService.getApprovalDetail(approvalId, DRAFTER_ID);
+            ApprovalDetailResponseDto result = approvalService.getApprovalDetail(approvalId,
+                DRAFTER_ID);
 
             // then
             assertThat(result).isNotNull();
@@ -738,8 +715,8 @@ public class ApprovalTest {
 
             // when & then
             assertThatThrownBy(() -> approvalService.getApprovalDetail(approvalId, DRAFTER_ID))
-                    .isInstanceOf(CustomException.class)
-                    .hasFieldOrPropertyWithValue("errorCode", ErrorCode.NOT_APPROVER);
+                .isInstanceOf(CustomException.class)
+                .hasFieldOrPropertyWithValue("errorCode", ErrorCode.NOT_APPROVER);
         }
 
         @Test
@@ -749,26 +726,22 @@ public class ApprovalTest {
             BasicApproval approval = createApprovalWithSteps();
             approval.setStatus(ApprovalStatus.PENDING);
 
-            User participantUser =
-                    User.builder()
-                            .id(3L)
-                            .nameKor("참조자")
-                            .department(department)
-                            .role(Role.USER)
-                            .build();
-            ApprovalParticipant referrer =
-                    ApprovalParticipant.builder()
-                            .user(participantUser)
-                            .participantType(ParticipantType.REFERRER)
-                            .build();
+            User participantUser = User.builder()
+                .id(3L)
+                .nameKor("참조자")
+                .department(department)
+                .role(Role.USER)
+                .build();
+            ApprovalParticipant referrer = new ApprovalParticipant(null, approval, participantUser,
+                ParticipantType.REFERRER);
             approval.getParticipants().add(referrer);
 
             given(approvalRepository.findById(approvalId)).willReturn(Optional.of(approval));
             given(userRepository.findById(3L)).willReturn(Optional.of(participantUser));
             given(
-                            approvalMapper.toDetailResponseDto(
-                                    any(Approval.class), any(Long.class), any(S3Service.class)))
-                    .willReturn(ApprovalDetailResponseDto.builder().id(approvalId).build());
+                approvalMapper.toDetailResponseDto(
+                    any(Approval.class), any(Long.class), any(S3Service.class)))
+                .willReturn(ApprovalDetailResponseDto.builder().id(approvalId).build());
 
             ApprovalDetailResponseDto result = approvalService.getApprovalDetail(approvalId, 3L);
 
@@ -790,9 +763,9 @@ public class ApprovalTest {
             given(approvalRepository.findById(approvalId)).willReturn(Optional.of(approval));
             given(userRepository.findById(55L)).willReturn(Optional.of(admin));
             given(
-                            approvalMapper.toDetailResponseDto(
-                                    any(Approval.class), any(Long.class), any(S3Service.class)))
-                    .willReturn(ApprovalDetailResponseDto.builder().id(approvalId).build());
+                approvalMapper.toDetailResponseDto(
+                    any(Approval.class), any(Long.class), any(S3Service.class)))
+                .willReturn(ApprovalDetailResponseDto.builder().id(approvalId).build());
 
             // when
             ApprovalDetailResponseDto result = approvalService.getApprovalDetail(approvalId, 55L);
@@ -813,9 +786,9 @@ public class ApprovalTest {
             given(approvalRepository.findById(approvalId)).willReturn(Optional.of(approval));
             given(userRepository.findById(77L)).willReturn(Optional.of(masterAdmin));
             given(
-                            approvalMapper.toDetailResponseDto(
-                                    any(Approval.class), any(Long.class), any(S3Service.class)))
-                    .willReturn(ApprovalDetailResponseDto.builder().id(approvalId).build());
+                approvalMapper.toDetailResponseDto(
+                    any(Approval.class), any(Long.class), any(S3Service.class)))
+                .willReturn(ApprovalDetailResponseDto.builder().id(approvalId).build());
 
             // when
             ApprovalDetailResponseDto result = approvalService.getApprovalDetail(approvalId, 77L);
@@ -830,27 +803,22 @@ public class ApprovalTest {
             Long approvalId = 100L;
             BasicApproval approval = createApprovalWithSteps();
             approval.setStatus(ApprovalStatus.PENDING);
-
-            User participantUser =
-                    User.builder()
-                            .id(3L)
-                            .nameKor("열람권자")
-                            .department(department)
-                            .role(Role.USER)
-                            .build();
-            ApprovalParticipant viewer =
-                    ApprovalParticipant.builder()
-                            .user(participantUser)
-                            .participantType(ParticipantType.VIEWER)
-                            .build();
+            User participantUser = User.builder()
+                .id(3L)
+                .nameKor("열람권자")
+                .department(department)
+                .role(Role.USER)
+                .build();
+            ApprovalParticipant viewer = new ApprovalParticipant(null, approval, participantUser,
+                ParticipantType.VIEWER);
             approval.getParticipants().add(viewer);
 
             given(approvalRepository.findById(approvalId)).willReturn(Optional.of(approval));
             given(userRepository.findById(3L)).willReturn(Optional.of(participantUser));
 
             assertThatThrownBy(() -> approvalService.getApprovalDetail(approvalId, 3L))
-                    .isInstanceOf(CustomException.class)
-                    .hasFieldOrPropertyWithValue("errorCode", ErrorCode.NOT_APPROVER);
+                .isInstanceOf(CustomException.class)
+                .hasFieldOrPropertyWithValue("errorCode", ErrorCode.NOT_APPROVER);
         }
 
         @Test
@@ -860,30 +828,26 @@ public class ApprovalTest {
             BasicApproval approval = createApprovalWithSteps();
             approval.setStatus(ApprovalStatus.APPROVED);
 
-            User participantUser =
-                    User.builder()
-                            .id(3L)
-                            .nameKor("열람권자")
-                            .department(department)
-                            .role(Role.USER)
-                            .build();
-            ApprovalParticipant viewer =
-                    ApprovalParticipant.builder()
-                            .user(participantUser)
-                            .participantType(ParticipantType.VIEWER)
-                            .build();
+            User participantUser = User.builder()
+                .id(3L)
+                .nameKor("열람권자")
+                .department(department)
+                .role(Role.USER)
+                .build();
+            ApprovalParticipant viewer = new ApprovalParticipant(null, approval, participantUser,
+                ParticipantType.VIEWER);
             approval.getParticipants().add(viewer);
 
             given(approvalRepository.findById(approvalId)).willReturn(Optional.of(approval));
             given(userRepository.findById(3L)).willReturn(Optional.of(participantUser));
             given(
-                            approvalMapper.toDetailResponseDto(
-                                    any(Approval.class), any(Long.class), any(S3Service.class)))
-                    .willReturn(
-                            ApprovalDetailResponseDto.builder()
-                                    .id(approvalId)
-                                    .status(ApprovalStatus.APPROVED)
-                                    .build());
+                approvalMapper.toDetailResponseDto(
+                    any(Approval.class), any(Long.class), any(S3Service.class)))
+                .willReturn(
+                    ApprovalDetailResponseDto.builder()
+                        .id(approvalId)
+                        .status(ApprovalStatus.APPROVED)
+                        .build());
 
             ApprovalDetailResponseDto result = approvalService.getApprovalDetail(approvalId, 3L);
 
@@ -897,27 +861,27 @@ public class ApprovalTest {
             Long approvalId = 100L;
             // 현재 2번 결재자의 차례(PENDING)라고 가정
             User approver2 = User.builder().id(2L).nameKor("결재자2").department(department).build();
-            BasicApproval approval =
-                    createApprovalWithSteps(createStep(1L, approver2, 1, ApprovalStatus.PENDING));
+            BasicApproval approval = createApprovalWithSteps(
+                createStep(1L, approver2, 1, ApprovalStatus.PENDING));
             approval.setStatus(ApprovalStatus.PENDING); // 전체 상태는 PENDING
 
             // 기안자 본인이 조회하는 상황
-            User drafterUser =
-                    User.builder().id(DRAFTER_ID).role(Role.USER).department(department).build();
+            User drafterUser = User.builder().id(DRAFTER_ID).role(Role.USER).department(department)
+                .build();
 
             given(approvalRepository.findById(approvalId)).willReturn(Optional.of(approval));
             given(userRepository.findById(DRAFTER_ID)).willReturn(Optional.of(drafterUser));
             given(
-                            approvalMapper.toDetailResponseDto(
-                                    any(Approval.class), any(Long.class), any(S3Service.class)))
-                    .willReturn(
-                            ApprovalDetailResponseDto.builder()
-                                    .id(approvalId)
-                                    .status(ApprovalStatus.IN_PROGRESS)
-                                    .build());
+                approvalMapper.toDetailResponseDto(
+                    any(Approval.class), any(Long.class), any(S3Service.class)))
+                .willReturn(
+                    ApprovalDetailResponseDto.builder()
+                        .id(approvalId)
+                        .status(ApprovalStatus.IN_PROGRESS)
+                        .build());
 
-            ApprovalDetailResponseDto result =
-                    approvalService.getApprovalDetail(approvalId, DRAFTER_ID);
+            ApprovalDetailResponseDto result = approvalService.getApprovalDetail(approvalId,
+                DRAFTER_ID);
 
             assertThat(result).isNotNull();
             // 내 차례가 아니므로 IN_PROGRESS 로 보여야 함
@@ -930,23 +894,23 @@ public class ApprovalTest {
             Long approvalId = 100L;
             // 현재 내 차례(PENDING)라고 가정
             User me = User.builder().id(APPROVER_ID).role(Role.USER).department(department).build();
-            BasicApproval approval =
-                    createApprovalWithSteps(createStep(1L, me, 1, ApprovalStatus.PENDING));
+            BasicApproval approval = createApprovalWithSteps(
+                createStep(1L, me, 1, ApprovalStatus.PENDING));
             approval.setStatus(ApprovalStatus.PENDING); // 전체 상태는 PENDING
 
             given(approvalRepository.findById(approvalId)).willReturn(Optional.of(approval));
             given(userRepository.findById(APPROVER_ID)).willReturn(Optional.of(me));
             given(
-                            approvalMapper.toDetailResponseDto(
-                                    any(Approval.class), any(Long.class), any(S3Service.class)))
-                    .willReturn(
-                            ApprovalDetailResponseDto.builder()
-                                    .id(approvalId)
-                                    .status(ApprovalStatus.PENDING)
-                                    .build());
+                approvalMapper.toDetailResponseDto(
+                    any(Approval.class), any(Long.class), any(S3Service.class)))
+                .willReturn(
+                    ApprovalDetailResponseDto.builder()
+                        .id(approvalId)
+                        .status(ApprovalStatus.PENDING)
+                        .build());
 
-            ApprovalDetailResponseDto result =
-                    approvalService.getApprovalDetail(approvalId, APPROVER_ID);
+            ApprovalDetailResponseDto result = approvalService.getApprovalDetail(approvalId,
+                APPROVER_ID);
 
             assertThat(result).isNotNull();
             // 내 차례이므로 그대로 PENDING 으로 보여야 함
@@ -975,12 +939,12 @@ public class ApprovalTest {
         given(approvalMapper.toEntity(dto)).willReturn(entity);
         ArgumentCaptor<Approval> approvalCaptor = ArgumentCaptor.forClass(Approval.class);
         given(approvalRepository.save(approvalCaptor.capture()))
-                .willAnswer(
-                        inv -> {
-                            Approval a = inv.getArgument(0);
-                            a.setId(1L);
-                            return a;
-                        });
+            .willAnswer(
+                inv -> {
+                    Approval a = inv.getArgument(0);
+                    a.setId(1L);
+                    return a;
+                });
 
         Long id = approvalService.createApproval(dto, DRAFTER_ID);
 
@@ -990,7 +954,7 @@ public class ApprovalTest {
         assertThat(savedApproval.getDrafter()).isEqualTo(drafter);
         assertThat(savedApproval.getDraftDepartment()).isEqualTo(department);
         assertThat(savedApproval.getRetentionPeriod())
-                .isEqualTo(savedApproval.getDocumentType().getRetentionPeriod());
+            .isEqualTo(savedApproval.getDocumentType().getRetentionPeriod());
 
         // 1. 문서 번호 포맷 검증 ([문서종류] [부서명] [날짜]-[PK])
         String today = LocalDate.now().format(DateTimeFormatter.ofPattern("yyyyMMdd"));
@@ -1014,21 +978,16 @@ public class ApprovalTest {
         if (approval instanceof CarFuelApproval carFuel && carFuel.getDetails() != null) {
             carFuel.getDetails().forEach(d -> assertThat(d.getApproval()).isEqualTo(carFuel));
         } else if (approval instanceof OverseasTripApproval overseas
-                && overseas.getDetails() != null) {
+            && overseas.getDetails() != null) {
             overseas.getDetails().forEach(d -> assertThat(d.getApproval()).isEqualTo(overseas));
         } else if (approval instanceof ExpenseDraftApproval expense
-                && expense.getDetails() != null) {
+            && expense.getDetails() != null) {
             expense.getDetails().forEach(d -> assertThat(d.getApproval()).isEqualTo(expense));
         }
     }
 
     private ApprovalStep createStep(Long id, User approver, int sequence, ApprovalStatus status) {
-        return ApprovalStep.builder()
-                .id(id)
-                .approver(approver)
-                .sequence(sequence)
-                .status(status)
-                .build();
+        return new ApprovalStep(id, null, approver, sequence, status, null, null);
     }
 
     private BasicApproval createApprovalWithSteps(ApprovalStep... steps) {

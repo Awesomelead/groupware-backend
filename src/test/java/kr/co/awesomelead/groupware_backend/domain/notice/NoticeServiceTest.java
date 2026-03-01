@@ -5,6 +5,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.given;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 
@@ -243,7 +244,8 @@ class NoticeServiceTest {
 
             given(userRepository.findById(1L)).willReturn(Optional.of(adminUser));
             given(noticeRepository.findByIdWithDetails(1L)).willReturn(Optional.of(notice));
-            given(noticeAttachmentRepository.findById(10L)).willReturn(Optional.of(oldAttachment));
+            given(noticeAttachmentRepository.findByIdAndNoticeId(10L, 1L))
+                    .willReturn(Optional.of(oldAttachment));
             given(s3Service.uploadFile(any())).willReturn("new-key");
 
             // when
@@ -257,6 +259,50 @@ class NoticeServiceTest {
             verify(s3Service).deleteFile("old-key");
             verify(s3Service).uploadFile(any());
             verify(noticeAttachmentRepository).delete(any());
+        }
+
+        @Test
+        @DisplayName("다른 공지의 첨부파일 ID를 삭제 요청하면 NOTICE_ATTACHMENT_NOT_FOUND 에러를 던진다")
+        void it_throws_when_attachment_not_belong_to_notice() {
+            // given
+            Notice notice = Notice.builder().build();
+            NoticeUpdateRequestDto dto =
+                    NoticeUpdateRequestDto.builder().attachmentsIdsToRemove(List.of(999L)).build();
+
+            given(userRepository.findById(1L)).willReturn(Optional.of(adminUser));
+            given(noticeRepository.findByIdWithDetails(1L)).willReturn(Optional.of(notice));
+            given(noticeAttachmentRepository.findByIdAndNoticeId(999L, 1L))
+                    .willReturn(Optional.empty());
+
+            // when & then
+            assertThatThrownBy(() -> noticeService.updateNotice(1L, 1L, dto, null))
+                    .isInstanceOf(CustomException.class)
+                    .extracting("errorCode")
+                    .isEqualTo(ErrorCode.NOTICE_ATTACHMENT_NOT_FOUND);
+        }
+
+        @Test
+        @DisplayName("multipart에 빈 파일/블랍 파일명만 전달되면 업로드를 수행하지 않는다")
+        void it_skips_empty_or_blob_file() throws IOException {
+            // given
+            Notice notice = Notice.builder().build();
+            NoticeUpdateRequestDto dto = NoticeUpdateRequestDto.builder().title("수정제목").build();
+
+            MockMultipartFile emptyFile =
+                    new MockMultipartFile("files", "", "application/octet-stream", new byte[0]);
+            MockMultipartFile blobFile =
+                    new MockMultipartFile(
+                            "files", "blob", "application/octet-stream", "x".getBytes());
+
+            given(userRepository.findById(1L)).willReturn(Optional.of(adminUser));
+            given(noticeRepository.findByIdWithDetails(1L)).willReturn(Optional.of(notice));
+
+            // when
+            noticeService.updateNotice(1L, 1L, dto, List.of(emptyFile, blobFile));
+
+            // then
+            verify(s3Service, never()).uploadFile(any());
+            verify(noticeAttachmentRepository, never()).delete(any());
         }
     }
 

@@ -3,8 +3,6 @@ package kr.co.awesomelead.groupware_backend.domain.admin.dto.request;
 import io.swagger.v3.oas.annotations.media.ArraySchema;
 import io.swagger.v3.oas.annotations.media.Schema;
 
-import jakarta.validation.constraints.NotNull;
-
 import kr.co.awesomelead.groupware_backend.domain.department.enums.Company;
 import kr.co.awesomelead.groupware_backend.domain.user.enums.Authority;
 import kr.co.awesomelead.groupware_backend.domain.user.enums.JobType;
@@ -19,7 +17,8 @@ import java.util.List;
 
 @Getter
 @Setter
-public class UserApprovalRequestDto {
+@Schema(description = "관리자 직원 정보 수정 요청 (이메일 제외)")
+public class AdminUserUpdateRequestDto {
 
     @Schema(description = "한글 이름", example = "홍길동")
     private String nameKor;
@@ -45,37 +44,32 @@ public class UserApprovalRequestDto {
     @Schema(description = "주민등록번호/외국인등록번호", example = "9001011234567")
     private String registrationNumber;
 
-    @Schema(description = "전화번호", example = "01099998888")
+    @Schema(description = "전화번호 (변경 시 인증 필요)", example = "01099998888")
     private String phoneNumber;
 
     @Schema(description = "근무사업장", example = "어썸리드")
-    @NotNull(message = "근무사업장은 필수 항목입니다.")
     private Company workLocation;
 
-    @Schema(description = "부서 ID", example = "1")
-    @NotNull(message = "부서 ID는 필수 항목입니다.")
+    @Schema(description = "부서 ID", example = "11")
     private Long departmentId;
 
     @Schema(description = "직급", example = "사원")
-    @NotNull(message = "직급은 필수 항목입니다.")
     private Position position;
 
     @Schema(description = "직무 유형", example = "관리직")
-    @NotNull(message = "직무 유형은 필수 항목입니다.")
     private JobType jobType;
+
+    @Schema(description = "역할", example = "일반 사용자")
+    private Role role;
 
     @ArraySchema(
             schema = @Schema(implementation = Authority.class),
-            arraySchema = @Schema(description = "권한부여 목록 (반드시 배열 형태로 전달)"))
+            arraySchema = @Schema(description = "권한부여 목록 (배열 형태)"))
     private List<Authority> authorities;
 
     @Schema(description = "입사일", example = "2025-09-22")
-    @NotNull(message = "입사일은 필수 항목입니다.")
     private LocalDate hireDate;
 
     @Schema(description = "퇴사일", example = "2026-12-31")
     private LocalDate resignationDate;
-
-    @Schema(description = "역할", example = "일반 사용자")
-    private Role role;
 }

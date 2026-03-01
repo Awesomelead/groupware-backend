@@ -37,7 +37,7 @@ public class NoticeCreateRequestDto {
     @Schema(description = "상단 고정 여부", example = "false", defaultValue = "false")
     private Boolean pinned = false;
 
-    @Schema(description = "공지 대상 회사 목록 (해당 회사의 전사 공지 시 활용)", example = "[\"AWESOME\"]")
+    @Schema(description = "공지 대상 회사 목록 (해당 회사의 전사 공지 시 활용)", example = "[\"어썸리드\"]")
     private List<Company> targetCompanies;
 
     @Schema(description = "공지 대상 부서 ID 목록 (부서 및 하위 부서원 자동 포함)", example = "[1, 5, 12]")

@@ -88,7 +88,6 @@ public class SecurityConfig {
                                         "/api/auth/login",
                                         "/api/auth/signup",
                                         "/api/auth/reissue",
-                                        "/api/auth/user",
                                         "/api/auth/verify-phone-code",
                                         "/api/auth/verify-identity",
                                         "/api/auth/verify-email-code",
@@ -106,6 +105,7 @@ public class SecurityConfig {
                                 .permitAll()
                                 .requestMatchers(
                                         "/api/auth/logout",
+                                        "/api/auth/user",
                                         "/api/auth/reset-password", // 로그인 상태에서의 비번 변경
                                         "/api/admin/**", // 관리자 기능
                                         "/api/visits/admin/**",

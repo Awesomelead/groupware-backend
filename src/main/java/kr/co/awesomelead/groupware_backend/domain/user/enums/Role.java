@@ -4,6 +4,8 @@ import com.fasterxml.jackson.annotation.JsonValue;
 
 import lombok.Getter;
 
+import java.util.Arrays;
+
 @Getter
 public enum Role {
     ADMIN("관리자"),
@@ -19,5 +21,21 @@ public enum Role {
 
     Role(String description) {
         this.description = description;
+    }
+
+    public static Role from(String value) {
+        if (value == null) {
+            throw new IllegalArgumentException("역할 값은 null일 수 없습니다.");
+        }
+
+        String normalized = value.trim();
+
+        return Arrays.stream(values())
+                .filter(
+                        role ->
+                                role.name().equalsIgnoreCase(normalized)
+                                        || role.getDescription().equals(normalized))
+                .findFirst()
+                .orElseThrow(() -> new IllegalArgumentException("알 수 없는 역할: " + value));
     }
 }

@@ -1,11 +1,17 @@
 package kr.co.awesomelead.groupware_backend.domain.department.service;
 
 import kr.co.awesomelead.groupware_backend.domain.department.dto.response.DepartmentHierarchyResponseDto;
+import kr.co.awesomelead.groupware_backend.domain.department.dto.response.OrganizationCompanyOptionResponseDto;
+import kr.co.awesomelead.groupware_backend.domain.department.dto.response.OrganizationDepartmentNodeResponseDto;
+import kr.co.awesomelead.groupware_backend.domain.department.dto.response.OrganizationRootTreeResponseDto;
+import kr.co.awesomelead.groupware_backend.domain.department.dto.response.OrganizationUserNodeResponseDto;
 import kr.co.awesomelead.groupware_backend.domain.department.dto.response.UserSummaryResponseDto;
 import kr.co.awesomelead.groupware_backend.domain.department.entity.Department;
 import kr.co.awesomelead.groupware_backend.domain.department.enums.Company;
+import kr.co.awesomelead.groupware_backend.domain.department.enums.DepartmentName;
 import kr.co.awesomelead.groupware_backend.domain.department.repository.DepartmentRepository;
 import kr.co.awesomelead.groupware_backend.domain.user.entity.User;
+import kr.co.awesomelead.groupware_backend.domain.user.enums.Status;
 import kr.co.awesomelead.groupware_backend.domain.user.mapper.UserMapper;
 import kr.co.awesomelead.groupware_backend.domain.user.repository.UserRepository;
 import kr.co.awesomelead.groupware_backend.global.error.CustomException;
@@ -17,6 +23,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Comparator;
 import java.util.List;
 
 @Service
@@ -35,6 +43,40 @@ public class DepartmentService {
 
         // DTO로 변환 후 반환
         return rootDepartments.stream().map(DepartmentHierarchyResponseDto::from).toList();
+    }
+
+    public OrganizationRootTreeResponseDto getOrganizationTree() {
+        List<Department> allRootDepartments = departmentRepository.findByParentIsNull();
+
+        Department rootDepartment =
+                allRootDepartments.stream()
+                        .filter(department -> department.getName() == DepartmentName.CHUNGNAM_HQ)
+                        .findFirst()
+                        .orElseGet(
+                                () ->
+                                        allRootDepartments.stream()
+                                                .sorted(Comparator.comparing(Department::getId))
+                                                .findFirst()
+                                                .orElseThrow(
+                                                        () ->
+                                                                new CustomException(
+                                                                        ErrorCode
+                                                                                .DEPARTMENT_NOT_FOUND)));
+
+        List<OrganizationCompanyOptionResponseDto> companyOptions =
+                Arrays.stream(Company.values())
+                        .map(
+                                company ->
+                                        OrganizationCompanyOptionResponseDto.builder()
+                                                .company(company)
+                                                .companyName(company.getDescription())
+                                                .build())
+                        .toList();
+
+        return OrganizationRootTreeResponseDto.builder()
+                .rootDepartment(toOrganizationDepartmentNode(rootDepartment))
+                .companyOptions(companyOptions)
+                .build();
     }
 
     @Transactional(readOnly = true)
@@ -64,5 +106,30 @@ public class DepartmentService {
                 collectDepartmentIdsRecursive(child, ids);
             }
         }
+    }
+
+    private OrganizationDepartmentNodeResponseDto toOrganizationDepartmentNode(
+            Department department) {
+        List<OrganizationUserNodeResponseDto> users =
+                department.getUsers().stream()
+                        .filter(user -> user.getStatus() == Status.AVAILABLE)
+                        .sorted(Comparator.comparing(User::getId))
+                        .map(OrganizationUserNodeResponseDto::from)
+                        .toList();
+
+        List<OrganizationDepartmentNodeResponseDto> children =
+                department.getChildren().stream()
+                        .sorted(Comparator.comparing(Department::getId))
+                        .map(this::toOrganizationDepartmentNode)
+                        .toList();
+
+        return OrganizationDepartmentNodeResponseDto.builder()
+                .id(department.getId())
+                .code(department.getName().name())
+                .label(department.getName().getDescription())
+                .company(department.getCompany())
+                .users(users)
+                .children(children)
+                .build();
     }
 }

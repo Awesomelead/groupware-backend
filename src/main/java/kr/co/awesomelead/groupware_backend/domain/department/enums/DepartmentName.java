@@ -20,19 +20,18 @@ public enum DepartmentName {
     SALES_DEPT("영업부"),
     CHUNGNAM_PLANNING("충남 경영기획실"),
     AWESOME_PROD_HQ("(주)어썸리드 생산본부"),
-    QUALITY_SAFETY_HQ("품질안전본부"),
     MARUI_PROD_HQ("(주)한국마루이 생산본부"),
     TECHNICAL_ADVISOR("기술고문"),
-    SECURITY_DEPT("경비"),
+    ENVIRONMENT_SAFETY("환경안전부"),
+    QUALITY_CONTROL("품질관리부"),
+    AWESOME_SECURITY_DEPT("어썸리드 경비"),
+    MARUI_SECURITY_DEPT("마루이 경비"),
 
     // Level 2: 하위 부서들
     MANAGEMENT_SUPPORT("경영지원부"),
     CHAMBER_PROD("챔버생산부"),
     PARTS_PROD("부품생산부"),
-    ENVIRONMENT_SAFETY("환경안전부"),
-    QUALITY_CONTROL("품질관리부"),
-    PRODUCTION("생산부"),
-    PRODUCTION_MANAGEMENT("생산관리부");
+    PRODUCTION("생산부");
 
     private final String description;
 

@@ -121,7 +121,7 @@ public class NoticeService {
                 conditionDto, userId, hasAccessNotice, pageable);
     }
 
-    @Transactional(readOnly = true)
+    @Transactional
     public NoticeDetailDto getNotice(Long noticeId) {
         Notice notice =
                 noticeRepository
@@ -149,6 +149,9 @@ public class NoticeService {
             s3Service.deleteFile(attachment.getS3Key());
         }
 
+        // FK 자식 먼저 삭제
+        noticeTargetRepository.deleteByNoticeId(noticeId);
+
         // 공지사항 삭제 (첨부파일도 함께 삭제됨 - CascadeType.ALL)
         noticeRepository.delete(notice);
     }
@@ -169,7 +172,7 @@ public class NoticeService {
             for (Long attachmentId : dto.getAttachmentsIdsToRemove()) {
                 NoticeAttachment attachment =
                         noticeAttachmentRepository
-                                .findById(attachmentId)
+                                .findByIdAndNoticeId(attachmentId, noticeId)
                                 .orElseThrow(
                                         () ->
                                                 new CustomException(
@@ -190,9 +193,22 @@ public class NoticeService {
     private void uploadFiles(List<MultipartFile> files, Notice notice) throws IOException {
         if (files != null && !files.isEmpty()) {
             for (MultipartFile file : files) {
+                if (file == null || file.isEmpty()) {
+                    continue;
+                }
+
+                String originalFileName = file.getOriginalFilename();
+                if (originalFileName == null || originalFileName.isBlank()) {
+                    continue;
+                }
+
+                if ("blob".equalsIgnoreCase(originalFileName.trim())) {
+                    continue;
+                }
+
                 String s3Key = s3Service.uploadFile(file);
                 NoticeAttachment attachment = new NoticeAttachment();
-                attachment.setOriginalFileName(file.getOriginalFilename());
+                attachment.setOriginalFileName(originalFileName);
                 attachment.setS3Key(s3Key);
                 attachment.setFileSize(file.getSize());
                 notice.addAttachment(attachment);

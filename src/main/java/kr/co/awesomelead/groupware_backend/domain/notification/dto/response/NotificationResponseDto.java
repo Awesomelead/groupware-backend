@@ -1,10 +1,13 @@
 package kr.co.awesomelead.groupware_backend.domain.notification.dto.response;
 
 import io.swagger.v3.oas.annotations.media.Schema;
-import java.time.LocalDateTime;
+
 import kr.co.awesomelead.groupware_backend.domain.notification.entity.Notification;
 import kr.co.awesomelead.groupware_backend.domain.notification.enums.NotificationDomainType;
+
 import lombok.Getter;
+
+import java.time.LocalDateTime;
 
 @Getter
 @Schema(description = "알림 응답")

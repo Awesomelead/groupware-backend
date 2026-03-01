@@ -14,18 +14,21 @@ import jakarta.persistence.PrePersist;
 import jakarta.persistence.PreUpdate;
 import jakarta.persistence.Table;
 import jakarta.persistence.UniqueConstraint;
-import java.time.LocalDateTime;
+
 import kr.co.awesomelead.groupware_backend.domain.fcm.enums.DeviceType;
 import kr.co.awesomelead.groupware_backend.domain.user.entity.User;
+
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+
+import java.time.LocalDateTime;
 
 @Entity
 @Getter
 @NoArgsConstructor
-@Table(name = "fcm_tokens", uniqueConstraints = {
-    @UniqueConstraint(columnNames = {"user_id", "device_type"})
-})
+@Table(
+        name = "fcm_tokens",
+        uniqueConstraints = {@UniqueConstraint(columnNames = {"user_id", "device_type"})})
 public class FcmToken {
 
     @Id

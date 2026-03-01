@@ -1,9 +1,12 @@
 package kr.co.awesomelead.groupware_backend.domain.fcm.dto.request;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
+
 import kr.co.awesomelead.groupware_backend.domain.fcm.enums.DeviceType;
+
 import lombok.Getter;
 import lombok.Setter;
 
@@ -16,7 +19,11 @@ public class FcmTokenRegisterRequestDto {
     @NotBlank(message = "FCM 토큰은 필수입니다.")
     private String token;
 
-    @Schema(description = "디바이스 유형", example = "ANDROID", required = true, implementation = DeviceType.class)
+    @Schema(
+            description = "디바이스 유형",
+            example = "ANDROID",
+            required = true,
+            implementation = DeviceType.class)
     @NotNull(message = "디바이스 유형은 필수입니다.")
     private DeviceType deviceType;
 }

@@ -9,10 +9,13 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.PrePersist;
 import jakarta.persistence.Table;
-import java.time.LocalDateTime;
+
 import kr.co.awesomelead.groupware_backend.domain.notification.enums.NotificationDomainType;
+
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+
+import java.time.LocalDateTime;
 
 @Entity
 @Getter
@@ -54,12 +57,12 @@ public class Notification {
     }
 
     private Notification(
-        Long userId,
-        String title,
-        String content,
-        NotificationDomainType domainType,
-        Long domainId,
-        String redirectUrl) {
+            Long userId,
+            String title,
+            String content,
+            NotificationDomainType domainType,
+            Long domainId,
+            String redirectUrl) {
         this.userId = userId;
         this.title = title;
         this.content = content;
@@ -70,18 +73,18 @@ public class Notification {
     }
 
     public static Notification of(
-        Long userId,
-        String title,
-        String content,
-        NotificationDomainType domainType,
-        Long domainId,
-        String redirectUrl) {
+            Long userId,
+            String title,
+            String content,
+            NotificationDomainType domainType,
+            Long domainId,
+            String redirectUrl) {
         validate(userId, title, content, domainType);
         return new Notification(userId, title, content, domainType, domainId, redirectUrl);
     }
 
     private static void validate(
-        Long userId, String title, String content, NotificationDomainType domainType) {
+            Long userId, String title, String content, NotificationDomainType domainType) {
         if (userId == null) {
             throw new IllegalArgumentException("userId는 필수입니다.");
         }

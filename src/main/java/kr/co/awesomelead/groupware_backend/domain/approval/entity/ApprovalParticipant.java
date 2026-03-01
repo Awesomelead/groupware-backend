@@ -15,7 +15,6 @@ import jakarta.persistence.Table;
 import kr.co.awesomelead.groupware_backend.domain.approval.enums.ParticipantType;
 import kr.co.awesomelead.groupware_backend.domain.user.entity.User;
 
-import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;

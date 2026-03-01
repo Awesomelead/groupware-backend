@@ -4,14 +4,18 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
+
 import jakarta.validation.Valid;
+
 import kr.co.awesomelead.groupware_backend.domain.auth.util.JWTUtil;
 import kr.co.awesomelead.groupware_backend.domain.fcm.dto.request.FcmTokenRegisterRequestDto;
 import kr.co.awesomelead.groupware_backend.domain.fcm.service.FcmTokenService;
 import kr.co.awesomelead.groupware_backend.domain.user.repository.UserRepository;
 import kr.co.awesomelead.groupware_backend.global.error.CustomException;
 import kr.co.awesomelead.groupware_backend.global.error.ErrorCode;
+
 import lombok.RequiredArgsConstructor;
+
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -31,7 +35,9 @@ public class FcmTokenController {
     private final UserRepository userRepository;
     private final JWTUtil jwtUtil;
 
-    @Operation(summary = "FCM 토큰 등록/갱신", description = "로그인 후 또는 토큰 갱신 시 FCM 토큰을 등록합니다. 동일 디바이스 타입은 Upsert 처리됩니다.")
+    @Operation(
+            summary = "FCM 토큰 등록/갱신",
+            description = "로그인 후 또는 토큰 갱신 시 FCM 토큰을 등록합니다. 동일 디바이스 타입은 Upsert 처리됩니다.")
     @ApiResponses({
         @ApiResponse(responseCode = "200", description = "등록/갱신 성공"),
         @ApiResponse(responseCode = "400", description = "유효하지 않은 요청"),
@@ -39,8 +45,8 @@ public class FcmTokenController {
     })
     @PostMapping
     public ResponseEntity<Void> registerToken(
-        @RequestHeader("Authorization") String authorizationHeader,
-        @RequestBody @Valid FcmTokenRegisterRequestDto requestDto) {
+            @RequestHeader("Authorization") String authorizationHeader,
+            @RequestBody @Valid FcmTokenRegisterRequestDto requestDto) {
         Long userId = extractUserId(authorizationHeader);
         fcmTokenService.registerToken(userId, requestDto.getToken(), requestDto.getDeviceType());
         return ResponseEntity.ok().build();
@@ -53,8 +59,8 @@ public class FcmTokenController {
     })
     @DeleteMapping("/{token}")
     public ResponseEntity<Void> deleteToken(
-        @RequestHeader("Authorization") String authorizationHeader,
-        @PathVariable String token) {
+            @RequestHeader("Authorization") String authorizationHeader,
+            @PathVariable String token) {
         Long userId = extractUserId(authorizationHeader);
         fcmTokenService.deleteToken(userId, token);
         return ResponseEntity.noContent().build();
@@ -64,8 +70,8 @@ public class FcmTokenController {
         String accessToken = authorizationHeader.replace("Bearer ", "");
         String email = jwtUtil.getUsername(accessToken);
         return userRepository
-            .findByEmail(email)
-            .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND))
-            .getId();
+                .findByEmail(email)
+                .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND))
+                .getId();
     }
 }

@@ -56,6 +56,9 @@ class AuthServiceTest {
 
     @Mock private UserMapper userMapper;
 
+    @Mock
+    private kr.co.awesomelead.groupware_backend.domain.fcm.service.FcmTokenService fcmTokenService;
+
     @InjectMocks private AuthService authService;
 
     private User testUser;

@@ -15,7 +15,6 @@ import jakarta.persistence.Table;
 import kr.co.awesomelead.groupware_backend.domain.approval.enums.ApprovalStatus;
 import kr.co.awesomelead.groupware_backend.domain.user.entity.User;
 
-import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
@@ -27,9 +26,9 @@ import java.time.LocalDateTime;
 @Entity
 @Getter
 @Setter
-@Builder
-@NoArgsConstructor(access = AccessLevel.PROTECTED)
+@NoArgsConstructor
 @AllArgsConstructor
+@Builder
 @Table(name = "approval_steps")
 public class ApprovalStep {
 

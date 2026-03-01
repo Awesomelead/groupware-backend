@@ -29,7 +29,6 @@ import kr.co.awesomelead.groupware_backend.global.common.entity.BaseTimeEntity;
 import kr.co.awesomelead.groupware_backend.global.error.CustomException;
 import kr.co.awesomelead.groupware_backend.global.error.ErrorCode;
 
-import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -46,9 +45,8 @@ import java.util.List;
 @Setter
 @Inheritance(strategy = InheritanceType.JOINED) // 상속 조인 전략
 @DiscriminatorColumn(name = "document_type") // 문서 구분 컬럼
-@NoArgsConstructor(access = AccessLevel.PROTECTED)
+@NoArgsConstructor
 @AllArgsConstructor
-// @Builder
 @Table(name = "approvals")
 public abstract class Approval extends BaseTimeEntity {
 

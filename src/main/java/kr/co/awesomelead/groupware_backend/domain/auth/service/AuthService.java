@@ -17,6 +17,7 @@ import kr.co.awesomelead.groupware_backend.domain.auth.dto.response.LoginRespons
 import kr.co.awesomelead.groupware_backend.domain.auth.dto.response.SignupResponseDto;
 import kr.co.awesomelead.groupware_backend.domain.auth.entity.RefreshToken;
 import kr.co.awesomelead.groupware_backend.domain.auth.util.JWTUtil;
+import kr.co.awesomelead.groupware_backend.domain.fcm.service.FcmTokenService;
 import kr.co.awesomelead.groupware_backend.domain.user.entity.User;
 import kr.co.awesomelead.groupware_backend.domain.user.mapper.UserMapper;
 import kr.co.awesomelead.groupware_backend.domain.user.repository.UserRepository;
@@ -52,6 +53,7 @@ public class AuthService {
     private final AuthenticationManager authenticationManager;
     private final JWTUtil jwtUtil;
     private final RefreshTokenService refreshTokenService;
+    private final FcmTokenService fcmTokenService;
     private final ApprovalRepository approvalRepository;
 
     @PersistenceContext private EntityManager entityManager;
@@ -95,7 +97,15 @@ public class AuthService {
         // 7. DB에 저장
         User savedUser = userRepository.save(user);
 
-        // 8. 인증 완료 플래그 삭제
+        // 8. FCM 토큰 등록 (선택 - 클라이언트가 토큰을 전달한 경우에만)
+        if (joinDto.getFcmToken() != null
+                && !joinDto.getFcmToken().isBlank()
+                && joinDto.getDeviceType() != null) {
+            fcmTokenService.registerToken(
+                    savedUser.getId(), joinDto.getFcmToken(), joinDto.getDeviceType());
+        }
+
+        // 9. 인증 완료 플래그 삭제
         emailAuthService.clearVerification(joinDto.getEmail());
         phoneAuthService.clearVerification(joinDto.getPhoneNumber());
 
@@ -130,7 +140,6 @@ public class AuthService {
                 userRepository
                         .findByEmail(username)
                         .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
-
         // 7. 응답 생성
         LoginResponseDto loginResponseDto =
                 new LoginResponseDto(
@@ -141,14 +150,31 @@ public class AuthService {
                         user.getNameEng(),
                         user.getPosition());
 
+        // 8. FCM 토큰 등록 (선택)
+        if (requestDto.getFcmToken() != null
+                && !requestDto.getFcmToken().isBlank()
+                && requestDto.getDeviceType() != null) {
+            fcmTokenService.registerToken(
+                    user.getId(), requestDto.getFcmToken(), requestDto.getDeviceType());
+        }
+
         return loginResponseDto;
     }
 
-    public void logout(String email, String refreshToken) {
+    public void logout(String email, String refreshToken, String fcmToken) {
         RefreshToken token = refreshTokenService.validateRefreshToken(refreshToken);
 
         if (!token.getEmail().equals(email)) {
             throw new CustomException(ErrorCode.REFRESH_TOKEN_MISMATCH);
+        }
+
+        // 1. FCM 토큰 삭제 (선택)
+        if (fcmToken != null && !fcmToken.isBlank()) {
+            User user =
+                    userRepository
+                            .findByEmail(email)
+                            .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
+            fcmTokenService.deleteToken(user.getId(), fcmToken);
         }
 
         refreshTokenService.deleteRefreshToken(refreshToken);

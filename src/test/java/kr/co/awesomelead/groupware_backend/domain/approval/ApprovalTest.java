@@ -757,10 +757,8 @@ public class ApprovalTest {
                             .role(Role.USER)
                             .build();
             ApprovalParticipant referrer =
-                    ApprovalParticipant.builder()
-                            .user(participantUser)
-                            .participantType(ParticipantType.REFERRER)
-                            .build();
+                    new ApprovalParticipant(
+                            null, approval, participantUser, ParticipantType.REFERRER);
             approval.getParticipants().add(referrer);
 
             given(approvalRepository.findById(approvalId)).willReturn(Optional.of(approval));
@@ -830,7 +828,6 @@ public class ApprovalTest {
             Long approvalId = 100L;
             BasicApproval approval = createApprovalWithSteps();
             approval.setStatus(ApprovalStatus.PENDING);
-
             User participantUser =
                     User.builder()
                             .id(3L)
@@ -839,10 +836,8 @@ public class ApprovalTest {
                             .role(Role.USER)
                             .build();
             ApprovalParticipant viewer =
-                    ApprovalParticipant.builder()
-                            .user(participantUser)
-                            .participantType(ParticipantType.VIEWER)
-                            .build();
+                    new ApprovalParticipant(
+                            null, approval, participantUser, ParticipantType.VIEWER);
             approval.getParticipants().add(viewer);
 
             given(approvalRepository.findById(approvalId)).willReturn(Optional.of(approval));
@@ -868,10 +863,8 @@ public class ApprovalTest {
                             .role(Role.USER)
                             .build();
             ApprovalParticipant viewer =
-                    ApprovalParticipant.builder()
-                            .user(participantUser)
-                            .participantType(ParticipantType.VIEWER)
-                            .build();
+                    new ApprovalParticipant(
+                            null, approval, participantUser, ParticipantType.VIEWER);
             approval.getParticipants().add(viewer);
 
             given(approvalRepository.findById(approvalId)).willReturn(Optional.of(approval));
@@ -1023,12 +1016,7 @@ public class ApprovalTest {
     }
 
     private ApprovalStep createStep(Long id, User approver, int sequence, ApprovalStatus status) {
-        return ApprovalStep.builder()
-                .id(id)
-                .approver(approver)
-                .sequence(sequence)
-                .status(status)
-                .build();
+        return new ApprovalStep(id, null, approver, sequence, status, null, null);
     }
 
     private BasicApproval createApprovalWithSteps(ApprovalStep... steps) {

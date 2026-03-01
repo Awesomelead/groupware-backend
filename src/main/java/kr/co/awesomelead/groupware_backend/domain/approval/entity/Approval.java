@@ -43,7 +43,6 @@ import org.hibernate.annotations.BatchSize;
 @DiscriminatorColumn(name = "document_type") // 문서 구분 컬럼
 @NoArgsConstructor
 @AllArgsConstructor
-// @Builder
 @Table(name = "approvals")
 public abstract class Approval extends BaseTimeEntity {
 
@@ -112,7 +111,7 @@ public abstract class Approval extends BaseTimeEntity {
 
         // 모든 step이 APPROVED이면 문서 전체 승인 처리
         boolean allApproved = steps.stream()
-            .allMatch(s -> s.getStatus() == ApprovalStatus.APPROVED);
+                .allMatch(s -> s.getStatus() == ApprovalStatus.APPROVED);
         if (allApproved) {
             this.status = ApprovalStatus.APPROVED;
         }
@@ -129,9 +128,9 @@ public abstract class Approval extends BaseTimeEntity {
 
     private ApprovalStep findMyStep(User approver) {
         return steps.stream()
-            .filter(s -> s.getApprover().getId().equals(approver.getId()))
-            .findFirst()
-            .orElseThrow(() -> new CustomException(ErrorCode.NOT_APPROVER));
+                .filter(s -> s.getApprover().getId().equals(approver.getId()))
+                .findFirst()
+                .orElseThrow(() -> new CustomException(ErrorCode.NOT_APPROVER));
     }
 
     private void validateStepPending(ApprovalStep step) {
@@ -142,9 +141,9 @@ public abstract class Approval extends BaseTimeEntity {
 
     private void validateMyTurn(ApprovalStep myStep) {
         ApprovalStep currentStep = steps.stream()
-            .filter(s -> s.getStatus() == ApprovalStatus.PENDING)
-            .min(Comparator.comparingInt(ApprovalStep::getSequence))
-            .orElseThrow(() -> new CustomException(ErrorCode.ALREADY_PROCESSED_STEP));
+                .filter(s -> s.getStatus() == ApprovalStatus.PENDING)
+                .min(Comparator.comparingInt(ApprovalStep::getSequence))
+                .orElseThrow(() -> new CustomException(ErrorCode.ALREADY_PROCESSED_STEP));
 
         if (!currentStep.getId().equals(myStep.getId())) {
             throw new CustomException(ErrorCode.NOT_YOUR_TURN);
@@ -153,19 +152,19 @@ public abstract class Approval extends BaseTimeEntity {
 
     private void activateNextStep(int approvedSequence) {
         steps.stream()
-            .filter(
-                s -> s.getSequence() > approvedSequence
-                    && s.getStatus() == ApprovalStatus.WAITING)
-            .min(Comparator.comparingInt(ApprovalStep::getSequence))
-            .ifPresent(next -> next.setStatus(ApprovalStatus.PENDING));
+                .filter(
+                        s -> s.getSequence() > approvedSequence
+                                && s.getStatus() == ApprovalStatus.WAITING)
+                .min(Comparator.comparingInt(ApprovalStep::getSequence))
+                .ifPresent(next -> next.setStatus(ApprovalStatus.PENDING));
     }
 
     public ApprovalStatus getDisplayStatus(Long viewerId) {
         if (this.status == ApprovalStatus.PENDING) {
             boolean isMyTurn = this.steps.stream()
-                .anyMatch(
-                    s -> s.getApprover().getId().equals(viewerId)
-                        && s.getStatus() == ApprovalStatus.PENDING);
+                    .anyMatch(
+                            s -> s.getApprover().getId().equals(viewerId)
+                                    && s.getStatus() == ApprovalStatus.PENDING);
             if (!isMyTurn) {
                 return ApprovalStatus.IN_PROGRESS;
             }

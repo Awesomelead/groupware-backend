@@ -17,7 +17,6 @@ import kr.co.awesomelead.groupware_backend.domain.user.entity.User;
 
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
-import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -27,8 +26,7 @@ import java.time.LocalDateTime;
 @Entity
 @Getter
 @Setter
-@Builder
-@NoArgsConstructor(access = AccessLevel.PROTECTED)
+@NoArgsConstructor
 @AllArgsConstructor
 @Table(name = "approval_steps")
 public class ApprovalStep {
@@ -49,9 +47,7 @@ public class ApprovalStep {
     private Integer sequence; // 단계 (1, 2, 3...)
 
     @Enumerated(EnumType.STRING)
-    @Column(
-            nullable = false,
-            columnDefinition = "ENUM('WAITING','PENDING','APPROVED','REJECTED','CANCELED')")
+    @Column(nullable = false, columnDefinition = "ENUM('WAITING','PENDING','APPROVED','REJECTED','CANCELED')")
     private ApprovalStatus status; // 승인상태 (PENDING, APPROVED, REJECTED)
 
     private LocalDateTime processedAt; // 처리시간

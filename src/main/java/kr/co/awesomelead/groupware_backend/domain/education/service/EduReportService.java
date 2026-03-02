@@ -1,5 +1,7 @@
 package kr.co.awesomelead.groupware_backend.domain.education.service;
 
+import java.io.IOException;
+import java.util.List;
 import kr.co.awesomelead.groupware_backend.domain.department.entity.Department;
 import kr.co.awesomelead.groupware_backend.domain.department.repository.DepartmentRepository;
 import kr.co.awesomelead.groupware_backend.domain.education.dto.request.EduReportRequestDto;
@@ -14,6 +16,7 @@ import kr.co.awesomelead.groupware_backend.domain.education.mapper.EduMapper;
 import kr.co.awesomelead.groupware_backend.domain.education.repository.EduAttachmentRepository;
 import kr.co.awesomelead.groupware_backend.domain.education.repository.EduAttendanceRepository;
 import kr.co.awesomelead.groupware_backend.domain.education.repository.EduReportRepository;
+import kr.co.awesomelead.groupware_backend.domain.notification.service.NotificationService;
 import kr.co.awesomelead.groupware_backend.domain.user.entity.User;
 import kr.co.awesomelead.groupware_backend.domain.user.enums.Authority;
 import kr.co.awesomelead.groupware_backend.domain.user.enums.Role;
@@ -21,17 +24,12 @@ import kr.co.awesomelead.groupware_backend.domain.user.repository.UserRepository
 import kr.co.awesomelead.groupware_backend.global.error.CustomException;
 import kr.co.awesomelead.groupware_backend.global.error.ErrorCode;
 import kr.co.awesomelead.groupware_backend.global.infra.s3.service.S3Service;
-
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
-
-import java.io.IOException;
-import java.util.List;
 
 @Slf4j
 @Service
@@ -45,15 +43,16 @@ public class EduReportService {
     private final DepartmentRepository departmentRepository;
     private final UserRepository userRepository;
     private final S3Service s3Service;
+    private final NotificationService notificationService;
 
     @Transactional
     public Long createEduReport(EduReportRequestDto requestDto, List<MultipartFile> files, Long id)
-            throws IOException {
+        throws IOException {
 
         User user =
-                userRepository
-                        .findById(id)
-                        .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
+            userRepository
+                .findById(id)
+                .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
 
         if (!user.hasAuthority(Authority.ACCESS_EDUCATION)) {
             throw new CustomException(ErrorCode.NO_AUTHORITY_FOR_EDU_REPORT);
@@ -62,9 +61,9 @@ public class EduReportService {
         Department department = null;
         if (requestDto.getEduType() == EduType.DEPARTMENT && requestDto.getDepartmentId() != null) {
             department =
-                    departmentRepository
-                            .findById(requestDto.getDepartmentId())
-                            .orElseThrow(() -> new CustomException(ErrorCode.DEPARTMENT_NOT_FOUND));
+                departmentRepository
+                    .findById(requestDto.getDepartmentId())
+                    .orElseThrow(() -> new CustomException(ErrorCode.DEPARTMENT_NOT_FOUND));
         }
 
         EduReport report = eduMapper.toEduReportEntity(requestDto, department);
@@ -84,16 +83,32 @@ public class EduReportService {
                 report.addAttachment(attachment);
             }
         }
-        return eduReportRepository.save(report).getId();
+
+        EduReport savedReport = eduReportRepository.save(report);
+
+        // 알림 발송 대상 조회 및 전송
+        List<Long> targetUserIds;
+        if (requestDto.getEduType() == EduType.PSM || requestDto.getEduType() == EduType.SAFETY) {
+            targetUserIds = userRepository.findAllActiveUserIds();
+        } else {
+            targetUserIds = userRepository.findAllIdsByDepartmentId(requestDto.getDepartmentId());
+        }
+        notificationService.sendEduReportAlertToTargets(
+            requestDto.getEduType().getDescription(),
+            requestDto.getTitle(),
+            savedReport.getId(),
+            targetUserIds);
+
+        return savedReport.getId();
     }
 
     @Transactional(readOnly = true)
     public List<EduReportSummaryDto> getEduReports(EduType type, Long id) {
 
         User user =
-                userRepository
-                        .findById(id)
-                        .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
+            userRepository
+                .findById(id)
+                .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
 
         Department department = user.getDepartment();
 
@@ -104,14 +119,14 @@ public class EduReportService {
     public EduReportDetailDto getEduReport(Long eduReportId, Long id) {
 
         User user =
-                userRepository
-                        .findById(id)
-                        .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
+            userRepository
+                .findById(id)
+                .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
 
         EduReport report =
-                eduReportRepository
-                        .findById(eduReportId)
-                        .orElseThrow(() -> new CustomException(ErrorCode.EDU_REPORT_NOT_FOUND));
+            eduReportRepository
+                .findById(eduReportId)
+                .orElseThrow(() -> new CustomException(ErrorCode.EDU_REPORT_NOT_FOUND));
 
         EduReportDetailDto dto = eduMapper.toDetailDto(report, s3Service);
 
@@ -125,42 +140,44 @@ public class EduReportService {
     public void deleteEduReport(Long eduReportId, Long id) {
 
         User user =
-                userRepository
-                        .findById(id)
-                        .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
+            userRepository
+                .findById(id)
+                .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
 
         if (!user.hasAuthority(Authority.ACCESS_EDUCATION)) {
             throw new CustomException(ErrorCode.NO_AUTHORITY_FOR_EDU_REPORT);
         }
 
         EduReport report =
-                eduReportRepository
-                        .findById(eduReportId)
-                        .orElseThrow(() -> new CustomException(ErrorCode.EDU_REPORT_NOT_FOUND));
+            eduReportRepository
+                .findById(eduReportId)
+                .orElseThrow(() -> new CustomException(ErrorCode.EDU_REPORT_NOT_FOUND));
 
         report.getAttachments()
-                .forEach(
-                        attachment -> {
-                            s3Service.deleteFile(attachment.getS3Key());
-                        });
+            .forEach(
+                attachment -> {
+                    s3Service.deleteFile(attachment.getS3Key());
+                });
         eduReportRepository.delete(report);
     }
 
-    public record FileDownloadDto(byte[] fileData, String originalFileName, long fileSize) {}
+    public record FileDownloadDto(byte[] fileData, String originalFileName, long fileSize) {
+
+    }
 
     @Transactional(readOnly = true)
     public FileDownloadDto getFileForDownload(Long attachmentId) {
         // DB 조회
         EduAttachment attachment =
-                eduAttachmentRepository
-                        .findById(attachmentId)
-                        .orElseThrow(() -> new CustomException(ErrorCode.EDU_ATTACHMENT_NOT_FOUND));
+            eduAttachmentRepository
+                .findById(attachmentId)
+                .orElseThrow(() -> new CustomException(ErrorCode.EDU_ATTACHMENT_NOT_FOUND));
 
         // S3 데이터 다운로드
         byte[] fileData = s3Service.downloadFile(attachment.getS3Key());
 
         return new FileDownloadDto(
-                fileData, attachment.getOriginalFileName(), attachment.getFileSize());
+            fileData, attachment.getOriginalFileName(), attachment.getFileSize());
     }
 
     //    @Transactional(readOnly = true)
@@ -173,17 +190,17 @@ public class EduReportService {
 
     @Transactional
     public void markAttendance(Long reportId, MultipartFile signatureFile, Long userId)
-            throws IOException {
+        throws IOException {
 
         User user =
-                userRepository
-                        .findById(userId)
-                        .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
+            userRepository
+                .findById(userId)
+                .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
 
         EduReport report =
-                eduReportRepository
-                        .findById(reportId)
-                        .orElseThrow(() -> new CustomException(ErrorCode.EDU_REPORT_NOT_FOUND));
+            eduReportRepository
+                .findById(reportId)
+                .orElseThrow(() -> new CustomException(ErrorCode.EDU_REPORT_NOT_FOUND));
 
         if (eduAttendanceRepository.existsByEduReportAndUser(report, user)) {
             throw new CustomException(ErrorCode.ALREADY_MARKED_ATTENDANCE);
@@ -237,22 +254,22 @@ public class EduReportService {
     public EduReportAdminDetailDto getEduReportForAdmin(Long reportId, Long userId) {
 
         User user =
-                userRepository
-                        .findById(userId)
-                        .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
+            userRepository
+                .findById(userId)
+                .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
 
         if (user.getRole() != Role.ADMIN) {
             throw new CustomException(ErrorCode.NO_AUTHORITY_FOR_EDU_REPORT);
         }
 
         EduReport report =
-                eduReportRepository
-                        .findById(reportId)
-                        .orElseThrow(() -> new CustomException(ErrorCode.EDU_REPORT_NOT_FOUND));
+            eduReportRepository
+                .findById(reportId)
+                .orElseThrow(() -> new CustomException(ErrorCode.EDU_REPORT_NOT_FOUND));
 
         // 출석 명단 조회
         List<EduAttendance> attendances =
-                eduAttendanceRepository.findAllByEduReportIdWithUser(reportId);
+            eduAttendanceRepository.findAllByEduReportIdWithUser(reportId);
 
         // 통계 데이터 계산
         long numberOfPeople = calculateTargetPeopleCount(report); // 교육 대상 인원

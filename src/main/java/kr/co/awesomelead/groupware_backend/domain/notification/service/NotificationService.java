@@ -165,6 +165,38 @@ public class NotificationService {
     }
 
     /**
+     * 교육(EduReport) 등록 시 대상 유저 전체에게 FCM 알림 전송 + Notification 저장
+     *
+     * @param eduTypeLabel  교육 유형 라벨 (예: SAFETY, PSM, 부서명 등)
+     * @param eduTitle      등록된 교육 제목
+     * @param reportId      등록된 교육 ID (알림 domainId로 저장)
+     * @param targetUserIds 알림을 받을 유저 ID 집합 (리스트 형태)
+     */
+    @Transactional
+    public void sendEduReportAlertToTargets(
+            String eduTypeLabel, String eduTitle, Long reportId, List<Long> targetUserIds) {
+        if (targetUserIds == null || targetUserIds.isEmpty()) {
+            log.info("교육 알림 전송 건너뜀 - 대상 없음, reportId: {}", reportId);
+            return;
+        }
+
+        String title = NotificationMessage.EDU_REPORT_CREATED.getTitle();
+        String content = NotificationMessage.EDU_REPORT_CREATED.formatContent(eduTypeLabel, eduTitle);
+
+        for (Long userId : targetUserIds) {
+            // 1. FCM 푸시 알림 전송 (토큰이 없으면 내부에서 skip)
+            fcmService.sendToUser(userId, title, content, null);
+
+            // 2. 알림함 저장
+            createNotification(
+                    userId, title, content, NotificationDomainType.EDUCATION, reportId, null);
+        }
+
+        log.info(
+                "교육 알림 전송 완료 - reportId: {}, 대상 수: {}", reportId, targetUserIds.size());
+    }
+
+    /**
      * 방문 이벤트(사전 예약/입실) 발생 시 host 담당 부서 소속 전원에게 FCM 알림 전송 + Notification 저장
      *
      * @param template         알림 메시지 템플릿

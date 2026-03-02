@@ -1,9 +1,9 @@
 package kr.co.awesomelead.groupware_backend.global.error;
 
+import java.util.HashMap;
+import java.util.Map;
 import kr.co.awesomelead.groupware_backend.global.common.response.ApiResponse;
-
 import lombok.extern.slf4j.Slf4j;
-
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -11,9 +11,8 @@ import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
-
-import java.util.HashMap;
-import java.util.Map;
+import org.springframework.web.multipart.MaxUploadSizeExceededException;
+import org.springframework.web.multipart.MultipartException;
 
 @Slf4j
 @RestControllerAdvice
@@ -22,16 +21,16 @@ public class GlobalExceptionHandler {
     // DTO 유효성 검사 (@Valid 실패)
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ResponseEntity<ApiResponse<Map<String, String>>> handleValidationExceptions(
-            MethodArgumentNotValidException ex) {
+        MethodArgumentNotValidException ex) {
 
         Map<String, String> errors = new HashMap<>();
         ex.getBindingResult()
-                .getFieldErrors()
-                .forEach(error -> errors.put(error.getField(), error.getDefaultMessage()));
+            .getFieldErrors()
+            .forEach(error -> errors.put(error.getField(), error.getDefaultMessage()));
 
         // COMMON400 같은 공통 에러 코드를 사용, result에 상세 에러 맵을 담아 반환
         return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                .body(ApiResponse.onFailure("COMMON400", "입력값이 유효하지 않습니다.", errors));
+            .body(ApiResponse.onFailure("COMMON400", "입력값이 유효하지 않습니다.", errors));
     }
 
     // 비즈니스 예외 (CustomException) 처리
@@ -40,25 +39,41 @@ public class GlobalExceptionHandler {
         ErrorCode errorCode = ex.getErrorCode();
 
         return ResponseEntity.status(errorCode.getHttpStatus())
-                .body(ApiResponse.onFailure(errorCode.name(), errorCode.getMessage()));
+            .body(ApiResponse.onFailure(errorCode.name(), errorCode.getMessage()));
     }
 
     // DB 제약 조건 위반 처리
     @ExceptionHandler(DataIntegrityViolationException.class)
     public ResponseEntity<ApiResponse<Void>> handleDataIntegrityViolationException(
-            DataIntegrityViolationException ex) {
+        DataIntegrityViolationException ex) {
         log.error("[DataIntegrityViolationException] message: {}", ex.getMessage(), ex);
 
         return ResponseEntity.status(HttpStatus.CONFLICT)
-                .body(ApiResponse.onFailure("COMMON409", "데이터 무결성 위반이 발생했습니다. (중복 데이터 등)"));
+            .body(ApiResponse.onFailure("COMMON409", "데이터 무결성 위반이 발생했습니다. (중복 데이터 등)"));
     }
 
     // 쿼리 파라미터 타입 변환 실패 처리 (예: enum 변환 실패)
     @ExceptionHandler(MethodArgumentTypeMismatchException.class)
     public ResponseEntity<ApiResponse<Void>> handleMethodArgumentTypeMismatchException(
-            MethodArgumentTypeMismatchException ex) {
+        MethodArgumentTypeMismatchException ex) {
         return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                .body(ApiResponse.onFailure("COMMON400", "입력값이 유효하지 않습니다."));
+            .body(ApiResponse.onFailure("COMMON400", "입력값이 유효하지 않습니다."));
+    }
+
+    // 첨부파일 용량 초과시 예외 처리
+    @ExceptionHandler(MaxUploadSizeExceededException.class)
+    public ResponseEntity<ApiResponse<Object>> handleMaxUploadSizeExceeded(
+        MaxUploadSizeExceededException e) {
+        return ResponseEntity.badRequest()
+            .body(ApiResponse.onFailure("COMMON400", "파일 용량이 제한을 초과했습니다. (파일당 50MB, 요청당 100MB)",
+                null));
+    }
+
+    @ExceptionHandler(MultipartException.class)
+    public ResponseEntity<ApiResponse<Object>> handleMultipartException(
+        MultipartException e) {
+        return ResponseEntity.badRequest()
+            .body(ApiResponse.onFailure("COMMON400", "업로드 요청 크기가 제한을 초과했거나 형식이 잘못되었습니다.", null));
     }
 
     // 그 외 정의되지 않은 모든 예외 처리
@@ -67,6 +82,6 @@ public class GlobalExceptionHandler {
         log.error("[Internal Server Error] message: {}", ex.getMessage(), ex);
 
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                .body(ApiResponse.onFailure("COMMON500", "서버 내부 오류가 발생했습니다."));
+            .body(ApiResponse.onFailure("COMMON500", "서버 내부 오류가 발생했습니다."));
     }
 }

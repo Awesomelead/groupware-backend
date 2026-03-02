@@ -91,6 +91,8 @@ public class NoticeService {
             finalTargetUserIds.addAll(requestDto.getTargetUserIds());
         }
 
+        validateTargetsNotEmpty(finalTargetUserIds);
+
         List<NoticeTarget> targets =
                 finalTargetUserIds.stream()
                         .map(
@@ -195,6 +197,8 @@ public class NoticeService {
             Set<Long> finalTargetUserIds =
                     resolveTargetUserIds(effectiveCompanies, effectiveDepartmentIds, effectiveUserIds);
 
+            validateTargetsNotEmpty(finalTargetUserIds);
+
             noticeTargetRepository.deleteByNoticeId(noticeId);
 
             if (!finalTargetUserIds.isEmpty()) {
@@ -257,6 +261,12 @@ public class NoticeService {
         }
 
         return finalTargetUserIds;
+    }
+
+    private void validateTargetsNotEmpty(Set<Long> finalTargetUserIds) {
+        if (finalTargetUserIds == null || finalTargetUserIds.isEmpty()) {
+            throw new CustomException(ErrorCode.NOTICE_TARGET_REQUIRED);
+        }
     }
 
     private void uploadFiles(List<MultipartFile> files, Notice notice) throws IOException {

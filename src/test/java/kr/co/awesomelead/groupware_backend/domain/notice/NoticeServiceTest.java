@@ -145,6 +145,30 @@ class NoticeServiceTest {
                                 "errorCode", ErrorCode.NO_AUTHORITY_FOR_NOTICE);
             }
         }
+
+        @Test
+        @DisplayName("대상자 조건이 모두 비어 있으면 NOTICE_TARGET_REQUIRED 예외를 던진다")
+        void it_throws_when_target_is_empty() {
+            // given
+            NoticeCreateRequestDto dto =
+                    NoticeCreateRequestDto.builder()
+                            .title("제목")
+                            .targetCompanies(List.of())
+                            .targetDepartmentIds(List.of())
+                            .targetUserIds(List.of())
+                            .build();
+            Notice notice = Notice.builder().build();
+
+            given(userRepository.findById(1L)).willReturn(Optional.of(adminUser));
+            given(noticeMapper.toNoticeEntity(any(), any())).willReturn(notice);
+            given(noticeRepository.save(any())).willReturn(notice);
+
+            // when & then
+            assertThatThrownBy(() -> noticeService.createNotice(dto, null, 1L))
+                    .isInstanceOf(CustomException.class)
+                    .extracting("errorCode")
+                    .isEqualTo(ErrorCode.NOTICE_TARGET_REQUIRED);
+        }
     }
 
     @Nested
@@ -339,6 +363,29 @@ class NoticeServiceTest {
             // then
             verify(noticeTargetRepository).deleteByNoticeId(1L);
             verify(noticeTargetRepository).saveAll(any());
+        }
+
+        @Test
+        @DisplayName("대상자를 빈 값으로 수정하려 하면 NOTICE_TARGET_REQUIRED 예외를 던진다")
+        void it_throws_when_updating_targets_to_empty() {
+            // given
+            Notice notice = Notice.builder().build();
+            NoticeUpdateRequestDto dto =
+                    NoticeUpdateRequestDto.builder()
+                            .targetCompanies(List.of())
+                            .targetDepartmentIds(List.of())
+                            .targetUserIds(List.of())
+                            .build();
+
+            given(userRepository.findById(1L)).willReturn(Optional.of(adminUser));
+            given(noticeRepository.findByIdWithDetails(1L)).willReturn(Optional.of(notice));
+
+            // when & then
+            assertThatThrownBy(() -> noticeService.updateNotice(1L, 1L, dto, null))
+                    .isInstanceOf(CustomException.class)
+                    .extracting("errorCode")
+                    .isEqualTo(ErrorCode.NOTICE_TARGET_REQUIRED);
+            verify(noticeTargetRepository, never()).deleteByNoticeId(any());
         }
     }
 

@@ -139,14 +139,14 @@ public class NoticeController {
                                         mediaType = "application/json",
                                         examples =
                                                 @ExampleObject(
-                                                        name = "회사 미선택 오류",
+                                                        name = "대상자 미선택 오류",
                                                         value =
                                                                 """
                                 {
-                                "isSuccess": false,
-                                "code": "COMMON400",
-                                "message": "공지 대상 회사는 최소 하나 이상 선택해야 합니다.",
-                                "result": null
+                                  "isSuccess": false,
+                                  "code": "NOTICE_TARGET_REQUIRED",
+                                  "message": "공지 대상자는 최소 1명 이상이어야 합니다.",
+                                  "result": null
                                 }
                                 """))),
                 @io.swagger.v3.oas.annotations.responses.ApiResponse(
@@ -542,6 +542,18 @@ public class NoticeController {
                                       "isSuccess": false,
                                       "code": "COMMON400",
                                       "message": "파일 용량이 제한을 초과했습니다.",
+                                      "result": null
+                                    }
+                                    """)
+                                            ,
+                                            @ExampleObject(
+                                                    name = "대상자 미선택 오류",
+                                                    value =
+                                                            """
+                                    {
+                                      "isSuccess": false,
+                                      "code": "NOTICE_TARGET_REQUIRED",
+                                      "message": "공지 대상자는 최소 1명 이상이어야 합니다.",
                                       "result": null
                                     }
                                     """)

@@ -20,6 +20,8 @@ import kr.co.awesomelead.groupware_backend.domain.auth.dto.response.SignupRespon
 import kr.co.awesomelead.groupware_backend.domain.auth.entity.RefreshToken;
 import kr.co.awesomelead.groupware_backend.domain.auth.util.JWTUtil;
 import kr.co.awesomelead.groupware_backend.domain.fcm.service.FcmTokenService;
+import kr.co.awesomelead.groupware_backend.domain.notification.enums.NotificationDomainType;
+import kr.co.awesomelead.groupware_backend.domain.notification.enums.NotificationMessage;
 import kr.co.awesomelead.groupware_backend.domain.notification.service.NotificationService;
 import kr.co.awesomelead.groupware_backend.domain.user.entity.User;
 import kr.co.awesomelead.groupware_backend.domain.user.mapper.UserMapper;
@@ -108,8 +110,12 @@ public class AuthService {
         emailAuthService.clearVerification(joinDto.getEmail());
         phoneAuthService.clearVerification(joinDto.getPhoneNumber());
 
-        // 10. Admin 유저에게 신규 가입 알림 전송
-        notificationService.sendSignupAlertToAdmins(savedUser.getDisplayName());
+        // 10. Admin 유저에게 신규 가입 알림 전송 (FCM + Notification DB)
+        notificationService.sendAlertToAdmins(
+            NotificationMessage.SIGNUP_ADMIN_ALERT,
+            NotificationDomainType.AUTH,
+            null,
+            savedUser.getDisplayName());
 
         return new SignupResponseDto(savedUser.getId(), savedUser.getEmail());
     }

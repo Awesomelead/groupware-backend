@@ -36,18 +36,12 @@ public class NoticeQueryRepository {
             Pageable pageable) {
 
         QNotice notice = QNotice.notice;
-        QNoticeTarget noticeTarget = QNoticeTarget.noticeTarget;
         QUser author = QUser.user;
 
         var query = queryFactory.from(notice).innerJoin(notice.author, author);
 
-        if (!hasAccessNotice) {
-            query.innerJoin(noticeTarget)
-                    .on(noticeTarget.notice.eq(notice))
-                    .where(noticeTarget.user.id.eq(userId));
-        }
-
         query.where(
+                noticeAccessible(hasAccessNotice, userId),
                 typeEq(conditionDto.getType()),
                 searchKeyword(conditionDto.getKeyword(), conditionDto.getSearchType(), author));
 
@@ -109,12 +103,16 @@ public class NoticeQueryRepository {
             return null; // 관리자는 필터링 없음
         }
 
-        // 내 ID가 타겟 테이블에 존재하는지 확인하는 서브쿼리
-        // (Join 방식이 아닌 exists 방식이 필요한 곳을 위해 남겨둠)
-        return QNotice.notice.id.in(
-                JPAExpressions.select(QNoticeTarget.noticeTarget.notice.id)
-                        .from(QNoticeTarget.noticeTarget)
-                        .where(QNoticeTarget.noticeTarget.user.id.eq(userId)));
+        // 일반 유저는 "내가 작성한 공지" 또는 "내가 대상자인 공지"를 볼 수 있다.
+        return QNotice.notice
+                .author
+                .id
+                .eq(userId)
+                .or(
+                        QNotice.notice.id.in(
+                                JPAExpressions.select(QNoticeTarget.noticeTarget.notice.id)
+                                        .from(QNoticeTarget.noticeTarget)
+                                        .where(QNoticeTarget.noticeTarget.user.id.eq(userId))));
     }
 
     private BooleanExpression typeEq(NoticeType type) {

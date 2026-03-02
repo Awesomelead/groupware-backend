@@ -34,6 +34,10 @@ services:
       - ENCRYPTION_SALT=${ENCRYPTION_SALT}
       - PORTONE_APISECRET=${PORTONE_APISECRET}
       - FIREBASE_CREDENTIALS_JSON=${FIREBASE_CREDENTIALS_JSON}
+      - MULTIPART_MAX_FILE_SIZE=${MULTIPART_MAX_FILE_SIZE}
+      - MULTIPART_MAX_REQUEST_SIZE=${MULTIPART_MAX_REQUEST_SIZE}
+      - TZ=Asia/Seoul
+      - JAVA_TOOL_OPTIONS=-Duser.timezone=Asia/Seoul
     depends_on:
       - redis
     restart: unless-stopped

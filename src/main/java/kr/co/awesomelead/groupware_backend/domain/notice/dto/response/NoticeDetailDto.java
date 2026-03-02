@@ -30,7 +30,11 @@ public class NoticeDetailDto {
     @Schema(description = "작성자 이름", example = "홍길동")
     private String authorName;
 
-    @Schema(description = "수정일시", example = "2025-01-10T14:30:00")
+    @Schema(
+            description = "수정일시 (KST, Asia/Seoul)",
+            type = "string",
+            format = "date-time",
+            example = "2026-02-27T10:30:00")
     private LocalDateTime updatedDate;
 
     @Schema(description = "조회수", example = "42")

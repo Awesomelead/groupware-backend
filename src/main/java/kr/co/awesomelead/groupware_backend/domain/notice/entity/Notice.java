@@ -130,6 +130,37 @@ public class Notice {
         }
     }
 
+    public void update(
+            NoticeType type,
+            String title,
+            String content,
+            Boolean pinned,
+            List<Company> targetCompanies,
+            List<Long> targetDepartments,
+            List<Long> targetUsers) {
+        if (type != null) {
+            this.type = type;
+        }
+        if (StringUtils.hasText(title)) {
+            this.title = title;
+        }
+        if (StringUtils.hasText(content)) {
+            this.content = content;
+        }
+        if (pinned != null) {
+            this.pinned = pinned;
+        }
+        if (targetCompanies != null) {
+            this.targetCompanies = new ArrayList<>(targetCompanies);
+        }
+        if (targetDepartments != null) {
+            this.targetDepartments = new ArrayList<>(targetDepartments);
+        }
+        if (targetUsers != null) {
+            this.targetUsers = new ArrayList<>(targetUsers);
+        }
+    }
+
     public void removeAttachment(NoticeAttachment attachment) {
         this.attachments.remove(attachment);
         attachment.setNotice(null);

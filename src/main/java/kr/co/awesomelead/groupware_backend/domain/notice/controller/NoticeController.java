@@ -448,7 +448,7 @@ public class NoticeController {
 
     @Operation(
             summary = "공지 수정",
-            description = "특정 공지를 수정합니다. multipart/form-data 기반으로 내용 수정 및 첨부파일 추가/삭제를 처리합니다.",
+            description = "특정 공지를 수정합니다. multipart/form-data 기반으로 제목/내용/유형/대상자/첨부파일을 수정할 수 있습니다.",
             requestBody =
                     @io.swagger.v3.oas.annotations.parameters.RequestBody(
                             required = true,
@@ -479,6 +479,19 @@ public class NoticeController {
                                         "content": "회의 시간이 오후 3시로 변경되었습니다.",
                                         "pinned": true,
                                         "attachmentsIdsToRemove": [1]
+                                      }
+                                    }
+                                    """),
+                                            @ExampleObject(
+                                                    name = "유형 + 대상자 수정",
+                                                    value =
+                                                            """
+                                    {
+                                      "notice": {
+                                        "type": "상시공지",
+                                        "targetCompanies": ["어썸리드"],
+                                        "targetDepartmentIds": [11, 12],
+                                        "targetUserIds": [17, 22]
                                       }
                                     }
                                     """),

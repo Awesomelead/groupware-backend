@@ -88,6 +88,8 @@ jobs:
             ENCRYPTION_SALT=${{ secrets.ENCRYPTION_SALT }}
             PORTONE_APISECRET=${{ secrets.PORTONE_APISECRET }}
             FIREBASE_CREDENTIALS_JSON='${{ secrets.FIREBASE_CREDENTIALS_JSON }}'
+            MULTIPART_MAX_FILE_SIZE='${{ secrets.MULTIPART_MAX_FILE_SIZE }}'
+            MULTIPART_MAX_REQUEST_SIZE=50MB='${{ secrets.MULTIPART_MAX_REQUEST_SIZE }}'
             EOF
             
             cd /home/ubuntu

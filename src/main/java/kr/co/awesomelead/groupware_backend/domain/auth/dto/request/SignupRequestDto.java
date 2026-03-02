@@ -9,6 +9,7 @@ import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
 
 import kr.co.awesomelead.groupware_backend.domain.department.enums.Company;
+import kr.co.awesomelead.groupware_backend.domain.fcm.enums.DeviceType;
 
 import lombok.Getter;
 import lombok.Setter;
@@ -82,4 +83,11 @@ public class SignupRequestDto {
     @Schema(description = "비밀번호 확인", example = "test1234!", required = true)
     @NotBlank(message = "비밀번호 확인은 필수입니다.")
     private String passwordConfirm;
+
+    // FCM (선택 필드 — 없으면 FCM 등록 건너뜀)
+    @Schema(description = "FCM 토큰 (Firebase SDK에서 발급, 선택)", example = "dY3jk2...firebase-token")
+    private String fcmToken;
+
+    @Schema(description = "디바이스 유형 (선택)", example = "ANDROID", implementation = DeviceType.class)
+    private DeviceType deviceType;
 }

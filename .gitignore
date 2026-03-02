@@ -44,6 +44,9 @@ echo "*.jar.*" >> .gitignore
 
 src/main/resources/application-prod.yml
 
+# Firebase Service Account Key
+src/main/resources/firebase/serviceAccountKey.json
+
 # Environment Variables
 .env
 .env.local

@@ -87,6 +87,7 @@ jobs:
             ENCRYPTION_SECRET_KEY=${{ secrets.ENCRYPTION_SECRET_KEY }}
             ENCRYPTION_SALT=${{ secrets.ENCRYPTION_SALT }}
             PORTONE_APISECRET=${{ secrets.PORTONE_APISECRET }}
+            FIREBASE_CREDENTIALS_JSON='${{ secrets.FIREBASE_CREDENTIALS_JSON }}'
             EOF
             
             cd /home/ubuntu

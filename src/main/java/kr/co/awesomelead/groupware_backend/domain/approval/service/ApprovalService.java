@@ -141,12 +141,14 @@ public class ApprovalService {
                             .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
 
             ApprovalStep step =
-                    ApprovalStep.builder()
-                            .approval(approval)
-                            .approver(approver)
-                            .sequence(stepDto.getSequence())
-                            .status(ApprovalStatus.PENDING) // 모든 단계의 초기 상태는 PENDING
-                            .build();
+                    new ApprovalStep(
+                            null,
+                            approval,
+                            approver,
+                            stepDto.getSequence(),
+                            ApprovalStatus.PENDING,
+                            null,
+                            null);
 
             approval.getSteps().add(step); // 부모 엔티티 리스트에 추가 (CascadeType.ALL 작동)
         }
@@ -164,11 +166,7 @@ public class ApprovalService {
                             .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
 
             ApprovalParticipant participant =
-                    ApprovalParticipant.builder()
-                            .approval(approval)
-                            .user(user)
-                            .participantType(partDto.getParticipantType())
-                            .build();
+                    new ApprovalParticipant(null, approval, user, partDto.getParticipantType());
 
             approval.getParticipants().add(participant);
         }

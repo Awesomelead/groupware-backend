@@ -19,9 +19,9 @@ import lombok.Setter;
 @Entity
 @Getter
 @Setter
-@Builder
 @NoArgsConstructor
 @AllArgsConstructor
+@Builder
 @Table(name = "approval_attachments")
 public class ApprovalAttachment {
 

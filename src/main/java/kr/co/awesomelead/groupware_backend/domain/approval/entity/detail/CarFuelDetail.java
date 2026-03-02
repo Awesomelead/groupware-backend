@@ -11,7 +11,6 @@ import jakarta.persistence.Table;
 
 import kr.co.awesomelead.groupware_backend.domain.approval.entity.document.CarFuelApproval;
 
-import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
@@ -23,9 +22,9 @@ import java.time.LocalDate;
 @Entity
 @Getter
 @Setter
-@Builder
-@NoArgsConstructor(access = AccessLevel.PROTECTED)
+@NoArgsConstructor
 @AllArgsConstructor
+@Builder
 @Table(name = "car_fuel_details")
 public class CarFuelDetail {
 

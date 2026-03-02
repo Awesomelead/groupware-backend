@@ -91,6 +91,8 @@ public class NoticeService {
             finalTargetUserIds.addAll(requestDto.getTargetUserIds());
         }
 
+        validateTargetsNotEmpty(finalTargetUserIds);
+
         List<NoticeTarget> targets =
                 finalTargetUserIds.stream()
                         .map(
@@ -166,7 +168,57 @@ public class NoticeService {
                         .findByIdWithDetails(noticeId)
                         .orElseThrow(() -> new CustomException(ErrorCode.NOTICE_NOT_FOUND));
 
-        notice.update(dto.getTitle(), dto.getContent(), dto.getPinned());
+        notice.update(
+                dto.getType(),
+                dto.getTitle(),
+                dto.getContent(),
+                dto.getPinned(),
+                dto.getTargetCompanies(),
+                dto.getTargetDepartmentIds(),
+                dto.getTargetUserIds());
+
+        boolean shouldRebuildTargets =
+                dto.getTargetCompanies() != null
+                        || dto.getTargetDepartmentIds() != null
+                        || dto.getTargetUserIds() != null;
+
+        if (shouldRebuildTargets) {
+            List<Company> effectiveCompanies =
+                    dto.getTargetCompanies() != null
+                            ? dto.getTargetCompanies()
+                            : notice.getTargetCompanies();
+            List<Long> effectiveDepartmentIds =
+                    dto.getTargetDepartmentIds() != null
+                            ? dto.getTargetDepartmentIds()
+                            : notice.getTargetDepartments();
+            List<Long> effectiveUserIds =
+                    dto.getTargetUserIds() != null
+                            ? dto.getTargetUserIds()
+                            : notice.getTargetUsers();
+
+            Set<Long> finalTargetUserIds =
+                    resolveTargetUserIds(
+                            effectiveCompanies, effectiveDepartmentIds, effectiveUserIds);
+
+            validateTargetsNotEmpty(finalTargetUserIds);
+
+            noticeTargetRepository.deleteByNoticeId(noticeId);
+
+            if (!finalTargetUserIds.isEmpty()) {
+                List<NoticeTarget> targets =
+                        finalTargetUserIds.stream()
+                                .map(
+                                        targetId ->
+                                                NoticeTarget.builder()
+                                                        .notice(notice)
+                                                        .user(
+                                                                userRepository.getReferenceById(
+                                                                        targetId))
+                                                        .build())
+                                .toList();
+                noticeTargetRepository.saveAll(targets);
+            }
+        }
 
         if (dto.getAttachmentsIdsToRemove() != null) {
             for (Long attachmentId : dto.getAttachmentsIdsToRemove()) {
@@ -188,6 +240,40 @@ public class NoticeService {
         uploadFiles(newFiles, notice);
 
         return noticeId;
+    }
+
+    private Set<Long> resolveTargetUserIds(
+            List<Company> targetCompanies,
+            List<Long> targetDepartmentIds,
+            List<Long> targetUserIds) {
+        Set<Long> finalTargetUserIds = new HashSet<>();
+
+        if (targetCompanies != null) {
+            for (Company company : targetCompanies) {
+                List<Long> companyUserIds = userRepository.findAllIdsByCompany(company);
+                finalTargetUserIds.addAll(companyUserIds);
+            }
+        }
+
+        if (targetDepartmentIds != null) {
+            for (Long deptId : targetDepartmentIds) {
+                List<UserSummaryResponseDto> deptUsers =
+                        departmentService.getUsersByDepartmentHierarchy(deptId);
+                deptUsers.forEach(u -> finalTargetUserIds.add(u.getId()));
+            }
+        }
+
+        if (targetUserIds != null) {
+            finalTargetUserIds.addAll(targetUserIds);
+        }
+
+        return finalTargetUserIds;
+    }
+
+    private void validateTargetsNotEmpty(Set<Long> finalTargetUserIds) {
+        if (finalTargetUserIds == null || finalTargetUserIds.isEmpty()) {
+            throw new CustomException(ErrorCode.NOTICE_TARGET_REQUIRED);
+        }
     }
 
     private void uploadFiles(List<MultipartFile> files, Notice notice) throws IOException {

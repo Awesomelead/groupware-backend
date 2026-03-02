@@ -71,14 +71,21 @@ public class NotificationService {
     }
 
     /**
-     * 회원가입 완료 시 Admin/MasterAdmin 유저 전체에게 FCM 알림 전송 + Notification 저장
+     * Admin/MasterAdmin 유저 전체에게 FCM 알림 전송 + Notification 저장
      *
-     * @param newUserName 가입한 신규 유저의 표시 이름
+     * @param template   알림 메시지 템플릿
+     * @param domainType 생성할 알림의 도메인 타입
+     * @param domainId   생성할 알림의 도메인 ID (선택)
+     * @param args       템플릿 포맷팅에 사용할 인자
      */
     @Transactional
-    public void sendSignupAlertToAdmins(String newUserName) {
-        String title = NotificationMessage.SIGNUP_ADMIN_ALERT.getTitle();
-        String content = NotificationMessage.SIGNUP_ADMIN_ALERT.formatContent(newUserName);
+    public void sendAlertToAdmins(
+            NotificationMessage template,
+            NotificationDomainType domainType,
+            Long domainId,
+            Object... args) {
+        String title = template.getTitle();
+        String content = template.formatContent(args);
 
         List<User> admins = userRepository.findAllByRole(Role.ADMIN);
         admins.addAll(userRepository.findAllByRole(Role.MASTER_ADMIN));
@@ -88,10 +95,42 @@ public class NotificationService {
             fcmService.sendToUser(admin.getId(), title, content, null);
 
             // 2. 알림함 저장
-            createNotification(admin.getId(), title, content, NotificationDomainType.AUTH, null, null);
+            createNotification(
+                    admin.getId(), title, content, domainType, domainId, null);
         }
 
-        log.info("신규 가입 알림 전송 완료 - 대상 Admin 수: {}, 신규 유저: {}", admins.size(), newUserName);
+        log.info(
+                "관리자 그룹 알림 전송 완료 - 대상 Admin 수: {}, 템플릿: {}",
+                admins.size(),
+                template.name());
+    }
+
+    /**
+     * 특정 단일 유저에게 FCM 알림 전송 + Notification 저장
+     *
+     * @param userId     수신 유저 ID
+     * @param template   알림 메시지 템플릿
+     * @param domainType 생성할 알림의 도메인 타입
+     * @param domainId   생성할 알림의 도메인 ID (선택)
+     * @param args       템플릿 포맷팅에 사용할 인자
+     */
+    @Transactional
+    public void sendAlertToUser(
+            Long userId,
+            NotificationMessage template,
+            NotificationDomainType domainType,
+            Long domainId,
+            Object... args) {
+        String title = template.getTitle();
+        String content = template.formatContent(args);
+
+        // 1. FCM 푸시 알림 전송
+        fcmService.sendToUser(userId, title, content, null);
+
+        // 2. 알림함 저장
+        createNotification(userId, title, content, domainType, domainId, null);
+
+        log.info("단일 유저 알림 전송 완료 - userId: {}, 템플릿: {}", userId, template.name());
     }
 
     /**
@@ -123,5 +162,45 @@ public class NotificationService {
 
         log.info(
                 "공지 알림 전송 완료 - noticeId: {}, 대상 수: {}", noticeId, targetUserIds.size());
+    }
+
+    /**
+     * 방문 이벤트(사전 예약/입실) 발생 시 host 담당 부서 소속 전원에게 FCM 알림 전송 + Notification 저장
+     *
+     * @param template         알림 메시지 템플릿
+     * @param visitId          방문 ID (domainId로 저장)
+     * @param hostDepartmentId host 직원의 부서 ID
+     * @param contentArgs      템플릿 포맷팅에 사용할 인자
+     */
+    @Transactional
+    public void sendVisitAlertToDepartment(
+            NotificationMessage template,
+            Long visitId,
+            Long hostDepartmentId,
+            Object... contentArgs) {
+        List<Long> targetUserIds = userRepository.findAllIdsByDepartmentId(hostDepartmentId);
+
+        if (targetUserIds.isEmpty()) {
+            log.info("방문 알림 전송 건너뜀 - 대상 없음, visitId: {}", visitId);
+            return;
+        }
+
+        String title = template.getTitle();
+        String content = template.formatContent(contentArgs);
+
+        for (Long userId : targetUserIds) {
+            // 1. FCM 푸시 알림 전송 (토큰이 없으면 내부에서 skip)
+            fcmService.sendToUser(userId, title, content, null);
+
+            // 2. 알림함 저장
+            createNotification(
+                    userId, title, content, NotificationDomainType.VISIT, visitId, null);
+        }
+
+        log.info(
+                "방문 알림 전송 완료 - visitId: {}, 대상 수: {}, 템플릿: {}",
+                visitId,
+                targetUserIds.size(),
+                template.name());
     }
 }

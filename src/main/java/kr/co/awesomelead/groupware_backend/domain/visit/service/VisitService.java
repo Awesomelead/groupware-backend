@@ -84,7 +84,7 @@ public class VisitService {
                     hostDeptId,
                     visit.getVisitorName(),
                     visit.getStartDate(),
-                    dto.getPlannedEntryTime(),
+                    dto.getEntryTime(),
                     hostName);
         }
 

@@ -150,6 +150,24 @@ public class NoticeController {
                                 }
                                 """))),
                 @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                        responseCode = "400",
+                        description = "첨부파일 용량 초과",
+                        content =
+                                @Content(
+                                        mediaType = "application/json",
+                                        examples =
+                                                @ExampleObject(
+                                                        name = "첨부파일 용량 초과",
+                                                        value =
+                                                                """
+                                {
+                                "isSuccess": false,
+                                "code": "COMMON400",
+                                "message": "파일 용량이 제한을 초과했습니다.",
+                                "result": null
+                                }
+                                """))),
+                @io.swagger.v3.oas.annotations.responses.ApiResponse(
                         responseCode = "403",
                         description = "권한 없음",
                         content =
@@ -487,7 +505,34 @@ public class NoticeController {
                         description = "수정 성공"),
                 @io.swagger.v3.oas.annotations.responses.ApiResponse(
                         responseCode = "400",
-                        description = "잘못된 요청"),
+                        description = "잘못된 요청",
+                        content =
+                                @Content(
+                                        mediaType = "application/json",
+                                        examples = {
+                                            @ExampleObject(
+                                                    name = "입력값 검증 실패",
+                                                    value =
+                                                            """
+                                    {
+                                      "isSuccess": false,
+                                      "code": "COMMON400",
+                                      "message": "입력값이 유효하지 않습니다.",
+                                      "result": { "title": "제목은 필수입니다." }
+                                    }
+                                    """),
+                                            @ExampleObject(
+                                                    name = "첨부파일 용량 초과",
+                                                    value =
+                                                            """
+                                    {
+                                      "isSuccess": false,
+                                      "code": "COMMON400",
+                                      "message": "파일 용량이 제한을 초과했습니다.",
+                                      "result": null
+                                    }
+                                    """)
+                                        })),
                 @io.swagger.v3.oas.annotations.responses.ApiResponse(
                         responseCode = "403",
                         description = "권한 없음"),

@@ -544,8 +544,7 @@ public class NoticeController {
                                       "message": "파일 용량이 제한을 초과했습니다.",
                                       "result": null
                                     }
-                                    """)
-                                            ,
+                                    """),
                                             @ExampleObject(
                                                     name = "대상자 미선택 오류",
                                                     value =

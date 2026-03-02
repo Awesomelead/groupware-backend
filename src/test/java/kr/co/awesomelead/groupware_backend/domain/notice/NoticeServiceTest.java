@@ -355,7 +355,8 @@ class NoticeServiceTest {
             given(userRepository.findById(1L)).willReturn(Optional.of(adminUser));
             given(noticeRepository.findByIdWithDetails(1L)).willReturn(Optional.of(notice));
             given(userRepository.findAllIdsByCompany(Company.MARUI)).willReturn(List.of(10L));
-            given(departmentService.getUsersByDepartmentHierarchy(200L)).willReturn(List.of(deptUser));
+            given(departmentService.getUsersByDepartmentHierarchy(200L))
+                    .willReturn(List.of(deptUser));
 
             // when
             noticeService.updateNotice(1L, 1L, dto, null);

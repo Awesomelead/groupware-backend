@@ -104,7 +104,9 @@ public class NoticeQueryRepository {
         }
 
         // 일반 유저는 "내가 작성한 공지" 또는 "내가 대상자인 공지"를 볼 수 있다.
-        return QNotice.notice.author.id
+        return QNotice.notice
+                .author
+                .id
                 .eq(userId)
                 .or(
                         QNotice.notice.id.in(

@@ -192,10 +192,13 @@ public class NoticeService {
                             ? dto.getTargetDepartmentIds()
                             : notice.getTargetDepartments();
             List<Long> effectiveUserIds =
-                    dto.getTargetUserIds() != null ? dto.getTargetUserIds() : notice.getTargetUsers();
+                    dto.getTargetUserIds() != null
+                            ? dto.getTargetUserIds()
+                            : notice.getTargetUsers();
 
             Set<Long> finalTargetUserIds =
-                    resolveTargetUserIds(effectiveCompanies, effectiveDepartmentIds, effectiveUserIds);
+                    resolveTargetUserIds(
+                            effectiveCompanies, effectiveDepartmentIds, effectiveUserIds);
 
             validateTargetsNotEmpty(finalTargetUserIds);
 
@@ -208,7 +211,9 @@ public class NoticeService {
                                         targetId ->
                                                 NoticeTarget.builder()
                                                         .notice(notice)
-                                                        .user(userRepository.getReferenceById(targetId))
+                                                        .user(
+                                                                userRepository.getReferenceById(
+                                                                        targetId))
                                                         .build())
                                 .toList();
                 noticeTargetRepository.saveAll(targets);
@@ -238,7 +243,9 @@ public class NoticeService {
     }
 
     private Set<Long> resolveTargetUserIds(
-            List<Company> targetCompanies, List<Long> targetDepartmentIds, List<Long> targetUserIds) {
+            List<Company> targetCompanies,
+            List<Long> targetDepartmentIds,
+            List<Long> targetUserIds) {
         Set<Long> finalTargetUserIds = new HashSet<>();
 
         if (targetCompanies != null) {

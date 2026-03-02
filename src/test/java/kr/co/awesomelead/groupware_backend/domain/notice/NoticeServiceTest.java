@@ -26,6 +26,7 @@ import kr.co.awesomelead.groupware_backend.domain.notice.respository.NoticeQuery
 import kr.co.awesomelead.groupware_backend.domain.notice.respository.NoticeRepository;
 import kr.co.awesomelead.groupware_backend.domain.notice.respository.NoticeTargetRepository;
 import kr.co.awesomelead.groupware_backend.domain.notice.service.NoticeService;
+import kr.co.awesomelead.groupware_backend.domain.notification.service.NotificationService;
 import kr.co.awesomelead.groupware_backend.domain.user.entity.User;
 import kr.co.awesomelead.groupware_backend.domain.user.enums.Authority;
 import kr.co.awesomelead.groupware_backend.domain.user.repository.UserRepository;
@@ -55,16 +56,27 @@ import java.util.Optional;
 @DisplayName("NoticeService 단위 테스트")
 class NoticeServiceTest {
 
-    @InjectMocks private NoticeService noticeService;
+    @InjectMocks
+    private NoticeService noticeService;
 
-    @Mock private NoticeRepository noticeRepository;
-    @Mock private NoticeQueryRepository noticeQueryRepository;
-    @Mock private NoticeAttachmentRepository noticeAttachmentRepository;
-    @Mock private NoticeTargetRepository noticeTargetRepository;
-    @Mock private NoticeMapper noticeMapper;
-    @Mock private S3Service s3Service;
-    @Mock private UserRepository userRepository;
-    @Mock private DepartmentService departmentService;
+    @Mock
+    private NoticeRepository noticeRepository;
+    @Mock
+    private NoticeQueryRepository noticeQueryRepository;
+    @Mock
+    private NoticeAttachmentRepository noticeAttachmentRepository;
+    @Mock
+    private NoticeTargetRepository noticeTargetRepository;
+    @Mock
+    private NoticeMapper noticeMapper;
+    @Mock
+    private S3Service s3Service;
+    @Mock
+    private UserRepository userRepository;
+    @Mock
+    private DepartmentService departmentService;
+    @Mock
+    private NotificationService notificationService;
 
     private User adminUser;
     private User regularUser;
@@ -97,13 +109,12 @@ class NoticeServiceTest {
             @DisplayName("회사/부서/개인 타겟을 모두 취합하여 공지 대상을 생성한다")
             void it_creates_notice_with_flattened_targets() throws IOException {
                 // given
-                NoticeCreateRequestDto dto =
-                        NoticeCreateRequestDto.builder()
-                                .title("제목")
-                                .targetCompanies(List.of(Company.AWESOME))
-                                .targetDepartmentIds(List.of(10L))
-                                .targetUserIds(List.of(99L))
-                                .build();
+                NoticeCreateRequestDto dto = NoticeCreateRequestDto.builder()
+                        .title("제목")
+                        .targetCompanies(List.of(Company.AWESOME))
+                        .targetDepartmentIds(List.of(10L))
+                        .targetUserIds(List.of(99L))
+                        .build();
 
                 Notice notice = Notice.builder().build();
                 ReflectionTestUtils.setField(notice, "id", 100L);
@@ -126,6 +137,7 @@ class NoticeServiceTest {
                 assertThat(resultId).isEqualTo(100L);
                 verify(noticeTargetRepository).saveAll(any());
                 verify(noticeRepository, times(1)).save(any());
+                verify(notificationService).sendNoticeAlertToTargets(any(), any(), any());
             }
         }
 
@@ -142,6 +154,8 @@ class NoticeServiceTest {
                         .isInstanceOf(CustomException.class)
                         .hasFieldOrPropertyWithValue(
                                 "errorCode", ErrorCode.NO_AUTHORITY_FOR_NOTICE);
+
+                verify(notificationService, never()).sendNoticeAlertToTargets(any(), any(), any());
             }
         }
     }
@@ -162,8 +176,8 @@ class NoticeServiceTest {
                 NoticeSearchConditionDto condition = new NoticeSearchConditionDto();
                 given(userRepository.findById(1L)).willReturn(Optional.of(adminUser));
                 given(
-                                noticeQueryRepository.findNoticesWithFilters(
-                                        eq(condition), eq(1L), eq(true), any()))
+                        noticeQueryRepository.findNoticesWithFilters(
+                                eq(condition), eq(1L), eq(true), any()))
                         .willReturn(Page.empty());
 
                 // when
@@ -186,8 +200,8 @@ class NoticeServiceTest {
                 NoticeSearchConditionDto condition = new NoticeSearchConditionDto();
                 given(userRepository.findById(2L)).willReturn(Optional.of(regularUser));
                 given(
-                                noticeQueryRepository.findNoticesWithFilters(
-                                        eq(condition), eq(2L), eq(false), any()))
+                        noticeQueryRepository.findNoticesWithFilters(
+                                eq(condition), eq(2L), eq(false), any()))
                         .willReturn(Page.empty());
 
                 // when
@@ -236,11 +250,10 @@ class NoticeServiceTest {
             NoticeAttachment oldAttachment = new NoticeAttachment();
             ReflectionTestUtils.setField(oldAttachment, "s3Key", "old-key");
 
-            NoticeUpdateRequestDto dto =
-                    NoticeUpdateRequestDto.builder()
-                            .title("수정제목")
-                            .attachmentsIdsToRemove(List.of(10L))
-                            .build();
+            NoticeUpdateRequestDto dto = NoticeUpdateRequestDto.builder()
+                    .title("수정제목")
+                    .attachmentsIdsToRemove(List.of(10L))
+                    .build();
 
             given(userRepository.findById(1L)).willReturn(Optional.of(adminUser));
             given(noticeRepository.findByIdWithDetails(1L)).willReturn(Optional.of(notice));
@@ -266,8 +279,7 @@ class NoticeServiceTest {
         void it_throws_when_attachment_not_belong_to_notice() {
             // given
             Notice notice = Notice.builder().build();
-            NoticeUpdateRequestDto dto =
-                    NoticeUpdateRequestDto.builder().attachmentsIdsToRemove(List.of(999L)).build();
+            NoticeUpdateRequestDto dto = NoticeUpdateRequestDto.builder().attachmentsIdsToRemove(List.of(999L)).build();
 
             given(userRepository.findById(1L)).willReturn(Optional.of(adminUser));
             given(noticeRepository.findByIdWithDetails(1L)).willReturn(Optional.of(notice));
@@ -288,11 +300,9 @@ class NoticeServiceTest {
             Notice notice = Notice.builder().build();
             NoticeUpdateRequestDto dto = NoticeUpdateRequestDto.builder().title("수정제목").build();
 
-            MockMultipartFile emptyFile =
-                    new MockMultipartFile("files", "", "application/octet-stream", new byte[0]);
-            MockMultipartFile blobFile =
-                    new MockMultipartFile(
-                            "files", "blob", "application/octet-stream", "x".getBytes());
+            MockMultipartFile emptyFile = new MockMultipartFile("files", "", "application/octet-stream", new byte[0]);
+            MockMultipartFile blobFile = new MockMultipartFile(
+                    "files", "blob", "application/octet-stream", "x".getBytes());
 
             given(userRepository.findById(1L)).willReturn(Optional.of(adminUser));
             given(noticeRepository.findByIdWithDetails(1L)).willReturn(Optional.of(notice));

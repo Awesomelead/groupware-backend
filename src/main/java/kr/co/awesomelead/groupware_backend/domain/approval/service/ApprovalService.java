@@ -19,6 +19,7 @@ import kr.co.awesomelead.groupware_backend.domain.approval.enums.ParticipantType
 import kr.co.awesomelead.groupware_backend.domain.approval.mapper.ApprovalMapper;
 import kr.co.awesomelead.groupware_backend.domain.approval.repository.ApprovalAttachmentRepository;
 import kr.co.awesomelead.groupware_backend.domain.approval.repository.ApprovalRepository;
+import kr.co.awesomelead.groupware_backend.domain.notification.service.NotificationService;
 import kr.co.awesomelead.groupware_backend.domain.user.entity.User;
 import kr.co.awesomelead.groupware_backend.domain.user.enums.Role;
 import kr.co.awesomelead.groupware_backend.domain.user.repository.UserRepository;
@@ -27,6 +28,7 @@ import kr.co.awesomelead.groupware_backend.global.error.ErrorCode;
 import kr.co.awesomelead.groupware_backend.global.infra.s3.service.S3Service;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
 import org.springframework.data.domain.Page;
 import org.springframework.stereotype.Service;
@@ -36,6 +38,7 @@ import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
 
+@Slf4j
 @Service
 @Transactional(readOnly = true)
 @RequiredArgsConstructor
@@ -44,19 +47,17 @@ public class ApprovalService {
     private final ApprovalRepository approvalRepository;
     private final UserRepository userRepository;
     private final ApprovalAttachmentRepository attachmentRepository;
-    private final kr.co.awesomelead.groupware_backend.domain.approval.repository.querydsl
-                    .ApprovalQueryRepository
-            approvalQueryRepository;
+    private final kr.co.awesomelead.groupware_backend.domain.approval.repository.querydsl.ApprovalQueryRepository approvalQueryRepository;
     private final ApprovalMapper approvalMapper;
     private final S3Service s3Service;
+    private final NotificationService notificationService;
 
     @Transactional
     public Long createApproval(ApprovalCreateRequestDto dto, Long drafterId) {
         // 1. 기안자 정보 및 부서 스냅샷 확보
-        User drafter =
-                userRepository
-                        .findById(drafterId)
-                        .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
+        User drafter = userRepository
+                .findById(drafterId)
+                .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
 
         // 2. 근태신청서인 경우 LeaveType-LeaveDetailType 검증
         if (dto instanceof LeaveApprovalCreateRequestDto leaveDto) {
@@ -89,6 +90,23 @@ public class ApprovalService {
 
         // 7. 채번된 PK를 이용하여 문서 번호 생성 및 업데이트
         generateDocumentNumber(approval);
+
+        // 8. 알림 전송: 첫 번째 결재자 + 참조자(REFERRER)
+        approval.getSteps().stream()
+                .min(java.util.Comparator.comparingInt(ApprovalStep::getSequence))
+                .ifPresent(firstStep -> {
+                    List<Long> referrerIds = approval.getParticipants().stream()
+                            .filter(p -> p.getParticipantType() == ParticipantType.REFERRER)
+                            .map(p -> p.getUser().getId())
+                            .toList();
+                    try {
+                        notificationService.sendApprovalCreatedAlert(
+                                approval.getId(), approval.getTitle(),
+                                firstStep.getApprover().getId(), referrerIds);
+                    } catch (Exception e) {
+                        log.warn("전자결재 생성 알림 전송 실패: {}", e.getMessage());
+                    }
+                });
 
         return approval.getId();
     }
@@ -135,20 +153,18 @@ public class ApprovalService {
         }
 
         for (StepRequestDto stepDto : steps) {
-            User approver =
-                    userRepository
-                            .findById(stepDto.getApproverId())
-                            .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
+            User approver = userRepository
+                    .findById(stepDto.getApproverId())
+                    .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
 
-            ApprovalStep step =
-                    new ApprovalStep(
-                            null,
-                            approval,
-                            approver,
-                            stepDto.getSequence(),
-                            ApprovalStatus.PENDING,
-                            null,
-                            null);
+            ApprovalStep step = new ApprovalStep(
+                    null,
+                    approval,
+                    approver,
+                    stepDto.getSequence(),
+                    ApprovalStatus.PENDING,
+                    null,
+                    null);
 
             approval.getSteps().add(step); // 부모 엔티티 리스트에 추가 (CascadeType.ALL 작동)
         }
@@ -160,13 +176,12 @@ public class ApprovalService {
         }
 
         for (ParticipantRequestDto partDto : participants) {
-            User user =
-                    userRepository
-                            .findById(partDto.getUserId())
-                            .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
+            User user = userRepository
+                    .findById(partDto.getUserId())
+                    .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
 
-            ApprovalParticipant participant =
-                    new ApprovalParticipant(null, approval, user, partDto.getParticipantType());
+            ApprovalParticipant participant = new ApprovalParticipant(null, approval, user,
+                    partDto.getParticipantType());
 
             approval.getParticipants().add(participant);
         }
@@ -187,41 +202,78 @@ public class ApprovalService {
 
     @Transactional
     public void approveApproval(Long approvalId, Long approverId, String comment) {
-        Approval approval =
-                approvalRepository
-                        .findById(approvalId)
-                        .orElseThrow(() -> new CustomException(ErrorCode.APPROVAL_NOT_FOUND));
+        Approval approval = approvalRepository
+                .findById(approvalId)
+                .orElseThrow(() -> new CustomException(ErrorCode.APPROVAL_NOT_FOUND));
 
-        User approver =
-                userRepository
-                        .findById(approverId)
-                        .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
+        User approver = userRepository
+                .findById(approverId)
+                .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
 
         approval.approve(approver, comment);
+
+        // 승인 후 상태에 따라 알림 분기
+        boolean allApproved = approval.getSteps().stream()
+                .allMatch(s -> s.getStatus() == ApprovalStatus.APPROVED);
+
+        if (allApproved) {
+            // 최종 승인: 기안자 + 열람권자(VIEWER)에게 알림
+            List<Long> viewerIds = approval.getParticipants().stream()
+                    .filter(p -> p.getParticipantType() == ParticipantType.VIEWER)
+                    .map(p -> p.getUser().getId())
+                    .toList();
+            try {
+                notificationService.sendApprovalFinallyApprovedAlert(
+                        approval.getId(), approval.getTitle(),
+                        approval.getDrafter().getId(), viewerIds);
+            } catch (Exception e) {
+                log.warn("전자결재 최종승인 알림 전송 실패: {}", e.getMessage());
+            }
+        } else {
+            // 다음 결재자에게 알림
+            approval.getSteps().stream()
+                    .filter(s -> s.getStatus() == ApprovalStatus.PENDING)
+                    .min(java.util.Comparator.comparingInt(ApprovalStep::getSequence))
+                    .ifPresent(nextStep -> {
+                        try {
+                            notificationService.sendApprovalNextStepAlert(
+                                    nextStep.getApprover().getId(),
+                                    approval.getId(), approval.getTitle());
+                        } catch (Exception e) {
+                            log.warn("전자결재 다음 결재자 알림 전송 실패: {}", e.getMessage());
+                        }
+                    });
+        }
     }
 
     @Transactional
     public void rejectApproval(Long approvalId, Long approverId, String comment) {
-        Approval approval =
-                approvalRepository
-                        .findById(approvalId)
-                        .orElseThrow(() -> new CustomException(ErrorCode.APPROVAL_NOT_FOUND));
+        Approval approval = approvalRepository
+                .findById(approvalId)
+                .orElseThrow(() -> new CustomException(ErrorCode.APPROVAL_NOT_FOUND));
 
-        User approver =
-                userRepository
-                        .findById(approverId)
-                        .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
+        User approver = userRepository
+                .findById(approverId)
+                .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
 
         approval.reject(approver, comment);
+
+        // 기안자에게 반려 알림
+        try {
+            notificationService.sendApprovalRejectedAlert(
+                    approval.getDrafter().getId(), approval.getId(),
+                    approval.getTitle(), comment);
+        } catch (Exception e) {
+            log.warn("전자결재 반려 알림 전송 실패: {}", e.getMessage());
+        }
     }
 
     public Page<ApprovalSummaryResponseDto> getApprovalList(
             ApprovalListRequestDto condition, Long userId) {
 
-        User user =
-                userRepository
-                        .findById(userId)
-                        .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
+        User user = userRepository
+                .findById(userId)
+                .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
 
         return approvalQueryRepository.findApprovalsByCondition(
                 condition, userId, user.getRole().name());
@@ -229,38 +281,34 @@ public class ApprovalService {
 
     public ApprovalDetailResponseDto getApprovalDetail(Long approvalId, Long userId) {
 
-        Approval approval =
-                approvalRepository
-                        .findById(approvalId)
-                        .orElseThrow(() -> new CustomException(ErrorCode.APPROVAL_NOT_FOUND));
+        Approval approval = approvalRepository
+                .findById(approvalId)
+                .orElseThrow(() -> new CustomException(ErrorCode.APPROVAL_NOT_FOUND));
 
-        User user =
-                userRepository
-                        .findById(userId)
-                        .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
+        User user = userRepository
+                .findById(userId)
+                .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
 
         // 권한 검증: 관리자이거나, 해당 문서의 기안자/결재선/참조자에 포함되어 있어야 조회 가능
         boolean isAdmin = user.getRole() == Role.ADMIN || user.getRole() == Role.MASTER_ADMIN;
         boolean isDrafter = approval.getDrafter().getId().equals(userId);
-        boolean isApprover =
-                approval.getSteps().stream()
-                        .anyMatch(step -> step.getApprover().getId().equals(userId));
-        boolean isParticipant =
-                approval.getParticipants().stream()
-                        .anyMatch(
-                                part -> {
-                                    if (part.getUser().getId().equals(userId)) {
-                                        // 참조자(REFERRER)는 상신 직후 바로 조회 가능
-                                        if (part.getParticipantType() == ParticipantType.REFERRER) {
-                                            return true;
-                                        }
-                                        // 열람권자(VIEWER)는 최종 승인(APPROVED)된 문서만 조회 가능
-                                        if (part.getParticipantType() == ParticipantType.VIEWER) {
-                                            return approval.getStatus() == ApprovalStatus.APPROVED;
-                                        }
-                                    }
-                                    return false;
-                                });
+        boolean isApprover = approval.getSteps().stream()
+                .anyMatch(step -> step.getApprover().getId().equals(userId));
+        boolean isParticipant = approval.getParticipants().stream()
+                .anyMatch(
+                        part -> {
+                            if (part.getUser().getId().equals(userId)) {
+                                // 참조자(REFERRER)는 상신 직후 바로 조회 가능
+                                if (part.getParticipantType() == ParticipantType.REFERRER) {
+                                    return true;
+                                }
+                                // 열람권자(VIEWER)는 최종 승인(APPROVED)된 문서만 조회 가능
+                                if (part.getParticipantType() == ParticipantType.VIEWER) {
+                                    return approval.getStatus() == ApprovalStatus.APPROVED;
+                                }
+                            }
+                            return false;
+                        });
 
         if (!isAdmin && !isDrafter && !isApprover && !isParticipant) {
             throw new CustomException(ErrorCode.NOT_APPROVER);

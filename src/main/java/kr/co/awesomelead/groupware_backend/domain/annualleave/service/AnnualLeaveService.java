@@ -9,6 +9,7 @@ import kr.co.awesomelead.groupware_backend.domain.annualleave.repository.AnnualL
 import kr.co.awesomelead.groupware_backend.domain.user.entity.User;
 import kr.co.awesomelead.groupware_backend.domain.user.enums.Authority;
 import kr.co.awesomelead.groupware_backend.domain.user.repository.UserRepository;
+import kr.co.awesomelead.groupware_backend.domain.notification.service.NotificationService;
 import kr.co.awesomelead.groupware_backend.global.error.CustomException;
 import kr.co.awesomelead.groupware_backend.global.error.ErrorCode;
 
@@ -41,15 +42,15 @@ public class AnnualLeaveService {
     private final AnnualLeaveRepository annualLeaveRepository;
     private final AnnualLeaveMapper annualLeaveMapper;
     private final UserRepository userRepository;
+    private final NotificationService notificationService;
 
     @Transactional
     public ExcelUploadResponseDto uploadAnnualLeaveFile(
             MultipartFile file, String sheetName, Long userId) {
         // 유저의 연차발송 권한 확인
-        User currentUser =
-                userRepository
-                        .findById(userId)
-                        .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
+        User currentUser = userRepository
+                .findById(userId)
+                .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
         if (!currentUser.hasAuthority(Authority.MANAGE_EMPLOYEE_DATA)) {
             throw new CustomException(ErrorCode.NO_AUTHORITY_FOR_ANNUAL_LEAVE);
         }
@@ -84,7 +85,7 @@ public class AnnualLeaveService {
                                     i + 1, // 엑셀 상의 열
                                     getCellValueAsString(row.getCell(3)), // 성명
                                     e.getMessage() // 실패 원인 (에러 메세지)
-                                    ));
+                            ));
                 }
             }
 
@@ -110,10 +111,9 @@ public class AnnualLeaveService {
         }
 
         // 유저 식별 (성명 + 입사일)
-        User targetUser =
-                userRepository
-                        .findByNameAndJoinDate(name, joinDate)
-                        .orElseThrow(() -> new RuntimeException("일치하는 직원을 찾을 수 없습니다."));
+        User targetUser = userRepository
+                .findByNameAndJoinDate(name, joinDate)
+                .orElseThrow(() -> new RuntimeException("일치하는 직원을 찾을 수 없습니다."));
 
         // 연차 정보 추출 (Double 타입 대응)
         Double total = getCellValueAsDouble(row.getCell(5));
@@ -123,8 +123,7 @@ public class AnnualLeaveService {
         Double remain = getCellValueAsDouble(row.getCell(9));
 
         // 기존 정보가 있으면 업데이트, 없으면 신규 생성
-        AnnualLeave annualLeave =
-                annualLeaveRepository.findByUser(targetUser).orElse(new AnnualLeave());
+        AnnualLeave annualLeave = annualLeaveRepository.findByUser(targetUser).orElse(new AnnualLeave());
 
         annualLeave.setUser(targetUser);
         annualLeave.setTotal(total);
@@ -135,6 +134,10 @@ public class AnnualLeaveService {
         annualLeave.setUpdateDate(updateDate); // Date 타입 호환
 
         annualLeaveRepository.save(annualLeave);
+
+        // 연차 알림 전송 (LocalDate를 "yyyy년 MM월 dd일" 형식으로 변환하여 템플릿과 매칭)
+        String formattedDate = updateDate.format(DateTimeFormatter.ofPattern("yyyy년 MM월 dd일"));
+        notificationService.sendAnnualLeaveAlertToUser(targetUser.getId(), formattedDate);
     }
 
     // 연차 데이터 공지 기준일 파싱
@@ -192,10 +195,9 @@ public class AnnualLeaveService {
 
     @Transactional(readOnly = true)
     public AnnualLeaveResponseDto getAnnualLeave(Long userId) {
-        User user =
-                userRepository
-                        .findById(userId)
-                        .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
+        User user = userRepository
+                .findById(userId)
+                .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
         return annualLeaveMapper.toAnnualLeaveResponseDto(user.getAnnualLeave());
     }
 }

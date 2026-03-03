@@ -235,4 +235,149 @@ public class NotificationService {
                 targetUserIds.size(),
                 template.name());
     }
+
+    /**
+     * 연차 갱신/등록 시 단일 유저에게 알림 전송
+     *
+     * @param userId            알림 대상 유저 ID
+     * @param baseDateFormatted 포맷팅된 기준일 문자열 (예: "2025년 08월 01일")
+     */
+    @Transactional
+    public void sendAnnualLeaveAlertToUser(Long userId, String baseDateFormatted) {
+        NotificationMessage template = NotificationMessage.ANNUAL_LEAVE_UPDATED;
+        String title = template.getTitle();
+        String content = template.formatContent(baseDateFormatted);
+
+        // 1. FCM 알림 전송
+        fcmService.sendToUser(userId, title, content, null);
+
+        // 2. 알림함 DB 저장 (domainId는 단일 엔티티 연차 특성상 null 처리)
+        createNotification(userId, title, content, NotificationDomainType.ANNUAL_LEAVE, null, null);
+
+        log.info("연차 알림 전송 완료 - userId: {}, 기준일: {}", userId, baseDateFormatted);
+    }
+
+    /**
+     * 급여명세서 발송 시 단일 유저에게 알림 전송
+     *
+     * @param userId    알림 대상 유저 ID
+     * @param payslipId 발송된 Payslip ID (domainId로 저장)
+     */
+    @Transactional
+    public void sendPayslipAlertToUser(Long userId, Long payslipId) {
+        NotificationMessage template = NotificationMessage.PAYSLIP_SENT;
+        String title = template.getTitle();
+        String content = template.formatContent();
+
+        // 1. FCM 알림 전송
+        fcmService.sendToUser(userId, title, content, null);
+
+        // 2. 알림함 DB 저장
+        createNotification(userId, title, content, NotificationDomainType.PAYSLIP, payslipId, null);
+
+        log.info("급여명세서 알림 전송 완료 - userId: {}, payslipId: {}", userId, payslipId);
+    }
+
+    // ======================== 전자결재 알림 ========================
+
+    /**
+     * 전자결재 생성 시 첫 번째 결재자와 참조자(REFERRER)에게 알림 전송
+     *
+     * @param approvalId      결재 문서 ID
+     * @param docTitle        결재 문서 제목
+     * @param firstApproverId 첫 번째 결재자 유저 ID
+     * @param referrerIds     참조자(REFERRER) 유저 ID 목록
+     */
+    @Transactional
+    public void sendApprovalCreatedAlert(
+            Long approvalId, String docTitle, Long firstApproverId, List<Long> referrerIds) {
+
+        // 1. 첫 번째 결재자에게 알림
+        String approverTitle = NotificationMessage.APPROVAL_CREATED_APPROVER.getTitle();
+        String approverContent = NotificationMessage.APPROVAL_CREATED_APPROVER.formatContent(docTitle);
+        fcmService.sendToUser(firstApproverId, approverTitle, approverContent, null);
+        createNotification(firstApproverId, approverTitle, approverContent,
+                NotificationDomainType.APPROVAL, approvalId, null);
+        log.info("전자결재 생성 알림(결재자) 전송 - approvalId: {}, approverId: {}", approvalId, firstApproverId);
+
+        // 2. 참조자들에게 알림
+        String referrerTitle = NotificationMessage.APPROVAL_CREATED_REFERRER.getTitle();
+        String referrerContent = NotificationMessage.APPROVAL_CREATED_REFERRER.formatContent(docTitle);
+        for (Long referrerId : referrerIds) {
+            fcmService.sendToUser(referrerId, referrerTitle, referrerContent, null);
+            createNotification(referrerId, referrerTitle, referrerContent,
+                    NotificationDomainType.APPROVAL, approvalId, null);
+        }
+        log.info("전자결재 생성 알림(참조자 {}명) 전송 완료 - approvalId: {}", referrerIds.size(), approvalId);
+    }
+
+    /**
+     * N번째 결재자가 승인 시 N+1번째 결재자에게 알림 전송
+     *
+     * @param nextApproverId 다음 결재자 유저 ID
+     * @param approvalId     결재 문서 ID
+     * @param docTitle       결재 문서 제목
+     */
+    @Transactional
+    public void sendApprovalNextStepAlert(Long nextApproverId, Long approvalId, String docTitle) {
+        String title = NotificationMessage.APPROVAL_CREATED_APPROVER.getTitle();
+        String content = NotificationMessage.APPROVAL_CREATED_APPROVER.formatContent(docTitle);
+
+        fcmService.sendToUser(nextApproverId, title, content, null);
+        createNotification(nextApproverId, title, content,
+                NotificationDomainType.APPROVAL, approvalId, null);
+
+        log.info("전자결재 다음 결재자 알림 전송 - approvalId: {}, nextApproverId: {}", approvalId, nextApproverId);
+    }
+
+    /**
+     * 전자결재 반려 시 기안자에게 사유와 함께 알림 전송
+     *
+     * @param drafterId  기안자 유저 ID
+     * @param approvalId 결재 문서 ID
+     * @param docTitle   결재 문서 제목
+     * @param comment    반려 사유
+     */
+    @Transactional
+    public void sendApprovalRejectedAlert(
+            Long drafterId, Long approvalId, String docTitle, String comment) {
+        String title = NotificationMessage.APPROVAL_REJECTED.getTitle();
+        String content = NotificationMessage.APPROVAL_REJECTED.formatContent(docTitle, comment);
+
+        fcmService.sendToUser(drafterId, title, content, null);
+        createNotification(drafterId, title, content,
+                NotificationDomainType.APPROVAL, approvalId, null);
+
+        log.info("전자결재 반려 알림 전송 - approvalId: {}, drafterId: {}", approvalId, drafterId);
+    }
+
+    /**
+     * 전자결재 최종 승인 시 기안자와 열람권자(VIEWER)에게 알림 전송
+     *
+     * @param approvalId 결재 문서 ID
+     * @param docTitle   결재 문서 제목
+     * @param drafterId  기안자 유저 ID
+     * @param viewerIds  열람권자(VIEWER) 유저 ID 목록
+     */
+    @Transactional
+    public void sendApprovalFinallyApprovedAlert(
+            Long approvalId, String docTitle, Long drafterId, List<Long> viewerIds) {
+        String title = NotificationMessage.APPROVAL_FINALLY_APPROVED.getTitle();
+        String content = NotificationMessage.APPROVAL_FINALLY_APPROVED.formatContent(docTitle);
+
+        // 1. 기안자에게 알림
+        fcmService.sendToUser(drafterId, title, content, null);
+        createNotification(drafterId, title, content,
+                NotificationDomainType.APPROVAL, approvalId, null);
+
+        // 2. 열람권자들에게 알림
+        for (Long viewerId : viewerIds) {
+            fcmService.sendToUser(viewerId, title, content, null);
+            createNotification(viewerId, title, content,
+                    NotificationDomainType.APPROVAL, approvalId, null);
+        }
+
+        log.info("전자결재 최종 승인 알림 전송 - approvalId: {}, drafterId: {}, viewers: {}명",
+                approvalId, drafterId, viewerIds.size());
+    }
 }

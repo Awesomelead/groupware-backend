@@ -1,5 +1,9 @@
 package kr.co.awesomelead.groupware_backend.domain.notification.service;
 
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import kr.co.awesomelead.groupware_backend.domain.fcm.service.FcmService;
 import kr.co.awesomelead.groupware_backend.domain.notification.dto.response.NotificationResponseDto;
 import kr.co.awesomelead.groupware_backend.domain.notification.entity.Notification;
@@ -11,17 +15,12 @@ import kr.co.awesomelead.groupware_backend.domain.user.enums.Role;
 import kr.co.awesomelead.groupware_backend.domain.user.repository.UserRepository;
 import kr.co.awesomelead.groupware_backend.global.error.CustomException;
 import kr.co.awesomelead.groupware_backend.global.error.ErrorCode;
-
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
-import java.util.List;
-import java.util.Set;
 
 @Slf4j
 @Service
@@ -34,11 +33,11 @@ public class NotificationService {
 
     @Transactional
     public void createNotification(
-            Long userId,
-            String title,
-            String content,
-            NotificationDomainType domainType,
-            Long domainId) {
+        Long userId,
+        String title,
+        String content,
+        NotificationDomainType domainType,
+        Long domainId) {
         Notification notification = Notification.of(userId, title, content, domainType, domainId);
         notificationRepository.save(notification);
         log.info("알림 생성 - userId: {}, domainType: {}", userId, domainType);
@@ -47,15 +46,15 @@ public class NotificationService {
     @Transactional(readOnly = true)
     public Page<NotificationResponseDto> getNotifications(Long userId, Pageable pageable) {
         return notificationRepository
-                .findByUserIdOrderByCreatedAtDesc(userId, pageable)
-                .map(NotificationResponseDto::from);
+            .findByUserIdOrderByCreatedAtDesc(userId, pageable)
+            .map(NotificationResponseDto::from);
     }
 
     @Transactional
     public void markAsRead(Long notificationId, Long userId) {
         Notification notification = notificationRepository
-                .findById(notificationId)
-                .orElseThrow(() -> new CustomException(ErrorCode.NOTIFICATION_NOT_FOUND));
+            .findById(notificationId)
+            .orElseThrow(() -> new CustomException(ErrorCode.NOTIFICATION_NOT_FOUND));
 
         if (!notification.getUserId().equals(userId)) {
             throw new CustomException(ErrorCode.NO_AUTHORITY_FOR_NOTIFICATION);
@@ -79,10 +78,10 @@ public class NotificationService {
      */
     @Transactional
     public void sendAlertToAdmins(
-            NotificationMessage template,
-            NotificationDomainType domainType,
-            Long domainId,
-            Object... args) {
+        NotificationMessage template,
+        NotificationDomainType domainType,
+        Long domainId,
+        Object... args) {
         String title = template.getTitle();
         String content = template.formatContent(args);
 
@@ -91,17 +90,18 @@ public class NotificationService {
 
         for (User admin : admins) {
             // 1. FCM 푸시 알림 전송 (토큰이 없으면 내부에서 skip)
-            fcmService.sendToUser(admin.getId(), title, content, null);
+            fcmService.sendToUser(admin.getId(), title, content,
+                buildFcmData(domainType, domainId));
 
             // 2. 알림함 저장
             createNotification(
-                    admin.getId(), title, content, domainType, domainId);
+                admin.getId(), title, content, domainType, domainId);
         }
 
         log.info(
-                "관리자 그룹 알림 전송 완료 - 대상 Admin 수: {}, 템플릿: {}",
-                admins.size(),
-                template.name());
+            "관리자 그룹 알림 전송 완료 - 대상 Admin 수: {}, 템플릿: {}",
+            admins.size(),
+            template.name());
     }
 
     /**
@@ -110,21 +110,21 @@ public class NotificationService {
      * @param userId     수신 유저 ID
      * @param template   알림 메시지 템플릿
      * @param domainType 생성할 알림의 도메인 타입
-     * @param domainId   생성할 알림의 도메인 ID (선택)
+     * @param domainId   생성할 알림의 도메인 ID
      * @param args       템플릿 포맷팅에 사용할 인자
      */
     @Transactional
     public void sendAlertToUser(
-            Long userId,
-            NotificationMessage template,
-            NotificationDomainType domainType,
-            Long domainId,
-            Object... args) {
+        Long userId,
+        NotificationMessage template,
+        NotificationDomainType domainType,
+        Long domainId,
+        Object... args) {
         String title = template.getTitle();
         String content = template.formatContent(args);
 
         // 1. FCM 푸시 알림 전송
-        fcmService.sendToUser(userId, title, content, null);
+        fcmService.sendToUser(userId, title, content, buildFcmData(domainType, domainId));
 
         // 2. 알림함 저장
         createNotification(userId, title, content, domainType, domainId);
@@ -141,7 +141,7 @@ public class NotificationService {
      */
     @Transactional
     public void sendNoticeAlertToTargets(
-            String noticeTitle, Long noticeId, Set<Long> targetUserIds) {
+        String noticeTitle, Long noticeId, Set<Long> targetUserIds) {
         if (targetUserIds == null || targetUserIds.isEmpty()) {
             log.info("공지 알림 전송 건너뜀 - 대상 없음, noticeId: {}", noticeId);
             return;
@@ -152,15 +152,16 @@ public class NotificationService {
 
         for (Long userId : targetUserIds) {
             // 1. FCM 푸시 알림 전송 (토큰이 없으면 내부에서 skip)
-            fcmService.sendToUser(userId, title, content, null);
+            fcmService.sendToUser(userId, title, content,
+                buildFcmData(NotificationDomainType.NOTICE, noticeId));
 
             // 2. 알림함 저장
             createNotification(
-                    userId, title, content, NotificationDomainType.NOTICE, noticeId);
+                userId, title, content, NotificationDomainType.NOTICE, noticeId);
         }
 
         log.info(
-                "공지 알림 전송 완료 - noticeId: {}, 대상 수: {}", noticeId, targetUserIds.size());
+            "공지 알림 전송 완료 - noticeId: {}, 대상 수: {}", noticeId, targetUserIds.size());
     }
 
     /**
@@ -173,26 +174,28 @@ public class NotificationService {
      */
     @Transactional
     public void sendEduReportAlertToTargets(
-            String eduTypeLabel, String eduTitle, Long reportId, List<Long> targetUserIds) {
+        String eduTypeLabel, String eduTitle, Long reportId, List<Long> targetUserIds) {
         if (targetUserIds == null || targetUserIds.isEmpty()) {
             log.info("교육 알림 전송 건너뜀 - 대상 없음, reportId: {}", reportId);
             return;
         }
 
         String title = NotificationMessage.EDU_REPORT_CREATED.getTitle();
-        String content = NotificationMessage.EDU_REPORT_CREATED.formatContent(eduTypeLabel, eduTitle);
+        String content = NotificationMessage.EDU_REPORT_CREATED.formatContent(eduTypeLabel,
+            eduTitle);
 
         for (Long userId : targetUserIds) {
             // 1. FCM 푸시 알림 전송 (토큰이 없으면 내부에서 skip)
-            fcmService.sendToUser(userId, title, content, null);
+            fcmService.sendToUser(userId, title, content,
+                buildFcmData(NotificationDomainType.EDUCATION, reportId));
 
             // 2. 알림함 저장
             createNotification(
-                    userId, title, content, NotificationDomainType.EDUCATION, reportId);
+                userId, title, content, NotificationDomainType.EDUCATION, reportId);
         }
 
         log.info(
-                "교육 알림 전송 완료 - reportId: {}, 대상 수: {}", reportId, targetUserIds.size());
+            "교육 알림 전송 완료 - reportId: {}, 대상 수: {}", reportId, targetUserIds.size());
     }
 
     /**
@@ -205,10 +208,10 @@ public class NotificationService {
      */
     @Transactional
     public void sendVisitAlertToDepartment(
-            NotificationMessage template,
-            Long visitId,
-            Long hostDepartmentId,
-            Object... contentArgs) {
+        NotificationMessage template,
+        Long visitId,
+        Long hostDepartmentId,
+        Object... contentArgs) {
         List<Long> targetUserIds = userRepository.findAllIdsByDepartmentId(hostDepartmentId);
 
         if (targetUserIds.isEmpty()) {
@@ -221,18 +224,19 @@ public class NotificationService {
 
         for (Long userId : targetUserIds) {
             // 1. FCM 푸시 알림 전송 (토큰이 없으면 내부에서 skip)
-            fcmService.sendToUser(userId, title, content, null);
+            fcmService.sendToUser(userId, title, content,
+                buildFcmData(NotificationDomainType.VISIT, visitId));
 
             // 2. 알림함 저장
             createNotification(
-                    userId, title, content, NotificationDomainType.VISIT, visitId);
+                userId, title, content, NotificationDomainType.VISIT, visitId);
         }
 
         log.info(
-                "방문 알림 전송 완료 - visitId: {}, 대상 수: {}, 템플릿: {}",
-                visitId,
-                targetUserIds.size(),
-                template.name());
+            "방문 알림 전송 완료 - visitId: {}, 대상 수: {}, 템플릿: {}",
+            visitId,
+            targetUserIds.size(),
+            template.name());
     }
 
     /**
@@ -248,7 +252,8 @@ public class NotificationService {
         String content = template.formatContent(baseDateFormatted);
 
         // 1. FCM 알림 전송
-        fcmService.sendToUser(userId, title, content, null);
+        fcmService.sendToUser(userId, title, content,
+            buildFcmData(NotificationDomainType.ANNUAL_LEAVE, null));
 
         // 2. 알림함 DB 저장 (domainId는 단일 엔티티 연차 특성상 null 처리)
         createNotification(userId, title, content, NotificationDomainType.ANNUAL_LEAVE, null);
@@ -269,15 +274,14 @@ public class NotificationService {
         String content = template.formatContent();
 
         // 1. FCM 알림 전송
-        fcmService.sendToUser(userId, title, content, null);
+        fcmService.sendToUser(userId, title, content,
+            buildFcmData(NotificationDomainType.PAYSLIP, payslipId));
 
         // 2. 알림함 DB 저장
         createNotification(userId, title, content, NotificationDomainType.PAYSLIP, payslipId);
 
         log.info("급여명세서 알림 전송 완료 - userId: {}, payslipId: {}", userId, payslipId);
     }
-
-    // ======================== 전자결재 알림 ========================
 
     /**
      * 전자결재 생성 시 첫 번째 결재자와 참조자(REFERRER)에게 알림 전송
@@ -289,23 +293,28 @@ public class NotificationService {
      */
     @Transactional
     public void sendApprovalCreatedAlert(
-            Long approvalId, String docTitle, Long firstApproverId, List<Long> referrerIds) {
+        Long approvalId, String docTitle, Long firstApproverId, List<Long> referrerIds) {
 
         // 1. 첫 번째 결재자에게 알림
         String approverTitle = NotificationMessage.APPROVAL_CREATED_APPROVER.getTitle();
-        String approverContent = NotificationMessage.APPROVAL_CREATED_APPROVER.formatContent(docTitle);
-        fcmService.sendToUser(firstApproverId, approverTitle, approverContent, null);
+        String approverContent = NotificationMessage.APPROVAL_CREATED_APPROVER.formatContent(
+            docTitle);
+        fcmService.sendToUser(firstApproverId, approverTitle, approverContent,
+            buildFcmData(NotificationDomainType.APPROVAL, approvalId));
         createNotification(firstApproverId, approverTitle, approverContent,
-                NotificationDomainType.APPROVAL, approvalId);
-        log.info("전자결재 생성 알림(결재자) 전송 - approvalId: {}, approverId: {}", approvalId, firstApproverId);
+            NotificationDomainType.APPROVAL, approvalId);
+        log.info("전자결재 생성 알림(결재자) 전송 - approvalId: {}, approverId: {}", approvalId,
+            firstApproverId);
 
         // 2. 참조자들에게 알림
         String referrerTitle = NotificationMessage.APPROVAL_CREATED_REFERRER.getTitle();
-        String referrerContent = NotificationMessage.APPROVAL_CREATED_REFERRER.formatContent(docTitle);
+        String referrerContent = NotificationMessage.APPROVAL_CREATED_REFERRER.formatContent(
+            docTitle);
         for (Long referrerId : referrerIds) {
-            fcmService.sendToUser(referrerId, referrerTitle, referrerContent, null);
+            fcmService.sendToUser(referrerId, referrerTitle, referrerContent,
+                buildFcmData(NotificationDomainType.APPROVAL, approvalId));
             createNotification(referrerId, referrerTitle, referrerContent,
-                    NotificationDomainType.APPROVAL, approvalId);
+                NotificationDomainType.APPROVAL, approvalId);
         }
         log.info("전자결재 생성 알림(참조자 {}명) 전송 완료 - approvalId: {}", referrerIds.size(), approvalId);
     }
@@ -322,11 +331,13 @@ public class NotificationService {
         String title = NotificationMessage.APPROVAL_CREATED_APPROVER.getTitle();
         String content = NotificationMessage.APPROVAL_CREATED_APPROVER.formatContent(docTitle);
 
-        fcmService.sendToUser(nextApproverId, title, content, null);
+        fcmService.sendToUser(nextApproverId, title, content,
+            buildFcmData(NotificationDomainType.APPROVAL, approvalId));
         createNotification(nextApproverId, title, content,
-                NotificationDomainType.APPROVAL, approvalId);
+            NotificationDomainType.APPROVAL, approvalId);
 
-        log.info("전자결재 다음 결재자 알림 전송 - approvalId: {}, nextApproverId: {}", approvalId, nextApproverId);
+        log.info("전자결재 다음 결재자 알림 전송 - approvalId: {}, nextApproverId: {}", approvalId,
+            nextApproverId);
     }
 
     /**
@@ -339,13 +350,14 @@ public class NotificationService {
      */
     @Transactional
     public void sendApprovalRejectedAlert(
-            Long drafterId, Long approvalId, String docTitle, String comment) {
+        Long drafterId, Long approvalId, String docTitle, String comment) {
         String title = NotificationMessage.APPROVAL_REJECTED.getTitle();
         String content = NotificationMessage.APPROVAL_REJECTED.formatContent(docTitle, comment);
 
-        fcmService.sendToUser(drafterId, title, content, null);
+        fcmService.sendToUser(drafterId, title, content,
+            buildFcmData(NotificationDomainType.APPROVAL, approvalId));
         createNotification(drafterId, title, content,
-                NotificationDomainType.APPROVAL, approvalId);
+            NotificationDomainType.APPROVAL, approvalId);
 
         log.info("전자결재 반려 알림 전송 - approvalId: {}, drafterId: {}", approvalId, drafterId);
     }
@@ -360,23 +372,32 @@ public class NotificationService {
      */
     @Transactional
     public void sendApprovalFinallyApprovedAlert(
-            Long approvalId, String docTitle, Long drafterId, List<Long> viewerIds) {
+        Long approvalId, String docTitle, Long drafterId, List<Long> viewerIds) {
         String title = NotificationMessage.APPROVAL_FINALLY_APPROVED.getTitle();
         String content = NotificationMessage.APPROVAL_FINALLY_APPROVED.formatContent(docTitle);
 
         // 1. 기안자에게 알림
-        fcmService.sendToUser(drafterId, title, content, null);
+        fcmService.sendToUser(drafterId, title, content,
+            buildFcmData(NotificationDomainType.APPROVAL, approvalId));
         createNotification(drafterId, title, content,
-                NotificationDomainType.APPROVAL, approvalId);
+            NotificationDomainType.APPROVAL, approvalId);
 
         // 2. 열람권자들에게 알림
         for (Long viewerId : viewerIds) {
-            fcmService.sendToUser(viewerId, title, content, null);
+            fcmService.sendToUser(viewerId, title, content,
+                buildFcmData(NotificationDomainType.APPROVAL, approvalId));
             createNotification(viewerId, title, content,
-                    NotificationDomainType.APPROVAL, approvalId);
+                NotificationDomainType.APPROVAL, approvalId);
         }
 
         log.info("전자결재 최종 승인 알림 전송 - approvalId: {}, drafterId: {}, viewers: {}명",
-                approvalId, drafterId, viewerIds.size());
+            approvalId, drafterId, viewerIds.size());
+    }
+
+    private Map<String, String> buildFcmData(NotificationDomainType domainType, Long domainId) {
+        Map<String, String> data = new HashMap<>();
+        data.put("domainType", domainType.name());
+        data.put("domainId", domainId != null ? domainId.toString() : "");
+        return data;
     }
 }

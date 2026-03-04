@@ -29,11 +29,13 @@ public class FcmTokenController {
 
     private final FcmTokenService fcmTokenService;
 
-    @Operation(summary = "FCM 토큰 등록/갱신", description = "로그인 후 또는 토큰 갱신 시 FCM 토큰을 등록합니다. 동일 디바이스 타입은 Upsert 처리됩니다.")
+    @Operation(
+            summary = "FCM 토큰 등록/갱신",
+            description = "로그인 후 또는 토큰 갱신 시 FCM 토큰을 등록합니다. 동일 디바이스 타입은 Upsert 처리됩니다.")
     @ApiResponses({
-            @ApiResponse(responseCode = "200", description = "등록/갱신 성공"),
-            @ApiResponse(responseCode = "400", description = "유효하지 않은 요청"),
-            @ApiResponse(responseCode = "404", description = "사용자를 찾을 수 없음")
+        @ApiResponse(responseCode = "200", description = "등록/갱신 성공"),
+        @ApiResponse(responseCode = "400", description = "유효하지 않은 요청"),
+        @ApiResponse(responseCode = "404", description = "사용자를 찾을 수 없음")
     })
     @PostMapping
     public ResponseEntity<Void> registerToken(

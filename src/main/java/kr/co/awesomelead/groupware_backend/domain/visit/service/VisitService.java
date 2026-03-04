@@ -63,9 +63,10 @@ public class VisitService {
     @Transactional
     public Long registerOneDayPreVisit(OneDayVisitRequestDto dto) {
 
-        User host = userRepository
-                .findById(dto.getHostId())
-                .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
+        User host =
+                userRepository
+                        .findById(dto.getHostId())
+                        .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
 
         Long hostDeptId = host.getDepartment() != null ? host.getDepartment().getId() : null;
         String hostName = host.getDisplayName();
@@ -96,9 +97,10 @@ public class VisitService {
 
         validateLongTermPeriod(dto.getStartDate(), dto.getEndDate());
 
-        User host = userRepository
-                .findById(dto.getHostId())
-                .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
+        User host =
+                userRepository
+                        .findById(dto.getHostId())
+                        .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
 
         Long hostDeptId = host.getDepartment() != null ? host.getDepartment().getId() : null;
         String encodedPassword = passwordEncoder.encode(dto.getPassword());
@@ -125,9 +127,10 @@ public class VisitService {
     @Transactional
     public Long registerOnSiteVisit(OnSiteVisitRequestDto dto) throws IOException {
 
-        User host = userRepository
-                .findById(dto.getHostId())
-                .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
+        User host =
+                userRepository
+                        .findById(dto.getHostId())
+                        .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
 
         String encodedPassword = passwordEncoder.encode(dto.getPassword());
         String signatureKey = s3Service.uploadFile(dto.getSignatureFile());
@@ -137,13 +140,14 @@ public class VisitService {
 
         Long hostDeptId = host.getDepartment() != null ? host.getDepartment().getId() : null;
 
-        VisitRecord record = VisitRecord.builder()
-                .visit(visit)
-                .visitDate(LocalDate.now())
-                .entryTime(LocalDateTime.now())
-                .exitTime(null) // 현장 방문 시점에는 퇴실 시간이 없음
-                .signatureKey(signatureKey)
-                .build();
+        VisitRecord record =
+                VisitRecord.builder()
+                        .visit(visit)
+                        .visitDate(LocalDate.now())
+                        .entryTime(LocalDateTime.now())
+                        .exitTime(null) // 현장 방문 시점에는 퇴실 시간이 없음
+                        .signatureKey(signatureKey)
+                        .build();
 
         visit.getRecords().add(record);
 
@@ -210,9 +214,10 @@ public class VisitService {
     @Transactional
     public Long checkIn(CheckInRequestDto dto) throws IOException {
         // 1. 방문 신청 건 조회
-        Visit visit = visitRepository
-                .findById(dto.getVisitId())
-                .orElseThrow(() -> new CustomException(ErrorCode.VISIT_NOT_FOUND));
+        Visit visit =
+                visitRepository
+                        .findById(dto.getVisitId())
+                        .orElseThrow(() -> new CustomException(ErrorCode.VISIT_NOT_FOUND));
 
         // 2. 비밀번호 검증
         if (!passwordEncoder.matches(dto.getPassword(), visit.getPassword())) {
@@ -232,12 +237,13 @@ public class VisitService {
         String signatureKey = s3Service.uploadFile(dto.getSignatureFile());
 
         // 6. 입실 기록(VisitRecord) 생성
-        VisitRecord record = VisitRecord.builder()
-                .visit(visit)
-                .visitDate(LocalDate.now())
-                .entryTime(LocalDateTime.now())
-                .signatureKey(signatureKey)
-                .build();
+        VisitRecord record =
+                VisitRecord.builder()
+                        .visit(visit)
+                        .visitDate(LocalDate.now())
+                        .entryTime(LocalDateTime.now())
+                        .signatureKey(signatureKey)
+                        .build();
 
         visit.getRecords().add(record);
 
@@ -264,14 +270,16 @@ public class VisitService {
     public Long checkOut(Long userId, CheckOutRequestDto dto) {
         validateAdminAuthority(userId);
 
-        Visit visit = visitRepository
-                .findById(dto.getVisitId())
-                .orElseThrow(() -> new CustomException(ErrorCode.VISIT_NOT_FOUND));
+        Visit visit =
+                visitRepository
+                        .findById(dto.getVisitId())
+                        .orElseThrow(() -> new CustomException(ErrorCode.VISIT_NOT_FOUND));
 
-        VisitRecord record = visit.getRecords().stream()
-                .filter(r -> r.getId().equals(dto.getVisitRecordId()))
-                .findFirst()
-                .orElseThrow(() -> new CustomException(ErrorCode.RECORD_NOT_FOUND));
+        VisitRecord record =
+                visit.getRecords().stream()
+                        .filter(r -> r.getId().equals(dto.getVisitRecordId()))
+                        .findFirst()
+                        .orElseThrow(() -> new CustomException(ErrorCode.RECORD_NOT_FOUND));
 
         boolean isInitialCheckOut = (record.getExitTime() == null);
 
@@ -303,15 +311,18 @@ public class VisitService {
     public List<MyVisitListResponseDto> getMyVisitList(VisitSearchRequestDto dto) {
         String inputPhoneHash = hashValue(dto.getPhoneNumber());
 
-        List<Visit> visits = visitRepository.findByVisitorNameAndPhoneNumberHash(dto.getName(), inputPhoneHash);
+        List<Visit> visits =
+                visitRepository.findByVisitorNameAndPhoneNumberHash(dto.getName(), inputPhoneHash);
 
         return visits.stream()
                 .filter(
-                        visit -> StringUtils.hasText(
-                                visit.getPassword())) // 비밀번호가 있는 건만 대상 (현장 내방 제외)
+                        visit ->
+                                StringUtils.hasText(
+                                        visit.getPassword())) // 비밀번호가 있는 건만 대상 (현장 내방 제외)
                 .filter(
-                        visit -> passwordEncoder.matches(
-                                dto.getPassword(), visit.getPassword())) // 비번 일치 확인
+                        visit ->
+                                passwordEncoder.matches(
+                                        dto.getPassword(), visit.getPassword())) // 비번 일치 확인
                 .map(visitMapper::toMyVisitListResponseDto)
                 .toList();
     }
@@ -320,9 +331,10 @@ public class VisitService {
     @Transactional(readOnly = true)
     public MyVisitDetailResponseDto getMyVisitDetail(Long visitId, MyVisitDetailRequestDto dto) {
         // 1. 존재 여부 확인
-        Visit visit = visitRepository
-                .findById(visitId)
-                .orElseThrow(() -> new CustomException(ErrorCode.VISIT_NOT_FOUND));
+        Visit visit =
+                visitRepository
+                        .findById(visitId)
+                        .orElseThrow(() -> new CustomException(ErrorCode.VISIT_NOT_FOUND));
 
         // 2. 비밀번호 검증
         if (!passwordEncoder.matches(dto.getPassword(), visit.getPassword())) {
@@ -349,9 +361,10 @@ public class VisitService {
     @Transactional
     public void updateMyVisit(Long visitId, MyVisitUpdateRequestDto dto) {
 
-        Visit visit = visitRepository
-                .findById(visitId)
-                .orElseThrow(() -> new CustomException(ErrorCode.VISIT_NOT_FOUND));
+        Visit visit =
+                visitRepository
+                        .findById(visitId)
+                        .orElseThrow(() -> new CustomException(ErrorCode.VISIT_NOT_FOUND));
 
         if (!passwordEncoder.matches(dto.getPassword(), visit.getPassword())) {
             throw new CustomException(ErrorCode.INVALID_PASSWORD);
@@ -362,8 +375,10 @@ public class VisitService {
 
         if (visit.isLongTerm()) {
 
-            LocalDate effectiveStart = (dto.getStartDate() != null) ? dto.getStartDate() : visit.getStartDate();
-            LocalDate effectiveEnd = (dto.getEndDate() != null) ? dto.getEndDate() : visit.getEndDate();
+            LocalDate effectiveStart =
+                    (dto.getStartDate() != null) ? dto.getStartDate() : visit.getStartDate();
+            LocalDate effectiveEnd =
+                    (dto.getEndDate() != null) ? dto.getEndDate() : visit.getEndDate();
 
             validateLongTermPeriod(effectiveStart, effectiveEnd);
             // 장기 방문은 수정 후 다시 승인 대기 상태로 변경
@@ -419,9 +434,10 @@ public class VisitService {
 
         validateAdminAuthority(userId);
 
-        Visit visit = visitRepository
-                .findById(visitId)
-                .orElseThrow(() -> new CustomException(ErrorCode.VISIT_NOT_FOUND));
+        Visit visit =
+                visitRepository
+                        .findById(visitId)
+                        .orElseThrow(() -> new CustomException(ErrorCode.VISIT_NOT_FOUND));
 
         VisitDetailResponseDto responseDto = visitMapper.toVisitDetailResponseDto(visit);
 
@@ -441,9 +457,10 @@ public class VisitService {
     }
 
     private void validateAdminAuthority(Long userId) {
-        User user = userRepository
-                .findById(userId)
-                .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
+        User user =
+                userRepository
+                        .findById(userId)
+                        .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
 
         // MANAGEMENT 직군이고 방문 관리 권한이 있는지 확인
         if (user.getJobType() != JobType.MANAGEMENT || !user.hasAuthority(Authority.ACCESS_VISIT)) {
@@ -458,9 +475,10 @@ public class VisitService {
         validateAdminAuthority(userId);
 
         // 2. 방문 신청 건 조회
-        Visit visit = visitRepository
-                .findById(visitId)
-                .orElseThrow(() -> new CustomException(ErrorCode.VISIT_NOT_FOUND));
+        Visit visit =
+                visitRepository
+                        .findById(visitId)
+                        .orElseThrow(() -> new CustomException(ErrorCode.VISIT_NOT_FOUND));
 
         // 3. 승인 가능한 상태인지 검증
         // - 장기 방문이어야 함

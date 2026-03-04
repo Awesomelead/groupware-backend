@@ -6,8 +6,7 @@ import lombok.RequiredArgsConstructor;
 /**
  * 알림 메시지 템플릿을 관리하는 Enum.
  *
- * <p>
- * title과 content는 String.format()으로 포맷팅 가능한 패턴을 사용할 수 있습니다. 예: {@code
+ * <p>title과 content는 String.format()으로 포맷팅 가능한 패턴을 사용할 수 있습니다. 예: {@code
  * NotificationMessage.SIGNUP_ADMIN_ALERT.formatContent("홍길동")}
  */
 @Getter

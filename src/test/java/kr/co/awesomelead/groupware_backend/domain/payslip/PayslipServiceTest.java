@@ -8,6 +8,7 @@ import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 
+import kr.co.awesomelead.groupware_backend.domain.notification.service.NotificationService;
 import kr.co.awesomelead.groupware_backend.domain.payslip.dto.request.PayslipStatusRequestDto;
 import kr.co.awesomelead.groupware_backend.domain.payslip.dto.response.AdminPayslipSummaryDto;
 import kr.co.awesomelead.groupware_backend.domain.payslip.dto.response.EmployeePayslipDetailDto;
@@ -16,7 +17,6 @@ import kr.co.awesomelead.groupware_backend.domain.payslip.enums.PayslipStatus;
 import kr.co.awesomelead.groupware_backend.domain.payslip.mapper.PayslipMapper;
 import kr.co.awesomelead.groupware_backend.domain.payslip.repository.PayslipRepository;
 import kr.co.awesomelead.groupware_backend.domain.payslip.service.PayslipService;
-import kr.co.awesomelead.groupware_backend.domain.notification.service.NotificationService;
 import kr.co.awesomelead.groupware_backend.domain.user.entity.User;
 import kr.co.awesomelead.groupware_backend.domain.user.enums.Authority;
 import kr.co.awesomelead.groupware_backend.domain.user.enums.Role;
@@ -43,19 +43,13 @@ import java.util.Optional;
 @ExtendWith(MockitoExtension.class)
 public class PayslipServiceTest {
 
-    @InjectMocks
-    private PayslipService payslipService;
+    @InjectMocks private PayslipService payslipService;
 
-    @Mock
-    private PayslipRepository payslipRepository;
-    @Mock
-    private UserRepository userRepository;
-    @Mock
-    private S3Service s3Service;
-    @Mock
-    private PayslipMapper payslipMapper;
-    @Mock
-    private NotificationService notificationService;
+    @Mock private PayslipRepository payslipRepository;
+    @Mock private UserRepository userRepository;
+    @Mock private S3Service s3Service;
+    @Mock private PayslipMapper payslipMapper;
+    @Mock private NotificationService notificationService;
 
     private User admin;
     private User employee;
@@ -100,8 +94,9 @@ public class PayslipServiceTest {
                 admin.getAuthorities().add(Authority.MANAGE_EMPLOYEE_DATA); // 권한 부여
                 given(userRepository.findById(1L)).willReturn(Optional.of(admin));
 
-                MockMultipartFile txtFile = new MockMultipartFile(
-                        "payslipFiles", "test.txt", "text/plain", "content".getBytes());
+                MockMultipartFile txtFile =
+                        new MockMultipartFile(
+                                "payslipFiles", "test.txt", "text/plain", "content".getBytes());
 
                 // when & then
                 assertThatThrownBy(() -> payslipService.sendPayslip(List.of(txtFile), 1L))
@@ -121,11 +116,12 @@ public class PayslipServiceTest {
                 admin.getAuthorities().add(Authority.MANAGE_EMPLOYEE_DATA);
                 given(userRepository.findById(1L)).willReturn(Optional.of(admin));
 
-                MockMultipartFile pdfFile = new MockMultipartFile(
-                        "payslipFiles",
-                        "홍길동_20240101_급여명세서.pdf",
-                        "application/pdf",
-                        "pdf content".getBytes());
+                MockMultipartFile pdfFile =
+                        new MockMultipartFile(
+                                "payslipFiles",
+                                "홍길동_20240101_급여명세서.pdf",
+                                "application/pdf",
+                                "pdf content".getBytes());
 
                 given(userRepository.findByNameAndJoinDate("홍길동", LocalDate.of(2024, 1, 1)))
                         .willReturn(Optional.of(employee));
@@ -274,7 +270,8 @@ public class PayslipServiceTest {
 
         @BeforeEach
         void setUp() {
-            payslip = Payslip.builder().id(100L).user(employee).status(PayslipStatus.PENDING).build();
+            payslip =
+                    Payslip.builder().id(100L).user(employee).status(PayslipStatus.PENDING).build();
             requestDto = new PayslipStatusRequestDto();
         }
 
@@ -291,8 +288,9 @@ public class PayslipServiceTest {
 
                 // when & then
                 assertThatThrownBy(
-                        () -> payslipService.respondToPayslip(
-                                anotherUserId, 100L, requestDto))
+                                () ->
+                                        payslipService.respondToPayslip(
+                                                anotherUserId, 100L, requestDto))
                         .isInstanceOf(CustomException.class)
                         .hasFieldOrPropertyWithValue(
                                 "errorCode", ErrorCode.NO_AUTHORITY_FOR_VIEW_PAYSLIP);
@@ -313,8 +311,9 @@ public class PayslipServiceTest {
 
                 // when & then
                 assertThatThrownBy(
-                        () -> payslipService.respondToPayslip(
-                                employee.getId(), 100L, requestDto))
+                                () ->
+                                        payslipService.respondToPayslip(
+                                                employee.getId(), 100L, requestDto))
                         .isInstanceOf(CustomException.class)
                         .hasFieldOrPropertyWithValue(
                                 "errorCode", ErrorCode.NO_REJECTION_REASON_PROVIDED);

@@ -38,9 +38,8 @@ public class NotificationService {
             String title,
             String content,
             NotificationDomainType domainType,
-            Long domainId,
-            String redirectUrl) {
-        Notification notification = Notification.of(userId, title, content, domainType, domainId, redirectUrl);
+            Long domainId) {
+        Notification notification = Notification.of(userId, title, content, domainType, domainId);
         notificationRepository.save(notification);
         log.info("알림 생성 - userId: {}, domainType: {}", userId, domainType);
     }
@@ -96,7 +95,7 @@ public class NotificationService {
 
             // 2. 알림함 저장
             createNotification(
-                    admin.getId(), title, content, domainType, domainId, null);
+                    admin.getId(), title, content, domainType, domainId);
         }
 
         log.info(
@@ -128,7 +127,7 @@ public class NotificationService {
         fcmService.sendToUser(userId, title, content, null);
 
         // 2. 알림함 저장
-        createNotification(userId, title, content, domainType, domainId, null);
+        createNotification(userId, title, content, domainType, domainId);
 
         log.info("단일 유저 알림 전송 완료 - userId: {}, 템플릿: {}", userId, template.name());
     }
@@ -157,7 +156,7 @@ public class NotificationService {
 
             // 2. 알림함 저장
             createNotification(
-                    userId, title, content, NotificationDomainType.NOTICE, noticeId, null);
+                    userId, title, content, NotificationDomainType.NOTICE, noticeId);
         }
 
         log.info(
@@ -189,7 +188,7 @@ public class NotificationService {
 
             // 2. 알림함 저장
             createNotification(
-                    userId, title, content, NotificationDomainType.EDUCATION, reportId, null);
+                    userId, title, content, NotificationDomainType.EDUCATION, reportId);
         }
 
         log.info(
@@ -226,7 +225,7 @@ public class NotificationService {
 
             // 2. 알림함 저장
             createNotification(
-                    userId, title, content, NotificationDomainType.VISIT, visitId, null);
+                    userId, title, content, NotificationDomainType.VISIT, visitId);
         }
 
         log.info(
@@ -252,7 +251,7 @@ public class NotificationService {
         fcmService.sendToUser(userId, title, content, null);
 
         // 2. 알림함 DB 저장 (domainId는 단일 엔티티 연차 특성상 null 처리)
-        createNotification(userId, title, content, NotificationDomainType.ANNUAL_LEAVE, null, null);
+        createNotification(userId, title, content, NotificationDomainType.ANNUAL_LEAVE, null);
 
         log.info("연차 알림 전송 완료 - userId: {}, 기준일: {}", userId, baseDateFormatted);
     }
@@ -273,7 +272,7 @@ public class NotificationService {
         fcmService.sendToUser(userId, title, content, null);
 
         // 2. 알림함 DB 저장
-        createNotification(userId, title, content, NotificationDomainType.PAYSLIP, payslipId, null);
+        createNotification(userId, title, content, NotificationDomainType.PAYSLIP, payslipId);
 
         log.info("급여명세서 알림 전송 완료 - userId: {}, payslipId: {}", userId, payslipId);
     }
@@ -297,7 +296,7 @@ public class NotificationService {
         String approverContent = NotificationMessage.APPROVAL_CREATED_APPROVER.formatContent(docTitle);
         fcmService.sendToUser(firstApproverId, approverTitle, approverContent, null);
         createNotification(firstApproverId, approverTitle, approverContent,
-                NotificationDomainType.APPROVAL, approvalId, null);
+                NotificationDomainType.APPROVAL, approvalId);
         log.info("전자결재 생성 알림(결재자) 전송 - approvalId: {}, approverId: {}", approvalId, firstApproverId);
 
         // 2. 참조자들에게 알림
@@ -306,7 +305,7 @@ public class NotificationService {
         for (Long referrerId : referrerIds) {
             fcmService.sendToUser(referrerId, referrerTitle, referrerContent, null);
             createNotification(referrerId, referrerTitle, referrerContent,
-                    NotificationDomainType.APPROVAL, approvalId, null);
+                    NotificationDomainType.APPROVAL, approvalId);
         }
         log.info("전자결재 생성 알림(참조자 {}명) 전송 완료 - approvalId: {}", referrerIds.size(), approvalId);
     }
@@ -325,7 +324,7 @@ public class NotificationService {
 
         fcmService.sendToUser(nextApproverId, title, content, null);
         createNotification(nextApproverId, title, content,
-                NotificationDomainType.APPROVAL, approvalId, null);
+                NotificationDomainType.APPROVAL, approvalId);
 
         log.info("전자결재 다음 결재자 알림 전송 - approvalId: {}, nextApproverId: {}", approvalId, nextApproverId);
     }
@@ -346,7 +345,7 @@ public class NotificationService {
 
         fcmService.sendToUser(drafterId, title, content, null);
         createNotification(drafterId, title, content,
-                NotificationDomainType.APPROVAL, approvalId, null);
+                NotificationDomainType.APPROVAL, approvalId);
 
         log.info("전자결재 반려 알림 전송 - approvalId: {}, drafterId: {}", approvalId, drafterId);
     }
@@ -368,13 +367,13 @@ public class NotificationService {
         // 1. 기안자에게 알림
         fcmService.sendToUser(drafterId, title, content, null);
         createNotification(drafterId, title, content,
-                NotificationDomainType.APPROVAL, approvalId, null);
+                NotificationDomainType.APPROVAL, approvalId);
 
         // 2. 열람권자들에게 알림
         for (Long viewerId : viewerIds) {
             fcmService.sendToUser(viewerId, title, content, null);
             createNotification(viewerId, title, content,
-                    NotificationDomainType.APPROVAL, approvalId, null);
+                    NotificationDomainType.APPROVAL, approvalId);
         }
 
         log.info("전자결재 최종 승인 알림 전송 - approvalId: {}, drafterId: {}, viewers: {}명",

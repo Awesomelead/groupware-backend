@@ -42,9 +42,6 @@ public class Notification {
 
     private Long domainId;
 
-    @Column(length = 500)
-    private String redirectUrl;
-
     @Column(nullable = false)
     private Boolean isRead;
 
@@ -61,14 +58,12 @@ public class Notification {
             String title,
             String content,
             NotificationDomainType domainType,
-            Long domainId,
-            String redirectUrl) {
+            Long domainId) {
         this.userId = userId;
         this.title = title;
         this.content = content;
         this.domainType = domainType;
         this.domainId = domainId;
-        this.redirectUrl = redirectUrl;
         this.isRead = false;
     }
 
@@ -77,10 +72,9 @@ public class Notification {
             String title,
             String content,
             NotificationDomainType domainType,
-            Long domainId,
-            String redirectUrl) {
+            Long domainId) {
         validate(userId, title, content, domainType);
-        return new Notification(userId, title, content, domainType, domainId, redirectUrl);
+        return new Notification(userId, title, content, domainType, domainId);
     }
 
     private static void validate(

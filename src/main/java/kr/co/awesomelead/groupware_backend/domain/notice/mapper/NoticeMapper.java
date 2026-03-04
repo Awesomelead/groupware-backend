@@ -20,6 +20,8 @@ public interface NoticeMapper {
     @Mapping(target = "id", ignore = true)
     @Mapping(target = "author", source = "author")
     @Mapping(target = "attachments", ignore = true)
+    @Mapping(target = "targetDepartments", source = "dto.targetDepartmentIds")
+    @Mapping(target = "targetUsers", source = "dto.targetUserIds")
     Notice toNoticeEntity(NoticeCreateRequestDto dto, User author);
 
     NoticeSummaryDto toNoticeSummaryDto(Notice notice);

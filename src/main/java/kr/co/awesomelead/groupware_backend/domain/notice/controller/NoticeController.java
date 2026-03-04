@@ -139,13 +139,31 @@ public class NoticeController {
                                         mediaType = "application/json",
                                         examples =
                                                 @ExampleObject(
-                                                        name = "회사 미선택 오류",
+                                                        name = "대상자 미선택 오류",
+                                                        value =
+                                                                """
+                                {
+                                  "isSuccess": false,
+                                  "code": "NOTICE_TARGET_REQUIRED",
+                                  "message": "공지 대상자는 최소 1명 이상이어야 합니다.",
+                                  "result": null
+                                }
+                                """))),
+                @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                        responseCode = "400",
+                        description = "첨부파일 용량 초과",
+                        content =
+                                @Content(
+                                        mediaType = "application/json",
+                                        examples =
+                                                @ExampleObject(
+                                                        name = "첨부파일 용량 초과",
                                                         value =
                                                                 """
                                 {
                                 "isSuccess": false,
                                 "code": "COMMON400",
-                                "message": "공지 대상 회사는 최소 하나 이상 선택해야 합니다.",
+                                "message": "파일 용량이 제한을 초과했습니다.",
                                 "result": null
                                 }
                                 """))),
@@ -430,7 +448,7 @@ public class NoticeController {
 
     @Operation(
             summary = "공지 수정",
-            description = "특정 공지를 수정합니다. multipart/form-data 기반으로 내용 수정 및 첨부파일 추가/삭제를 처리합니다.",
+            description = "특정 공지를 수정합니다. multipart/form-data 기반으로 제목/내용/유형/대상자/첨부파일을 수정할 수 있습니다.",
             requestBody =
                     @io.swagger.v3.oas.annotations.parameters.RequestBody(
                             required = true,
@@ -465,6 +483,19 @@ public class NoticeController {
                                     }
                                     """),
                                             @ExampleObject(
+                                                    name = "유형 + 대상자 수정",
+                                                    value =
+                                                            """
+                                    {
+                                      "notice": {
+                                        "type": "상시공지",
+                                        "targetCompanies": ["어썸리드"],
+                                        "targetDepartmentIds": [11, 12],
+                                        "targetUserIds": [17, 22]
+                                      }
+                                    }
+                                    """),
+                                            @ExampleObject(
                                                     name = "내용 + 첨부파일 추가",
                                                     value =
                                                             """
@@ -487,7 +518,45 @@ public class NoticeController {
                         description = "수정 성공"),
                 @io.swagger.v3.oas.annotations.responses.ApiResponse(
                         responseCode = "400",
-                        description = "잘못된 요청"),
+                        description = "잘못된 요청",
+                        content =
+                                @Content(
+                                        mediaType = "application/json",
+                                        examples = {
+                                            @ExampleObject(
+                                                    name = "입력값 검증 실패",
+                                                    value =
+                                                            """
+                                    {
+                                      "isSuccess": false,
+                                      "code": "COMMON400",
+                                      "message": "입력값이 유효하지 않습니다.",
+                                      "result": { "title": "제목은 필수입니다." }
+                                    }
+                                    """),
+                                            @ExampleObject(
+                                                    name = "첨부파일 용량 초과",
+                                                    value =
+                                                            """
+                                    {
+                                      "isSuccess": false,
+                                      "code": "COMMON400",
+                                      "message": "파일 용량이 제한을 초과했습니다.",
+                                      "result": null
+                                    }
+                                    """),
+                                            @ExampleObject(
+                                                    name = "대상자 미선택 오류",
+                                                    value =
+                                                            """
+                                    {
+                                      "isSuccess": false,
+                                      "code": "NOTICE_TARGET_REQUIRED",
+                                      "message": "공지 대상자는 최소 1명 이상이어야 합니다.",
+                                      "result": null
+                                    }
+                                    """)
+                                        })),
                 @io.swagger.v3.oas.annotations.responses.ApiResponse(
                         responseCode = "403",
                         description = "권한 없음"),

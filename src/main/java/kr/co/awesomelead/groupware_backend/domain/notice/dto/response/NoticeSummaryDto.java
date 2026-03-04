@@ -30,6 +30,10 @@ public class NoticeSummaryDto {
     @Schema(description = "상단 고정 여부", example = "true") // 추가됨
     private boolean isPinned;
 
-    @Schema(description = "수정일시", example = "2025-01-10T14:30:00")
+    @Schema(
+            description = "수정일시 (KST, Asia/Seoul)",
+            type = "string",
+            format = "date-time",
+            example = "2026-02-27T10:30:00")
     private LocalDateTime updatedDate;
 }

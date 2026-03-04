@@ -20,6 +20,7 @@ import kr.co.awesomelead.groupware_backend.domain.notice.dto.response.NoticeDeta
 import kr.co.awesomelead.groupware_backend.domain.notice.dto.response.NoticeSummaryDto;
 import kr.co.awesomelead.groupware_backend.domain.notice.entity.Notice;
 import kr.co.awesomelead.groupware_backend.domain.notice.entity.NoticeAttachment;
+import kr.co.awesomelead.groupware_backend.domain.notice.enums.NoticeType;
 import kr.co.awesomelead.groupware_backend.domain.notice.mapper.NoticeMapper;
 import kr.co.awesomelead.groupware_backend.domain.notice.respository.NoticeAttachmentRepository;
 import kr.co.awesomelead.groupware_backend.domain.notice.respository.NoticeQueryRepository;
@@ -148,6 +149,30 @@ class NoticeServiceTest {
 
                 verify(notificationService, never()).sendNoticeAlertToTargets(any(), any(), any());
             }
+        }
+
+        @Test
+        @DisplayName("대상자 조건이 모두 비어 있으면 NOTICE_TARGET_REQUIRED 예외를 던진다")
+        void it_throws_when_target_is_empty() {
+            // given
+            NoticeCreateRequestDto dto =
+                    NoticeCreateRequestDto.builder()
+                            .title("제목")
+                            .targetCompanies(List.of())
+                            .targetDepartmentIds(List.of())
+                            .targetUserIds(List.of())
+                            .build();
+            Notice notice = Notice.builder().build();
+
+            given(userRepository.findById(1L)).willReturn(Optional.of(adminUser));
+            given(noticeMapper.toNoticeEntity(any(), any())).willReturn(notice);
+            given(noticeRepository.save(any())).willReturn(notice);
+
+            // when & then
+            assertThatThrownBy(() -> noticeService.createNotice(dto, null, 1L))
+                    .isInstanceOf(CustomException.class)
+                    .extracting("errorCode")
+                    .isEqualTo(ErrorCode.NOTICE_TARGET_REQUIRED);
         }
     }
 
@@ -308,6 +333,65 @@ class NoticeServiceTest {
             // then
             verify(s3Service, never()).uploadFile(any());
             verify(noticeAttachmentRepository, never()).delete(any());
+        }
+
+        @Test
+        @DisplayName("대상자 정보가 변경되면 NoticeTarget을 삭제 후 재생성한다")
+        void it_rebuilds_notice_targets_when_target_is_updated() throws IOException {
+            // given
+            Notice notice =
+                    Notice.builder()
+                            .targetCompanies(List.of(Company.AWESOME))
+                            .targetDepartments(List.of(100L))
+                            .targetUsers(List.of(300L))
+                            .build();
+
+            NoticeUpdateRequestDto dto =
+                    NoticeUpdateRequestDto.builder()
+                            .type(NoticeType.REGULAR)
+                            .targetCompanies(List.of(Company.MARUI))
+                            .targetDepartmentIds(List.of(200L))
+                            .targetUserIds(List.of(400L))
+                            .build();
+
+            UserSummaryResponseDto deptUser = new UserSummaryResponseDto();
+            ReflectionTestUtils.setField(deptUser, "id", 20L);
+
+            given(userRepository.findById(1L)).willReturn(Optional.of(adminUser));
+            given(noticeRepository.findByIdWithDetails(1L)).willReturn(Optional.of(notice));
+            given(userRepository.findAllIdsByCompany(Company.MARUI)).willReturn(List.of(10L));
+            given(departmentService.getUsersByDepartmentHierarchy(200L))
+                    .willReturn(List.of(deptUser));
+
+            // when
+            noticeService.updateNotice(1L, 1L, dto, null);
+
+            // then
+            verify(noticeTargetRepository).deleteByNoticeId(1L);
+            verify(noticeTargetRepository).saveAll(any());
+        }
+
+        @Test
+        @DisplayName("대상자를 빈 값으로 수정하려 하면 NOTICE_TARGET_REQUIRED 예외를 던진다")
+        void it_throws_when_updating_targets_to_empty() {
+            // given
+            Notice notice = Notice.builder().build();
+            NoticeUpdateRequestDto dto =
+                    NoticeUpdateRequestDto.builder()
+                            .targetCompanies(List.of())
+                            .targetDepartmentIds(List.of())
+                            .targetUserIds(List.of())
+                            .build();
+
+            given(userRepository.findById(1L)).willReturn(Optional.of(adminUser));
+            given(noticeRepository.findByIdWithDetails(1L)).willReturn(Optional.of(notice));
+
+            // when & then
+            assertThatThrownBy(() -> noticeService.updateNotice(1L, 1L, dto, null))
+                    .isInstanceOf(CustomException.class)
+                    .extracting("errorCode")
+                    .isEqualTo(ErrorCode.NOTICE_TARGET_REQUIRED);
+            verify(noticeTargetRepository, never()).deleteByNoticeId(any());
         }
     }
 

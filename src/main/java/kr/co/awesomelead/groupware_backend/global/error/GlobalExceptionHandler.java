@@ -11,6 +11,8 @@ import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
+import org.springframework.web.multipart.MaxUploadSizeExceededException;
+import org.springframework.web.multipart.MultipartException;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -59,6 +61,24 @@ public class GlobalExceptionHandler {
             MethodArgumentTypeMismatchException ex) {
         return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                 .body(ApiResponse.onFailure("COMMON400", "입력값이 유효하지 않습니다."));
+    }
+
+    // 첨부파일 용량 초과시 예외 처리
+    @ExceptionHandler(MaxUploadSizeExceededException.class)
+    public ResponseEntity<ApiResponse<Object>> handleMaxUploadSizeExceeded(
+            MaxUploadSizeExceededException e) {
+        return ResponseEntity.badRequest()
+                .body(
+                        ApiResponse.onFailure(
+                                "COMMON400", "파일 용량이 제한을 초과했습니다. (파일당 50MB, 요청당 100MB)", null));
+    }
+
+    @ExceptionHandler(MultipartException.class)
+    public ResponseEntity<ApiResponse<Object>> handleMultipartException(MultipartException e) {
+        return ResponseEntity.badRequest()
+                .body(
+                        ApiResponse.onFailure(
+                                "COMMON400", "업로드 요청 크기가 제한을 초과했거나 형식이 잘못되었습니다.", null));
     }
 
     // 그 외 정의되지 않은 모든 예외 처리

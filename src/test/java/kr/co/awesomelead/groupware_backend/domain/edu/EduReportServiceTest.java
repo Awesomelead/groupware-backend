@@ -26,6 +26,7 @@ import kr.co.awesomelead.groupware_backend.domain.education.repository.EduAttach
 import kr.co.awesomelead.groupware_backend.domain.education.repository.EduAttendanceRepository;
 import kr.co.awesomelead.groupware_backend.domain.education.repository.EduReportRepository;
 import kr.co.awesomelead.groupware_backend.domain.education.service.EduReportService;
+import kr.co.awesomelead.groupware_backend.domain.notification.service.NotificationService;
 import kr.co.awesomelead.groupware_backend.domain.user.entity.User;
 import kr.co.awesomelead.groupware_backend.domain.user.enums.Authority;
 import kr.co.awesomelead.groupware_backend.domain.user.enums.Role;
@@ -63,6 +64,8 @@ public class EduReportServiceTest {
     @Mock private DepartmentRepository departmentRepository;
     @Mock private UserRepository userRepository;
     @Mock private S3Service s3Service;
+
+    @Mock private NotificationService notificationService;
 
     @InjectMocks private EduReportService eduReportService;
 
@@ -164,6 +167,9 @@ public class EduReportServiceTest {
         EduReport savedReport = eduReportCaptor.getValue();
         assertThat(savedReport.getTitle()).isEqualTo("교육 보고서 제목");
         assertThat(savedReport.getContent()).isEqualTo("교육 보고서 내용");
+
+        verify(notificationService, times(1))
+                .sendEduReportAlertToTargets(anyString(), anyString(), anyLong(), any());
     }
 
     @Test

@@ -18,6 +18,9 @@ import kr.co.awesomelead.groupware_backend.domain.auth.dto.response.SignupRespon
 import kr.co.awesomelead.groupware_backend.domain.auth.entity.RefreshToken;
 import kr.co.awesomelead.groupware_backend.domain.auth.util.JWTUtil;
 import kr.co.awesomelead.groupware_backend.domain.fcm.service.FcmTokenService;
+import kr.co.awesomelead.groupware_backend.domain.notification.enums.NotificationDomainType;
+import kr.co.awesomelead.groupware_backend.domain.notification.enums.NotificationMessage;
+import kr.co.awesomelead.groupware_backend.domain.notification.service.NotificationService;
 import kr.co.awesomelead.groupware_backend.domain.user.entity.User;
 import kr.co.awesomelead.groupware_backend.domain.user.mapper.UserMapper;
 import kr.co.awesomelead.groupware_backend.domain.user.repository.UserRepository;
@@ -55,6 +58,7 @@ public class AuthService {
     private final RefreshTokenService refreshTokenService;
     private final FcmTokenService fcmTokenService;
     private final ApprovalRepository approvalRepository;
+    private final NotificationService notificationService;
 
     @PersistenceContext private EntityManager entityManager;
 
@@ -108,6 +112,13 @@ public class AuthService {
         // 9. 인증 완료 플래그 삭제
         emailAuthService.clearVerification(joinDto.getEmail());
         phoneAuthService.clearVerification(joinDto.getPhoneNumber());
+
+        // 10. Admin 유저에게 신규 가입 알림 전송 (FCM + Notification DB)
+        notificationService.sendAlertToAdmins(
+                NotificationMessage.SIGNUP_ADMIN_ALERT,
+                NotificationDomainType.AUTH,
+                null,
+                savedUser.getDisplayName());
 
         return new SignupResponseDto(savedUser.getId(), savedUser.getEmail());
     }

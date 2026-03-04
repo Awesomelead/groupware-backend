@@ -14,6 +14,7 @@ import kr.co.awesomelead.groupware_backend.domain.education.mapper.EduMapper;
 import kr.co.awesomelead.groupware_backend.domain.education.repository.EduAttachmentRepository;
 import kr.co.awesomelead.groupware_backend.domain.education.repository.EduAttendanceRepository;
 import kr.co.awesomelead.groupware_backend.domain.education.repository.EduReportRepository;
+import kr.co.awesomelead.groupware_backend.domain.notification.service.NotificationService;
 import kr.co.awesomelead.groupware_backend.domain.user.entity.User;
 import kr.co.awesomelead.groupware_backend.domain.user.enums.Authority;
 import kr.co.awesomelead.groupware_backend.domain.user.enums.Role;
@@ -45,6 +46,7 @@ public class EduReportService {
     private final DepartmentRepository departmentRepository;
     private final UserRepository userRepository;
     private final S3Service s3Service;
+    private final NotificationService notificationService;
 
     @Transactional
     public Long createEduReport(EduReportRequestDto requestDto, List<MultipartFile> files, Long id)
@@ -84,7 +86,23 @@ public class EduReportService {
                 report.addAttachment(attachment);
             }
         }
-        return eduReportRepository.save(report).getId();
+
+        EduReport savedReport = eduReportRepository.save(report);
+
+        // 알림 발송 대상 조회 및 전송
+        List<Long> targetUserIds;
+        if (requestDto.getEduType() == EduType.PSM || requestDto.getEduType() == EduType.SAFETY) {
+            targetUserIds = userRepository.findAllActiveUserIds();
+        } else {
+            targetUserIds = userRepository.findAllIdsByDepartmentId(requestDto.getDepartmentId());
+        }
+        notificationService.sendEduReportAlertToTargets(
+                requestDto.getEduType().getDescription(),
+                requestDto.getTitle(),
+                savedReport.getId(),
+                targetUserIds);
+
+        return savedReport.getId();
     }
 
     @Transactional(readOnly = true)

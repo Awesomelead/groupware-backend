@@ -3,6 +3,8 @@ package kr.co.awesomelead.groupware_backend.domain.visit.service;
 import static kr.co.awesomelead.groupware_backend.domain.visit.entity.Visit.hashValue;
 
 import kr.co.awesomelead.groupware_backend.domain.department.repository.DepartmentRepository;
+import kr.co.awesomelead.groupware_backend.domain.notification.enums.NotificationMessage;
+import kr.co.awesomelead.groupware_backend.domain.notification.service.NotificationService;
 import kr.co.awesomelead.groupware_backend.domain.user.entity.User;
 import kr.co.awesomelead.groupware_backend.domain.user.enums.Authority;
 import kr.co.awesomelead.groupware_backend.domain.user.enums.JobType;
@@ -56,6 +58,7 @@ public class VisitService {
     private final VisitMapper visitMapper;
     private final S3Service s3Service;
     private final PasswordEncoder passwordEncoder;
+    private final NotificationService notificationService;
 
     @Transactional
     public Long registerOneDayPreVisit(OneDayVisitRequestDto dto) {
@@ -65,12 +68,28 @@ public class VisitService {
                         .findById(dto.getHostId())
                         .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
 
+        Long hostDeptId = host.getDepartment() != null ? host.getDepartment().getId() : null;
+        String hostName = host.getDisplayName();
         String encodedPassword = passwordEncoder.encode(dto.getPassword());
 
         Visit visit = visitMapper.toOneDayVisit(dto, host, encodedPassword);
         syncAndValidatePermissions(visit, dto);
 
-        return visitRepository.save(visit).getId();
+        Long visitId = visitRepository.save(visit).getId();
+
+        // 담당 부서 소속 전원에게 방문 예정 알림
+        if (hostDeptId != null) {
+            notificationService.sendVisitAlertToDepartment(
+                    NotificationMessage.VISIT_ONE_DAY_PRE,
+                    visitId,
+                    hostDeptId,
+                    visit.getVisitorName(),
+                    visit.getStartDate(),
+                    dto.getEntryTime(),
+                    hostName);
+        }
+
+        return visitId;
     }
 
     @Transactional
@@ -83,12 +102,26 @@ public class VisitService {
                         .findById(dto.getHostId())
                         .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
 
+        Long hostDeptId = host.getDepartment() != null ? host.getDepartment().getId() : null;
         String encodedPassword = passwordEncoder.encode(dto.getPassword());
 
         Visit visit = visitMapper.toLongTermVisit(dto, host, encodedPassword);
         syncAndValidatePermissions(visit, dto);
 
-        return visitRepository.save(visit).getId();
+        Long visitId = visitRepository.save(visit).getId();
+
+        // 담당 부서 소속 전원에게 장기 방문 승인 요청 알림
+        if (hostDeptId != null) {
+            notificationService.sendVisitAlertToDepartment(
+                    NotificationMessage.VISIT_LONG_TERM_PRE,
+                    visitId,
+                    hostDeptId,
+                    visit.getVisitorName(),
+                    dto.getStartDate(),
+                    dto.getEndDate());
+        }
+
+        return visitId;
     }
 
     @Transactional
@@ -105,6 +138,8 @@ public class VisitService {
         Visit visit = visitMapper.toOnSiteVisit(dto, host, encodedPassword);
         syncAndValidatePermissions(visit, dto);
 
+        Long hostDeptId = host.getDepartment() != null ? host.getDepartment().getId() : null;
+
         VisitRecord record =
                 VisitRecord.builder()
                         .visit(visit)
@@ -116,7 +151,19 @@ public class VisitService {
 
         visit.getRecords().add(record);
 
-        return visitRepository.save(visit).getId();
+        Long visitId = visitRepository.save(visit).getId();
+
+        // 담당 부서 소속 전원에게 입실 알림
+        if (hostDeptId != null) {
+            notificationService.sendVisitAlertToDepartment(
+                    NotificationMessage.VISIT_CHECK_IN,
+                    visitId,
+                    hostDeptId,
+                    visit.getVisitorName(),
+                    record.getEntryTime().toLocalTime());
+        }
+
+        return visitId;
     }
 
     private void syncAndValidatePermissions(Visit visit, VisitRequest dto) {
@@ -203,6 +250,18 @@ public class VisitService {
         // 7. 방문 상태 업데이트
         visit.setStatus(VisitStatus.IN_PROGRESS);
         visit.setVisited(true);
+
+        // 8. 담당 부서 소속 전원에게 입실 알림
+        User host = visit.getUser();
+        if (host != null && host.getDepartment() != null) {
+            LocalDateTime entryTime = record.getEntryTime();
+            notificationService.sendVisitAlertToDepartment(
+                    NotificationMessage.VISIT_CHECK_IN,
+                    visit.getId(),
+                    host.getDepartment().getId(),
+                    visit.getVisitorName(),
+                    entryTime.toLocalTime());
+        }
 
         return visit.getId();
     }

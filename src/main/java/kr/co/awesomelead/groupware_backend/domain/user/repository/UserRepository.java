@@ -43,6 +43,14 @@ public interface UserRepository extends JpaRepository<User, Long> {
 
     boolean existsByPhoneNumberHash(String phoneNumberHash);
 
+    List<User> findAllByRole(Role role);
+
+    @Query("SELECT u.id FROM User u WHERE u.department.id = :departmentId")
+    List<Long> findAllIdsByDepartmentId(@Param("departmentId") Long departmentId);
+
+    @Query("SELECT u.id FROM User u WHERE u.status = 'AVAILABLE'")
+    List<Long> findAllActiveUserIds();
+
     @Query("SELECT u.id FROM User u WHERE u.workLocation = :company")
     List<Long> findAllIdsByCompany(@Param("company") Company company);
 

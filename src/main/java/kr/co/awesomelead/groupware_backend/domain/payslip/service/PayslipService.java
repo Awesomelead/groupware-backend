@@ -1,5 +1,6 @@
 package kr.co.awesomelead.groupware_backend.domain.payslip.service;
 
+import kr.co.awesomelead.groupware_backend.domain.notification.service.NotificationService;
 import kr.co.awesomelead.groupware_backend.domain.payslip.dto.request.PayslipStatusRequestDto;
 import kr.co.awesomelead.groupware_backend.domain.payslip.dto.response.AdminPayslipDetailDto;
 import kr.co.awesomelead.groupware_backend.domain.payslip.dto.response.AdminPayslipSummaryDto;
@@ -37,6 +38,7 @@ public class PayslipService {
     private final PayslipMapper payslipMapper;
     private final UserRepository userRepository;
     private final S3Service s3Service;
+    private final NotificationService notificationService;
 
     @Transactional
     public void sendPayslip(List<MultipartFile> payslipFiles, Long userId) throws IOException {
@@ -73,19 +75,20 @@ public class PayslipService {
 
             String s3Key = s3Service.uploadFile(file);
 
-            savePayslipInfo(s3Key, originalFileName, target);
+            Payslip savedPayslip = savePayslipInfo(s3Key, originalFileName, target);
+            notificationService.sendPayslipAlertToUser(target.getId(), savedPayslip.getId());
         }
     }
 
     @Transactional
-    protected void savePayslipInfo(String s3Key, String originalFileName, User targetUser) {
+    protected Payslip savePayslipInfo(String s3Key, String originalFileName, User targetUser) {
         Payslip payslip =
                 Payslip.builder()
                         .fileKey(s3Key)
                         .originalFileName(originalFileName)
                         .user(targetUser)
                         .build();
-        payslipRepository.save(payslip);
+        return payslipRepository.save(payslip);
     }
 
     // 관리자용 보낸 급여명세서 목록 조회 (Status에 따라)

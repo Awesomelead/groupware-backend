@@ -27,6 +27,7 @@ import kr.co.awesomelead.groupware_backend.domain.notice.respository.NoticeQuery
 import kr.co.awesomelead.groupware_backend.domain.notice.respository.NoticeRepository;
 import kr.co.awesomelead.groupware_backend.domain.notice.respository.NoticeTargetRepository;
 import kr.co.awesomelead.groupware_backend.domain.notice.service.NoticeService;
+import kr.co.awesomelead.groupware_backend.domain.notification.service.NotificationService;
 import kr.co.awesomelead.groupware_backend.domain.user.entity.User;
 import kr.co.awesomelead.groupware_backend.domain.user.enums.Authority;
 import kr.co.awesomelead.groupware_backend.domain.user.repository.UserRepository;
@@ -66,6 +67,7 @@ class NoticeServiceTest {
     @Mock private S3Service s3Service;
     @Mock private UserRepository userRepository;
     @Mock private DepartmentService departmentService;
+    @Mock private NotificationService notificationService;
 
     private User adminUser;
     private User regularUser;
@@ -127,6 +129,7 @@ class NoticeServiceTest {
                 assertThat(resultId).isEqualTo(100L);
                 verify(noticeTargetRepository).saveAll(any());
                 verify(noticeRepository, times(1)).save(any());
+                verify(notificationService).sendNoticeAlertToTargets(any(), any(), any());
             }
         }
 
@@ -143,6 +146,8 @@ class NoticeServiceTest {
                         .isInstanceOf(CustomException.class)
                         .hasFieldOrPropertyWithValue(
                                 "errorCode", ErrorCode.NO_AUTHORITY_FOR_NOTICE);
+
+                verify(notificationService, never()).sendNoticeAlertToTargets(any(), any(), any());
             }
         }
 

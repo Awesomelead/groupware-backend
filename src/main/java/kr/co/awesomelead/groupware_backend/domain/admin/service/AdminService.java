@@ -10,6 +10,9 @@ import kr.co.awesomelead.groupware_backend.domain.admin.enums.AuthorityAction;
 import kr.co.awesomelead.groupware_backend.domain.aligo.service.PhoneAuthService;
 import kr.co.awesomelead.groupware_backend.domain.department.entity.Department;
 import kr.co.awesomelead.groupware_backend.domain.department.repository.DepartmentRepository;
+import kr.co.awesomelead.groupware_backend.domain.notification.enums.NotificationDomainType;
+import kr.co.awesomelead.groupware_backend.domain.notification.enums.NotificationMessage;
+import kr.co.awesomelead.groupware_backend.domain.notification.service.NotificationService;
 import kr.co.awesomelead.groupware_backend.domain.user.entity.MyInfoUpdateRequest;
 import kr.co.awesomelead.groupware_backend.domain.user.entity.User;
 import kr.co.awesomelead.groupware_backend.domain.user.enums.Authority;
@@ -42,6 +45,7 @@ public class AdminService {
     private final DepartmentRepository departmentRepository;
     private final MyInfoUpdateRequestRepository myInfoUpdateRequestRepository;
     private final PhoneAuthService phoneAuthService;
+    private final NotificationService notificationService;
 
     @Transactional
     public void approveUserRegistration(
@@ -443,6 +447,13 @@ public class AdminService {
         request.approve(admin);
         userRepository.save(targetUser);
         myInfoUpdateRequestRepository.save(request);
+
+        // 요청 승인 알림 전송 (FCM + Notification DB)
+        notificationService.sendAlertToUser(
+                userId,
+                NotificationMessage.MY_INFO_UPDATE_APPROVED,
+                NotificationDomainType.MY_INFO_UPDATE,
+                request.getId());
     }
 
     @Transactional
@@ -472,6 +483,14 @@ public class AdminService {
 
         request.reject(admin, reason.trim());
         myInfoUpdateRequestRepository.save(request);
+
+        // 요청 반려 알림 전송 (FCM + Notification DB)
+        notificationService.sendAlertToUser(
+                userId,
+                NotificationMessage.MY_INFO_UPDATE_REJECTED,
+                NotificationDomainType.MY_INFO_UPDATE,
+                request.getId(),
+                reason.trim());
     }
 
     @Transactional(readOnly = true)

@@ -12,6 +12,7 @@ import kr.co.awesomelead.groupware_backend.domain.aligo.service.PhoneAuthService
 import kr.co.awesomelead.groupware_backend.domain.department.entity.Department;
 import kr.co.awesomelead.groupware_backend.domain.department.enums.Company;
 import kr.co.awesomelead.groupware_backend.domain.department.enums.DepartmentName;
+import kr.co.awesomelead.groupware_backend.domain.notification.service.NotificationService;
 import kr.co.awesomelead.groupware_backend.domain.user.dto.response.MyInfoResponseDto;
 import kr.co.awesomelead.groupware_backend.domain.user.dto.response.UpdateMyInfoRequestDto;
 import kr.co.awesomelead.groupware_backend.domain.user.entity.MyInfoUpdateRequest;
@@ -44,12 +45,10 @@ import java.util.Optional;
 class UserServiceTest {
 
     @Mock private UserRepository userRepository;
-
     @Mock private PhoneAuthService phoneAuthService;
     @Mock private MyInfoUpdateRequestRepository myInfoUpdateRequestRepository;
-
     @Mock private UserDetails userDetails;
-
+    @Mock private NotificationService notificationService;
     @InjectMocks private UserService userService;
 
     private static final String TEST_EMAIL = "test@example.com";
@@ -179,6 +178,7 @@ class UserServiceTest {
 
             verify(userRepository).findByEmail(TEST_EMAIL);
             verify(myInfoUpdateRequestRepository).save(any(MyInfoUpdateRequest.class));
+            verify(notificationService).sendAlertToAdmins(any(), any(), any(), any());
         }
 
         @Test
@@ -209,6 +209,7 @@ class UserServiceTest {
             verify(userRepository).existsByPhoneNumberHash(newPhoneHash);
             verify(myInfoUpdateRequestRepository).save(any(MyInfoUpdateRequest.class));
             verify(phoneAuthService).clearVerification(NEW_PHONE);
+            verify(notificationService).sendAlertToAdmins(any(), any(), any(), any());
         }
 
         @Test
@@ -239,6 +240,7 @@ class UserServiceTest {
             verify(userRepository).findByEmail(TEST_EMAIL);
             verify(phoneAuthService).isPhoneVerified(NEW_PHONE);
             verify(myInfoUpdateRequestRepository).save(any(MyInfoUpdateRequest.class));
+            verify(notificationService).sendAlertToAdmins(any(), any(), any(), any());
         }
 
         @Test

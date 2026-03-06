@@ -2,9 +2,7 @@ package kr.co.awesomelead.groupware_backend.domain.auth.service;
 
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
-import java.util.Collection;
-import java.util.Iterator;
-import java.util.List;
+
 import kr.co.awesomelead.groupware_backend.domain.aligo.service.PhoneAuthService;
 import kr.co.awesomelead.groupware_backend.domain.approval.entity.Approval;
 import kr.co.awesomelead.groupware_backend.domain.approval.repository.ApprovalRepository;
@@ -28,8 +26,10 @@ import kr.co.awesomelead.groupware_backend.domain.user.mapper.UserMapper;
 import kr.co.awesomelead.groupware_backend.domain.user.repository.UserRepository;
 import kr.co.awesomelead.groupware_backend.global.error.CustomException;
 import kr.co.awesomelead.groupware_backend.global.error.ErrorCode;
+
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -38,6 +38,10 @@ import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.util.Collection;
+import java.util.Iterator;
+import java.util.List;
 
 @Slf4j
 @Service
@@ -56,8 +60,7 @@ public class AuthService {
     private final ApprovalRepository approvalRepository;
     private final NotificationService notificationService;
 
-    @PersistenceContext
-    private EntityManager entityManager;
+    @PersistenceContext private EntityManager entityManager;
 
     @Value("${spring.jwt.access-validation}")
     private long accessTokenValidation;
@@ -100,10 +103,10 @@ public class AuthService {
 
         // 8. FCM 토큰 등록 (선택 - 클라이언트가 토큰을 전달한 경우에만)
         if (joinDto.getFcmToken() != null
-            && !joinDto.getFcmToken().isBlank()
-            && joinDto.getDeviceType() != null) {
+                && !joinDto.getFcmToken().isBlank()
+                && joinDto.getDeviceType() != null) {
             fcmTokenService.registerToken(
-                savedUser.getId(), joinDto.getFcmToken(), joinDto.getDeviceType());
+                    savedUser.getId(), joinDto.getFcmToken(), joinDto.getDeviceType());
         }
 
         // 9. 인증 완료 플래그 삭제
@@ -112,10 +115,10 @@ public class AuthService {
 
         // 10. Admin 유저에게 신규 가입 알림 전송 (FCM + Notification DB)
         notificationService.sendAlertToAdmins(
-            NotificationMessage.SIGNUP_ADMIN_ALERT,
-            NotificationDomainType.AUTH,
-            null,
-            savedUser.getDisplayName());
+                NotificationMessage.SIGNUP_ADMIN_ALERT,
+                NotificationDomainType.AUTH,
+                null,
+                savedUser.getDisplayName());
 
         return new SignupResponseDto(savedUser.getId(), savedUser.getEmail());
     }
@@ -123,8 +126,8 @@ public class AuthService {
     public LoginResponseDto login(LoginRequestDto requestDto) {
         // 1. 인증 처리
         UsernamePasswordAuthenticationToken authToken =
-            new UsernamePasswordAuthenticationToken(
-                requestDto.getEmail(), requestDto.getPassword(), null);
+                new UsernamePasswordAuthenticationToken(
+                        requestDto.getEmail(), requestDto.getPassword(), null);
 
         Authentication authentication = authenticationManager.authenticate(authToken);
 
@@ -145,26 +148,26 @@ public class AuthService {
 
         // 6. 사용자 정보 조회
         User user =
-            userRepository
-                .findByEmail(username)
-                .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
+                userRepository
+                        .findByEmail(username)
+                        .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
         // 7. 응답 생성
         LoginResponseDto loginResponseDto =
-            new LoginResponseDto(
-                accessToken,
-                refreshToken,
-                user.getId(),
-                user.getNameKor(),
-                user.getNameEng(),
-                user.getPosition(),
-                user.getRole());
+                new LoginResponseDto(
+                        accessToken,
+                        refreshToken,
+                        user.getId(),
+                        user.getNameKor(),
+                        user.getNameEng(),
+                        user.getPosition(),
+                        user.getRole());
 
         // 8. FCM 토큰 등록 (선택)
         if (requestDto.getFcmToken() != null
-            && !requestDto.getFcmToken().isBlank()
-            && requestDto.getDeviceType() != null) {
+                && !requestDto.getFcmToken().isBlank()
+                && requestDto.getDeviceType() != null) {
             fcmTokenService.registerToken(
-                user.getId(), requestDto.getFcmToken(), requestDto.getDeviceType());
+                    user.getId(), requestDto.getFcmToken(), requestDto.getDeviceType());
         }
 
         return loginResponseDto;
@@ -180,9 +183,9 @@ public class AuthService {
         // 1. FCM 토큰 삭제 (선택)
         if (fcmToken != null && !fcmToken.isBlank()) {
             User user =
-                userRepository
-                    .findByEmail(email)
-                    .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
+                    userRepository
+                            .findByEmail(email)
+                            .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
             fcmTokenService.deleteToken(user.getId(), fcmToken);
         }
 
@@ -218,9 +221,9 @@ public class AuthService {
         // 2. 해시로 사용자 찾기
         String phoneNumberHash = User.hashValue(phoneNumber);
         User user =
-            userRepository
-                .findByPhoneNumberHash(phoneNumberHash)
-                .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
+                userRepository
+                        .findByPhoneNumberHash(phoneNumberHash)
+                        .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
 
         // 3. 이름 검증
         if (!user.getNameKor().equals(name)) {
@@ -256,9 +259,9 @@ public class AuthService {
         }
         // 3. 이메일로 사용자 찾기
         User user =
-            userRepository
-                .findByEmail(requestDto.getEmail())
-                .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
+                userRepository
+                        .findByEmail(requestDto.getEmail())
+                        .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
 
         // 4. 해당 유저의 비밀번호 변경
         user.setPassword(bCryptPasswordEncoder.encode(requestDto.getNewPassword()));
@@ -274,9 +277,9 @@ public class AuthService {
 
         // 1. 이메일로 사용자 조회
         User user =
-            userRepository
-                .findByEmail(requestDto.getEmail())
-                .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
+                userRepository
+                        .findByEmail(requestDto.getEmail())
+                        .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
 
         // 2. 휴대폰 인증 여부 확인
         if (!phoneAuthService.isPhoneVerified(requestDto.getPhoneNumber())) {
@@ -312,9 +315,9 @@ public class AuthService {
 
         // 2. 사용자 조회
         User user =
-            userRepository
-                .findById(userId)
-                .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
+                userRepository
+                        .findById(userId)
+                        .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
 
         // 3. 현재 비밀번호 확인
         if (!bCryptPasswordEncoder.matches(requestDto.getCurrentPassword(), user.getPassword())) {
@@ -337,59 +340,59 @@ public class AuthService {
     @Transactional
     public void deleteUser(Long userId) {
         User user =
-            userRepository
-                .findById(userId)
-                .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
+                userRepository
+                        .findById(userId)
+                        .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
 
         // 1) 토큰 및 사용자 직접 참조 데이터 정리
         deleteByQuery(
-            "delete from RefreshToken rt where rt.email = :email", "email", user.getEmail());
+                "delete from RefreshToken rt where rt.email = :email", "email", user.getEmail());
         deleteByQuery(
-            "delete from MyInfoUpdateRequest r where r.reviewedBy.id = :userId",
-            "userId",
-            userId);
+                "delete from MyInfoUpdateRequest r where r.reviewedBy.id = :userId",
+                "userId",
+                userId);
         deleteByQuery(
-            "delete from MyInfoUpdateRequest r where r.user.id = :userId", "userId", userId);
+                "delete from MyInfoUpdateRequest r where r.user.id = :userId", "userId", userId);
         deleteByQuery("delete from RequestHistory rh where rh.user.id = :userId", "userId", userId);
         deleteByQuery("delete from EduAttendance ea where ea.user.id = :userId", "userId", userId);
         deleteByQuery("delete from CheckSheet cs where cs.user.id = :userId", "userId", userId);
         deleteByQuery("delete from Payslip p where p.user.id = :userId", "userId", userId);
         deleteByQuery("delete from AnnualLeave al where al.user.id = :userId", "userId", userId);
         deleteByQuery(
-            "delete from VisitRecord vr where vr.visit.user.id = :userId", "userId", userId);
+                "delete from VisitRecord vr where vr.visit.user.id = :userId", "userId", userId);
         deleteByQuery("delete from Visit v where v.user.id = :userId", "userId", userId);
         deleteByQuery("delete from NoticeTarget nt where nt.user.id = :userId", "userId", userId);
         deleteByQuery(
-            "delete from MessageAttachment ma where ma.message.sender.id = :userId or"
-                + " ma.message.receiver.id = :userId",
-            "userId",
-            userId);
+                "delete from MessageAttachment ma where ma.message.sender.id = :userId or"
+                        + " ma.message.receiver.id = :userId",
+                "userId",
+                userId);
         deleteByQuery(
-            "delete from Message m where m.sender.id = :userId or m.receiver.id = :userId",
-            "userId",
-            userId);
+                "delete from Message m where m.sender.id = :userId or m.receiver.id = :userId",
+                "userId",
+                userId);
         deleteByQuery(
-            "delete from ApprovalParticipant ap where ap.user.id = :userId", "userId", userId);
+                "delete from ApprovalParticipant ap where ap.user.id = :userId", "userId", userId);
         deleteByQuery(
-            "delete from ApprovalStep aps where aps.approver.id = :userId", "userId", userId);
+                "delete from ApprovalStep aps where aps.approver.id = :userId", "userId", userId);
         deleteByQuery(
-            "delete from SavedApprovalLineDetail sld where sld.approver.id = :userId",
-            "userId",
-            userId);
+                "delete from SavedApprovalLineDetail sld where sld.approver.id = :userId",
+                "userId",
+                userId);
         deleteByQuery(
-            "delete from SavedApprovalLineDetail sld where sld.savedLine.user.id = :userId",
-            "userId",
-            userId);
+                "delete from SavedApprovalLineDetail sld where sld.savedLine.user.id = :userId",
+                "userId",
+                userId);
         deleteByQuery(
-            "delete from SavedApprovalLine sl where sl.user.id = :userId", "userId", userId);
+                "delete from SavedApprovalLine sl where sl.user.id = :userId", "userId", userId);
         deleteByQuery(
-            "delete from NoticeTarget nt where nt.notice.author.id = :userId",
-            "userId",
-            userId);
+                "delete from NoticeTarget nt where nt.notice.author.id = :userId",
+                "userId",
+                userId);
         deleteByQuery(
-            "delete from NoticeAttachment na where na.notice.author.id = :userId",
-            "userId",
-            userId);
+                "delete from NoticeAttachment na where na.notice.author.id = :userId",
+                "userId",
+                userId);
         deleteByQuery("delete from Notice n where n.author.id = :userId", "userId", userId);
 
         // 2) 사용자가 기안한 결재 문서 삭제 (JOINED 상속 + 자식 테이블 동시 정리)

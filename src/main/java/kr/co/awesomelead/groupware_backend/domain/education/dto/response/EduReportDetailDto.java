@@ -81,7 +81,9 @@ public class EduReportDetailDto {
         @Schema(description = "직원 이름", example = "홍길동")
         private String userName;
 
-        @Schema(description = "서명 이미지 URL", example = "https://s3.amazonaws.com/bucket/signature.png")
+        @Schema(
+                description = "서명 이미지 URL",
+                example = "https://s3.amazonaws.com/bucket/signature.png")
         private String signatureUrl;
     }
 }

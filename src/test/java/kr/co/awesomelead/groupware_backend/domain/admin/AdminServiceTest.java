@@ -92,7 +92,7 @@ class AdminServiceTest {
                 pendingUser.setStatus(Status.PENDING);
 
                 when(userRepository.findById(userId)).thenReturn(Optional.of(pendingUser));
-                when(departmentRepository.findById(any())).thenReturn(Optional.of(department));
+                when(departmentRepository.findByName(any())).thenReturn(Optional.of(department));
 
                 // when
                 adminService.approveUserRegistration(userId, requestDto, adminId);
@@ -121,7 +121,7 @@ class AdminServiceTest {
                 pendingUser.setStatus(Status.PENDING);
 
                 when(userRepository.findById(userId)).thenReturn(Optional.of(pendingUser));
-                when(departmentRepository.findById(any())).thenReturn(Optional.of(department));
+                when(departmentRepository.findByName(any())).thenReturn(Optional.of(department));
 
                 UserApprovalRequestDto invalidRequestDto = createRequestDto();
                 invalidRequestDto.setJobType(JobType.FIELD);
@@ -448,7 +448,7 @@ class AdminServiceTest {
     private UserApprovalRequestDto createRequestDto() {
         UserApprovalRequestDto dto = new UserApprovalRequestDto();
         dto.setJobType(JobType.MANAGEMENT);
-        dto.setDepartmentId(1L);
+        dto.setDepartmentName(DepartmentName.SALES_DEPT);
         dto.setHireDate(LocalDate.now());
         dto.setPosition(Position.STAFF);
         return dto;

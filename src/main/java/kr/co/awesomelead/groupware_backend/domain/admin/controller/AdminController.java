@@ -54,14 +54,14 @@ import java.util.List;
         name = "Admin",
         description =
                 """
-            ## 관리자 전용 API
+                ## 관리자 전용 API
 
-            시스템 관리 권한이 필요한 기능을 제공합니다. 주로 사용자 승인 및 권한 관리를 담당합니다.
+                시스템 관리 권한이 필요한 기능을 제공합니다. 주로 사용자 승인 및 권한 관리를 담당합니다.
 
-            ### 권한 안내
-            - **회원가입 승인**: `ROLE_ADMIN` 이상의 권한이 필요합니다.
-            - **역할 변경**: `ROLE_ADMIN` 또는 `ROLE_MASTER_ADMIN` 권한이 필요합니다.
-            """)
+                ### 권한 안내
+                - **회원가입 승인**: `ROLE_ADMIN` 이상의 권한이 필요합니다.
+                - **역할 변경**: `ROLE_ADMIN` 또는 `ROLE_MASTER_ADMIN` 권한이 필요합니다.
+                """)
 public class AdminController {
 
     private final AdminService adminService;
@@ -79,23 +79,23 @@ public class AdminController {
                                                 @ExampleObject(
                                                         value =
                                                                 """
-                                {
-                                  "isSuccess": true,
-                                  "code": "COMMON200",
-                                  "message": "요청에 성공했습니다.",
-                                  "result": [
-                                    {
-                                      "userId": 17,
-                                      "nameKor": "홍길동",
-                                      "position": "사원",
-                                      "jobType": "관리직",
-                                      "departmentName": "경영지원부",
-                                      "signupStatus": "AVAILABLE",
-                                      "hasPendingMyInfoRequest": true
-                                    }
-                                  ]
-                                }
-                                """))),
+                                        {
+                                          "isSuccess": true,
+                                          "code": "COMMON200",
+                                          "message": "요청에 성공했습니다.",
+                                          "result": [
+                                            {
+                                              "userId": 17,
+                                              "nameKor": "홍길동",
+                                              "position": "사원",
+                                              "jobType": "관리직",
+                                              "departmentName": "경영지원부",
+                                              "signupStatus": "AVAILABLE",
+                                              "hasPendingMyInfoRequest": true
+                                            }
+                                          ]
+                                        }
+                                        """))),
                 @io.swagger.v3.oas.annotations.responses.ApiResponse(
                         responseCode = "403",
                         description = "권한 없음",
@@ -106,13 +106,13 @@ public class AdminController {
                                                 @ExampleObject(
                                                         value =
                                                                 """
-                                {
-                                  "isSuccess": false,
-                                  "code": "NO_AUTHORITY_FOR_REGISTRATION",
-                                  "message": "회원가입 승인 권한이 없습니다.",
-                                  "result": null
-                                }
-                                """)))
+                                        {
+                                          "isSuccess": false,
+                                          "code": "NO_AUTHORITY_FOR_REGISTRATION",
+                                          "message": "회원가입 승인 권한이 없습니다.",
+                                          "result": null
+                                        }
+                                        """)))
             })
     @GetMapping("/users")
     public ResponseEntity<ApiResponse<Page<AdminUserSummaryResponseDto>>> getUsers(
@@ -160,39 +160,39 @@ public class AdminController {
                                                 @ExampleObject(
                                                         value =
                                                                 """
-                                {
-                                  "isSuccess": true,
-                                  "code": "COMMON200",
-                                  "message": "요청에 성공했습니다.",
-                                  "result": {
-                                    "userId": 17,
-                                    "nameKor": "홍길동",
-                                    "nameEng": "HONG GILDONG",
-                                    "birthDate": "2000-01-01",
-                                    "nationality": "대한민국",
-                                    "zipcode": "06234",
-                                    "address1": "서울특별시 강남구 테헤란로 123",
-                                    "address2": "어썸리드빌딩 5층",
-                                    "registrationNumber": "0001013123456",
-                                    "phoneNumber": "01012345678",
-                                    "email": "hg@gmail.com",
-                                    "workLocation": "어썸리드",
-                                    "departmentId": 11,
-                                    "departmentName": "경영지원부",
-                                    "position": "사원",
-                                    "jobType": "관리직",
-                                    "authorities": [
-                                      { "code": "ACCESS_MESSAGE", "label": "메세지 작성", "enabled": true },
-                                      { "code": "ACCESS_EDUCATION", "label": "교육 작성", "enabled": false }
-                                    ],
-                                    "hireDate": "2025-09-22",
-                                    "resignationDate": null,
-                                    "role": "일반 사용자",
-                                    "signupStatus": "AVAILABLE",
-                                    "hasPendingMyInfoRequest": false
-                                  }
-                                }
-                                """))),
+                                        {
+                                          "isSuccess": true,
+                                          "code": "COMMON200",
+                                          "message": "요청에 성공했습니다.",
+                                          "result": {
+                                            "userId": 17,
+                                            "nameKor": "홍길동",
+                                            "nameEng": "HONG GILDONG",
+                                            "birthDate": "2000-01-01",
+                                            "nationality": "대한민국",
+                                            "zipcode": "06234",
+                                            "address1": "서울특별시 강남구 테헤란로 123",
+                                            "address2": "어썸리드빌딩 5층",
+                                            "registrationNumber": "0001013123456",
+                                            "phoneNumber": "01012345678",
+                                            "email": "hg@gmail.com",
+                                            "workLocation": "어썸리드",
+                                            "departmentId": 11,
+                                            "departmentName": "경영지원부",
+                                            "position": "사원",
+                                            "jobType": "관리직",
+                                            "authorities": [
+                                              { "code": "ACCESS_MESSAGE", "label": "메세지 작성", "enabled": true },
+                                              { "code": "ACCESS_EDUCATION", "label": "교육 작성", "enabled": false }
+                                            ],
+                                            "hireDate": "2025-09-22",
+                                            "resignationDate": null,
+                                            "role": "일반 사용자",
+                                            "signupStatus": "AVAILABLE",
+                                            "hasPendingMyInfoRequest": false
+                                          }
+                                        }
+                                        """))),
                 @io.swagger.v3.oas.annotations.responses.ApiResponse(
                         responseCode = "403",
                         description = "권한 없음",
@@ -203,13 +203,13 @@ public class AdminController {
                                                 @ExampleObject(
                                                         value =
                                                                 """
-                                {
-                                  "isSuccess": false,
-                                  "code": "NO_AUTHORITY_FOR_REGISTRATION",
-                                  "message": "회원가입 승인 권한이 없습니다.",
-                                  "result": null
-                                }
-                                """))),
+                                        {
+                                          "isSuccess": false,
+                                          "code": "NO_AUTHORITY_FOR_REGISTRATION",
+                                          "message": "회원가입 승인 권한이 없습니다.",
+                                          "result": null
+                                        }
+                                        """))),
                 @io.swagger.v3.oas.annotations.responses.ApiResponse(
                         responseCode = "404",
                         description = "사용자 없음",
@@ -220,13 +220,13 @@ public class AdminController {
                                                 @ExampleObject(
                                                         value =
                                                                 """
-                                {
-                                  "isSuccess": false,
-                                  "code": "USER_NOT_FOUND",
-                                  "message": "해당 사용자를 찾을 수 없습니다.",
-                                  "result": null
-                                }
-                                """)))
+                                        {
+                                          "isSuccess": false,
+                                          "code": "USER_NOT_FOUND",
+                                          "message": "해당 사용자를 찾을 수 없습니다.",
+                                          "result": null
+                                        }
+                                        """)))
             })
     @GetMapping("/users/{userId}")
     public ResponseEntity<ApiResponse<AdminUserDetailResponseDto>> getUserDetail(
@@ -250,13 +250,13 @@ public class AdminController {
                                                 @ExampleObject(
                                                         value =
                                                                 """
-                                {
-                                  "isSuccess": true,
-                                  "code": "COMMON200",
-                                  "message": "요청에 성공했습니다.",
-                                  "result": "직원 정보가 성공적으로 수정되었습니다."
-                                }
-                                """))),
+                                        {
+                                          "isSuccess": true,
+                                          "code": "COMMON200",
+                                          "message": "요청에 성공했습니다.",
+                                          "result": "직원 정보가 성공적으로 수정되었습니다."
+                                        }
+                                        """))),
                 @io.swagger.v3.oas.annotations.responses.ApiResponse(
                         responseCode = "400",
                         description = "잘못된 요청",
@@ -268,24 +268,24 @@ public class AdminController {
                                                     name = "전화번호 인증 필요",
                                                     value =
                                                             """
-                                    {
-                                      "isSuccess": false,
-                                      "code": "PHONE_NOT_VERIFIED",
-                                      "message": "전화번호 인증이 필요합니다.",
-                                      "result": null
-                                    }
-                                    """),
+                                                        {
+                                                          "isSuccess": false,
+                                                          "code": "PHONE_NOT_VERIFIED",
+                                                          "message": "전화번호 인증이 필요합니다.",
+                                                          "result": null
+                                                        }
+                                                        """),
                                             @ExampleObject(
                                                     name = "잘못된 직무/역할 조합",
                                                     value =
                                                             """
-                                    {
-                                      "isSuccess": false,
-                                      "code": "INVALID_JOB_TYPE_FOR_ADMIN_ROLE",
-                                      "message": "현장직은 관리자 권한을 가질 수 없습니다.",
-                                      "result": null
-                                    }
-                                    """)
+                                                        {
+                                                          "isSuccess": false,
+                                                          "code": "INVALID_JOB_TYPE_FOR_ADMIN_ROLE",
+                                                          "message": "현장직은 관리자 권한을 가질 수 없습니다.",
+                                                          "result": null
+                                                        }
+                                                        """)
                                         })),
                 @io.swagger.v3.oas.annotations.responses.ApiResponse(
                         responseCode = "403",
@@ -297,13 +297,13 @@ public class AdminController {
                                                 @ExampleObject(
                                                         value =
                                                                 """
-                                {
-                                  "isSuccess": false,
-                                  "code": "NO_AUTHORITY_FOR_REGISTRATION",
-                                  "message": "회원가입 승인 권한이 없습니다.",
-                                  "result": null
-                                }
-                                """))),
+                                        {
+                                          "isSuccess": false,
+                                          "code": "NO_AUTHORITY_FOR_REGISTRATION",
+                                          "message": "회원가입 승인 권한이 없습니다.",
+                                          "result": null
+                                        }
+                                        """))),
                 @io.swagger.v3.oas.annotations.responses.ApiResponse(
                         responseCode = "404",
                         description = "사용자/부서 없음",
@@ -315,24 +315,24 @@ public class AdminController {
                                                     name = "사용자 없음",
                                                     value =
                                                             """
-                                    {
-                                      "isSuccess": false,
-                                      "code": "USER_NOT_FOUND",
-                                      "message": "해당 사용자를 찾을 수 없습니다.",
-                                      "result": null
-                                    }
-                                    """),
+                                                        {
+                                                          "isSuccess": false,
+                                                          "code": "USER_NOT_FOUND",
+                                                          "message": "해당 사용자를 찾을 수 없습니다.",
+                                                          "result": null
+                                                        }
+                                                        """),
                                             @ExampleObject(
                                                     name = "부서 없음",
                                                     value =
                                                             """
-                                    {
-                                      "isSuccess": false,
-                                      "code": "DEPARTMENT_NOT_FOUND",
-                                      "message": "해당 부서를 찾을 수 없습니다.",
-                                      "result": null
-                                    }
-                                    """)
+                                                        {
+                                                          "isSuccess": false,
+                                                          "code": "DEPARTMENT_NOT_FOUND",
+                                                          "message": "해당 부서를 찾을 수 없습니다.",
+                                                          "result": null
+                                                        }
+                                                        """)
                                         }))
             })
     @PatchMapping("/users/{userId}")
@@ -358,36 +358,36 @@ public class AdminController {
                                                 @ExampleObject(
                                                         value =
                                                                 """
-                                {
-                                  "isSuccess": true,
-                                  "code": "COMMON200",
-                                  "message": "요청에 성공했습니다.",
-                                  "result": [
-                                    {
-                                      "userId": 21,
-                                      "nameKor": "홍길동",
-                                      "nameEng": "HONG GILDONG",
-                                      "birthDate": "1990-01-01",
-                                      "nationality": "대한민국",
-                                      "zipcode": "06234",
-                                      "address1": "서울특별시 강남구 테헤란로 123",
-                                      "address2": "어썸리드빌딩 5층",
-                                      "registrationNumber": "9001011234567",
-                                      "phoneNumber": "01012345678",
-                                      "email": "hong@test.com",
-                                      "workLocation": "어썸리드",
-                                      "departmentName": "경영지원부",
-                                      "position": "사원",
-                                      "jobType": "관리직",
-                                      "authorities": ["메세지 작성"],
-                                      "hireDate": "2025-09-22",
-                                      "resignationDate": null,
-                                      "role": "일반 사용자",
-                                      "status": "PENDING"
-                                    }
-                                  ]
-                                }
-                                """))),
+                                        {
+                                          "isSuccess": true,
+                                          "code": "COMMON200",
+                                          "message": "요청에 성공했습니다.",
+                                          "result": [
+                                            {
+                                              "userId": 21,
+                                              "nameKor": "홍길동",
+                                              "nameEng": "HONG GILDONG",
+                                              "birthDate": "1990-01-01",
+                                              "nationality": "대한민국",
+                                              "zipcode": "06234",
+                                              "address1": "서울특별시 강남구 테헤란로 123",
+                                              "address2": "어썸리드빌딩 5층",
+                                              "registrationNumber": "9001011234567",
+                                              "phoneNumber": "01012345678",
+                                              "email": "hong@test.com",
+                                              "workLocation": "어썸리드",
+                                              "departmentName": "경영지원부",
+                                              "position": "사원",
+                                              "jobType": "관리직",
+                                              "authorities": ["메세지 작성"],
+                                              "hireDate": "2025-09-22",
+                                              "resignationDate": null,
+                                              "role": "일반 사용자",
+                                              "status": "PENDING"
+                                            }
+                                          ]
+                                        }
+                                        """))),
                 @io.swagger.v3.oas.annotations.responses.ApiResponse(
                         responseCode = "401",
                         description = "인증 실패",
@@ -398,13 +398,13 @@ public class AdminController {
                                                 @ExampleObject(
                                                         value =
                                                                 """
-                                {
-                                  "isSuccess": false,
-                                  "code": "USER_NOT_FOUND",
-                                  "message": "해당 사용자를 찾을 수 없습니다.",
-                                  "result": null
-                                }
-                                """))),
+                                        {
+                                          "isSuccess": false,
+                                          "code": "USER_NOT_FOUND",
+                                          "message": "해당 사용자를 찾을 수 없습니다.",
+                                          "result": null
+                                        }
+                                        """))),
                 @io.swagger.v3.oas.annotations.responses.ApiResponse(
                         responseCode = "403",
                         description = "권한 없음",
@@ -415,13 +415,13 @@ public class AdminController {
                                                 @ExampleObject(
                                                         value =
                                                                 """
-                                {
-                                  "isSuccess": false,
-                                  "code": "NO_AUTHORITY_FOR_REGISTRATION",
-                                  "message": "회원가입 승인 권한이 없습니다.",
-                                  "result": null
-                                }
-                                """)))
+                                        {
+                                          "isSuccess": false,
+                                          "code": "NO_AUTHORITY_FOR_REGISTRATION",
+                                          "message": "회원가입 승인 권한이 없습니다.",
+                                          "result": null
+                                        }
+                                        """)))
             })
     @GetMapping("/users/pending")
     public ResponseEntity<ApiResponse<List<PendingUserSummaryResponseDto>>> getPendingUsers(
@@ -447,13 +447,13 @@ public class AdminController {
                                                 @ExampleObject(
                                                         value =
                                                                 """
-                                {
-                                "isSuccess": true,
-                                "code": "COMMON200",
-                                "message": "요청에 성공했습니다.",
-                                "result": "1번 사용자의 회원가입이 성공적으로 승인되었습니다."
-                                }
-                                """))),
+                                        {
+                                        "isSuccess": true,
+                                        "code": "COMMON200",
+                                        "message": "요청에 성공했습니다.",
+                                        "result": "1번 사용자의 회원가입이 성공적으로 승인되었습니다."
+                                        }
+                                        """))),
                 @io.swagger.v3.oas.annotations.responses.ApiResponse(
                         responseCode = "400",
                         description = "잘못된 요청",
@@ -465,27 +465,27 @@ public class AdminController {
                                                     name = "이미 승인된 사용자",
                                                     value =
                                                             """
-                                    {
-                                      "isSuccess": false,
-                                      "code": "DUPLICATED_SIGNUP_REQUEST",
-                                      "message": "이미 승인 처리가 완료된 사용자입니다.",
-                                      "result": null
-                                    }
-                                    """),
+                                                        {
+                                                          "isSuccess": false,
+                                                          "code": "DUPLICATED_SIGNUP_REQUEST",
+                                                          "message": "이미 승인 처리가 완료된 사용자입니다.",
+                                                          "result": null
+                                                        }
+                                                        """),
                                             @ExampleObject(
                                                     name = "입력값 검증 실패",
                                                     value =
                                                             """
-                                    {
-                                      "isSuccess": false,
-                                      "code": "COMMON400",
-                                      "message": "입력값이 유효하지 않습니다.",
-                                      "result": {
-                                        "departmentId": "부서 ID는 필수입니다.",
-                                        "position": "직급 정보가 누락되었습니다."
-                                      }
-                                    }
-                                    """)
+                                                        {
+                                                          "isSuccess": false,
+                                                          "code": "COMMON400",
+                                                          "message": "입력값이 유효하지 않습니다.",
+                                                          "result": {
+                                                            "departmentId": "부서 ID는 필수입니다.",
+                                                            "position": "직급 정보가 누락되었습니다."
+                                                          }
+                                                        }
+                                                        """)
                                         })),
                 @io.swagger.v3.oas.annotations.responses.ApiResponse(
                         responseCode = "404",
@@ -498,24 +498,24 @@ public class AdminController {
                                                     name = "사용자 없음",
                                                     value =
                                                             """
-                                    {
-                                      "isSuccess": false,
-                                      "code": "USER_NOT_FOUND",
-                                      "message": "해당 사용자를 찾을 수 없습니다.",
-                                      "result": null
-                                    }
-                                    """),
+                                                        {
+                                                          "isSuccess": false,
+                                                          "code": "USER_NOT_FOUND",
+                                                          "message": "해당 사용자를 찾을 수 없습니다.",
+                                                          "result": null
+                                                        }
+                                                        """),
                                             @ExampleObject(
                                                     name = "부서 없음",
                                                     value =
                                                             """
-                                    {
-                                      "isSuccess": false,
-                                      "code": "DEPARTMENT_NOT_FOUND",
-                                      "message": "해당 부서를 찾을 수 없습니다.",
-                                      "result": null
-                                    }
-                                    """)
+                                                        {
+                                                          "isSuccess": false,
+                                                          "code": "DEPARTMENT_NOT_FOUND",
+                                                          "message": "해당 부서를 찾을 수 없습니다.",
+                                                          "result": null
+                                                        }
+                                                        """)
                                         }))
             })
     @PatchMapping("/users/{userId}/approve")
@@ -538,56 +538,56 @@ public class AdminController {
                                                         name = "권한 1개 선택 예시",
                                                         value =
                                                                 """
-                                {
-                                  "nameKor": "홍길동",
-                                  "nameEng": "HONG GILDONG",
-                                  "birthDate": "1990-01-01",
-                                  "nationality": "대한민국",
-                                  "zipcode": "06234",
-                                  "address1": "서울특별시 강남구 테헤란로 123",
-                                  "address2": "어썸리드빌딩 5층",
-                                  "registrationNumber": "9001011234567",
-                                  "phoneNumber": "01099998888",
-                                  "workLocation": "어썸리드",
-                                  "departmentId": 1,
-                                  "position": "사원",
-                                  "jobType": "관리직",
-                                  "authorities": ["메세지 작성"],
-                                  "hireDate": "2025-09-22",
-                                  "resignationDate": null,
-                                  "role": "일반 사용자"
-                                }
-                                """),
+                                                        {
+                                                          "nameKor": "홍길동",
+                                                          "nameEng": "HONG GILDONG",
+                                                          "birthDate": "1990-01-01",
+                                                          "nationality": "대한민국",
+                                                          "zipcode": "06234",
+                                                          "address1": "서울특별시 강남구 테헤란로 123",
+                                                          "address2": "어썸리드빌딩 5층",
+                                                          "registrationNumber": "9001011234567",
+                                                          "phoneNumber": "01099998888",
+                                                          "workLocation": "어썸리드",
+                                                          "departmentName": "경영지원부",
+                                                          "position": "사원",
+                                                          "jobType": "관리직",
+                                                          "authorities": ["메세지 작성"],
+                                                          "hireDate": "2025-09-22",
+                                                          "resignationDate": null,
+                                                          "role": "일반 사용자"
+                                                        }
+                                                        """),
                                                 @ExampleObject(
                                                         name = "권한 5개 선택 예시",
                                                         value =
                                                                 """
-                                {
-                                  "nameKor": "홍길동",
-                                  "nameEng": "HONG GILDONG",
-                                  "birthDate": "1990-01-01",
-                                  "nationality": "대한민국",
-                                  "zipcode": "06234",
-                                  "address1": "서울특별시 강남구 테헤란로 123",
-                                  "address2": "어썸리드빌딩 5층",
-                                  "registrationNumber": "9001011234567",
-                                  "phoneNumber": "01099998888",
-                                  "workLocation": "어썸리드",
-                                  "departmentId": 1,
-                                  "position": "사원",
-                                  "jobType": "관리직",
-                                  "authorities": [
-                                    "메세지 작성",
-                                    "교육 작성",
-                                    "공지 작성",
-                                    "방문자 관리 접근",
-                                    "사원 데이터 관리"
-                                  ],
-                                  "hireDate": "2025-09-22",
-                                  "resignationDate": null,
-                                  "role": "일반 사용자"
-                                }
-                                """)
+                                                        {
+                                                          "nameKor": "홍길동",
+                                                          "nameEng": "HONG GILDONG",
+                                                          "birthDate": "1990-01-01",
+                                                          "nationality": "대한민국",
+                                                          "zipcode": "06234",
+                                                          "address1": "서울특별시 강남구 테헤란로 123",
+                                                          "address2": "어썸리드빌딩 5층",
+                                                          "registrationNumber": "9001011234567",
+                                                          "phoneNumber": "01099998888",
+                                                          "workLocation": "어썸리드",
+                                                          "departmentName": "경영지원부",
+                                                          "position": "사원",
+                                                          "jobType": "관리직",
+                                                          "authorities": [
+                                                            "메세지 작성",
+                                                            "교육 작성",
+                                                            "공지 작성",
+                                                            "방문자 관리 접근",
+                                                            "사원 데이터 관리"
+                                                          ],
+                                                          "hireDate": "2025-09-22",
+                                                          "resignationDate": null,
+                                                          "role": "일반 사용자"
+                                                        }
+                                                        """)
                                             }))
                     @Parameter(description = "사용자 승인 정보 (부서 ID, 직급 등)", required = true)
                     @Valid
@@ -616,13 +616,13 @@ public class AdminController {
                                                 @ExampleObject(
                                                         value =
                                                                 """
-                                {
-                                "isSuccess": true,
-                                "code": "COMMON200",
-                                "message": "요청에 성공했습니다.",
-                                "result": "5번 사용자의 역할이 관리자(으)로 성공적으로 변경되었습니다."
-                                }
-                                """))),
+                                        {
+                                        "isSuccess": true,
+                                        "code": "COMMON200",
+                                        "message": "요청에 성공했습니다.",
+                                        "result": "5번 사용자의 역할이 관리자(으)로 성공적으로 변경되었습니다."
+                                        }
+                                        """))),
                 @io.swagger.v3.oas.annotations.responses.ApiResponse(
                         responseCode = "403",
                         description = "권한 부족",
@@ -634,13 +634,13 @@ public class AdminController {
                                                         name = "역할 변경 권한 없음",
                                                         value =
                                                                 """
-                                {
-                                "isSuccess": false,
-                                "code": "NO_AUTHORITY_FOR_ROLE_UPDATE",
-                                "message": "사용자 역할 변경 권한이 없습니다.",
-                                "result": null
-                                }
-                                """))),
+                                        {
+                                        "isSuccess": false,
+                                        "code": "NO_AUTHORITY_FOR_ROLE_UPDATE",
+                                        "message": "사용자 역할 변경 권한이 없습니다.",
+                                        "result": null
+                                        }
+                                        """))),
                 @io.swagger.v3.oas.annotations.responses.ApiResponse(
                         responseCode = "404",
                         description = "사용자 없음",
@@ -651,13 +651,13 @@ public class AdminController {
                                                 @ExampleObject(
                                                         value =
                                                                 """
-                                {
-                                "isSuccess": false,
-                                "code": "USER_NOT_FOUND",
-                                "message": "해당 사용자를 찾을 수 없습니다.",
-                                "result": null
-                                }
-                                """)))
+                                        {
+                                        "isSuccess": false,
+                                        "code": "USER_NOT_FOUND",
+                                        "message": "해당 사용자를 찾을 수 없습니다.",
+                                        "result": null
+                                        }
+                                        """)))
             })
     @PatchMapping("/users/{userId}/role")
     @PreAuthorize("hasAnyRole('ADMIN', 'MASTER_ADMIN')")
@@ -690,13 +690,13 @@ public class AdminController {
                                                 @ExampleObject(
                                                         value =
                                                                 """
-                                {
-                                "isSuccess": true,
-                                "code": "COMMON200",
-                                "message": "요청에 성공했습니다.",
-                                "result": "권한이 성공적으로 변경되었습니다."
-                                }
-                                """))),
+                                        {
+                                        "isSuccess": true,
+                                        "code": "COMMON200",
+                                        "message": "요청에 성공했습니다.",
+                                        "result": "권한이 성공적으로 변경되었습니다."
+                                        }
+                                        """))),
                 @io.swagger.v3.oas.annotations.responses.ApiResponse(
                         responseCode = "400",
                         description = "잘못된 요청 파라미터",
@@ -708,35 +708,35 @@ public class AdminController {
                                                     name = "입력값 검증 실패",
                                                     value =
                                                             """
-                                    {
-                                    "isSuccess": false,
-                                    "code": "COMMON400",
-                                    "message": "입력값이 유효하지 않습니다.",
-                                    "result": null
-                                    }
-                                    """),
+                                                        {
+                                                        "isSuccess": false,
+                                                        "code": "COMMON400",
+                                                        "message": "입력값이 유효하지 않습니다.",
+                                                        "result": null
+                                                        }
+                                                        """),
                                             @ExampleObject(
                                                     name = "이미 부여된 권한 추가",
                                                     value =
                                                             """
-                                    {
-                                    "isSuccess": false,
-                                    "code": "AUTHORITY_ALREADY_ASSIGNED",
-                                    "message": "이미 부여된 권한입니다.",
-                                    "result": null
-                                    }
-                                    """),
+                                                        {
+                                                        "isSuccess": false,
+                                                        "code": "AUTHORITY_ALREADY_ASSIGNED",
+                                                        "message": "이미 부여된 권한입니다.",
+                                                        "result": null
+                                                        }
+                                                        """),
                                             @ExampleObject(
                                                     name = "없는 권한 제거",
                                                     value =
                                                             """
-                                    {
-                                    "isSuccess": false,
-                                    "code": "AUTHORITY_NOT_ASSIGNED",
-                                    "message": "부여되지 않은 권한은 제거할 수 없습니다.",
-                                    "result": null
-                                    }
-                                    """)
+                                                        {
+                                                        "isSuccess": false,
+                                                        "code": "AUTHORITY_NOT_ASSIGNED",
+                                                        "message": "부여되지 않은 권한은 제거할 수 없습니다.",
+                                                        "result": null
+                                                        }
+                                                        """)
                                         })),
                 @io.swagger.v3.oas.annotations.responses.ApiResponse(
                         responseCode = "403",
@@ -748,13 +748,13 @@ public class AdminController {
                                                 @ExampleObject(
                                                         value =
                                                                 """
-                                {
-                                "isSuccess": false,
-                                "code": "NO_AUTHORITY_FOR_ROLE_UPDATE",
-                                "message": "사용자 역할 변경 권한이 없습니다.",
-                                "result": null
-                                }
-                                """))),
+                                        {
+                                        "isSuccess": false,
+                                        "code": "NO_AUTHORITY_FOR_ROLE_UPDATE",
+                                        "message": "사용자 역할 변경 권한이 없습니다.",
+                                        "result": null
+                                        }
+                                        """))),
                 @io.swagger.v3.oas.annotations.responses.ApiResponse(
                         responseCode = "404",
                         description = "사용자 없음",
@@ -765,13 +765,13 @@ public class AdminController {
                                                 @ExampleObject(
                                                         value =
                                                                 """
-                                {
-                                "isSuccess": false,
-                                "code": "USER_NOT_FOUND",
-                                "message": "해당 사용자를 찾을 수 없습니다.",
-                                "result": null
-                                }
-                                """)))
+                                        {
+                                        "isSuccess": false,
+                                        "code": "USER_NOT_FOUND",
+                                        "message": "해당 사용자를 찾을 수 없습니다.",
+                                        "result": null
+                                        }
+                                        """)))
             })
     @PatchMapping("/users/{userId}/authority")
     public ResponseEntity<ApiResponse<String>> updateUserAuthority(
@@ -813,13 +813,13 @@ public class AdminController {
                                                 @ExampleObject(
                                                         value =
                                                                 """
-                                {
-                                  "isSuccess": true,
-                                  "code": "COMMON200",
-                                  "message": "요청에 성공했습니다.",
-                                  "result": "22번 사용자의 개인정보 수정 요청이 승인되었습니다."
-                                }
-                                """))),
+                                        {
+                                          "isSuccess": true,
+                                          "code": "COMMON200",
+                                          "message": "요청에 성공했습니다.",
+                                          "result": "22번 사용자의 개인정보 수정 요청이 승인되었습니다."
+                                        }
+                                        """))),
                 @io.swagger.v3.oas.annotations.responses.ApiResponse(
                         responseCode = "403",
                         description = "권한 없음",
@@ -830,13 +830,13 @@ public class AdminController {
                                                 @ExampleObject(
                                                         value =
                                                                 """
-                                {
-                                  "isSuccess": false,
-                                  "code": "NO_AUTHORITY_FOR_MY_INFO_UPDATE_APPROVAL",
-                                  "message": "개인정보 수정 승인 권한이 없습니다.",
-                                  "result": null
-                                }
-                                """))),
+                                        {
+                                          "isSuccess": false,
+                                          "code": "NO_AUTHORITY_FOR_MY_INFO_UPDATE_APPROVAL",
+                                          "message": "개인정보 수정 승인 권한이 없습니다.",
+                                          "result": null
+                                        }
+                                        """))),
                 @io.swagger.v3.oas.annotations.responses.ApiResponse(
                         responseCode = "404",
                         description = "요청 또는 사용자 없음",
@@ -848,24 +848,24 @@ public class AdminController {
                                                     name = "사용자 없음",
                                                     value =
                                                             """
-                                    {
-                                      "isSuccess": false,
-                                      "code": "USER_NOT_FOUND",
-                                      "message": "해당 사용자를 찾을 수 없습니다.",
-                                      "result": null
-                                    }
-                                    """),
+                                                        {
+                                                          "isSuccess": false,
+                                                          "code": "USER_NOT_FOUND",
+                                                          "message": "해당 사용자를 찾을 수 없습니다.",
+                                                          "result": null
+                                                        }
+                                                        """),
                                             @ExampleObject(
                                                     name = "요청 없음",
                                                     value =
                                                             """
-                                    {
-                                      "isSuccess": false,
-                                      "code": "MY_INFO_UPDATE_REQUEST_NOT_FOUND",
-                                      "message": "해당 개인정보 수정 요청을 찾을 수 없습니다.",
-                                      "result": null
-                                    }
-                                    """)
+                                                        {
+                                                          "isSuccess": false,
+                                                          "code": "MY_INFO_UPDATE_REQUEST_NOT_FOUND",
+                                                          "message": "해당 개인정보 수정 요청을 찾을 수 없습니다.",
+                                                          "result": null
+                                                        }
+                                                        """)
                                         }))
             })
     @PatchMapping("/users/{userId}/my-info/approve")
@@ -892,13 +892,13 @@ public class AdminController {
                                                 @ExampleObject(
                                                         value =
                                                                 """
-                                {
-                                  "isSuccess": true,
-                                  "code": "COMMON200",
-                                  "message": "요청에 성공했습니다.",
-                                  "result": "22번 사용자의 개인정보 수정 요청이 반려되었습니다."
-                                }
-                                """))),
+                                        {
+                                          "isSuccess": true,
+                                          "code": "COMMON200",
+                                          "message": "요청에 성공했습니다.",
+                                          "result": "22번 사용자의 개인정보 수정 요청이 반려되었습니다."
+                                        }
+                                        """))),
                 @io.swagger.v3.oas.annotations.responses.ApiResponse(
                         responseCode = "400",
                         description = "잘못된 요청",
@@ -909,13 +909,13 @@ public class AdminController {
                                                 @ExampleObject(
                                                         value =
                                                                 """
-                                {
-                                  "isSuccess": false,
-                                  "code": "MY_INFO_UPDATE_REJECT_REASON_REQUIRED",
-                                  "message": "반려 사유를 입력해주세요.",
-                                  "result": null
-                                }
-                                """))),
+                                        {
+                                          "isSuccess": false,
+                                          "code": "MY_INFO_UPDATE_REJECT_REASON_REQUIRED",
+                                          "message": "반려 사유를 입력해주세요.",
+                                          "result": null
+                                        }
+                                        """))),
                 @io.swagger.v3.oas.annotations.responses.ApiResponse(
                         responseCode = "403",
                         description = "권한 없음",
@@ -926,13 +926,13 @@ public class AdminController {
                                                 @ExampleObject(
                                                         value =
                                                                 """
-                                {
-                                  "isSuccess": false,
-                                  "code": "NO_AUTHORITY_FOR_MY_INFO_UPDATE_APPROVAL",
-                                  "message": "개인정보 수정 승인 권한이 없습니다.",
-                                  "result": null
-                                }
-                                """))),
+                                        {
+                                          "isSuccess": false,
+                                          "code": "NO_AUTHORITY_FOR_MY_INFO_UPDATE_APPROVAL",
+                                          "message": "개인정보 수정 승인 권한이 없습니다.",
+                                          "result": null
+                                        }
+                                        """))),
                 @io.swagger.v3.oas.annotations.responses.ApiResponse(
                         responseCode = "404",
                         description = "요청 또는 사용자 없음",
@@ -944,24 +944,24 @@ public class AdminController {
                                                     name = "사용자 없음",
                                                     value =
                                                             """
-                                    {
-                                      "isSuccess": false,
-                                      "code": "USER_NOT_FOUND",
-                                      "message": "해당 사용자를 찾을 수 없습니다.",
-                                      "result": null
-                                    }
-                                    """),
+                                                        {
+                                                          "isSuccess": false,
+                                                          "code": "USER_NOT_FOUND",
+                                                          "message": "해당 사용자를 찾을 수 없습니다.",
+                                                          "result": null
+                                                        }
+                                                        """),
                                             @ExampleObject(
                                                     name = "요청 없음",
                                                     value =
                                                             """
-                                    {
-                                      "isSuccess": false,
-                                      "code": "MY_INFO_UPDATE_REQUEST_NOT_FOUND",
-                                      "message": "해당 개인정보 수정 요청을 찾을 수 없습니다.",
-                                      "result": null
-                                    }
-                                    """)
+                                                        {
+                                                          "isSuccess": false,
+                                                          "code": "MY_INFO_UPDATE_REQUEST_NOT_FOUND",
+                                                          "message": "해당 개인정보 수정 요청을 찾을 수 없습니다.",
+                                                          "result": null
+                                                        }
+                                                        """)
                                         }))
             })
     @PatchMapping("/users/{userId}/my-info/reject")
@@ -989,27 +989,27 @@ public class AdminController {
                                                 @ExampleObject(
                                                         value =
                                                                 """
-                                {
-                                  "isSuccess": true,
-                                  "code": "COMMON200",
-                                  "message": "요청에 성공했습니다.",
-                                  "result": [
-                                    {
-                                      "requestId": 101,
-                                      "userId": 17,
-                                      "nameKor": "홍길동",
-                                      "email": "hgd@gmail.com",
-                                      "requestedNameEng": "HONG GILDONG",
-                                      "requestedPhoneNumber": null,
-                                      "requestedZipcode": "06234",
-                                      "requestedAddress1": "서울특별시 강남구 테헤란로 123",
-                                      "requestedAddress2": "어썸리드빌딩 5층",
-                                      "status": "PENDING",
-                                      "requestedAt": "2026-02-26T15:20:00"
-                                    }
-                                  ]
-                                }
-                                """))),
+                                        {
+                                          "isSuccess": true,
+                                          "code": "COMMON200",
+                                          "message": "요청에 성공했습니다.",
+                                          "result": [
+                                            {
+                                              "requestId": 101,
+                                              "userId": 17,
+                                              "nameKor": "홍길동",
+                                              "email": "hgd@gmail.com",
+                                              "requestedNameEng": "HONG GILDONG",
+                                              "requestedPhoneNumber": null,
+                                              "requestedZipcode": "06234",
+                                              "requestedAddress1": "서울특별시 강남구 테헤란로 123",
+                                              "requestedAddress2": "어썸리드빌딩 5층",
+                                              "status": "PENDING",
+                                              "requestedAt": "2026-02-26T15:20:00"
+                                            }
+                                          ]
+                                        }
+                                        """))),
                 @io.swagger.v3.oas.annotations.responses.ApiResponse(
                         responseCode = "403",
                         description = "권한 없음",
@@ -1020,13 +1020,13 @@ public class AdminController {
                                                 @ExampleObject(
                                                         value =
                                                                 """
-                                {
-                                  "isSuccess": false,
-                                  "code": "NO_AUTHORITY_FOR_MY_INFO_UPDATE_APPROVAL",
-                                  "message": "개인정보 수정 승인 권한이 없습니다.",
-                                  "result": null
-                                }
-                                """)))
+                                        {
+                                          "isSuccess": false,
+                                          "code": "NO_AUTHORITY_FOR_MY_INFO_UPDATE_APPROVAL",
+                                          "message": "개인정보 수정 승인 권한이 없습니다.",
+                                          "result": null
+                                        }
+                                        """)))
             })
     @GetMapping("/users/my-info/requests/pending")
     public ResponseEntity<ApiResponse<List<MyInfoUpdateRequestSummaryResponseDto>>>

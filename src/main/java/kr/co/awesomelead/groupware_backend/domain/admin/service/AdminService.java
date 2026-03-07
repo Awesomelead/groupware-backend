@@ -50,7 +50,7 @@ public class AdminService {
     @Transactional
     public void approveUserRegistration(
             Long userId, UserApprovalRequestDto requestDto, Long adminId) {
-        //  관리자 권한 확인
+        // 관리자 권한 확인
         User admin =
                 userRepository
                         .findById(adminId)
@@ -116,7 +116,7 @@ public class AdminService {
 
         Department department =
                 departmentRepository
-                        .findById(requestDto.getDepartmentId())
+                        .findByName(requestDto.getDepartmentName())
                         .orElseThrow(() -> new CustomException(ErrorCode.DEPARTMENT_NOT_FOUND));
 
         // DTO의 정보로 사용자 엔티티를 설정

@@ -1,7 +1,7 @@
 package kr.co.awesomelead.groupware_backend.domain.requesthistory.repository;
 
-import kr.co.awesomelead.groupware_backend.domain.requesthistory.entity.RequestHistory;
 import kr.co.awesomelead.groupware_backend.domain.approval.enums.ApprovalStatus;
+import kr.co.awesomelead.groupware_backend.domain.requesthistory.entity.RequestHistory;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;

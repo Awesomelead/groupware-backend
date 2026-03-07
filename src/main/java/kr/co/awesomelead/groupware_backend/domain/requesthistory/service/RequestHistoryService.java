@@ -74,7 +74,8 @@ public class RequestHistoryService {
         RequestHistory requestHistory =
                 requestHistoryRepository
                         .findByIdAndUserId(requestId, userId)
-                        .orElseThrow(() -> new CustomException(ErrorCode.REQUEST_HISTORY_NOT_FOUND));
+                        .orElseThrow(
+                                () -> new CustomException(ErrorCode.REQUEST_HISTORY_NOT_FOUND));
 
         return RequestHistoryDetailResponseDto.from(requestHistory);
     }
@@ -88,7 +89,8 @@ public class RequestHistoryService {
         RequestHistory requestHistory =
                 requestHistoryRepository
                         .findByIdAndUserId(requestId, userId)
-                        .orElseThrow(() -> new CustomException(ErrorCode.REQUEST_HISTORY_NOT_FOUND));
+                        .orElseThrow(
+                                () -> new CustomException(ErrorCode.REQUEST_HISTORY_NOT_FOUND));
 
         if (requestHistory.getApprovalStatus() != ApprovalStatus.WAITING) {
             throw new CustomException(ErrorCode.REQUEST_HISTORY_NOT_CANCELABLE);
@@ -106,8 +108,9 @@ public class RequestHistoryService {
                         .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
         validateAdminAuthority(admin);
 
-        return requestHistoryRepository.findAllWithUserAndDepartmentByStatus(status, pageable).map(
-                AdminRequestHistorySummaryResponseDto::from);
+        return requestHistoryRepository
+                .findAllWithUserAndDepartmentByStatus(status, pageable)
+                .map(AdminRequestHistorySummaryResponseDto::from);
     }
 
     private void validateAdminAuthority(User admin) {

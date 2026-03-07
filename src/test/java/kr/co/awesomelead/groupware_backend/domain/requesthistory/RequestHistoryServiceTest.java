@@ -89,7 +89,8 @@ class RequestHistoryServiceTest {
             ReflectionTestUtils.setField(user, "id", 1L);
             RequestHistory requestHistory = new RequestHistory();
             ReflectionTestUtils.setField(requestHistory, "id", 10L);
-            ReflectionTestUtils.setField(requestHistory, "requestType", RequestType.CAREER_CERTIFICATE);
+            ReflectionTestUtils.setField(
+                    requestHistory, "requestType", RequestType.CAREER_CERTIFICATE);
             ReflectionTestUtils.setField(requestHistory, "purpose", "관공서 제출용");
             ReflectionTestUtils.setField(requestHistory, "copies", 2);
 
@@ -217,8 +218,9 @@ class RequestHistoryServiceTest {
             Page<RequestHistory> page = new PageImpl<>(List.of(requestHistory), pageable, 1);
 
             given(userRepository.findById(100L)).willReturn(Optional.of(admin));
-            given(requestHistoryRepository.findAllWithUserAndDepartmentByStatus(
-                            ApprovalStatus.WAITING, pageable))
+            given(
+                            requestHistoryRepository.findAllWithUserAndDepartmentByStatus(
+                                    ApprovalStatus.WAITING, pageable))
                     .willReturn(page);
 
             // when

@@ -24,6 +24,7 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -123,5 +124,38 @@ public class RequestHistoryController {
         RequestHistoryDetailResponseDto result =
                 requestHistoryService.getMyRequestDetail(userDetails.getId(), requestId);
         return ResponseEntity.ok(ApiResponse.onSuccess(result));
+    }
+
+    @Operation(summary = "내 제증명 발급 신청 취소", description = "현재 로그인한 사용자가 본인의 대기 상태 신청을 취소합니다.")
+    @ApiResponses(
+            value = {
+                @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                        responseCode = "200",
+                        description = "취소 성공"),
+                @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                        responseCode = "400",
+                        description = "취소 불가 상태",
+                        content =
+                                @Content(
+                                        mediaType = "application/json",
+                                        examples =
+                                                @ExampleObject(
+                                                        value =
+                                                                """
+                                {
+                                  "isSuccess": false,
+                                  "code": "REQUEST_HISTORY_NOT_CANCELABLE",
+                                  "message": "대기 상태 요청만 취소할 수 있습니다.",
+                                  "result": null
+                                }
+                                """)))
+            })
+    @PatchMapping("/{requestId}/cancel")
+    public ResponseEntity<ApiResponse<String>> cancelMyRequest(
+            @Parameter(hidden = true) @AuthenticationPrincipal CustomUserDetails userDetails,
+            @Parameter(description = "취소할 신청 ID", example = "1", required = true) @PathVariable
+                    Long requestId) {
+        requestHistoryService.cancelMyRequest(userDetails.getId(), requestId);
+        return ResponseEntity.ok(ApiResponse.onSuccess("신청이 취소되었습니다."));
     }
 }

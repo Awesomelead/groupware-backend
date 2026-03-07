@@ -1,6 +1,7 @@
 package kr.co.awesomelead.groupware_backend.global.common.dto.response;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -21,9 +22,6 @@ public class EnumCodeDto {
     private String description;
 
     public static EnumCodeDto of(String code, String description) {
-        return EnumCodeDto.builder()
-                .code(code)
-                .description(description)
-                .build();
+        return EnumCodeDto.builder().code(code).description(description).build();
     }
 }

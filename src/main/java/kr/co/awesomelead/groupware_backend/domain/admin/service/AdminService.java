@@ -51,15 +51,17 @@ public class AdminService {
     public void approveUserRegistration(
             Long userId, UserApprovalRequestDto requestDto, Long adminId) {
         // 관리자 권한 확인
-        User admin = userRepository
-                .findById(adminId)
-                .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
+        User admin =
+                userRepository
+                        .findById(adminId)
+                        .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
         validateRegistrationAuthority(admin);
 
         // userId로 PENDING 상태의 사용자를 조회
-        User user = userRepository
-                .findById(userId)
-                .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
+        User user =
+                userRepository
+                        .findById(userId)
+                        .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
 
         if (user.getStatus() != Status.PENDING) {
             throw new CustomException(ErrorCode.DUPLICATED_SIGNUP_REQUEST);
@@ -112,9 +114,10 @@ public class AdminService {
             }
         }
 
-        Department department = departmentRepository
-                .findByName(requestDto.getDepartmentName())
-                .orElseThrow(() -> new CustomException(ErrorCode.DEPARTMENT_NOT_FOUND));
+        Department department =
+                departmentRepository
+                        .findByName(requestDto.getDepartmentName())
+                        .orElseThrow(() -> new CustomException(ErrorCode.DEPARTMENT_NOT_FOUND));
 
         // DTO의 정보로 사용자 엔티티를 설정
         user.setWorkLocation(requestDto.getWorkLocation());
@@ -157,9 +160,10 @@ public class AdminService {
 
     @Transactional(readOnly = true)
     public List<PendingUserSummaryResponseDto> getPendingSignupUsers(Long adminId) {
-        User admin = userRepository
-                .findById(adminId)
-                .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
+        User admin =
+                userRepository
+                        .findById(adminId)
+                        .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
         validateRegistrationAuthority(admin);
 
         return userRepository.findAllByStatusWithDepartment(Status.PENDING).stream()
@@ -176,15 +180,17 @@ public class AdminService {
             JobType jobType,
             Role role,
             Pageable pageable) {
-        User admin = userRepository
-                .findById(adminId)
-                .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
+        User admin =
+                userRepository
+                        .findById(adminId)
+                        .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
         validateRegistrationAuthority(admin);
 
-        Set<Long> pendingMyInfoUserIds = myInfoUpdateRequestRepository
-                .findDistinctUserIdsByStatus(MyInfoUpdateRequestStatus.PENDING)
-                .stream()
-                .collect(Collectors.toSet());
+        Set<Long> pendingMyInfoUserIds =
+                myInfoUpdateRequestRepository
+                        .findDistinctUserIdsByStatus(MyInfoUpdateRequestStatus.PENDING)
+                        .stream()
+                        .collect(Collectors.toSet());
 
         String normalizedKeyword = hasText(keyword) ? keyword.trim() : null;
 
@@ -192,37 +198,43 @@ public class AdminService {
                 .findAllWithDepartmentAndKeyword(
                         normalizedKeyword, position, departmentId, jobType, role, pageable)
                 .map(
-                        u -> AdminUserSummaryResponseDto.from(
-                                u, pendingMyInfoUserIds.contains(u.getId())));
+                        u ->
+                                AdminUserSummaryResponseDto.from(
+                                        u, pendingMyInfoUserIds.contains(u.getId())));
     }
 
     @Transactional(readOnly = true)
     public AdminUserDetailResponseDto getUserDetail(Long adminId, Long userId) {
-        User admin = userRepository
-                .findById(adminId)
-                .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
+        User admin =
+                userRepository
+                        .findById(adminId)
+                        .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
         validateRegistrationAuthority(admin);
 
-        User user = userRepository
-                .findById(userId)
-                .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
+        User user =
+                userRepository
+                        .findById(userId)
+                        .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
 
-        boolean hasPendingMyInfoRequest = myInfoUpdateRequestRepository.existsByUserIdAndStatus(
-                userId, MyInfoUpdateRequestStatus.PENDING);
+        boolean hasPendingMyInfoRequest =
+                myInfoUpdateRequestRepository.existsByUserIdAndStatus(
+                        userId, MyInfoUpdateRequestStatus.PENDING);
 
         return AdminUserDetailResponseDto.from(user, hasPendingMyInfoRequest);
     }
 
     @Transactional
     public void updateUserInfo(Long userId, AdminUserUpdateRequestDto requestDto, Long adminId) {
-        User admin = userRepository
-                .findById(adminId)
-                .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
+        User admin =
+                userRepository
+                        .findById(adminId)
+                        .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
         validateRegistrationAuthority(admin);
 
-        User user = userRepository
-                .findById(userId)
-                .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
+        User user =
+                userRepository
+                        .findById(userId)
+                        .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
 
         if (requestDto.getNameKor() != null) {
             user.setNameKor(requestDto.getNameKor());
@@ -275,9 +287,10 @@ public class AdminService {
             user.setWorkLocation(requestDto.getWorkLocation());
         }
         if (requestDto.getDepartmentId() != null) {
-            Department department = departmentRepository
-                    .findById(requestDto.getDepartmentId())
-                    .orElseThrow(() -> new CustomException(ErrorCode.DEPARTMENT_NOT_FOUND));
+            Department department =
+                    departmentRepository
+                            .findById(requestDto.getDepartmentId())
+                            .orElseThrow(() -> new CustomException(ErrorCode.DEPARTMENT_NOT_FOUND));
             user.setDepartment(department);
         }
         if (requestDto.getPosition() != null) {
@@ -314,17 +327,19 @@ public class AdminService {
     @Transactional
     public void updateUserRole(Long userId, Role role, Long adminId) {
 
-        User admin = userRepository
-                .findById(adminId)
-                .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
+        User admin =
+                userRepository
+                        .findById(adminId)
+                        .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
 
         if (admin.getRole() != Role.ADMIN && admin.getRole() != Role.MASTER_ADMIN) {
             throw new CustomException(ErrorCode.NO_AUTHORITY_FOR_ROLE_UPDATE);
         }
         // 1. 대상 사용자 조회
-        User targetUser = userRepository
-                .findById(userId)
-                .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
+        User targetUser =
+                userRepository
+                        .findById(userId)
+                        .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
 
         // 2. 역할 업데이트
         targetUser.setRole(role);
@@ -343,18 +358,20 @@ public class AdminService {
     public void updateUserAuthority(
             Long userId, List<Authority> authorities, AuthorityAction action, Long adminId) {
         // 1. 관리자 권한 확인 (ADMIN 또는 MASTER_ADMIN만 가능)
-        User admin = userRepository
-                .findById(adminId)
-                .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
+        User admin =
+                userRepository
+                        .findById(adminId)
+                        .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
 
         if (admin.getRole() != Role.ADMIN && admin.getRole() != Role.MASTER_ADMIN) {
             throw new CustomException(ErrorCode.NO_AUTHORITY_FOR_ROLE_UPDATE);
         }
 
         // 2. 대상 사용자 조회
-        User targetUser = userRepository
-                .findById(userId)
-                .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
+        User targetUser =
+                userRepository
+                        .findById(userId)
+                        .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
 
         // 3. 요청 유효성 검사
         if (authorities == null || authorities.isEmpty()) {
@@ -386,21 +403,25 @@ public class AdminService {
 
     @Transactional
     public void approveMyInfoUpdate(Long userId, Long adminId) {
-        User admin = userRepository
-                .findById(adminId)
-                .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
+        User admin =
+                userRepository
+                        .findById(adminId)
+                        .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
         validateMyInfoApprovalAuthority(admin);
 
-        User targetUser = userRepository
-                .findById(userId)
-                .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
+        User targetUser =
+                userRepository
+                        .findById(userId)
+                        .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
 
-        MyInfoUpdateRequest request = myInfoUpdateRequestRepository
-                .findFirstByUserIdAndStatusOrderByCreatedAtDesc(
-                        userId, MyInfoUpdateRequestStatus.PENDING)
-                .orElseThrow(
-                        () -> new CustomException(
-                                ErrorCode.MY_INFO_UPDATE_REQUEST_NOT_FOUND));
+        MyInfoUpdateRequest request =
+                myInfoUpdateRequestRepository
+                        .findFirstByUserIdAndStatusOrderByCreatedAtDesc(
+                                userId, MyInfoUpdateRequestStatus.PENDING)
+                        .orElseThrow(
+                                () ->
+                                        new CustomException(
+                                                ErrorCode.MY_INFO_UPDATE_REQUEST_NOT_FOUND));
 
         if (request.getRequestedNameEng() != null) {
             targetUser.setNameEng(request.getRequestedNameEng());
@@ -437,9 +458,10 @@ public class AdminService {
 
     @Transactional
     public void rejectMyInfoUpdate(Long userId, String reason, Long adminId) {
-        User admin = userRepository
-                .findById(adminId)
-                .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
+        User admin =
+                userRepository
+                        .findById(adminId)
+                        .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
         validateMyInfoApprovalAuthority(admin);
 
         if (reason == null || reason.isBlank()) {
@@ -450,12 +472,14 @@ public class AdminService {
                 .findById(userId)
                 .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
 
-        MyInfoUpdateRequest request = myInfoUpdateRequestRepository
-                .findFirstByUserIdAndStatusOrderByCreatedAtDesc(
-                        userId, MyInfoUpdateRequestStatus.PENDING)
-                .orElseThrow(
-                        () -> new CustomException(
-                                ErrorCode.MY_INFO_UPDATE_REQUEST_NOT_FOUND));
+        MyInfoUpdateRequest request =
+                myInfoUpdateRequestRepository
+                        .findFirstByUserIdAndStatusOrderByCreatedAtDesc(
+                                userId, MyInfoUpdateRequestStatus.PENDING)
+                        .orElseThrow(
+                                () ->
+                                        new CustomException(
+                                                ErrorCode.MY_INFO_UPDATE_REQUEST_NOT_FOUND));
 
         request.reject(admin, reason.trim());
         myInfoUpdateRequestRepository.save(request);
@@ -472,9 +496,10 @@ public class AdminService {
     @Transactional(readOnly = true)
     public List<MyInfoUpdateRequestSummaryResponseDto> getPendingMyInfoUpdateRequests(
             Long adminId) {
-        User admin = userRepository
-                .findById(adminId)
-                .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
+        User admin =
+                userRepository
+                        .findById(adminId)
+                        .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
         validateMyInfoApprovalAuthority(admin);
 
         return myInfoUpdateRequestRepository

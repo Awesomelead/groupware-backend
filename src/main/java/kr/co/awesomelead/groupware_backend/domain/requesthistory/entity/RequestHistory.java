@@ -37,7 +37,7 @@ public class RequestHistory {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id", nullable = false)
-    @JsonBackReference
+    @JsonBackReference("request-history-user")
     private User user;
 
     // 증명서 종류 (재직/경력)
@@ -57,6 +57,10 @@ public class RequestHistory {
     @Column(nullable = false, length = 100)
     private String purpose;
 
+    // 발급 부수
+    @Column(nullable = false)
+    private Integer copies;
+
     // 발급 희망일 (필수)
     @Column(nullable = false)
     private LocalDate wishDate;
@@ -70,4 +74,14 @@ public class RequestHistory {
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 20)
     private ApprovalStatus approvalStatus = ApprovalStatus.WAITING;
+
+    // 처리 관리자
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "processed_by")
+    @JsonBackReference("request-history-processor")
+    private User processedBy;
+
+    // 발급 처리일
+    @Column
+    private LocalDate processedDate;
 }

@@ -21,5 +21,4 @@ public class LoginRequestDto {
     @Schema(description = "비밀번호", example = "test1234!", required = true)
     @NotBlank(message = "비밀번호를 입력해주세요.")
     private String password;
-
 }

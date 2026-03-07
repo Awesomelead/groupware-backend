@@ -58,8 +58,7 @@ public class AuthService {
     private final ApprovalRepository approvalRepository;
     private final NotificationService notificationService;
 
-    @PersistenceContext
-    private EntityManager entityManager;
+    @PersistenceContext private EntityManager entityManager;
 
     @Value("${spring.jwt.access-validation}")
     private long accessTokenValidation;
@@ -116,8 +115,9 @@ public class AuthService {
 
     public LoginResponseDto login(LoginRequestDto requestDto) {
         // 1. 인증 처리
-        UsernamePasswordAuthenticationToken authToken = new UsernamePasswordAuthenticationToken(
-                requestDto.getEmail(), requestDto.getPassword(), null);
+        UsernamePasswordAuthenticationToken authToken =
+                new UsernamePasswordAuthenticationToken(
+                        requestDto.getEmail(), requestDto.getPassword(), null);
 
         Authentication authentication = authenticationManager.authenticate(authToken);
 
@@ -137,18 +137,20 @@ public class AuthService {
         String refreshToken = refreshTokenService.createAndSaveRefreshToken(username, role);
 
         // 6. 사용자 정보 조회
-        User user = userRepository
-                .findByEmail(username)
-                .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
+        User user =
+                userRepository
+                        .findByEmail(username)
+                        .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
         // 7. 응답 생성
-        LoginResponseDto loginResponseDto = new LoginResponseDto(
-                accessToken,
-                refreshToken,
-                user.getId(),
-                user.getNameKor(),
-                user.getNameEng(),
-                user.getPosition(),
-                user.getRole());
+        LoginResponseDto loginResponseDto =
+                new LoginResponseDto(
+                        accessToken,
+                        refreshToken,
+                        user.getId(),
+                        user.getNameKor(),
+                        user.getNameEng(),
+                        user.getPosition(),
+                        user.getRole());
 
         return loginResponseDto;
     }
@@ -191,9 +193,10 @@ public class AuthService {
 
         // 2. 해시로 사용자 찾기
         String phoneNumberHash = User.hashValue(phoneNumber);
-        User user = userRepository
-                .findByPhoneNumberHash(phoneNumberHash)
-                .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
+        User user =
+                userRepository
+                        .findByPhoneNumberHash(phoneNumberHash)
+                        .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
 
         // 3. 이름 검증
         if (!user.getNameKor().equals(name)) {
@@ -228,9 +231,10 @@ public class AuthService {
             throw new CustomException(ErrorCode.PASSWORD_MISMATCH);
         }
         // 3. 이메일로 사용자 찾기
-        User user = userRepository
-                .findByEmail(requestDto.getEmail())
-                .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
+        User user =
+                userRepository
+                        .findByEmail(requestDto.getEmail())
+                        .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
 
         // 4. 해당 유저의 비밀번호 변경
         user.setPassword(bCryptPasswordEncoder.encode(requestDto.getNewPassword()));
@@ -245,9 +249,10 @@ public class AuthService {
     public void resetPasswordByPhone(ResetPasswordByPhoneRequestDto requestDto) {
 
         // 1. 이메일로 사용자 조회
-        User user = userRepository
-                .findByEmail(requestDto.getEmail())
-                .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
+        User user =
+                userRepository
+                        .findByEmail(requestDto.getEmail())
+                        .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
 
         // 2. 휴대폰 인증 여부 확인
         if (!phoneAuthService.isPhoneVerified(requestDto.getPhoneNumber())) {
@@ -282,9 +287,10 @@ public class AuthService {
         }
 
         // 2. 사용자 조회
-        User user = userRepository
-                .findById(userId)
-                .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
+        User user =
+                userRepository
+                        .findById(userId)
+                        .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
 
         // 3. 현재 비밀번호 확인
         if (!bCryptPasswordEncoder.matches(requestDto.getCurrentPassword(), user.getPassword())) {
@@ -306,9 +312,10 @@ public class AuthService {
     // 계정 삭제
     @Transactional
     public void deleteUser(Long userId) {
-        User user = userRepository
-                .findById(userId)
-                .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
+        User user =
+                userRepository
+                        .findById(userId)
+                        .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
 
         // 1) 토큰 및 사용자 직접 참조 데이터 정리
         deleteByQuery(

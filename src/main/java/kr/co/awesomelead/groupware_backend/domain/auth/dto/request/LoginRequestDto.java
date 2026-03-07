@@ -5,8 +5,6 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 
-import kr.co.awesomelead.groupware_backend.domain.fcm.enums.DeviceType;
-
 import lombok.Getter;
 import lombok.Setter;
 
@@ -24,9 +22,4 @@ public class LoginRequestDto {
     @NotBlank(message = "비밀번호를 입력해주세요.")
     private String password;
 
-    @Schema(description = "FCM 토큰 (선택)", example = "dY3jk2...firebase-token")
-    private String fcmToken;
-
-    @Schema(description = "디바이스 유형 (FCM 토큰이 있을 경우 필수)", example = "ANDROID")
-    private DeviceType deviceType;
 }

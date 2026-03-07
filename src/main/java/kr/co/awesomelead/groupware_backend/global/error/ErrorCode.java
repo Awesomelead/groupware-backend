@@ -92,6 +92,7 @@ public enum ErrorCode {
     NOTICE_NOT_FOUND(HttpStatus.NOT_FOUND, "해당 공지사항을 찾을 수 없습니다."),
     NOTICE_ATTACHMENT_NOT_FOUND(HttpStatus.NOT_FOUND, "해당 공지사항 첨부파일을 찾을 수 없습니다."),
     REQUEST_HISTORY_NOT_FOUND(HttpStatus.NOT_FOUND, "해당 제증명 발급 신청 내역을 찾을 수 없습니다."),
+    REQUEST_HISTORY_NOT_CANCELABLE(HttpStatus.BAD_REQUEST, "대기 상태 요청만 취소할 수 있습니다."),
     PAYSLIP_NOT_FOUND(HttpStatus.NOT_FOUND, "해당 급여명세서를 찾을 수 없습니다."),
     RECORD_NOT_FOUND(HttpStatus.NOT_FOUND, "해당 방문기록을 찾을 수 없습니다."),
     FCM_TOKEN_NOT_FOUND(HttpStatus.NOT_FOUND, "해당 FCM 토큰을 찾을 수 없습니다."),

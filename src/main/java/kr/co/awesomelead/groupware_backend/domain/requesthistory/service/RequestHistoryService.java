@@ -74,4 +74,22 @@ public class RequestHistoryService {
 
         return RequestHistoryDetailResponseDto.from(requestHistory);
     }
+
+    @Transactional
+    public void cancelMyRequest(Long userId, Long requestId) {
+        userRepository
+                .findById(userId)
+                .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
+
+        RequestHistory requestHistory =
+                requestHistoryRepository
+                        .findByIdAndUserId(requestId, userId)
+                        .orElseThrow(() -> new CustomException(ErrorCode.REQUEST_HISTORY_NOT_FOUND));
+
+        if (requestHistory.getApprovalStatus() != ApprovalStatus.WAITING) {
+            throw new CustomException(ErrorCode.REQUEST_HISTORY_NOT_CANCELABLE);
+        }
+
+        requestHistory.setApprovalStatus(ApprovalStatus.CANCELED);
+    }
 }

@@ -1,9 +1,9 @@
 package kr.co.awesomelead.groupware_backend.domain.education.service;
 
 import kr.co.awesomelead.groupware_backend.domain.department.entity.Department;
+import kr.co.awesomelead.groupware_backend.domain.department.enums.DepartmentName;
 import kr.co.awesomelead.groupware_backend.domain.department.repository.DepartmentRepository;
 import kr.co.awesomelead.groupware_backend.domain.education.dto.request.EduReportRequestDto;
-import kr.co.awesomelead.groupware_backend.domain.education.dto.response.EduReportAdminDetailDto;
 import kr.co.awesomelead.groupware_backend.domain.education.dto.response.EduReportDetailDto;
 import kr.co.awesomelead.groupware_backend.domain.education.dto.response.EduReportSummaryDto;
 import kr.co.awesomelead.groupware_backend.domain.education.entity.EduAttachment;
@@ -13,11 +13,11 @@ import kr.co.awesomelead.groupware_backend.domain.education.enums.EduType;
 import kr.co.awesomelead.groupware_backend.domain.education.mapper.EduMapper;
 import kr.co.awesomelead.groupware_backend.domain.education.repository.EduAttachmentRepository;
 import kr.co.awesomelead.groupware_backend.domain.education.repository.EduAttendanceRepository;
+import kr.co.awesomelead.groupware_backend.domain.education.repository.EduReportQueryRepository;
 import kr.co.awesomelead.groupware_backend.domain.education.repository.EduReportRepository;
 import kr.co.awesomelead.groupware_backend.domain.notification.service.NotificationService;
 import kr.co.awesomelead.groupware_backend.domain.user.entity.User;
 import kr.co.awesomelead.groupware_backend.domain.user.enums.Authority;
-import kr.co.awesomelead.groupware_backend.domain.user.enums.Role;
 import kr.co.awesomelead.groupware_backend.domain.user.repository.UserRepository;
 import kr.co.awesomelead.groupware_backend.global.error.CustomException;
 import kr.co.awesomelead.groupware_backend.global.error.ErrorCode;
@@ -40,6 +40,7 @@ import java.util.List;
 public class EduReportService {
 
     private final EduReportRepository eduReportRepository;
+    private final EduReportQueryRepository eduReportQueryRepository;
     private final EduAttendanceRepository eduAttendanceRepository;
     private final EduAttachmentRepository eduAttachmentRepository;
     private final EduMapper eduMapper;
@@ -106,16 +107,34 @@ public class EduReportService {
     }
 
     @Transactional(readOnly = true)
-    public List<EduReportSummaryDto> getEduReports(EduType type, Long id) {
+    public List<EduReportSummaryDto> getEduReports(
+            EduType type, DepartmentName departmentName, Long id) {
 
         User user =
                 userRepository
                         .findById(id)
                         .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
 
-        Department department = user.getDepartment();
+        boolean hasAccess = user.hasAuthority(Authority.ACCESS_EDUCATION);
 
-        return eduReportRepository.findEduReportsWithFilters(type, department, user);
+        Department dept;
+        if (hasAccess) {
+            // 권한 있음: departmentName이 지정되면 해당 부서, 없으면 null(전체 조회)
+            dept =
+                    (departmentName != null)
+                            ? departmentRepository
+                                    .findByName(departmentName)
+                                    .orElseThrow(
+                                            () ->
+                                                    new CustomException(
+                                                            ErrorCode.DEPARTMENT_NOT_FOUND))
+                            : null;
+        } else {
+            // 권한 없음: 자신의 부서로 제한
+            dept = user.getDepartment();
+        }
+
+        return eduReportQueryRepository.findEduReports(type, dept, id, hasAccess);
     }
 
     @Transactional(readOnly = true)
@@ -131,7 +150,19 @@ public class EduReportService {
                         .findById(eduReportId)
                         .orElseThrow(() -> new CustomException(ErrorCode.EDU_REPORT_NOT_FOUND));
 
-        EduReportDetailDto dto = eduMapper.toDetailDto(report, s3Service);
+        boolean hasAccess = user.hasAuthority(Authority.ACCESS_EDUCATION);
+
+        List<EduAttendance> attendances = null;
+        long numberOfPeople = -1L;
+
+        if (hasAccess) {
+            // ACCESS_EDUCATION 권한 있음: 출석자 목록과 통계 포함
+            attendances = eduAttendanceRepository.findAllByEduReportIdWithUser(eduReportId);
+            numberOfPeople = calculateTargetPeopleCount(report);
+        }
+
+        EduReportDetailDto dto =
+                eduMapper.toDetailDto(report, attendances, numberOfPeople, s3Service);
 
         boolean isAttended = eduAttendanceRepository.existsByEduReportAndUser(report, user);
         dto.setAttendance(isAttended);
@@ -181,13 +212,14 @@ public class EduReportService {
                 fileData, attachment.getOriginalFileName(), attachment.getFileSize());
     }
 
-    //    @Transactional(readOnly = true)
-    //    public String getDownloadUrl(Long attachmentId) {
-    //        EduAttachment attachment = eduAttachmentRepository.findById(attachmentId).orElseThrow(
-    //            () -> new CustomException(ErrorCode.EDU_ATTACHMENT_NOT_FOUND)
-    //        );
-    //        return s3Service.getPresignedViewUrl(attachment.getS3Key());
-    //    }
+    // @Transactional(readOnly = true)
+    // public String getDownloadUrl(Long attachmentId) {
+    // EduAttachment attachment =
+    // eduAttachmentRepository.findById(attachmentId).orElseThrow(
+    // () -> new CustomException(ErrorCode.EDU_ATTACHMENT_NOT_FOUND)
+    // );
+    // return s3Service.getPresignedViewUrl(attachment.getS3Key());
+    // }
 
     @Transactional
     public void markAttendance(Long reportId, MultipartFile signatureFile, Long userId)
@@ -251,39 +283,10 @@ public class EduReportService {
         }
     }
 
-    @Transactional(readOnly = true)
-    public EduReportAdminDetailDto getEduReportForAdmin(Long reportId, Long userId) {
-
-        User user =
-                userRepository
-                        .findById(userId)
-                        .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
-
-        if (user.getRole() != Role.ADMIN) {
-            throw new CustomException(ErrorCode.NO_AUTHORITY_FOR_EDU_REPORT);
-        }
-
-        EduReport report =
-                eduReportRepository
-                        .findById(reportId)
-                        .orElseThrow(() -> new CustomException(ErrorCode.EDU_REPORT_NOT_FOUND));
-
-        // 출석 명단 조회
-        List<EduAttendance> attendances =
-                eduAttendanceRepository.findAllByEduReportIdWithUser(reportId);
-
-        // 통계 데이터 계산
-        long numberOfPeople = calculateTargetPeopleCount(report); // 교육 대상 인원
-
-        return eduMapper.toAdminDetailDto(report, attendances, numberOfPeople, s3Service);
-    }
-
     private long calculateTargetPeopleCount(EduReport report) {
         if (report.getEduType() == EduType.DEPARTMENT && report.getDepartment() != null) {
-            // 부서 교육인 경우 해당 부서의 인원수만 카운트
             return userRepository.countByDepartment(report.getDepartment());
         }
-        // 공통 교육(COMMON) 등은 전체 인원수 카운트
         return userRepository.count();
     }
 }

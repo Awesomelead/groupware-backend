@@ -159,7 +159,8 @@ public class AuthService {
                         user.getId(),
                         user.getNameKor(),
                         user.getNameEng(),
-                        user.getPosition());
+                        user.getPosition(),
+                        user.getRole());
 
         // 8. FCM 토큰 등록 (선택)
         if (requestDto.getFcmToken() != null

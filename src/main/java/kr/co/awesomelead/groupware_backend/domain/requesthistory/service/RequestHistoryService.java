@@ -2,17 +2,21 @@ package kr.co.awesomelead.groupware_backend.domain.requesthistory.service;
 
 import kr.co.awesomelead.groupware_backend.domain.approval.enums.ApprovalStatus;
 import kr.co.awesomelead.groupware_backend.domain.requesthistory.dto.request.RequestHistoryCreateRequestDto;
+import kr.co.awesomelead.groupware_backend.domain.requesthistory.dto.response.AdminRequestHistorySummaryResponseDto;
 import kr.co.awesomelead.groupware_backend.domain.requesthistory.dto.response.RequestHistoryDetailResponseDto;
 import kr.co.awesomelead.groupware_backend.domain.requesthistory.dto.response.RequestHistorySummaryResponseDto;
 import kr.co.awesomelead.groupware_backend.domain.requesthistory.entity.RequestHistory;
 import kr.co.awesomelead.groupware_backend.domain.requesthistory.repository.RequestHistoryRepository;
 import kr.co.awesomelead.groupware_backend.domain.user.entity.User;
+import kr.co.awesomelead.groupware_backend.domain.user.enums.Role;
 import kr.co.awesomelead.groupware_backend.domain.user.repository.UserRepository;
 import kr.co.awesomelead.groupware_backend.global.error.CustomException;
 import kr.co.awesomelead.groupware_backend.global.error.ErrorCode;
 
 import lombok.RequiredArgsConstructor;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
@@ -91,5 +95,24 @@ public class RequestHistoryService {
         }
 
         requestHistory.setApprovalStatus(ApprovalStatus.CANCELED);
+    }
+
+    @Transactional(readOnly = true)
+    public Page<AdminRequestHistorySummaryResponseDto> getAllRequestsForAdmin(
+            Long adminId, ApprovalStatus status, Pageable pageable) {
+        User admin =
+                userRepository
+                        .findById(adminId)
+                        .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
+        validateAdminAuthority(admin);
+
+        return requestHistoryRepository.findAllWithUserAndDepartmentByStatus(status, pageable).map(
+                AdminRequestHistorySummaryResponseDto::from);
+    }
+
+    private void validateAdminAuthority(User admin) {
+        if (admin.getRole() != Role.ADMIN && admin.getRole() != Role.MASTER_ADMIN) {
+            throw new CustomException(ErrorCode.NO_AUTHORITY_FOR_REGISTRATION);
+        }
     }
 }

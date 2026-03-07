@@ -13,6 +13,7 @@ import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
+import jakarta.persistence.EntityListeners;
 
 import kr.co.awesomelead.groupware_backend.domain.approval.enums.ApprovalStatus;
 import kr.co.awesomelead.groupware_backend.domain.requesthistory.enums.RequestType;
@@ -22,6 +23,7 @@ import lombok.Getter;
 import lombok.Setter;
 
 import org.springframework.data.annotation.CreatedDate;
+import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
 import java.time.LocalDate;
 
@@ -29,6 +31,7 @@ import java.time.LocalDate;
 @Getter
 @Setter
 @Table(name = "request_histories")
+@EntityListeners(AuditingEntityListener.class)
 public class RequestHistory {
 
     @Id

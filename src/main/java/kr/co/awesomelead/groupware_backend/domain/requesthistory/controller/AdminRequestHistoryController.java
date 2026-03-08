@@ -6,6 +6,8 @@ import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.ExampleObject;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
+import kr.co.awesomelead.groupware_backend.domain.requesthistory.dto.request.RequestHistoryRejectRequestDto;
 import kr.co.awesomelead.groupware_backend.domain.requesthistory.dto.response.AdminRequestHistoryDetailResponseDto;
 import kr.co.awesomelead.groupware_backend.domain.requesthistory.dto.response.AdminRequestHistorySummaryResponseDto;
 import kr.co.awesomelead.groupware_backend.domain.requesthistory.enums.RequestHistoryStatus;
@@ -22,6 +24,7 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
@@ -235,5 +238,72 @@ public class AdminRequestHistoryController {
         Long requestId) {
         requestHistoryService.issueRequest(userDetails.getId(), requestId);
         return ResponseEntity.ok(ApiResponse.onSuccess("발급 완료 처리되었습니다."));
+    }
+
+    @Operation(summary = "개인 증명서류 반려 처리", description = "제증명 신청을 반려 처리합니다. (PENDING -> REJECTED)")
+    @ApiResponses(
+        value = {
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                responseCode = "200",
+                description = "처리 성공"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                responseCode = "400",
+                description = "잘못된 요청/처리 불가 상태",
+                content =
+                @Content(
+                    mediaType = "application/json",
+                    examples = {
+                        @ExampleObject(
+                            name = "반려 사유 누락",
+                            value =
+                                """
+                                    {
+                                      "isSuccess": false,
+                                      "code": "REJECTION_REASON_REQUIRED",
+                                      "message": "반려 시 반려 사유가 반드시 필요합니다.",
+                                      "result": null
+                                    }
+                                    """),
+                        @ExampleObject(
+                            name = "처리 불가 상태",
+                            value =
+                                """
+                                    {
+                                      "isSuccess": false,
+                                      "code": "REQUEST_HISTORY_NOT_REJECTABLE",
+                                      "message": "발급 대기 상태 요청만 반려 처리할 수 있습니다.",
+                                      "result": null
+                                    }
+                                    """)
+                    })),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                responseCode = "403",
+                description = "권한 없음",
+                content =
+                @Content(
+                    mediaType = "application/json",
+                    examples =
+                    @ExampleObject(
+                        value =
+                            """
+                                {
+                                  "isSuccess": false,
+                                  "code": "NO_AUTHORITY_FOR_CERTIFICATE_REQUEST_REVIEW",
+                                  "message": "제증명 신청 승인/반려 권한이 없습니다.",
+                                  "result": null
+                                }
+                                """))),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                responseCode = "404",
+                description = "신청 내역 없음")
+        })
+    @PatchMapping("/{requestId}/reject")
+    public ResponseEntity<ApiResponse<String>> rejectRequest(
+        @Parameter(hidden = true) @AuthenticationPrincipal CustomUserDetails userDetails,
+        @Parameter(description = "신청 ID", required = true, example = "101") @PathVariable
+        Long requestId,
+        @Valid @RequestBody RequestHistoryRejectRequestDto requestDto) {
+        requestHistoryService.rejectRequest(userDetails.getId(), requestId, requestDto.getReason());
+        return ResponseEntity.ok(ApiResponse.onSuccess("반려 처리되었습니다."));
     }
 }

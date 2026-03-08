@@ -153,6 +153,35 @@ public class RequestHistoryService {
         requestHistory.setApprovalStatus(RequestHistoryStatus.ISSUED);
         requestHistory.setProcessedBy(admin);
         requestHistory.setProcessedDate(LocalDate.now());
+        requestHistory.setRejectReason(null);
+    }
+
+    @Transactional
+    public void rejectRequest(Long adminId, Long requestId, String reason) {
+        User admin =
+                userRepository
+                        .findById(adminId)
+                        .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
+        validateAdminAuthority(admin);
+
+        if (!StringUtils.hasText(reason)) {
+            throw new CustomException(ErrorCode.REJECTION_REASON_REQUIRED);
+        }
+
+        RequestHistory requestHistory =
+                requestHistoryRepository
+                        .findByIdWithUserAndDepartment(requestId)
+                        .orElseThrow(
+                                () -> new CustomException(ErrorCode.REQUEST_HISTORY_NOT_FOUND));
+
+        if (requestHistory.getApprovalStatus() != RequestHistoryStatus.PENDING) {
+            throw new CustomException(ErrorCode.REQUEST_HISTORY_NOT_REJECTABLE);
+        }
+
+        requestHistory.setApprovalStatus(RequestHistoryStatus.REJECTED);
+        requestHistory.setProcessedBy(admin);
+        requestHistory.setProcessedDate(LocalDate.now());
+        requestHistory.setRejectReason(reason.trim());
     }
 
     private void validateAdminAuthority(User admin) {

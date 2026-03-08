@@ -10,6 +10,7 @@ import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.Index;
 import jakarta.persistence.Inheritance;
 import jakarta.persistence.InheritanceType;
 import jakarta.persistence.JoinColumn;
@@ -19,7 +20,9 @@ import jakarta.persistence.OneToMany;
 import jakarta.persistence.OrderBy;
 import jakarta.persistence.Table;
 import jakarta.persistence.Transient;
-
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.List;
 import kr.co.awesomelead.groupware_backend.domain.approval.enums.ApprovalStatus;
 import kr.co.awesomelead.groupware_backend.domain.approval.enums.DocumentType;
 import kr.co.awesomelead.groupware_backend.domain.approval.enums.RetentionPeriod;
@@ -28,17 +31,11 @@ import kr.co.awesomelead.groupware_backend.domain.user.entity.User;
 import kr.co.awesomelead.groupware_backend.global.common.entity.BaseTimeEntity;
 import kr.co.awesomelead.groupware_backend.global.error.CustomException;
 import kr.co.awesomelead.groupware_backend.global.error.ErrorCode;
-
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
-
 import org.hibernate.annotations.BatchSize;
-
-import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.List;
 
 @Entity
 @Getter
@@ -47,7 +44,10 @@ import java.util.List;
 @DiscriminatorColumn(name = "document_type") // 문서 구분 컬럼
 @NoArgsConstructor
 @AllArgsConstructor
-@Table(name = "approvals")
+@Table(name = "approvals", indexes = {
+    @Index(name = "idx_approval_created_at", columnList = "created_at"),
+    @Index(name = "idx_approval_drafter_status", columnList = "drafter_id, status")
+})
 public abstract class Approval extends BaseTimeEntity {
 
     @Id
@@ -66,8 +66,8 @@ public abstract class Approval extends BaseTimeEntity {
 
     @Enumerated(EnumType.STRING)
     @Column(
-            nullable = false,
-            columnDefinition = "ENUM('WAITING','PENDING','APPROVED','REJECTED','CANCELED')")
+        nullable = false,
+        columnDefinition = "ENUM('WAITING','PENDING','APPROVED','REJECTED','CANCELED')")
     private ApprovalStatus status; // 상태: PENDING, APPROVED, REJECTED 등
 
     @Enumerated(EnumType.STRING)
@@ -116,8 +116,8 @@ public abstract class Approval extends BaseTimeEntity {
         activateNextStep(myStep.getSequence());
 
         // 모든 step이 APPROVED이면 문서 전체 승인 처리
-        boolean allApproved =
-                steps.stream().allMatch(s -> s.getStatus() == ApprovalStatus.APPROVED);
+        boolean allApproved = steps.stream()
+            .allMatch(s -> s.getStatus() == ApprovalStatus.APPROVED);
         if (allApproved) {
             this.status = ApprovalStatus.APPROVED;
         }
@@ -134,9 +134,9 @@ public abstract class Approval extends BaseTimeEntity {
 
     private ApprovalStep findMyStep(User approver) {
         return steps.stream()
-                .filter(s -> s.getApprover().getId().equals(approver.getId()))
-                .findFirst()
-                .orElseThrow(() -> new CustomException(ErrorCode.NOT_APPROVER));
+            .filter(s -> s.getApprover().getId().equals(approver.getId()))
+            .findFirst()
+            .orElseThrow(() -> new CustomException(ErrorCode.NOT_APPROVER));
     }
 
     private void validateStepPending(ApprovalStep step) {
@@ -147,10 +147,10 @@ public abstract class Approval extends BaseTimeEntity {
 
     private void validateMyTurn(ApprovalStep myStep) {
         ApprovalStep currentStep =
-                steps.stream()
-                        .filter(s -> s.getStatus() == ApprovalStatus.PENDING)
-                        .min(Comparator.comparingInt(ApprovalStep::getSequence))
-                        .orElseThrow(() -> new CustomException(ErrorCode.ALREADY_PROCESSED_STEP));
+            steps.stream()
+                .filter(s -> s.getStatus() == ApprovalStatus.PENDING)
+                .min(Comparator.comparingInt(ApprovalStep::getSequence))
+                .orElseThrow(() -> new CustomException(ErrorCode.ALREADY_PROCESSED_STEP));
 
         if (!currentStep.getId().equals(myStep.getId())) {
             throw new CustomException(ErrorCode.NOT_YOUR_TURN);
@@ -159,22 +159,22 @@ public abstract class Approval extends BaseTimeEntity {
 
     private void activateNextStep(int approvedSequence) {
         steps.stream()
-                .filter(
-                        s ->
-                                s.getSequence() > approvedSequence
-                                        && s.getStatus() == ApprovalStatus.WAITING)
-                .min(Comparator.comparingInt(ApprovalStep::getSequence))
-                .ifPresent(next -> next.setStatus(ApprovalStatus.PENDING));
+            .filter(
+                s ->
+                    s.getSequence() > approvedSequence
+                        && s.getStatus() == ApprovalStatus.WAITING)
+            .min(Comparator.comparingInt(ApprovalStep::getSequence))
+            .ifPresent(next -> next.setStatus(ApprovalStatus.PENDING));
     }
 
     public ApprovalStatus getDisplayStatus(Long viewerId) {
         if (this.status == ApprovalStatus.PENDING) {
             boolean isMyTurn =
-                    this.steps.stream()
-                            .anyMatch(
-                                    s ->
-                                            s.getApprover().getId().equals(viewerId)
-                                                    && s.getStatus() == ApprovalStatus.PENDING);
+                this.steps.stream()
+                    .anyMatch(
+                        s ->
+                            s.getApprover().getId().equals(viewerId)
+                                && s.getStatus() == ApprovalStatus.PENDING);
             if (!isMyTurn) {
                 return ApprovalStatus.IN_PROGRESS;
             }

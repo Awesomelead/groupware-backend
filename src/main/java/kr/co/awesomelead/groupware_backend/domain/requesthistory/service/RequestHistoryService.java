@@ -9,7 +9,7 @@ import kr.co.awesomelead.groupware_backend.domain.requesthistory.entity.RequestH
 import kr.co.awesomelead.groupware_backend.domain.requesthistory.enums.RequestHistoryStatus;
 import kr.co.awesomelead.groupware_backend.domain.requesthistory.repository.RequestHistoryRepository;
 import kr.co.awesomelead.groupware_backend.domain.user.entity.User;
-import kr.co.awesomelead.groupware_backend.domain.user.enums.Role;
+import kr.co.awesomelead.groupware_backend.domain.user.enums.Authority;
 import kr.co.awesomelead.groupware_backend.domain.user.repository.UserRepository;
 import kr.co.awesomelead.groupware_backend.global.error.CustomException;
 import kr.co.awesomelead.groupware_backend.global.error.ErrorCode;
@@ -132,8 +132,8 @@ public class RequestHistoryService {
     }
 
     private void validateAdminAuthority(User admin) {
-        if (admin.getRole() != Role.ADMIN && admin.getRole() != Role.MASTER_ADMIN) {
-            throw new CustomException(ErrorCode.NO_AUTHORITY_FOR_REGISTRATION);
+        if (!admin.hasAuthority(Authority.MANAGE_CERTIFICATE_REQUEST)) {
+            throw new CustomException(ErrorCode.NO_AUTHORITY_FOR_CERTIFICATE_REQUEST_REVIEW);
         }
     }
 }

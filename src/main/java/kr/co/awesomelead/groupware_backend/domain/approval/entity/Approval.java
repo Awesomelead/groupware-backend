@@ -10,6 +10,7 @@ import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.Index;
 import jakarta.persistence.Inheritance;
 import jakarta.persistence.InheritanceType;
 import jakarta.persistence.JoinColumn;
@@ -47,7 +48,12 @@ import java.util.List;
 @DiscriminatorColumn(name = "document_type") // 문서 구분 컬럼
 @NoArgsConstructor
 @AllArgsConstructor
-@Table(name = "approvals")
+@Table(
+        name = "approvals",
+        indexes = {
+            @Index(name = "idx_approval_created_at", columnList = "created_at"),
+            @Index(name = "idx_approval_drafter_status", columnList = "drafter_id, status")
+        })
 public abstract class Approval extends BaseTimeEntity {
 
     @Id

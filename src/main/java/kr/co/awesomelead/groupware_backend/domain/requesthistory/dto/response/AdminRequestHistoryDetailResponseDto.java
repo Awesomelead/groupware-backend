@@ -56,6 +56,9 @@ public class AdminRequestHistoryDetailResponseDto {
     @Schema(description = "처리일", example = "2026-03-11", nullable = true)
     private LocalDate processedDate;
 
+    @Schema(description = "반려 사유", example = "신청 정보 확인이 필요합니다.", nullable = true)
+    private String rejectReason;
+
     public static AdminRequestHistoryDetailResponseDto from(RequestHistory requestHistory) {
         User requester = requestHistory.getUser();
         User processor = requestHistory.getProcessedBy();
@@ -75,9 +78,10 @@ public class AdminRequestHistoryDetailResponseDto {
             .copies(requestHistory.getCopies())
             .wishDate(requestHistory.getWishDate())
             .requestDate(requestHistory.getRequestDate())
-            .approvalStatus(requestHistory.getApprovalStatus())
-            .processedByName(processor != null ? processor.getDisplayName() : null)
-            .processedDate(requestHistory.getProcessedDate())
-            .build();
+                .approvalStatus(requestHistory.getApprovalStatus())
+                .processedByName(processor != null ? processor.getDisplayName() : null)
+                .processedDate(requestHistory.getProcessedDate())
+                .rejectReason(requestHistory.getRejectReason())
+                .build();
     }
 }

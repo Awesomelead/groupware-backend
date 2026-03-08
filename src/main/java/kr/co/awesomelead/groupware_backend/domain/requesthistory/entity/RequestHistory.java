@@ -86,4 +86,8 @@ public class RequestHistory {
 
     // 발급 처리일
     @Column private LocalDate processedDate;
+
+    // 반려 사유
+    @Column(length = 500)
+    private String rejectReason;
 }

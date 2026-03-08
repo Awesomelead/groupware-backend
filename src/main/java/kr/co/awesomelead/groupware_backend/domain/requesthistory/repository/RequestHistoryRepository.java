@@ -1,7 +1,7 @@
 package kr.co.awesomelead.groupware_backend.domain.requesthistory.repository;
 
-import kr.co.awesomelead.groupware_backend.domain.approval.enums.ApprovalStatus;
 import kr.co.awesomelead.groupware_backend.domain.requesthistory.entity.RequestHistory;
+import kr.co.awesomelead.groupware_backend.domain.requesthistory.enums.RequestHistoryStatus;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -28,5 +28,5 @@ public interface RequestHistoryRepository extends JpaRepository<RequestHistory, 
                     "select count(rh) from RequestHistory rh "
                             + "where (:status is null or rh.approvalStatus = :status)")
     Page<RequestHistory> findAllWithUserAndDepartmentByStatus(
-            @Param("status") ApprovalStatus status, Pageable pageable);
+            @Param("status") RequestHistoryStatus status, Pageable pageable);
 }

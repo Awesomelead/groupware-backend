@@ -2,8 +2,8 @@ package kr.co.awesomelead.groupware_backend.domain.requesthistory.dto.response;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 
-import kr.co.awesomelead.groupware_backend.domain.approval.enums.ApprovalStatus;
 import kr.co.awesomelead.groupware_backend.domain.requesthistory.entity.RequestHistory;
+import kr.co.awesomelead.groupware_backend.domain.requesthistory.enums.RequestHistoryStatus;
 import kr.co.awesomelead.groupware_backend.domain.requesthistory.enums.RequestType;
 
 import lombok.Builder;
@@ -41,7 +41,7 @@ public class RequestHistoryDetailResponseDto {
     private LocalDate requestDate;
 
     @Schema(description = "처리 상태", example = "대기")
-    private ApprovalStatus approvalStatus;
+    private RequestHistoryStatus approvalStatus;
 
     @Schema(description = "처리자 이름", example = "관리자", nullable = true)
     private String processedByName;

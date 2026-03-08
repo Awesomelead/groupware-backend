@@ -2,8 +2,8 @@ package kr.co.awesomelead.groupware_backend.domain.requesthistory.dto.response;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 
-import kr.co.awesomelead.groupware_backend.domain.approval.enums.ApprovalStatus;
 import kr.co.awesomelead.groupware_backend.domain.requesthistory.entity.RequestHistory;
+import kr.co.awesomelead.groupware_backend.domain.requesthistory.enums.RequestHistoryStatus;
 import kr.co.awesomelead.groupware_backend.domain.requesthistory.enums.RequestType;
 import kr.co.awesomelead.groupware_backend.domain.user.entity.User;
 
@@ -48,7 +48,7 @@ public class AdminRequestHistorySummaryResponseDto {
     private LocalDate requestDate;
 
     @Schema(description = "처리 상태", example = "대기")
-    private ApprovalStatus approvalStatus;
+    private RequestHistoryStatus approvalStatus;
 
     public static AdminRequestHistorySummaryResponseDto from(RequestHistory requestHistory) {
         User requester = requestHistory.getUser();

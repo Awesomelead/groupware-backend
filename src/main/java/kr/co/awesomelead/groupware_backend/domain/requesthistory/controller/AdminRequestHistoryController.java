@@ -7,8 +7,8 @@ import io.swagger.v3.oas.annotations.media.ExampleObject;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 
-import kr.co.awesomelead.groupware_backend.domain.approval.enums.ApprovalStatus;
 import kr.co.awesomelead.groupware_backend.domain.requesthistory.dto.response.AdminRequestHistorySummaryResponseDto;
+import kr.co.awesomelead.groupware_backend.domain.requesthistory.enums.RequestHistoryStatus;
 import kr.co.awesomelead.groupware_backend.domain.requesthistory.service.RequestHistoryService;
 import kr.co.awesomelead.groupware_backend.domain.user.dto.CustomUserDetails;
 import kr.co.awesomelead.groupware_backend.global.common.response.ApiResponse;
@@ -91,12 +91,12 @@ public class AdminRequestHistoryController {
     @GetMapping
     public ResponseEntity<ApiResponse<Page<AdminRequestHistorySummaryResponseDto>>> getAllRequests(
             @Parameter(hidden = true) @AuthenticationPrincipal CustomUserDetails userDetails,
-            @Parameter(
-                            description = "상태 필터 (선택값: 대기, 승인, 반려, 취소)",
+                    @Parameter(
+                            description = "상태 필터 (선택값: 발급 대기, 발급 완료, 반려, 취소)",
                             required = false,
-                            example = "대기")
+                            example = "발급 대기")
                     @RequestParam(required = false)
-                    ApprovalStatus status,
+                    RequestHistoryStatus status,
             @ParameterObject @PageableDefault(page = 0, size = 20) Pageable pageable) {
         Page<AdminRequestHistorySummaryResponseDto> result =
                 requestHistoryService.getAllRequestsForAdmin(userDetails.getId(), status, pageable);

@@ -15,7 +15,7 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 
-import kr.co.awesomelead.groupware_backend.domain.approval.enums.ApprovalStatus;
+import kr.co.awesomelead.groupware_backend.domain.requesthistory.enums.RequestHistoryStatus;
 import kr.co.awesomelead.groupware_backend.domain.requesthistory.enums.RequestType;
 import kr.co.awesomelead.groupware_backend.domain.user.entity.User;
 
@@ -73,10 +73,10 @@ public class RequestHistory {
     @Column(nullable = false, updatable = false)
     private LocalDate requestDate;
 
-    // 승인 상태 (기본값: WAITING)
+    // 제증명 신청 상태 (기본값: PENDING)
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 20)
-    private ApprovalStatus approvalStatus = ApprovalStatus.WAITING;
+    private RequestHistoryStatus approvalStatus = RequestHistoryStatus.PENDING;
 
     // 처리 관리자
     @ManyToOne(fetch = FetchType.LAZY)

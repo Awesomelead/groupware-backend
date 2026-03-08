@@ -6,12 +6,12 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.verify;
 
-import kr.co.awesomelead.groupware_backend.domain.approval.enums.ApprovalStatus;
 import kr.co.awesomelead.groupware_backend.domain.requesthistory.dto.request.RequestHistoryCreateRequestDto;
 import kr.co.awesomelead.groupware_backend.domain.requesthistory.dto.response.AdminRequestHistorySummaryResponseDto;
 import kr.co.awesomelead.groupware_backend.domain.requesthistory.dto.response.RequestHistoryDetailResponseDto;
 import kr.co.awesomelead.groupware_backend.domain.requesthistory.dto.response.RequestHistorySummaryResponseDto;
 import kr.co.awesomelead.groupware_backend.domain.requesthistory.entity.RequestHistory;
+import kr.co.awesomelead.groupware_backend.domain.requesthistory.enums.RequestHistoryStatus;
 import kr.co.awesomelead.groupware_backend.domain.requesthistory.enums.RequestType;
 import kr.co.awesomelead.groupware_backend.domain.requesthistory.repository.RequestHistoryRepository;
 import kr.co.awesomelead.groupware_backend.domain.requesthistory.service.RequestHistoryService;
@@ -163,7 +163,8 @@ class RequestHistoryServiceTest {
             User user = new User();
             ReflectionTestUtils.setField(user, "id", 1L);
             RequestHistory requestHistory = new RequestHistory();
-            ReflectionTestUtils.setField(requestHistory, "approvalStatus", ApprovalStatus.WAITING);
+            ReflectionTestUtils.setField(
+                    requestHistory, "approvalStatus", RequestHistoryStatus.PENDING);
 
             given(userRepository.findById(1L)).willReturn(Optional.of(user));
             given(requestHistoryRepository.findByIdAndUserId(10L, 1L))
@@ -173,7 +174,7 @@ class RequestHistoryServiceTest {
             requestHistoryService.cancelMyRequest(1L, 10L);
 
             // then
-            assertThat(requestHistory.getApprovalStatus()).isEqualTo(ApprovalStatus.CANCELED);
+            assertThat(requestHistory.getApprovalStatus()).isEqualTo(RequestHistoryStatus.CANCELED);
             verify(requestHistoryRepository).findByIdAndUserId(10L, 1L);
         }
 
@@ -184,7 +185,8 @@ class RequestHistoryServiceTest {
             User user = new User();
             ReflectionTestUtils.setField(user, "id", 1L);
             RequestHistory requestHistory = new RequestHistory();
-            ReflectionTestUtils.setField(requestHistory, "approvalStatus", ApprovalStatus.APPROVED);
+            ReflectionTestUtils.setField(
+                    requestHistory, "approvalStatus", RequestHistoryStatus.ISSUED);
 
             given(userRepository.findById(1L)).willReturn(Optional.of(user));
             given(requestHistoryRepository.findByIdAndUserId(10L, 1L))
@@ -220,13 +222,13 @@ class RequestHistoryServiceTest {
             given(userRepository.findById(100L)).willReturn(Optional.of(admin));
             given(
                             requestHistoryRepository.findAllWithUserAndDepartmentByStatus(
-                                    ApprovalStatus.WAITING, pageable))
+                                    RequestHistoryStatus.PENDING, pageable))
                     .willReturn(page);
 
             // when
             Page<AdminRequestHistorySummaryResponseDto> result =
                     requestHistoryService.getAllRequestsForAdmin(
-                            100L, ApprovalStatus.WAITING, pageable);
+                            100L, RequestHistoryStatus.PENDING, pageable);
 
             // then
             assertThat(result.getTotalElements()).isEqualTo(1);

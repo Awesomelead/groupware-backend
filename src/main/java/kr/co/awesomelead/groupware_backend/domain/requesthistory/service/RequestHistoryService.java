@@ -1,11 +1,11 @@
 package kr.co.awesomelead.groupware_backend.domain.requesthistory.service;
 
-import kr.co.awesomelead.groupware_backend.domain.approval.enums.ApprovalStatus;
 import kr.co.awesomelead.groupware_backend.domain.requesthistory.dto.request.RequestHistoryCreateRequestDto;
 import kr.co.awesomelead.groupware_backend.domain.requesthistory.dto.response.AdminRequestHistorySummaryResponseDto;
 import kr.co.awesomelead.groupware_backend.domain.requesthistory.dto.response.RequestHistoryDetailResponseDto;
 import kr.co.awesomelead.groupware_backend.domain.requesthistory.dto.response.RequestHistorySummaryResponseDto;
 import kr.co.awesomelead.groupware_backend.domain.requesthistory.entity.RequestHistory;
+import kr.co.awesomelead.groupware_backend.domain.requesthistory.enums.RequestHistoryStatus;
 import kr.co.awesomelead.groupware_backend.domain.requesthistory.repository.RequestHistoryRepository;
 import kr.co.awesomelead.groupware_backend.domain.user.entity.User;
 import kr.co.awesomelead.groupware_backend.domain.user.enums.Role;
@@ -49,7 +49,7 @@ public class RequestHistoryService {
         requestHistory.setPurpose(requestDto.getPurpose());
         requestHistory.setCopies(requestDto.getCopies());
         requestHistory.setWishDate(requestDto.getWishDate());
-        requestHistory.setApprovalStatus(ApprovalStatus.WAITING);
+        requestHistory.setApprovalStatus(RequestHistoryStatus.PENDING);
 
         return requestHistoryRepository.save(requestHistory).getId();
     }
@@ -92,16 +92,16 @@ public class RequestHistoryService {
                         .orElseThrow(
                                 () -> new CustomException(ErrorCode.REQUEST_HISTORY_NOT_FOUND));
 
-        if (requestHistory.getApprovalStatus() != ApprovalStatus.WAITING) {
+        if (requestHistory.getApprovalStatus() != RequestHistoryStatus.PENDING) {
             throw new CustomException(ErrorCode.REQUEST_HISTORY_NOT_CANCELABLE);
         }
 
-        requestHistory.setApprovalStatus(ApprovalStatus.CANCELED);
+        requestHistory.setApprovalStatus(RequestHistoryStatus.CANCELED);
     }
 
     @Transactional(readOnly = true)
     public Page<AdminRequestHistorySummaryResponseDto> getAllRequestsForAdmin(
-            Long adminId, ApprovalStatus status, Pageable pageable) {
+            Long adminId, RequestHistoryStatus status, Pageable pageable) {
         User admin =
                 userRepository
                         .findById(adminId)

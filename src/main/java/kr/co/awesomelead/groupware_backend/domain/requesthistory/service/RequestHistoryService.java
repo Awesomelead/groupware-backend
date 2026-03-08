@@ -22,6 +22,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 
+import java.time.LocalDate;
 import java.util.List;
 
 @Service
@@ -129,6 +130,29 @@ public class RequestHistoryService {
                                 () -> new CustomException(ErrorCode.REQUEST_HISTORY_NOT_FOUND));
 
         return AdminRequestHistoryDetailResponseDto.from(requestHistory);
+    }
+
+    @Transactional
+    public void issueRequest(Long adminId, Long requestId) {
+        User admin =
+                userRepository
+                        .findById(adminId)
+                        .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
+        validateAdminAuthority(admin);
+
+        RequestHistory requestHistory =
+                requestHistoryRepository
+                        .findByIdWithUserAndDepartment(requestId)
+                        .orElseThrow(
+                                () -> new CustomException(ErrorCode.REQUEST_HISTORY_NOT_FOUND));
+
+        if (requestHistory.getApprovalStatus() != RequestHistoryStatus.PENDING) {
+            throw new CustomException(ErrorCode.REQUEST_HISTORY_NOT_ISSUABLE);
+        }
+
+        requestHistory.setApprovalStatus(RequestHistoryStatus.ISSUED);
+        requestHistory.setProcessedBy(admin);
+        requestHistory.setProcessedDate(LocalDate.now());
     }
 
     private void validateAdminAuthority(User admin) {

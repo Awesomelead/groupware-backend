@@ -305,4 +305,55 @@ class RequestHistoryServiceTest {
                     .isEqualTo(ErrorCode.REQUEST_HISTORY_NOT_FOUND);
         }
     }
+
+    @Nested
+    @DisplayName("issueRequest 메서드는")
+    class Describe_issueRequest {
+
+        @Test
+        @DisplayName("발급 대기 상태 요청을 발급 완료 처리한다")
+        void it_issues_pending_request() {
+            // given
+            User admin = new User();
+            ReflectionTestUtils.setField(admin, "id", 100L);
+            admin.addAuthority(Authority.MANAGE_CERTIFICATE_REQUEST);
+
+            RequestHistory requestHistory = new RequestHistory();
+            ReflectionTestUtils.setField(requestHistory, "approvalStatus", RequestHistoryStatus.PENDING);
+
+            given(userRepository.findById(100L)).willReturn(Optional.of(admin));
+            given(requestHistoryRepository.findByIdWithUserAndDepartment(101L))
+                    .willReturn(Optional.of(requestHistory));
+
+            // when
+            requestHistoryService.issueRequest(100L, 101L);
+
+            // then
+            assertThat(requestHistory.getApprovalStatus()).isEqualTo(RequestHistoryStatus.ISSUED);
+            assertThat(requestHistory.getProcessedBy()).isEqualTo(admin);
+            assertThat(requestHistory.getProcessedDate()).isNotNull();
+        }
+
+        @Test
+        @DisplayName("발급 대기 상태가 아니면 REQUEST_HISTORY_NOT_ISSUABLE 예외를 던진다")
+        void it_throws_when_request_not_pending() {
+            // given
+            User admin = new User();
+            ReflectionTestUtils.setField(admin, "id", 100L);
+            admin.addAuthority(Authority.MANAGE_CERTIFICATE_REQUEST);
+
+            RequestHistory requestHistory = new RequestHistory();
+            ReflectionTestUtils.setField(requestHistory, "approvalStatus", RequestHistoryStatus.CANCELED);
+
+            given(userRepository.findById(100L)).willReturn(Optional.of(admin));
+            given(requestHistoryRepository.findByIdWithUserAndDepartment(101L))
+                    .willReturn(Optional.of(requestHistory));
+
+            // when & then
+            assertThatThrownBy(() -> requestHistoryService.issueRequest(100L, 101L))
+                    .isInstanceOf(CustomException.class)
+                    .extracting("errorCode")
+                    .isEqualTo(ErrorCode.REQUEST_HISTORY_NOT_ISSUABLE);
+        }
+    }
 }

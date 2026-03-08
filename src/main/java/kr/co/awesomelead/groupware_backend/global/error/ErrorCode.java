@@ -81,6 +81,8 @@ public enum ErrorCode {
     NO_AUTHORITY_FOR_ROLE_UPDATE(HttpStatus.FORBIDDEN, "사용자 역할 변경 권한이 없습니다."),
     NO_AUTHORITY_FOR_VIEW_PAYSLIP(HttpStatus.FORBIDDEN, "급여명세서 조회 권한이 없습니다."),
     NO_AUTHORITY_FOR_NOTIFICATION(HttpStatus.FORBIDDEN, "해당 알림에 대한 접근 권한이 없습니다."),
+    NO_AUTHORITY_FOR_CERTIFICATE_REQUEST_REVIEW(
+            HttpStatus.FORBIDDEN, "제증명 신청 승인/반려 권한이 없습니다."),
 
     // 404 Not Found
     USER_NOT_FOUND(HttpStatus.NOT_FOUND, "해당 사용자를 찾을 수 없습니다."),

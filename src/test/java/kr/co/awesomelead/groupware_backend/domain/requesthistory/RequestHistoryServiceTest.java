@@ -17,8 +17,8 @@ import kr.co.awesomelead.groupware_backend.domain.requesthistory.enums.RequestTy
 import kr.co.awesomelead.groupware_backend.domain.requesthistory.repository.RequestHistoryRepository;
 import kr.co.awesomelead.groupware_backend.domain.requesthistory.service.RequestHistoryService;
 import kr.co.awesomelead.groupware_backend.domain.user.entity.User;
+import kr.co.awesomelead.groupware_backend.domain.user.enums.Authority;
 import kr.co.awesomelead.groupware_backend.domain.user.enums.Position;
-import kr.co.awesomelead.groupware_backend.domain.user.enums.Role;
 import kr.co.awesomelead.groupware_backend.domain.user.repository.UserRepository;
 import kr.co.awesomelead.groupware_backend.global.error.CustomException;
 import kr.co.awesomelead.groupware_backend.global.error.ErrorCode;
@@ -211,7 +211,7 @@ class RequestHistoryServiceTest {
             // given
             User admin = new User();
             ReflectionTestUtils.setField(admin, "id", 100L);
-            ReflectionTestUtils.setField(admin, "role", Role.ADMIN);
+            admin.addAuthority(Authority.MANAGE_CERTIFICATE_REQUEST);
 
             RequestHistory requestHistory = new RequestHistory();
             ReflectionTestUtils.setField(requestHistory, "id", 10L);
@@ -238,12 +238,11 @@ class RequestHistoryServiceTest {
         }
 
         @Test
-        @DisplayName("관리자 권한이 아니면 NO_AUTHORITY_FOR_REGISTRATION 예외를 던진다")
+        @DisplayName("권한이 없으면 NO_AUTHORITY_FOR_CERTIFICATE_REQUEST_REVIEW 예외를 던진다")
         void it_throws_when_not_admin() {
             // given
             User normalUser = new User();
             ReflectionTestUtils.setField(normalUser, "id", 200L);
-            ReflectionTestUtils.setField(normalUser, "role", Role.USER);
 
             given(userRepository.findById(200L)).willReturn(Optional.of(normalUser));
 
@@ -254,7 +253,7 @@ class RequestHistoryServiceTest {
                                             200L, null, PageRequest.of(0, 20)))
                     .isInstanceOf(CustomException.class)
                     .extracting("errorCode")
-                    .isEqualTo(ErrorCode.NO_AUTHORITY_FOR_REGISTRATION);
+                    .isEqualTo(ErrorCode.NO_AUTHORITY_FOR_CERTIFICATE_REQUEST_REVIEW);
         }
     }
 
@@ -268,7 +267,7 @@ class RequestHistoryServiceTest {
             // given
             User admin = new User();
             ReflectionTestUtils.setField(admin, "id", 100L);
-            ReflectionTestUtils.setField(admin, "role", Role.MASTER_ADMIN);
+            admin.addAuthority(Authority.MANAGE_CERTIFICATE_REQUEST);
 
             RequestHistory requestHistory = new RequestHistory();
             ReflectionTestUtils.setField(requestHistory, "id", 101L);
@@ -293,7 +292,7 @@ class RequestHistoryServiceTest {
             // given
             User admin = new User();
             ReflectionTestUtils.setField(admin, "id", 100L);
-            ReflectionTestUtils.setField(admin, "role", Role.ADMIN);
+            admin.addAuthority(Authority.MANAGE_CERTIFICATE_REQUEST);
 
             given(userRepository.findById(100L)).willReturn(Optional.of(admin));
             given(requestHistoryRepository.findByIdWithUserAndDepartment(999L))

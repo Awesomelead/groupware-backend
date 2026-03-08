@@ -75,14 +75,14 @@ public class AdminRequestHistoryController {
                 content =
                 @Content(
                     mediaType = "application/json",
-                    examples =
-                    @ExampleObject(
-                        value =
-                            """
+                                        examples =
+                                                @ExampleObject(
+                                                        value =
+                                                                """
                                 {
                                   "isSuccess": false,
-                                  "code": "NO_AUTHORITY_FOR_REGISTRATION",
-                                  "message": "회원가입 승인 권한이 없습니다.",
+                                  "code": "NO_AUTHORITY_FOR_CERTIFICATE_REQUEST_REVIEW",
+                                  "message": "제증명 신청 승인/반려 권한이 없습니다.",
                                   "result": null
                                 }
                                 """)))
@@ -151,6 +151,24 @@ public class AdminRequestHistoryController {
                                   "isSuccess": false,
                                   "code": "REQUEST_HISTORY_NOT_FOUND",
                                   "message": "해당 제증명 발급 신청 내역을 찾을 수 없습니다.",
+                                  "result": null
+                                }
+                                """)))
+            ,
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                responseCode = "403",
+                description = "권한 없음",
+                content =
+                @Content(
+                    mediaType = "application/json",
+                    examples =
+                    @ExampleObject(
+                        value =
+                            """
+                                {
+                                  "isSuccess": false,
+                                  "code": "NO_AUTHORITY_FOR_CERTIFICATE_REQUEST_REVIEW",
+                                  "message": "제증명 신청 승인/반려 권한이 없습니다.",
                                   "result": null
                                 }
                                 """)))

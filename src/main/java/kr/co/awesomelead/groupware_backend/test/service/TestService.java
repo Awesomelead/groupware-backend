@@ -81,7 +81,9 @@ public class TestService {
     public DummyUsersCreateResponseDto createDummyUsers(DummyUsersCreateRequestDto request) {
         List<Department> departments =
                 (request.getDepartmentIds() == null || request.getDepartmentIds().isEmpty())
-                        ? departmentRepository.findAll().stream().filter(d -> d.getParent() != null).toList()
+                        ? departmentRepository.findAll().stream()
+                                .filter(d -> d.getParent() != null)
+                                .toList()
                         : departmentRepository.findAllById(request.getDepartmentIds());
 
         if (departments.isEmpty()) {

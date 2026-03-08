@@ -30,9 +30,7 @@ public class DummyUsersCreateRequestDto {
     @Min(1)
     private int startIndex = 1;
 
-    @Schema(
-            description = "대상 부서 ID 목록 (비우면 전체 부서 순환 분배)",
-            example = "[2,3,4,5,6]")
+    @Schema(description = "대상 부서 ID 목록 (비우면 전체 부서 순환 분배)", example = "[2,3,4,5,6]")
     private List<Long> departmentIds;
 
     @Schema(description = "더미 계정 공통 비밀번호", example = "test1234!", defaultValue = "test1234!")

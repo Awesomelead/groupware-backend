@@ -7,6 +7,7 @@ import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.verify;
 
 import kr.co.awesomelead.groupware_backend.domain.requesthistory.dto.request.RequestHistoryCreateRequestDto;
+import kr.co.awesomelead.groupware_backend.domain.requesthistory.dto.response.AdminRequestHistoryDetailResponseDto;
 import kr.co.awesomelead.groupware_backend.domain.requesthistory.dto.response.AdminRequestHistorySummaryResponseDto;
 import kr.co.awesomelead.groupware_backend.domain.requesthistory.dto.response.RequestHistoryDetailResponseDto;
 import kr.co.awesomelead.groupware_backend.domain.requesthistory.dto.response.RequestHistorySummaryResponseDto;
@@ -254,6 +255,55 @@ class RequestHistoryServiceTest {
                     .isInstanceOf(CustomException.class)
                     .extracting("errorCode")
                     .isEqualTo(ErrorCode.NO_AUTHORITY_FOR_REGISTRATION);
+        }
+    }
+
+    @Nested
+    @DisplayName("getRequestDetailForAdmin 메서드는")
+    class Describe_getRequestDetailForAdmin {
+
+        @Test
+        @DisplayName("관리자 권한이면 신청 상세를 조회한다")
+        void it_returns_request_detail_for_admin() {
+            // given
+            User admin = new User();
+            ReflectionTestUtils.setField(admin, "id", 100L);
+            ReflectionTestUtils.setField(admin, "role", Role.MASTER_ADMIN);
+
+            RequestHistory requestHistory = new RequestHistory();
+            ReflectionTestUtils.setField(requestHistory, "id", 101L);
+            ReflectionTestUtils.setField(requestHistory, "name", "홍길동");
+
+            given(userRepository.findById(100L)).willReturn(Optional.of(admin));
+            given(requestHistoryRepository.findByIdWithUserAndDepartment(101L))
+                    .willReturn(Optional.of(requestHistory));
+
+            // when
+            AdminRequestHistoryDetailResponseDto result =
+                    requestHistoryService.getRequestDetailForAdmin(100L, 101L);
+
+            // then
+            assertThat(result.getRequestId()).isEqualTo(101L);
+            assertThat(result.getNameKor()).isEqualTo("홍길동");
+        }
+
+        @Test
+        @DisplayName("존재하지 않는 신청이면 REQUEST_HISTORY_NOT_FOUND 예외를 던진다")
+        void it_throws_when_request_not_found() {
+            // given
+            User admin = new User();
+            ReflectionTestUtils.setField(admin, "id", 100L);
+            ReflectionTestUtils.setField(admin, "role", Role.ADMIN);
+
+            given(userRepository.findById(100L)).willReturn(Optional.of(admin));
+            given(requestHistoryRepository.findByIdWithUserAndDepartment(999L))
+                    .willReturn(Optional.empty());
+
+            // when & then
+            assertThatThrownBy(() -> requestHistoryService.getRequestDetailForAdmin(100L, 999L))
+                    .isInstanceOf(CustomException.class)
+                    .extracting("errorCode")
+                    .isEqualTo(ErrorCode.REQUEST_HISTORY_NOT_FOUND);
         }
     }
 }

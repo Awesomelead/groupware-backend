@@ -356,4 +356,73 @@ class RequestHistoryServiceTest {
                     .isEqualTo(ErrorCode.REQUEST_HISTORY_NOT_ISSUABLE);
         }
     }
+
+    @Nested
+    @DisplayName("rejectRequest 메서드는")
+    class Describe_rejectRequest {
+
+        @Test
+        @DisplayName("발급 대기 상태 요청을 반려 처리한다")
+        void it_rejects_pending_request() {
+            // given
+            User admin = new User();
+            ReflectionTestUtils.setField(admin, "id", 100L);
+            admin.addAuthority(Authority.MANAGE_CERTIFICATE_REQUEST);
+
+            RequestHistory requestHistory = new RequestHistory();
+            ReflectionTestUtils.setField(requestHistory, "approvalStatus", RequestHistoryStatus.PENDING);
+
+            given(userRepository.findById(100L)).willReturn(Optional.of(admin));
+            given(requestHistoryRepository.findByIdWithUserAndDepartment(101L))
+                    .willReturn(Optional.of(requestHistory));
+
+            // when
+            requestHistoryService.rejectRequest(100L, 101L, "정보가 불충분합니다.");
+
+            // then
+            assertThat(requestHistory.getApprovalStatus()).isEqualTo(RequestHistoryStatus.REJECTED);
+            assertThat(requestHistory.getProcessedBy()).isEqualTo(admin);
+            assertThat(requestHistory.getProcessedDate()).isNotNull();
+            assertThat(requestHistory.getRejectReason()).isEqualTo("정보가 불충분합니다.");
+        }
+
+        @Test
+        @DisplayName("반려 사유가 비어있으면 REJECTION_REASON_REQUIRED 예외를 던진다")
+        void it_throws_when_reason_is_blank() {
+            // given
+            User admin = new User();
+            ReflectionTestUtils.setField(admin, "id", 100L);
+            admin.addAuthority(Authority.MANAGE_CERTIFICATE_REQUEST);
+
+            given(userRepository.findById(100L)).willReturn(Optional.of(admin));
+
+            // when & then
+            assertThatThrownBy(() -> requestHistoryService.rejectRequest(100L, 101L, "   "))
+                    .isInstanceOf(CustomException.class)
+                    .extracting("errorCode")
+                    .isEqualTo(ErrorCode.REJECTION_REASON_REQUIRED);
+        }
+
+        @Test
+        @DisplayName("발급 대기 상태가 아니면 REQUEST_HISTORY_NOT_REJECTABLE 예외를 던진다")
+        void it_throws_when_request_not_pending() {
+            // given
+            User admin = new User();
+            ReflectionTestUtils.setField(admin, "id", 100L);
+            admin.addAuthority(Authority.MANAGE_CERTIFICATE_REQUEST);
+
+            RequestHistory requestHistory = new RequestHistory();
+            ReflectionTestUtils.setField(requestHistory, "approvalStatus", RequestHistoryStatus.ISSUED);
+
+            given(userRepository.findById(100L)).willReturn(Optional.of(admin));
+            given(requestHistoryRepository.findByIdWithUserAndDepartment(101L))
+                    .willReturn(Optional.of(requestHistory));
+
+            // when & then
+            assertThatThrownBy(() -> requestHistoryService.rejectRequest(100L, 101L, "이미 발급됨"))
+                    .isInstanceOf(CustomException.class)
+                    .extracting("errorCode")
+                    .isEqualTo(ErrorCode.REQUEST_HISTORY_NOT_REJECTABLE);
+        }
+    }
 }

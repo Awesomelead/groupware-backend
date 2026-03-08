@@ -15,7 +15,8 @@ public enum Authority {
 
     ACCESS_VISIT("방문자 관리 접근"),
 
-    MANAGE_EMPLOYEE_DATA("사원 데이터 관리"); // 연차, 급여명세서, 근태확인표 발송 권한
+    MANAGE_EMPLOYEE_DATA("사원 데이터 관리"), // 연차, 급여명세서, 근태확인표 발송 권한
+    MANAGE_CERTIFICATE_REQUEST("제증명 신청 승인/반려");
 
     private final String description;
 

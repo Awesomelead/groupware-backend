@@ -51,10 +51,14 @@ public class ApprovalQueryRepository {
         // 2. 문서 양식 종류(DocumentType) 필터
         BooleanExpression docTypeExpression = eqDocumentType(condition.getDocumentType());
 
-        // 3. 메인 쿼리 작성 (N+1 최적화를 위해 컬렉션은 지연 로딩 후 application 단에서 가공하거나, 엔티티로 한번에 로딩)
+        // 3. 메인 쿼리 작성 (N+1 최적화를 위해 페이징에서는 ToOne만 fetchJoin, 컬렉션은 BatchSize)
         JPAQuery<Approval> query =
                 queryFactory
                         .selectFrom(approval)
+                        .join(approval.drafter)
+                        .fetchJoin()
+                        .join(approval.draftDepartment)
+                        .fetchJoin()
                         .where(categoryExpression, docTypeExpression)
                         .orderBy(approval.createdAt.desc())
                         .distinct();

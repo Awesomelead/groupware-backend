@@ -6,6 +6,7 @@ import kr.co.awesomelead.groupware_backend.domain.annualleave.dto.response.Excel
 import kr.co.awesomelead.groupware_backend.domain.annualleave.entity.AnnualLeave;
 import kr.co.awesomelead.groupware_backend.domain.annualleave.mapper.AnnualLeaveMapper;
 import kr.co.awesomelead.groupware_backend.domain.annualleave.repository.AnnualLeaveRepository;
+import kr.co.awesomelead.groupware_backend.domain.notification.service.NotificationService;
 import kr.co.awesomelead.groupware_backend.domain.user.entity.User;
 import kr.co.awesomelead.groupware_backend.domain.user.enums.Authority;
 import kr.co.awesomelead.groupware_backend.domain.user.repository.UserRepository;
@@ -41,6 +42,7 @@ public class AnnualLeaveService {
     private final AnnualLeaveRepository annualLeaveRepository;
     private final AnnualLeaveMapper annualLeaveMapper;
     private final UserRepository userRepository;
+    private final NotificationService notificationService;
 
     @Transactional
     public ExcelUploadResponseDto uploadAnnualLeaveFile(
@@ -135,6 +137,10 @@ public class AnnualLeaveService {
         annualLeave.setUpdateDate(updateDate); // Date 타입 호환
 
         annualLeaveRepository.save(annualLeave);
+
+        // 연차 알림 전송 (LocalDate를 "yyyy년 MM월 dd일" 형식으로 변환하여 템플릿과 매칭)
+        String formattedDate = updateDate.format(DateTimeFormatter.ofPattern("yyyy년 MM월 dd일"));
+        notificationService.sendAnnualLeaveAlertToUser(targetUser.getId(), formattedDate);
     }
 
     // 연차 데이터 공지 기준일 파싱

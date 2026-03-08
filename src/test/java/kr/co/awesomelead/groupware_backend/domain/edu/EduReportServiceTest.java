@@ -3,6 +3,7 @@ package kr.co.awesomelead.groupware_backend.domain.edu;
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 import static org.assertj.core.api.AssertionsForClassTypes.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.never;
@@ -14,7 +15,6 @@ import kr.co.awesomelead.groupware_backend.domain.department.entity.Department;
 import kr.co.awesomelead.groupware_backend.domain.department.enums.DepartmentName;
 import kr.co.awesomelead.groupware_backend.domain.department.repository.DepartmentRepository;
 import kr.co.awesomelead.groupware_backend.domain.education.dto.request.EduReportRequestDto;
-import kr.co.awesomelead.groupware_backend.domain.education.dto.response.EduReportAdminDetailDto;
 import kr.co.awesomelead.groupware_backend.domain.education.dto.response.EduReportDetailDto;
 import kr.co.awesomelead.groupware_backend.domain.education.dto.response.EduReportSummaryDto;
 import kr.co.awesomelead.groupware_backend.domain.education.entity.EduAttachment;
@@ -24,8 +24,10 @@ import kr.co.awesomelead.groupware_backend.domain.education.enums.EduType;
 import kr.co.awesomelead.groupware_backend.domain.education.mapper.EduMapper;
 import kr.co.awesomelead.groupware_backend.domain.education.repository.EduAttachmentRepository;
 import kr.co.awesomelead.groupware_backend.domain.education.repository.EduAttendanceRepository;
+import kr.co.awesomelead.groupware_backend.domain.education.repository.EduReportQueryRepository;
 import kr.co.awesomelead.groupware_backend.domain.education.repository.EduReportRepository;
 import kr.co.awesomelead.groupware_backend.domain.education.service.EduReportService;
+import kr.co.awesomelead.groupware_backend.domain.notification.service.NotificationService;
 import kr.co.awesomelead.groupware_backend.domain.user.entity.User;
 import kr.co.awesomelead.groupware_backend.domain.user.enums.Authority;
 import kr.co.awesomelead.groupware_backend.domain.user.enums.Role;
@@ -63,6 +65,9 @@ public class EduReportServiceTest {
     @Mock private DepartmentRepository departmentRepository;
     @Mock private UserRepository userRepository;
     @Mock private S3Service s3Service;
+    @Mock private EduReportQueryRepository eduReportQueryRepository;
+
+    @Mock private NotificationService notificationService;
 
     @InjectMocks private EduReportService eduReportService;
 
@@ -164,6 +169,9 @@ public class EduReportServiceTest {
         EduReport savedReport = eduReportCaptor.getValue();
         assertThat(savedReport.getTitle()).isEqualTo("교육 보고서 제목");
         assertThat(savedReport.getContent()).isEqualTo("교육 보고서 내용");
+
+        verify(notificationService, times(1))
+                .sendEduReportAlertToTargets(anyString(), anyString(), anyLong(), any());
     }
 
     @Test
@@ -245,10 +253,10 @@ public class EduReportServiceTest {
     }
 
     @Test
-    @DisplayName("교육 보고서 목록 조회 성공 테스트")
+    @DisplayName("교육 보고서 목록 조회 성공 - 권한 없는 유저 (자신의 부서만 조회)")
     void getEduReports_Success() {
         // given
-        User user = createNormalUser();
+        User user = createNormalUser(); // ACCESS_EDUCATION 권한 없음
         Department department = defaultDept;
 
         EduReportSummaryDto report1 =
@@ -264,20 +272,92 @@ public class EduReportServiceTest {
         List<EduReportSummaryDto> mockList = List.of(report1);
 
         when(userRepository.findById(1L)).thenReturn(Optional.of(user));
-        when(eduReportRepository.findEduReportsWithFilters(
-                        EduType.SAFETY, user.getDepartment(), user))
+        when(eduReportQueryRepository.findEduReports(EduType.SAFETY, department, 1L, false))
                 .thenReturn(mockList);
 
         // when
-        List<EduReportSummaryDto> result = eduReportService.getEduReports(EduType.SAFETY, 1L);
+        List<EduReportSummaryDto> result = eduReportService.getEduReports(EduType.SAFETY, null, 1L);
 
         // then
         assertThat(result).isNotNull();
         assertThat(result.size()).isEqualTo(1);
         assertThat(result.get(0).getTitle()).isEqualTo("안전 교육 보고서");
 
-        verify(eduReportRepository, times(1))
-                .findEduReportsWithFilters(EduType.SAFETY, department, user);
+        verify(eduReportQueryRepository, times(1))
+                .findEduReports(EduType.SAFETY, department, 1L, false);
+    }
+
+    @Test
+    @DisplayName("교육 보고서 목록 조회 성공 - ACCESS_EDUCATION 권한 있음, 부서 미지정 → 전체 조회")
+    void getEduReports_WithAccess_ReturnsAll() {
+        // given
+        User user = createNormalUser();
+        user.addAuthority(Authority.ACCESS_EDUCATION);
+
+        EduReportSummaryDto report1 =
+                EduReportSummaryDto.builder()
+                        .id(1L)
+                        .title("전체 공개 안전 교육")
+                        .eduType(EduType.SAFETY)
+                        .eduDate(LocalDate.now())
+                        .attendance(false)
+                        .pinned(false)
+                        .build();
+
+        List<EduReportSummaryDto> mockList = List.of(report1);
+
+        when(userRepository.findById(1L)).thenReturn(Optional.of(user));
+        // dept=null → 전체 조회
+        when(eduReportQueryRepository.findEduReports(null, null, 1L, true)).thenReturn(mockList);
+
+        // when
+        List<EduReportSummaryDto> result = eduReportService.getEduReports(null, null, 1L);
+
+        // then
+        assertThat(result).isNotNull();
+        assertThat(result.size()).isEqualTo(1);
+
+        // hasAccess=true, dept=null → QueryRepository에 null 부서로 호출
+        verify(eduReportQueryRepository, times(1)).findEduReports(null, null, 1L, true);
+    }
+
+    @Test
+    @DisplayName("교육 보고서 목록 조회 성공 - ACCESS_EDUCATION 권한 있음, 특정 부서 필터")
+    void getEduReports_WithAccess_FilterByDept() {
+        // given
+        User user = createNormalUser();
+        user.addAuthority(Authority.ACCESS_EDUCATION);
+
+        Department salesDept = Department.builder().id(2L).name(DepartmentName.SALES_DEPT).build();
+
+        EduReportSummaryDto report1 =
+                EduReportSummaryDto.builder()
+                        .id(2L)
+                        .title("영업부 부서 교육")
+                        .eduType(EduType.DEPARTMENT)
+                        .eduDate(LocalDate.now())
+                        .attendance(false)
+                        .pinned(false)
+                        .build();
+
+        when(userRepository.findById(1L)).thenReturn(Optional.of(user));
+        when(departmentRepository.findByName(DepartmentName.SALES_DEPT))
+                .thenReturn(Optional.of(salesDept));
+        when(eduReportQueryRepository.findEduReports(EduType.DEPARTMENT, salesDept, 1L, true))
+                .thenReturn(List.of(report1));
+
+        // when
+        List<EduReportSummaryDto> result =
+                eduReportService.getEduReports(EduType.DEPARTMENT, DepartmentName.SALES_DEPT, 1L);
+
+        // then
+        assertThat(result).isNotNull();
+        assertThat(result.size()).isEqualTo(1);
+        assertThat(result.get(0).getTitle()).isEqualTo("영업부 부서 교육");
+
+        verify(departmentRepository, times(1)).findByName(DepartmentName.SALES_DEPT);
+        verify(eduReportQueryRepository, times(1))
+                .findEduReports(EduType.DEPARTMENT, salesDept, 1L, true);
     }
 
     @Test
@@ -287,30 +367,31 @@ public class EduReportServiceTest {
         when(userRepository.findById(1L)).thenReturn(Optional.empty());
 
         // when & then
-        assertThatThrownBy(() -> eduReportService.getEduReports(EduType.SAFETY, 1L))
+        assertThatThrownBy(() -> eduReportService.getEduReports(EduType.SAFETY, null, 1L))
                 .isInstanceOf(CustomException.class)
-                .extracting("errorCode") // CustomException 내부의 errorCode 필드 추출
+                .extracting("errorCode")
                 .isEqualTo(ErrorCode.USER_NOT_FOUND);
 
-        verify(eduReportRepository, never()).findEduReportsWithFilters(any(), any(), any());
+        verify(eduReportQueryRepository, never()).findEduReports(any(), any(), any(), anyBoolean());
     }
 
     @Test
-    @DisplayName("교육 보고서 조회 성공테스트")
+    @DisplayName("교육 보고서 조회 성공테스트 - 권한 없는 유저 (attendees=null)")
     void getEduReport_Success() {
         // given
         Long reportId = 1L;
         Long userId = 99L;
-        User user = createAdminUser();
+        User user = createNormalUser(); // ACCESS_EDUCATION 권한 없음
 
         EduReport report = EduReport.builder().id(reportId).title("단일 조회 테스트 제목").build();
 
         EduReportDetailDto mockDto =
                 EduReportDetailDto.builder().id(reportId).title("단일 조회 테스트 제목").build();
 
-        when(eduReportRepository.findById(reportId)).thenReturn(Optional.of(report));
-        when(eduMapper.toDetailDto(report, s3Service)).thenReturn(mockDto);
         when(userRepository.findById(userId)).thenReturn(Optional.of(user));
+        when(eduReportRepository.findById(reportId)).thenReturn(Optional.of(report));
+        // 권한 없음 → attendances=null, numberOfPeople=-1L
+        when(eduMapper.toDetailDto(report, null, -1L, s3Service)).thenReturn(mockDto);
         when(eduAttendanceRepository.existsByEduReportAndUser(report, user)).thenReturn(true);
 
         // when
@@ -319,10 +400,13 @@ public class EduReportServiceTest {
         // then
         assertThat(result).isNotNull();
         assertThat(result.getTitle()).isEqualTo("단일 조회 테스트 제목");
-        assertThat(result.isAttendance()).isTrue(); // 출석 여부가 true로 세팅되었는지 확인
+        assertThat(result.isAttendance()).isTrue();
+        assertThat(result.getAttendees()).isNull(); // 권한 없으면 null
 
         verify(eduReportRepository, times(1)).findById(reportId);
         verify(eduAttendanceRepository, times(1)).existsByEduReportAndUser(report, user);
+        // 출석자 목록 조회는 호출되지 않아야 함
+        verify(eduAttendanceRepository, never()).findAllByEduReportIdWithUser(anyLong());
     }
 
     @Test
@@ -593,87 +677,79 @@ public class EduReportServiceTest {
     }
 
     @Test
-    @DisplayName("관리자용 교육 보고서 상세 조회 성공 테스트")
-    void getEduReportForAdmin_Success() {
+    @DisplayName("교육 보고서 조회 - ACCESS_EDUCATION 권한 있음 → attendees 포함")
+    void getEduReport_WithAccess_IncludesAttendees() {
         // given
         Long reportId = 1L;
         Long userId = 99L;
-        User adminUser = createAdminUser();
+        User user = createNormalUser();
+        user.addAuthority(Authority.ACCESS_EDUCATION);
 
         EduReport report =
-                EduReport.builder()
-                        .id(reportId)
-                        .title("관리자용 테스트 보고서")
-                        .eduType(EduType.SAFETY)
-                        .build();
+                EduReport.builder().id(reportId).title("권한 보고서").eduType(EduType.SAFETY).build();
 
         List<EduAttendance> attendances = new ArrayList<>();
+        long totalCount = 30L;
 
-        int targetCount = 50;
-        EduReportAdminDetailDto mockDto =
-                EduReportAdminDetailDto.builder()
+        EduReportDetailDto mockDto =
+                EduReportDetailDto.builder()
                         .id(reportId)
-                        .title("관리자용 테스트 보고서")
-                        .numberOfPeople(targetCount)
+                        .title("권한 보고서")
+                        .numberOfPeople(30)
                         .numberOfAttendees(0)
+                        .attendees(List.of())
                         .build();
 
-        when(userRepository.findById(userId)).thenReturn(Optional.of(adminUser));
+        when(userRepository.findById(userId)).thenReturn(Optional.of(user));
         when(eduReportRepository.findById(reportId)).thenReturn(Optional.of(report));
         when(eduAttendanceRepository.findAllByEduReportIdWithUser(reportId))
                 .thenReturn(attendances);
-        when(userRepository.count()).thenReturn((long) targetCount);
-        when(eduMapper.toAdminDetailDto(report, attendances, targetCount, s3Service))
-                .thenReturn(mockDto);
+        when(userRepository.count()).thenReturn(totalCount);
+        when(eduMapper.toDetailDto(report, attendances, totalCount, s3Service)).thenReturn(mockDto);
+        when(eduAttendanceRepository.existsByEduReportAndUser(report, user)).thenReturn(false);
 
         // when
-        EduReportAdminDetailDto result = eduReportService.getEduReportForAdmin(reportId, userId);
+        EduReportDetailDto result = eduReportService.getEduReport(reportId, userId);
 
         // then
         assertThat(result).isNotNull();
-        assertThat(result.getTitle()).isEqualTo("관리자용 테스트 보고서");
-        assertThat(result.getNumberOfPeople()).isEqualTo(50L);
+        assertThat(result.getAttendees()).isNotNull(); // 권한 있으면 attendees 포함
+        assertThat(result.getNumberOfPeople()).isEqualTo(30);
 
-        verify(userRepository, times(1)).findById(userId);
-        verify(eduReportRepository, times(1)).findById(reportId);
+        verify(eduAttendanceRepository, times(1)).findAllByEduReportIdWithUser(reportId);
     }
 
     @Test
-    @DisplayName("관리자용 상세 조회 실패 - 권한이 없는 유저")
-    void getEduReportForAdmin_Fail_NoAuthority() {
+    @DisplayName("교육 보고서 조회 - ACCESS_EDUCATION 권한 없음 → attendees=null")
+    void getEduReport_WithoutAccess_AttendeesIsNull() {
         // given
         Long reportId = 1L;
         Long userId = 1L;
-        User normalUser = createNormalUser(); // 일반 유저 (ROLE.USER)
+        User user = createNormalUser(); // 권한 없음
 
-        when(userRepository.findById(userId)).thenReturn(Optional.of(normalUser));
+        EduReport report =
+                EduReport.builder().id(reportId).title("일반 보고서").eduType(EduType.SAFETY).build();
 
-        // when & then
-        assertThatThrownBy(() -> eduReportService.getEduReportForAdmin(reportId, userId))
-                .isInstanceOf(CustomException.class)
-                .hasFieldOrPropertyWithValue("errorCode", ErrorCode.NO_AUTHORITY_FOR_EDU_REPORT);
+        EduReportDetailDto mockDto =
+                EduReportDetailDto.builder()
+                        .id(reportId)
+                        .title("일반 보고서")
+                        .attendees(null)
+                        .numberOfPeople(null)
+                        .build();
 
-        verify(userRepository, times(1)).findById(userId);
-        verify(eduReportRepository, never()).findById(anyLong());
-    }
+        when(userRepository.findById(userId)).thenReturn(Optional.of(user));
+        when(eduReportRepository.findById(reportId)).thenReturn(Optional.of(report));
+        when(eduMapper.toDetailDto(report, null, -1L, s3Service)).thenReturn(mockDto);
+        when(eduAttendanceRepository.existsByEduReportAndUser(report, user)).thenReturn(false);
 
-    @Test
-    @DisplayName("관리자용 상세 조회 실패 - 보고서가 존재하지 않음")
-    void getEduReportForAdmin_Fail_NotFound() {
-        // given
-        Long reportId = 1L;
-        Long userId = 99L;
-        User adminUser = createAdminUser();
+        // when
+        EduReportDetailDto result = eduReportService.getEduReport(reportId, userId);
 
-        when(userRepository.findById(userId)).thenReturn(Optional.of(adminUser));
-        when(eduReportRepository.findById(reportId)).thenReturn(Optional.empty());
+        // then
+        assertThat(result.getAttendees()).isNull(); // 권한 없으면 null
+        assertThat(result.getNumberOfPeople()).isNull();
 
-        // when & then
-        assertThatThrownBy(() -> eduReportService.getEduReportForAdmin(reportId, userId))
-                .isInstanceOf(CustomException.class)
-                .hasFieldOrPropertyWithValue("errorCode", ErrorCode.EDU_REPORT_NOT_FOUND);
-
-        verify(userRepository, times(1)).findById(userId);
         verify(eduAttendanceRepository, never()).findAllByEduReportIdWithUser(anyLong());
     }
 }

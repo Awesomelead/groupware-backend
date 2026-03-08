@@ -8,6 +8,7 @@ import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 
+import kr.co.awesomelead.groupware_backend.domain.notification.service.NotificationService;
 import kr.co.awesomelead.groupware_backend.domain.payslip.dto.request.PayslipStatusRequestDto;
 import kr.co.awesomelead.groupware_backend.domain.payslip.dto.response.AdminPayslipSummaryDto;
 import kr.co.awesomelead.groupware_backend.domain.payslip.dto.response.EmployeePayslipDetailDto;
@@ -48,6 +49,7 @@ public class PayslipServiceTest {
     @Mock private UserRepository userRepository;
     @Mock private S3Service s3Service;
     @Mock private PayslipMapper payslipMapper;
+    @Mock private NotificationService notificationService;
 
     private User admin;
     private User employee;
@@ -124,6 +126,8 @@ public class PayslipServiceTest {
                 given(userRepository.findByNameAndJoinDate("홍길동", LocalDate.of(2024, 1, 1)))
                         .willReturn(Optional.of(employee));
                 given(s3Service.uploadFile(pdfFile)).willReturn("s3-key");
+                Payslip savedPayslip = Payslip.builder().id(99L).user(employee).build();
+                given(payslipRepository.save(any(Payslip.class))).willReturn(savedPayslip);
 
                 // when
                 payslipService.sendPayslip(List.of(pdfFile), 1L);
@@ -131,6 +135,7 @@ public class PayslipServiceTest {
                 // then
                 verify(s3Service, times(1)).uploadFile(any());
                 verify(payslipRepository, times(1)).save(any(Payslip.class));
+                verify(notificationService, times(1)).sendPayslipAlertToUser(employee.getId(), 99L);
             }
         }
     }

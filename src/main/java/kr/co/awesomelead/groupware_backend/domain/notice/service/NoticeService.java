@@ -16,6 +16,7 @@ import kr.co.awesomelead.groupware_backend.domain.notice.respository.NoticeAttac
 import kr.co.awesomelead.groupware_backend.domain.notice.respository.NoticeQueryRepository;
 import kr.co.awesomelead.groupware_backend.domain.notice.respository.NoticeRepository;
 import kr.co.awesomelead.groupware_backend.domain.notice.respository.NoticeTargetRepository;
+import kr.co.awesomelead.groupware_backend.domain.notification.service.NotificationService;
 import kr.co.awesomelead.groupware_backend.domain.user.entity.User;
 import kr.co.awesomelead.groupware_backend.domain.user.enums.Authority;
 import kr.co.awesomelead.groupware_backend.domain.user.repository.UserRepository;
@@ -48,6 +49,7 @@ public class NoticeService {
     private final S3Service s3Service;
     private final UserRepository userRepository;
     private final DepartmentService departmentService;
+    private final NotificationService notificationService;
 
     private User validateAndGetAuthor(Long userId) {
         User user =
@@ -104,6 +106,10 @@ public class NoticeService {
                         .toList();
 
         noticeTargetRepository.saveAll(targets);
+
+        // 공지 대상자에게 알림 전송
+        notificationService.sendNoticeAlertToTargets(
+                notice.getTitle(), notice.getId(), finalTargetUserIds);
 
         uploadFiles(files, notice);
 

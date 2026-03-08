@@ -3,6 +3,7 @@ package kr.co.awesomelead.groupware_backend.domain.auth.dto.response;
 import io.swagger.v3.oas.annotations.media.Schema;
 
 import kr.co.awesomelead.groupware_backend.domain.user.enums.Position;
+import kr.co.awesomelead.groupware_backend.domain.user.enums.Role;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -35,4 +36,7 @@ public class LoginResponseDto {
 
     @Schema(description = "직급", example = "대리")
     private Position position;
+
+    @Schema(description = "역할", example = "관리자")
+    private Role role;
 }

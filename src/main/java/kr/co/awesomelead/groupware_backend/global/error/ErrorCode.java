@@ -61,6 +61,8 @@ public enum ErrorCode {
     MY_INFO_UPDATE_REJECT_REASON_REQUIRED(HttpStatus.BAD_REQUEST, "반려 사유를 입력해주세요."),
     MY_INFO_UPDATE_REQUEST_NOT_CANCELABLE(HttpStatus.BAD_REQUEST, "대기 상태 요청만 취소할 수 있습니다."),
     NOTICE_TARGET_REQUIRED(HttpStatus.BAD_REQUEST, "공지 대상자는 최소 1명 이상이어야 합니다."),
+    REQUEST_HISTORY_NOT_ISSUABLE(HttpStatus.BAD_REQUEST, "발급 대기 상태 요청만 발급 완료 처리할 수 있습니다."),
+    REQUEST_HISTORY_NOT_REJECTABLE(HttpStatus.BAD_REQUEST, "발급 대기 상태 요청만 반려 처리할 수 있습니다."),
 
     // 401 Unauthorized
     INVALID_TOKEN(HttpStatus.UNAUTHORIZED, "유효하지 않은 토큰입니다."),
@@ -81,6 +83,7 @@ public enum ErrorCode {
     NO_AUTHORITY_FOR_ROLE_UPDATE(HttpStatus.FORBIDDEN, "사용자 역할 변경 권한이 없습니다."),
     NO_AUTHORITY_FOR_VIEW_PAYSLIP(HttpStatus.FORBIDDEN, "급여명세서 조회 권한이 없습니다."),
     NO_AUTHORITY_FOR_NOTIFICATION(HttpStatus.FORBIDDEN, "해당 알림에 대한 접근 권한이 없습니다."),
+    NO_AUTHORITY_FOR_CERTIFICATE_REQUEST_REVIEW(HttpStatus.FORBIDDEN, "제증명 신청 승인/반려 권한이 없습니다."),
 
     // 404 Not Found
     USER_NOT_FOUND(HttpStatus.NOT_FOUND, "해당 사용자를 찾을 수 없습니다."),
@@ -91,6 +94,8 @@ public enum ErrorCode {
     EDU_ATTACHMENT_NOT_FOUND(HttpStatus.NOT_FOUND, "해당 교육 첨부파일을 찾을 수 없습니다."),
     NOTICE_NOT_FOUND(HttpStatus.NOT_FOUND, "해당 공지사항을 찾을 수 없습니다."),
     NOTICE_ATTACHMENT_NOT_FOUND(HttpStatus.NOT_FOUND, "해당 공지사항 첨부파일을 찾을 수 없습니다."),
+    REQUEST_HISTORY_NOT_FOUND(HttpStatus.NOT_FOUND, "해당 제증명 발급 신청 내역을 찾을 수 없습니다."),
+    REQUEST_HISTORY_NOT_CANCELABLE(HttpStatus.BAD_REQUEST, "대기 상태 요청만 취소할 수 있습니다."),
     PAYSLIP_NOT_FOUND(HttpStatus.NOT_FOUND, "해당 급여명세서를 찾을 수 없습니다."),
     RECORD_NOT_FOUND(HttpStatus.NOT_FOUND, "해당 방문기록을 찾을 수 없습니다."),
     FCM_TOKEN_NOT_FOUND(HttpStatus.NOT_FOUND, "해당 FCM 토큰을 찾을 수 없습니다."),

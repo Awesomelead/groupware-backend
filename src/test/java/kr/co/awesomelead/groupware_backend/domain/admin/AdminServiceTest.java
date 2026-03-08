@@ -19,6 +19,7 @@ import kr.co.awesomelead.groupware_backend.domain.department.entity.Department;
 import kr.co.awesomelead.groupware_backend.domain.department.enums.Company;
 import kr.co.awesomelead.groupware_backend.domain.department.enums.DepartmentName;
 import kr.co.awesomelead.groupware_backend.domain.department.repository.DepartmentRepository;
+import kr.co.awesomelead.groupware_backend.domain.notification.service.NotificationService;
 import kr.co.awesomelead.groupware_backend.domain.user.entity.MyInfoUpdateRequest;
 import kr.co.awesomelead.groupware_backend.domain.user.entity.User;
 import kr.co.awesomelead.groupware_backend.domain.user.enums.Authority;
@@ -58,6 +59,7 @@ class AdminServiceTest {
     @Mock private DepartmentRepository departmentRepository;
     @Mock private MyInfoUpdateRequestRepository myInfoUpdateRequestRepository;
     @Mock private PhoneAuthService phoneAuthService;
+    @Mock private NotificationService notificationService;
     @InjectMocks private AdminService adminService;
     private final Long adminId = 100L;
     private final Long userId = 1L;
@@ -90,7 +92,7 @@ class AdminServiceTest {
                 pendingUser.setStatus(Status.PENDING);
 
                 when(userRepository.findById(userId)).thenReturn(Optional.of(pendingUser));
-                when(departmentRepository.findById(any())).thenReturn(Optional.of(department));
+                when(departmentRepository.findByName(any())).thenReturn(Optional.of(department));
 
                 // when
                 adminService.approveUserRegistration(userId, requestDto, adminId);
@@ -119,7 +121,7 @@ class AdminServiceTest {
                 pendingUser.setStatus(Status.PENDING);
 
                 when(userRepository.findById(userId)).thenReturn(Optional.of(pendingUser));
-                when(departmentRepository.findById(any())).thenReturn(Optional.of(department));
+                when(departmentRepository.findByName(any())).thenReturn(Optional.of(department));
 
                 UserApprovalRequestDto invalidRequestDto = createRequestDto();
                 invalidRequestDto.setJobType(JobType.FIELD);
@@ -446,7 +448,7 @@ class AdminServiceTest {
     private UserApprovalRequestDto createRequestDto() {
         UserApprovalRequestDto dto = new UserApprovalRequestDto();
         dto.setJobType(JobType.MANAGEMENT);
-        dto.setDepartmentId(1L);
+        dto.setDepartmentName(DepartmentName.SALES_DEPT);
         dto.setHireDate(LocalDate.now());
         dto.setPosition(Position.STAFF);
         return dto;
@@ -676,6 +678,7 @@ class AdminServiceTest {
             assertThat(request.getStatus()).isEqualTo(MyInfoUpdateRequestStatus.APPROVED);
             verify(userRepository).save(targetUser);
             verify(myInfoUpdateRequestRepository).save(request);
+            verify(notificationService).sendAlertToUser(any(), any(), any(), any());
         }
 
         @Test
@@ -702,6 +705,7 @@ class AdminServiceTest {
             assertThat(request.getStatus()).isEqualTo(MyInfoUpdateRequestStatus.REJECTED);
             assertThat(request.getRejectReason()).isEqualTo("증빙 불충분");
             verify(myInfoUpdateRequestRepository).save(request);
+            verify(notificationService).sendAlertToUser(any(), any(), any(), any(), any());
         }
 
         @Test

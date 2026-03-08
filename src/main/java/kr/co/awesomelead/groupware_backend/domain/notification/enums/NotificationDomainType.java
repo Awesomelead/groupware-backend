@@ -12,6 +12,7 @@ public enum NotificationDomainType {
     EDUCATION,
     PAYSLIP,
     REQUEST_HISTORY,
+    MY_INFO_UPDATE,
     CHECK_SHEET;
 
     @JsonValue

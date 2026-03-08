@@ -28,9 +28,6 @@ public class NotificationResponseDto {
     @Schema(description = "도메인 PK", example = "42")
     private final Long domainId;
 
-    @Schema(description = "리다이렉트 URL", example = "/visits/42")
-    private final String redirectUrl;
-
     @Schema(description = "읽음 여부", example = "false")
     private final Boolean isRead;
 
@@ -43,7 +40,7 @@ public class NotificationResponseDto {
         this.content = notification.getContent();
         this.domainType = notification.getDomainType();
         this.domainId = notification.getDomainId();
-        this.redirectUrl = notification.getRedirectUrl();
+
         this.isRead = notification.getIsRead();
         this.createdAt = notification.getCreatedAt();
     }

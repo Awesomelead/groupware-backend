@@ -10,8 +10,8 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 
 import jakarta.validation.Valid;
 
+import kr.co.awesomelead.groupware_backend.domain.department.enums.DepartmentName;
 import kr.co.awesomelead.groupware_backend.domain.education.dto.request.EduReportRequestDto;
-import kr.co.awesomelead.groupware_backend.domain.education.dto.response.EduReportAdminDetailDto;
 import kr.co.awesomelead.groupware_backend.domain.education.dto.response.EduReportDetailDto;
 import kr.co.awesomelead.groupware_backend.domain.education.dto.response.EduReportSummaryDto;
 import kr.co.awesomelead.groupware_backend.domain.education.enums.EduType;
@@ -26,7 +26,6 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -52,17 +51,17 @@ import java.util.List;
         name = "Education Report",
         description =
                 """
-            ## 교육 보고서 관리 API
+    ## 교육 보고서 관리 API
 
-            안전교육, 부서교육 등 사내 교육 보고서의 생성, 조회, 삭제 및 출석 체크 기능을 제공합니다.
+    안전교육, 부서교육 등 사내 교육 보고서의 생성, 조회, 삭제 및 출석 체크 기능을 제공합니다.
 
-            ### 사용되는 Enum 타입
-            - **EduType**: PSM, SAFETY(안전 보건), DEPARTMENT(부서 교육)
+    ### 사용되는 Enum 타입
+    - **EduType**: PSM, SAFETY(안전 보건), DEPARTMENT(부서 교육)
 
-            ### 권한 안내
-            - **작성/삭제 권한**: `WRITE_EDUCATION` 권한이 필요합니다. (401 에러 발생 가능)
-            - **관리자 조회**: `ADMIN` 역할(Role)이 필요합니다. (401 에러 발생 가능)
-            """)
+    ### 권한 안내
+    - **작성/삭제 권한**: `WRITE_EDUCATION` 권한이 필요합니다. (401 에러 발생 가능)
+    - **관리자 조회**: `ADMIN` 역할(Role)이 필요합니다. (401 에러 발생 가능)
+    """)
 public class EduReportController {
 
     private final EduReportService eduReportService;
@@ -82,13 +81,13 @@ public class EduReportController {
                                                 @ExampleObject(
                                                         value =
                                                                 """
-                    {
-                      "isSuccess": true,
-                      "code": "COMMON201",
-                      "message": "성공적으로 생성되었습니다.",
-                      "result": 1
-                    }
-                    """))),
+          {
+            "isSuccess": true,
+            "code": "COMMON201",
+            "message": "성공적으로 생성되었습니다.",
+            "result": 1
+          }
+          """))),
                 @io.swagger.v3.oas.annotations.responses.ApiResponse(
                         responseCode = "401",
                         description = "권한 없음",
@@ -100,13 +99,13 @@ public class EduReportController {
                                                         name = "작성 권한 없음",
                                                         value =
                                                                 """
-                    {
-                      "isSuccess": false,
-                      "code": "NO_AUTHORITY_FOR_EDU_REPORT",
-                      "message": "교육 보고서 작성 권한이 없습니다.",
-                      "result": null
-                    }
-                    """))),
+          {
+            "isSuccess": false,
+            "code": "NO_AUTHORITY_FOR_EDU_REPORT",
+            "message": "교육 보고서 작성 권한이 없습니다.",
+            "result": null
+          }
+          """))),
                 @io.swagger.v3.oas.annotations.responses.ApiResponse(
                         responseCode = "404",
                         description = "사용자 또는 부서 없음",
@@ -118,24 +117,24 @@ public class EduReportController {
                                                     name = "사용자 없음",
                                                     value =
                                                             """
-                    {
-                      "isSuccess": false,
-                      "code": "USER_NOT_FOUND",
-                      "message": "해당 사용자를 찾을 수 없습니다.",
-                      "result": null
-                    }
-                    """),
+              {
+                "isSuccess": false,
+                "code": "USER_NOT_FOUND",
+                "message": "해당 사용자를 찾을 수 없습니다.",
+                "result": null
+              }
+              """),
                                             @ExampleObject(
                                                     name = "부서 없음",
                                                     value =
                                                             """
-                    {
-                      "isSuccess": false,
-                      "code": "DEPARTMENT_NOT_FOUND",
-                      "message": "해당 부서를 찾을 수 없습니다.",
-                      "result": null
-                    }
-                    """)
+              {
+                "isSuccess": false,
+                "code": "DEPARTMENT_NOT_FOUND",
+                "message": "해당 부서를 찾을 수 없습니다.",
+                "result": null
+              }
+              """)
                                         }))
             })
     @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
@@ -175,22 +174,27 @@ public class EduReportController {
                                         @ExampleObject(
                                                 value =
                                                         """
-                    {
-                      "isSuccess": false,
-                      "code": "USER_NOT_FOUND",
-                      "message": "해당 사용자를 찾을 수 없습니다.",
-                      "result": null
-                    }
-                    """)))
+          {
+            "isSuccess": false,
+            "code": "USER_NOT_FOUND",
+            "message": "해당 사용자를 찾을 수 없습니다.",
+            "result": null
+          }
+          """)))
     })
     @GetMapping
     public ResponseEntity<ApiResponse<List<EduReportSummaryDto>>> getEduReports(
             @Parameter(description = "필터링할 교육 유형 (미지정 시 전체 조회)", example = "LEGAL")
                     @RequestParam(required = false)
                     EduType type,
+            @Parameter(
+                            description = "[ACCESS_EDUCATION 권한 필요] 특정 부서 교육만 필터링. 미지정 시 전체 조회.",
+                            example = "SALES_DEPT")
+                    @RequestParam(required = false)
+                    DepartmentName departmentName,
             @Parameter(hidden = true) @AuthenticationPrincipal CustomUserDetails userDetails) {
         List<EduReportSummaryDto> reports =
-                eduReportService.getEduReports(type, userDetails.getId());
+                eduReportService.getEduReports(type, departmentName, userDetails.getId());
         return ResponseEntity.ok(ApiResponse.onSuccess(reports));
     }
 
@@ -210,24 +214,24 @@ public class EduReportController {
                                             name = "보고서 없음",
                                             value =
                                                     """
-                    {
-                      "isSuccess": false,
-                      "code": "EDU_REPORT_NOT_FOUND",
-                      "message": "해당 교육 보고서를 찾을 수 없습니다.",
-                      "result": null
-                    }
-                    """),
+              {
+                "isSuccess": false,
+                "code": "EDU_REPORT_NOT_FOUND",
+                "message": "해당 교육 보고서를 찾을 수 없습니다.",
+                "result": null
+              }
+              """),
                                     @ExampleObject(
                                             name = "사용자 없음",
                                             value =
                                                     """
-                    {
-                      "isSuccess": false,
-                      "code": "USER_NOT_FOUND",
-                      "message": "해당 사용자를 찾을 수 없습니다.",
-                      "result": null
-                    }
-                    """)
+              {
+                "isSuccess": false,
+                "code": "USER_NOT_FOUND",
+                "message": "해당 사용자를 찾을 수 없습니다.",
+                "result": null
+              }
+              """)
                                 }))
     })
     @GetMapping("/{eduReportId}")
@@ -254,13 +258,13 @@ public class EduReportController {
                                                 name = "삭제 권한 없음",
                                                 value =
                                                         """
-                    {
-                      "isSuccess": false,
-                      "code": "NO_AUTHORITY_FOR_EDU_REPORT",
-                      "message": "교육 보고서 작성 권한이 없습니다.",
-                      "result": null
-                    }
-                    """))),
+          {
+            "isSuccess": false,
+            "code": "NO_AUTHORITY_FOR_EDU_REPORT",
+            "message": "교육 보고서 작성 권한이 없습니다.",
+            "result": null
+          }
+          """))),
         @io.swagger.v3.oas.annotations.responses.ApiResponse(
                 responseCode = "404",
                 description = "보고서 또는 사용자 없음",
@@ -272,24 +276,24 @@ public class EduReportController {
                                             name = "보고서 없음",
                                             value =
                                                     """
-                    {
-                      "isSuccess": false,
-                      "code": "EDU_REPORT_NOT_FOUND",
-                      "message": "해당 교육 보고서를 찾을 수 없습니다.",
-                      "result": null
-                    }
-                    """),
+              {
+                "isSuccess": false,
+                "code": "EDU_REPORT_NOT_FOUND",
+                "message": "해당 교육 보고서를 찾을 수 없습니다.",
+                "result": null
+              }
+              """),
                                     @ExampleObject(
                                             name = "사용자 없음",
                                             value =
                                                     """
-                    {
-                      "isSuccess": false,
-                      "code": "USER_NOT_FOUND",
-                      "message": "해당 사용자를 찾을 수 없습니다.",
-                      "result": null
-                    }
-                    """)
+              {
+                "isSuccess": false,
+                "code": "USER_NOT_FOUND",
+                "message": "해당 사용자를 찾을 수 없습니다.",
+                "result": null
+              }
+              """)
                                 }))
     })
     @DeleteMapping("/{eduReportId}")
@@ -317,13 +321,13 @@ public class EduReportController {
                                         @ExampleObject(
                                                 value =
                                                         """
-                    {
-                      "isSuccess": false,
-                      "code": "EDU_ATTACHMENT_NOT_FOUND",
-                      "message": "해당 교육 첨부파일을 찾을 수 없습니다.",
-                      "result": null
-                    }
-                    """)))
+          {
+            "isSuccess": false,
+            "code": "EDU_ATTACHMENT_NOT_FOUND",
+            "message": "해당 교육 첨부파일을 찾을 수 없습니다.",
+            "result": null
+          }
+          """)))
     })
     @GetMapping("/attachments/{id}/download")
     public ResponseEntity<byte[]> downloadAttachment(
@@ -342,14 +346,14 @@ public class EduReportController {
                 .body(downloadDto.fileData());
     }
 
-    //    @GetMapping("/attachments/{id}/download")
-    //    public ResponseEntity<Void> downloadAttachment(@PathVariable Long id) {
-    //        String downloadUrl = eduReportService.getDownloadUrl(id);
+    // @GetMapping("/attachments/{id}/download")
+    // public ResponseEntity<Void> downloadAttachment(@PathVariable Long id) {
+    // String downloadUrl = eduReportService.getDownloadUrl(id);
     //
-    //        return ResponseEntity.status(HttpStatus.FOUND)
-    //            .location(URI.create(downloadUrl))
-    //            .build();
-    //    }
+    // return ResponseEntity.status(HttpStatus.FOUND)
+    // .location(URI.create(downloadUrl))
+    // .build();
+    // }
 
     @Operation(summary = "출석 체크", description = "png 서명 이미지를 통해 교육 보고서에 대한 출석 체크를 수행합니다.")
     @ApiResponses(
@@ -368,35 +372,35 @@ public class EduReportController {
                                                     name = "이미 출석함",
                                                     value =
                                                             """
-                    {
-                      "isSuccess": false,
-                      "code": "ALREADY_MARKED_ATTENDANCE",
-                      "message": "이미 출석이 체크된 교육입니다.",
-                      "result": null
-                    }
-                    """),
+              {
+                "isSuccess": false,
+                "code": "ALREADY_MARKED_ATTENDANCE",
+                "message": "이미 출석이 체크된 교육입니다.",
+                "result": null
+              }
+              """),
                                             @ExampleObject(
                                                     name = "서명 미제공",
                                                     value =
                                                             """
-                    {
-                      "isSuccess": false,
-                      "code": "NO_SIGNATURE_PROVIDED",
-                      "message": "서명이 제공되지 않았습니다.",
-                      "result": null
-                    }
-                    """),
+              {
+                "isSuccess": false,
+                "code": "NO_SIGNATURE_PROVIDED",
+                "message": "서명이 제공되지 않았습니다.",
+                "result": null
+              }
+              """),
                                             @ExampleObject(
                                                     name = "잘못된 서명 형식",
                                                     value =
                                                             """
-                    {
-                      "isSuccess": false,
-                      "code": "INVALID_SIGNATURE_FORMAT",
-                      "message": "서명은 PNG 파일 형식만 지원합니다.",
-                      "result": null
-                    }
-                    """)
+              {
+                "isSuccess": false,
+                "code": "INVALID_SIGNATURE_FORMAT",
+                "message": "서명은 PNG 파일 형식만 지원합니다.",
+                "result": null
+              }
+              """)
                                         })),
                 @io.swagger.v3.oas.annotations.responses.ApiResponse(
                         responseCode = "404",
@@ -408,13 +412,13 @@ public class EduReportController {
                                                 @ExampleObject(
                                                         value =
                                                                 """
-                    {
-                      "isSuccess": false,
-                      "code": "EDU_REPORT_NOT_FOUND",
-                      "message": "해당 교육 보고서를 찾을 수 없습니다.",
-                      "result": null
-                    }
-                    """)))
+          {
+            "isSuccess": false,
+            "code": "EDU_REPORT_NOT_FOUND",
+            "message": "해당 교육 보고서를 찾을 수 없습니다.",
+            "result": null
+          }
+          """)))
             })
     @PostMapping("/{id}/attendance")
     public ResponseEntity<ApiResponse<Void>> markAttendance(
@@ -428,91 +432,5 @@ public class EduReportController {
         eduReportService.markAttendance(id, signature, userDetails.getId());
 
         return ResponseEntity.ok(ApiResponse.onNoContent());
-    }
-
-    @Operation(summary = "관리자용 교육 보고서 상세 조회", description = "관리자 권한으로 교육 보고서의 상세 정보를 조회합니다.")
-    @ApiResponses({
-        @io.swagger.v3.oas.annotations.responses.ApiResponse(
-                responseCode = "200",
-                description = "관리자 조회 성공",
-                content =
-                        @Content(
-                                mediaType = "application/json",
-                                schema = @Schema(implementation = ApiResponse.class),
-                                examples =
-                                        @ExampleObject(
-                                                value =
-                                                        """
-                    {
-                      "isSuccess": true,
-                      "code": "COMMON200",
-                      "message": "요청에 성공했습니다.",
-                      "result": {
-                        "id": 1,
-                        "title": "2026 안전교육",
-                        "attendanceList": [
-                          {"userName": "홍길동", "attendedAt": "2026-01-11T16:00:00"}
-                        ]
-                      }
-                    }
-                    """))),
-        @io.swagger.v3.oas.annotations.responses.ApiResponse(
-                responseCode = "401",
-                description = "권한 없음",
-                content =
-                        @Content(
-                                mediaType = "application/json",
-                                examples =
-                                        @ExampleObject(
-                                                name = "관리자 권한 없음",
-                                                value =
-                                                        """
-                    {
-                      "isSuccess": false,
-                      "code": "NO_AUTHORITY_FOR_EDU_REPORT",
-                      "message": "교육 보고서 작성 권한이 없습니다.",
-                      "result": null
-                    }
-                    """))),
-        @io.swagger.v3.oas.annotations.responses.ApiResponse(
-                responseCode = "404",
-                description = "보고서 또는 사용자 없음",
-                content =
-                        @Content(
-                                mediaType = "application/json",
-                                examples = {
-                                    @ExampleObject(
-                                            name = "보고서 없음",
-                                            value =
-                                                    """
-                    {
-                      "isSuccess": false,
-                      "code": "EDU_REPORT_NOT_FOUND",
-                      "message": "해당 교육 보고서를 찾을 수 없습니다.",
-                      "result": null
-                    }
-                    """),
-                                    @ExampleObject(
-                                            name = "사용자 없음",
-                                            value =
-                                                    """
-                    {
-                      "isSuccess": false,
-                      "code": "USER_NOT_FOUND",
-                      "message": "해당 사용자를 찾을 수 없습니다.",
-                      "result": null
-                    }
-                    """)
-                                }))
-    })
-    @GetMapping("/{reportId}/admin")
-    @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<ApiResponse<EduReportAdminDetailDto>> getEduReportForAdmin(
-            @Parameter(description = "조회할 보고서 ID", example = "1") @PathVariable Long reportId,
-            @Parameter(hidden = true) @AuthenticationPrincipal CustomUserDetails userDetails) {
-        EduReportAdminDetailDto response =
-                eduReportService.getEduReportForAdmin(reportId, userDetails.getId());
-
-        return ResponseEntity.ok(ApiResponse.onSuccess(response));
     }
 }

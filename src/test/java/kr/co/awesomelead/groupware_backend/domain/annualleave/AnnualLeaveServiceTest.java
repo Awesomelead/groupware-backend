@@ -14,6 +14,7 @@ import kr.co.awesomelead.groupware_backend.domain.annualleave.entity.AnnualLeave
 import kr.co.awesomelead.groupware_backend.domain.annualleave.mapper.AnnualLeaveMapper;
 import kr.co.awesomelead.groupware_backend.domain.annualleave.repository.AnnualLeaveRepository;
 import kr.co.awesomelead.groupware_backend.domain.annualleave.service.AnnualLeaveService;
+import kr.co.awesomelead.groupware_backend.domain.notification.service.NotificationService;
 import kr.co.awesomelead.groupware_backend.domain.user.entity.User;
 import kr.co.awesomelead.groupware_backend.domain.user.enums.Authority;
 import kr.co.awesomelead.groupware_backend.domain.user.repository.UserRepository;
@@ -40,7 +41,10 @@ public class AnnualLeaveServiceTest {
     @Mock private AnnualLeaveRepository annualLeaveRepository;
 
     @Mock private UserRepository userRepository;
+
     @Mock private AnnualLeaveMapper annualLeaveMapper;
+
+    @Mock private NotificationService notificationService;
 
     @InjectMocks private AnnualLeaveService annualLeaveService;
 
@@ -103,6 +107,8 @@ public class AnnualLeaveServiceTest {
                 assertThat(response.getSuccessCount()).isGreaterThan(0);
                 assertThat(response.getFailureCount()).isEqualTo(0);
                 verify(annualLeaveRepository, atLeastOnce()).save(any());
+                verify(notificationService, atLeastOnce())
+                        .sendAnnualLeaveAlertToUser(any(), anyString());
             }
         }
 

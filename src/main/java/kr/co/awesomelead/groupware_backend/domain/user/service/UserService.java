@@ -1,6 +1,9 @@
 package kr.co.awesomelead.groupware_backend.domain.user.service;
 
 import kr.co.awesomelead.groupware_backend.domain.aligo.service.PhoneAuthService;
+import kr.co.awesomelead.groupware_backend.domain.notification.enums.NotificationDomainType;
+import kr.co.awesomelead.groupware_backend.domain.notification.enums.NotificationMessage;
+import kr.co.awesomelead.groupware_backend.domain.notification.service.NotificationService;
 import kr.co.awesomelead.groupware_backend.domain.user.dto.response.MyInfoResponseDto;
 import kr.co.awesomelead.groupware_backend.domain.user.dto.response.UpdateMyInfoRequestDto;
 import kr.co.awesomelead.groupware_backend.domain.user.entity.MyInfoUpdateRequest;
@@ -26,6 +29,7 @@ public class UserService {
     private final UserRepository userRepository;
     private final MyInfoUpdateRequestRepository myInfoUpdateRequestRepository;
     private final PhoneAuthService phoneAuthService;
+    private final NotificationService notificationService;
 
     // 내 정보 조회
     @Transactional(readOnly = true)
@@ -124,6 +128,13 @@ public class UserService {
         if (requestedPhoneNumber != null) {
             phoneAuthService.clearVerification(requestedPhoneNumber);
         }
+
+        // Admin 권한 유저들에게 정보수정 승인 요청 알림 전송 (FCM + Notification DB)
+        notificationService.sendAlertToAdmins(
+                NotificationMessage.MY_INFO_UPDATE_REQUEST_ADMIN,
+                NotificationDomainType.MY_INFO_UPDATE,
+                request.getId(),
+                user.getDisplayName());
 
         log.info("내 정보 수정 요청 생성 - 사용자 ID: {}, 요청 ID: {}", user.getId(), request.getId());
 

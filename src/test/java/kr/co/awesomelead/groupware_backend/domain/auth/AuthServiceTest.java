@@ -20,6 +20,7 @@ import kr.co.awesomelead.groupware_backend.domain.auth.dto.response.SignupRespon
 import kr.co.awesomelead.groupware_backend.domain.auth.service.AuthService;
 import kr.co.awesomelead.groupware_backend.domain.auth.service.EmailAuthService;
 import kr.co.awesomelead.groupware_backend.domain.department.enums.Company;
+import kr.co.awesomelead.groupware_backend.domain.notification.service.NotificationService;
 import kr.co.awesomelead.groupware_backend.domain.user.entity.User;
 import kr.co.awesomelead.groupware_backend.domain.user.enums.Role;
 import kr.co.awesomelead.groupware_backend.domain.user.enums.Status;
@@ -56,8 +57,7 @@ class AuthServiceTest {
 
     @Mock private UserMapper userMapper;
 
-    @Mock
-    private kr.co.awesomelead.groupware_backend.domain.fcm.service.FcmTokenService fcmTokenService;
+    @Mock private NotificationService notificationService;
 
     @InjectMocks private AuthService authService;
 
@@ -156,6 +156,7 @@ class AuthServiceTest {
         verify(userRepository, times(1)).save(any(User.class));
         verify(emailAuthService, times(1)).clearVerification(signupDto.getEmail());
         verify(phoneAuthService, times(1)).clearVerification(signupDto.getPhoneNumber());
+        verify(notificationService, times(1)).sendAlertToAdmins(any(), any(), any(), any());
     }
 
     @Test
@@ -173,6 +174,7 @@ class AuthServiceTest {
 
         assertThat(exception.getErrorCode()).isEqualTo(ErrorCode.PASSWORD_MISMATCH);
         verify(userRepository, never()).save(any(User.class));
+        verify(notificationService, never()).sendAlertToAdmins(any(), any(), any(), any());
     }
 
     @Test
@@ -196,6 +198,7 @@ class AuthServiceTest {
         verify(userRepository, never()).save(any(User.class));
         // 전화번호 인증 실패 시 이메일 확인은 실행 안 됨
         verify(emailAuthService, never()).isEmailVerified(any());
+        verify(notificationService, never()).sendAlertToAdmins(any(), any(), any(), any());
     }
 
     @Test
@@ -219,6 +222,7 @@ class AuthServiceTest {
 
         assertThat(exception.getErrorCode()).isEqualTo(ErrorCode.EMAIL_NOT_VERIFIED);
         verify(userRepository, never()).save(any(User.class));
+        verify(notificationService, never()).sendAlertToAdmins(any(), any(), any(), any());
     }
 
     @Test
@@ -243,6 +247,7 @@ class AuthServiceTest {
 
         assertThat(exception.getErrorCode()).isEqualTo(ErrorCode.DUPLICATE_LOGIN_ID);
         verify(userRepository, never()).save(any(User.class));
+        verify(notificationService, never()).sendAlertToAdmins(any(), any(), any(), any());
     }
 
     @Test
@@ -270,6 +275,7 @@ class AuthServiceTest {
 
         assertThat(exception.getErrorCode()).isEqualTo(ErrorCode.DUPLICATE_REGISTRATION_NUMBER);
         verify(userRepository, never()).save(any(User.class));
+        verify(notificationService, never()).sendAlertToAdmins(any(), any(), any(), any());
     }
 
     @Nested

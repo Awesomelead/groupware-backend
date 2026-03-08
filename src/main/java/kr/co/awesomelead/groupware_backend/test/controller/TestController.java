@@ -7,25 +7,20 @@ import jakarta.validation.Valid;
 
 import kr.co.awesomelead.groupware_backend.domain.auth.dto.request.FindEmailRequestDto;
 import kr.co.awesomelead.groupware_backend.domain.auth.dto.response.FindEmailResponseDto;
-import kr.co.awesomelead.groupware_backend.domain.department.enums.Company;
-import kr.co.awesomelead.groupware_backend.domain.user.entity.User;
-import kr.co.awesomelead.groupware_backend.domain.user.enums.Role;
-import kr.co.awesomelead.groupware_backend.domain.user.enums.Status;
-import kr.co.awesomelead.groupware_backend.domain.user.repository.UserRepository;
+import kr.co.awesomelead.groupware_backend.global.common.response.ApiResponse;
+import kr.co.awesomelead.groupware_backend.test.dto.request.DummyUsersCreateRequestDto;
+import kr.co.awesomelead.groupware_backend.test.dto.response.DummyUsersCreateResponseDto;
 import kr.co.awesomelead.groupware_backend.test.service.TestService;
 
 import lombok.RequiredArgsConstructor;
 
-import org.springframework.context.annotation.Profile;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-@Profile("test")
 @RestController
 @RequestMapping("/api/test")
 @RequiredArgsConstructor
@@ -34,8 +29,6 @@ import org.springframework.web.bind.annotation.RestController;
             """)
 public class TestController {
 
-    private final UserRepository userRepository;
-    private final BCryptPasswordEncoder passwordEncoder;
     private final TestService testService;
 
     @Operation(summary = "[테스트] 아이디 찾기 (전체 조회)", description = "성능 테스트용 - 인증 우회")
@@ -62,27 +55,21 @@ public class TestController {
         return ResponseEntity.ok(response);
     }
 
-    @Operation(summary = "[테스트] 테스트 user 더미데이터 생성", description = "선택한 수만큼 테스트 user 더미데이터를 생성합니다.")
+    @Operation(summary = "[테스트] 더미 유저 생성", description = "이메일/휴대폰 인증 없이 더미 유저를 생성합니다.")
     @PostMapping("/generate-users/{count}")
-    public ResponseEntity<String> generateUsers(@PathVariable int count) {
-        for (int i = 1; i <= count; i++) {
-            User user =
-                    User.builder()
-                            .nameKor("홍길동")
-                            .nameEng("Hong " + i)
-                            .email("testuser" + i + "@example.com")
-                            .password(passwordEncoder.encode("test1234!"))
-                            .phoneNumber(String.format("0101234%04d", i))
-                            .nationality("대한민국")
-                            .registrationNumber(String.format("9001%02d-1234567", i % 28 + 1))
-                            .workLocation(Company.AWESOME)
-                            .role(Role.USER)
-                            .status(Status.AVAILABLE)
-                            .build();
+    public ResponseEntity<ApiResponse<DummyUsersCreateResponseDto>> generateUsers(
+            @PathVariable int count) {
+        DummyUsersCreateRequestDto request = new DummyUsersCreateRequestDto();
+        request.setCount(count);
+        DummyUsersCreateResponseDto result = testService.createDummyUsers(request);
+        return ResponseEntity.ok(ApiResponse.onSuccess(result));
+    }
 
-            userRepository.save(user);
-        }
-
-        return ResponseEntity.ok(count + "명의 테스트 사용자 생성 완료!");
+    @Operation(summary = "[테스트] 더미 유저 생성(상세 옵션)", description = "이메일/휴대폰 인증 없이 더미 유저를 생성합니다.")
+    @PostMapping("/users/dummy")
+    public ResponseEntity<ApiResponse<DummyUsersCreateResponseDto>> createDummyUsers(
+            @Valid @RequestBody DummyUsersCreateRequestDto request) {
+        DummyUsersCreateResponseDto result = testService.createDummyUsers(request);
+        return ResponseEntity.ok(ApiResponse.onSuccess(result));
     }
 }

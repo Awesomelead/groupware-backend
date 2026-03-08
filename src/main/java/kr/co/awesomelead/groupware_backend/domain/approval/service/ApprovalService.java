@@ -19,6 +19,7 @@ import kr.co.awesomelead.groupware_backend.domain.approval.enums.ParticipantType
 import kr.co.awesomelead.groupware_backend.domain.approval.mapper.ApprovalMapper;
 import kr.co.awesomelead.groupware_backend.domain.approval.repository.ApprovalAttachmentRepository;
 import kr.co.awesomelead.groupware_backend.domain.approval.repository.ApprovalRepository;
+import kr.co.awesomelead.groupware_backend.domain.notification.service.NotificationService;
 import kr.co.awesomelead.groupware_backend.domain.user.entity.User;
 import kr.co.awesomelead.groupware_backend.domain.user.enums.Role;
 import kr.co.awesomelead.groupware_backend.domain.user.repository.UserRepository;
@@ -27,6 +28,7 @@ import kr.co.awesomelead.groupware_backend.global.error.ErrorCode;
 import kr.co.awesomelead.groupware_backend.global.infra.s3.service.S3Service;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
 import org.springframework.data.domain.Page;
 import org.springframework.stereotype.Service;
@@ -36,6 +38,7 @@ import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
 
+@Slf4j
 @Service
 @Transactional(readOnly = true)
 @RequiredArgsConstructor
@@ -49,6 +52,7 @@ public class ApprovalService {
             approvalQueryRepository;
     private final ApprovalMapper approvalMapper;
     private final S3Service s3Service;
+    private final NotificationService notificationService;
 
     @Transactional
     public Long createApproval(ApprovalCreateRequestDto dto, Long drafterId) {
@@ -89,6 +93,30 @@ public class ApprovalService {
 
         // 7. 채번된 PK를 이용하여 문서 번호 생성 및 업데이트
         generateDocumentNumber(approval);
+
+        // 8. 알림 전송: 첫 번째 결재자 + 참조자(REFERRER)
+        approval.getSteps().stream()
+                .min(java.util.Comparator.comparingInt(ApprovalStep::getSequence))
+                .ifPresent(
+                        firstStep -> {
+                            List<Long> referrerIds =
+                                    approval.getParticipants().stream()
+                                            .filter(
+                                                    p ->
+                                                            p.getParticipantType()
+                                                                    == ParticipantType.REFERRER)
+                                            .map(p -> p.getUser().getId())
+                                            .toList();
+                            try {
+                                notificationService.sendApprovalCreatedAlert(
+                                        approval.getId(),
+                                        approval.getTitle(),
+                                        firstStep.getApprover().getId(),
+                                        referrerIds);
+                            } catch (Exception e) {
+                                log.warn("전자결재 생성 알림 전송 실패: {}", e.getMessage());
+                            }
+                        });
 
         return approval.getId();
     }
@@ -198,6 +226,45 @@ public class ApprovalService {
                         .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
 
         approval.approve(approver, comment);
+
+        // 승인 후 상태에 따라 알림 분기
+        boolean allApproved =
+                approval.getSteps().stream()
+                        .allMatch(s -> s.getStatus() == ApprovalStatus.APPROVED);
+
+        if (allApproved) {
+            // 최종 승인: 기안자 + 열람권자(VIEWER)에게 알림
+            List<Long> viewerIds =
+                    approval.getParticipants().stream()
+                            .filter(p -> p.getParticipantType() == ParticipantType.VIEWER)
+                            .map(p -> p.getUser().getId())
+                            .toList();
+            try {
+                notificationService.sendApprovalFinallyApprovedAlert(
+                        approval.getId(),
+                        approval.getTitle(),
+                        approval.getDrafter().getId(),
+                        viewerIds);
+            } catch (Exception e) {
+                log.warn("전자결재 최종승인 알림 전송 실패: {}", e.getMessage());
+            }
+        } else {
+            // 다음 결재자에게 알림
+            approval.getSteps().stream()
+                    .filter(s -> s.getStatus() == ApprovalStatus.PENDING)
+                    .min(java.util.Comparator.comparingInt(ApprovalStep::getSequence))
+                    .ifPresent(
+                            nextStep -> {
+                                try {
+                                    notificationService.sendApprovalNextStepAlert(
+                                            nextStep.getApprover().getId(),
+                                            approval.getId(),
+                                            approval.getTitle());
+                                } catch (Exception e) {
+                                    log.warn("전자결재 다음 결재자 알림 전송 실패: {}", e.getMessage());
+                                }
+                            });
+        }
     }
 
     @Transactional
@@ -213,6 +280,14 @@ public class ApprovalService {
                         .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
 
         approval.reject(approver, comment);
+
+        // 기안자에게 반려 알림
+        try {
+            notificationService.sendApprovalRejectedAlert(
+                    approval.getDrafter().getId(), approval.getId(), approval.getTitle(), comment);
+        } catch (Exception e) {
+            log.warn("전자결재 반려 알림 전송 실패: {}", e.getMessage());
+        }
     }
 
     public Page<ApprovalSummaryResponseDto> getApprovalList(

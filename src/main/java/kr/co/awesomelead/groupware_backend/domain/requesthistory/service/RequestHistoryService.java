@@ -1,6 +1,7 @@
 package kr.co.awesomelead.groupware_backend.domain.requesthistory.service;
 
 import kr.co.awesomelead.groupware_backend.domain.requesthistory.dto.request.RequestHistoryCreateRequestDto;
+import kr.co.awesomelead.groupware_backend.domain.requesthistory.dto.response.AdminRequestHistoryDetailResponseDto;
 import kr.co.awesomelead.groupware_backend.domain.requesthistory.dto.response.AdminRequestHistorySummaryResponseDto;
 import kr.co.awesomelead.groupware_backend.domain.requesthistory.dto.response.RequestHistoryDetailResponseDto;
 import kr.co.awesomelead.groupware_backend.domain.requesthistory.dto.response.RequestHistorySummaryResponseDto;
@@ -111,6 +112,23 @@ public class RequestHistoryService {
         return requestHistoryRepository
                 .findAllWithUserAndDepartmentByStatus(status, pageable)
                 .map(AdminRequestHistorySummaryResponseDto::from);
+    }
+
+    @Transactional(readOnly = true)
+    public AdminRequestHistoryDetailResponseDto getRequestDetailForAdmin(Long adminId, Long requestId) {
+        User admin =
+                userRepository
+                        .findById(adminId)
+                        .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
+        validateAdminAuthority(admin);
+
+        RequestHistory requestHistory =
+                requestHistoryRepository
+                        .findByIdWithUserAndDepartment(requestId)
+                        .orElseThrow(
+                                () -> new CustomException(ErrorCode.REQUEST_HISTORY_NOT_FOUND));
+
+        return AdminRequestHistoryDetailResponseDto.from(requestHistory);
     }
 
     private void validateAdminAuthority(User admin) {

@@ -19,6 +19,13 @@ public interface RequestHistoryRepository extends JpaRepository<RequestHistory, 
     Optional<RequestHistory> findByIdAndUserId(Long id, Long userId);
 
     @Query(
+            "select rh from RequestHistory rh "
+                    + "join fetch rh.user u "
+                    + "left join fetch u.department d "
+                    + "where rh.id = :id")
+    Optional<RequestHistory> findByIdWithUserAndDepartment(@Param("id") Long id);
+
+    @Query(
             value =
                     "select rh from RequestHistory rh "
                             + "join fetch rh.user u "

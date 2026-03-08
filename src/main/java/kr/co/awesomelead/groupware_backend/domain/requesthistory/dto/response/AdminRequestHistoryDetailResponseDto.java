@@ -1,13 +1,16 @@
 package kr.co.awesomelead.groupware_backend.domain.requesthistory.dto.response;
 
 import io.swagger.v3.oas.annotations.media.Schema;
-import java.time.LocalDate;
+
 import kr.co.awesomelead.groupware_backend.domain.requesthistory.entity.RequestHistory;
 import kr.co.awesomelead.groupware_backend.domain.requesthistory.enums.RequestHistoryStatus;
 import kr.co.awesomelead.groupware_backend.domain.requesthistory.enums.RequestType;
 import kr.co.awesomelead.groupware_backend.domain.user.entity.User;
+
 import lombok.Builder;
 import lombok.Getter;
+
+import java.time.LocalDate;
 
 @Getter
 @Builder
@@ -64,20 +67,20 @@ public class AdminRequestHistoryDetailResponseDto {
         User processor = requestHistory.getProcessedBy();
 
         return AdminRequestHistoryDetailResponseDto.builder()
-            .requestId(requestHistory.getId())
-            .userId(requester != null ? requester.getId() : null)
-            .nameKor(requestHistory.getName())
-            .nameEng(requester != null ? requester.getNameEng() : null)
-            .departmentName(
-                requester != null && requester.getDepartment() != null
-                    ? requester.getDepartment().getName().getDescription()
-                    : null)
-            .position(requestHistory.getPosition())
-            .requestType(requestHistory.getRequestType())
-            .purpose(requestHistory.getPurpose())
-            .copies(requestHistory.getCopies())
-            .wishDate(requestHistory.getWishDate())
-            .requestDate(requestHistory.getRequestDate())
+                .requestId(requestHistory.getId())
+                .userId(requester != null ? requester.getId() : null)
+                .nameKor(requestHistory.getName())
+                .nameEng(requester != null ? requester.getNameEng() : null)
+                .departmentName(
+                        requester != null && requester.getDepartment() != null
+                                ? requester.getDepartment().getName().getDescription()
+                                : null)
+                .position(requestHistory.getPosition())
+                .requestType(requestHistory.getRequestType())
+                .purpose(requestHistory.getPurpose())
+                .copies(requestHistory.getCopies())
+                .wishDate(requestHistory.getWishDate())
+                .requestDate(requestHistory.getRequestDate())
                 .approvalStatus(requestHistory.getApprovalStatus())
                 .processedByName(processor != null ? processor.getDisplayName() : null)
                 .processedDate(requestHistory.getProcessedDate())

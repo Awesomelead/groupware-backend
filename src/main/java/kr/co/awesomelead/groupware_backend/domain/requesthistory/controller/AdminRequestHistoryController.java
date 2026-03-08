@@ -6,7 +6,9 @@ import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.ExampleObject;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
+
 import jakarta.validation.Valid;
+
 import kr.co.awesomelead.groupware_backend.domain.requesthistory.dto.request.RequestHistoryRejectRequestDto;
 import kr.co.awesomelead.groupware_backend.domain.requesthistory.dto.response.AdminRequestHistoryDetailResponseDto;
 import kr.co.awesomelead.groupware_backend.domain.requesthistory.dto.response.AdminRequestHistorySummaryResponseDto;
@@ -14,7 +16,9 @@ import kr.co.awesomelead.groupware_backend.domain.requesthistory.enums.RequestHi
 import kr.co.awesomelead.groupware_backend.domain.requesthistory.service.RequestHistoryService;
 import kr.co.awesomelead.groupware_backend.domain.user.dto.CustomUserDetails;
 import kr.co.awesomelead.groupware_backend.global.common.response.ApiResponse;
+
 import lombok.RequiredArgsConstructor;
+
 import org.springdoc.core.annotations.ParameterObject;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -39,17 +43,17 @@ public class AdminRequestHistoryController {
 
     @Operation(summary = "개인 증명서류 신청 목록 조회", description = "관리자 화면에서 전체 신청 목록을 조회합니다.")
     @ApiResponses(
-        value = {
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(
-                responseCode = "200",
-                description = "조회 성공",
-                content =
-                @Content(
-                    mediaType = "application/json",
-                    examples =
-                    @ExampleObject(
-                        value =
-                            """
+            value = {
+                @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                        responseCode = "200",
+                        description = "조회 성공",
+                        content =
+                                @Content(
+                                        mediaType = "application/json",
+                                        examples =
+                                                @ExampleObject(
+                                                        value =
+                                                                """
                                 {
                                   "isSuccess": true,
                                   "code": "COMMON200",
@@ -73,12 +77,12 @@ public class AdminRequestHistoryController {
                                   }
                                 }
                                 """))),
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(
-                responseCode = "403",
-                description = "권한 없음",
-                content =
-                @Content(
-                    mediaType = "application/json",
+                @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                        responseCode = "403",
+                        description = "권한 없음",
+                        content =
+                                @Content(
+                                        mediaType = "application/json",
                                         examples =
                                                 @ExampleObject(
                                                         value =
@@ -90,35 +94,35 @@ public class AdminRequestHistoryController {
                                   "result": null
                                 }
                                 """)))
-        })
+            })
     @GetMapping
     public ResponseEntity<ApiResponse<Page<AdminRequestHistorySummaryResponseDto>>> getAllRequests(
-        @Parameter(hidden = true) @AuthenticationPrincipal CustomUserDetails userDetails,
-        @Parameter(
-            description = "상태 필터 (선택값: 발급 대기, 발급 완료, 반려, 취소)",
-            required = false,
-            example = "발급 대기")
-        @RequestParam(required = false)
-        RequestHistoryStatus status,
-        @ParameterObject @PageableDefault(page = 0, size = 20) Pageable pageable) {
+            @Parameter(hidden = true) @AuthenticationPrincipal CustomUserDetails userDetails,
+            @Parameter(
+                            description = "상태 필터 (선택값: 발급 대기, 발급 완료, 반려, 취소)",
+                            required = false,
+                            example = "발급 대기")
+                    @RequestParam(required = false)
+                    RequestHistoryStatus status,
+            @ParameterObject @PageableDefault(page = 0, size = 20) Pageable pageable) {
         Page<AdminRequestHistorySummaryResponseDto> result =
-            requestHistoryService.getAllRequestsForAdmin(userDetails.getId(), status, pageable);
+                requestHistoryService.getAllRequestsForAdmin(userDetails.getId(), status, pageable);
         return ResponseEntity.ok(ApiResponse.onSuccess(result));
     }
 
     @Operation(summary = "개인 증명서류 신청 상세 조회", description = "관리자 화면에서 특정 신청의 상세 정보를 조회합니다.")
     @ApiResponses(
-        value = {
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(
-                responseCode = "200",
-                description = "조회 성공",
-                content =
-                @Content(
-                    mediaType = "application/json",
-                    examples =
-                    @ExampleObject(
-                        value =
-                            """
+            value = {
+                @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                        responseCode = "200",
+                        description = "조회 성공",
+                        content =
+                                @Content(
+                                        mediaType = "application/json",
+                                        examples =
+                                                @ExampleObject(
+                                                        value =
+                                                                """
                                 {
                                   "isSuccess": true,
                                   "code": "COMMON200",
@@ -141,34 +145,33 @@ public class AdminRequestHistoryController {
                                   }
                                 }
                                 """))),
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(
-                responseCode = "404",
-                description = "신청 내역 없음",
-                content =
-                @Content(
-                    mediaType = "application/json",
-                    examples =
-                    @ExampleObject(
-                        value =
-                            """
+                @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                        responseCode = "404",
+                        description = "신청 내역 없음",
+                        content =
+                                @Content(
+                                        mediaType = "application/json",
+                                        examples =
+                                                @ExampleObject(
+                                                        value =
+                                                                """
                                 {
                                   "isSuccess": false,
                                   "code": "REQUEST_HISTORY_NOT_FOUND",
                                   "message": "해당 제증명 발급 신청 내역을 찾을 수 없습니다.",
                                   "result": null
                                 }
-                                """)))
-            ,
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(
-                responseCode = "403",
-                description = "권한 없음",
-                content =
-                @Content(
-                    mediaType = "application/json",
-                    examples =
-                    @ExampleObject(
-                        value =
-                            """
+                                """))),
+                @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                        responseCode = "403",
+                        description = "권한 없음",
+                        content =
+                                @Content(
+                                        mediaType = "application/json",
+                                        examples =
+                                                @ExampleObject(
+                                                        value =
+                                                                """
                                 {
                                   "isSuccess": false,
                                   "code": "NO_AUTHORITY_FOR_CERTIFICATE_REQUEST_REVIEW",
@@ -176,33 +179,35 @@ public class AdminRequestHistoryController {
                                   "result": null
                                 }
                                 """)))
-        })
+            })
     @GetMapping("/{requestId}")
     public ResponseEntity<ApiResponse<AdminRequestHistoryDetailResponseDto>> getRequestDetail(
-        @Parameter(hidden = true) @AuthenticationPrincipal CustomUserDetails userDetails,
-        @Parameter(description = "신청 ID", required = true, example = "101") @PathVariable
-        Long requestId) {
+            @Parameter(hidden = true) @AuthenticationPrincipal CustomUserDetails userDetails,
+            @Parameter(description = "신청 ID", required = true, example = "101") @PathVariable
+                    Long requestId) {
         AdminRequestHistoryDetailResponseDto result =
-            requestHistoryService.getRequestDetailForAdmin(userDetails.getId(), requestId);
+                requestHistoryService.getRequestDetailForAdmin(userDetails.getId(), requestId);
         return ResponseEntity.ok(ApiResponse.onSuccess(result));
     }
 
-    @Operation(summary = "개인 증명서류 발급 완료 처리", description = "제증명 신청을 발급 완료 처리합니다. (PENDING -> ISSUED)")
+    @Operation(
+            summary = "개인 증명서류 발급 완료 처리",
+            description = "제증명 신청을 발급 완료 처리합니다. (PENDING -> ISSUED)")
     @ApiResponses(
-        value = {
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(
-                responseCode = "200",
-                description = "처리 성공"),
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(
-                responseCode = "400",
-                description = "처리 불가 상태",
-                content =
-                @Content(
-                    mediaType = "application/json",
-                    examples =
-                    @ExampleObject(
-                        value =
-                            """
+            value = {
+                @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                        responseCode = "200",
+                        description = "처리 성공"),
+                @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                        responseCode = "400",
+                        description = "처리 불가 상태",
+                        content =
+                                @Content(
+                                        mediaType = "application/json",
+                                        examples =
+                                                @ExampleObject(
+                                                        value =
+                                                                """
                                 {
                                   "isSuccess": false,
                                   "code": "REQUEST_HISTORY_NOT_ISSUABLE",
@@ -210,16 +215,16 @@ public class AdminRequestHistoryController {
                                   "result": null
                                 }
                                 """))),
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(
-                responseCode = "403",
-                description = "권한 없음",
-                content =
-                @Content(
-                    mediaType = "application/json",
-                    examples =
-                    @ExampleObject(
-                        value =
-                            """
+                @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                        responseCode = "403",
+                        description = "권한 없음",
+                        content =
+                                @Content(
+                                        mediaType = "application/json",
+                                        examples =
+                                                @ExampleObject(
+                                                        value =
+                                                                """
                                 {
                                   "isSuccess": false,
                                   "code": "NO_AUTHORITY_FOR_CERTIFICATE_REQUEST_REVIEW",
@@ -227,36 +232,36 @@ public class AdminRequestHistoryController {
                                   "result": null
                                 }
                                 """))),
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(
-                responseCode = "404",
-                description = "신청 내역 없음")
-        })
+                @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                        responseCode = "404",
+                        description = "신청 내역 없음")
+            })
     @PatchMapping("/{requestId}/issue")
     public ResponseEntity<ApiResponse<String>> issueRequest(
-        @Parameter(hidden = true) @AuthenticationPrincipal CustomUserDetails userDetails,
-        @Parameter(description = "신청 ID", required = true, example = "101") @PathVariable
-        Long requestId) {
+            @Parameter(hidden = true) @AuthenticationPrincipal CustomUserDetails userDetails,
+            @Parameter(description = "신청 ID", required = true, example = "101") @PathVariable
+                    Long requestId) {
         requestHistoryService.issueRequest(userDetails.getId(), requestId);
         return ResponseEntity.ok(ApiResponse.onSuccess("발급 완료 처리되었습니다."));
     }
 
     @Operation(summary = "개인 증명서류 반려 처리", description = "제증명 신청을 반려 처리합니다. (PENDING -> REJECTED)")
     @ApiResponses(
-        value = {
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(
-                responseCode = "200",
-                description = "처리 성공"),
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(
-                responseCode = "400",
-                description = "잘못된 요청/처리 불가 상태",
-                content =
-                @Content(
-                    mediaType = "application/json",
-                    examples = {
-                        @ExampleObject(
-                            name = "반려 사유 누락",
-                            value =
-                                """
+            value = {
+                @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                        responseCode = "200",
+                        description = "처리 성공"),
+                @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                        responseCode = "400",
+                        description = "잘못된 요청/처리 불가 상태",
+                        content =
+                                @Content(
+                                        mediaType = "application/json",
+                                        examples = {
+                                            @ExampleObject(
+                                                    name = "반려 사유 누락",
+                                                    value =
+                                                            """
                                     {
                                       "isSuccess": false,
                                       "code": "REJECTION_REASON_REQUIRED",
@@ -264,10 +269,10 @@ public class AdminRequestHistoryController {
                                       "result": null
                                     }
                                     """),
-                        @ExampleObject(
-                            name = "처리 불가 상태",
-                            value =
-                                """
+                                            @ExampleObject(
+                                                    name = "처리 불가 상태",
+                                                    value =
+                                                            """
                                     {
                                       "isSuccess": false,
                                       "code": "REQUEST_HISTORY_NOT_REJECTABLE",
@@ -275,17 +280,17 @@ public class AdminRequestHistoryController {
                                       "result": null
                                     }
                                     """)
-                    })),
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(
-                responseCode = "403",
-                description = "권한 없음",
-                content =
-                @Content(
-                    mediaType = "application/json",
-                    examples =
-                    @ExampleObject(
-                        value =
-                            """
+                                        })),
+                @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                        responseCode = "403",
+                        description = "권한 없음",
+                        content =
+                                @Content(
+                                        mediaType = "application/json",
+                                        examples =
+                                                @ExampleObject(
+                                                        value =
+                                                                """
                                 {
                                   "isSuccess": false,
                                   "code": "NO_AUTHORITY_FOR_CERTIFICATE_REQUEST_REVIEW",
@@ -293,16 +298,16 @@ public class AdminRequestHistoryController {
                                   "result": null
                                 }
                                 """))),
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(
-                responseCode = "404",
-                description = "신청 내역 없음")
-        })
+                @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                        responseCode = "404",
+                        description = "신청 내역 없음")
+            })
     @PatchMapping("/{requestId}/reject")
     public ResponseEntity<ApiResponse<String>> rejectRequest(
-        @Parameter(hidden = true) @AuthenticationPrincipal CustomUserDetails userDetails,
-        @Parameter(description = "신청 ID", required = true, example = "101") @PathVariable
-        Long requestId,
-        @Valid @RequestBody RequestHistoryRejectRequestDto requestDto) {
+            @Parameter(hidden = true) @AuthenticationPrincipal CustomUserDetails userDetails,
+            @Parameter(description = "신청 ID", required = true, example = "101") @PathVariable
+                    Long requestId,
+            @Valid @RequestBody RequestHistoryRejectRequestDto requestDto) {
         requestHistoryService.rejectRequest(userDetails.getId(), requestId, requestDto.getReason());
         return ResponseEntity.ok(ApiResponse.onSuccess("반려 처리되었습니다."));
     }

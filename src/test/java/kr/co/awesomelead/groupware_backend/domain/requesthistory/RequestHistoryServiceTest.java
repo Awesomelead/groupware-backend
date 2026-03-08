@@ -319,7 +319,8 @@ class RequestHistoryServiceTest {
             admin.addAuthority(Authority.MANAGE_CERTIFICATE_REQUEST);
 
             RequestHistory requestHistory = new RequestHistory();
-            ReflectionTestUtils.setField(requestHistory, "approvalStatus", RequestHistoryStatus.PENDING);
+            ReflectionTestUtils.setField(
+                    requestHistory, "approvalStatus", RequestHistoryStatus.PENDING);
 
             given(userRepository.findById(100L)).willReturn(Optional.of(admin));
             given(requestHistoryRepository.findByIdWithUserAndDepartment(101L))
@@ -343,7 +344,8 @@ class RequestHistoryServiceTest {
             admin.addAuthority(Authority.MANAGE_CERTIFICATE_REQUEST);
 
             RequestHistory requestHistory = new RequestHistory();
-            ReflectionTestUtils.setField(requestHistory, "approvalStatus", RequestHistoryStatus.CANCELED);
+            ReflectionTestUtils.setField(
+                    requestHistory, "approvalStatus", RequestHistoryStatus.CANCELED);
 
             given(userRepository.findById(100L)).willReturn(Optional.of(admin));
             given(requestHistoryRepository.findByIdWithUserAndDepartment(101L))
@@ -370,7 +372,8 @@ class RequestHistoryServiceTest {
             admin.addAuthority(Authority.MANAGE_CERTIFICATE_REQUEST);
 
             RequestHistory requestHistory = new RequestHistory();
-            ReflectionTestUtils.setField(requestHistory, "approvalStatus", RequestHistoryStatus.PENDING);
+            ReflectionTestUtils.setField(
+                    requestHistory, "approvalStatus", RequestHistoryStatus.PENDING);
 
             given(userRepository.findById(100L)).willReturn(Optional.of(admin));
             given(requestHistoryRepository.findByIdWithUserAndDepartment(101L))
@@ -412,7 +415,8 @@ class RequestHistoryServiceTest {
             admin.addAuthority(Authority.MANAGE_CERTIFICATE_REQUEST);
 
             RequestHistory requestHistory = new RequestHistory();
-            ReflectionTestUtils.setField(requestHistory, "approvalStatus", RequestHistoryStatus.ISSUED);
+            ReflectionTestUtils.setField(
+                    requestHistory, "approvalStatus", RequestHistoryStatus.ISSUED);
 
             given(userRepository.findById(100L)).willReturn(Optional.of(admin));
             given(requestHistoryRepository.findByIdWithUserAndDepartment(101L))

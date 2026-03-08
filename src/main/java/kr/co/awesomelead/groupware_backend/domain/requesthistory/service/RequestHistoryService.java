@@ -116,7 +116,8 @@ public class RequestHistoryService {
     }
 
     @Transactional(readOnly = true)
-    public AdminRequestHistoryDetailResponseDto getRequestDetailForAdmin(Long adminId, Long requestId) {
+    public AdminRequestHistoryDetailResponseDto getRequestDetailForAdmin(
+            Long adminId, Long requestId) {
         User admin =
                 userRepository
                         .findById(adminId)

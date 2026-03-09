@@ -159,14 +159,4 @@ public class PayslipService {
         return payslipMapper.toEmployeePayslipDetailDto(payslip);
     }
 
-    public record FileDownloadDto(byte[] fileData, String originalFileName) {
-
-    }
-
-    public FileDownloadDto downloadPayslip(String fileKey, String originalFileName) {
-        byte[] fileData = s3Service.downloadFile(fileKey);
-
-        return new FileDownloadDto(fileData, originalFileName);
-    }
-
 }

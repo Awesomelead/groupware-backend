@@ -6,18 +6,22 @@ import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.ExampleObject;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
+
 import jakarta.validation.Valid;
+
 import kr.co.awesomelead.groupware_backend.domain.integration.hanbiro.dto.request.HanbiroAccountLinkRequestDto;
 import kr.co.awesomelead.groupware_backend.domain.integration.hanbiro.dto.response.HanbiroMailRedirectResponseDto;
 import kr.co.awesomelead.groupware_backend.domain.integration.hanbiro.service.HanbiroSsoService;
 import kr.co.awesomelead.groupware_backend.domain.user.dto.CustomUserDetails;
 import kr.co.awesomelead.groupware_backend.global.common.response.ApiResponse;
+
 import lombok.RequiredArgsConstructor;
+
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -61,7 +65,9 @@ public class HanbiroSsoController {
         return ResponseEntity.ok(ApiResponse.onNoContent("한비로 계정 연동이 완료되었습니다."));
     }
 
-    @Operation(summary = "한비로 메일 리다이렉트 URL 발급", description = "로그인 사용자가 호출하면 한비로 메일 자동 로그인 URL을 반환합니다.")
+    @Operation(
+            summary = "한비로 메일 리다이렉트 URL 발급",
+            description = "로그인 사용자가 호출하면 한비로 메일 자동 로그인 URL을 반환합니다.")
     @ApiResponses(
             value = {
                 @io.swagger.v3.oas.annotations.responses.ApiResponse(

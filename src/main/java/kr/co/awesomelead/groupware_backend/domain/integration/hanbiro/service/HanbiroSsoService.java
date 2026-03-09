@@ -2,18 +2,19 @@ package kr.co.awesomelead.groupware_backend.domain.integration.hanbiro.service;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import java.time.LocalDateTime;
-import java.util.Objects;
+
 import kr.co.awesomelead.groupware_backend.domain.integration.hanbiro.dto.request.HanbiroAccountLinkRequestDto;
 import kr.co.awesomelead.groupware_backend.domain.integration.hanbiro.dto.response.HanbiroMailRedirectResponseDto;
 import kr.co.awesomelead.groupware_backend.domain.user.entity.User;
 import kr.co.awesomelead.groupware_backend.domain.user.repository.UserRepository;
 import kr.co.awesomelead.groupware_backend.global.error.CustomException;
 import kr.co.awesomelead.groupware_backend.global.error.ErrorCode;
+
 import lombok.Getter;
-import lombok.extern.slf4j.Slf4j;
 import lombok.RequiredArgsConstructor;
 import lombok.Setter;
+import lombok.extern.slf4j.Slf4j;
+
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
@@ -25,6 +26,9 @@ import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestTemplate;
+
+import java.time.LocalDateTime;
+import java.util.Objects;
 
 @Slf4j
 @Service
@@ -60,8 +64,7 @@ public class HanbiroSsoService {
 
         HanbiroAuthResponse authResponse =
                 callAuth(requestDto.getHanbiroId().trim(), requestDto.getHanbiroPassword().trim());
-        if (!Boolean.TRUE.equals(authResponse.getSuccess())
-                || isBlank(authResponse.getSession())) {
+        if (!Boolean.TRUE.equals(authResponse.getSuccess()) || isBlank(authResponse.getSession())) {
             throw new CustomException(ErrorCode.HANBIRO_REAUTH_REQUIRED);
         }
 

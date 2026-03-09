@@ -1,6 +1,7 @@
 package kr.co.awesomelead.groupware_backend.domain.notification.repository;
 
 import kr.co.awesomelead.groupware_backend.domain.notification.entity.Notification;
+import kr.co.awesomelead.groupware_backend.domain.notification.enums.NotificationDomainType;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -11,4 +12,6 @@ public interface NotificationRepository extends JpaRepository<Notification, Long
     Page<Notification> findByUserIdOrderByCreatedAtDesc(Long userId, Pageable pageable);
 
     long countByUserIdAndIsReadFalse(Long userId);
+
+    void deleteByDomainTypeAndDomainId(NotificationDomainType domainType, Long domainId);
 }

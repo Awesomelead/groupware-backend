@@ -9,7 +9,6 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 
 import kr.co.awesomelead.groupware_backend.domain.notification.service.NotificationService;
-import kr.co.awesomelead.groupware_backend.domain.payslip.dto.request.PayslipStatusRequestDto;
 import kr.co.awesomelead.groupware_backend.domain.payslip.dto.response.AdminPayslipSummaryDto;
 import kr.co.awesomelead.groupware_backend.domain.payslip.dto.response.EmployeePayslipDetailDto;
 import kr.co.awesomelead.groupware_backend.domain.payslip.entity.Payslip;
@@ -245,7 +244,8 @@ public class PayslipServiceTest {
             void it_returns_detail_dto() {
                 // given
                 User owner = User.builder().id(1L).build();
-                Payslip myPayslip = Payslip.builder().id(100L).user(owner).build();
+                Payslip myPayslip =
+                        Payslip.builder().id(100L).user(owner).status(PayslipStatus.SENT).build();
 
                 given(payslipRepository.findById(100L)).willReturn(Optional.of(myPayslip));
                 given(payslipMapper.toEmployeePayslipDetailDto(myPayslip, s3Service))
@@ -257,87 +257,8 @@ public class PayslipServiceTest {
                 // then
                 assertThat(result.getPayslipId()).isEqualTo(100L);
                 verify(payslipMapper).toEmployeePayslipDetailDto(myPayslip, s3Service);
-            }
-        }
-    }
-
-    @Nested
-    @DisplayName("respondToPayslip 메서드는")
-    class Describe_respondToPayslip {
-
-        private Payslip payslip;
-        private PayslipStatusRequestDto requestDto;
-
-        @BeforeEach
-        void setUp() {
-            payslip =
-                    Payslip.builder().id(100L).user(employee).status(PayslipStatus.PENDING).build();
-            requestDto = new PayslipStatusRequestDto();
-        }
-
-        @Nested
-        @DisplayName("자신의 명세서가 아닌 경우")
-        class Context_not_owner {
-
-            @Test
-            @DisplayName("NO_AUTHORITY_FOR_VIEW_PAYSLIP 예외를 던진다.")
-            void it_throws_forbidden_exception() {
-                // given
-                given(payslipRepository.findById(100L)).willReturn(Optional.of(payslip));
-                Long anotherUserId = 999L;
-
-                // when & then
-                assertThatThrownBy(
-                                () ->
-                                        payslipService.respondToPayslip(
-                                                anotherUserId, 100L, requestDto))
-                        .isInstanceOf(CustomException.class)
-                        .hasFieldOrPropertyWithValue(
-                                "errorCode", ErrorCode.NO_AUTHORITY_FOR_VIEW_PAYSLIP);
-            }
-        }
-
-        @Nested
-        @DisplayName("반려(REJECTED)를 선택했는데 사유가 비어있다면")
-        class Context_rejected_without_reason {
-
-            @Test
-            @DisplayName("NO_REJECTION_REASON_PROVIDED 예외를 던진다.")
-            void it_throws_reason_required_exception() {
-                // given
-                given(payslipRepository.findById(100L)).willReturn(Optional.of(payslip));
-                requestDto.setStatus(PayslipStatus.REJECTED);
-                requestDto.setRejectionReason(""); // 빈 사유
-
-                // when & then
-                assertThatThrownBy(
-                                () ->
-                                        payslipService.respondToPayslip(
-                                                employee.getId(), 100L, requestDto))
-                        .isInstanceOf(CustomException.class)
-                        .hasFieldOrPropertyWithValue(
-                                "errorCode", ErrorCode.NO_REJECTION_REASON_PROVIDED);
-            }
-        }
-
-        @Nested
-        @DisplayName("정상적으로 승인(APPROVED)을 하면")
-        class Context_approve_success {
-
-            @Test
-            @DisplayName("상태가 변경되고 반려 사유는 null이 된다.")
-            void it_updates_status_to_approved() {
-                // given
-                payslip.setRejectionReason("이전 거절 사유");
-                given(payslipRepository.findById(100L)).willReturn(Optional.of(payslip));
-                requestDto.setStatus(PayslipStatus.APPROVED);
-
-                // when
-                payslipService.respondToPayslip(employee.getId(), 100L, requestDto);
-
-                // then
-                assertThat(payslip.getStatus()).isEqualTo(PayslipStatus.APPROVED);
-                assertThat(payslip.getRejectionReason()).isNull();
+                assertThat(myPayslip.getStatus()).isEqualTo(PayslipStatus.READ);
+                assertThat(myPayslip.getReadAt()).isNotNull();
             }
         }
     }

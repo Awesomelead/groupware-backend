@@ -46,14 +46,6 @@ public class Payslip {
     @JsonBackReference
     private User user;
 
-    @Enumerated(EnumType.STRING)
-    @Column(nullable = false, length = 20)
-    @Builder.Default
-    private PayslipStatus status = PayslipStatus.PENDING; // 급여명세서 상태
-
-    @Column(columnDefinition = "TEXT")
-    private String rejectionReason; // 반려 사유
-
     @Column(nullable = false, length = 200)
     private String fileKey; // 파일 키
 
@@ -63,4 +55,11 @@ public class Payslip {
     @CreatedDate // 엔티티가 생성될 때 날짜가 자동으로 저장됨
     @Column(nullable = false, updatable = false)
     private LocalDateTime createdAt; // 생성 일시
+
+    @Builder.Default
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false, length = 20)
+    private PayslipStatus status = PayslipStatus.SENT;
+
+    @Column private LocalDateTime readAt;
 }

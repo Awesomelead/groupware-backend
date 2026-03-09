@@ -30,9 +30,6 @@ public class AdminPayslipDetailDto {
     @Schema(description = "급여명세서 상태", example = "PENDING")
     private PayslipStatus status;
 
-    @Schema(description = "반려 사유", example = "파일이 손상되었습니다.")
-    private String rejectionReason;
-
     @Schema(
             description = "파일 조회 URL",
             example = "https://bucket.s3.amazonaws.com/payslips/unique-file-key.pdf")
@@ -43,4 +40,10 @@ public class AdminPayslipDetailDto {
 
     @Schema(description = "생성 일시", example = "2025-12-31T10:15:30")
     private LocalDateTime createdAt;
+
+    @Schema(description = "급여명세서 상태", example = "READ")
+    private PayslipStatus status;
+
+    @Schema(description = "열람 일시", example = "2025-12-31T12:30:00")
+    private LocalDateTime readAt;
 }

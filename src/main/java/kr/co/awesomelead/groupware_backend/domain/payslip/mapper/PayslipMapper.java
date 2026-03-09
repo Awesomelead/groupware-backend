@@ -39,6 +39,7 @@ public interface PayslipMapper {
     @Mapping(
             target = "presignedUrl",
             expression = "java(s3Service.getPresignedViewUrl(payslip.getFileKey()))")
+    @Mapping(target = "payslipId", source = "payslip.id")
     EmployeePayslipDetailDto toEmployeePayslipDetailDto(
             Payslip payslip, @Context S3Service s3Service);
 }

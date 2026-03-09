@@ -44,10 +44,9 @@ public class PayslipService {
     @Transactional
     public void sendPayslip(List<MultipartFile> payslipFiles, Long userId) throws IOException {
 
-        User user =
-                userRepository
-                        .findById(userId)
-                        .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
+        User user = userRepository
+                .findById(userId)
+                .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
         if (!user.hasAuthority(Authority.MANAGE_EMPLOYEE_DATA)) {
             throw new CustomException(ErrorCode.NO_AUTHORITY_FOR_PAYSLIP);
         }
@@ -60,20 +59,17 @@ public class PayslipService {
                 throw new CustomException(ErrorCode.ONLY_PDF_ALLOWED);
             }
 
-            String fileName =
-                    file.getOriginalFilename(); // 파일명은 "name_yyyyMMdd_급여명세서.ext" 형식으로 고정된 것으로 가정
+            String fileName = file.getOriginalFilename(); // 파일명은 "name_yyyyMMdd_급여명세서.ext" 형식으로 고정된 것으로 가정
             String[] split = fileName.split("_");
 
             String name = split[0].trim();
             String normalizedName = Normalizer.normalize(name, Normalizer.Form.NFC);
             String hireDateStr = split[1];
-            LocalDate hireDate =
-                    LocalDate.parse(hireDateStr, DateTimeFormatter.ofPattern("yyyyMMdd"));
+            LocalDate hireDate = LocalDate.parse(hireDateStr, DateTimeFormatter.ofPattern("yyyyMMdd"));
 
-            User target =
-                    userRepository
-                            .findByNameAndJoinDate(normalizedName, hireDate)
-                            .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
+            User target = userRepository
+                    .findByNameAndJoinDate(normalizedName, hireDate)
+                    .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
 
             String s3Key = s3Service.uploadFile(file);
 
@@ -84,23 +80,21 @@ public class PayslipService {
 
     @Transactional
     protected Payslip savePayslipInfo(String s3Key, String originalFileName, User targetUser) {
-        Payslip payslip =
-                Payslip.builder()
-                        .fileKey(s3Key)
-                        .originalFileName(originalFileName)
-                        .status(PayslipStatus.SENT)
-                        .user(targetUser)
-                        .build();
+        Payslip payslip = Payslip.builder()
+                .fileKey(s3Key)
+                .originalFileName(originalFileName)
+                .status(PayslipStatus.SENT)
+                .user(targetUser)
+                .build();
         return payslipRepository.save(payslip);
     }
 
     // 관리자용 보낸 급여명세서 목록 조회 (Status에 따라)
     @Transactional(readOnly = true)
     public List<AdminPayslipSummaryDto> getPayslipsForAdmin(Long adminId, PayslipStatus status) {
-        User admin =
-                userRepository
-                        .findById(adminId)
-                        .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
+        User admin = userRepository
+                .findById(adminId)
+                .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
         if (admin.getRole() != Role.ADMIN && admin.getRole() != Role.MASTER_ADMIN) {
             throw new CustomException(ErrorCode.NO_AUTHORITY_FOR_PAYSLIP);
         }
@@ -113,18 +107,16 @@ public class PayslipService {
     // 관리자용 보낸 급여명세서 상세 조회
     @Transactional(readOnly = true)
     public AdminPayslipDetailDto getPayslipForAdmin(Long adminId, Long payslipId) {
-        User admin =
-                userRepository
-                        .findById(adminId)
-                        .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
+        User admin = userRepository
+                .findById(adminId)
+                .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
         if (admin.getRole() != Role.ADMIN && admin.getRole() != Role.MASTER_ADMIN) {
             throw new CustomException(ErrorCode.NO_AUTHORITY_FOR_PAYSLIP);
         }
 
-        Payslip payslip =
-                payslipRepository
-                        .findById(payslipId)
-                        .orElseThrow(() -> new CustomException(ErrorCode.PAYSLIP_NOT_FOUND));
+        Payslip payslip = payslipRepository
+                .findById(payslipId)
+                .orElseThrow(() -> new CustomException(ErrorCode.PAYSLIP_NOT_FOUND));
 
         return payslipMapper.toAdminPayslipDetailDto(payslip, s3Service);
     }
@@ -145,10 +137,9 @@ public class PayslipService {
     @Transactional
     public EmployeePayslipDetailDto getPayslip(Long userId, Long payslipId) {
 
-        Payslip payslip =
-                payslipRepository
-                        .findById(payslipId)
-                        .orElseThrow(() -> new CustomException(ErrorCode.PAYSLIP_NOT_FOUND));
+        Payslip payslip = payslipRepository
+                .findById(payslipId)
+                .orElseThrow(() -> new CustomException(ErrorCode.PAYSLIP_NOT_FOUND));
 
         if (!payslip.getUser().getId().equals(userId)) {
             throw new CustomException(ErrorCode.NO_AUTHORITY_FOR_VIEW_PAYSLIP);
@@ -159,6 +150,6 @@ public class PayslipService {
             payslip.setStatus(PayslipStatus.READ);
             payslip.setReadAt(LocalDateTime.now());
         }
-        return payslipMapper.toEmployeePayslipDetailDto(payslip);
+        return payslipMapper.toEmployeePayslipDetailDto(payslip, s3Service);
     }
 }

@@ -38,7 +38,7 @@ public class HanbiroSsoService {
     private final RestTemplate restTemplate;
     private final UserRepository userRepository;
 
-    @Value("${hanbiro.sso.base-url}")
+    @Value("${hanbiro.sso.base-url:}")
     private String baseUrl;
 
     @Value("${hanbiro.sso.auth-path:/auth}")

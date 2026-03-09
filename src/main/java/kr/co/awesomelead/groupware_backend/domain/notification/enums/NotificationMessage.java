@@ -41,9 +41,7 @@ public enum NotificationMessage {
     private final String title;
     private final String contentPattern;
 
-    /**
-     * title을 그대로 반환합니다.
-     */
+    /** title을 그대로 반환합니다. */
     public String getTitle() {
         return title;
     }

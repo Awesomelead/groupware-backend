@@ -90,6 +90,11 @@ jobs:
             FIREBASE_CREDENTIALS_JSON='${{ secrets.FIREBASE_CREDENTIALS_JSON }}'
             MULTIPART_MAX_FILE_SIZE=${{ secrets.MULTIPART_MAX_FILE_SIZE }}
             MULTIPART_MAX_REQUEST_SIZE=${{ secrets.MULTIPART_MAX_REQUEST_SIZE }}
+            HANBIRO_SSO_BASE_URL=${{ secrets.HANBIRO_SSO_BASE_URL }}
+            HANBIRO_SSO_AUTH_PATH=${{ secrets.HANBIRO_SSO_AUTH_PATH }}
+            HANBIRO_SSO_CREATE_TOKEN_PATH=${{ secrets.HANBIRO_SSO_CREATE_TOKEN_PATH }}
+            HANBIRO_SSO_RAW=${{ secrets.HANBIRO_SSO_RAW }}
+            HANBIRO_SSO_METHOD=${{ secrets.HANBIRO_SSO_METHOD }}
             TZ=Asia/Seoul
             JAVA_TOOL_OPTIONS=-Duser.timezone=Asia/Seoul
             EOF

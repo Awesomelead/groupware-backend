@@ -63,12 +63,14 @@ public enum ErrorCode {
     NOTICE_TARGET_REQUIRED(HttpStatus.BAD_REQUEST, "공지 대상자는 최소 1명 이상이어야 합니다."),
     REQUEST_HISTORY_NOT_ISSUABLE(HttpStatus.BAD_REQUEST, "발급 대기 상태 요청만 발급 완료 처리할 수 있습니다."),
     REQUEST_HISTORY_NOT_REJECTABLE(HttpStatus.BAD_REQUEST, "발급 대기 상태 요청만 반려 처리할 수 있습니다."),
+    HANBIRO_ACCOUNT_NOT_LINKED(HttpStatus.BAD_REQUEST, "한비로 계정 연동이 필요합니다."),
 
     // 401 Unauthorized
     INVALID_TOKEN(HttpStatus.UNAUTHORIZED, "유효하지 않은 토큰입니다."),
     EXPIRED_TOKEN(HttpStatus.UNAUTHORIZED, "만료된 토큰입니다."),
     AUTH_CODE_EXPIRED(HttpStatus.UNAUTHORIZED, "인증번호가 만료되었습니다."),
     VISITOR_AUTHENTICATION_FAILED(HttpStatus.UNAUTHORIZED, "내방객 인증에 실패했습니다."),
+    HANBIRO_REAUTH_REQUIRED(HttpStatus.UNAUTHORIZED, "한비로 재인증이 필요합니다."),
 
     // 403
     REFRESH_TOKEN_MISMATCH(HttpStatus.FORBIDDEN, "해당 리프레시 토큰에 대한 권한이 없습니다."),
@@ -110,6 +112,7 @@ public enum ErrorCode {
 
     // 500 Internal Server Error
     INTERNAL_SERVER_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "서버 내부 오류가 발생했습니다."),
+    HANBIRO_SSO_FAILED(HttpStatus.BAD_GATEWAY, "한비로 SSO 연동에 실패했습니다."),
     ALIMTALK_SEND_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "알림톡 전송에 실패했습니다."),
     EMAIL_SEND_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "이메일 전송에 실패했습니다."),
     IDENTITY_VERIFICATION_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "본인인증 조회에 실패했습니다.");

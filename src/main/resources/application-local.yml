@@ -26,3 +26,11 @@ spring:
     multipart:
       max-file-size: ${MULTIPART_MAX_FILE_SIZE}
       max-request-size: ${MULTIPART_MAX_REQUEST_SIZE}
+
+hanbiro:
+  sso:
+    base-url: ${HANBIRO_SSO_BASE_URL}
+    auth-path: ${HANBIRO_SSO_AUTH_PATH}
+    create-token-path: ${HANBIRO_SSO_CREATE_TOKEN_PATH}
+    raw: ${HANBIRO_SSO_RAW}
+    method: ${HANBIRO_SSO_METHOD}

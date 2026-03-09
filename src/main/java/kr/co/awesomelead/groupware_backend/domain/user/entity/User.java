@@ -47,6 +47,7 @@ import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Base64;
@@ -108,6 +109,15 @@ public class User {
 
     @Column(nullable = false, length = 64, unique = true)
     private String phoneNumberHash; // SHA-256 해시 (조회용)
+
+    @Column(length = 100)
+    private String hanbiroId; // 한비로 로그인 ID
+
+    @Column(length = 500)
+    @Convert(converter = Encryptor.class)
+    private String hanbiroPassword; // 한비로 로그인 비밀번호(암호화 저장)
+
+    private LocalDateTime hanbiroLinkedAt; // 한비로 계정 연동 시각
 
     // == 관리자가 입력/수정하는 정보 == //
     private LocalDate hireDate; // 입사일

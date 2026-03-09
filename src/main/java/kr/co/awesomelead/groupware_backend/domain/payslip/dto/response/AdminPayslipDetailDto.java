@@ -1,15 +1,12 @@
 package kr.co.awesomelead.groupware_backend.domain.payslip.dto.response;
 
 import io.swagger.v3.oas.annotations.media.Schema;
-
+import java.time.LocalDateTime;
 import kr.co.awesomelead.groupware_backend.domain.payslip.enums.PayslipStatus;
-
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-
-import java.time.LocalDateTime;
 
 @Getter
 @AllArgsConstructor
@@ -27,12 +24,6 @@ public class AdminPayslipDetailDto {
     @Schema(description = "직원 직급", example = "대리")
     private String employPosition;
 
-    @Schema(description = "급여명세서 상태", example = "PENDING")
-    private PayslipStatus status;
-
-    @Schema(description = "반려 사유", example = "파일이 손상되었습니다.")
-    private String rejectionReason;
-
     @Schema(description = "파일 키", example = "files/2025/12/31/unique-file-key.pdf")
     private String fileKey;
 
@@ -41,4 +32,10 @@ public class AdminPayslipDetailDto {
 
     @Schema(description = "생성 일시", example = "2025-12-31T10:15:30")
     private LocalDateTime createdAt;
+
+    @Schema(description = "급여명세서 상태", example = "READ")
+    private PayslipStatus status;
+
+    @Schema(description = "열람 일시", example = "2025-12-31T12:30:00")
+    private LocalDateTime readAt;
 }

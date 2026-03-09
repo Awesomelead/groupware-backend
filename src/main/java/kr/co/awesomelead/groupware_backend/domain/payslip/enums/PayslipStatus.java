@@ -8,9 +8,8 @@ import lombok.Getter;
 @Getter
 @AllArgsConstructor
 public enum PayslipStatus {
-    PENDING("확인 대기"),
-    APPROVED("확인 완료"),
-    REJECTED("거절됨");
+    SENT("발송 완료"),
+    READ("열람 완료");
 
     private final String description;
 

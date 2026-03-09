@@ -245,11 +245,7 @@ public class PayslipServiceTest {
                 // given
                 User owner = User.builder().id(1L).build();
                 Payslip myPayslip =
-                        Payslip.builder()
-                                .id(100L)
-                                .user(owner)
-                                .status(PayslipStatus.SENT)
-                                .build();
+                        Payslip.builder().id(100L).user(owner).status(PayslipStatus.SENT).build();
 
                 given(payslipRepository.findById(100L)).willReturn(Optional.of(myPayslip));
                 given(payslipMapper.toEmployeePayslipDetailDto(myPayslip))

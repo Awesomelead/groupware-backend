@@ -16,11 +16,5 @@ public interface PayslipRepository extends JpaRepository<Payslip, Long> {
                     + "WHERE (:status IS NULL OR p.status = :status)")
     List<Payslip> findAllByStatusOptionalWithUser(@Param("status") PayslipStatus status);
 
-    @Query(
-            "SELECT p FROM Payslip p "
-                    + "WHERE p.user.id = :userId "
-                    + "AND (:status IS NULL OR p.status = :status) "
-                    + "ORDER BY p.createdAt DESC")
-    List<Payslip> findAllByUserIdAndStatusOptional(
-            @Param("userId") Long userId, @Param("status") PayslipStatus status);
+    List<Payslip> findAllByUserIdOrderByCreatedAtDesc(Long userId);
 }

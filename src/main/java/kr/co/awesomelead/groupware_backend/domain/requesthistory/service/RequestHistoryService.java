@@ -1,5 +1,9 @@
 package kr.co.awesomelead.groupware_backend.domain.requesthistory.service;
 
+import kr.co.awesomelead.groupware_backend.domain.notification.enums.NotificationDomainType;
+import kr.co.awesomelead.groupware_backend.domain.notification.enums.NotificationMessage;
+import kr.co.awesomelead.groupware_backend.domain.notification.repository.NotificationRepository;
+import kr.co.awesomelead.groupware_backend.domain.notification.service.NotificationService;
 import kr.co.awesomelead.groupware_backend.domain.requesthistory.dto.request.RequestHistoryCreateRequestDto;
 import kr.co.awesomelead.groupware_backend.domain.requesthistory.dto.response.AdminRequestHistoryDetailResponseDto;
 import kr.co.awesomelead.groupware_backend.domain.requesthistory.dto.response.AdminRequestHistorySummaryResponseDto;
@@ -31,6 +35,8 @@ public class RequestHistoryService {
 
     private final RequestHistoryRepository requestHistoryRepository;
     private final UserRepository userRepository;
+    private final NotificationService notificationService;
+    private final NotificationRepository notificationRepository;
 
     @Transactional
     public Long createRequest(Long userId, RequestHistoryCreateRequestDto requestDto) {
@@ -53,7 +59,15 @@ public class RequestHistoryService {
         requestHistory.setWishDate(requestDto.getWishDate());
         requestHistory.setApprovalStatus(RequestHistoryStatus.PENDING);
 
-        return requestHistoryRepository.save(requestHistory).getId();
+        Long requestId = requestHistoryRepository.save(requestHistory).getId();
+
+        notificationService.sendAlertToAdmins(
+                NotificationMessage.REQUEST_HISTORY_CREATED,
+                NotificationDomainType.REQUEST_HISTORY,
+                requestId,
+                user.getNameKor());
+
+        return requestId;
     }
 
     @Transactional(readOnly = true)
@@ -99,6 +113,9 @@ public class RequestHistoryService {
         }
 
         requestHistory.setApprovalStatus(RequestHistoryStatus.CANCELED);
+
+        notificationRepository.deleteByDomainTypeAndDomainId(
+                NotificationDomainType.REQUEST_HISTORY, requestId);
     }
 
     @Transactional(readOnly = true)
@@ -155,6 +172,13 @@ public class RequestHistoryService {
         requestHistory.setProcessedBy(admin);
         requestHistory.setProcessedDate(LocalDate.now());
         requestHistory.setRejectReason(null);
+
+        notificationService.sendAlertToUser(
+                requestHistory.getUser().getId(),
+                NotificationMessage.REQUEST_HISTORY_ISSUED,
+                NotificationDomainType.REQUEST_HISTORY,
+                requestId,
+                requestHistory.getRequestType().getDescription());
     }
 
     @Transactional
@@ -183,6 +207,14 @@ public class RequestHistoryService {
         requestHistory.setProcessedBy(admin);
         requestHistory.setProcessedDate(LocalDate.now());
         requestHistory.setRejectReason(reason.trim());
+
+        notificationService.sendAlertToUser(
+                requestHistory.getUser().getId(),
+                NotificationMessage.REQUEST_HISTORY_REJECTED,
+                NotificationDomainType.REQUEST_HISTORY,
+                requestId,
+                requestHistory.getRequestType().getDescription(),
+                reason.trim());
     }
 
     private void validateAdminAuthority(User admin) {

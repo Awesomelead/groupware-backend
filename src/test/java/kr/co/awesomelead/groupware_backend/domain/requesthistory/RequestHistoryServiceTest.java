@@ -6,6 +6,13 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.verify;
 
+import java.time.LocalDate;
+import java.util.List;
+import java.util.Optional;
+import kr.co.awesomelead.groupware_backend.domain.notification.enums.NotificationDomainType;
+import kr.co.awesomelead.groupware_backend.domain.notification.enums.NotificationMessage;
+import kr.co.awesomelead.groupware_backend.domain.notification.repository.NotificationRepository;
+import kr.co.awesomelead.groupware_backend.domain.notification.service.NotificationService;
 import kr.co.awesomelead.groupware_backend.domain.requesthistory.dto.request.RequestHistoryCreateRequestDto;
 import kr.co.awesomelead.groupware_backend.domain.requesthistory.dto.response.AdminRequestHistoryDetailResponseDto;
 import kr.co.awesomelead.groupware_backend.domain.requesthistory.dto.response.AdminRequestHistorySummaryResponseDto;
@@ -22,7 +29,6 @@ import kr.co.awesomelead.groupware_backend.domain.user.enums.Position;
 import kr.co.awesomelead.groupware_backend.domain.user.repository.UserRepository;
 import kr.co.awesomelead.groupware_backend.global.error.CustomException;
 import kr.co.awesomelead.groupware_backend.global.error.ErrorCode;
-
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -35,17 +41,20 @@ import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.test.util.ReflectionTestUtils;
 
-import java.time.LocalDate;
-import java.util.List;
-import java.util.Optional;
-
 @ExtendWith(MockitoExtension.class)
 @DisplayName("RequestHistoryService 단위 테스트")
 class RequestHistoryServiceTest {
 
-    @InjectMocks private RequestHistoryService requestHistoryService;
-    @Mock private RequestHistoryRepository requestHistoryRepository;
-    @Mock private UserRepository userRepository;
+    @InjectMocks
+    private RequestHistoryService requestHistoryService;
+    @Mock
+    private RequestHistoryRepository requestHistoryRepository;
+    @Mock
+    private UserRepository userRepository;
+    @Mock
+    private NotificationService notificationService;
+    @Mock
+    private NotificationRepository notificationRepository;
 
     @Nested
     @DisplayName("createRequest 메서드는")
@@ -75,6 +84,12 @@ class RequestHistoryServiceTest {
 
             // then
             assertThat(result).isEqualTo(100L);
+            verify(notificationService)
+                .sendAlertToAdmins(
+                    NotificationMessage.REQUEST_HISTORY_CREATED,
+                    NotificationDomainType.REQUEST_HISTORY,
+                    100L,
+                    "홍길동");
         }
     }
 
@@ -91,13 +106,13 @@ class RequestHistoryServiceTest {
             RequestHistory requestHistory = new RequestHistory();
             ReflectionTestUtils.setField(requestHistory, "id", 10L);
             ReflectionTestUtils.setField(
-                    requestHistory, "requestType", RequestType.CAREER_CERTIFICATE);
+                requestHistory, "requestType", RequestType.CAREER_CERTIFICATE);
             ReflectionTestUtils.setField(requestHistory, "purpose", "관공서 제출용");
             ReflectionTestUtils.setField(requestHistory, "copies", 2);
 
             given(userRepository.findById(1L)).willReturn(Optional.of(user));
             given(requestHistoryRepository.findByUserIdOrderByRequestDateDescIdDesc(1L))
-                    .willReturn(List.of(requestHistory));
+                .willReturn(List.of(requestHistory));
 
             // when
             List<RequestHistorySummaryResponseDto> result = requestHistoryService.getMyRequests(1L);
@@ -124,11 +139,11 @@ class RequestHistoryServiceTest {
 
             given(userRepository.findById(1L)).willReturn(Optional.of(user));
             given(requestHistoryRepository.findByIdAndUserId(10L, 1L))
-                    .willReturn(Optional.of(requestHistory));
+                .willReturn(Optional.of(requestHistory));
 
             // when
-            RequestHistoryDetailResponseDto result =
-                    requestHistoryService.getMyRequestDetail(1L, 10L);
+            RequestHistoryDetailResponseDto result = requestHistoryService.getMyRequestDetail(1L,
+                10L);
 
             // then
             assertThat(result.getId()).isEqualTo(10L);
@@ -147,9 +162,9 @@ class RequestHistoryServiceTest {
 
             // when & then
             assertThatThrownBy(() -> requestHistoryService.getMyRequestDetail(1L, 10L))
-                    .isInstanceOf(CustomException.class)
-                    .extracting("errorCode")
-                    .isEqualTo(ErrorCode.REQUEST_HISTORY_NOT_FOUND);
+                .isInstanceOf(CustomException.class)
+                .extracting("errorCode")
+                .isEqualTo(ErrorCode.REQUEST_HISTORY_NOT_FOUND);
         }
     }
 
@@ -165,11 +180,11 @@ class RequestHistoryServiceTest {
             ReflectionTestUtils.setField(user, "id", 1L);
             RequestHistory requestHistory = new RequestHistory();
             ReflectionTestUtils.setField(
-                    requestHistory, "approvalStatus", RequestHistoryStatus.PENDING);
+                requestHistory, "approvalStatus", RequestHistoryStatus.PENDING);
 
             given(userRepository.findById(1L)).willReturn(Optional.of(user));
             given(requestHistoryRepository.findByIdAndUserId(10L, 1L))
-                    .willReturn(Optional.of(requestHistory));
+                .willReturn(Optional.of(requestHistory));
 
             // when
             requestHistoryService.cancelMyRequest(1L, 10L);
@@ -177,6 +192,8 @@ class RequestHistoryServiceTest {
             // then
             assertThat(requestHistory.getApprovalStatus()).isEqualTo(RequestHistoryStatus.CANCELED);
             verify(requestHistoryRepository).findByIdAndUserId(10L, 1L);
+            verify(notificationRepository)
+                .deleteByDomainTypeAndDomainId(NotificationDomainType.REQUEST_HISTORY, 10L);
         }
 
         @Test
@@ -187,17 +204,17 @@ class RequestHistoryServiceTest {
             ReflectionTestUtils.setField(user, "id", 1L);
             RequestHistory requestHistory = new RequestHistory();
             ReflectionTestUtils.setField(
-                    requestHistory, "approvalStatus", RequestHistoryStatus.ISSUED);
+                requestHistory, "approvalStatus", RequestHistoryStatus.ISSUED);
 
             given(userRepository.findById(1L)).willReturn(Optional.of(user));
             given(requestHistoryRepository.findByIdAndUserId(10L, 1L))
-                    .willReturn(Optional.of(requestHistory));
+                .willReturn(Optional.of(requestHistory));
 
             // when & then
             assertThatThrownBy(() -> requestHistoryService.cancelMyRequest(1L, 10L))
-                    .isInstanceOf(CustomException.class)
-                    .extracting("errorCode")
-                    .isEqualTo(ErrorCode.REQUEST_HISTORY_NOT_CANCELABLE);
+                .isInstanceOf(CustomException.class)
+                .extracting("errorCode")
+                .isEqualTo(ErrorCode.REQUEST_HISTORY_NOT_CANCELABLE);
         }
     }
 
@@ -222,14 +239,14 @@ class RequestHistoryServiceTest {
 
             given(userRepository.findById(100L)).willReturn(Optional.of(admin));
             given(
-                            requestHistoryRepository.findAllWithUserAndDepartmentByStatus(
-                                    RequestHistoryStatus.PENDING, pageable))
-                    .willReturn(page);
+                requestHistoryRepository.findAllWithUserAndDepartmentByStatus(
+                    RequestHistoryStatus.PENDING, pageable))
+                .willReturn(page);
 
             // when
-            Page<AdminRequestHistorySummaryResponseDto> result =
-                    requestHistoryService.getAllRequestsForAdmin(
-                            100L, RequestHistoryStatus.PENDING, pageable);
+            Page<AdminRequestHistorySummaryResponseDto> result = requestHistoryService
+                .getAllRequestsForAdmin(
+                    100L, RequestHistoryStatus.PENDING, pageable);
 
             // then
             assertThat(result.getTotalElements()).isEqualTo(1);
@@ -248,12 +265,11 @@ class RequestHistoryServiceTest {
 
             // when & then
             assertThatThrownBy(
-                            () ->
-                                    requestHistoryService.getAllRequestsForAdmin(
-                                            200L, null, PageRequest.of(0, 20)))
-                    .isInstanceOf(CustomException.class)
-                    .extracting("errorCode")
-                    .isEqualTo(ErrorCode.NO_AUTHORITY_FOR_CERTIFICATE_REQUEST_REVIEW);
+                () -> requestHistoryService.getAllRequestsForAdmin(
+                    200L, null, PageRequest.of(0, 20)))
+                .isInstanceOf(CustomException.class)
+                .extracting("errorCode")
+                .isEqualTo(ErrorCode.NO_AUTHORITY_FOR_CERTIFICATE_REQUEST_REVIEW);
         }
     }
 
@@ -275,11 +291,11 @@ class RequestHistoryServiceTest {
 
             given(userRepository.findById(100L)).willReturn(Optional.of(admin));
             given(requestHistoryRepository.findByIdWithUserAndDepartment(101L))
-                    .willReturn(Optional.of(requestHistory));
+                .willReturn(Optional.of(requestHistory));
 
             // when
-            AdminRequestHistoryDetailResponseDto result =
-                    requestHistoryService.getRequestDetailForAdmin(100L, 101L);
+            AdminRequestHistoryDetailResponseDto result = requestHistoryService
+                .getRequestDetailForAdmin(100L, 101L);
 
             // then
             assertThat(result.getRequestId()).isEqualTo(101L);
@@ -296,13 +312,13 @@ class RequestHistoryServiceTest {
 
             given(userRepository.findById(100L)).willReturn(Optional.of(admin));
             given(requestHistoryRepository.findByIdWithUserAndDepartment(999L))
-                    .willReturn(Optional.empty());
+                .willReturn(Optional.empty());
 
             // when & then
             assertThatThrownBy(() -> requestHistoryService.getRequestDetailForAdmin(100L, 999L))
-                    .isInstanceOf(CustomException.class)
-                    .extracting("errorCode")
-                    .isEqualTo(ErrorCode.REQUEST_HISTORY_NOT_FOUND);
+                .isInstanceOf(CustomException.class)
+                .extracting("errorCode")
+                .isEqualTo(ErrorCode.REQUEST_HISTORY_NOT_FOUND);
         }
     }
 
@@ -318,13 +334,19 @@ class RequestHistoryServiceTest {
             ReflectionTestUtils.setField(admin, "id", 100L);
             admin.addAuthority(Authority.MANAGE_CERTIFICATE_REQUEST);
 
+            User requester = new User();
+            ReflectionTestUtils.setField(requester, "id", 200L);
+
             RequestHistory requestHistory = new RequestHistory();
+            ReflectionTestUtils.setField(requestHistory, "user", requester);
             ReflectionTestUtils.setField(
-                    requestHistory, "approvalStatus", RequestHistoryStatus.PENDING);
+                requestHistory, "requestType", RequestType.EMPLOYMENT_CERTIFICATE);
+            ReflectionTestUtils.setField(
+                requestHistory, "approvalStatus", RequestHistoryStatus.PENDING);
 
             given(userRepository.findById(100L)).willReturn(Optional.of(admin));
             given(requestHistoryRepository.findByIdWithUserAndDepartment(101L))
-                    .willReturn(Optional.of(requestHistory));
+                .willReturn(Optional.of(requestHistory));
 
             // when
             requestHistoryService.issueRequest(100L, 101L);
@@ -333,6 +355,13 @@ class RequestHistoryServiceTest {
             assertThat(requestHistory.getApprovalStatus()).isEqualTo(RequestHistoryStatus.ISSUED);
             assertThat(requestHistory.getProcessedBy()).isEqualTo(admin);
             assertThat(requestHistory.getProcessedDate()).isNotNull();
+            verify(notificationService)
+                .sendAlertToUser(
+                    200L,
+                    NotificationMessage.REQUEST_HISTORY_ISSUED,
+                    NotificationDomainType.REQUEST_HISTORY,
+                    101L,
+                    RequestType.EMPLOYMENT_CERTIFICATE.getDescription());
         }
 
         @Test
@@ -345,17 +374,17 @@ class RequestHistoryServiceTest {
 
             RequestHistory requestHistory = new RequestHistory();
             ReflectionTestUtils.setField(
-                    requestHistory, "approvalStatus", RequestHistoryStatus.CANCELED);
+                requestHistory, "approvalStatus", RequestHistoryStatus.CANCELED);
 
             given(userRepository.findById(100L)).willReturn(Optional.of(admin));
             given(requestHistoryRepository.findByIdWithUserAndDepartment(101L))
-                    .willReturn(Optional.of(requestHistory));
+                .willReturn(Optional.of(requestHistory));
 
             // when & then
             assertThatThrownBy(() -> requestHistoryService.issueRequest(100L, 101L))
-                    .isInstanceOf(CustomException.class)
-                    .extracting("errorCode")
-                    .isEqualTo(ErrorCode.REQUEST_HISTORY_NOT_ISSUABLE);
+                .isInstanceOf(CustomException.class)
+                .extracting("errorCode")
+                .isEqualTo(ErrorCode.REQUEST_HISTORY_NOT_ISSUABLE);
         }
     }
 
@@ -371,13 +400,19 @@ class RequestHistoryServiceTest {
             ReflectionTestUtils.setField(admin, "id", 100L);
             admin.addAuthority(Authority.MANAGE_CERTIFICATE_REQUEST);
 
+            User requester = new User();
+            ReflectionTestUtils.setField(requester, "id", 200L);
+
             RequestHistory requestHistory = new RequestHistory();
+            ReflectionTestUtils.setField(requestHistory, "user", requester);
             ReflectionTestUtils.setField(
-                    requestHistory, "approvalStatus", RequestHistoryStatus.PENDING);
+                requestHistory, "requestType", RequestType.EMPLOYMENT_CERTIFICATE);
+            ReflectionTestUtils.setField(
+                requestHistory, "approvalStatus", RequestHistoryStatus.PENDING);
 
             given(userRepository.findById(100L)).willReturn(Optional.of(admin));
             given(requestHistoryRepository.findByIdWithUserAndDepartment(101L))
-                    .willReturn(Optional.of(requestHistory));
+                .willReturn(Optional.of(requestHistory));
 
             // when
             requestHistoryService.rejectRequest(100L, 101L, "정보가 불충분합니다.");
@@ -387,6 +422,14 @@ class RequestHistoryServiceTest {
             assertThat(requestHistory.getProcessedBy()).isEqualTo(admin);
             assertThat(requestHistory.getProcessedDate()).isNotNull();
             assertThat(requestHistory.getRejectReason()).isEqualTo("정보가 불충분합니다.");
+            verify(notificationService)
+                .sendAlertToUser(
+                    200L,
+                    NotificationMessage.REQUEST_HISTORY_REJECTED,
+                    NotificationDomainType.REQUEST_HISTORY,
+                    101L,
+                    RequestType.EMPLOYMENT_CERTIFICATE.getDescription(),
+                    "정보가 불충분합니다.");
         }
 
         @Test
@@ -401,9 +444,9 @@ class RequestHistoryServiceTest {
 
             // when & then
             assertThatThrownBy(() -> requestHistoryService.rejectRequest(100L, 101L, "   "))
-                    .isInstanceOf(CustomException.class)
-                    .extracting("errorCode")
-                    .isEqualTo(ErrorCode.REJECTION_REASON_REQUIRED);
+                .isInstanceOf(CustomException.class)
+                .extracting("errorCode")
+                .isEqualTo(ErrorCode.REJECTION_REASON_REQUIRED);
         }
 
         @Test
@@ -416,17 +459,17 @@ class RequestHistoryServiceTest {
 
             RequestHistory requestHistory = new RequestHistory();
             ReflectionTestUtils.setField(
-                    requestHistory, "approvalStatus", RequestHistoryStatus.ISSUED);
+                requestHistory, "approvalStatus", RequestHistoryStatus.ISSUED);
 
             given(userRepository.findById(100L)).willReturn(Optional.of(admin));
             given(requestHistoryRepository.findByIdWithUserAndDepartment(101L))
-                    .willReturn(Optional.of(requestHistory));
+                .willReturn(Optional.of(requestHistory));
 
             // when & then
             assertThatThrownBy(() -> requestHistoryService.rejectRequest(100L, 101L, "이미 발급됨"))
-                    .isInstanceOf(CustomException.class)
-                    .extracting("errorCode")
-                    .isEqualTo(ErrorCode.REQUEST_HISTORY_NOT_REJECTABLE);
+                .isInstanceOf(CustomException.class)
+                .extracting("errorCode")
+                .isEqualTo(ErrorCode.REQUEST_HISTORY_NOT_REJECTABLE);
         }
     }
 }

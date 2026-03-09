@@ -6,6 +6,9 @@ import kr.co.awesomelead.groupware_backend.domain.payslip.dto.response.EmployeeP
 import kr.co.awesomelead.groupware_backend.domain.payslip.dto.response.EmployeePayslipSummaryDto;
 import kr.co.awesomelead.groupware_backend.domain.payslip.entity.Payslip;
 
+import kr.co.awesomelead.groupware_backend.global.infra.s3.service.S3Service;
+
+import org.mapstruct.Context;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 
@@ -24,12 +27,15 @@ public interface PayslipMapper {
     @Mapping(target = "payslipId", source = "payslip.id")
     @Mapping(target = "employeeName", source = "user.displayName")
     @Mapping(target = "employPosition", source = "user.position")
-    AdminPayslipDetailDto toAdminPayslipDetailDto(Payslip payslip);
+    @Mapping(target = "presignedUrl", expression = "java(s3Service.getPresignedViewUrl(payslip.getFileKey()))")
+    AdminPayslipDetailDto toAdminPayslipDetailDto(Payslip payslip, @Context S3Service s3Service);
 
     @Mapping(target = "payslipId", source = "payslip.id")
     EmployeePayslipSummaryDto toEmployeePayslipSummaryDto(Payslip payslip);
 
     List<EmployeePayslipSummaryDto> toEmployeePayslipSummaryDtoList(List<Payslip> payslips);
 
-    EmployeePayslipDetailDto toEmployeePayslipDetailDto(Payslip payslip);
+    @Mapping(target = "presignedUrl", expression = "java(s3Service.getPresignedViewUrl(payslip.getFileKey()))")
+    EmployeePayslipDetailDto toEmployeePayslipDetailDto(
+            Payslip payslip, @Context S3Service s3Service);
 }

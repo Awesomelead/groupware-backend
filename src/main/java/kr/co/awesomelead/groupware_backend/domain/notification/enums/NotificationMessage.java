@@ -22,6 +22,10 @@ public enum NotificationMessage {
     MY_INFO_UPDATE_APPROVED("내 정보 수정 승인 완료", "요청하신 내 정보 수정이 승인되었습니다."),
     MY_INFO_UPDATE_REJECTED("내 정보 수정 반려 안내", "요청하신 내 정보 수정이 반려되었습니다. (사유: %s)"),
 
+    REQUEST_HISTORY_CREATED("증명서 발급 신청", "[%s] 증명서 발급 신청서가 제출되었습니다. 승인을 진행해 주세요."),
+    REQUEST_HISTORY_ISSUED("증명서 발급 완료", "요청하신 증명서(%s)가 발급되었습니다."),
+    REQUEST_HISTORY_REJECTED("증명서 발급 반려", "요청하신 증명서(%s) 발급이 반려되었습니다. (사유: %s)"),
+
     EDU_REPORT_CREATED("새 교육 등록", "[%s] 새로운 교육(%s)이 등록되었습니다."),
 
     ANNUAL_LEAVE_UPDATED("연차 갱신 안내", "%s 기준 연차가 반영되었습니다."),
@@ -37,7 +41,9 @@ public enum NotificationMessage {
     private final String title;
     private final String contentPattern;
 
-    /** title을 그대로 반환합니다. */
+    /**
+     * title을 그대로 반환합니다.
+     */
     public String getTitle() {
         return title;
     }

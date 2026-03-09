@@ -27,17 +27,32 @@ public class MyInfoUpdateRequestSummaryResponseDto {
     @Schema(description = "요청자 이메일", example = "hong@test.com")
     private String email;
 
+    @Schema(description = "기존 영문 이름", example = "KO YEONGMIN")
+    private String currentNameEng;
+
     @Schema(description = "요청 영문 이름", example = "KO YEONGMIN")
     private String requestedNameEng;
+
+    @Schema(description = "기존 전화번호", example = "01012345678")
+    private String currentPhoneNumber;
 
     @Schema(description = "요청 전화번호", example = "01012345678")
     private String requestedPhoneNumber;
 
+    @Schema(description = "기존 우편번호", example = "06234")
+    private String currentZipcode;
+
     @Schema(description = "요청 우편번호", example = "06234")
     private String requestedZipcode;
 
+    @Schema(description = "기존 주소1", example = "서울특별시 강남구 테헤란로 123")
+    private String currentAddress1;
+
     @Schema(description = "요청 주소1", example = "서울특별시 강남구 테헤란로 123")
     private String requestedAddress1;
+
+    @Schema(description = "기존 주소2", example = "어썸리드빌딩 5층")
+    private String currentAddress2;
 
     @Schema(description = "요청 주소2", example = "어썸리드빌딩 5층")
     private String requestedAddress2;
@@ -54,10 +69,15 @@ public class MyInfoUpdateRequestSummaryResponseDto {
                 .userId(request.getUser().getId())
                 .nameKor(request.getUser().getNameKor())
                 .email(request.getUser().getEmail())
+                .currentNameEng(request.getUser().getNameEng())
                 .requestedNameEng(request.getRequestedNameEng())
+                .currentPhoneNumber(request.getUser().getPhoneNumber())
                 .requestedPhoneNumber(request.getRequestedPhoneNumber())
+                .currentZipcode(request.getUser().getZipcode())
                 .requestedZipcode(request.getRequestedZipcode())
+                .currentAddress1(request.getUser().getAddress1())
                 .requestedAddress1(request.getRequestedAddress1())
+                .currentAddress2(request.getUser().getAddress2())
                 .requestedAddress2(request.getRequestedAddress2())
                 .status(request.getStatus())
                 .requestedAt(request.getCreatedAt())

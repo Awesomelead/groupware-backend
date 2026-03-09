@@ -135,7 +135,6 @@ public class AdminService {
         if (requestDto.getBirthDate() != null) {
             user.setBirthDate(requestDto.getBirthDate());
         }
-        user.setResignationDate(requestDto.getResignationDate());
         // 사용자의 상태를 AVAILABLE로 변경
         user.setStatus(Status.AVAILABLE);
 

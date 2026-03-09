@@ -713,12 +713,19 @@ class AdminServiceTest {
         void getPendingMyInfoUpdateRequests_success() {
             // given
             User targetUser =
-                    User.builder().id(userId).nameKor("홍길동").email("hong@test.com").build();
+                    User.builder()
+                            .id(userId)
+                            .nameKor("홍길동")
+                            .email("hong@test.com")
+                            .nameEng("CURRENT_HONG")
+                            .phoneNumber("01011112222")
+                            .build();
             MyInfoUpdateRequest request =
                     MyInfoUpdateRequest.builder()
                             .id(77L)
                             .user(targetUser)
                             .requestedNameEng("HONG")
+                            .requestedPhoneNumber("01033334444")
                             .status(MyInfoUpdateRequestStatus.PENDING)
                             .build();
             when(myInfoUpdateRequestRepository.findAllByStatusWithUser(
@@ -733,7 +740,10 @@ class AdminServiceTest {
             assertThat(result.size()).isEqualTo(1);
             assertThat(result.get(0).getRequestId()).isEqualTo(77L);
             assertThat(result.get(0).getUserId()).isEqualTo(userId);
+            assertThat(result.get(0).getCurrentNameEng()).isEqualTo("CURRENT_HONG");
             assertThat(result.get(0).getRequestedNameEng()).isEqualTo("HONG");
+            assertThat(result.get(0).getCurrentPhoneNumber()).isEqualTo("01011112222");
+            assertThat(result.get(0).getRequestedPhoneNumber()).isEqualTo("01033334444");
         }
     }
 }

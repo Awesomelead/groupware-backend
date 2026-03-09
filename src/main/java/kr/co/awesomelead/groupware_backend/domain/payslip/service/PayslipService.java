@@ -126,7 +126,7 @@ public class PayslipService {
                         .findById(payslipId)
                         .orElseThrow(() -> new CustomException(ErrorCode.PAYSLIP_NOT_FOUND));
 
-        return payslipMapper.toAdminPayslipDetailDto(payslip);
+        return payslipMapper.toAdminPayslipDetailDto(payslip, s3Service);
     }
 
     // 직원의 급여명세서 목록 조회 (Status에 따라)
@@ -159,6 +159,6 @@ public class PayslipService {
             payslip.setStatus(PayslipStatus.READ);
             payslip.setReadAt(LocalDateTime.now());
         }
-        return payslipMapper.toEmployeePayslipDetailDto(payslip);
+        return payslipMapper.toEmployeePayslipDetailDto(payslip, s3Service);
     }
 }

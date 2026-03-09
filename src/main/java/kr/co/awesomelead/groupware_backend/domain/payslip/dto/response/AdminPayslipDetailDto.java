@@ -27,8 +27,10 @@ public class AdminPayslipDetailDto {
     @Schema(description = "직원 직급", example = "대리")
     private String employPosition;
 
-    @Schema(description = "파일 키", example = "files/2025/12/31/unique-file-key.pdf")
-    private String fileKey;
+    @Schema(
+            description = "파일 조회 URL",
+            example = "https://bucket.s3.amazonaws.com/payslips/unique-file-key.pdf")
+    private String presignedUrl;
 
     @Schema(description = "원본 파일명", example = "홍길동_20251231_급여명세서.pdf")
     private String originalFileName;

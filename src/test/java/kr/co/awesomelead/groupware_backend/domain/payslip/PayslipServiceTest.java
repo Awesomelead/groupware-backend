@@ -248,7 +248,7 @@ public class PayslipServiceTest {
                         Payslip.builder().id(100L).user(owner).status(PayslipStatus.SENT).build();
 
                 given(payslipRepository.findById(100L)).willReturn(Optional.of(myPayslip));
-                given(payslipMapper.toEmployeePayslipDetailDto(myPayslip))
+                given(payslipMapper.toEmployeePayslipDetailDto(myPayslip, s3Service))
                         .willReturn(EmployeePayslipDetailDto.builder().payslipId(100L).build());
 
                 // when
@@ -256,9 +256,9 @@ public class PayslipServiceTest {
 
                 // then
                 assertThat(result.getPayslipId()).isEqualTo(100L);
+                verify(payslipMapper).toEmployeePayslipDetailDto(myPayslip, s3Service);
                 assertThat(myPayslip.getStatus()).isEqualTo(PayslipStatus.READ);
                 assertThat(myPayslip.getReadAt()).isNotNull();
-                verify(payslipMapper).toEmployeePayslipDetailDto(myPayslip);
             }
         }
     }

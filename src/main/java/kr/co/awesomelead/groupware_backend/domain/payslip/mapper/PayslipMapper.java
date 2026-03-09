@@ -31,5 +31,6 @@ public interface PayslipMapper {
 
     List<EmployeePayslipSummaryDto> toEmployeePayslipSummaryDtoList(List<Payslip> payslips);
 
+    @Mapping(target = "payslipId", source = "payslip.id")
     EmployeePayslipDetailDto toEmployeePayslipDetailDto(Payslip payslip);
 }

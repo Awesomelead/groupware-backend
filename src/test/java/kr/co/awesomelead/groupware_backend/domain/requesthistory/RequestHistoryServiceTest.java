@@ -6,6 +6,10 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.verify;
 
+import kr.co.awesomelead.groupware_backend.domain.notification.enums.NotificationDomainType;
+import kr.co.awesomelead.groupware_backend.domain.notification.enums.NotificationMessage;
+import kr.co.awesomelead.groupware_backend.domain.notification.repository.NotificationRepository;
+import kr.co.awesomelead.groupware_backend.domain.notification.service.NotificationService;
 import kr.co.awesomelead.groupware_backend.domain.requesthistory.dto.request.RequestHistoryCreateRequestDto;
 import kr.co.awesomelead.groupware_backend.domain.requesthistory.dto.response.AdminRequestHistoryDetailResponseDto;
 import kr.co.awesomelead.groupware_backend.domain.requesthistory.dto.response.AdminRequestHistorySummaryResponseDto;
@@ -46,6 +50,8 @@ class RequestHistoryServiceTest {
     @InjectMocks private RequestHistoryService requestHistoryService;
     @Mock private RequestHistoryRepository requestHistoryRepository;
     @Mock private UserRepository userRepository;
+    @Mock private NotificationService notificationService;
+    @Mock private NotificationRepository notificationRepository;
 
     @Nested
     @DisplayName("createRequest 메서드는")
@@ -75,6 +81,12 @@ class RequestHistoryServiceTest {
 
             // then
             assertThat(result).isEqualTo(100L);
+            verify(notificationService)
+                    .sendAlertToAdmins(
+                            NotificationMessage.REQUEST_HISTORY_CREATED,
+                            NotificationDomainType.REQUEST_HISTORY,
+                            100L,
+                            "홍길동");
         }
     }
 
@@ -177,6 +189,8 @@ class RequestHistoryServiceTest {
             // then
             assertThat(requestHistory.getApprovalStatus()).isEqualTo(RequestHistoryStatus.CANCELED);
             verify(requestHistoryRepository).findByIdAndUserId(10L, 1L);
+            verify(notificationRepository)
+                    .deleteByDomainTypeAndDomainId(NotificationDomainType.REQUEST_HISTORY, 10L);
         }
 
         @Test
@@ -318,7 +332,13 @@ class RequestHistoryServiceTest {
             ReflectionTestUtils.setField(admin, "id", 100L);
             admin.addAuthority(Authority.MANAGE_CERTIFICATE_REQUEST);
 
+            User requester = new User();
+            ReflectionTestUtils.setField(requester, "id", 200L);
+
             RequestHistory requestHistory = new RequestHistory();
+            ReflectionTestUtils.setField(requestHistory, "user", requester);
+            ReflectionTestUtils.setField(
+                    requestHistory, "requestType", RequestType.EMPLOYMENT_CERTIFICATE);
             ReflectionTestUtils.setField(
                     requestHistory, "approvalStatus", RequestHistoryStatus.PENDING);
 
@@ -333,6 +353,13 @@ class RequestHistoryServiceTest {
             assertThat(requestHistory.getApprovalStatus()).isEqualTo(RequestHistoryStatus.ISSUED);
             assertThat(requestHistory.getProcessedBy()).isEqualTo(admin);
             assertThat(requestHistory.getProcessedDate()).isNotNull();
+            verify(notificationService)
+                    .sendAlertToUser(
+                            200L,
+                            NotificationMessage.REQUEST_HISTORY_ISSUED,
+                            NotificationDomainType.REQUEST_HISTORY,
+                            101L,
+                            RequestType.EMPLOYMENT_CERTIFICATE.getDescription());
         }
 
         @Test
@@ -371,7 +398,13 @@ class RequestHistoryServiceTest {
             ReflectionTestUtils.setField(admin, "id", 100L);
             admin.addAuthority(Authority.MANAGE_CERTIFICATE_REQUEST);
 
+            User requester = new User();
+            ReflectionTestUtils.setField(requester, "id", 200L);
+
             RequestHistory requestHistory = new RequestHistory();
+            ReflectionTestUtils.setField(requestHistory, "user", requester);
+            ReflectionTestUtils.setField(
+                    requestHistory, "requestType", RequestType.EMPLOYMENT_CERTIFICATE);
             ReflectionTestUtils.setField(
                     requestHistory, "approvalStatus", RequestHistoryStatus.PENDING);
 
@@ -387,6 +420,14 @@ class RequestHistoryServiceTest {
             assertThat(requestHistory.getProcessedBy()).isEqualTo(admin);
             assertThat(requestHistory.getProcessedDate()).isNotNull();
             assertThat(requestHistory.getRejectReason()).isEqualTo("정보가 불충분합니다.");
+            verify(notificationService)
+                    .sendAlertToUser(
+                            200L,
+                            NotificationMessage.REQUEST_HISTORY_REJECTED,
+                            NotificationDomainType.REQUEST_HISTORY,
+                            101L,
+                            RequestType.EMPLOYMENT_CERTIFICATE.getDescription(),
+                            "정보가 불충분합니다.");
         }
 
         @Test

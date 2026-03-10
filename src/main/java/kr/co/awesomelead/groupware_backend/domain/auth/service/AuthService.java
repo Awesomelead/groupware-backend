@@ -32,6 +32,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
@@ -119,7 +120,12 @@ public class AuthService {
                 new UsernamePasswordAuthenticationToken(
                         requestDto.getEmail(), requestDto.getPassword(), null);
 
-        Authentication authentication = authenticationManager.authenticate(authToken);
+        Authentication authentication;
+        try {
+            authentication = authenticationManager.authenticate(authToken);
+        } catch (AuthenticationException e) {
+            throw new CustomException(ErrorCode.INVALID_LOGIN_CREDENTIALS);
+        }
 
         // 2. 사용자 정보 추출
         String username = authentication.getName();

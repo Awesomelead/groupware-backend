@@ -96,11 +96,22 @@ public class HanbiroSsoService {
             throw new CustomException(ErrorCode.HANBIRO_REAUTH_REQUIRED);
         }
 
-        HanbiroCreateTokenResponse createTokenResponse = callCreateToken(authResponse.getSession());
+        // 환경에 따라 session_id 규약이 다를 수 있어 gw_id -> session 순으로 폴백 시도
+        HanbiroCreateTokenResponse createTokenResponse = callCreateToken(user.getHanbiroId());
         if (!Boolean.TRUE.equals(createTokenResponse.getSuccess())
                 || createTokenResponse.getRedirectUri() == null
                 || createTokenResponse.getRedirectUri().isBlank()) {
-            throw new CustomException(ErrorCode.HANBIRO_SSO_FAILED);
+            log.warn("Hanbiro create_token 1차 실패(gw_id), msg={}", createTokenResponse.getMsg());
+
+            createTokenResponse = callCreateToken(authResponse.getSession());
+            if (!Boolean.TRUE.equals(createTokenResponse.getSuccess())
+                    || createTokenResponse.getRedirectUri() == null
+                    || createTokenResponse.getRedirectUri().isBlank()) {
+                log.error(
+                        "Hanbiro create_token 2차 실패(session), msg={}",
+                        createTokenResponse.getMsg());
+                throw new CustomException(ErrorCode.HANBIRO_SSO_FAILED);
+            }
         }
 
         return new HanbiroMailRedirectResponseDto(createTokenResponse.getRedirectUri());

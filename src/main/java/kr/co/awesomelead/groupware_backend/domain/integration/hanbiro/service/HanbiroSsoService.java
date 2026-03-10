@@ -28,10 +28,7 @@ import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestTemplate;
 
 import java.time.LocalDateTime;
-import java.util.LinkedHashSet;
-import java.util.List;
 import java.util.Objects;
-import java.util.Set;
 
 @Slf4j
 @Service
@@ -68,12 +65,12 @@ public class HanbiroSsoService {
         String rawHanbiroId = requestDto.getHanbiroId().trim();
         String hanbiroPassword = requestDto.getHanbiroPassword().trim();
 
-        String resolvedHanbiroId = resolveValidHanbiroId(rawHanbiroId, hanbiroPassword);
-        if (isBlank(resolvedHanbiroId)) {
+        HanbiroAuthResponse authResponse = callAuth(rawHanbiroId, hanbiroPassword);
+        if (!Boolean.TRUE.equals(authResponse.getSuccess()) || isBlank(authResponse.getSession())) {
             throw new CustomException(ErrorCode.HANBIRO_INVALID_CREDENTIALS);
         }
 
-        user.setHanbiroId(resolvedHanbiroId);
+        user.setHanbiroId(rawHanbiroId);
         user.setHanbiroPassword(hanbiroPassword);
         user.setHanbiroLinkedAt(LocalDateTime.now());
     }
@@ -156,28 +153,6 @@ public class HanbiroSsoService {
             log.error("Hanbiro /create_token 호출 실패: {}", e.getMessage());
             throw new CustomException(ErrorCode.HANBIRO_SSO_FAILED);
         }
-    }
-
-    private String resolveValidHanbiroId(String inputId, String inputPassword) {
-        for (String candidate : buildGwIdCandidates(inputId)) {
-            HanbiroAuthResponse authResponse = callAuth(candidate, inputPassword);
-            if (Boolean.TRUE.equals(authResponse.getSuccess())
-                    && !isBlank(authResponse.getSession())) {
-                return candidate;
-            }
-        }
-        return null;
-    }
-
-    private List<String> buildGwIdCandidates(String inputId) {
-        Set<String> candidates = new LinkedHashSet<>();
-        candidates.add(inputId);
-
-        int atIndex = inputId.indexOf('@');
-        if (atIndex > 0) {
-            candidates.add(inputId.substring(0, atIndex));
-        }
-        return List.copyOf(candidates);
     }
 
     private HttpEntity<MultiValueMap<String, String>> createFormRequest(

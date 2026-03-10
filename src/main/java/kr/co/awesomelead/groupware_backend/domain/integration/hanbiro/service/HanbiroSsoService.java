@@ -70,7 +70,7 @@ public class HanbiroSsoService {
 
         String resolvedHanbiroId = resolveValidHanbiroId(rawHanbiroId, hanbiroPassword);
         if (isBlank(resolvedHanbiroId)) {
-            throw new CustomException(ErrorCode.HANBIRO_REAUTH_REQUIRED);
+            throw new CustomException(ErrorCode.HANBIRO_INVALID_CREDENTIALS);
         }
 
         user.setHanbiroId(resolvedHanbiroId);

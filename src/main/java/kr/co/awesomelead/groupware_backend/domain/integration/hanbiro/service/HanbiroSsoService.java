@@ -101,9 +101,7 @@ public class HanbiroSsoService {
         if (!Boolean.TRUE.equals(createTokenResponse.getSuccess())
                 || createTokenResponse.getRedirectUri() == null
                 || createTokenResponse.getRedirectUri().isBlank()) {
-            log.warn(
-                    "Hanbiro create_token 1차 실패(gw_id), msg={}",
-                    createTokenResponse.getMsg());
+            log.warn("Hanbiro create_token 1차 실패(gw_id), msg={}", createTokenResponse.getMsg());
 
             createTokenResponse = callCreateToken(authResponse.getSession());
             if (!Boolean.TRUE.equals(createTokenResponse.getSuccess())

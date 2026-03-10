@@ -527,8 +527,8 @@ public class AuthController {
                                                                 """
                                         {
                                           "isSuccess": false,
-                                          "code": "COMMON401",
-                                          "message": "인증에 실패했습니다.",
+                                          "code": "INVALID_LOGIN_CREDENTIALS",
+                                          "message": "아이디 또는 비밀번호가 올바르지 않습니다.",
                                           "result": null
                                         }
                                         """)))

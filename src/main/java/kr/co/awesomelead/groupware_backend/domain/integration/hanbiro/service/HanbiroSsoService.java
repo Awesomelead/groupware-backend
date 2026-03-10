@@ -161,7 +161,8 @@ public class HanbiroSsoService {
     private String resolveValidHanbiroId(String inputId, String inputPassword) {
         for (String candidate : buildGwIdCandidates(inputId)) {
             HanbiroAuthResponse authResponse = callAuth(candidate, inputPassword);
-            if (Boolean.TRUE.equals(authResponse.getSuccess()) && !isBlank(authResponse.getSession())) {
+            if (Boolean.TRUE.equals(authResponse.getSuccess())
+                    && !isBlank(authResponse.getSession())) {
                 return candidate;
             }
         }

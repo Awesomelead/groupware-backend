@@ -41,7 +41,7 @@ public class HanbiroSsoController {
                         description = "연동 성공"),
                 @io.swagger.v3.oas.annotations.responses.ApiResponse(
                         responseCode = "401",
-                        description = "한비로 인증 실패(재인증 필요)",
+                        description = "한비로 인증 실패(아이디/비밀번호 불일치)",
                         content =
                                 @Content(
                                         mediaType = "application/json",
@@ -51,8 +51,8 @@ public class HanbiroSsoController {
                                                                 """
                                 {
                                   "isSuccess": false,
-                                  "code": "HANBIRO_REAUTH_REQUIRED",
-                                  "message": "한비로 재인증이 필요합니다.",
+                                  "code": "HANBIRO_INVALID_CREDENTIALS",
+                                  "message": "한비로 아이디 또는 비밀번호가 올바르지 않습니다.",
                                   "result": null
                                 }
                                 """)))

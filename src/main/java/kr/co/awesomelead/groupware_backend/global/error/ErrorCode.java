@@ -70,7 +70,9 @@ public enum ErrorCode {
     EXPIRED_TOKEN(HttpStatus.UNAUTHORIZED, "만료된 토큰입니다."),
     AUTH_CODE_EXPIRED(HttpStatus.UNAUTHORIZED, "인증번호가 만료되었습니다."),
     VISITOR_AUTHENTICATION_FAILED(HttpStatus.UNAUTHORIZED, "내방객 인증에 실패했습니다."),
+    INVALID_LOGIN_CREDENTIALS(HttpStatus.UNAUTHORIZED, "아이디 또는 비밀번호가 올바르지 않습니다."),
     HANBIRO_REAUTH_REQUIRED(HttpStatus.UNAUTHORIZED, "한비로 재인증이 필요합니다."),
+    HANBIRO_INVALID_CREDENTIALS(HttpStatus.UNAUTHORIZED, "한비로 아이디 또는 비밀번호가 올바르지 않습니다."),
 
     // 403
     REFRESH_TOKEN_MISMATCH(HttpStatus.FORBIDDEN, "해당 리프레시 토큰에 대한 권한이 없습니다."),

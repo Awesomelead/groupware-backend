@@ -109,7 +109,6 @@ public class EduReportServiceTest {
                 EduReportRequestDto.builder()
                         .title("교육 보고서 제목")
                         .content("교육 보고서 내용")
-                        .eduDate(LocalDate.of(2025, 12, 31))
                         .eduType(EduType.SAFETY)
                         .departmentId(null) // 안전교육이므로 부서 아이디 제외
                         .build();
@@ -132,7 +131,6 @@ public class EduReportServiceTest {
                 EduReport.builder()
                         .id(1L) // Mock 데이터이므로 식별자를 넣어줍니다.
                         .eduType(requestDto.getEduType())
-                        .eduDate(requestDto.getEduDate())
                         .title(requestDto.getTitle())
                         .content(requestDto.getContent())
                         .pinned(false) // 기본값
@@ -182,7 +180,6 @@ public class EduReportServiceTest {
                 EduReportRequestDto.builder()
                         .title("교육 보고서 제목")
                         .content("교육 보고서 내용")
-                        .eduDate(LocalDate.of(2025, 12, 31))
                         .eduType(EduType.SAFETY)
                         .departmentId(null) // 안전교육이므로 부서 아이디 제외
                         .build();
@@ -206,7 +203,6 @@ public class EduReportServiceTest {
                 EduReportRequestDto.builder()
                         .title("교육 보고서 제목")
                         .content("교육 보고서 내용")
-                        .eduDate(LocalDate.of(2025, 12, 31))
                         .eduType(EduType.SAFETY)
                         .departmentId(null) // 안전교육이므로 부서 아이디 제외
                         .build();
@@ -232,7 +228,6 @@ public class EduReportServiceTest {
                 EduReportRequestDto.builder()
                         .title("교육 보고서 제목")
                         .content("교육 보고서 내용")
-                        .eduDate(LocalDate.of(2025, 12, 31))
                         .eduType(EduType.DEPARTMENT)
                         .departmentId(999L) // 존재하지 않는 부서 아이디
                         .build();

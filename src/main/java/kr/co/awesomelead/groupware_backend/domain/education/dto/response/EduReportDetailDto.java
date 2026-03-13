@@ -41,6 +41,9 @@ public class EduReportDetailDto {
     @Schema(description = "출석 여부", example = "true")
     private boolean attendance;
 
+    @Schema(description = "서명 필수 여부", example = "false")
+    private boolean signatureRequired;
+
     @Schema(description = "첨부 파일 목록")
     private List<AttachmentResponse> attachments;
 

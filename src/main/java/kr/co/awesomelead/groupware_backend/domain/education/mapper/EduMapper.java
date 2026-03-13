@@ -19,6 +19,7 @@ import java.util.List;
 public interface EduMapper {
 
     @Mapping(target = "id", ignore = true)
+    @Mapping(target = "eduDate", ignore = true)
     @Mapping(target = "attachments", ignore = true)
     @Mapping(target = "department", source = "department")
     EduReport toEduReportEntity(EduReportRequestDto dto, Department department);

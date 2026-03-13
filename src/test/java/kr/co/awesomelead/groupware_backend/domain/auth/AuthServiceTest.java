@@ -4,6 +4,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.never;
@@ -12,16 +13,23 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import kr.co.awesomelead.groupware_backend.domain.aligo.service.PhoneAuthService;
+import kr.co.awesomelead.groupware_backend.domain.approval.repository.ApprovalRepository;
+import kr.co.awesomelead.groupware_backend.domain.auth.dto.request.LoginRequestDto;
 import kr.co.awesomelead.groupware_backend.domain.auth.dto.request.ResetPasswordByEmailRequestDto;
 import kr.co.awesomelead.groupware_backend.domain.auth.dto.request.ResetPasswordByPhoneRequestDto;
 import kr.co.awesomelead.groupware_backend.domain.auth.dto.request.ResetPasswordRequestDto;
 import kr.co.awesomelead.groupware_backend.domain.auth.dto.request.SignupRequestDto;
+import kr.co.awesomelead.groupware_backend.domain.auth.dto.response.LoginResponseDto;
 import kr.co.awesomelead.groupware_backend.domain.auth.dto.response.SignupResponseDto;
 import kr.co.awesomelead.groupware_backend.domain.auth.service.AuthService;
 import kr.co.awesomelead.groupware_backend.domain.auth.service.EmailAuthService;
+import kr.co.awesomelead.groupware_backend.domain.auth.service.RefreshTokenService;
+import kr.co.awesomelead.groupware_backend.domain.auth.util.JWTUtil;
 import kr.co.awesomelead.groupware_backend.domain.department.enums.Company;
 import kr.co.awesomelead.groupware_backend.domain.notification.service.NotificationService;
+import kr.co.awesomelead.groupware_backend.domain.user.dto.response.MyInfoAuthorityItemDto;
 import kr.co.awesomelead.groupware_backend.domain.user.entity.User;
+import kr.co.awesomelead.groupware_backend.domain.user.enums.Authority;
 import kr.co.awesomelead.groupware_backend.domain.user.enums.Role;
 import kr.co.awesomelead.groupware_backend.domain.user.enums.Status;
 import kr.co.awesomelead.groupware_backend.domain.user.mapper.UserMapper;
@@ -37,6 +45,8 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.core.Authentication;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.test.context.ActiveProfiles;
 
@@ -58,6 +68,10 @@ class AuthServiceTest {
     @Mock private UserMapper userMapper;
 
     @Mock private NotificationService notificationService;
+    @Mock private AuthenticationManager authenticationManager;
+    @Mock private JWTUtil jwtUtil;
+    @Mock private RefreshTokenService refreshTokenService;
+    @Mock private ApprovalRepository approvalRepository;
 
     @InjectMocks private AuthService authService;
 
@@ -76,6 +90,45 @@ class AuthServiceTest {
         testUser.setEmail(TEST_EMAIL);
         testUser.setPassword(ENCODED_OLD_PASSWORD);
         testUser.setPhoneNumber(TEST_PHONE);
+        testUser.setRole(Role.USER);
+    }
+
+    @Test
+    @DisplayName("로그인 성공 테스트 - 권한 정보 포함")
+    void login_Success() {
+        // given
+        LoginRequestDto loginRequestDto = new LoginRequestDto();
+        loginRequestDto.setEmail(TEST_EMAIL);
+        loginRequestDto.setPassword(OLD_PASSWORD);
+
+        testUser.addAuthority(Authority.ACCESS_EDUCATION);
+
+        Authentication authentication = org.mockito.Mockito.mock(Authentication.class);
+        org.springframework.security.core.GrantedAuthority grantedAuthority = () -> "ROLE_USER";
+
+        when(authenticationManager.authenticate(any())).thenReturn(authentication);
+        when(authentication.getName()).thenReturn(TEST_EMAIL);
+        when(authentication.getAuthorities())
+                .thenAnswer(invocation -> java.util.Collections.singletonList(grantedAuthority));
+
+        when(jwtUtil.createJwt(anyString(), anyString(), anyLong())).thenReturn("access_token");
+        when(refreshTokenService.createAndSaveRefreshToken(anyString(), anyString()))
+                .thenReturn("refresh_token");
+        when(userRepository.findByEmail(TEST_EMAIL)).thenReturn(Optional.of(testUser));
+
+        // when
+        LoginResponseDto response = authService.login(loginRequestDto);
+
+        // then
+        assertThat(response.getAccessToken()).isEqualTo("access_token");
+        assertThat(response.getRefreshToken()).isEqualTo("refresh_token");
+        assertThat(response.getAuthorities()).isNotNull();
+        assertThat(response.getAuthorities().size()).isEqualTo(1);
+
+        MyInfoAuthorityItemDto authorityDto = response.getAuthorities().get(0);
+        assertThat(authorityDto.getCode()).isEqualTo(Authority.ACCESS_EDUCATION.name());
+        assertThat(authorityDto.getLabel()).isEqualTo(Authority.ACCESS_EDUCATION.getDescription());
+        assertThat(authorityDto.isEnabled()).isTrue();
     }
 
     @Test

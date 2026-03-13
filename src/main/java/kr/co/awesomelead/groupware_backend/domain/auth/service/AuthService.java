@@ -20,6 +20,7 @@ import kr.co.awesomelead.groupware_backend.domain.auth.util.JWTUtil;
 import kr.co.awesomelead.groupware_backend.domain.notification.enums.NotificationDomainType;
 import kr.co.awesomelead.groupware_backend.domain.notification.enums.NotificationMessage;
 import kr.co.awesomelead.groupware_backend.domain.notification.service.NotificationService;
+import kr.co.awesomelead.groupware_backend.domain.user.dto.response.MyInfoAuthorityItemDto;
 import kr.co.awesomelead.groupware_backend.domain.user.entity.User;
 import kr.co.awesomelead.groupware_backend.domain.user.mapper.UserMapper;
 import kr.co.awesomelead.groupware_backend.domain.user.repository.UserRepository;
@@ -114,6 +115,7 @@ public class AuthService {
         return new SignupResponseDto(savedUser.getId(), savedUser.getEmail());
     }
 
+    @Transactional(readOnly = true)
     public LoginResponseDto login(LoginRequestDto requestDto) {
         // 1. 인증 처리
         UsernamePasswordAuthenticationToken authToken =
@@ -148,6 +150,17 @@ public class AuthService {
                         .findByEmail(username)
                         .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
         // 7. 응답 생성
+        List<MyInfoAuthorityItemDto> authorityDtos =
+                user.getAuthorities().stream()
+                        .map(
+                                authority ->
+                                        MyInfoAuthorityItemDto.builder()
+                                                .code(authority.name())
+                                                .label(authority.getDescription())
+                                                .enabled(true)
+                                                .build())
+                        .toList();
+
         LoginResponseDto loginResponseDto =
                 new LoginResponseDto(
                         accessToken,
@@ -156,7 +169,8 @@ public class AuthService {
                         user.getNameKor(),
                         user.getNameEng(),
                         user.getPosition(),
-                        user.getRole());
+                        user.getRole(),
+                        authorityDtos);
 
         return loginResponseDto;
     }

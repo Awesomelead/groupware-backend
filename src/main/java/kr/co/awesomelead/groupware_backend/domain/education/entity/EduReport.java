@@ -13,6 +13,7 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.Lob;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToMany;
+import jakarta.persistence.PrePersist;
 import jakarta.persistence.Table;
 
 import kr.co.awesomelead.groupware_backend.domain.department.entity.Department;
@@ -35,7 +36,7 @@ import java.util.List;
 @NoArgsConstructor
 @AllArgsConstructor
 @Table(name = "edu_reports")
-// @Table(indexes = @Index(name = "idx_edu_date", columnList = "eduDate")) 차후 성능비교를 위해 대기
+// @Table(indexes = @Index(name = "idx_edu_date", columnList = "eduDate"))
 public class EduReport {
 
     @Id
@@ -46,8 +47,9 @@ public class EduReport {
     @Column(nullable = false, length = 20)
     private EduType eduType;
 
+    @Builder.Default
     @Column(nullable = false)
-    private LocalDate eduDate;
+    private LocalDate eduDate = LocalDate.now();
 
     @Column(nullable = false, length = 200)
     private String title;
@@ -71,6 +73,13 @@ public class EduReport {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "department_id", nullable = true) // 부서교육의 경우에만 작성
     private Department department;
+
+    @PrePersist
+    protected void prePersist() {
+        if (this.eduDate == null) {
+            this.eduDate = LocalDate.now();
+        }
+    }
 
     public void addAttachment(EduAttachment attachment) {
         this.attachments.add(attachment);

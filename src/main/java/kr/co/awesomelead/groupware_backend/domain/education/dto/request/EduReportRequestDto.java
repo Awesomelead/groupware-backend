@@ -12,8 +12,6 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
-import java.time.LocalDate;
-
 @Getter
 @Builder
 @NoArgsConstructor
@@ -34,10 +32,6 @@ public class EduReportRequestDto {
     @Schema(description = "교육 내용", example = "개인정보 보호 및 사내 보안 규정 안내")
     @NotBlank(message = "내용은 필수입니다.")
     private String content;
-
-    @Schema(description = "교육 실시 일자", example = "2026-01-11")
-    @NotNull(message = "교육 날짜는 필수입니다.")
-    private LocalDate eduDate;
 
     @Schema(description = "상단 고정 여부", example = "false", defaultValue = "false")
     private boolean pinned;

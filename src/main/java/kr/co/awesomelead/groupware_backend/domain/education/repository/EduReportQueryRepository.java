@@ -27,9 +27,9 @@ public class EduReportQueryRepository {
     /**
      * 교육 보고서 목록 조회
      *
-     * @param type 교육 유형 필터 (null 이면 전체)
-     * @param dept 부서 필터 엔티티
-     * @param userId 출석 여부 서브쿼리에 사용할 현재 사용자 ID
+     * @param type      교육 유형 필터 (null 이면 전체)
+     * @param dept      부서 필터 엔티티
+     * @param userId    출석 여부 서브쿼리에 사용할 현재 사용자 ID
      * @param hasAccess ACCESS_EDUCATION 권한 보유 여부
      */
     public List<EduReportSummaryDto> findEduReports(
@@ -49,7 +49,8 @@ public class EduReportQueryRepository {
                                                 eduAttendance.eduReport.eq(eduReport),
                                                 eduAttendance.user.id.eq(userId))
                                         .exists(),
-                                eduReport.pinned))
+                                eduReport.pinned,
+                                eduReport.signatureRequired))
                 .from(eduReport)
                 .where(eqEduType(type), deptFilter(hasAccess, dept))
                 .orderBy(eduReport.pinned.desc(), eduReport.eduDate.desc())
@@ -67,9 +68,9 @@ public class EduReportQueryRepository {
      * 부서 접근 필터
      *
      * <ul>
-     *   <li>hasAccess=true + dept=null → 조건 없음 (전체 조회)
-     *   <li>hasAccess=true + dept≠null → 해당 부서 교육만 조회
-     *   <li>hasAccess=false → 기존 로직: DEPARTMENT 타입이 아니거나, 타입이 DEPARTMENT이면 자신의 부서만
+     * <li>hasAccess=true + dept=null → 조건 없음 (전체 조회)
+     * <li>hasAccess=true + dept≠null → 해당 부서 교육만 조회
+     * <li>hasAccess=false → 기존 로직: DEPARTMENT 타입이 아니거나, 타입이 DEPARTMENT이면 자신의 부서만
      * </ul>
      */
     private BooleanExpression deptFilter(boolean hasAccess, Department dept) {

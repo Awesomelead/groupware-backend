@@ -2,9 +2,7 @@ package kr.co.awesomelead.groupware_backend.domain.auth.service;
 
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
-import java.util.Collection;
-import java.util.Iterator;
-import java.util.List;
+
 import kr.co.awesomelead.groupware_backend.domain.aligo.service.PhoneAuthService;
 import kr.co.awesomelead.groupware_backend.domain.approval.entity.Approval;
 import kr.co.awesomelead.groupware_backend.domain.approval.repository.ApprovalRepository;
@@ -28,8 +26,10 @@ import kr.co.awesomelead.groupware_backend.domain.user.mapper.UserMapper;
 import kr.co.awesomelead.groupware_backend.domain.user.repository.UserRepository;
 import kr.co.awesomelead.groupware_backend.global.error.CustomException;
 import kr.co.awesomelead.groupware_backend.global.error.ErrorCode;
+
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -39,6 +39,10 @@ import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.util.Collection;
+import java.util.Iterator;
+import java.util.List;
 
 @Slf4j
 @Service
@@ -56,8 +60,7 @@ public class AuthService {
     private final ApprovalRepository approvalRepository;
     private final NotificationService notificationService;
 
-    @PersistenceContext
-    private EntityManager entityManager;
+    @PersistenceContext private EntityManager entityManager;
 
     @Value("${spring.jwt.access-validation}")
     private long accessTokenValidation;
@@ -115,8 +118,9 @@ public class AuthService {
     @Transactional(readOnly = true)
     public LoginResponseDto login(LoginRequestDto requestDto) {
         // 1. 인증 처리
-        UsernamePasswordAuthenticationToken authToken = new UsernamePasswordAuthenticationToken(
-                requestDto.getEmail(), requestDto.getPassword(), null);
+        UsernamePasswordAuthenticationToken authToken =
+                new UsernamePasswordAuthenticationToken(
+                        requestDto.getEmail(), requestDto.getPassword(), null);
 
         Authentication authentication;
         try {
@@ -141,27 +145,32 @@ public class AuthService {
         String refreshToken = refreshTokenService.createAndSaveRefreshToken(username, role);
 
         // 6. 사용자 정보 조회
-        User user = userRepository
-                .findByEmail(username)
-                .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
+        User user =
+                userRepository
+                        .findByEmail(username)
+                        .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
         // 7. 응답 생성
-        List<MyInfoAuthorityItemDto> authorityDtos = user.getAuthorities().stream()
-                .map(authority -> MyInfoAuthorityItemDto.builder()
-                        .code(authority.name())
-                        .label(authority.getDescription())
-                        .enabled(true)
-                        .build())
-                .toList();
+        List<MyInfoAuthorityItemDto> authorityDtos =
+                user.getAuthorities().stream()
+                        .map(
+                                authority ->
+                                        MyInfoAuthorityItemDto.builder()
+                                                .code(authority.name())
+                                                .label(authority.getDescription())
+                                                .enabled(true)
+                                                .build())
+                        .toList();
 
-        LoginResponseDto loginResponseDto = new LoginResponseDto(
-                accessToken,
-                refreshToken,
-                user.getId(),
-                user.getNameKor(),
-                user.getNameEng(),
-                user.getPosition(),
-                user.getRole(),
-                authorityDtos);
+        LoginResponseDto loginResponseDto =
+                new LoginResponseDto(
+                        accessToken,
+                        refreshToken,
+                        user.getId(),
+                        user.getNameKor(),
+                        user.getNameEng(),
+                        user.getPosition(),
+                        user.getRole(),
+                        authorityDtos);
 
         return loginResponseDto;
     }
@@ -204,9 +213,10 @@ public class AuthService {
 
         // 2. 해시로 사용자 찾기
         String phoneNumberHash = User.hashValue(phoneNumber);
-        User user = userRepository
-                .findByPhoneNumberHash(phoneNumberHash)
-                .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
+        User user =
+                userRepository
+                        .findByPhoneNumberHash(phoneNumberHash)
+                        .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
 
         // 3. 이름 검증
         if (!user.getNameKor().equals(name)) {
@@ -241,9 +251,10 @@ public class AuthService {
             throw new CustomException(ErrorCode.PASSWORD_MISMATCH);
         }
         // 3. 이메일로 사용자 찾기
-        User user = userRepository
-                .findByEmail(requestDto.getEmail())
-                .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
+        User user =
+                userRepository
+                        .findByEmail(requestDto.getEmail())
+                        .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
 
         // 4. 해당 유저의 비밀번호 변경
         user.setPassword(bCryptPasswordEncoder.encode(requestDto.getNewPassword()));
@@ -258,9 +269,10 @@ public class AuthService {
     public void resetPasswordByPhone(ResetPasswordByPhoneRequestDto requestDto) {
 
         // 1. 이메일로 사용자 조회
-        User user = userRepository
-                .findByEmail(requestDto.getEmail())
-                .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
+        User user =
+                userRepository
+                        .findByEmail(requestDto.getEmail())
+                        .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
 
         // 2. 휴대폰 인증 여부 확인
         if (!phoneAuthService.isPhoneVerified(requestDto.getPhoneNumber())) {
@@ -295,9 +307,10 @@ public class AuthService {
         }
 
         // 2. 사용자 조회
-        User user = userRepository
-                .findById(userId)
-                .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
+        User user =
+                userRepository
+                        .findById(userId)
+                        .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
 
         // 3. 현재 비밀번호 확인
         if (!bCryptPasswordEncoder.matches(requestDto.getCurrentPassword(), user.getPassword())) {
@@ -319,9 +332,10 @@ public class AuthService {
     // 계정 삭제
     @Transactional
     public void deleteUser(Long userId) {
-        User user = userRepository
-                .findById(userId)
-                .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
+        User user =
+                userRepository
+                        .findById(userId)
+                        .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
 
         // 1) 토큰 및 사용자 직접 참조 데이터 정리
         deleteByQuery(

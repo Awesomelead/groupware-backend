@@ -18,7 +18,10 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 public class EduReportRequestDto {
 
-    @Schema(description = "교육 유형", example = "LEGAL", allowableValues = { "LEGAL", "JOB", "DEPARTMENT", "OTHER" })
+    @Schema(
+            description = "교육 유형",
+            example = "LEGAL",
+            allowableValues = {"LEGAL", "JOB", "DEPARTMENT", "OTHER"})
     @NotNull(message = "교육 유형은 필수입니다.")
     private EduType eduType;
 

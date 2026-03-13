@@ -2,14 +2,14 @@ package kr.co.awesomelead.groupware_backend.domain.auth.dto.response;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 
-import kr.co.awesomelead.groupware_backend.domain.user.enums.Authority;
+import kr.co.awesomelead.groupware_backend.domain.user.dto.response.MyInfoAuthorityItemDto;
 import kr.co.awesomelead.groupware_backend.domain.user.enums.Position;
 import kr.co.awesomelead.groupware_backend.domain.user.enums.Role;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 
-import java.util.Set;
+import java.util.List;
 
 @Getter
 @AllArgsConstructor
@@ -37,6 +37,6 @@ public class LoginResponseDto {
         @Schema(description = "역할", example = "관리자")
         private Role role;
 
-        @Schema(description = "보유 권한 목록", example = "[\"교육 작성\", \"메세지 작성\"]")
-        private Set<Authority> authorities;
+        @Schema(description = "보유 권한 목록")
+        private List<MyInfoAuthorityItemDto> authorities;
 }

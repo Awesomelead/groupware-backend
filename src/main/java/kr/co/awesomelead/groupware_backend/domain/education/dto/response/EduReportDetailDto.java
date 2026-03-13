@@ -41,6 +41,9 @@ public class EduReportDetailDto {
     @Schema(description = "출석 여부", example = "true")
     private boolean attendance;
 
+    @Schema(description = "서명 필수 여부", example = "false")
+    private boolean signatureRequired;
+
     @Schema(description = "첨부 파일 목록")
     private List<AttachmentResponse> attachments;
 
@@ -81,9 +84,7 @@ public class EduReportDetailDto {
         @Schema(description = "직원 이름", example = "홍길동")
         private String userName;
 
-        @Schema(
-                description = "서명 이미지 URL",
-                example = "https://s3.amazonaws.com/bucket/signature.png")
+        @Schema(description = "서명 이미지 URL", example = "https://s3.amazonaws.com/bucket/signature.png")
         private String signatureUrl;
     }
 }

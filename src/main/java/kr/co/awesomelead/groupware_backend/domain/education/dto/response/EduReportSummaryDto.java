@@ -34,4 +34,7 @@ public class EduReportSummaryDto {
 
     @Schema(description = "상단 고정 여부", example = "false")
     private boolean pinned;
+
+    @Schema(description = "서명 필수 여부", example = "false")
+    private boolean signatureRequired;
 }

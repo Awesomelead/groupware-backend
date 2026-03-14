@@ -260,6 +260,7 @@ public class EduReportServiceTest {
                         .title("안전 교육 보고서")
                         .eduType(EduType.SAFETY)
                         .eduDate(LocalDate.now())
+                        .content("안전 교육 보고서 내용")
                         .attendance(true)
                         .pinned(false)
                         .build();
@@ -295,6 +296,7 @@ public class EduReportServiceTest {
                         .title("전체 공개 안전 교육")
                         .eduType(EduType.SAFETY)
                         .eduDate(LocalDate.now())
+                        .content("전체 공개 안전 교육 내용")
                         .attendance(false)
                         .pinned(false)
                         .build();
@@ -331,6 +333,7 @@ public class EduReportServiceTest {
                         .title("영업부 부서 교육")
                         .eduType(EduType.DEPARTMENT)
                         .eduDate(LocalDate.now())
+                        .content("영업부 부서 교육 내용")
                         .attendance(false)
                         .pinned(false)
                         .build();

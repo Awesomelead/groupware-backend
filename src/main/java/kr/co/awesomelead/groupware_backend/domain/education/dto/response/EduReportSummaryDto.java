@@ -29,6 +29,9 @@ public class EduReportSummaryDto {
     @Schema(description = "교육 날짜", example = "2026-03-15")
     private LocalDate eduDate;
 
+    @Schema(description = "교육 내용", example = "이번 교육에서는 안전 수칙에 대해 다룹니다.")
+    private String content;
+
     @Schema(description = "출석 여부", example = "true")
     private boolean attendance;
 

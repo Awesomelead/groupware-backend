@@ -43,6 +43,7 @@ public class EduReportQueryRepository {
                                 eduReport.title,
                                 eduReport.eduType,
                                 eduReport.eduDate,
+                                eduReport.content,
                                 JPAExpressions.selectOne()
                                         .from(eduAttendance)
                                         .where(

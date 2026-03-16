@@ -67,7 +67,11 @@ public class EduReportController {
     private final EduReportService eduReportService;
     private final EduAttachmentRepository eduAttachmentRepository;
 
-    @Operation(summary = "교육 보고서 생성", description = "교육 보고서를 생성합니다.")
+    @Operation(
+            summary = "교육 보고서 생성",
+            description =
+                    "교육 보고서를 생성합니다. PSM/안전보건 교육은 categoryId가 필수이며, 부서교육은"
+                            + " departmentId가 필요합니다.")
     @ApiResponses(
             value = {
                 @io.swagger.v3.oas.annotations.responses.ApiResponse(
@@ -86,6 +90,23 @@ public class EduReportController {
             "code": "COMMON201",
             "message": "성공적으로 생성되었습니다.",
             "result": 1
+          }
+          """))),
+                @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                        responseCode = "400",
+                        description = "잘못된 요청",
+                        content =
+                                @Content(
+                                        mediaType = "application/json",
+                                        examples =
+                                                @ExampleObject(
+                                                        value =
+                                                                """
+          {
+            "isSuccess": false,
+            "code": "EDUCATION_CATEGORY_REQUIRED",
+            "message": "PSM/안전보건 교육 등록 시 카테고리는 필수입니다.",
+            "result": null
           }
           """))),
                 @io.swagger.v3.oas.annotations.responses.ApiResponse(
@@ -132,6 +153,17 @@ public class EduReportController {
                 "isSuccess": false,
                 "code": "DEPARTMENT_NOT_FOUND",
                 "message": "해당 부서를 찾을 수 없습니다.",
+                "result": null
+              }
+              """),
+                                            @ExampleObject(
+                                                    name = "카테고리 없음",
+                                                    value =
+                                                            """
+              {
+                "isSuccess": false,
+                "code": "EDUCATION_CATEGORY_NOT_FOUND",
+                "message": "해당 교육 카테고리를 찾을 수 없습니다.",
                 "result": null
               }
               """)

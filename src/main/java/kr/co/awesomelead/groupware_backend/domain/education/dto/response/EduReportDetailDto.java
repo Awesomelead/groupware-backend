@@ -29,6 +29,12 @@ public class EduReportDetailDto {
     @Schema(description = "교육 유형", example = "SAFETY")
     private EduType eduType;
 
+    @Schema(description = "교육 카테고리 ID", example = "1")
+    private Long categoryId;
+
+    @Schema(description = "교육 카테고리명", example = "유해위험물질")
+    private String categoryName;
+
     @Schema(description = "부서 교육 시 대상 부서명 (부서 교육이 아닌 경우 null)", example = "영업부")
     private String departmentName;
 

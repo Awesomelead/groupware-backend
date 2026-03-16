@@ -119,6 +119,17 @@ public class AdminEducationCategoryService {
     }
 
     @Transactional
+    public void activateCategory(Long adminId, Long categoryId) {
+        validateCategoryManageAuthority(adminId);
+
+        EducationCategory category =
+                educationCategoryRepository
+                        .findById(categoryId)
+                        .orElseThrow(() -> new CustomException(ErrorCode.EDUCATION_CATEGORY_NOT_FOUND));
+        category.setActive(true);
+    }
+
+    @Transactional
     public void reorderCategories(Long adminId, EducationCategoryReorderRequestDto requestDto) {
         validateCategoryManageAuthority(adminId);
 

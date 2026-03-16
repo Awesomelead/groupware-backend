@@ -60,6 +60,15 @@ public class AdminEducationCategoryController {
         return ResponseEntity.ok(ApiResponse.onNoContent("교육 카테고리가 비활성화되었습니다."));
     }
 
+    @Operation(summary = "교육 카테고리 활성화", description = "관리자가 교육 카테고리를 활성화합니다.")
+    @PatchMapping("/{categoryId}/activate")
+    public ResponseEntity<ApiResponse<Void>> activateCategory(
+            @Parameter(hidden = true) @AuthenticationPrincipal CustomUserDetails userDetails,
+            @PathVariable Long categoryId) {
+        adminEducationCategoryService.activateCategory(userDetails.getId(), categoryId);
+        return ResponseEntity.ok(ApiResponse.onNoContent("교육 카테고리가 활성화되었습니다."));
+    }
+
     @Operation(summary = "교육 카테고리 정렬 변경", description = "같은 부모를 가진 카테고리들의 정렬 순서를 변경합니다.")
     @PatchMapping("/reorder")
     public ResponseEntity<ApiResponse<Void>> reorderCategories(
@@ -69,4 +78,3 @@ public class AdminEducationCategoryController {
         return ResponseEntity.ok(ApiResponse.onNoContent("교육 카테고리 정렬이 변경되었습니다."));
     }
 }
-

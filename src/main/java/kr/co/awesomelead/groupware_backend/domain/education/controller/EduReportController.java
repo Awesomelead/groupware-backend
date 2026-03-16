@@ -225,7 +225,8 @@ public class EduReportController {
             description =
                     "교육 보고서 목록을 조회합니다. "
                             + "departmentName은 DEPARTMENT 유형에서만 사용되며,"
-                            + " PSM/SAFETY 조회 시에는 전달하지 않거나 무시됩니다.")
+                            + " PSM/SAFETY 조회 시에는 전달하지 않거나 무시됩니다."
+                            + " categoryId를 전달하면 특정 카테고리만 조회합니다.")
     @ApiResponses({
         @io.swagger.v3.oas.annotations.responses.ApiResponse(
                 responseCode = "200",
@@ -313,9 +314,14 @@ public class EduReportController {
                             example = "SALES_DEPT")
                     @RequestParam(required = false)
                     DepartmentName departmentName,
+            @Parameter(
+                            description = "카테고리 ID 필터 (PSM/SAFETY 카테고리별 조회용)",
+                            example = "1")
+                    @RequestParam(required = false)
+                    Long categoryId,
             @Parameter(hidden = true) @AuthenticationPrincipal CustomUserDetails userDetails) {
         List<EduReportSummaryDto> reports =
-                eduReportService.getEduReports(type, departmentName, userDetails.getId());
+                eduReportService.getEduReports(type, departmentName, categoryId, userDetails.getId());
         return ResponseEntity.ok(ApiResponse.onSuccess(reports));
     }
 

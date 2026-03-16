@@ -33,7 +33,7 @@ public class EduReportQueryRepository {
      * @param hasAccess ACCESS_EDUCATION 권한 보유 여부
      */
     public List<EduReportSummaryDto> findEduReports(
-            EduType type, Department dept, Long userId, boolean hasAccess) {
+            EduType type, Department dept, Long categoryId, Long userId, boolean hasAccess) {
 
         return queryFactory
                 .select(
@@ -55,7 +55,7 @@ public class EduReportQueryRepository {
                                 eduReport.category.id,
                                 eduReport.category.name))
                 .from(eduReport)
-                .where(eqEduType(type), deptFilter(type, hasAccess, dept))
+                .where(eqEduType(type), eqCategoryId(categoryId), deptFilter(type, hasAccess, dept))
                 .orderBy(eduReport.pinned.desc(), eduReport.eduDate.desc())
                 .fetch();
     }
@@ -65,6 +65,10 @@ public class EduReportQueryRepository {
     /** 교육 유형 필터 — null 이면 조건 없음 (전체) */
     private BooleanExpression eqEduType(EduType type) {
         return type != null ? eduReport.eduType.eq(type) : null;
+    }
+
+    private BooleanExpression eqCategoryId(Long categoryId) {
+        return categoryId != null ? eduReport.category.id.eq(categoryId) : null;
     }
 
     /**

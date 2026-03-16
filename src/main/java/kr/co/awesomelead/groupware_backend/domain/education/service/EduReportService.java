@@ -133,7 +133,7 @@ public class EduReportService {
 
     @Transactional(readOnly = true)
     public List<EduReportSummaryDto> getEduReports(
-            EduType type, DepartmentName departmentName, Long id) {
+            EduType type, DepartmentName departmentName, Long categoryId, Long id) {
 
         User user =
                 userRepository
@@ -159,7 +159,7 @@ public class EduReportService {
             dept = user.getDepartment();
         }
 
-        return eduReportQueryRepository.findEduReports(type, dept, id, hasAccess);
+        return eduReportQueryRepository.findEduReports(type, dept, categoryId, id, hasAccess);
     }
 
     @Transactional(readOnly = true)

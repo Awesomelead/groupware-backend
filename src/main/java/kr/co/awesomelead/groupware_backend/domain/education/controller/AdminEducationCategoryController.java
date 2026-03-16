@@ -2,6 +2,10 @@ package kr.co.awesomelead.groupware_backend.domain.education.controller;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.ExampleObject;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 
 import jakarta.validation.Valid;
@@ -33,6 +37,78 @@ public class AdminEducationCategoryController {
     private final AdminEducationCategoryService adminEducationCategoryService;
 
     @Operation(summary = "교육 카테고리 생성", description = "관리자가 교육 카테고리를 생성합니다.")
+    @ApiResponses(
+            value = {
+                @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                        responseCode = "200",
+                        description = "생성 성공",
+                        content =
+                                @Content(
+                                        mediaType = "application/json",
+                                        schema = @Schema(implementation = ApiResponse.class),
+                                        examples =
+                                                @ExampleObject(
+                                                        value =
+                                                                """
+                                {
+                                  "isSuccess": true,
+                                  "code": "COMMON200",
+                                  "message": "요청에 성공했습니다.",
+                                  "result": 101
+                                }
+                                """))),
+                @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                        responseCode = "403",
+                        description = "권한 없음",
+                        content =
+                                @Content(
+                                        mediaType = "application/json",
+                                        examples =
+                                                @ExampleObject(
+                                                        value =
+                                                                """
+                                {
+                                  "isSuccess": false,
+                                  "code": "NO_AUTHORITY_FOR_EDUCATION_CATEGORY_MANAGE",
+                                  "message": "교육 카테고리 관리 권한이 없습니다.",
+                                  "result": null
+                                }
+                                """))),
+                @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                        responseCode = "404",
+                        description = "부모 카테고리 없음",
+                        content =
+                                @Content(
+                                        mediaType = "application/json",
+                                        examples =
+                                                @ExampleObject(
+                                                        value =
+                                                                """
+                                {
+                                  "isSuccess": false,
+                                  "code": "EDUCATION_CATEGORY_NOT_FOUND",
+                                  "message": "해당 교육 카테고리를 찾을 수 없습니다.",
+                                  "result": null
+                                }
+                                """))),
+                @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                        responseCode = "409",
+                        description = "중복 코드",
+                        content =
+                                @Content(
+                                        mediaType = "application/json",
+                                        examples =
+                                                @ExampleObject(
+                                                        value =
+                                                                """
+                                {
+                                  "isSuccess": false,
+                                  "code": "DUPLICATE_EDUCATION_CATEGORY_CODE",
+                                  "message": "이미 사용 중인 교육 카테고리 코드입니다.",
+                                  "result": null
+                                }
+                                """)))
+            })
     @PostMapping
     public ResponseEntity<ApiResponse<Long>> createCategory(
             @Parameter(hidden = true) @AuthenticationPrincipal CustomUserDetails userDetails,
@@ -42,34 +118,259 @@ public class AdminEducationCategoryController {
     }
 
     @Operation(summary = "교육 카테고리 수정", description = "관리자가 교육 카테고리를 수정합니다.")
+    @ApiResponses(
+            value = {
+                @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                        responseCode = "200",
+                        description = "수정 성공",
+                        content =
+                                @Content(
+                                        mediaType = "application/json",
+                                        examples =
+                                                @ExampleObject(
+                                                        value =
+                                                                """
+                                {
+                                  "isSuccess": true,
+                                  "code": "COMMON204",
+                                  "message": "교육 카테고리가 수정되었습니다.",
+                                  "result": null
+                                }
+                                """))),
+                @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                        responseCode = "400",
+                        description = "잘못된 요청",
+                        content =
+                                @Content(
+                                        mediaType = "application/json",
+                                        examples =
+                                                @ExampleObject(
+                                                        value =
+                                                                """
+                                {
+                                  "isSuccess": false,
+                                  "code": "INVALID_ARGUMENT",
+                                  "message": "유효하지 않은 ARGUMENT입니다.",
+                                  "result": null
+                                }
+                                """))),
+                @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                        responseCode = "403",
+                        description = "권한 없음",
+                        content =
+                                @Content(
+                                        mediaType = "application/json",
+                                        examples =
+                                                @ExampleObject(
+                                                        value =
+                                                                """
+                                {
+                                  "isSuccess": false,
+                                  "code": "NO_AUTHORITY_FOR_EDUCATION_CATEGORY_MANAGE",
+                                  "message": "교육 카테고리 관리 권한이 없습니다.",
+                                  "result": null
+                                }
+                                """))),
+                @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                        responseCode = "404",
+                        description = "카테고리 없음",
+                        content =
+                                @Content(
+                                        mediaType = "application/json",
+                                        examples =
+                                                @ExampleObject(
+                                                        value =
+                                                                """
+                                {
+                                  "isSuccess": false,
+                                  "code": "EDUCATION_CATEGORY_NOT_FOUND",
+                                  "message": "해당 교육 카테고리를 찾을 수 없습니다.",
+                                  "result": null
+                                }
+                                """))),
+                @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                        responseCode = "409",
+                        description = "중복 코드",
+                        content =
+                                @Content(
+                                        mediaType = "application/json",
+                                        examples =
+                                                @ExampleObject(
+                                                        value =
+                                                                """
+                                {
+                                  "isSuccess": false,
+                                  "code": "DUPLICATE_EDUCATION_CATEGORY_CODE",
+                                  "message": "이미 사용 중인 교육 카테고리 코드입니다.",
+                                  "result": null
+                                }
+                                """)))
+            })
     @PatchMapping("/{categoryId}")
     public ResponseEntity<ApiResponse<Void>> updateCategory(
             @Parameter(hidden = true) @AuthenticationPrincipal CustomUserDetails userDetails,
-            @PathVariable Long categoryId,
+            @Parameter(description = "수정할 카테고리 ID", example = "101") @PathVariable Long categoryId,
             @Valid @RequestBody EducationCategoryUpdateRequestDto requestDto) {
         adminEducationCategoryService.updateCategory(userDetails.getId(), categoryId, requestDto);
         return ResponseEntity.ok(ApiResponse.onNoContent("교육 카테고리가 수정되었습니다."));
     }
 
     @Operation(summary = "교육 카테고리 비활성화", description = "관리자가 교육 카테고리를 비활성화합니다.")
+    @ApiResponses(
+            value = {
+                @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                        responseCode = "200",
+                        description = "비활성화 성공"),
+                @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                        responseCode = "403",
+                        description = "권한 없음",
+                        content =
+                                @Content(
+                                        mediaType = "application/json",
+                                        examples =
+                                                @ExampleObject(
+                                                        value =
+                                                                """
+                                {
+                                  "isSuccess": false,
+                                  "code": "NO_AUTHORITY_FOR_EDUCATION_CATEGORY_MANAGE",
+                                  "message": "교육 카테고리 관리 권한이 없습니다.",
+                                  "result": null
+                                }
+                                """))),
+                @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                        responseCode = "404",
+                        description = "카테고리 없음",
+                        content =
+                                @Content(
+                                        mediaType = "application/json",
+                                        examples =
+                                                @ExampleObject(
+                                                        value =
+                                                                """
+                                {
+                                  "isSuccess": false,
+                                  "code": "EDUCATION_CATEGORY_NOT_FOUND",
+                                  "message": "해당 교육 카테고리를 찾을 수 없습니다.",
+                                  "result": null
+                                }
+                                """)))
+            })
     @PatchMapping("/{categoryId}/deactivate")
     public ResponseEntity<ApiResponse<Void>> deactivateCategory(
             @Parameter(hidden = true) @AuthenticationPrincipal CustomUserDetails userDetails,
-            @PathVariable Long categoryId) {
+            @Parameter(description = "비활성화할 카테고리 ID", example = "101") @PathVariable Long categoryId) {
         adminEducationCategoryService.deactivateCategory(userDetails.getId(), categoryId);
         return ResponseEntity.ok(ApiResponse.onNoContent("교육 카테고리가 비활성화되었습니다."));
     }
 
     @Operation(summary = "교육 카테고리 활성화", description = "관리자가 교육 카테고리를 활성화합니다.")
+    @ApiResponses(
+            value = {
+                @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                        responseCode = "200",
+                        description = "활성화 성공"),
+                @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                        responseCode = "403",
+                        description = "권한 없음",
+                        content =
+                                @Content(
+                                        mediaType = "application/json",
+                                        examples =
+                                                @ExampleObject(
+                                                        value =
+                                                                """
+                                {
+                                  "isSuccess": false,
+                                  "code": "NO_AUTHORITY_FOR_EDUCATION_CATEGORY_MANAGE",
+                                  "message": "교육 카테고리 관리 권한이 없습니다.",
+                                  "result": null
+                                }
+                                """))),
+                @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                        responseCode = "404",
+                        description = "카테고리 없음",
+                        content =
+                                @Content(
+                                        mediaType = "application/json",
+                                        examples =
+                                                @ExampleObject(
+                                                        value =
+                                                                """
+                                {
+                                  "isSuccess": false,
+                                  "code": "EDUCATION_CATEGORY_NOT_FOUND",
+                                  "message": "해당 교육 카테고리를 찾을 수 없습니다.",
+                                  "result": null
+                                }
+                                """)))
+            })
     @PatchMapping("/{categoryId}/activate")
     public ResponseEntity<ApiResponse<Void>> activateCategory(
             @Parameter(hidden = true) @AuthenticationPrincipal CustomUserDetails userDetails,
-            @PathVariable Long categoryId) {
+            @Parameter(description = "활성화할 카테고리 ID", example = "101") @PathVariable Long categoryId) {
         adminEducationCategoryService.activateCategory(userDetails.getId(), categoryId);
         return ResponseEntity.ok(ApiResponse.onNoContent("교육 카테고리가 활성화되었습니다."));
     }
 
     @Operation(summary = "교육 카테고리 정렬 변경", description = "같은 부모를 가진 카테고리들의 정렬 순서를 변경합니다.")
+    @ApiResponses(
+            value = {
+                @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                        responseCode = "200",
+                        description = "정렬 변경 성공"),
+                @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                        responseCode = "400",
+                        description = "잘못된 요청",
+                        content =
+                                @Content(
+                                        mediaType = "application/json",
+                                        examples =
+                                                @ExampleObject(
+                                                        value =
+                                                                """
+                                {
+                                  "isSuccess": false,
+                                  "code": "INVALID_ARGUMENT",
+                                  "message": "유효하지 않은 ARGUMENT입니다.",
+                                  "result": null
+                                }
+                                """))),
+                @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                        responseCode = "403",
+                        description = "권한 없음",
+                        content =
+                                @Content(
+                                        mediaType = "application/json",
+                                        examples =
+                                                @ExampleObject(
+                                                        value =
+                                                                """
+                                {
+                                  "isSuccess": false,
+                                  "code": "NO_AUTHORITY_FOR_EDUCATION_CATEGORY_MANAGE",
+                                  "message": "교육 카테고리 관리 권한이 없습니다.",
+                                  "result": null
+                                }
+                                """))),
+                @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                        responseCode = "404",
+                        description = "카테고리 없음",
+                        content =
+                                @Content(
+                                        mediaType = "application/json",
+                                        examples =
+                                                @ExampleObject(
+                                                        value =
+                                                                """
+                                {
+                                  "isSuccess": false,
+                                  "code": "EDUCATION_CATEGORY_NOT_FOUND",
+                                  "message": "해당 교육 카테고리를 찾을 수 없습니다.",
+                                  "result": null
+                                }
+                                """)))
+            })
     @PatchMapping("/reorder")
     public ResponseEntity<ApiResponse<Void>> reorderCategories(
             @Parameter(hidden = true) @AuthenticationPrincipal CustomUserDetails userDetails,

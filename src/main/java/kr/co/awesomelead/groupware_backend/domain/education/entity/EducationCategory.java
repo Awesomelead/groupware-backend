@@ -72,4 +72,3 @@ public class EducationCategory {
     @Column(nullable = false)
     private boolean active = true;
 }
-

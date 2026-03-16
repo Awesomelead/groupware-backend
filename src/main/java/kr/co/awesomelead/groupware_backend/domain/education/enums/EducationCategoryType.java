@@ -18,4 +18,3 @@ public enum EducationCategoryType {
         return description;
     }
 }
-

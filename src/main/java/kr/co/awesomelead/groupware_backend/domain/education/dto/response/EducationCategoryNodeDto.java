@@ -27,4 +27,3 @@ public class EducationCategoryNodeDto {
     @Schema(description = "하위 카테고리 목록")
     private List<EducationCategoryNodeDto> children = new ArrayList<>();
 }
-

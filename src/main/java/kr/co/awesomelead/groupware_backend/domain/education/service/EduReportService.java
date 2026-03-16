@@ -15,9 +15,9 @@ import kr.co.awesomelead.groupware_backend.domain.education.enums.EducationCateg
 import kr.co.awesomelead.groupware_backend.domain.education.mapper.EduMapper;
 import kr.co.awesomelead.groupware_backend.domain.education.repository.EduAttachmentRepository;
 import kr.co.awesomelead.groupware_backend.domain.education.repository.EduAttendanceRepository;
-import kr.co.awesomelead.groupware_backend.domain.education.repository.EducationCategoryRepository;
 import kr.co.awesomelead.groupware_backend.domain.education.repository.EduReportQueryRepository;
 import kr.co.awesomelead.groupware_backend.domain.education.repository.EduReportRepository;
+import kr.co.awesomelead.groupware_backend.domain.education.repository.EducationCategoryRepository;
 import kr.co.awesomelead.groupware_backend.domain.notification.service.NotificationService;
 import kr.co.awesomelead.groupware_backend.domain.user.entity.User;
 import kr.co.awesomelead.groupware_backend.domain.user.enums.Authority;
@@ -84,7 +84,9 @@ public class EduReportService {
                     educationCategoryRepository
                             .findById(requestDto.getCategoryId())
                             .orElseThrow(
-                                    () -> new CustomException(ErrorCode.EDUCATION_CATEGORY_NOT_FOUND));
+                                    () ->
+                                            new CustomException(
+                                                    ErrorCode.EDUCATION_CATEGORY_NOT_FOUND));
 
             EducationCategoryType expectedType =
                     requestDto.getEduType() == EduType.PSM

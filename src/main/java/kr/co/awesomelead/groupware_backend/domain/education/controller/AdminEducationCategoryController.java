@@ -259,7 +259,8 @@ public class AdminEducationCategoryController {
     @PatchMapping("/{categoryId}/deactivate")
     public ResponseEntity<ApiResponse<Void>> deactivateCategory(
             @Parameter(hidden = true) @AuthenticationPrincipal CustomUserDetails userDetails,
-            @Parameter(description = "비활성화할 카테고리 ID", example = "101") @PathVariable Long categoryId) {
+            @Parameter(description = "비활성화할 카테고리 ID", example = "101") @PathVariable
+                    Long categoryId) {
         adminEducationCategoryService.deactivateCategory(userDetails.getId(), categoryId);
         return ResponseEntity.ok(ApiResponse.onNoContent("교육 카테고리가 비활성화되었습니다."));
     }
@@ -308,7 +309,8 @@ public class AdminEducationCategoryController {
     @PatchMapping("/{categoryId}/activate")
     public ResponseEntity<ApiResponse<Void>> activateCategory(
             @Parameter(hidden = true) @AuthenticationPrincipal CustomUserDetails userDetails,
-            @Parameter(description = "활성화할 카테고리 ID", example = "101") @PathVariable Long categoryId) {
+            @Parameter(description = "활성화할 카테고리 ID", example = "101") @PathVariable
+                    Long categoryId) {
         adminEducationCategoryService.activateCategory(userDetails.getId(), categoryId);
         return ResponseEntity.ok(ApiResponse.onNoContent("교육 카테고리가 활성화되었습니다."));
     }

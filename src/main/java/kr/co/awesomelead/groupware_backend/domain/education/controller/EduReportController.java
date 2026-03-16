@@ -2,11 +2,11 @@ package kr.co.awesomelead.groupware_backend.domain.education.controller;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.media.ArraySchema;
 import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Encoding;
 import io.swagger.v3.oas.annotations.media.ExampleObject;
 import io.swagger.v3.oas.annotations.media.Schema;
-import io.swagger.v3.oas.annotations.media.ArraySchema;
-import io.swagger.v3.oas.annotations.media.Encoding;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 
@@ -72,8 +72,7 @@ public class EduReportController {
     @Operation(
             summary = "교육 보고서 생성",
             description =
-                    "교육 보고서를 생성합니다. PSM/안전보건 교육은 categoryId가 필수이며, 부서교육은"
-                            + " departmentId가 필요합니다.",
+                    "교육 보고서를 생성합니다. PSM/안전보건 교육은 categoryId가 필수이며, 부서교육은" + " departmentId가 필요합니다.",
             requestBody =
                     @io.swagger.v3.oas.annotations.parameters.RequestBody(
                             required = true,
@@ -83,7 +82,8 @@ public class EduReportController {
                                             schema =
                                                     @Schema(
                                                             implementation =
-                                                                    EduReportCreateMultipartRequestDoc.class),
+                                                                    EduReportCreateMultipartRequestDoc
+                                                                            .class),
                                             encoding = {
                                                 @Encoding(
                                                         name = "requestDto",
@@ -314,14 +314,13 @@ public class EduReportController {
                             example = "SALES_DEPT")
                     @RequestParam(required = false)
                     DepartmentName departmentName,
-            @Parameter(
-                            description = "카테고리 ID 필터 (PSM/SAFETY 카테고리별 조회용)",
-                            example = "1")
+            @Parameter(description = "카테고리 ID 필터 (PSM/SAFETY 카테고리별 조회용)", example = "1")
                     @RequestParam(required = false)
                     Long categoryId,
             @Parameter(hidden = true) @AuthenticationPrincipal CustomUserDetails userDetails) {
         List<EduReportSummaryDto> reports =
-                eduReportService.getEduReports(type, departmentName, categoryId, userDetails.getId());
+                eduReportService.getEduReports(
+                        type, departmentName, categoryId, userDetails.getId());
         return ResponseEntity.ok(ApiResponse.onSuccess(reports));
     }
 

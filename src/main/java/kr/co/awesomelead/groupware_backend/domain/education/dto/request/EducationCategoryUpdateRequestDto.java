@@ -25,4 +25,3 @@ public class EducationCategoryUpdateRequestDto {
     @Schema(description = "정렬 순서", example = "2")
     private Integer sortOrder;
 }
-

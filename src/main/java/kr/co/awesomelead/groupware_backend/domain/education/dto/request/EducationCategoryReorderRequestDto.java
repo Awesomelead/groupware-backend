@@ -17,4 +17,3 @@ public class EducationCategoryReorderRequestDto {
     @NotEmpty(message = "정렬할 카테고리 ID 목록은 필수입니다.")
     private List<Long> categoryIds;
 }
-

@@ -30,10 +30,9 @@ public class EducationCategoryController {
     @Operation(summary = "교육 카테고리 트리 조회", description = "유형(PSM/SAFETY)에 해당하는 카테고리 트리를 조회합니다.")
     @GetMapping
     public ResponseEntity<ApiResponse<List<EducationCategoryNodeDto>>> getCategoryTree(
-            @Parameter(description = "카테고리 유형", example = "PSM", required = true)
-                    @RequestParam
+            @Parameter(description = "카테고리 유형", example = "PSM", required = true) @RequestParam
                     EducationCategoryType type) {
-        return ResponseEntity.ok(ApiResponse.onSuccess(educationCategoryService.getCategoryTree(type)));
+        return ResponseEntity.ok(
+                ApiResponse.onSuccess(educationCategoryService.getCategoryTree(type)));
     }
 }
-

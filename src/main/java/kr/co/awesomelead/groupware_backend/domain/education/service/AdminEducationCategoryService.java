@@ -45,7 +45,9 @@ public class AdminEducationCategoryService {
                     educationCategoryRepository
                             .findById(requestDto.getParentId())
                             .orElseThrow(
-                                    () -> new CustomException(ErrorCode.EDUCATION_CATEGORY_NOT_FOUND));
+                                    () ->
+                                            new CustomException(
+                                                    ErrorCode.EDUCATION_CATEGORY_NOT_FOUND));
             if (parent.getCategoryType() != requestDto.getCategoryType()) {
                 throw new CustomException(ErrorCode.INVALID_ARGUMENT);
             }
@@ -59,7 +61,8 @@ public class AdminEducationCategoryService {
                         .categoryType(requestDto.getCategoryType())
                         .parent(parent)
                         .depth(depth)
-                        .sortOrder(requestDto.getSortOrder() != null ? requestDto.getSortOrder() : 0)
+                        .sortOrder(
+                                requestDto.getSortOrder() != null ? requestDto.getSortOrder() : 0)
                         .active(true)
                         .build();
 
@@ -74,10 +77,12 @@ public class AdminEducationCategoryService {
         EducationCategory category =
                 educationCategoryRepository
                         .findById(categoryId)
-                        .orElseThrow(() -> new CustomException(ErrorCode.EDUCATION_CATEGORY_NOT_FOUND));
+                        .orElseThrow(
+                                () -> new CustomException(ErrorCode.EDUCATION_CATEGORY_NOT_FOUND));
 
         String newCode = requestDto.getCode().trim();
-        if (!newCode.equals(category.getCode()) && educationCategoryRepository.existsByCode(newCode)) {
+        if (!newCode.equals(category.getCode())
+                && educationCategoryRepository.existsByCode(newCode)) {
             throw new CustomException(ErrorCode.DUPLICATE_EDUCATION_CATEGORY_CODE);
         }
 
@@ -88,7 +93,9 @@ public class AdminEducationCategoryService {
                     educationCategoryRepository
                             .findById(requestDto.getParentId())
                             .orElseThrow(
-                                    () -> new CustomException(ErrorCode.EDUCATION_CATEGORY_NOT_FOUND));
+                                    () ->
+                                            new CustomException(
+                                                    ErrorCode.EDUCATION_CATEGORY_NOT_FOUND));
             if (parent.getCategoryType() != category.getCategoryType()) {
                 throw new CustomException(ErrorCode.INVALID_ARGUMENT);
             }
@@ -114,7 +121,8 @@ public class AdminEducationCategoryService {
         EducationCategory category =
                 educationCategoryRepository
                         .findById(categoryId)
-                        .orElseThrow(() -> new CustomException(ErrorCode.EDUCATION_CATEGORY_NOT_FOUND));
+                        .orElseThrow(
+                                () -> new CustomException(ErrorCode.EDUCATION_CATEGORY_NOT_FOUND));
         category.setActive(false);
     }
 
@@ -125,7 +133,8 @@ public class AdminEducationCategoryService {
         EducationCategory category =
                 educationCategoryRepository
                         .findById(categoryId)
-                        .orElseThrow(() -> new CustomException(ErrorCode.EDUCATION_CATEGORY_NOT_FOUND));
+                        .orElseThrow(
+                                () -> new CustomException(ErrorCode.EDUCATION_CATEGORY_NOT_FOUND));
         category.setActive(true);
     }
 
@@ -153,7 +162,8 @@ public class AdminEducationCategoryService {
         }
 
         Map<Long, EducationCategory> categoryById =
-                categories.stream().collect(Collectors.toMap(EducationCategory::getId, Function.identity()));
+                categories.stream()
+                        .collect(Collectors.toMap(EducationCategory::getId, Function.identity()));
 
         for (int i = 0; i < ids.size(); i++) {
             Long id = ids.get(i);

@@ -5,8 +5,8 @@ import kr.co.awesomelead.groupware_backend.domain.education.dto.request.EduRepor
 import kr.co.awesomelead.groupware_backend.domain.education.dto.response.EduReportDetailDto;
 import kr.co.awesomelead.groupware_backend.domain.education.entity.EduAttachment;
 import kr.co.awesomelead.groupware_backend.domain.education.entity.EduAttendance;
-import kr.co.awesomelead.groupware_backend.domain.education.entity.EducationCategory;
 import kr.co.awesomelead.groupware_backend.domain.education.entity.EduReport;
+import kr.co.awesomelead.groupware_backend.domain.education.entity.EducationCategory;
 import kr.co.awesomelead.groupware_backend.domain.user.entity.User;
 import kr.co.awesomelead.groupware_backend.global.infra.s3.service.S3Service;
 
@@ -41,7 +41,8 @@ public interface EduMapper {
             expression = "java(report.getCategory() != null ? report.getCategory().getId() : null)")
     @Mapping(
             target = "categoryName",
-            expression = "java(report.getCategory() != null ? report.getCategory().getName() : null)")
+            expression =
+                    "java(report.getCategory() != null ? report.getCategory().getName() : null)")
     @Mapping(
             target = "departmentName",
             expression =

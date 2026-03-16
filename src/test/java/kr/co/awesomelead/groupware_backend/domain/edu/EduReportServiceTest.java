@@ -26,9 +26,9 @@ import kr.co.awesomelead.groupware_backend.domain.education.enums.EducationCateg
 import kr.co.awesomelead.groupware_backend.domain.education.mapper.EduMapper;
 import kr.co.awesomelead.groupware_backend.domain.education.repository.EduAttachmentRepository;
 import kr.co.awesomelead.groupware_backend.domain.education.repository.EduAttendanceRepository;
-import kr.co.awesomelead.groupware_backend.domain.education.repository.EducationCategoryRepository;
 import kr.co.awesomelead.groupware_backend.domain.education.repository.EduReportQueryRepository;
 import kr.co.awesomelead.groupware_backend.domain.education.repository.EduReportRepository;
+import kr.co.awesomelead.groupware_backend.domain.education.repository.EducationCategoryRepository;
 import kr.co.awesomelead.groupware_backend.domain.education.service.EduReportService;
 import kr.co.awesomelead.groupware_backend.domain.notification.service.NotificationService;
 import kr.co.awesomelead.groupware_backend.domain.user.entity.User;
@@ -147,7 +147,10 @@ public class EduReportServiceTest {
         User user = createNormalUser();
         user.addAuthority(Authority.ACCESS_EDUCATION);
         EducationCategory category =
-                EducationCategory.builder().id(1L).categoryType(EducationCategoryType.SAFETY).build();
+                EducationCategory.builder()
+                        .id(1L)
+                        .categoryType(EducationCategoryType.SAFETY)
+                        .build();
 
         when(userRepository.findById(1L)).thenReturn(Optional.of(user));
         when(educationCategoryRepository.findById(1L)).thenReturn(Optional.of(category));

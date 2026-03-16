@@ -9,10 +9,13 @@ import kr.co.awesomelead.groupware_backend.domain.education.dto.response.EduRepo
 import kr.co.awesomelead.groupware_backend.domain.education.entity.EduAttachment;
 import kr.co.awesomelead.groupware_backend.domain.education.entity.EduAttendance;
 import kr.co.awesomelead.groupware_backend.domain.education.entity.EduReport;
+import kr.co.awesomelead.groupware_backend.domain.education.entity.EducationCategory;
 import kr.co.awesomelead.groupware_backend.domain.education.enums.EduType;
+import kr.co.awesomelead.groupware_backend.domain.education.enums.EducationCategoryType;
 import kr.co.awesomelead.groupware_backend.domain.education.mapper.EduMapper;
 import kr.co.awesomelead.groupware_backend.domain.education.repository.EduAttachmentRepository;
 import kr.co.awesomelead.groupware_backend.domain.education.repository.EduAttendanceRepository;
+import kr.co.awesomelead.groupware_backend.domain.education.repository.EducationCategoryRepository;
 import kr.co.awesomelead.groupware_backend.domain.education.repository.EduReportQueryRepository;
 import kr.co.awesomelead.groupware_backend.domain.education.repository.EduReportRepository;
 import kr.co.awesomelead.groupware_backend.domain.notification.service.NotificationService;
@@ -43,6 +46,7 @@ public class EduReportService {
     private final EduReportQueryRepository eduReportQueryRepository;
     private final EduAttendanceRepository eduAttendanceRepository;
     private final EduAttachmentRepository eduAttachmentRepository;
+    private final EducationCategoryRepository educationCategoryRepository;
     private final EduMapper eduMapper;
     private final DepartmentRepository departmentRepository;
     private final UserRepository userRepository;
@@ -70,7 +74,28 @@ public class EduReportService {
                             .orElseThrow(() -> new CustomException(ErrorCode.DEPARTMENT_NOT_FOUND));
         }
 
-        EduReport report = eduMapper.toEduReportEntity(requestDto, department);
+        EducationCategory category = null;
+        if (requestDto.getEduType() == EduType.PSM || requestDto.getEduType() == EduType.SAFETY) {
+            if (requestDto.getCategoryId() == null) {
+                throw new CustomException(ErrorCode.EDUCATION_CATEGORY_REQUIRED);
+            }
+
+            category =
+                    educationCategoryRepository
+                            .findById(requestDto.getCategoryId())
+                            .orElseThrow(
+                                    () -> new CustomException(ErrorCode.EDUCATION_CATEGORY_NOT_FOUND));
+
+            EducationCategoryType expectedType =
+                    requestDto.getEduType() == EduType.PSM
+                            ? EducationCategoryType.PSM
+                            : EducationCategoryType.SAFETY;
+            if (category.getCategoryType() != expectedType) {
+                throw new CustomException(ErrorCode.INVALID_ARGUMENT);
+            }
+        }
+
+        EduReport report = eduMapper.toEduReportEntity(requestDto, department, category);
 
         if (files != null && !files.isEmpty()) {
             for (MultipartFile file : files) {

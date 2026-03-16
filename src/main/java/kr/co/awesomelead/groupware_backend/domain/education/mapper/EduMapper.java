@@ -5,6 +5,7 @@ import kr.co.awesomelead.groupware_backend.domain.education.dto.request.EduRepor
 import kr.co.awesomelead.groupware_backend.domain.education.dto.response.EduReportDetailDto;
 import kr.co.awesomelead.groupware_backend.domain.education.entity.EduAttachment;
 import kr.co.awesomelead.groupware_backend.domain.education.entity.EduAttendance;
+import kr.co.awesomelead.groupware_backend.domain.education.entity.EducationCategory;
 import kr.co.awesomelead.groupware_backend.domain.education.entity.EduReport;
 import kr.co.awesomelead.groupware_backend.domain.user.entity.User;
 import kr.co.awesomelead.groupware_backend.global.infra.s3.service.S3Service;
@@ -22,7 +23,9 @@ public interface EduMapper {
     @Mapping(target = "eduDate", ignore = true)
     @Mapping(target = "attachments", ignore = true)
     @Mapping(target = "department", source = "department")
-    EduReport toEduReportEntity(EduReportRequestDto dto, Department department);
+    @Mapping(target = "category", source = "category")
+    EduReport toEduReportEntity(
+            EduReportRequestDto dto, Department department, EducationCategory category);
 
     /**
      * EduReport → EduReportDetailDto 변환

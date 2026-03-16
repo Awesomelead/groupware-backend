@@ -12,7 +12,8 @@ public interface EducationCategoryRepository extends JpaRepository<EducationCate
 
     Optional<EducationCategory> findByCode(String code);
 
+    boolean existsByCode(String code);
+
     List<EducationCategory> findAllByCategoryTypeAndActiveTrueOrderByDepthAscSortOrderAscIdAsc(
             EducationCategoryType categoryType);
 }
-

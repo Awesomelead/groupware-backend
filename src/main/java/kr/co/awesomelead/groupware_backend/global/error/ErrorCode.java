@@ -64,6 +64,7 @@ public enum ErrorCode {
     REQUEST_HISTORY_NOT_ISSUABLE(HttpStatus.BAD_REQUEST, "발급 대기 상태 요청만 발급 완료 처리할 수 있습니다."),
     REQUEST_HISTORY_NOT_REJECTABLE(HttpStatus.BAD_REQUEST, "발급 대기 상태 요청만 반려 처리할 수 있습니다."),
     HANBIRO_ACCOUNT_NOT_LINKED(HttpStatus.BAD_REQUEST, "한비로 계정 연동이 필요합니다."),
+    EDUCATION_CATEGORY_REQUIRED(HttpStatus.BAD_REQUEST, "PSM/안전보건 교육 등록 시 카테고리는 필수입니다."),
 
     // 401 Unauthorized
     INVALID_TOKEN(HttpStatus.UNAUTHORIZED, "유효하지 않은 토큰입니다."),
@@ -101,6 +102,7 @@ public enum ErrorCode {
     REQUEST_HISTORY_NOT_FOUND(HttpStatus.NOT_FOUND, "해당 제증명 발급 신청 내역을 찾을 수 없습니다."),
     REQUEST_HISTORY_NOT_CANCELABLE(HttpStatus.BAD_REQUEST, "대기 상태 요청만 취소할 수 있습니다."),
     PAYSLIP_NOT_FOUND(HttpStatus.NOT_FOUND, "해당 급여명세서를 찾을 수 없습니다."),
+    EDUCATION_CATEGORY_NOT_FOUND(HttpStatus.NOT_FOUND, "해당 교육 카테고리를 찾을 수 없습니다."),
     RECORD_NOT_FOUND(HttpStatus.NOT_FOUND, "해당 방문기록을 찾을 수 없습니다."),
     FCM_TOKEN_NOT_FOUND(HttpStatus.NOT_FOUND, "해당 FCM 토큰을 찾을 수 없습니다."),
     NOTIFICATION_NOT_FOUND(HttpStatus.NOT_FOUND, "해당 알림을 찾을 수 없습니다."),

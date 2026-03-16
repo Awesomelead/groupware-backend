@@ -55,7 +55,7 @@ public class EduReportQueryRepository {
                                 eduReport.category.id,
                                 eduReport.category.name))
                 .from(eduReport)
-                .where(eqEduType(type), deptFilter(hasAccess, dept))
+                .where(eqEduType(type), deptFilter(type, hasAccess, dept))
                 .orderBy(eduReport.pinned.desc(), eduReport.eduDate.desc())
                 .fetch();
     }
@@ -76,10 +76,15 @@ public class EduReportQueryRepository {
      *   <li>hasAccess=false → 기존 로직: DEPARTMENT 타입이 아니거나, 타입이 DEPARTMENT이면 자신의 부서만
      * </ul>
      */
-    private BooleanExpression deptFilter(boolean hasAccess, Department dept) {
+    private BooleanExpression deptFilter(EduType type, boolean hasAccess, Department dept) {
         if (hasAccess) {
-            // ACCESS_EDUCATION 권한 있음: dept 지정 시 해당 부서만, 없으면 전체
-            return dept != null ? eduReport.department.eq(dept) : null;
+            // ACCESS_EDUCATION 권한 있음:
+            // - DEPARTMENT 조회일 때만 departmentName 필터 적용
+            // - PSM/SAFETY 조회는 departmentName 무시
+            if (type == EduType.DEPARTMENT && dept != null) {
+                return eduReport.department.eq(dept);
+            }
+            return null;
         }
         // ACCESS_EDUCATION 권한 없음: 기존 로직 유지
         // - DEPARTMENT 타입이 아닌 교육(PSM, SAFETY)은 모두 보임

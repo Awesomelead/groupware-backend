@@ -37,6 +37,12 @@ public interface EduMapper {
     @Mapping(target = "attachments", source = "report.attachments")
     @Mapping(target = "eduType", source = "report.eduType")
     @Mapping(
+            target = "categoryId",
+            expression = "java(report.getCategory() != null ? report.getCategory().getId() : null)")
+    @Mapping(
+            target = "categoryName",
+            expression = "java(report.getCategory() != null ? report.getCategory().getName() : null)")
+    @Mapping(
             target = "departmentName",
             expression =
                     "java(report.getDepartment() != null"

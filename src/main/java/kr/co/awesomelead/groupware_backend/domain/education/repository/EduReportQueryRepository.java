@@ -51,7 +51,9 @@ public class EduReportQueryRepository {
                                                 eduAttendance.user.id.eq(userId))
                                         .exists(),
                                 eduReport.pinned,
-                                eduReport.signatureRequired))
+                                eduReport.signatureRequired,
+                                eduReport.category.id,
+                                eduReport.category.name))
                 .from(eduReport)
                 .where(eqEduType(type), deptFilter(hasAccess, dept))
                 .orderBy(eduReport.pinned.desc(), eduReport.eduDate.desc())

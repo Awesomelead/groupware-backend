@@ -40,4 +40,10 @@ public class EduReportSummaryDto {
 
     @Schema(description = "서명 필수 여부", example = "false")
     private boolean signatureRequired;
+
+    @Schema(description = "교육 카테고리 ID", example = "1")
+    private Long categoryId;
+
+    @Schema(description = "교육 카테고리명", example = "유해위험물질")
+    private String categoryName;
 }

@@ -74,6 +74,10 @@ public class EduReport {
     @JoinColumn(name = "department_id", nullable = true) // 부서교육의 경우에만 작성
     private Department department;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "category_id")
+    private EducationCategory category;
+
     @PrePersist
     protected void prePersist() {
         if (this.eduDate == null) {

@@ -41,4 +41,7 @@ public class EduReportRequestDto {
 
     @Schema(description = "부서 ID (부서 교육인 경우 필수)", example = "3")
     private Long departmentId; // 부서교육인 경우에만 작성
+
+    @Schema(description = "카테고리 ID (PSM/안전보건 작성 시 필수)", example = "1")
+    private Long categoryId;
 }

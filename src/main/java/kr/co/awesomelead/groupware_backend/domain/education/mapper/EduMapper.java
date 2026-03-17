@@ -6,6 +6,7 @@ import kr.co.awesomelead.groupware_backend.domain.education.dto.response.EduRepo
 import kr.co.awesomelead.groupware_backend.domain.education.entity.EduAttachment;
 import kr.co.awesomelead.groupware_backend.domain.education.entity.EduAttendance;
 import kr.co.awesomelead.groupware_backend.domain.education.entity.EduReport;
+import kr.co.awesomelead.groupware_backend.domain.education.entity.EducationCategory;
 import kr.co.awesomelead.groupware_backend.domain.user.entity.User;
 import kr.co.awesomelead.groupware_backend.global.infra.s3.service.S3Service;
 
@@ -22,7 +23,9 @@ public interface EduMapper {
     @Mapping(target = "eduDate", ignore = true)
     @Mapping(target = "attachments", ignore = true)
     @Mapping(target = "department", source = "department")
-    EduReport toEduReportEntity(EduReportRequestDto dto, Department department);
+    @Mapping(target = "category", source = "category")
+    EduReport toEduReportEntity(
+            EduReportRequestDto dto, Department department, EducationCategory category);
 
     /**
      * EduReport → EduReportDetailDto 변환
@@ -33,6 +36,13 @@ public interface EduMapper {
     @Mapping(target = "attendance", ignore = true)
     @Mapping(target = "attachments", source = "report.attachments")
     @Mapping(target = "eduType", source = "report.eduType")
+    @Mapping(
+            target = "categoryId",
+            expression = "java(report.getCategory() != null ? report.getCategory().getId() : null)")
+    @Mapping(
+            target = "categoryName",
+            expression =
+                    "java(report.getCategory() != null ? report.getCategory().getName() : null)")
     @Mapping(
             target = "departmentName",
             expression =

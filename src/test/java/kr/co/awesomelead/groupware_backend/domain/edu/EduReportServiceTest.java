@@ -20,12 +20,15 @@ import kr.co.awesomelead.groupware_backend.domain.education.dto.response.EduRepo
 import kr.co.awesomelead.groupware_backend.domain.education.entity.EduAttachment;
 import kr.co.awesomelead.groupware_backend.domain.education.entity.EduAttendance;
 import kr.co.awesomelead.groupware_backend.domain.education.entity.EduReport;
+import kr.co.awesomelead.groupware_backend.domain.education.entity.EducationCategory;
 import kr.co.awesomelead.groupware_backend.domain.education.enums.EduType;
+import kr.co.awesomelead.groupware_backend.domain.education.enums.EducationCategoryType;
 import kr.co.awesomelead.groupware_backend.domain.education.mapper.EduMapper;
 import kr.co.awesomelead.groupware_backend.domain.education.repository.EduAttachmentRepository;
 import kr.co.awesomelead.groupware_backend.domain.education.repository.EduAttendanceRepository;
 import kr.co.awesomelead.groupware_backend.domain.education.repository.EduReportQueryRepository;
 import kr.co.awesomelead.groupware_backend.domain.education.repository.EduReportRepository;
+import kr.co.awesomelead.groupware_backend.domain.education.repository.EducationCategoryRepository;
 import kr.co.awesomelead.groupware_backend.domain.education.service.EduReportService;
 import kr.co.awesomelead.groupware_backend.domain.notification.service.NotificationService;
 import kr.co.awesomelead.groupware_backend.domain.user.entity.User;
@@ -61,6 +64,7 @@ public class EduReportServiceTest {
     @Mock private EduReportRepository eduReportRepository;
     @Mock private EduAttendanceRepository eduAttendanceRepository;
     @Mock private EduAttachmentRepository eduAttachmentRepository;
+    @Mock private EducationCategoryRepository educationCategoryRepository;
     @Mock private EduMapper eduMapper;
     @Mock private DepartmentRepository departmentRepository;
     @Mock private UserRepository userRepository;
@@ -110,6 +114,7 @@ public class EduReportServiceTest {
                         .title("교육 보고서 제목")
                         .content("교육 보고서 내용")
                         .eduType(EduType.SAFETY)
+                        .categoryId(1L)
                         .departmentId(null) // 안전교육이므로 부서 아이디 제외
                         .build();
 
@@ -141,9 +146,15 @@ public class EduReportServiceTest {
 
         User user = createNormalUser();
         user.addAuthority(Authority.ACCESS_EDUCATION);
+        EducationCategory category =
+                EducationCategory.builder()
+                        .id(1L)
+                        .categoryType(EducationCategoryType.SAFETY)
+                        .build();
 
         when(userRepository.findById(1L)).thenReturn(Optional.of(user));
-        when(eduMapper.toEduReportEntity(any(EduReportRequestDto.class), any()))
+        when(educationCategoryRepository.findById(1L)).thenReturn(Optional.of(category));
+        when(eduMapper.toEduReportEntity(any(EduReportRequestDto.class), any(), any()))
                 .thenReturn(eduReport);
         when(s3Service.uploadFile(file)).thenReturn(eduAttachment.getS3Key());
         when(eduReportRepository.save(eduReport)).thenReturn(eduReport);
@@ -181,6 +192,7 @@ public class EduReportServiceTest {
                         .title("교육 보고서 제목")
                         .content("교육 보고서 내용")
                         .eduType(EduType.SAFETY)
+                        .categoryId(1L)
                         .departmentId(null) // 안전교육이므로 부서 아이디 제외
                         .build();
 
@@ -204,6 +216,7 @@ public class EduReportServiceTest {
                         .title("교육 보고서 제목")
                         .content("교육 보고서 내용")
                         .eduType(EduType.SAFETY)
+                        .categoryId(1L)
                         .departmentId(null) // 안전교육이므로 부서 아이디 제외
                         .build();
 
@@ -268,11 +281,12 @@ public class EduReportServiceTest {
         List<EduReportSummaryDto> mockList = List.of(report1);
 
         when(userRepository.findById(1L)).thenReturn(Optional.of(user));
-        when(eduReportQueryRepository.findEduReports(EduType.SAFETY, department, 1L, false))
+        when(eduReportQueryRepository.findEduReports(EduType.SAFETY, department, null, 1L, false))
                 .thenReturn(mockList);
 
         // when
-        List<EduReportSummaryDto> result = eduReportService.getEduReports(EduType.SAFETY, null, 1L);
+        List<EduReportSummaryDto> result =
+                eduReportService.getEduReports(EduType.SAFETY, null, null, 1L);
 
         // then
         assertThat(result).isNotNull();
@@ -280,7 +294,7 @@ public class EduReportServiceTest {
         assertThat(result.get(0).getTitle()).isEqualTo("안전 교육 보고서");
 
         verify(eduReportQueryRepository, times(1))
-                .findEduReports(EduType.SAFETY, department, 1L, false);
+                .findEduReports(EduType.SAFETY, department, null, 1L, false);
     }
 
     @Test
@@ -305,17 +319,18 @@ public class EduReportServiceTest {
 
         when(userRepository.findById(1L)).thenReturn(Optional.of(user));
         // dept=null → 전체 조회
-        when(eduReportQueryRepository.findEduReports(null, null, 1L, true)).thenReturn(mockList);
+        when(eduReportQueryRepository.findEduReports(null, null, null, 1L, true))
+                .thenReturn(mockList);
 
         // when
-        List<EduReportSummaryDto> result = eduReportService.getEduReports(null, null, 1L);
+        List<EduReportSummaryDto> result = eduReportService.getEduReports(null, null, null, 1L);
 
         // then
         assertThat(result).isNotNull();
         assertThat(result.size()).isEqualTo(1);
 
         // hasAccess=true, dept=null → QueryRepository에 null 부서로 호출
-        verify(eduReportQueryRepository, times(1)).findEduReports(null, null, 1L, true);
+        verify(eduReportQueryRepository, times(1)).findEduReports(null, null, null, 1L, true);
     }
 
     @Test
@@ -341,12 +356,13 @@ public class EduReportServiceTest {
         when(userRepository.findById(1L)).thenReturn(Optional.of(user));
         when(departmentRepository.findByName(DepartmentName.SALES_DEPT))
                 .thenReturn(Optional.of(salesDept));
-        when(eduReportQueryRepository.findEduReports(EduType.DEPARTMENT, salesDept, 1L, true))
+        when(eduReportQueryRepository.findEduReports(EduType.DEPARTMENT, salesDept, null, 1L, true))
                 .thenReturn(List.of(report1));
 
         // when
         List<EduReportSummaryDto> result =
-                eduReportService.getEduReports(EduType.DEPARTMENT, DepartmentName.SALES_DEPT, 1L);
+                eduReportService.getEduReports(
+                        EduType.DEPARTMENT, DepartmentName.SALES_DEPT, null, 1L);
 
         // then
         assertThat(result).isNotNull();
@@ -355,7 +371,7 @@ public class EduReportServiceTest {
 
         verify(departmentRepository, times(1)).findByName(DepartmentName.SALES_DEPT);
         verify(eduReportQueryRepository, times(1))
-                .findEduReports(EduType.DEPARTMENT, salesDept, 1L, true);
+                .findEduReports(EduType.DEPARTMENT, salesDept, null, 1L, true);
     }
 
     @Test
@@ -365,12 +381,13 @@ public class EduReportServiceTest {
         when(userRepository.findById(1L)).thenReturn(Optional.empty());
 
         // when & then
-        assertThatThrownBy(() -> eduReportService.getEduReports(EduType.SAFETY, null, 1L))
+        assertThatThrownBy(() -> eduReportService.getEduReports(EduType.SAFETY, null, null, 1L))
                 .isInstanceOf(CustomException.class)
                 .extracting("errorCode")
                 .isEqualTo(ErrorCode.USER_NOT_FOUND);
 
-        verify(eduReportQueryRepository, never()).findEduReports(any(), any(), any(), anyBoolean());
+        verify(eduReportQueryRepository, never())
+                .findEduReports(any(), any(), any(), anyLong(), anyBoolean());
     }
 
     @Test

@@ -64,6 +64,7 @@ public enum ErrorCode {
     REQUEST_HISTORY_NOT_ISSUABLE(HttpStatus.BAD_REQUEST, "발급 대기 상태 요청만 발급 완료 처리할 수 있습니다."),
     REQUEST_HISTORY_NOT_REJECTABLE(HttpStatus.BAD_REQUEST, "발급 대기 상태 요청만 반려 처리할 수 있습니다."),
     HANBIRO_ACCOUNT_NOT_LINKED(HttpStatus.BAD_REQUEST, "한비로 계정 연동이 필요합니다."),
+    EDUCATION_CATEGORY_REQUIRED(HttpStatus.BAD_REQUEST, "PSM/안전보건 교육 등록 시 카테고리는 필수입니다."),
 
     // 401 Unauthorized
     INVALID_TOKEN(HttpStatus.UNAUTHORIZED, "유효하지 않은 토큰입니다."),
@@ -88,6 +89,7 @@ public enum ErrorCode {
     NO_AUTHORITY_FOR_VIEW_PAYSLIP(HttpStatus.FORBIDDEN, "급여명세서 조회 권한이 없습니다."),
     NO_AUTHORITY_FOR_NOTIFICATION(HttpStatus.FORBIDDEN, "해당 알림에 대한 접근 권한이 없습니다."),
     NO_AUTHORITY_FOR_CERTIFICATE_REQUEST_REVIEW(HttpStatus.FORBIDDEN, "제증명 신청 승인/반려 권한이 없습니다."),
+    NO_AUTHORITY_FOR_EDUCATION_CATEGORY_MANAGE(HttpStatus.FORBIDDEN, "교육 카테고리 관리 권한이 없습니다."),
 
     // 404 Not Found
     USER_NOT_FOUND(HttpStatus.NOT_FOUND, "해당 사용자를 찾을 수 없습니다."),
@@ -101,6 +103,7 @@ public enum ErrorCode {
     REQUEST_HISTORY_NOT_FOUND(HttpStatus.NOT_FOUND, "해당 제증명 발급 신청 내역을 찾을 수 없습니다."),
     REQUEST_HISTORY_NOT_CANCELABLE(HttpStatus.BAD_REQUEST, "대기 상태 요청만 취소할 수 있습니다."),
     PAYSLIP_NOT_FOUND(HttpStatus.NOT_FOUND, "해당 급여명세서를 찾을 수 없습니다."),
+    EDUCATION_CATEGORY_NOT_FOUND(HttpStatus.NOT_FOUND, "해당 교육 카테고리를 찾을 수 없습니다."),
     RECORD_NOT_FOUND(HttpStatus.NOT_FOUND, "해당 방문기록을 찾을 수 없습니다."),
     FCM_TOKEN_NOT_FOUND(HttpStatus.NOT_FOUND, "해당 FCM 토큰을 찾을 수 없습니다."),
     NOTIFICATION_NOT_FOUND(HttpStatus.NOT_FOUND, "해당 알림을 찾을 수 없습니다."),
@@ -111,6 +114,7 @@ public enum ErrorCode {
     DUPLICATE_LOGIN_ID(HttpStatus.CONFLICT, "이미 사용 중인 아이디입니다."),
     DUPLICATE_PHONE_NUMBER(HttpStatus.CONFLICT, "이미 가입된 전화번호입니다."),
     DUPLICATE_REGISTRATION_NUMBER(HttpStatus.CONFLICT, "이미 가입된 주민등록번호입니다."),
+    DUPLICATE_EDUCATION_CATEGORY_CODE(HttpStatus.CONFLICT, "이미 사용 중인 교육 카테고리 코드입니다."),
 
     // 500 Internal Server Error
     INTERNAL_SERVER_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "서버 내부 오류가 발생했습니다."),

@@ -388,13 +388,9 @@ public class AuthService {
             boolean hasReferrer = config.getReferrerIds().contains(userId);
             if (hasApprover || hasReferrer) {
                 List<Long> newApprovers =
-                        config.getApproverIds().stream()
-                                .filter(id -> !id.equals(userId))
-                                .toList();
+                        config.getApproverIds().stream().filter(id -> !id.equals(userId)).toList();
                 List<Long> newReferrers =
-                        config.getReferrerIds().stream()
-                                .filter(id -> !id.equals(userId))
-                                .toList();
+                        config.getReferrerIds().stream().filter(id -> !id.equals(userId)).toList();
                 config.update(newApprovers, newReferrers);
             }
         }

@@ -90,6 +90,7 @@ public enum ErrorCode {
     NO_AUTHORITY_FOR_NOTIFICATION(HttpStatus.FORBIDDEN, "해당 알림에 대한 접근 권한이 없습니다."),
     NO_AUTHORITY_FOR_CERTIFICATE_REQUEST_REVIEW(HttpStatus.FORBIDDEN, "제증명 신청 승인/반려 권한이 없습니다."),
     NO_AUTHORITY_FOR_EDUCATION_CATEGORY_MANAGE(HttpStatus.FORBIDDEN, "교육 카테고리 관리 권한이 없습니다."),
+    NO_AUTHORITY_FOR_APPROVAL_CONFIG(HttpStatus.FORBIDDEN, "결재 설정 관리 권한이 없습니다."),
 
     // 404 Not Found
     USER_NOT_FOUND(HttpStatus.NOT_FOUND, "해당 사용자를 찾을 수 없습니다."),

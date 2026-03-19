@@ -3,6 +3,7 @@ package kr.co.awesomelead.groupware_backend.domain.visit.dto.response;
 import io.swagger.v3.oas.annotations.media.Schema;
 
 import kr.co.awesomelead.groupware_backend.domain.department.enums.DepartmentName;
+import kr.co.awesomelead.groupware_backend.domain.user.enums.Position;
 import kr.co.awesomelead.groupware_backend.domain.visit.enums.VisitPurpose;
 import kr.co.awesomelead.groupware_backend.domain.visit.enums.VisitStatus;
 
@@ -34,6 +35,15 @@ public class MyVisitDetailResponseDto {
 
     @Schema(description = "방문 목적", example = "고객 검수")
     private VisitPurpose purpose;
+
+    @Schema(description = "담당 직원 ID", example = "1")
+    private Long hostId;
+
+    @Schema(description = "담당 직원 이름", example = "김철수")
+    private String hostName;
+
+    @Schema(description = "담당 직원 직급", example = "과장")
+    private Position hostPosition;
 
     @Schema(description = "담당 부서명", example = "환경안전부")
     private DepartmentName departmentName;

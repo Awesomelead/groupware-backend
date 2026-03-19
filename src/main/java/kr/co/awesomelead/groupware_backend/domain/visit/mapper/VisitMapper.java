@@ -114,6 +114,9 @@ public interface VisitMapper {
 
     // MyVisitDetailResponseDto 매핑
     @Mapping(target = "visitId", source = "id")
+    @Mapping(target = "hostId", source = "user.id")
+    @Mapping(target = "hostName", expression = "java(visit.getUser().getDisplayName())")
+    @Mapping(target = "hostPosition", source = "user.position")
     @Mapping(target = "departmentName", source = "user.department.name")
     @Mapping(target = "entryTime", expression = "java(getEntryTimeLogic(visit))")
     @Mapping(target = "exitTime", expression = "java(getExitTimeLogic(visit))")

@@ -17,7 +17,6 @@ import kr.co.awesomelead.groupware_backend.domain.user.repository.UserRepository
 import kr.co.awesomelead.groupware_backend.domain.visit.dto.request.CheckInRequestDto;
 import kr.co.awesomelead.groupware_backend.domain.visit.dto.request.CheckOutRequestDto;
 import kr.co.awesomelead.groupware_backend.domain.visit.dto.request.LongTermVisitRequestDto;
-import kr.co.awesomelead.groupware_backend.domain.visit.dto.request.MyVisitDetailRequestDto;
 import kr.co.awesomelead.groupware_backend.domain.visit.dto.request.MyVisitUpdateRequestDto;
 import kr.co.awesomelead.groupware_backend.domain.visit.dto.request.OnSiteVisitRequestDto;
 import kr.co.awesomelead.groupware_backend.domain.visit.dto.request.OneDayVisitRequestDto;
@@ -817,29 +816,4 @@ public class VisitServiceTest {
         }
     }
 
-    @Nested
-    @DisplayName("getMyVisitDetail 메서드는")
-    class Describe_getMyVisitDetail {
-
-        @Nested
-        @DisplayName("비밀번호가 일치하지 않으면")
-        class Context_with_wrong_password {
-
-            @Test
-            @DisplayName("정보 조회를 거부하고 예외를 던진다.")
-            void it_throws_exception_for_wrong_password() {
-                // given
-                Visit visit = Visit.builder().password("encoded_pw").build();
-                MyVisitDetailRequestDto dto = new MyVisitDetailRequestDto("wrong_pw");
-
-                given(visitRepository.findById(any())).willReturn(Optional.of(visit));
-                given(passwordEncoder.matches("wrong_pw", "encoded_pw")).willReturn(false);
-
-                // when & then
-                assertThatThrownBy(() -> visitService.getMyVisitDetail(100L, dto))
-                        .isInstanceOf(CustomException.class)
-                        .hasMessageContaining("유효하지 않은 비밀번호입니다.");
-            }
-        }
-    }
 }

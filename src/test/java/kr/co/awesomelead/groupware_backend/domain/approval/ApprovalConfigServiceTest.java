@@ -87,8 +87,7 @@ class ApprovalConfigServiceTest {
             @DisplayName("기존 설정이 있으면 덮어쓰고 save를 호출하지 않는다")
             void saveConfig_existingEntry_updatesInPlace() {
                 ApprovalLineConfig existing =
-                        ApprovalLineConfig.of(
-                                DocumentType.BASIC, List.of(1L, 2L), List.of(3L));
+                        ApprovalLineConfig.of(DocumentType.BASIC, List.of(1L, 2L), List.of(3L));
 
                 ApprovalConfigSaveRequestDto request = new ApprovalConfigSaveRequestDto();
                 request.setDocumentType(DocumentType.BASIC);
@@ -146,7 +145,8 @@ class ApprovalConfigServiceTest {
                                 ex ->
                                         assertThat(((CustomException) ex).getErrorCode())
                                                 .isEqualTo(
-                                                        ErrorCode.NO_AUTHORITY_FOR_APPROVAL_CONFIG));
+                                                        ErrorCode
+                                                                .NO_AUTHORITY_FOR_APPROVAL_CONFIG));
             }
         }
     }

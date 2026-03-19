@@ -5,4 +5,5 @@ import kr.co.awesomelead.groupware_backend.domain.approval.enums.DocumentType;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 
-public interface ApprovalLineConfigRepository extends JpaRepository<ApprovalLineConfig, DocumentType> {}
+public interface ApprovalLineConfigRepository
+        extends JpaRepository<ApprovalLineConfig, DocumentType> {}

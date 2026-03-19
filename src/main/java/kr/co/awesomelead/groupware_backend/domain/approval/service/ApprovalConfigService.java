@@ -16,7 +16,13 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
 import java.util.Optional;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -53,6 +59,30 @@ public class ApprovalConfigService {
         }
 
         return ApprovalConfigResponseDto.from(config);
+    }
+
+    @Transactional(readOnly = true)
+    public List<ApprovalConfigResponseDto> getAllConfigs() {
+        List<ApprovalLineConfig> allConfigs = approvalLineConfigRepository.findAll();
+        Map<DocumentType, ApprovalLineConfig> configMap =
+                allConfigs.stream()
+                        .collect(
+                                Collectors.toMap(
+                                        ApprovalLineConfig::getDocumentType, Function.identity()));
+
+        return Arrays.stream(DocumentType.values())
+                .map(
+                        type -> {
+                            ApprovalLineConfig config =
+                                    configMap.getOrDefault(
+                                            type,
+                                            ApprovalLineConfig.of(
+                                                    type,
+                                                    Collections.emptyList(),
+                                                    Collections.emptyList()));
+                            return ApprovalConfigResponseDto.from(config);
+                        })
+                .collect(Collectors.toList());
     }
 
     @Transactional(readOnly = true)

@@ -9,6 +9,8 @@ import jakarta.validation.Valid;
 
 import kr.co.awesomelead.groupware_backend.domain.approval.dto.request.ApprovalConfigSaveRequestDto;
 import kr.co.awesomelead.groupware_backend.domain.approval.dto.response.ApprovalConfigResponseDto;
+
+import java.util.List;
 import kr.co.awesomelead.groupware_backend.domain.approval.enums.DocumentType;
 import kr.co.awesomelead.groupware_backend.domain.approval.service.ApprovalConfigService;
 import kr.co.awesomelead.groupware_backend.domain.user.dto.CustomUserDetails;
@@ -53,6 +55,19 @@ public class ApprovalConfigController {
         ApprovalConfigResponseDto response =
                 approvalConfigService.saveConfig(request, userDetails.getId());
         return ResponseEntity.ok(ApiResponse.onSuccess(response));
+    }
+
+    @Operation(
+            summary = "전체 결재선 설정 조회",
+            description = "모든 문서 양식에 대한 기본 결재선 설정을 목록으로 조회합니다.")
+    @ApiResponses({
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                responseCode = "200",
+                description = "조회 성공")
+    })
+    @GetMapping
+    public ResponseEntity<ApiResponse<List<ApprovalConfigResponseDto>>> getAllConfigs() {
+        return ResponseEntity.ok(ApiResponse.onSuccess(approvalConfigService.getAllConfigs()));
     }
 
     @Operation(

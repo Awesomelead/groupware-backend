@@ -152,6 +152,39 @@ class ApprovalConfigServiceTest {
     }
 
     @Nested
+    @DisplayName("전체 설정 조회 (getAllConfigs)")
+    class GetAllConfigs {
+
+        @Test
+        @DisplayName("DocumentType 전체 개수만큼 리스트가 반환되고, 설정 없는 타입은 빈 목록이다")
+        void getAllConfigs_성공() {
+            ApprovalLineConfig basicConfig =
+                    ApprovalLineConfig.of(DocumentType.BASIC, List.of(10L, 20L), List.of(30L));
+
+            given(approvalLineConfigRepository.findAll()).willReturn(List.of(basicConfig));
+
+            List<ApprovalConfigResponseDto> result = approvalConfigService.getAllConfigs();
+
+            assertThat(result).hasSize(DocumentType.values().length);
+            ApprovalConfigResponseDto basicResult =
+                    result.stream()
+                            .filter(r -> r.getDocumentType() == DocumentType.BASIC)
+                            .findFirst()
+                            .orElseThrow();
+            assertThat(basicResult.getApproverIds()).containsExactly(10L, 20L);
+            assertThat(basicResult.getReferrerIds()).containsExactly(30L);
+
+            result.stream()
+                    .filter(r -> r.getDocumentType() != DocumentType.BASIC)
+                    .forEach(
+                            r -> {
+                                assertThat(r.getApproverIds()).isEmpty();
+                                assertThat(r.getReferrerIds()).isEmpty();
+                            });
+        }
+    }
+
+    @Nested
     @DisplayName("설정 조회 (getConfig)")
     class GetConfig {
 

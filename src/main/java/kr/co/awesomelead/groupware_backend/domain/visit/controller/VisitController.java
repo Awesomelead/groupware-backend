@@ -13,7 +13,6 @@ import kr.co.awesomelead.groupware_backend.domain.user.dto.CustomUserDetails;
 import kr.co.awesomelead.groupware_backend.domain.visit.dto.request.CheckInRequestDto;
 import kr.co.awesomelead.groupware_backend.domain.visit.dto.request.CheckOutRequestDto;
 import kr.co.awesomelead.groupware_backend.domain.visit.dto.request.LongTermVisitRequestDto;
-import kr.co.awesomelead.groupware_backend.domain.visit.dto.request.MyVisitDetailRequestDto;
 import kr.co.awesomelead.groupware_backend.domain.visit.dto.request.MyVisitUpdateRequestDto;
 import kr.co.awesomelead.groupware_backend.domain.visit.dto.request.OnSiteVisitRequestDto;
 import kr.co.awesomelead.groupware_backend.domain.visit.dto.request.OneDayVisitRequestDto;
@@ -184,14 +183,12 @@ public class VisitController {
         return ResponseEntity.ok(ApiResponse.onSuccess(response));
     }
 
-    @Operation(summary = "내 방문 상세 조회", description = "방문 ID와 목록 조회 시 사용한 비밀번호를 통해 상세 정보를 확인합니다.")
-    @PostMapping("/{visitId}/detail")
+    @Operation(summary = "내 방문 상세 조회", description = "방문 ID로 상세 정보를 확인합니다.")
+    @GetMapping("/{visitId}/detail")
     public ResponseEntity<ApiResponse<MyVisitDetailResponseDto>> getMyVisitDetail(
             @Parameter(description = "조회할 방문 ID", example = "1") @PathVariable("visitId")
-                    Long visitId,
-            @Parameter(description = "상세 조회를 위한 비밀번호") @Valid @RequestBody
-                    MyVisitDetailRequestDto dto) {
-        MyVisitDetailResponseDto response = visitService.getMyVisitDetail(visitId, dto);
+                    Long visitId) {
+        MyVisitDetailResponseDto response = visitService.getMyVisitDetail(visitId);
         return ResponseEntity.ok(ApiResponse.onSuccess(response));
     }
 

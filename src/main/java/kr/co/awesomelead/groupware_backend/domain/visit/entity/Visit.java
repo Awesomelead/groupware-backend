@@ -24,7 +24,7 @@ import kr.co.awesomelead.groupware_backend.domain.user.entity.User;
 import kr.co.awesomelead.groupware_backend.domain.visit.enums.AdditionalPermissionType;
 import kr.co.awesomelead.groupware_backend.domain.visit.enums.VisitPurpose;
 import kr.co.awesomelead.groupware_backend.domain.visit.enums.VisitStatus;
-import kr.co.awesomelead.groupware_backend.domain.visit.enums.VisitType;
+import kr.co.awesomelead.groupware_backend.domain.visit.enums.VisitCategory;
 import kr.co.awesomelead.groupware_backend.global.encryption.Encryptor;
 
 import lombok.AccessLevel;
@@ -95,9 +95,6 @@ public class Visit {
 
     @Column private LocalTime plannedExitTime; // 신청 시 퇴실 예정 시간
 
-    @Column(nullable = false)
-    private boolean isLongTerm; // 장기 여부 (DTO 분리 시 활용)
-
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 30)
     @Builder.Default
@@ -108,7 +105,7 @@ public class Visit {
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 20)
-    private VisitType visitType; // 방문 유형 (사전/현장)
+    private VisitCategory visitCategory; // 방문 유형 (사전 하루 / 사전 장기 / 현장 입실)
 
     @Column(nullable = false)
     private boolean visited; // 방문 여부 (하루인 경우에만 유효)

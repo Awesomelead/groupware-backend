@@ -182,8 +182,8 @@ public class VisitServiceTest {
                     .permissionType(type)
                     .permissionDetail(detail)
                     .visitDate(LocalDate.now().plusDays(1))
-                    .entryTime(LocalTime.of(10, 0))
-                    .exitTime(LocalTime.of(18, 0))
+                    .plannedEntryTime(LocalTime.of(10, 0))
+                    .plannedExitTime(LocalTime.of(18, 0))
                     .hostId(1L)
                     .password("1234")
                     .build();
@@ -467,27 +467,6 @@ public class VisitServiceTest {
         @Mock private MockMultipartFile signatureFile;
 
         @Nested
-        @DisplayName("비밀번호가 일치하지 않으면")
-        class Context_with_invalid_password {
-
-            @Test
-            @DisplayName("INVALID_PASSWORD 예외를 던진다.")
-            void it_throws_invalid_password_exception() throws IOException {
-                // given
-                CheckInRequestDto dto = new CheckInRequestDto(1L, "wrong_pw", signatureFile);
-                Visit visit = createBaseVisit(VisitStatus.NOT_VISITED, VisitCategory.PRE_ONE_DAY);
-
-                given(visitRepository.findById(1L)).willReturn(Optional.of(visit));
-                given(passwordEncoder.matches("wrong_pw", ENCODED_PASSWORD)).willReturn(false);
-
-                // when & then
-                assertThatThrownBy(() -> visitService.checkIn(dto))
-                        .isInstanceOf(CustomException.class)
-                        .hasMessage("유효하지 않은 비밀번호입니다.");
-            }
-        }
-
-        @Nested
         @DisplayName("하루 방문인데 방문 예정일이 오늘이 아니면")
         class Context_with_invalid_visit_date {
 
@@ -495,13 +474,12 @@ public class VisitServiceTest {
             @DisplayName("NOT_VISIT_DATE 예외를 던진다.")
             void it_throws_not_visit_date_exception() throws IOException {
                 // given
-                CheckInRequestDto dto = new CheckInRequestDto(1L, "1234", signatureFile);
+                CheckInRequestDto dto = new CheckInRequestDto(1L, signatureFile);
                 // 어제 날짜로 예약된 하루 방문 건
                 Visit visit = createBaseVisit(VisitStatus.NOT_VISITED, VisitCategory.PRE_ONE_DAY);
                 visit.setStartDate(LocalDate.now().minusDays(1));
 
                 given(visitRepository.findById(1L)).willReturn(Optional.of(visit));
-                given(passwordEncoder.matches(PLAIN_PASSWORD, ENCODED_PASSWORD)).willReturn(true);
 
                 // when & then
                 assertThatThrownBy(() -> visitService.checkIn(dto))
@@ -518,13 +496,12 @@ public class VisitServiceTest {
             @DisplayName("VISIT_ALREADY_CHECKED_OUT 예외를 던진다.")
             void it_throws_visit_already_checked_out_exception() throws IOException {
                 // given
-                CheckInRequestDto dto = new CheckInRequestDto(1L, "1234", signatureFile);
+                CheckInRequestDto dto = new CheckInRequestDto(1L, signatureFile);
                 Visit visit = createBaseVisit(VisitStatus.COMPLETED, VisitCategory.PRE_ONE_DAY);
                 visit.setStartDate(LocalDate.now());
                 visit.setVisited(true);
 
                 given(visitRepository.findById(1L)).willReturn(Optional.of(visit));
-                given(passwordEncoder.matches(PLAIN_PASSWORD, ENCODED_PASSWORD)).willReturn(true);
 
                 // when & then
                 assertThatThrownBy(() -> visitService.checkIn(dto))
@@ -541,12 +518,11 @@ public class VisitServiceTest {
             @DisplayName("방문 상태를 IN_PROGRESS로 바꾸고 입실 기록을 생성한다.")
             void it_check_in_successfully() throws IOException {
                 // given
-                CheckInRequestDto dto = new CheckInRequestDto(1L, "1234", signatureFile);
+                CheckInRequestDto dto = new CheckInRequestDto(1L, signatureFile);
                 Visit visit = createBaseVisit(VisitStatus.NOT_VISITED, VisitCategory.PRE_ONE_DAY);
                 visit.setStartDate(LocalDate.now());
 
                 given(visitRepository.findById(1L)).willReturn(Optional.of(visit));
-                given(passwordEncoder.matches(PLAIN_PASSWORD, ENCODED_PASSWORD)).willReturn(true);
                 given(s3Service.uploadFile(any())).willReturn("s3-signature-key");
 
                 // when

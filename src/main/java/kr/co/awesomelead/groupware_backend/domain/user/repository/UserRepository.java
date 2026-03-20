@@ -60,6 +60,11 @@ public interface UserRepository extends JpaRepository<User, Long> {
     List<User> findAllByStatusWithDepartment(@Param("status") Status status);
 
     @Query(
+            value = "SELECT u FROM User u LEFT JOIN FETCH u.department d WHERE u.status = :status",
+            countQuery = "SELECT count(u) FROM User u WHERE u.status = :status")
+    Page<User> findAllByStatusWithDepartment(@Param("status") Status status, Pageable pageable);
+
+    @Query(
             value =
                     "SELECT u FROM User u LEFT JOIN FETCH u.department d "
                             + "WHERE (:keyword IS NULL OR :keyword = '' "

@@ -17,8 +17,8 @@ import java.time.LocalDate;
 @Schema(description = "직원 상세 정보 응답 DTO")
 public class UserDetailResponseDto {
 
-    @Schema(description = "한글 이름", example = "홍길동")
-    private String nameKor;
+    @Schema(description = "이름", example = "홍길동")
+    private String name;
 
     @Schema(description = "전화번호", example = "01012345678")
     private String phoneNumber;
@@ -37,7 +37,7 @@ public class UserDetailResponseDto {
 
     public static UserDetailResponseDto from(User user) {
         return UserDetailResponseDto.builder()
-                .nameKor(user.getNameKor())
+                .name(user.getDisplayName())
                 .phoneNumber(user.getPhoneNumber())
                 .departmentName(user.getDepartment() != null ? user.getDepartment().getName() : null)
                 .jobType(user.getJobType())

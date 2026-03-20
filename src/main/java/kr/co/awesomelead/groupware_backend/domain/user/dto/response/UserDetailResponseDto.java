@@ -39,7 +39,8 @@ public class UserDetailResponseDto {
         return UserDetailResponseDto.builder()
                 .name(user.getDisplayName())
                 .phoneNumber(user.getPhoneNumber())
-                .departmentName(user.getDepartment() != null ? user.getDepartment().getName() : null)
+                .departmentName(
+                        user.getDepartment() != null ? user.getDepartment().getName() : null)
                 .jobType(user.getJobType())
                 .position(user.getPosition())
                 .hireDate(user.getHireDate())

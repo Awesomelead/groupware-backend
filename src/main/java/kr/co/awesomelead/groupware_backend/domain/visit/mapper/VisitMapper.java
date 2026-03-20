@@ -2,7 +2,6 @@ package kr.co.awesomelead.groupware_backend.domain.visit.mapper;
 
 import kr.co.awesomelead.groupware_backend.domain.user.entity.User;
 import kr.co.awesomelead.groupware_backend.domain.visit.dto.request.LongTermVisitRequestDto;
-import kr.co.awesomelead.groupware_backend.domain.visit.enums.VisitCategory;
 import kr.co.awesomelead.groupware_backend.domain.visit.dto.request.MyVisitUpdateRequestDto;
 import kr.co.awesomelead.groupware_backend.domain.visit.dto.request.OnSiteVisitRequestDto;
 import kr.co.awesomelead.groupware_backend.domain.visit.dto.request.OneDayVisitRequestDto;

@@ -99,7 +99,9 @@ public class UserController {
                                 @Content(
                                         mediaType = "application/json",
                                         schema =
-                                                @Schema(implementation = UserSummaryResponseDto.class)))
+                                                @Schema(
+                                                        implementation =
+                                                                UserSummaryResponseDto.class)))
             })
     @GetMapping("/list")
     public ResponseEntity<ApiResponse<Page<UserSummaryResponseDto>>> getEmployeeList(

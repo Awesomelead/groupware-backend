@@ -8,10 +8,10 @@ import kr.co.awesomelead.groupware_backend.domain.user.dto.response.MyInfoRespon
 import kr.co.awesomelead.groupware_backend.domain.user.dto.response.UpdateMyInfoRequestDto;
 import kr.co.awesomelead.groupware_backend.domain.user.dto.response.UserDetailResponseDto;
 import kr.co.awesomelead.groupware_backend.domain.user.dto.response.UserSummaryResponseDto;
-import kr.co.awesomelead.groupware_backend.domain.user.enums.Status;
 import kr.co.awesomelead.groupware_backend.domain.user.entity.MyInfoUpdateRequest;
 import kr.co.awesomelead.groupware_backend.domain.user.entity.User;
 import kr.co.awesomelead.groupware_backend.domain.user.enums.MyInfoUpdateRequestStatus;
+import kr.co.awesomelead.groupware_backend.domain.user.enums.Status;
 import kr.co.awesomelead.groupware_backend.domain.user.repository.MyInfoUpdateRequestRepository;
 import kr.co.awesomelead.groupware_backend.domain.user.repository.UserRepository;
 import kr.co.awesomelead.groupware_backend.global.error.CustomException;

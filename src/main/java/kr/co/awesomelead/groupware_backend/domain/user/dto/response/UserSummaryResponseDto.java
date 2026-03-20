@@ -31,7 +31,8 @@ public class UserSummaryResponseDto {
                 .userId(user.getId())
                 .name(user.getDisplayName())
                 .position(user.getPosition())
-                .departmentName(user.getDepartment() != null ? user.getDepartment().getName() : null)
+                .departmentName(
+                        user.getDepartment() != null ? user.getDepartment().getName() : null)
                 .build();
     }
 }

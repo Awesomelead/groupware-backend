@@ -37,12 +37,11 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.security.core.userdetails.UserDetails;
-
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.security.core.userdetails.UserDetails;
 
 import java.time.LocalDate;
 import java.util.List;
@@ -416,13 +415,14 @@ class UserServiceTest {
             // given
             Pageable pageable = PageRequest.of(0, 20);
             User user1 = createTestUser();
-            User user2 = User.builder()
-                    .id(2L)
-                    .nameKor("이영희")
-                    .position(Position.MANAGER)
-                    .department(user1.getDepartment())
-                    .status(Status.AVAILABLE)
-                    .build();
+            User user2 =
+                    User.builder()
+                            .id(2L)
+                            .nameKor("이영희")
+                            .position(Position.MANAGER)
+                            .department(user1.getDepartment())
+                            .status(Status.AVAILABLE)
+                            .build();
             Page<User> userPage = new PageImpl<>(List.of(user1, user2), pageable, 2);
 
             given(userRepository.findAllByStatusWithDepartment(Status.AVAILABLE, pageable))
@@ -435,8 +435,10 @@ class UserServiceTest {
             assertThat(result.getTotalElements()).isEqualTo(2);
             assertThat(result.getContent().get(0).getUserId()).isEqualTo(1L);
             assertThat(result.getContent().get(0).getName()).isEqualTo(TEST_NAME_KOR);
-            assertThat(result.getContent().get(0).getPosition()).isEqualTo(Position.ASSISTANT_MANAGER);
-            assertThat(result.getContent().get(0).getDepartmentName()).isEqualTo(DepartmentName.CHUNGNAM_HQ);
+            assertThat(result.getContent().get(0).getPosition())
+                    .isEqualTo(Position.ASSISTANT_MANAGER);
+            assertThat(result.getContent().get(0).getDepartmentName())
+                    .isEqualTo(DepartmentName.CHUNGNAM_HQ);
             assertThat(result.getContent().get(1).getUserId()).isEqualTo(2L);
             assertThat(result.getContent().get(1).getName()).isEqualTo("이영희");
 

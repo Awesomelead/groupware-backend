@@ -153,7 +153,8 @@ public class VisitServiceTest {
                 User mockHost = User.builder().id(dto.getHostId()).build();
                 String encodedPassword = "encoded_password_1234";
 
-                Visit mockVisit = createBaseVisit(VisitStatus.NOT_VISITED, VisitCategory.PRE_ONE_DAY);
+                Visit mockVisit =
+                        createBaseVisit(VisitStatus.NOT_VISITED, VisitCategory.PRE_ONE_DAY);
                 mockVisit.setPurpose(dto.getPurpose());
 
                 given(userRepository.findById(dto.getHostId())).willReturn(Optional.of(mockHost));
@@ -728,7 +729,8 @@ public class VisitServiceTest {
             void it_updates_status_to_approved() {
                 // given
                 User admin = createHost();
-                Visit pendingVisit = createBaseVisit(VisitStatus.PENDING, VisitCategory.PRE_LONG_TERM);
+                Visit pendingVisit =
+                        createBaseVisit(VisitStatus.PENDING, VisitCategory.PRE_LONG_TERM);
                 VisitProcessRequestDto dto = new VisitProcessRequestDto(VisitStatus.APPROVED, null);
 
                 given(userRepository.findById(any())).willReturn(Optional.of(admin));
@@ -752,7 +754,8 @@ public class VisitServiceTest {
             void it_updates_status_to_rejected_and_records_reason() {
                 // given
                 User admin = createHost();
-                Visit pendingVisit = createBaseVisit(VisitStatus.PENDING, VisitCategory.PRE_LONG_TERM);
+                Visit pendingVisit =
+                        createBaseVisit(VisitStatus.PENDING, VisitCategory.PRE_LONG_TERM);
                 String reason = "방문 목적 부적합";
                 VisitProcessRequestDto dto =
                         new VisitProcessRequestDto(VisitStatus.REJECTED, reason);
@@ -778,7 +781,8 @@ public class VisitServiceTest {
             void it_throws_invalid_visit_status_exception() {
                 // given
                 User admin = createHost();
-                Visit approvedVisit = createBaseVisit(VisitStatus.APPROVED, VisitCategory.PRE_LONG_TERM);
+                Visit approvedVisit =
+                        createBaseVisit(VisitStatus.APPROVED, VisitCategory.PRE_LONG_TERM);
                 VisitProcessRequestDto dto =
                         new VisitProcessRequestDto(VisitStatus.REJECTED, "뒤늦은 반려");
 

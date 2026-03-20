@@ -1,6 +1,7 @@
 package kr.co.awesomelead.groupware_backend.domain.visit.repository;
 
 import kr.co.awesomelead.groupware_backend.domain.visit.entity.Visit;
+import kr.co.awesomelead.groupware_backend.domain.visit.enums.VisitCategory;
 import kr.co.awesomelead.groupware_backend.domain.visit.enums.VisitStatus;
 
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -23,6 +24,6 @@ public interface VisitRepository extends JpaRepository<Visit, Long> {
 
     List<Visit> findByVisitorNameAndPhoneNumberHash(String name, String inputPhoneHash);
 
-    List<Visit> findAllByIsLongTermTrueAndEndDateBeforeAndStatusNot(
-            LocalDate date, VisitStatus status);
+    List<Visit> findAllByVisitCategoryAndEndDateBeforeAndStatusNot(
+            VisitCategory visitCategory, LocalDate date, VisitStatus status);
 }

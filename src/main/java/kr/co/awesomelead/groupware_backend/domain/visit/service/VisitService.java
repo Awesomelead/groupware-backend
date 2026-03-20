@@ -12,7 +12,6 @@ import kr.co.awesomelead.groupware_backend.domain.user.repository.UserRepository
 import kr.co.awesomelead.groupware_backend.domain.visit.dto.request.CheckInRequestDto;
 import kr.co.awesomelead.groupware_backend.domain.visit.dto.request.CheckOutRequestDto;
 import kr.co.awesomelead.groupware_backend.domain.visit.dto.request.LongTermVisitRequestDto;
-import kr.co.awesomelead.groupware_backend.domain.visit.dto.request.MyVisitDetailRequestDto;
 import kr.co.awesomelead.groupware_backend.domain.visit.dto.request.MyVisitUpdateRequestDto;
 import kr.co.awesomelead.groupware_backend.domain.visit.dto.request.OnSiteVisitRequestDto;
 import kr.co.awesomelead.groupware_backend.domain.visit.dto.request.OneDayVisitRequestDto;
@@ -329,19 +328,14 @@ public class VisitService {
 
     // 내 방문 상세 조회
     @Transactional(readOnly = true)
-    public MyVisitDetailResponseDto getMyVisitDetail(Long visitId, MyVisitDetailRequestDto dto) {
+    public MyVisitDetailResponseDto getMyVisitDetail(Long visitId) {
         // 1. 존재 여부 확인
         Visit visit =
                 visitRepository
                         .findById(visitId)
                         .orElseThrow(() -> new CustomException(ErrorCode.VISIT_NOT_FOUND));
 
-        // 2. 비밀번호 검증
-        if (!passwordEncoder.matches(dto.getPassword(), visit.getPassword())) {
-            throw new CustomException(ErrorCode.INVALID_PASSWORD);
-        }
-
-        // 3. 엔티티 -> DTO 변환 (시간 계산은 매퍼의 default 메서드가 처리)
+        // 2. 엔티티 -> DTO 변환 (시간 계산은 매퍼의 default 메서드가 처리)
         MyVisitDetailResponseDto responseDto = visitMapper.toMyVisitDetailResponseDto(visit);
 
         if (responseDto.getRecords() != null) {

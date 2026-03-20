@@ -64,6 +64,6 @@ public class OnSiteVisitRequestDto implements VisitRequest {
     private String password;
 
     @NotNull(message = "방문자 서명은 필수입니다.")
-    @Schema(description = "방문자 서명 png 이미지 파일")
+    @Schema(type = "string", format = "binary", description = "방문자 서명 png 이미지 파일")
     private MultipartFile signatureFile;
 }

@@ -434,11 +434,11 @@ class UserServiceTest {
             // then
             assertThat(result.getTotalElements()).isEqualTo(2);
             assertThat(result.getContent().get(0).getUserId()).isEqualTo(1L);
-            assertThat(result.getContent().get(0).getNameKor()).isEqualTo(TEST_NAME_KOR);
+            assertThat(result.getContent().get(0).getName()).isEqualTo(TEST_NAME_KOR);
             assertThat(result.getContent().get(0).getPosition()).isEqualTo(Position.ASSISTANT_MANAGER);
             assertThat(result.getContent().get(0).getDepartmentName()).isEqualTo(DepartmentName.CHUNGNAM_HQ);
             assertThat(result.getContent().get(1).getUserId()).isEqualTo(2L);
-            assertThat(result.getContent().get(1).getNameKor()).isEqualTo("이영희");
+            assertThat(result.getContent().get(1).getName()).isEqualTo("이영희");
 
             verify(userRepository).findAllByStatusWithDepartment(Status.AVAILABLE, pageable);
         }

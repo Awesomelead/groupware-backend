@@ -5,6 +5,8 @@ import jakarta.persistence.PersistenceContext;
 
 import kr.co.awesomelead.groupware_backend.domain.aligo.service.PhoneAuthService;
 import kr.co.awesomelead.groupware_backend.domain.approval.entity.Approval;
+import kr.co.awesomelead.groupware_backend.domain.approval.entity.ApprovalLineConfig;
+import kr.co.awesomelead.groupware_backend.domain.approval.repository.ApprovalLineConfigRepository;
 import kr.co.awesomelead.groupware_backend.domain.approval.repository.ApprovalRepository;
 import kr.co.awesomelead.groupware_backend.domain.auth.dto.request.LoginRequestDto;
 import kr.co.awesomelead.groupware_backend.domain.auth.dto.request.ResetPasswordByEmailRequestDto;
@@ -58,6 +60,7 @@ public class AuthService {
     private final JWTUtil jwtUtil;
     private final RefreshTokenService refreshTokenService;
     private final ApprovalRepository approvalRepository;
+    private final ApprovalLineConfigRepository approvalLineConfigRepository;
     private final NotificationService notificationService;
 
     @PersistenceContext private EntityManager entityManager;
@@ -369,16 +372,6 @@ public class AuthService {
         deleteByQuery(
                 "delete from ApprovalStep aps where aps.approver.id = :userId", "userId", userId);
         deleteByQuery(
-                "delete from SavedApprovalLineDetail sld where sld.approver.id = :userId",
-                "userId",
-                userId);
-        deleteByQuery(
-                "delete from SavedApprovalLineDetail sld where sld.savedLine.user.id = :userId",
-                "userId",
-                userId);
-        deleteByQuery(
-                "delete from SavedApprovalLine sl where sl.user.id = :userId", "userId", userId);
-        deleteByQuery(
                 "delete from NoticeTarget nt where nt.notice.author.id = :userId",
                 "userId",
                 userId);
@@ -388,13 +381,27 @@ public class AuthService {
                 userId);
         deleteByQuery("delete from Notice n where n.author.id = :userId", "userId", userId);
 
-        // 2) 사용자가 기안한 결재 문서 삭제 (JOINED 상속 + 자식 테이블 동시 정리)
+        // 2) 결재선 설정에서 해당 유저 ID 제거
+        List<ApprovalLineConfig> configs = approvalLineConfigRepository.findAll();
+        for (ApprovalLineConfig config : configs) {
+            boolean hasApprover = config.getApproverIds().contains(userId);
+            boolean hasReferrer = config.getReferrerIds().contains(userId);
+            if (hasApprover || hasReferrer) {
+                List<Long> newApprovers =
+                        config.getApproverIds().stream().filter(id -> !id.equals(userId)).toList();
+                List<Long> newReferrers =
+                        config.getReferrerIds().stream().filter(id -> !id.equals(userId)).toList();
+                config.update(newApprovers, newReferrers);
+            }
+        }
+
+        // 3) 사용자가 기안한 결재 문서 삭제 (JOINED 상속 + 자식 테이블 동시 정리)
         List<Approval> draftedApprovals = approvalRepository.findAllByDrafterId(userId);
         if (!draftedApprovals.isEmpty()) {
             approvalRepository.deleteAll(draftedApprovals);
         }
 
-        // 3) 권한 테이블 정리 후 사용자 삭제
+        // 4) 권한 테이블 정리 후 사용자 삭제
         user.getAuthorities().clear();
         userRepository.delete(user);
 

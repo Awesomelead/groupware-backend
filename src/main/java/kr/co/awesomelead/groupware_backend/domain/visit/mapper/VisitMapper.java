@@ -2,6 +2,7 @@ package kr.co.awesomelead.groupware_backend.domain.visit.mapper;
 
 import kr.co.awesomelead.groupware_backend.domain.user.entity.User;
 import kr.co.awesomelead.groupware_backend.domain.visit.dto.request.LongTermVisitRequestDto;
+import kr.co.awesomelead.groupware_backend.domain.visit.enums.VisitCategory;
 import kr.co.awesomelead.groupware_backend.domain.visit.dto.request.MyVisitUpdateRequestDto;
 import kr.co.awesomelead.groupware_backend.domain.visit.dto.request.OnSiteVisitRequestDto;
 import kr.co.awesomelead.groupware_backend.domain.visit.dto.request.OneDayVisitRequestDto;
@@ -38,17 +39,16 @@ public interface VisitMapper {
     @Mapping(target = "password", source = "encodedPassword") // 암호화된 비밀번호 매핑
     @Mapping(target = "startDate", source = "dto.visitDate") // 시작일 = 방문일
     @Mapping(target = "endDate", source = "dto.visitDate") // 종료일 = 방문일
-    @Mapping(target = "plannedEntryTime", source = "dto.entryTime") // 추가
-    @Mapping(target = "plannedExitTime", source = "dto.exitTime") // 추가
+    @Mapping(target = "plannedEntryTime", source = "dto.plannedEntryTime")
+    @Mapping(target = "plannedExitTime", source = "dto.plannedExitTime")
     @Mapping(
             target = "status",
             expression =
                     "java(kr.co.awesomelead.groupware_backend.domain.visit.enums.VisitStatus.NOT_VISITED)")
     @Mapping(
-            target = "visitType",
+            target = "visitCategory",
             expression =
-                    "java(kr.co.awesomelead.groupware_backend.domain.visit.enums.VisitType.PRE_REGISTRATION)")
-    @Mapping(target = "isLongTerm", constant = "false")
+                    "java(kr.co.awesomelead.groupware_backend.domain.visit.enums.VisitCategory.PRE_ONE_DAY)")
     @Mapping(target = "visited", constant = "false")
     @Mapping(target = "records", ignore = true)
     @Mapping(target = "phoneNumberHash", ignore = true)
@@ -60,9 +60,7 @@ public interface VisitMapper {
     @Mapping(target = "id", ignore = true)
     @Mapping(target = "user", source = "host")
     @Mapping(target = "password", source = "encodedPassword")
-    @Mapping(target = "isLongTerm", constant = "true") // 장기 방문이므로 true
     @Mapping(target = "hostCompany", source = "host.workLocation")
-
     // 장기 방문은 예정 시간이 없으므로 매핑에서 제외 (null로 들어감)
     @Mapping(target = "plannedEntryTime", ignore = true)
     @Mapping(target = "plannedExitTime", ignore = true)
@@ -70,11 +68,10 @@ public interface VisitMapper {
             target = "status",
             expression =
                     "java(kr.co.awesomelead.groupware_backend.domain.visit.enums.VisitStatus.PENDING)")
-    // 장기는 보통 '승인 대기'
     @Mapping(
-            target = "visitType",
+            target = "visitCategory",
             expression =
-                    "java(kr.co.awesomelead.groupware_backend.domain.visit.enums.VisitType.PRE_REGISTRATION)")
+                    "java(kr.co.awesomelead.groupware_backend.domain.visit.enums.VisitCategory.PRE_LONG_TERM)")
     @Mapping(target = "records", ignore = true)
     @Mapping(target = "phoneNumberHash", ignore = true)
     @Mapping(target = "visited", constant = "false")
@@ -85,15 +82,14 @@ public interface VisitMapper {
     @Mapping(target = "user", source = "host")
     @Mapping(target = "password", source = "encodedPassword")
     @Mapping(
-            target = "visitType",
+            target = "visitCategory",
             expression =
-                    "java(kr.co.awesomelead.groupware_backend.domain.visit.enums.VisitType.ON_SITE)")
+                    "java(kr.co.awesomelead.groupware_backend.domain.visit.enums.VisitCategory.ON_SITE)")
     @Mapping(
             target = "status",
             expression =
                     "java(kr.co.awesomelead.groupware_backend.domain.visit.enums.VisitStatus.IN_PROGRESS)")
     @Mapping(target = "visited", constant = "true") // 즉시 방문 처리
-    @Mapping(target = "isLongTerm", constant = "false")
     @Mapping(target = "startDate", expression = "java(java.time.LocalDate.now())")
     @Mapping(target = "endDate", expression = "java(java.time.LocalDate.now())")
     @Mapping(target = "plannedEntryTime", expression = "java(java.time.LocalTime.now())")

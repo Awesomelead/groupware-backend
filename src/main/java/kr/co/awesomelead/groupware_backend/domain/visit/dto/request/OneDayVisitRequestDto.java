@@ -53,11 +53,11 @@ public class OneDayVisitRequestDto implements VisitRequest {
 
     @NotNull(message = "입실 예정 시간은 필수입니다.")
     @Schema(description = "입실 예정 시간", example = "10:00")
-    private LocalTime entryTime;
+    private LocalTime plannedEntryTime;
 
     @NotNull(message = "퇴실 예정 시간은 필수입니다.")
     @Schema(description = "퇴실 예정 시간", example = "18:00")
-    private LocalTime exitTime;
+    private LocalTime plannedExitTime;
 
     // 보충적 허가 관련
     @Schema(description = "보충적 허가 타입 (없을 시 NONE)", example = "해당 없음")
@@ -79,9 +79,9 @@ public class OneDayVisitRequestDto implements VisitRequest {
     @AssertTrue(message = "퇴실 예정 시간은 입실 예정 시간보다 빨라야 합니다.")
     @Schema(hidden = true)
     public boolean isValidTimeRange() {
-        if (entryTime == null || exitTime == null) {
+        if (plannedEntryTime == null || plannedExitTime == null) {
             return true;
         }
-        return exitTime.isAfter(entryTime);
+        return plannedExitTime.isAfter(plannedEntryTime);
     }
 }

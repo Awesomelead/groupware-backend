@@ -4,6 +4,7 @@ import io.swagger.v3.oas.annotations.media.Schema;
 
 import kr.co.awesomelead.groupware_backend.domain.department.enums.DepartmentName;
 import kr.co.awesomelead.groupware_backend.domain.visit.enums.AdditionalPermissionType;
+import kr.co.awesomelead.groupware_backend.domain.visit.enums.VisitCategory;
 import kr.co.awesomelead.groupware_backend.domain.visit.enums.VisitPurpose;
 import kr.co.awesomelead.groupware_backend.domain.visit.enums.VisitStatus;
 
@@ -58,6 +59,12 @@ public class VisitDetailResponseDto {
 
     @Schema(description = "반려 사유", example = "신분증 미지참")
     private String rejectionReason;
+
+    @Schema(description = "차량번호", example = "12가3456")
+    private String carNumber;
+
+    @Schema(description = "방문 유형 (사전 하루 / 사전 장기 / 현장 입실)", example = "사전 하루")
+    private VisitCategory visitCategory;
 
     @Schema(description = "입퇴실 및 서명 기록 리스트")
     private List<VisitRecordResponseDto> records;

@@ -25,6 +25,7 @@ import kr.co.awesomelead.groupware_backend.domain.visit.dto.response.VisitListRe
 import kr.co.awesomelead.groupware_backend.domain.visit.entity.Visit;
 import kr.co.awesomelead.groupware_backend.domain.visit.entity.VisitRecord;
 import kr.co.awesomelead.groupware_backend.domain.visit.enums.AdditionalPermissionType;
+import kr.co.awesomelead.groupware_backend.domain.visit.enums.VisitCategory;
 import kr.co.awesomelead.groupware_backend.domain.visit.enums.VisitPurpose;
 import kr.co.awesomelead.groupware_backend.domain.visit.enums.VisitStatus;
 import kr.co.awesomelead.groupware_backend.domain.visit.mapper.VisitMapper;
@@ -84,7 +85,7 @@ public class VisitService {
                     hostDeptId,
                     visit.getVisitorName(),
                     visit.getStartDate(),
-                    dto.getEntryTime(),
+                    dto.getPlannedEntryTime(),
                     hostName);
         }
 
@@ -218,13 +219,9 @@ public class VisitService {
                         .findById(dto.getVisitId())
                         .orElseThrow(() -> new CustomException(ErrorCode.VISIT_NOT_FOUND));
 
-        // 2. 비밀번호 검증
-        if (!passwordEncoder.matches(dto.getPassword(), visit.getPassword())) {
-            throw new CustomException(ErrorCode.INVALID_PASSWORD);
-        }
-
-        // 3. 날짜 검증 (하루 방문의 경우 오늘 날짜인지 확인)
-        if (!visit.isLongTerm() && !visit.getStartDate().equals(LocalDate.now())) {
+        // 2. 날짜 검증 (하루 방문의 경우 오늘 날짜인지 확인)
+        if (visit.getVisitCategory() != VisitCategory.PRE_LONG_TERM
+                && !visit.getStartDate().equals(LocalDate.now())) {
             throw new CustomException(ErrorCode.NOT_VISIT_DATE); // "방문 예정일이 아닙니다" 에러
         }
 
@@ -288,7 +285,7 @@ public class VisitService {
             if (visit.getStatus() != VisitStatus.IN_PROGRESS) {
                 throw new CustomException(ErrorCode.NOT_IN_PROGRESS);
             }
-            if (visit.isLongTerm()) {
+            if (visit.getVisitCategory() == VisitCategory.PRE_LONG_TERM) {
                 visit.setStatus(VisitStatus.APPROVED); // 다음 입실을 위해 다시 승인 상태로
             } else {
                 visit.setStatus(VisitStatus.COMPLETED); // 단기 방문은 최종 완료
@@ -367,7 +364,7 @@ public class VisitService {
         // 수정 가능 상태 검증 (하루: NOT_VISITED, 장기: PENDING)
         validateUpdateStatus(visit);
 
-        if (visit.isLongTerm()) {
+        if (visit.getVisitCategory() == VisitCategory.PRE_LONG_TERM) {
 
             LocalDate effectiveStart =
                     (dto.getStartDate() != null) ? dto.getStartDate() : visit.getStartDate();
@@ -381,7 +378,7 @@ public class VisitService {
 
         visitMapper.updateVisitFromDto(dto, visit);
 
-        if (!visit.isLongTerm()) {
+        if (visit.getVisitCategory() != VisitCategory.PRE_LONG_TERM) {
             visit.setEndDate(visit.getStartDate());
         }
 
@@ -397,7 +394,7 @@ public class VisitService {
             throw new CustomException(ErrorCode.INVALID_VISIT_STATUS);
         }
 
-        if (visit.isLongTerm()) {
+        if (visit.getVisitCategory() == VisitCategory.PRE_LONG_TERM) {
             if (visit.getStatus() != VisitStatus.PENDING
                     && visit.getStatus() != VisitStatus.APPROVED) {
                 throw new CustomException(ErrorCode.INVALID_VISIT_STATUS);
@@ -477,7 +474,7 @@ public class VisitService {
         // 3. 승인 가능한 상태인지 검증
         // - 장기 방문이어야 함
         // - 현재 상태가 PENDING(승인 대기)이어야 함
-        if (!visit.isLongTerm()) {
+        if (visit.getVisitCategory() != VisitCategory.PRE_LONG_TERM) {
             throw new CustomException(ErrorCode.NOT_LONG_TERM_VISIT); // "장기 방문 건이 아닙니다."
         }
 

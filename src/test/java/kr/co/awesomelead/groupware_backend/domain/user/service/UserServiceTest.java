@@ -5,6 +5,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.BDDMockito.given;
+import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 
@@ -15,6 +16,7 @@ import kr.co.awesomelead.groupware_backend.domain.department.enums.DepartmentNam
 import kr.co.awesomelead.groupware_backend.domain.notification.service.NotificationService;
 import kr.co.awesomelead.groupware_backend.domain.user.dto.response.MyInfoResponseDto;
 import kr.co.awesomelead.groupware_backend.domain.user.dto.response.UpdateMyInfoRequestDto;
+import kr.co.awesomelead.groupware_backend.domain.user.dto.response.UserSummaryResponseDto;
 import kr.co.awesomelead.groupware_backend.domain.user.entity.MyInfoUpdateRequest;
 import kr.co.awesomelead.groupware_backend.domain.user.entity.User;
 import kr.co.awesomelead.groupware_backend.domain.user.enums.JobType;
@@ -35,9 +37,14 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.security.core.userdetails.UserDetails;
 
 import java.time.LocalDate;
+import java.util.List;
 import java.util.Optional;
 
 @ExtendWith(MockitoExtension.class)
@@ -60,8 +67,8 @@ class UserServiceTest {
 
     @BeforeEach
     void setUp() {
-        // UserDetails Mock 설정
-        given(userDetails.getUsername()).willReturn(TEST_EMAIL);
+        // UserDetails Mock 설정 (getEmployeeList 등 userDetails 미사용 테스트에서도 안전하게 처리)
+        lenient().when(userDetails.getUsername()).thenReturn(TEST_EMAIL);
     }
 
     // Helper method: 새로운 User 객체 생성
@@ -395,6 +402,88 @@ class UserServiceTest {
 
             verify(userRepository).findByEmail(TEST_EMAIL);
             verify(myInfoUpdateRequestRepository, never()).save(any());
+        }
+    }
+
+    @Nested
+    @DisplayName("전 직원 목록 조회")
+    class GetEmployeeListTest {
+
+        @Test
+        @DisplayName("성공: AVAILABLE 상태 직원 목록을 페이징으로 반환한다")
+        void getEmployeeList_success() {
+            // given
+            Pageable pageable = PageRequest.of(0, 20);
+            User user1 = createTestUser();
+            User user2 =
+                    User.builder()
+                            .id(2L)
+                            .nameKor("이영희")
+                            .position(Position.MANAGER)
+                            .department(user1.getDepartment())
+                            .status(Status.AVAILABLE)
+                            .build();
+            Page<User> userPage = new PageImpl<>(List.of(user1, user2), pageable, 2);
+
+            given(userRepository.findAllByStatusWithDepartment(Status.AVAILABLE, pageable))
+                    .willReturn(userPage);
+
+            // when
+            Page<UserSummaryResponseDto> result = userService.getEmployeeList(pageable);
+
+            // then
+            assertThat(result.getTotalElements()).isEqualTo(2);
+            assertThat(result.getContent().get(0).getUserId()).isEqualTo(1L);
+            assertThat(result.getContent().get(0).getName()).isEqualTo(TEST_NAME_KOR);
+            assertThat(result.getContent().get(0).getPosition())
+                    .isEqualTo(Position.ASSISTANT_MANAGER);
+            assertThat(result.getContent().get(0).getDepartmentName())
+                    .isEqualTo(DepartmentName.CHUNGNAM_HQ);
+            assertThat(result.getContent().get(1).getUserId()).isEqualTo(2L);
+            assertThat(result.getContent().get(1).getName()).isEqualTo("이영희");
+
+            verify(userRepository).findAllByStatusWithDepartment(Status.AVAILABLE, pageable);
+        }
+
+        @Test
+        @DisplayName("성공: AVAILABLE 직원이 없으면 빈 페이지를 반환한다")
+        void getEmployeeList_empty() {
+            // given
+            Pageable pageable = PageRequest.of(0, 20);
+            Page<User> emptyPage = new PageImpl<>(List.of(), pageable, 0);
+
+            given(userRepository.findAllByStatusWithDepartment(Status.AVAILABLE, pageable))
+                    .willReturn(emptyPage);
+
+            // when
+            Page<UserSummaryResponseDto> result = userService.getEmployeeList(pageable);
+
+            // then
+            assertThat(result.getTotalElements()).isEqualTo(0);
+            assertThat(result.getContent()).isEmpty();
+
+            verify(userRepository).findAllByStatusWithDepartment(Status.AVAILABLE, pageable);
+        }
+
+        @Test
+        @DisplayName("성공: 페이지네이션이 정상적으로 동작한다")
+        void getEmployeeList_pagination() {
+            // given
+            Pageable pageable = PageRequest.of(1, 1); // 2번째 페이지, 1개씩
+            User user = createTestUser();
+            Page<User> userPage = new PageImpl<>(List.of(user), pageable, 3); // 전체 3명 중 2번째 페이지
+
+            given(userRepository.findAllByStatusWithDepartment(Status.AVAILABLE, pageable))
+                    .willReturn(userPage);
+
+            // when
+            Page<UserSummaryResponseDto> result = userService.getEmployeeList(pageable);
+
+            // then
+            assertThat(result.getTotalElements()).isEqualTo(3);
+            assertThat(result.getTotalPages()).isEqualTo(3);
+            assertThat(result.getNumber()).isEqualTo(1);
+            assertThat(result.getContent()).hasSize(1);
         }
     }
 

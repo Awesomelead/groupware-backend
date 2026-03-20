@@ -58,7 +58,7 @@ import java.util.List;
             내방객의 사전 예약 및 현장 방문 접수, 방문 정보 조회, 입/퇴실 처리 등을 수행합니다.
 
             ### 사용되는 Enum 타입
-            - **VisitType**: 방문 유형 (PRE_REGISTRATION: 사전 예약, ON_SITE: 현장 방문)
+            - **VisitCategory**: 방문 유형 (PRE_ONE_DAY: 사전 하루, PRE_LONG_TERM: 사전 장기, ON_SITE: 현장 입실)
             - **VisitPurpose**: 방문 목적 (CUSTOMER_INSPECTION: 고객 검수, GOODS_DELIVERY: 물품 납품, FACILITY_CONSTRUCTION: 시설공사, LOGISTICS: 입출고, MEETING: 미팅, OTHER: 기타)
             - **VisitStatus**: 방문 상태 (PENDING: 승인 대기, APPROVED: 승인 완료, NOT_VISITED: 방문 전, IN_PROGRESS: 방문 중, COMPLETED: 방문 완료)
             """)

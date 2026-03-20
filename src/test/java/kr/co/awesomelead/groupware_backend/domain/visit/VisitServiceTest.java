@@ -24,6 +24,7 @@ import kr.co.awesomelead.groupware_backend.domain.visit.dto.request.VisitProcess
 import kr.co.awesomelead.groupware_backend.domain.visit.entity.Visit;
 import kr.co.awesomelead.groupware_backend.domain.visit.entity.VisitRecord;
 import kr.co.awesomelead.groupware_backend.domain.visit.enums.AdditionalPermissionType;
+import kr.co.awesomelead.groupware_backend.domain.visit.enums.VisitCategory;
 import kr.co.awesomelead.groupware_backend.domain.visit.enums.VisitPurpose;
 import kr.co.awesomelead.groupware_backend.domain.visit.enums.VisitStatus;
 import kr.co.awesomelead.groupware_backend.domain.visit.mapper.VisitMapper;
@@ -83,12 +84,12 @@ public class VisitServiceTest {
         return host;
     }
 
-    private Visit createBaseVisit(VisitStatus status, boolean isLongTerm) {
+    private Visit createBaseVisit(VisitStatus status, VisitCategory visitCategory) {
         return Visit.builder()
                 .id(VISIT_ID)
                 .password(ENCODED_PASSWORD)
                 .status(status)
-                .isLongTerm(isLongTerm)
+                .visitCategory(visitCategory)
                 .records(new ArrayList<>())
                 .build();
     }
@@ -152,7 +153,8 @@ public class VisitServiceTest {
                 User mockHost = User.builder().id(dto.getHostId()).build();
                 String encodedPassword = "encoded_password_1234";
 
-                Visit mockVisit = createBaseVisit(VisitStatus.NOT_VISITED, false);
+                Visit mockVisit =
+                        createBaseVisit(VisitStatus.NOT_VISITED, VisitCategory.PRE_ONE_DAY);
                 mockVisit.setPurpose(dto.getPurpose());
 
                 given(userRepository.findById(dto.getHostId())).willReturn(Optional.of(mockHost));
@@ -181,8 +183,8 @@ public class VisitServiceTest {
                     .permissionType(type)
                     .permissionDetail(detail)
                     .visitDate(LocalDate.now().plusDays(1))
-                    .entryTime(LocalTime.of(10, 0))
-                    .exitTime(LocalTime.of(18, 0))
+                    .plannedEntryTime(LocalTime.of(10, 0))
+                    .plannedExitTime(LocalTime.of(18, 0))
                     .hostId(1L)
                     .password("1234")
                     .build();
@@ -342,7 +344,7 @@ public class VisitServiceTest {
                 // given
                 MyVisitUpdateRequestDto dto =
                         MyVisitUpdateRequestDto.builder().password(PLAIN_PASSWORD).build();
-                Visit visit = createBaseVisit(VisitStatus.NOT_VISITED, false);
+                Visit visit = createBaseVisit(VisitStatus.NOT_VISITED, VisitCategory.PRE_ONE_DAY);
 
                 given(visitRepository.findById(VISIT_ID)).willReturn(Optional.of(visit));
                 given(passwordEncoder.matches(PLAIN_PASSWORD, ENCODED_PASSWORD)).willReturn(false);
@@ -364,7 +366,7 @@ public class VisitServiceTest {
                 // given
                 MyVisitUpdateRequestDto dto =
                         MyVisitUpdateRequestDto.builder().password(PLAIN_PASSWORD).build();
-                Visit visit = createBaseVisit(VisitStatus.COMPLETED, false);
+                Visit visit = createBaseVisit(VisitStatus.COMPLETED, VisitCategory.PRE_ONE_DAY);
 
                 given(visitRepository.findById(VISIT_ID)).willReturn(Optional.of(visit));
                 given(passwordEncoder.matches(PLAIN_PASSWORD, ENCODED_PASSWORD)).willReturn(true);
@@ -392,7 +394,7 @@ public class VisitServiceTest {
                                 .visitorName("수정된이름")
                                 .build();
 
-                Visit visit = createBaseVisit(VisitStatus.NOT_VISITED, false);
+                Visit visit = createBaseVisit(VisitStatus.NOT_VISITED, VisitCategory.PRE_ONE_DAY);
                 visit.setStartDate(newDate);
 
                 given(visitRepository.findById(VISIT_ID)).willReturn(Optional.of(visit));
@@ -422,7 +424,7 @@ public class VisitServiceTest {
                                 .visitorName("이름수정")
                                 .build();
 
-                Visit visit = createBaseVisit(VisitStatus.APPROVED, true);
+                Visit visit = createBaseVisit(VisitStatus.APPROVED, VisitCategory.PRE_LONG_TERM);
                 visit.setStartDate(LocalDate.now());
                 visit.setEndDate(LocalDate.now().plusMonths(1));
                 visit.setVisited(false);
@@ -445,7 +447,7 @@ public class VisitServiceTest {
                 MyVisitUpdateRequestDto dto =
                         MyVisitUpdateRequestDto.builder().password(PLAIN_PASSWORD).build();
 
-                Visit visit = createBaseVisit(VisitStatus.APPROVED, true);
+                Visit visit = createBaseVisit(VisitStatus.APPROVED, VisitCategory.PRE_LONG_TERM);
                 visit.setVisited(true); // ★ 핵심: 이미 한 번이라도 입실했던 상태
 
                 given(visitRepository.findById(VISIT_ID)).willReturn(Optional.of(visit));
@@ -466,27 +468,6 @@ public class VisitServiceTest {
         @Mock private MockMultipartFile signatureFile;
 
         @Nested
-        @DisplayName("비밀번호가 일치하지 않으면")
-        class Context_with_invalid_password {
-
-            @Test
-            @DisplayName("INVALID_PASSWORD 예외를 던진다.")
-            void it_throws_invalid_password_exception() throws IOException {
-                // given
-                CheckInRequestDto dto = new CheckInRequestDto(1L, "wrong_pw", signatureFile);
-                Visit visit = createBaseVisit(VisitStatus.NOT_VISITED, false);
-
-                given(visitRepository.findById(1L)).willReturn(Optional.of(visit));
-                given(passwordEncoder.matches("wrong_pw", ENCODED_PASSWORD)).willReturn(false);
-
-                // when & then
-                assertThatThrownBy(() -> visitService.checkIn(dto))
-                        .isInstanceOf(CustomException.class)
-                        .hasMessage("유효하지 않은 비밀번호입니다.");
-            }
-        }
-
-        @Nested
         @DisplayName("하루 방문인데 방문 예정일이 오늘이 아니면")
         class Context_with_invalid_visit_date {
 
@@ -494,13 +475,12 @@ public class VisitServiceTest {
             @DisplayName("NOT_VISIT_DATE 예외를 던진다.")
             void it_throws_not_visit_date_exception() throws IOException {
                 // given
-                CheckInRequestDto dto = new CheckInRequestDto(1L, "1234", signatureFile);
+                CheckInRequestDto dto = new CheckInRequestDto(1L, signatureFile);
                 // 어제 날짜로 예약된 하루 방문 건
-                Visit visit = createBaseVisit(VisitStatus.NOT_VISITED, false);
+                Visit visit = createBaseVisit(VisitStatus.NOT_VISITED, VisitCategory.PRE_ONE_DAY);
                 visit.setStartDate(LocalDate.now().minusDays(1));
 
                 given(visitRepository.findById(1L)).willReturn(Optional.of(visit));
-                given(passwordEncoder.matches(PLAIN_PASSWORD, ENCODED_PASSWORD)).willReturn(true);
 
                 // when & then
                 assertThatThrownBy(() -> visitService.checkIn(dto))
@@ -517,13 +497,12 @@ public class VisitServiceTest {
             @DisplayName("VISIT_ALREADY_CHECKED_OUT 예외를 던진다.")
             void it_throws_visit_already_checked_out_exception() throws IOException {
                 // given
-                CheckInRequestDto dto = new CheckInRequestDto(1L, "1234", signatureFile);
-                Visit visit = createBaseVisit(VisitStatus.COMPLETED, false);
+                CheckInRequestDto dto = new CheckInRequestDto(1L, signatureFile);
+                Visit visit = createBaseVisit(VisitStatus.COMPLETED, VisitCategory.PRE_ONE_DAY);
                 visit.setStartDate(LocalDate.now());
                 visit.setVisited(true);
 
                 given(visitRepository.findById(1L)).willReturn(Optional.of(visit));
-                given(passwordEncoder.matches(PLAIN_PASSWORD, ENCODED_PASSWORD)).willReturn(true);
 
                 // when & then
                 assertThatThrownBy(() -> visitService.checkIn(dto))
@@ -540,12 +519,11 @@ public class VisitServiceTest {
             @DisplayName("방문 상태를 IN_PROGRESS로 바꾸고 입실 기록을 생성한다.")
             void it_check_in_successfully() throws IOException {
                 // given
-                CheckInRequestDto dto = new CheckInRequestDto(1L, "1234", signatureFile);
-                Visit visit = createBaseVisit(VisitStatus.NOT_VISITED, false);
+                CheckInRequestDto dto = new CheckInRequestDto(1L, signatureFile);
+                Visit visit = createBaseVisit(VisitStatus.NOT_VISITED, VisitCategory.PRE_ONE_DAY);
                 visit.setStartDate(LocalDate.now());
 
                 given(visitRepository.findById(1L)).willReturn(Optional.of(visit));
-                given(passwordEncoder.matches(PLAIN_PASSWORD, ENCODED_PASSWORD)).willReturn(true);
                 given(s3Service.uploadFile(any())).willReturn("s3-signature-key");
 
                 // when
@@ -590,7 +568,7 @@ public class VisitServiceTest {
             void it_throws_not_in_progress_exception() {
                 // given: 상태가 APPROVED(입실 전)인데 퇴실을 시도하는 경우
                 VisitRecord record = VisitRecord.builder().id(RECORD_ID).exitTime(null).build();
-                Visit visit = createBaseVisit(VisitStatus.APPROVED, false);
+                Visit visit = createBaseVisit(VisitStatus.APPROVED, VisitCategory.PRE_ONE_DAY);
                 visit.getRecords().add(record);
 
                 given(visitRepository.findById(VISIT_ID)).willReturn(Optional.of(visit));
@@ -614,7 +592,7 @@ public class VisitServiceTest {
                                 .exitTime(null)
                                 .build();
 
-                Visit visit = createBaseVisit(VisitStatus.IN_PROGRESS, false);
+                Visit visit = createBaseVisit(VisitStatus.IN_PROGRESS, VisitCategory.PRE_ONE_DAY);
                 visit.getRecords().add(record);
 
                 given(visitRepository.findById(VISIT_ID)).willReturn(Optional.of(visit));
@@ -639,7 +617,7 @@ public class VisitServiceTest {
                                 .entryTime(ENTRY_TIME)
                                 .exitTime(null)
                                 .build();
-                Visit visit = createBaseVisit(VisitStatus.IN_PROGRESS, true);
+                Visit visit = createBaseVisit(VisitStatus.IN_PROGRESS, VisitCategory.PRE_LONG_TERM);
                 visit.getRecords().add(record);
 
                 given(visitRepository.findById(VISIT_ID)).willReturn(Optional.of(visit));
@@ -672,7 +650,7 @@ public class VisitServiceTest {
                                 .entryTime(ENTRY_TIME)
                                 .exitTime(oldExitTime)
                                 .build();
-                Visit visit = createBaseVisit(VisitStatus.COMPLETED, false);
+                Visit visit = createBaseVisit(VisitStatus.COMPLETED, VisitCategory.PRE_ONE_DAY);
                 visit.getRecords().add(record);
 
                 given(visitRepository.findById(VISIT_ID)).willReturn(Optional.of(visit));
@@ -702,7 +680,7 @@ public class VisitServiceTest {
                                 .entryTime(ENTRY_TIME)
                                 .exitTime(null)
                                 .build();
-                Visit visit = createBaseVisit(VisitStatus.IN_PROGRESS, false);
+                Visit visit = createBaseVisit(VisitStatus.IN_PROGRESS, VisitCategory.PRE_ONE_DAY);
                 visit.getRecords().add(record);
 
                 given(visitRepository.findById(VISIT_ID)).willReturn(Optional.of(visit));
@@ -729,7 +707,7 @@ public class VisitServiceTest {
             void it_throws_not_long_term_visit_exception() {
                 // given
                 User admin = createHost();
-                Visit oneDayVisit = createBaseVisit(VisitStatus.PENDING, false);
+                Visit oneDayVisit = createBaseVisit(VisitStatus.PENDING, VisitCategory.PRE_ONE_DAY);
                 VisitProcessRequestDto dto = new VisitProcessRequestDto(VisitStatus.APPROVED, null);
 
                 given(userRepository.findById(any())).willReturn(Optional.of(admin));
@@ -751,7 +729,8 @@ public class VisitServiceTest {
             void it_updates_status_to_approved() {
                 // given
                 User admin = createHost();
-                Visit pendingVisit = createBaseVisit(VisitStatus.PENDING, true);
+                Visit pendingVisit =
+                        createBaseVisit(VisitStatus.PENDING, VisitCategory.PRE_LONG_TERM);
                 VisitProcessRequestDto dto = new VisitProcessRequestDto(VisitStatus.APPROVED, null);
 
                 given(userRepository.findById(any())).willReturn(Optional.of(admin));
@@ -775,7 +754,8 @@ public class VisitServiceTest {
             void it_updates_status_to_rejected_and_records_reason() {
                 // given
                 User admin = createHost();
-                Visit pendingVisit = createBaseVisit(VisitStatus.PENDING, true);
+                Visit pendingVisit =
+                        createBaseVisit(VisitStatus.PENDING, VisitCategory.PRE_LONG_TERM);
                 String reason = "방문 목적 부적합";
                 VisitProcessRequestDto dto =
                         new VisitProcessRequestDto(VisitStatus.REJECTED, reason);
@@ -801,7 +781,8 @@ public class VisitServiceTest {
             void it_throws_invalid_visit_status_exception() {
                 // given
                 User admin = createHost();
-                Visit approvedVisit = createBaseVisit(VisitStatus.APPROVED, true);
+                Visit approvedVisit =
+                        createBaseVisit(VisitStatus.APPROVED, VisitCategory.PRE_LONG_TERM);
                 VisitProcessRequestDto dto =
                         new VisitProcessRequestDto(VisitStatus.REJECTED, "뒤늦은 반려");
 

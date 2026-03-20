@@ -1,6 +1,7 @@
 package kr.co.awesomelead.groupware_backend.domain.visit.scheduler;
 
 import kr.co.awesomelead.groupware_backend.domain.visit.entity.Visit;
+import kr.co.awesomelead.groupware_backend.domain.visit.enums.VisitCategory;
 import kr.co.awesomelead.groupware_backend.domain.visit.enums.VisitStatus;
 import kr.co.awesomelead.groupware_backend.domain.visit.repository.VisitRepository;
 
@@ -28,8 +29,8 @@ public class VisitScheduler {
 
         // 1. 만료 대상 조회 (종료일이 오늘보다 이전인 건)
         List<Visit> expiredVisits =
-                visitRepository.findAllByIsLongTermTrueAndEndDateBeforeAndStatusNot(
-                        LocalDate.now(), VisitStatus.COMPLETED);
+                visitRepository.findAllByVisitCategoryAndEndDateBeforeAndStatusNot(
+                        VisitCategory.PRE_LONG_TERM, LocalDate.now(), VisitStatus.COMPLETED);
 
         if (expiredVisits.isEmpty()) {
             log.info("만료 대상 장기 방문 건이 없습니다.");

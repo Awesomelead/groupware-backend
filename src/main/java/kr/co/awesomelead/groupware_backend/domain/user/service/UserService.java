@@ -6,9 +6,12 @@ import kr.co.awesomelead.groupware_backend.domain.notification.enums.Notificatio
 import kr.co.awesomelead.groupware_backend.domain.notification.service.NotificationService;
 import kr.co.awesomelead.groupware_backend.domain.user.dto.response.MyInfoResponseDto;
 import kr.co.awesomelead.groupware_backend.domain.user.dto.response.UpdateMyInfoRequestDto;
+import kr.co.awesomelead.groupware_backend.domain.user.dto.response.UserDetailResponseDto;
+import kr.co.awesomelead.groupware_backend.domain.user.dto.response.UserSummaryResponseDto;
 import kr.co.awesomelead.groupware_backend.domain.user.entity.MyInfoUpdateRequest;
 import kr.co.awesomelead.groupware_backend.domain.user.entity.User;
 import kr.co.awesomelead.groupware_backend.domain.user.enums.MyInfoUpdateRequestStatus;
+import kr.co.awesomelead.groupware_backend.domain.user.enums.Status;
 import kr.co.awesomelead.groupware_backend.domain.user.repository.MyInfoUpdateRequestRepository;
 import kr.co.awesomelead.groupware_backend.domain.user.repository.UserRepository;
 import kr.co.awesomelead.groupware_backend.global.error.CustomException;
@@ -17,6 +20,8 @@ import kr.co.awesomelead.groupware_backend.global.error.ErrorCode;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -167,6 +172,24 @@ public class UserService {
         request.cancel();
         myInfoUpdateRequestRepository.save(request);
         log.info("내 정보 수정 요청 취소 - 사용자 ID: {}, 요청 ID: {}", user.getId(), requestId);
+    }
+
+    // 전 직원 목록 조회 (AVAILABLE 상태)
+    @Transactional(readOnly = true)
+    public Page<UserSummaryResponseDto> getEmployeeList(Pageable pageable) {
+        return userRepository
+                .findAllByStatusWithDepartment(Status.AVAILABLE, pageable)
+                .map(UserSummaryResponseDto::from);
+    }
+
+    // 직원 상세 조회
+    @Transactional(readOnly = true)
+    public UserDetailResponseDto getEmployeeDetail(Long userId) {
+        User user =
+                userRepository
+                        .findById(userId)
+                        .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
+        return UserDetailResponseDto.from(user);
     }
 
     private boolean hasText(String value) {

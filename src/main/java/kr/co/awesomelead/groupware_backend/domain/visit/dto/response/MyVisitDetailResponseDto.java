@@ -4,6 +4,7 @@ import io.swagger.v3.oas.annotations.media.Schema;
 
 import kr.co.awesomelead.groupware_backend.domain.department.enums.DepartmentName;
 import kr.co.awesomelead.groupware_backend.domain.user.enums.Position;
+import kr.co.awesomelead.groupware_backend.domain.visit.enums.VisitCategory;
 import kr.co.awesomelead.groupware_backend.domain.visit.enums.VisitPurpose;
 import kr.co.awesomelead.groupware_backend.domain.visit.enums.VisitStatus;
 
@@ -65,6 +66,12 @@ public class MyVisitDetailResponseDto {
 
     @Schema(description = "퇴실 시간", example = "2024-07-01T16:30:00")
     private LocalDateTime exitTime;
+
+    @Schema(description = "차량번호", example = "12가3456")
+    private String carNumber;
+
+    @Schema(description = "방문 유형 (사전 하루 / 사전 장기 / 현장 입실)", example = "사전 하루")
+    private VisitCategory visitCategory;
 
     @Schema(description = "입퇴실 및 서명 기록 리스트")
     private List<VisitRecordResponseDto> records;

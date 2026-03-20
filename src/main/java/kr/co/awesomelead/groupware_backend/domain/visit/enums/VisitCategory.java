@@ -7,11 +7,12 @@ import lombok.Getter;
 
 @Getter
 @AllArgsConstructor
-public enum VisitType {
-    PRE_REGISTRATION("사전 예약"), // 사전 예약
-    ON_SITE("현장 방문"); // 현장 방문
+public enum VisitCategory {
+    PRE_ONE_DAY("사전 하루"),
+    PRE_LONG_TERM("사전 장기"),
+    ON_SITE("현장 입실");
 
-    private final String description; // 한글 설명
+    private final String description;
 
     @JsonValue
     public String getDescription() {

@@ -54,16 +54,19 @@ public class MyVisitUpdateRequestDto implements VisitRequest {
     private LocalTime plannedExitTime;
 
     @Override
+    @Schema(hidden = true)
     public String getVisitorPhoneNumber() {
         return null;
     }
 
     @Override
+    @Schema(hidden = true)
     public String getCarNumber() {
         return null;
     }
 
     @Override
+    @Schema(hidden = true)
     public Long getHostId() {
         return null;
     }

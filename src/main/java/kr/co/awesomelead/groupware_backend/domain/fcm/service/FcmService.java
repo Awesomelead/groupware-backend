@@ -12,6 +12,7 @@ import kr.co.awesomelead.groupware_backend.domain.fcm.repository.FcmTokenReposit
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -25,6 +26,7 @@ public class FcmService {
     private final FcmTokenRepository fcmTokenRepository;
 
     /** 특정 유저의 모든 디바이스로 메시지 발송 */
+    @Async("fcmTaskExecutor")
     public void sendToUser(Long userId, String title, String body, Map<String, String> data) {
         List<FcmToken> tokens = fcmTokenRepository.findAllByUserId(userId);
         if (tokens.isEmpty()) {

@@ -99,7 +99,8 @@ public class NotificationService {
 
             // 2. FCM 이벤트 발행 (트랜잭션 커밋 후 비동기 발송)
             eventPublisher.publishEvent(
-                    new FcmSendEvent(admin.getId(), title, content, buildFcmData(domainType, domainId)));
+                    new FcmSendEvent(
+                            admin.getId(), title, content, buildFcmData(domainType, domainId)));
         }
 
         log.info("관리자 그룹 알림 전송 완료 - 대상 Admin 수: {}, 템플릿: {}", admins.size(), template.name());
@@ -159,7 +160,10 @@ public class NotificationService {
             // 2. FCM 이벤트 발행 (트랜잭션 커밋 후 비동기 발송)
             eventPublisher.publishEvent(
                     new FcmSendEvent(
-                            userId, title, content, buildFcmData(NotificationDomainType.NOTICE, noticeId)));
+                            userId,
+                            title,
+                            content,
+                            buildFcmData(NotificationDomainType.NOTICE, noticeId)));
         }
 
         log.info("공지 알림 전송 완료 - noticeId: {}, 대상 수: {}", noticeId, targetUserIds.size());
@@ -232,7 +236,10 @@ public class NotificationService {
             // 2. FCM 이벤트 발행 (트랜잭션 커밋 후 비동기 발송)
             eventPublisher.publishEvent(
                     new FcmSendEvent(
-                            userId, title, content, buildFcmData(NotificationDomainType.VISIT, visitId)));
+                            userId,
+                            title,
+                            content,
+                            buildFcmData(NotificationDomainType.VISIT, visitId)));
         }
 
         log.info(
@@ -260,7 +267,10 @@ public class NotificationService {
         // 2. FCM 이벤트 발행 (트랜잭션 커밋 후 비동기 발송)
         eventPublisher.publishEvent(
                 new FcmSendEvent(
-                        userId, title, content, buildFcmData(NotificationDomainType.ANNUAL_LEAVE, null)));
+                        userId,
+                        title,
+                        content,
+                        buildFcmData(NotificationDomainType.ANNUAL_LEAVE, null)));
 
         log.info("연차 알림 전송 완료 - userId: {}, 기준일: {}", userId, baseDateFormatted);
     }
@@ -283,7 +293,10 @@ public class NotificationService {
         // 2. FCM 이벤트 발행 (트랜잭션 커밋 후 비동기 발송)
         eventPublisher.publishEvent(
                 new FcmSendEvent(
-                        userId, title, content, buildFcmData(NotificationDomainType.PAYSLIP, payslipId)));
+                        userId,
+                        title,
+                        content,
+                        buildFcmData(NotificationDomainType.PAYSLIP, payslipId)));
 
         log.info("급여명세서 알림 전송 완료 - userId: {}, payslipId: {}", userId, payslipId);
     }

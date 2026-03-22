@@ -59,7 +59,7 @@ import java.util.List;
 
             ### 사용되는 Enum 타입
             - **VisitCategory**: 방문 유형 (`PRE_ONE_DAY`: 사전 하루, `PRE_LONG_TERM`: 사전 장기, `ON_SITE`: 현장 입실)
-            - **VisitPurpose**: 방문 목적 (`CUSTOMER_INSPECTION`: 고객 검수, `LOGISTICS_AND_DELIVERY`: 물품 납품/입출고, `FACILITY_CONSTRUCTION`: 시설공사, `HAZARDOUS_SUBSTANCE`: 위험물질 반입, `MEETING`: 미팅, `OTHER`: 기타)
+            - **VisitPurpose**: 방문 목적 (`CUSTOMER_INSPECTION`: 고객 검수, `LOGISTICS_AND_DELIVERY`: 입출고 및 물품 납품, `FACILITY_CONSTRUCTION`: 시설공사, `HAZARDOUS_SUBSTANCE`: 유해화학물질취급, `MEETING`: 미팅, `OTHER`: 기타)
             - **VisitStatus**: 방문 상태 (`PENDING`: 승인 대기, `APPROVED`: 승인 완료, `NOT_VISITED`: 방문 전, `IN_PROGRESS`: 방문 중, `COMPLETED`: 방문 완료, `REJECTED`: 반려)
             - **AdditionalPermissionType**: 추가 허가 유형 (`NONE`: 해당 없음, `CONFINED_SPACE_ENTRY`: 밀폐공간 출입, `HIGH_ALTITUDE_WORK`: 고소 작업, `OTHER_PERMISSION`: 기타 허가)
             """)

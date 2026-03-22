@@ -101,7 +101,8 @@ public class SecurityConfig {
                                         "/api/test/**",
                                         "/api/departments/hierarchy",
                                         "/api/departments/{departmentId}/users",
-                                        "/api/visits/**") // 내방객이 본인 방문기록 조회
+                                        "/api/visits/**", // 내방객이 본인 방문기록 조회
+                                        "/api/users/list") // 유저 목록 공개 조회
                                 .permitAll()
                                 .requestMatchers(
                                         "/api/auth/logout",

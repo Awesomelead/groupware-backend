@@ -14,11 +14,11 @@ import com.google.firebase.messaging.FirebaseMessaging;
 import com.google.firebase.messaging.FirebaseMessagingException;
 import com.google.firebase.messaging.MessagingErrorCode;
 import com.google.firebase.messaging.SendResponse;
-import java.util.List;
-import java.util.Map;
+
 import kr.co.awesomelead.groupware_backend.domain.fcm.entity.FcmToken;
 import kr.co.awesomelead.groupware_backend.domain.fcm.repository.FcmTokenRepository;
 import kr.co.awesomelead.groupware_backend.domain.fcm.service.FcmService;
+
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -28,6 +28,9 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.retry.annotation.EnableRetry;
 import org.springframework.test.context.junit.jupiter.SpringJUnitConfig;
+
+import java.util.List;
+import java.util.Map;
 
 @SpringJUnitConfig(FcmServiceTest.TestConfig.class)
 class FcmServiceTest {
@@ -47,11 +50,9 @@ class FcmServiceTest {
         }
     }
 
-    @Autowired
-    private FcmService fcmService;
+    @Autowired private FcmService fcmService;
 
-    @Autowired
-    private FcmTokenRepository fcmTokenRepository;
+    @Autowired private FcmTokenRepository fcmTokenRepository;
 
     @BeforeEach
     void setUp() {
@@ -176,7 +177,8 @@ class FcmServiceTest {
 
     @Test
     @DisplayName("sendToUser - 발송 결과에 UNREGISTERED 외 에러가 있으면 토큰 삭제 안 함")
-    void sendToUser_doesNotDeleteToken_whenNonUnregisteredError() throws FirebaseMessagingException {
+    void sendToUser_doesNotDeleteToken_whenNonUnregisteredError()
+            throws FirebaseMessagingException {
         String tokenValue = "device-token-abc";
         FcmToken mockToken = mock(FcmToken.class);
         when(mockToken.getToken()).thenReturn(tokenValue);

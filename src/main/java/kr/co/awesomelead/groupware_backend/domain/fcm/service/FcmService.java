@@ -57,7 +57,8 @@ public class FcmService {
             builder.putAllData(data);
         }
 
-        BatchResponse response = FirebaseMessaging.getInstance().sendEachForMulticast(builder.build());
+        BatchResponse response =
+                FirebaseMessaging.getInstance().sendEachForMulticast(builder.build());
         log.info(
                 "FCM 다중 발송 완료 - userId: {}, 성공: {}, 실패: {}",
                 userId,
@@ -72,8 +73,11 @@ public class FcmService {
                         && sendResponse.getException().getMessagingErrorCode()
                                 == MessagingErrorCode.UNREGISTERED) {
                     String invalidToken = tokenValues.get(i);
-                    log.warn("무효 토큰 삭제 - userId: {}, token: {}...{}", userId,
-                            invalidToken.substring(0, 10), invalidToken.substring(invalidToken.length() - 6));
+                    log.warn(
+                            "무효 토큰 삭제 - userId: {}, token: {}...{}",
+                            userId,
+                            invalidToken.substring(0, 10),
+                            invalidToken.substring(invalidToken.length() - 6));
                     fcmTokenRepository.deleteByToken(invalidToken);
                 }
             }
@@ -117,7 +121,6 @@ public class FcmService {
     @Recover
     public void recoverSendToTopic(
             FirebaseMessagingException e, String topicName, String title, String body) {
-        log.error(
-                "FCM 전송 최종 실패 (Retry 종료) - topic: {}, error: {}", topicName, e.getMessage());
+        log.error("FCM 전송 최종 실패 (Retry 종료) - topic: {}, error: {}", topicName, e.getMessage());
     }
 }

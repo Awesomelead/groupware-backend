@@ -61,7 +61,10 @@ import java.util.List;
     - **EduType**: PSM, SAFETY(안전 보건), DEPARTMENT(부서 교육)
 
     ### 권한 안내
-    - **작성/삭제 권한**: `WRITE_EDUCATION` 권한이 필요합니다. (401 에러 발생 가능)
+    - **작성 권한**
+      - PSM/안전보건: `WRITE_SAFETY`
+      - 부서교육: `ACCESS_EDUCATION`
+    - **삭제 권한**: `ACCESS_EDUCATION` 권한이 필요합니다.
     - **관리자 조회**: `ADMIN` 역할(Role)이 필요합니다. (401 에러 발생 가능)
     """)
 public class EduReportController {

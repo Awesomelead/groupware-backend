@@ -62,9 +62,7 @@ public class EduReportService {
                         .findById(id)
                         .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
 
-        if (!user.hasAuthority(Authority.ACCESS_EDUCATION)) {
-            throw new CustomException(ErrorCode.NO_AUTHORITY_FOR_EDU_REPORT);
-        }
+        validateCreateAuthority(user, requestDto.getEduType());
 
         Department department = null;
         if (requestDto.getEduType() == EduType.DEPARTMENT && requestDto.getDepartmentId() != null) {
@@ -131,6 +129,19 @@ public class EduReportService {
                 targetUserIds);
 
         return savedReport.getId();
+    }
+
+    private void validateCreateAuthority(User user, EduType eduType) {
+        if (eduType == EduType.PSM || eduType == EduType.SAFETY) {
+            if (!user.hasAuthority(Authority.WRITE_SAFETY)) {
+                throw new CustomException(ErrorCode.NO_AUTHORITY_FOR_SAFETY_WRITE);
+            }
+            return;
+        }
+
+        if (!user.hasAuthority(Authority.ACCESS_EDUCATION)) {
+            throw new CustomException(ErrorCode.NO_AUTHORITY_FOR_EDU_REPORT);
+        }
     }
 
     @Transactional(readOnly = true)

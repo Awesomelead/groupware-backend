@@ -11,6 +11,7 @@ public enum Authority {
     // 전체 권한은 ADMIN으로 변경할 때, 자동 부여
     ACCESS_MESSAGE("메세지 작성"), // jobType이 관리직일 경우 부여하고 시작
     ACCESS_EDUCATION("교육 작성"), // jobType이 관리직일 경우 부여하고 시작
+    WRITE_SAFETY("PSM/안전보건 작성"),
     ACCESS_NOTICE("공지 작성"),
 
     ACCESS_VISIT("방문자 관리 접근"),

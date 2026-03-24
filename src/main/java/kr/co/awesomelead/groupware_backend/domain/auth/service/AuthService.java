@@ -118,7 +118,7 @@ public class AuthService {
         return new SignupResponseDto(savedUser.getId(), savedUser.getEmail());
     }
 
-    @Transactional(readOnly = true)
+    @Transactional
     public LoginResponseDto login(LoginRequestDto requestDto) {
         // 1. 인증 처리
         UsernamePasswordAuthenticationToken authToken =

@@ -1,13 +1,11 @@
+server:
+  port: 8080
 spring:
-  application:
-    name: groupware-backend
-
   datasource:
     url: ${DB_URL}
-    driver-class-name: com.mysql.cj.jdbc.Driver
     username: ${DB_USERNAME}
     password: ${DB_PASSWORD}
-
+    driver-class-name: com.mysql.cj.jdbc.Driver
   jwt:
     secret: ${JWT_SECRET}
     access-validation: ${ACCESS_VALIDATION}
@@ -26,6 +24,60 @@ spring:
     multipart:
       max-file-size: ${MULTIPART_MAX_FILE_SIZE}
       max-request-size: ${MULTIPART_MAX_REQUEST_SIZE}
+  cloud:
+    aws:
+      credentials:
+        access-key: ${AWS_ACCESS_KEY}
+        secret-key: ${AWS_SECRET_KEY}
+      s3:
+        bucket: ${AWS_S3_BUCKET}
+      region:
+        static: ${AWS_S3_STATIC}
+    data:
+      redis:
+        host: localhost
+        port: 6379
+
+  mail:
+    host: ${MAIL_HOST}
+    port: ${MAIL_PORT}
+    username: ${MAIL_USERNAME}
+    password: ${MAIL_PASSWORD}
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls:
+            enable: true
+            required: true
+          connectiontimeout: 5000
+          timeout: 5000
+          writetimeout: 5000
+
+aligo:
+  api:
+    url: ${ALIGO_API_URL}
+    apikey: ${ALIGO_API_APIKEY}
+    userid: ${ALIGO_API_USERID}
+    senderkey: ${ALIGO_API_SENDERKEY}
+    sender: ${ALIGO_API_SENDER}
+    tpl-code: ${ALIGO_API_TPL_CODE}
+    test-mode: ${ALIGO_API_TEST_MODE}
+
+encryption:
+  secret-key: ${ENCRYPTION_SECRET_KEY}
+  salt: ${ENCRYPTION_SALT}
+
+portone:
+  apisecret: ${PORTONE_APISECRET}
+  public-info:
+    store-id: ${PORTONE_STORE_ID}
+    channel-key: ${PORTONE_CHANNEL_KEY}
+
+logging:
+  level:
+    org.springframework.security: DEBUG
+    kr.co.awesomelead.groupware_backend: DEBUG
 
 hanbiro:
   sso:

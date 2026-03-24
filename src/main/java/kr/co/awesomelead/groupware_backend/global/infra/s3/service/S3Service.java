@@ -82,6 +82,25 @@ public class S3Service {
         return fileName;
     }
 
+    public String uploadBytes(byte[] fileData, String originalFileName, String contentType) {
+        if (fileData == null || fileData.length == 0) {
+            throw new IllegalArgumentException("파일 데이터가 비어있습니다.");
+        }
+
+        String fileName = generateFileName(originalFileName);
+
+        PutObjectRequest putObjectRequest =
+                PutObjectRequest.builder()
+                        .bucket(bucketName)
+                        .key(fileName)
+                        .contentType(contentType != null ? contentType : "application/octet-stream")
+                        .contentDisposition("inline")
+                        .build();
+
+        s3Client.putObject(putObjectRequest, RequestBody.fromBytes(fileData));
+        return fileName;
+    }
+
     public void deleteFile(String fileKey) {
         if (fileKey == null || fileKey.isBlank()) {
             return;

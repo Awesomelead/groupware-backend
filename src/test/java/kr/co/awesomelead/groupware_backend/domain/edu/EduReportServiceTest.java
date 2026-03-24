@@ -145,7 +145,7 @@ public class EduReportServiceTest {
                         .build();
 
         User user = createNormalUser();
-        user.addAuthority(Authority.ACCESS_EDUCATION);
+        user.addAuthority(Authority.WRITE_SAFETY);
         EducationCategory category =
                 EducationCategory.builder()
                         .id(1L)
@@ -208,7 +208,7 @@ public class EduReportServiceTest {
     }
 
     @Test
-    @DisplayName("교육 보고서 생성 실패 - 권한이 없는 경우")
+    @DisplayName("교육 보고서 생성 실패 - 안전보건 작성 권한이 없는 경우")
     void createEduReport_Fail_NO_AUTHORITY_FOR_EDU_REPORT() {
         // given
         EduReportRequestDto requestDto =
@@ -228,7 +228,7 @@ public class EduReportServiceTest {
         assertThatThrownBy(() -> eduReportService.createEduReport(requestDto, null, 1L))
                 .isInstanceOf(CustomException.class)
                 .extracting("errorCode") // CustomException 내부의 errorCode 필드 추출
-                .isEqualTo(ErrorCode.NO_AUTHORITY_FOR_EDU_REPORT);
+                .isEqualTo(ErrorCode.NO_AUTHORITY_FOR_SAFETY_WRITE);
 
         verify(eduReportRepository, never()).save(any());
     }

@@ -11,6 +11,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 
 import kr.co.awesomelead.groupware_backend.domain.safetytraining.dto.request.SafetyTrainingSessionCreateRequestDto;
+import kr.co.awesomelead.groupware_backend.domain.safetytraining.dto.response.SafetyTrainingPreviewResponseDto;
 import kr.co.awesomelead.groupware_backend.domain.safetytraining.service.SafetyTrainingSessionService;
 import kr.co.awesomelead.groupware_backend.domain.user.dto.CustomUserDetails;
 import kr.co.awesomelead.groupware_backend.global.common.response.ApiResponse;
@@ -47,6 +48,15 @@ import org.springframework.web.bind.annotation.RestController;
 public class SafetyTrainingSessionController {
 
     private final SafetyTrainingSessionService safetyTrainingSessionService;
+
+    @Operation(summary = "안전보건 교육 엑셀 미리보기", description = "입력한 값으로 DB 저장 없이 엑셀 미리보기를 생성합니다.")
+    @PostMapping("/preview")
+    public ResponseEntity<ApiResponse<SafetyTrainingPreviewResponseDto>> preview(
+            @Parameter(hidden = true) @AuthenticationPrincipal CustomUserDetails userDetails,
+            @Valid @RequestBody SafetyTrainingSessionCreateRequestDto requestDto) {
+        return ResponseEntity.ok(
+                ApiResponse.onSuccess(safetyTrainingSessionService.preview(userDetails.getId(), requestDto)));
+    }
 
     @Operation(
             summary = "안전보건 교육 세션 생성",

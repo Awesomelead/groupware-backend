@@ -3,6 +3,7 @@ package kr.co.awesomelead.groupware_backend.domain.safetytraining.service;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import kr.co.awesomelead.groupware_backend.domain.safetytraining.dto.request.SafetyTrainingSessionCreateRequestDto;
+import kr.co.awesomelead.groupware_backend.domain.safetytraining.dto.response.SafetyTrainingPreviewResponseDto;
 import kr.co.awesomelead.groupware_backend.domain.safetytraining.entity.SafetyTrainingSession;
 import kr.co.awesomelead.groupware_backend.domain.safetytraining.entity.SafetyTrainingSessionAttendee;
 import kr.co.awesomelead.groupware_backend.domain.safetytraining.enums.SafetyTrainingAttendeeStatus;
@@ -15,6 +16,7 @@ import kr.co.awesomelead.groupware_backend.domain.safetytraining.repository.Safe
 import kr.co.awesomelead.groupware_backend.domain.safetytraining.repository.SafetyTrainingSessionRepository;
 import kr.co.awesomelead.groupware_backend.global.error.CustomException;
 import kr.co.awesomelead.groupware_backend.global.error.ErrorCode;
+import kr.co.awesomelead.groupware_backend.global.infra.s3.service.S3Service;
 
 import lombok.RequiredArgsConstructor;
 
@@ -37,6 +39,41 @@ public class SafetyTrainingSessionService {
     private final SafetyTrainingSessionAttendeeRepository attendeeRepository;
     private final UserRepository userRepository;
     private final ObjectMapper objectMapper;
+    private final SafetyTrainingExcelService safetyTrainingExcelService;
+    private final S3Service s3Service;
+
+    @Transactional(readOnly = true)
+    public SafetyTrainingPreviewResponseDto preview(
+            Long userId, SafetyTrainingSessionCreateRequestDto requestDto) {
+        User actor =
+                userRepository
+                        .findById(userId)
+                        .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
+        validateSafetyWriteAuthority(actor);
+        validateTimeRange(requestDto.getStartAt(), requestDto.getEndAt());
+
+        User instructor = findAndValidateInstructor(requestDto);
+        List<User> attendees = findTargetAttendees(requestDto);
+        String educationDateText = toEducationDateText(requestDto.getStartAt(), requestDto.getEndAt());
+
+        byte[] excelBytes =
+                safetyTrainingExcelService.buildPreviewExcel(
+                        requestDto, educationDateText, attendees, instructor.getNameKor());
+
+        String previewFileKey =
+                s3Service.uploadBytes(
+                        excelBytes,
+                        "safety-training-preview-" + System.currentTimeMillis() + ".xlsx",
+                        "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
+        String previewUrl = s3Service.getPresignedViewUrl(previewFileKey);
+
+        return SafetyTrainingPreviewResponseDto.builder()
+                .previewFileUrl(previewUrl)
+                .targetCount(attendees.size())
+                .attendedCount(0)
+                .absentCount(0)
+                .build();
+    }
 
     @Transactional
     public Long create(Long userId, SafetyTrainingSessionCreateRequestDto requestDto) {
@@ -44,21 +81,10 @@ public class SafetyTrainingSessionService {
                 userRepository
                         .findById(userId)
                         .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
-
-        if (!actor.hasAuthority(Authority.WRITE_SAFETY)) {
-            throw new CustomException(ErrorCode.NO_AUTHORITY_FOR_SAFETY_WRITE);
-        }
-
+        validateSafetyWriteAuthority(actor);
         validateTimeRange(requestDto.getStartAt(), requestDto.getEndAt());
 
-        User instructor =
-                userRepository
-                        .findById(requestDto.getInstructorUserId())
-                        .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
-
-        if (instructor.getWorkLocation() != requestDto.getCompanyScope()) {
-            throw new CustomException(ErrorCode.INVALID_ARGUMENT);
-        }
+        User instructor = findAndValidateInstructor(requestDto);
 
         String methodsJson = toMethodsJson(requestDto);
         String educationDateText = toEducationDateText(requestDto.getStartAt(), requestDto.getEndAt());
@@ -81,9 +107,7 @@ public class SafetyTrainingSessionService {
 
         SafetyTrainingSession saved = sessionRepository.save(session);
 
-        List<User> attendees =
-                userRepository.findAllByCompanyAndStatusExcludingPosition(
-                        requestDto.getCompanyScope(), Status.AVAILABLE, Position.CEO);
+        List<User> attendees = findTargetAttendees(requestDto);
 
         List<SafetyTrainingSessionAttendee> rows =
                 attendees.stream()
@@ -103,6 +127,23 @@ public class SafetyTrainingSessionService {
         saved.setAbsentCount(0);
 
         return saved.getId();
+    }
+
+    private void validateSafetyWriteAuthority(User user) {
+        if (!user.hasAuthority(Authority.WRITE_SAFETY)) {
+            throw new CustomException(ErrorCode.NO_AUTHORITY_FOR_SAFETY_WRITE);
+        }
+    }
+
+    private User findAndValidateInstructor(SafetyTrainingSessionCreateRequestDto requestDto) {
+        return userRepository
+                .findById(requestDto.getInstructorUserId())
+                .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
+    }
+
+    private List<User> findTargetAttendees(SafetyTrainingSessionCreateRequestDto requestDto) {
+        return userRepository.findAllByCompanyAndStatusExcludingPosition(
+                requestDto.getCompanyScope(), Status.AVAILABLE, Position.CEO);
     }
 
     private void validateTimeRange(LocalDateTime startAt, LocalDateTime endAt) {

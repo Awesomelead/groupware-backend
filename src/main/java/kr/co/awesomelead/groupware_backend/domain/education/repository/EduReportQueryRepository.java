@@ -2,6 +2,7 @@ package kr.co.awesomelead.groupware_backend.domain.education.repository;
 
 import static kr.co.awesomelead.groupware_backend.domain.education.entity.QEduAttendance.eduAttendance;
 import static kr.co.awesomelead.groupware_backend.domain.education.entity.QEduReport.eduReport;
+import static kr.co.awesomelead.groupware_backend.domain.education.entity.QEducationCategory.educationCategory;
 
 import com.querydsl.core.types.Projections;
 import com.querydsl.core.types.dsl.BooleanExpression;
@@ -52,9 +53,10 @@ public class EduReportQueryRepository {
                                         .exists(),
                                 eduReport.pinned,
                                 eduReport.signatureRequired,
-                                eduReport.category.id,
-                                eduReport.category.name))
+                                educationCategory.id,
+                                educationCategory.name))
                 .from(eduReport)
+                .leftJoin(eduReport.category, educationCategory)
                 .where(eqEduType(type), eqCategoryId(categoryId), deptFilter(type, hasAccess, dept))
                 .orderBy(eduReport.pinned.desc(), eduReport.eduDate.desc())
                 .fetch();
@@ -68,7 +70,7 @@ public class EduReportQueryRepository {
     }
 
     private BooleanExpression eqCategoryId(Long categoryId) {
-        return categoryId != null ? eduReport.category.id.eq(categoryId) : null;
+        return categoryId != null ? educationCategory.id.eq(categoryId) : null;
     }
 
     /**

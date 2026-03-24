@@ -55,6 +55,16 @@ public interface UserRepository extends JpaRepository<User, Long> {
     List<Long> findAllIdsByCompany(@Param("company") Company company);
 
     @Query(
+            "SELECT u FROM User u "
+                    + "WHERE u.workLocation = :company "
+                    + "AND u.status = :status "
+                    + "AND u.position <> :excludedPosition")
+    List<User> findAllByCompanyAndStatusExcludingPosition(
+            @Param("company") Company company,
+            @Param("status") Status status,
+            @Param("excludedPosition") Position excludedPosition);
+
+    @Query(
             "SELECT u FROM User u LEFT JOIN FETCH u.department d WHERE u.status = :status ORDER BY"
                     + " u.id DESC")
     List<User> findAllByStatusWithDepartment(@Param("status") Status status);

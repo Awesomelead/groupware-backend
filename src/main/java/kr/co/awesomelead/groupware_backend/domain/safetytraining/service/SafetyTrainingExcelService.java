@@ -80,7 +80,8 @@ public class SafetyTrainingExcelService {
         }
     }
 
-    private void fillEducationMethodsCheckboxes(Sheet sheet, List<SafetyEducationMethod> selectedMethods) {
+    private void fillEducationMethodsCheckboxes(
+            Sheet sheet, List<SafetyEducationMethod> selectedMethods) {
         Cell labelCell = findCellContains(sheet, "교육방법");
         if (labelCell == null) {
             return;
@@ -93,7 +94,11 @@ public class SafetyTrainingExcelService {
 
         Cell targetCell =
                 resolveValueCellRightOfLabel(
-                        sheet, row, labelCell.getRowIndex(), labelCell.getColumnIndex(), labelCell.getColumnIndex() + 1);
+                        sheet,
+                        row,
+                        labelCell.getRowIndex(),
+                        labelCell.getColumnIndex(),
+                        labelCell.getColumnIndex() + 1);
 
         String methodsText =
                 String.format(
@@ -171,7 +176,11 @@ public class SafetyTrainingExcelService {
         int preferredStartCol = labelCell.getColumnIndex() + Math.max(offsetCol, 1);
         Cell target =
                 resolveValueCellRightOfLabel(
-                        sheet, row, labelCell.getRowIndex(), labelCell.getColumnIndex(), preferredStartCol);
+                        sheet,
+                        row,
+                        labelCell.getRowIndex(),
+                        labelCell.getColumnIndex(),
+                        preferredStartCol);
         target.setCellValue(defaultString(value));
     }
 
@@ -203,7 +212,10 @@ public class SafetyTrainingExcelService {
                 return cell;
             }
 
-            String text = cell.getCellType() == CellType.STRING ? normalize(cell.getStringCellValue()) : "";
+            String text =
+                    cell.getCellType() == CellType.STRING
+                            ? normalize(cell.getStringCellValue())
+                            : "";
             if (text.isEmpty()) {
                 return cell;
             }
@@ -222,7 +234,8 @@ public class SafetyTrainingExcelService {
         return null;
     }
 
-    private String isSelected(List<SafetyEducationMethod> selectedMethods, SafetyEducationMethod method) {
+    private String isSelected(
+            List<SafetyEducationMethod> selectedMethods, SafetyEducationMethod method) {
         return selectedMethods.contains(method) ? "■" : "□";
     }
 

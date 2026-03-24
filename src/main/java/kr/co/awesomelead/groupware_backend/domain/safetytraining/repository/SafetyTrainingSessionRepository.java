@@ -4,4 +4,5 @@ import kr.co.awesomelead.groupware_backend.domain.safetytraining.entity.SafetyTr
 
 import org.springframework.data.jpa.repository.JpaRepository;
 
-public interface SafetyTrainingSessionRepository extends JpaRepository<SafetyTrainingSession, Long> {}
+public interface SafetyTrainingSessionRepository
+        extends JpaRepository<SafetyTrainingSession, Long> {}

@@ -29,14 +29,18 @@ public class SafetyTrainingSessionCreateRequestDto {
 
     @NotNull(message = "교육 구분은 필수입니다.")
     @Schema(
-            description = "교육 구분 코드 (REGULAR: 정기교육, HIRING: 채용시, JOB_CHANGE: 작업내용 변경시, SPECIAL: 특별교육, MSDS: MSDS교육)",
+            description =
+                    "교육 구분 코드 (REGULAR: 정기교육, HIRING: 채용시, JOB_CHANGE: 작업내용 변경시, SPECIAL: 특별교육,"
+                        + " MSDS: MSDS교육)",
             example = "REGULAR",
             allowableValues = {"REGULAR", "HIRING", "JOB_CHANGE", "SPECIAL", "MSDS"})
     private SafetyEducationType educationType;
 
     @NotEmpty(message = "교육 방법은 1개 이상 선택해야 합니다.")
     @Schema(
-            description = "교육 방법 코드 목록 (LECTURE: 강의, AUDIOVISUAL: 시청각, FIELD_TRAINING: 현장 교육, DEMONSTRATION: 시범 실습, TOUR: 견학, ROLE_PLAY: 역할연기)",
+            description =
+                    "교육 방법 코드 목록 (LECTURE: 강의, AUDIOVISUAL: 시청각, FIELD_TRAINING: 현장 교육,"
+                        + " DEMONSTRATION: 시범 실습, TOUR: 견학, ROLE_PLAY: 역할연기)",
             example = "[\"LECTURE\", \"AUDIOVISUAL\"]",
             allowableValues = {
                 "LECTURE",

@@ -7,13 +7,13 @@ import kr.co.awesomelead.groupware_backend.domain.safetytraining.dto.response.Sa
 import kr.co.awesomelead.groupware_backend.domain.safetytraining.entity.SafetyTrainingSession;
 import kr.co.awesomelead.groupware_backend.domain.safetytraining.entity.SafetyTrainingSessionAttendee;
 import kr.co.awesomelead.groupware_backend.domain.safetytraining.enums.SafetyTrainingAttendeeStatus;
+import kr.co.awesomelead.groupware_backend.domain.safetytraining.repository.SafetyTrainingSessionAttendeeRepository;
+import kr.co.awesomelead.groupware_backend.domain.safetytraining.repository.SafetyTrainingSessionRepository;
 import kr.co.awesomelead.groupware_backend.domain.user.entity.User;
 import kr.co.awesomelead.groupware_backend.domain.user.enums.Authority;
 import kr.co.awesomelead.groupware_backend.domain.user.enums.Position;
 import kr.co.awesomelead.groupware_backend.domain.user.enums.Status;
 import kr.co.awesomelead.groupware_backend.domain.user.repository.UserRepository;
-import kr.co.awesomelead.groupware_backend.domain.safetytraining.repository.SafetyTrainingSessionAttendeeRepository;
-import kr.co.awesomelead.groupware_backend.domain.safetytraining.repository.SafetyTrainingSessionRepository;
 import kr.co.awesomelead.groupware_backend.global.error.CustomException;
 import kr.co.awesomelead.groupware_backend.global.error.ErrorCode;
 import kr.co.awesomelead.groupware_backend.global.infra.s3.service.S3Service;
@@ -54,7 +54,8 @@ public class SafetyTrainingSessionService {
 
         User instructor = findAndValidateInstructor(requestDto);
         List<User> attendees = findTargetAttendees(requestDto);
-        String educationDateText = toEducationDateText(requestDto.getStartAt(), requestDto.getEndAt());
+        String educationDateText =
+                toEducationDateText(requestDto.getStartAt(), requestDto.getEndAt());
 
         byte[] excelBytes =
                 safetyTrainingExcelService.buildPreviewExcel(
@@ -87,7 +88,8 @@ public class SafetyTrainingSessionService {
         User instructor = findAndValidateInstructor(requestDto);
 
         String methodsJson = toMethodsJson(requestDto);
-        String educationDateText = toEducationDateText(requestDto.getStartAt(), requestDto.getEndAt());
+        String educationDateText =
+                toEducationDateText(requestDto.getStartAt(), requestDto.getEndAt());
 
         SafetyTrainingSession session =
                 SafetyTrainingSession.builder()

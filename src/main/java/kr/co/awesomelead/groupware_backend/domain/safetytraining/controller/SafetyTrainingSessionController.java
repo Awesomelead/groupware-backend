@@ -55,7 +55,8 @@ public class SafetyTrainingSessionController {
             @Parameter(hidden = true) @AuthenticationPrincipal CustomUserDetails userDetails,
             @Valid @RequestBody SafetyTrainingSessionCreateRequestDto requestDto) {
         return ResponseEntity.ok(
-                ApiResponse.onSuccess(safetyTrainingSessionService.preview(userDetails.getId(), requestDto)));
+                ApiResponse.onSuccess(
+                        safetyTrainingSessionService.preview(userDetails.getId(), requestDto)));
     }
 
     @Operation(
@@ -70,7 +71,8 @@ public class SafetyTrainingSessionController {
                                             schema =
                                                     @Schema(
                                                             implementation =
-                                                                    SafetyTrainingSessionCreateRequestDto.class),
+                                                                    SafetyTrainingSessionCreateRequestDto
+                                                                            .class),
                                             examples =
                                                     @ExampleObject(
                                                             value =

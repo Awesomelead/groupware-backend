@@ -1,5 +1,6 @@
 package kr.co.awesomelead.groupware_backend.config;
 
+import io.swagger.v3.oas.models.Operation;
 import io.swagger.v3.oas.models.Components;
 import io.swagger.v3.oas.models.OpenAPI;
 import io.swagger.v3.oas.models.info.Info;
@@ -7,11 +8,65 @@ import io.swagger.v3.oas.models.security.SecurityRequirement;
 import io.swagger.v3.oas.models.security.SecurityScheme;
 import io.swagger.v3.oas.models.servers.Server;
 
+import org.springdoc.core.customizers.OperationCustomizer;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.method.HandlerMethod;
+
+import java.lang.reflect.Field;
+import java.lang.reflect.Method;
+import java.lang.reflect.Modifier;
+import java.lang.reflect.ParameterizedType;
+import java.lang.reflect.Type;
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Objects;
+import java.util.Set;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 @Configuration
 public class SwaggerConfig {
+
+    private static final Pattern HAS_ROLE_PATTERN = Pattern.compile("hasRole\\('([^']+)'\\)");
+    private static final Pattern HAS_ANY_ROLE_PATTERN =
+            Pattern.compile("hasAnyRole\\(([^)]*)\\)");
+    private static final Pattern HAS_AUTHORITY_PATTERN =
+            Pattern.compile("hasAuthority\\('([^']+)'\\)");
+    private static final Pattern HAS_ANY_AUTHORITY_PATTERN =
+            Pattern.compile("hasAnyAuthority\\(([^)]*)\\)");
+    private static final Pattern QUOTED_TOKEN_PATTERN = Pattern.compile("'([^']+)'");
+    private static final List<String> PUBLIC_PATH_PATTERNS =
+            List.of(
+                    "/",
+                    "/index.html",
+                    "/api/test/**",
+                    "/api/auth/login",
+                    "/api/auth/signup",
+                    "/api/auth/bootstrap-promote-admin",
+                    "/api/auth/reissue",
+                    "/api/auth/verify-phone-code",
+                    "/api/auth/verify-identity",
+                    "/api/auth/verify-email-code",
+                    "/api/auth/send-phone-code",
+                    "/api/auth/send-email-code",
+                    "/api/auth/find-email",
+                    "/api/auth/reset-password/phone",
+                    "/api/auth/reset-password/email",
+                    "/api/edu-reports/attachments/{id}/download",
+                    "/api/departments/hierarchy",
+                    "/api/departments/{departmentId}/users",
+                    "/api/visits/**",
+                    "/api/users/list");
 
     @Bean
     public OpenAPI openAPI() {
@@ -37,5 +92,237 @@ public class SwaggerConfig {
                 .addSecurityItem(securityRequirement)
                 .addServersItem(new Server().url("/"))
                 .info(info);
+    }
+
+    @Bean
+    public OperationCustomizer operationDocCustomizer() {
+        return (Operation operation, HandlerMethod handlerMethod) -> {
+            String authoritySection = buildAuthoritySection(handlerMethod);
+            String enumSection = buildEnumSectionForCurrentApi(handlerMethod);
+
+            StringBuilder append = new StringBuilder();
+            append.append("\n\n---\n### 권한 정보\n").append(authoritySection);
+            append.append("\n\n### 사용 Enum\n").append(enumSection);
+
+            operation.setDescription(
+                    (operation.getDescription() == null ? "" : operation.getDescription())
+                            + append);
+
+            return operation;
+        };
+    }
+
+    private String buildAuthoritySection(HandlerMethod handlerMethod) {
+        Method method = handlerMethod.getMethod();
+        PreAuthorize methodAuth = method.getAnnotation(PreAuthorize.class);
+        PreAuthorize classAuth = handlerMethod.getBeanType().getAnnotation(PreAuthorize.class);
+
+        String expression = methodAuth != null ? methodAuth.value() : classAuth != null ? classAuth.value() : null;
+
+        if (expression == null || expression.isBlank()) {
+            String resolvedPath = resolveApiPath(handlerMethod);
+            if (isPublicApiPath(resolvedPath)) {
+                return "- 공개 API (권한 불필요)";
+            }
+            return "- 로그인 필요\n- 명시된 `@PreAuthorize` 없음 (서비스 레이어 권한 검증)";
+        }
+
+        List<String> roles = parseAuthorityTokens(expression, HAS_ROLE_PATTERN, HAS_ANY_ROLE_PATTERN);
+        List<String> authorities =
+                parseAuthorityTokens(
+                        expression, HAS_AUTHORITY_PATTERN, HAS_ANY_AUTHORITY_PATTERN);
+
+        StringBuilder result = new StringBuilder();
+        result.append("- `@PreAuthorize`: `").append(expression).append("`");
+
+        if (!roles.isEmpty()) {
+            result.append("\n- 필요 Role: ").append(String.join(", ", roles));
+        }
+        if (!authorities.isEmpty()) {
+            result.append("\n- 필요 Authority: ").append(String.join(", ", authorities));
+        }
+        return result.toString();
+    }
+
+    private String resolveApiPath(HandlerMethod handlerMethod) {
+        String classPath = "";
+        RequestMapping classMapping = handlerMethod.getBeanType().getAnnotation(RequestMapping.class);
+        if (classMapping != null && classMapping.value().length > 0) {
+            classPath = classMapping.value()[0];
+        }
+
+        String methodPath = "";
+        Method method = handlerMethod.getMethod();
+        if (method.isAnnotationPresent(GetMapping.class)) {
+            String[] values = method.getAnnotation(GetMapping.class).value();
+            methodPath = values.length > 0 ? values[0] : "";
+        } else if (method.isAnnotationPresent(PostMapping.class)) {
+            String[] values = method.getAnnotation(PostMapping.class).value();
+            methodPath = values.length > 0 ? values[0] : "";
+        } else if (method.isAnnotationPresent(PutMapping.class)) {
+            String[] values = method.getAnnotation(PutMapping.class).value();
+            methodPath = values.length > 0 ? values[0] : "";
+        } else if (method.isAnnotationPresent(PatchMapping.class)) {
+            String[] values = method.getAnnotation(PatchMapping.class).value();
+            methodPath = values.length > 0 ? values[0] : "";
+        } else if (method.isAnnotationPresent(DeleteMapping.class)) {
+            String[] values = method.getAnnotation(DeleteMapping.class).value();
+            methodPath = values.length > 0 ? values[0] : "";
+        } else if (method.isAnnotationPresent(RequestMapping.class)) {
+            String[] values = method.getAnnotation(RequestMapping.class).value();
+            methodPath = values.length > 0 ? values[0] : "";
+        }
+
+        return normalizePath(classPath + methodPath);
+    }
+
+    private boolean isPublicApiPath(String path) {
+        String normalizedPath = normalizePath(path);
+        for (String pattern : PUBLIC_PATH_PATTERNS) {
+            if (matchPathPattern(normalizedPath, pattern)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private String normalizePath(String path) {
+        if (path == null || path.isBlank()) {
+            return "/";
+        }
+        String normalized = path.replaceAll("//+", "/");
+        if (!normalized.startsWith("/")) {
+            normalized = "/" + normalized;
+        }
+        if (normalized.length() > 1 && normalized.endsWith("/")) {
+            normalized = normalized.substring(0, normalized.length() - 1);
+        }
+        return normalized;
+    }
+
+    private boolean matchPathPattern(String path, String pattern) {
+        String regex =
+                "^"
+                        + pattern
+                                .replace(".", "\\.")
+                                .replace("**", ".*")
+                                .replaceAll("\\{[^/]+\\}", "[^/]+")
+                        + "$";
+        return path.matches(regex);
+    }
+
+    private List<String> parseAuthorityTokens(
+            String expression, Pattern singlePattern, Pattern multiPattern) {
+        Set<String> values = new LinkedHashSet<>();
+
+        Matcher singleMatcher = singlePattern.matcher(expression);
+        while (singleMatcher.find()) {
+            values.add(singleMatcher.group(1));
+        }
+
+        Matcher multiMatcher = multiPattern.matcher(expression);
+        while (multiMatcher.find()) {
+            String group = multiMatcher.group(1);
+            Matcher quotedMatcher = QUOTED_TOKEN_PATTERN.matcher(group);
+            while (quotedMatcher.find()) {
+                values.add(quotedMatcher.group(1));
+            }
+        }
+
+        return new ArrayList<>(values);
+    }
+
+    private String buildEnumSectionForCurrentApi(HandlerMethod handlerMethod) {
+        Set<Class<? extends Enum<?>>> enumTypes = new LinkedHashSet<>();
+
+        for (var parameter : handlerMethod.getMethod().getGenericParameterTypes()) {
+            collectEnumsShallow(parameter, enumTypes, 2);
+        }
+        collectEnumsShallow(handlerMethod.getMethod().getGenericReturnType(), enumTypes, 2);
+
+        if (enumTypes.isEmpty()) {
+            return "- 없음";
+        }
+
+        List<Class<? extends Enum<?>>> sorted = enumTypes.stream().sorted(Comparator.comparing(Class::getSimpleName)).toList();
+        List<String> lines = new ArrayList<>();
+        for (Class<? extends Enum<?>> enumType : sorted) {
+            lines.add("- **" + enumType.getSimpleName() + "**");
+            for (String value : enumValueLines(enumType)) {
+                lines.add("  - " + value);
+            }
+        }
+
+        return String.join("\n", lines);
+    }
+
+    @SuppressWarnings("unchecked")
+    private void collectEnumsShallow(Type type, Set<Class<? extends Enum<?>>> sink, int depth) {
+        if (type == null || depth < 0) {
+            return;
+        }
+
+        if (type instanceof Class<?> clazz) {
+            if (clazz.isEnum()) {
+                sink.add((Class<? extends Enum<?>>) clazz);
+                return;
+            }
+
+            if (isLeafClass(clazz)) {
+                return;
+            }
+
+            if (depth == 0) {
+                return;
+            }
+
+            for (Field field : clazz.getDeclaredFields()) {
+                if (Modifier.isStatic(field.getModifiers()) || field.isSynthetic()) {
+                    continue;
+                }
+                collectEnumsShallow(field.getGenericType(), sink, depth - 1);
+            }
+            return;
+        }
+
+        if (type instanceof ParameterizedType parameterizedType) {
+            collectEnumsShallow(parameterizedType.getRawType(), sink, depth);
+            for (Type argType : parameterizedType.getActualTypeArguments()) {
+                collectEnumsShallow(argType, sink, depth - 1);
+            }
+        }
+    }
+
+    private boolean isLeafClass(Class<?> clazz) {
+        if (clazz.isEnum()) {
+            return true;
+        }
+        Package pkg = clazz.getPackage();
+        String packageName = pkg == null ? "" : pkg.getName();
+        return clazz.isPrimitive()
+                || packageName.startsWith("java.")
+                || packageName.startsWith("jakarta.")
+                || packageName.startsWith("javax.")
+                || packageName.startsWith("org.springframework.");
+    }
+
+    private List<String> enumValueLines(Class<? extends Enum<?>> enumType) {
+        List<String> values = new ArrayList<>();
+        for (Enum<?> constant : enumType.getEnumConstants()) {
+            String code = constant.name();
+            String label = extractEnumLabel(constant);
+            values.add(label == null ? code : code + " (" + label + ")");
+        }
+        return values;
+    }
+
+    private String extractEnumLabel(Enum<?> constant) {
+        try {
+            Method getDescription = constant.getClass().getMethod("getDescription");
+            Object value = getDescription.invoke(constant);
+            return Objects.toString(value, null);
+        } catch (Exception ignored) {
+            return null;
+        }
     }
 }

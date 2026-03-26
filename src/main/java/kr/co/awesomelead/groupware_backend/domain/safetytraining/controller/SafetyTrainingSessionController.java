@@ -11,15 +11,23 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 
 import kr.co.awesomelead.groupware_backend.domain.safetytraining.dto.request.SafetyTrainingSessionCreateRequestDto;
+import kr.co.awesomelead.groupware_backend.domain.safetytraining.dto.request.SafetyTrainingSessionSearchConditionDto;
 import kr.co.awesomelead.groupware_backend.domain.safetytraining.dto.response.SafetyTrainingPreviewResponseDto;
+import kr.co.awesomelead.groupware_backend.domain.safetytraining.dto.response.SafetyTrainingSessionSummaryResponseDto;
 import kr.co.awesomelead.groupware_backend.domain.safetytraining.service.SafetyTrainingSessionService;
 import kr.co.awesomelead.groupware_backend.domain.user.dto.CustomUserDetails;
 import kr.co.awesomelead.groupware_backend.global.common.response.ApiResponse;
 
 import lombok.RequiredArgsConstructor;
 
+import org.springdoc.core.annotations.ParameterObject;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -35,6 +43,8 @@ import org.springframework.web.bind.annotation.RestController;
         안전보건 교육 세션 API
 
         ### 권한
+        - 조회: 일반 사용자(`본인 회사만 조회`)
+        - 조회: `WRITE_SAFETY` 권한 사용자(`전체 회사 조회 가능`)
         - 생성: `WRITE_SAFETY`
 
         ### 사용 Enum
@@ -48,6 +58,49 @@ import org.springframework.web.bind.annotation.RestController;
 public class SafetyTrainingSessionController {
 
     private final SafetyTrainingSessionService safetyTrainingSessionService;
+
+    @Operation(
+            summary = "안전보건 교육 세션 목록 조회",
+            description =
+                    "일반 사용자는 본인 회사 데이터만 조회할 수 있으며, WRITE_SAFETY 권한 사용자는 전체 회사 조회가 가능합니다.")
+    @ApiResponses(
+            value = {
+                @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                        responseCode = "200",
+                        description = "조회 성공",
+                        content =
+                                @Content(
+                                        mediaType = "application/json",
+                                        schema = @Schema(implementation = ApiResponse.class))),
+                @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                        responseCode = "404",
+                        description = "사용자 없음",
+                        content =
+                                @Content(
+                                        mediaType = "application/json",
+                                        examples =
+                                                @ExampleObject(
+                                                        value =
+                                                                """
+            {
+              "isSuccess": false,
+              "code": "USER_NOT_FOUND",
+              "message": "해당 사용자를 찾을 수 없습니다.",
+              "result": null
+            }
+            """)))
+            })
+    @GetMapping
+    public ResponseEntity<ApiResponse<Page<SafetyTrainingSessionSummaryResponseDto>>> getSessions(
+            @ParameterObject SafetyTrainingSessionSearchConditionDto condition,
+            @ParameterObject
+                    @PageableDefault(page = 0, size = 20, sort = "createdAt", direction = Sort.Direction.DESC)
+                    Pageable pageable,
+            @Parameter(hidden = true) @AuthenticationPrincipal CustomUserDetails userDetails) {
+        Page<SafetyTrainingSessionSummaryResponseDto> result =
+                safetyTrainingSessionService.getSessions(userDetails.getId(), condition, pageable);
+        return ResponseEntity.ok(ApiResponse.onSuccess(result));
+    }
 
     @Operation(summary = "안전보건 교육 엑셀 미리보기", description = "입력한 값으로 DB 저장 없이 엑셀 미리보기를 생성합니다.")
     @PostMapping("/preview")

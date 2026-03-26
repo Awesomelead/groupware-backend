@@ -3,7 +3,10 @@ package kr.co.awesomelead.groupware_backend.domain.safetytraining.service;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import kr.co.awesomelead.groupware_backend.domain.safetytraining.dto.request.SafetyTrainingSessionCreateRequestDto;
+import kr.co.awesomelead.groupware_backend.domain.safetytraining.dto.request.SafetyTrainingSessionSearchConditionDto;
 import kr.co.awesomelead.groupware_backend.domain.safetytraining.dto.response.SafetyTrainingPreviewResponseDto;
+import kr.co.awesomelead.groupware_backend.domain.safetytraining.dto.response.SafetyTrainingSessionSummaryResponseDto;
+import kr.co.awesomelead.groupware_backend.domain.department.enums.Company;
 import kr.co.awesomelead.groupware_backend.domain.safetytraining.entity.SafetyTrainingSession;
 import kr.co.awesomelead.groupware_backend.domain.safetytraining.entity.SafetyTrainingSessionAttendee;
 import kr.co.awesomelead.groupware_backend.domain.safetytraining.enums.SafetyTrainingAttendeeStatus;
@@ -20,6 +23,8 @@ import kr.co.awesomelead.groupware_backend.global.infra.s3.service.S3Service;
 
 import lombok.RequiredArgsConstructor;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -131,6 +136,37 @@ public class SafetyTrainingSessionService {
         return saved.getId();
     }
 
+    @Transactional(readOnly = true)
+    public Page<SafetyTrainingSessionSummaryResponseDto> getSessions(
+            Long userId, SafetyTrainingSessionSearchConditionDto condition, Pageable pageable) {
+        User actor =
+                userRepository
+                        .findById(userId)
+                        .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
+        SafetyTrainingSessionSearchConditionDto filter =
+                condition == null ? new SafetyTrainingSessionSearchConditionDto() : condition;
+
+        boolean canReadAllCompanies = actor.hasAuthority(Authority.WRITE_SAFETY);
+        Company companyScope =
+                canReadAllCompanies
+                        ? filter.getCompanyScope()
+                        : actor.getWorkLocation();
+
+        if (!canReadAllCompanies && companyScope == null) {
+            return Page.empty(pageable);
+        }
+
+        return sessionRepository
+                .findAllByFilters(
+                        companyScope,
+                        filter.getEducationType(),
+                        filter.getStatus(),
+                        filter.getStartAtFrom(),
+                        filter.getStartAtTo(),
+                        pageable)
+                .map(this::toSummaryDto);
+    }
+
     private void validateSafetyWriteAuthority(User user) {
         if (!user.hasAuthority(Authority.WRITE_SAFETY)) {
             throw new CustomException(ErrorCode.NO_AUTHORITY_FOR_SAFETY_WRITE);
@@ -177,5 +213,25 @@ public class SafetyTrainingSessionService {
                 startAt.format(DATE_TIME_TEXT_FORMATTER),
                 endAt.format(DATE_TIME_TEXT_FORMATTER),
                 durationText);
+    }
+
+    private SafetyTrainingSessionSummaryResponseDto toSummaryDto(SafetyTrainingSession session) {
+        return SafetyTrainingSessionSummaryResponseDto.builder()
+                .sessionId(session.getId())
+                .title(session.getTitle())
+                .educationType(session.getEducationType())
+                .startAt(session.getStartAt())
+                .endAt(session.getEndAt())
+                .place(session.getPlace())
+                .companyScope(session.getCompanyScope())
+                .instructorUserId(
+                        session.getInstructorUser() == null ? null : session.getInstructorUser().getId())
+                .instructorName(session.getInstructorNameSnapshot())
+                .status(session.getStatus())
+                .targetCount(session.getTargetCount())
+                .attendedCount(session.getAttendedCount())
+                .absentCount(session.getAbsentCount())
+                .createdAt(session.getCreatedAt())
+                .build();
     }
 }

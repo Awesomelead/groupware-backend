@@ -16,6 +16,7 @@ import org.springdoc.core.customizers.OperationCustomizer;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
@@ -37,6 +38,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
+import java.util.Arrays;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -103,23 +105,82 @@ public class SwaggerConfig {
     @Bean
     public OperationCustomizer operationDocCustomizer() {
         return (Operation operation, HandlerMethod handlerMethod) -> {
+            String resolvedPath = resolveApiPath(handlerMethod);
+            String httpMethod = resolveHttpMethod(handlerMethod);
+            ensureSummary(operation, handlerMethod, httpMethod, resolvedPath);
+            ensureTag(operation, handlerMethod);
+
             String authoritySection = buildAuthoritySection(handlerMethod);
             String enumSection = buildEnumSectionForCurrentApi(handlerMethod);
-            String resolvedPath = resolveApiPath(handlerMethod);
             boolean isPublicApi = isPublicApiPath(resolvedPath);
+            String uploadSection = buildUploadSection(handlerMethod);
+
+            String baseDescription = operation.getDescription();
+            if (baseDescription == null || baseDescription.isBlank()) {
+                baseDescription = String.format("엔드포인트: `%s %s`", httpMethod, resolvedPath);
+            }
 
             StringBuilder append = new StringBuilder();
             append.append("\n\n---\n### 권한 정보\n").append(authoritySection);
             append.append("\n\n### 사용 Enum\n").append(enumSection);
+            if (uploadSection != null) {
+                append.append("\n\n### 파일 업로드\n").append(uploadSection);
+            }
 
-            operation.setDescription(
-                    (operation.getDescription() == null ? "" : operation.getDescription())
-                            + append);
+            operation.setDescription(baseDescription + append);
 
             addDefaultErrorResponses(operation, isPublicApi);
 
             return operation;
         };
+    }
+
+    private void ensureSummary(
+            Operation operation, HandlerMethod handlerMethod, String httpMethod, String path) {
+        if (operation.getSummary() != null && !operation.getSummary().isBlank()) {
+            return;
+        }
+        String methodName = handlerMethod.getMethod().getName();
+        operation.setSummary(String.format("[%s] %s", httpMethod, humanizeMethodName(methodName)));
+    }
+
+    private void ensureTag(Operation operation, HandlerMethod handlerMethod) {
+        if (operation.getTags() != null && !operation.getTags().isEmpty()) {
+            return;
+        }
+        String controllerName = handlerMethod.getBeanType().getSimpleName();
+        if (controllerName.endsWith("Controller")) {
+            controllerName = controllerName.substring(0, controllerName.length() - "Controller".length());
+        }
+        operation.setTags(List.of(controllerName));
+    }
+
+    private String buildUploadSection(HandlerMethod handlerMethod) {
+        boolean hasMultipartFile =
+                Arrays.stream(handlerMethod.getMethod().getParameterTypes())
+                        .anyMatch(MultipartFile.class::isAssignableFrom);
+
+        if (!hasMultipartFile) {
+            for (Type type : handlerMethod.getMethod().getGenericParameterTypes()) {
+                if (type instanceof ParameterizedType parameterizedType) {
+                    for (Type argType : parameterizedType.getActualTypeArguments()) {
+                        if (argType == MultipartFile.class) {
+                            hasMultipartFile = true;
+                            break;
+                        }
+                    }
+                }
+                if (hasMultipartFile) {
+                    break;
+                }
+            }
+        }
+
+        if (!hasMultipartFile) {
+            return null;
+        }
+        return "- `multipart/form-data` 요청\n"
+                + "- 파일당 최대 `50MB`, 요청당 최대 `100MB` (환경 설정값 기준)";
     }
 
     private void addDefaultErrorResponses(Operation operation, boolean isPublicApi) {
@@ -260,6 +321,34 @@ public class SwaggerConfig {
         }
 
         return normalizePath(classPath + methodPath);
+    }
+
+    private String resolveHttpMethod(HandlerMethod handlerMethod) {
+        Method method = handlerMethod.getMethod();
+        if (method.isAnnotationPresent(GetMapping.class)) {
+            return "GET";
+        }
+        if (method.isAnnotationPresent(PostMapping.class)) {
+            return "POST";
+        }
+        if (method.isAnnotationPresent(PutMapping.class)) {
+            return "PUT";
+        }
+        if (method.isAnnotationPresent(PatchMapping.class)) {
+            return "PATCH";
+        }
+        if (method.isAnnotationPresent(DeleteMapping.class)) {
+            return "DELETE";
+        }
+        return "REQUEST";
+    }
+
+    private String humanizeMethodName(String methodName) {
+        if (methodName == null || methodName.isBlank()) {
+            return "API";
+        }
+        String withSpaces = methodName.replaceAll("([a-z])([A-Z])", "$1 $2");
+        return withSpaces.substring(0, 1).toUpperCase() + withSpaces.substring(1);
     }
 
     private boolean isPublicApiPath(String path) {

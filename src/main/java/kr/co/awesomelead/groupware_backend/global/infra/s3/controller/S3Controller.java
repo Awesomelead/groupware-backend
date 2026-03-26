@@ -8,6 +8,7 @@ import kr.co.awesomelead.groupware_backend.global.infra.s3.service.S3Service;
 import lombok.RequiredArgsConstructor;
 
 import org.springframework.http.ResponseEntity;
+import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestPart;
@@ -24,7 +25,7 @@ public class S3Controller {
     private final S3Service s3Service;
 
     @Operation(summary = "파일 단일 업로드", description = "파일을 S3에 업로드하고 접근 URL을 반환합니다.")
-    @PostMapping("/upload")
+    @PostMapping(value = "/upload", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<ApiResponse<String>> uploadFile(@RequestPart("file") MultipartFile file)
             throws IOException {
 

@@ -12,8 +12,8 @@ import jakarta.validation.Valid;
 
 import kr.co.awesomelead.groupware_backend.domain.safetytraining.dto.request.SafetyTrainingSessionCreateRequestDto;
 import kr.co.awesomelead.groupware_backend.domain.safetytraining.dto.request.SafetyTrainingSessionSearchConditionDto;
-import kr.co.awesomelead.groupware_backend.domain.safetytraining.dto.response.SafetyTrainingSessionDetailResponseDto;
 import kr.co.awesomelead.groupware_backend.domain.safetytraining.dto.response.SafetyTrainingPreviewResponseDto;
+import kr.co.awesomelead.groupware_backend.domain.safetytraining.dto.response.SafetyTrainingSessionDetailResponseDto;
 import kr.co.awesomelead.groupware_backend.domain.safetytraining.dto.response.SafetyTrainingSessionSummaryResponseDto;
 import kr.co.awesomelead.groupware_backend.domain.safetytraining.service.SafetyTrainingSessionService;
 import kr.co.awesomelead.groupware_backend.domain.user.dto.CustomUserDetails;
@@ -32,8 +32,8 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestPart;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestPart;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -68,8 +68,7 @@ public class SafetyTrainingSessionController {
 
     @Operation(
             summary = "안전보건 교육 세션 목록 조회",
-            description =
-                    "일반 사용자는 본인 회사 데이터만 조회할 수 있으며, WRITE_SAFETY 권한 사용자는 전체 회사 조회가 가능합니다.")
+            description = "일반 사용자는 본인 회사 데이터만 조회할 수 있으며, WRITE_SAFETY 권한 사용자는 전체 회사 조회가 가능합니다.")
     @ApiResponses(
             value = {
                 @io.swagger.v3.oas.annotations.responses.ApiResponse(
@@ -101,7 +100,11 @@ public class SafetyTrainingSessionController {
     public ResponseEntity<ApiResponse<Page<SafetyTrainingSessionSummaryResponseDto>>> getSessions(
             @ParameterObject SafetyTrainingSessionSearchConditionDto condition,
             @ParameterObject
-                    @PageableDefault(page = 0, size = 20, sort = "createdAt", direction = Sort.Direction.DESC)
+                    @PageableDefault(
+                            page = 0,
+                            size = 20,
+                            sort = "createdAt",
+                            direction = Sort.Direction.DESC)
                     Pageable pageable,
             @Parameter(hidden = true) @AuthenticationPrincipal CustomUserDetails userDetails) {
         Page<SafetyTrainingSessionSummaryResponseDto> result =
@@ -111,8 +114,7 @@ public class SafetyTrainingSessionController {
 
     @Operation(
             summary = "안전보건 교육 세션 상세 조회",
-            description =
-                    "제목, 교육 정보, 보고서 파일 URL, 내 수료/미수료 및 서명 가능 여부를 조회합니다.")
+            description = "제목, 교육 정보, 보고서 파일 URL, 내 수료/미수료 및 서명 가능 여부를 조회합니다.")
     @ApiResponses(
             value = {
                 @io.swagger.v3.oas.annotations.responses.ApiResponse(
@@ -181,12 +183,11 @@ public class SafetyTrainingSessionController {
                         content =
                                 @Content(
                                         mediaType = "application/json",
-                                        examples =
-                                                {
-                                                    @ExampleObject(
-                                                            name = "이미 서명됨",
-                                                            value =
-                                                                    """
+                                        examples = {
+                                            @ExampleObject(
+                                                    name = "이미 서명됨",
+                                                    value =
+                                                            """
             {
               "isSuccess": false,
               "code": "ALREADY_MARKED_ATTENDANCE",
@@ -194,10 +195,10 @@ public class SafetyTrainingSessionController {
               "result": null
             }
             """),
-                                                    @ExampleObject(
-                                                            name = "서명 누락",
-                                                            value =
-                                                                    """
+                                            @ExampleObject(
+                                                    name = "서명 누락",
+                                                    value =
+                                                            """
             {
               "isSuccess": false,
               "code": "NO_SIGNATURE_PROVIDED",
@@ -205,10 +206,10 @@ public class SafetyTrainingSessionController {
               "result": null
             }
             """),
-                                                    @ExampleObject(
-                                                            name = "서명 형식 오류",
-                                                            value =
-                                                                    """
+                                            @ExampleObject(
+                                                    name = "서명 형식 오류",
+                                                    value =
+                                                            """
             {
               "isSuccess": false,
               "code": "INVALID_SIGNATURE_FORMAT",
@@ -216,7 +217,7 @@ public class SafetyTrainingSessionController {
               "result": null
             }
             """)
-                                                })),
+                                        })),
                 @io.swagger.v3.oas.annotations.responses.ApiResponse(
                         responseCode = "403",
                         description = "서명 권한 없음(타 회사)",

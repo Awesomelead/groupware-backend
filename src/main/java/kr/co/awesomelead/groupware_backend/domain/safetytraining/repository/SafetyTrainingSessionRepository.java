@@ -1,9 +1,9 @@
 package kr.co.awesomelead.groupware_backend.domain.safetytraining.repository;
 
 import kr.co.awesomelead.groupware_backend.domain.department.enums.Company;
+import kr.co.awesomelead.groupware_backend.domain.safetytraining.entity.SafetyTrainingSession;
 import kr.co.awesomelead.groupware_backend.domain.safetytraining.enums.SafetyEducationType;
 import kr.co.awesomelead.groupware_backend.domain.safetytraining.enums.SafetyTrainingSessionStatus;
-import kr.co.awesomelead.groupware_backend.domain.safetytraining.entity.SafetyTrainingSession;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;

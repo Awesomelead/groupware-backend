@@ -1,8 +1,8 @@
 package kr.co.awesomelead.groupware_backend.config;
 
-import io.swagger.v3.oas.models.Operation;
 import io.swagger.v3.oas.models.Components;
 import io.swagger.v3.oas.models.OpenAPI;
+import io.swagger.v3.oas.models.Operation;
 import io.swagger.v3.oas.models.info.Info;
 import io.swagger.v3.oas.models.media.Content;
 import io.swagger.v3.oas.models.media.MediaType;
@@ -16,7 +16,6 @@ import org.springdoc.core.customizers.OperationCustomizer;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
@@ -24,6 +23,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.method.HandlerMethod;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
@@ -31,6 +31,7 @@ import java.lang.reflect.Modifier;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Comparator;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
@@ -38,7 +39,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
-import java.util.Arrays;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -46,8 +46,7 @@ import java.util.regex.Pattern;
 public class SwaggerConfig {
 
     private static final Pattern HAS_ROLE_PATTERN = Pattern.compile("hasRole\\('([^']+)'\\)");
-    private static final Pattern HAS_ANY_ROLE_PATTERN =
-            Pattern.compile("hasAnyRole\\(([^)]*)\\)");
+    private static final Pattern HAS_ANY_ROLE_PATTERN = Pattern.compile("hasAnyRole\\(([^)]*)\\)");
     private static final Pattern HAS_AUTHORITY_PATTERN =
             Pattern.compile("hasAuthority\\('([^']+)'\\)");
     private static final Pattern HAS_ANY_AUTHORITY_PATTERN =
@@ -150,7 +149,8 @@ public class SwaggerConfig {
         }
         String controllerName = handlerMethod.getBeanType().getSimpleName();
         if (controllerName.endsWith("Controller")) {
-            controllerName = controllerName.substring(0, controllerName.length() - "Controller".length());
+            controllerName =
+                    controllerName.substring(0, controllerName.length() - "Controller".length());
         }
         operation.setTags(List.of(controllerName));
     }
@@ -179,8 +179,7 @@ public class SwaggerConfig {
         if (!hasMultipartFile) {
             return null;
         }
-        return "- `multipart/form-data` 요청\n"
-                + "- 파일당 최대 `50MB`, 요청당 최대 `100MB` (환경 설정값 기준)";
+        return "- `multipart/form-data` 요청\n" + "- 파일당 최대 `50MB`, 요청당 최대 `100MB` (환경 설정값 기준)";
     }
 
     private void addDefaultErrorResponses(Operation operation, boolean isPublicApi) {
@@ -190,44 +189,14 @@ public class SwaggerConfig {
             operation.setResponses(responses);
         }
 
-        putIfAbsent(
-                responses,
-                "400",
-                "요청 값 오류",
-                "COMMON400",
-                "입력값이 유효하지 않습니다.");
+        putIfAbsent(responses, "400", "요청 값 오류", "COMMON400", "입력값이 유효하지 않습니다.");
         if (!isPublicApi) {
-            putIfAbsent(
-                    responses,
-                    "401",
-                    "인증 실패",
-                    "INVALID_TOKEN",
-                    "유효하지 않은 토큰입니다.");
-            putIfAbsent(
-                    responses,
-                    "403",
-                    "권한 부족",
-                    "NO_AUTHORITY_FOR_XXX",
-                    "요청 권한이 없습니다.");
+            putIfAbsent(responses, "401", "인증 실패", "INVALID_TOKEN", "유효하지 않은 토큰입니다.");
+            putIfAbsent(responses, "403", "권한 부족", "NO_AUTHORITY_FOR_XXX", "요청 권한이 없습니다.");
         }
-        putIfAbsent(
-                responses,
-                "404",
-                "리소스 없음",
-                "XXX_NOT_FOUND",
-                "요청한 리소스를 찾을 수 없습니다.");
-        putIfAbsent(
-                responses,
-                "409",
-                "데이터 충돌",
-                "COMMON409",
-                "데이터 무결성 위반이 발생했습니다. (중복 데이터 등)");
-        putIfAbsent(
-                responses,
-                "500",
-                "서버 내부 오류",
-                "COMMON500",
-                "서버 내부 오류가 발생했습니다.");
+        putIfAbsent(responses, "404", "리소스 없음", "XXX_NOT_FOUND", "요청한 리소스를 찾을 수 없습니다.");
+        putIfAbsent(responses, "409", "데이터 충돌", "COMMON409", "데이터 무결성 위반이 발생했습니다. (중복 데이터 등)");
+        putIfAbsent(responses, "500", "서버 내부 오류", "COMMON500", "서버 내부 오류가 발생했습니다.");
     }
 
     private void putIfAbsent(
@@ -264,7 +233,10 @@ public class SwaggerConfig {
         PreAuthorize methodAuth = method.getAnnotation(PreAuthorize.class);
         PreAuthorize classAuth = handlerMethod.getBeanType().getAnnotation(PreAuthorize.class);
 
-        String expression = methodAuth != null ? methodAuth.value() : classAuth != null ? classAuth.value() : null;
+        String expression =
+                methodAuth != null
+                        ? methodAuth.value()
+                        : classAuth != null ? classAuth.value() : null;
 
         if (expression == null || expression.isBlank()) {
             String resolvedPath = resolveApiPath(handlerMethod);
@@ -274,10 +246,10 @@ public class SwaggerConfig {
             return "- 로그인 필요\n- 명시된 `@PreAuthorize` 없음 (서비스 레이어 권한 검증)";
         }
 
-        List<String> roles = parseAuthorityTokens(expression, HAS_ROLE_PATTERN, HAS_ANY_ROLE_PATTERN);
+        List<String> roles =
+                parseAuthorityTokens(expression, HAS_ROLE_PATTERN, HAS_ANY_ROLE_PATTERN);
         List<String> authorities =
-                parseAuthorityTokens(
-                        expression, HAS_AUTHORITY_PATTERN, HAS_ANY_AUTHORITY_PATTERN);
+                parseAuthorityTokens(expression, HAS_AUTHORITY_PATTERN, HAS_ANY_AUTHORITY_PATTERN);
 
         StringBuilder result = new StringBuilder();
         result.append("- `@PreAuthorize`: `").append(expression).append("`");
@@ -293,7 +265,8 @@ public class SwaggerConfig {
 
     private String resolveApiPath(HandlerMethod handlerMethod) {
         String classPath = "";
-        RequestMapping classMapping = handlerMethod.getBeanType().getAnnotation(RequestMapping.class);
+        RequestMapping classMapping =
+                handlerMethod.getBeanType().getAnnotation(RequestMapping.class);
         if (classMapping != null && classMapping.value().length > 0) {
             classPath = classMapping.value()[0];
         }
@@ -378,8 +351,7 @@ public class SwaggerConfig {
     private boolean matchPathPattern(String path, String pattern) {
         String regex =
                 "^"
-                        + pattern
-                                .replace(".", "\\.")
+                        + pattern.replace(".", "\\.")
                                 .replace("**", ".*")
                                 .replaceAll("\\{[^/]+\\}", "[^/]+")
                         + "$";
@@ -419,7 +391,8 @@ public class SwaggerConfig {
             return "- 없음";
         }
 
-        List<Class<? extends Enum<?>>> sorted = enumTypes.stream().sorted(Comparator.comparing(Class::getSimpleName)).toList();
+        List<Class<? extends Enum<?>>> sorted =
+                enumTypes.stream().sorted(Comparator.comparing(Class::getSimpleName)).toList();
         List<String> lines = new ArrayList<>();
         for (Class<? extends Enum<?>> enumType : sorted) {
             lines.add("- **" + enumType.getSimpleName() + "**");

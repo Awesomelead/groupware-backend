@@ -41,14 +41,10 @@ public class SafetyTrainingSessionSearchConditionDto {
     private SafetyTrainingSessionStatus status;
 
     @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME)
-    @Schema(
-            description = "교육 시작시각 하한(이 값 이상)",
-            example = "2026-03-01T00:00:00")
+    @Schema(description = "교육 시작시각 하한(이 값 이상)", example = "2026-03-01T00:00:00")
     private LocalDateTime startAtFrom;
 
     @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME)
-    @Schema(
-            description = "교육 시작시각 상한(이 값 이하)",
-            example = "2026-03-31T23:59:59")
+    @Schema(description = "교육 시작시각 상한(이 값 이하)", example = "2026-03-31T23:59:59")
     private LocalDateTime startAtTo;
 }

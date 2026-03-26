@@ -8,8 +8,8 @@ import kr.co.awesomelead.groupware_backend.domain.approval.entity.Approval;
 import kr.co.awesomelead.groupware_backend.domain.approval.entity.ApprovalLineConfig;
 import kr.co.awesomelead.groupware_backend.domain.approval.repository.ApprovalLineConfigRepository;
 import kr.co.awesomelead.groupware_backend.domain.approval.repository.ApprovalRepository;
-import kr.co.awesomelead.groupware_backend.domain.auth.dto.request.LoginRequestDto;
 import kr.co.awesomelead.groupware_backend.domain.auth.dto.request.BootstrapAdminPromoteRequestDto;
+import kr.co.awesomelead.groupware_backend.domain.auth.dto.request.LoginRequestDto;
 import kr.co.awesomelead.groupware_backend.domain.auth.dto.request.ResetPasswordByEmailRequestDto;
 import kr.co.awesomelead.groupware_backend.domain.auth.dto.request.ResetPasswordByPhoneRequestDto;
 import kr.co.awesomelead.groupware_backend.domain.auth.dto.request.ResetPasswordRequestDto;
@@ -126,7 +126,8 @@ public class AuthService {
 
     @Transactional
     public SignupResponseDto bootstrapPromoteAdmin(BootstrapAdminPromoteRequestDto requestDto) {
-        if (userRepository.existsByRole(Role.ADMIN) || userRepository.existsByRole(Role.MASTER_ADMIN)) {
+        if (userRepository.existsByRole(Role.ADMIN)
+                || userRepository.existsByRole(Role.MASTER_ADMIN)) {
             throw new CustomException(ErrorCode.BOOTSTRAP_ADMIN_ALREADY_EXISTS);
         }
 

@@ -21,6 +21,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
@@ -178,8 +179,10 @@ public class UserService {
     @Transactional(readOnly = true)
     public Page<UserSummaryResponseDto> getEmployeeList(String keyword, Pageable pageable) {
         if (keyword != null && !keyword.isBlank()) {
+            Pageable unsorted =
+                    PageRequest.of(pageable.getPageNumber(), pageable.getPageSize());
             return userRepository
-                    .searchByNameKorFullText(keyword, pageable)
+                    .searchByNameKorFullText(keyword, unsorted)
                     .map(UserSummaryResponseDto::from);
         }
         return userRepository

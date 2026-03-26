@@ -12,6 +12,7 @@ import jakarta.validation.Valid;
 import kr.co.awesomelead.groupware_backend.domain.aligo.service.PhoneAuthService;
 import kr.co.awesomelead.groupware_backend.domain.auth.dto.request.FindEmailRequestDto;
 import kr.co.awesomelead.groupware_backend.domain.auth.dto.request.LoginRequestDto;
+import kr.co.awesomelead.groupware_backend.domain.auth.dto.request.BootstrapAdminPromoteRequestDto;
 import kr.co.awesomelead.groupware_backend.domain.auth.dto.request.LogoutRequestDto;
 import kr.co.awesomelead.groupware_backend.domain.auth.dto.request.ReissueRequestDto;
 import kr.co.awesomelead.groupware_backend.domain.auth.dto.request.ResetPasswordByEmailRequestDto;
@@ -464,6 +465,33 @@ public class AuthController {
     public ResponseEntity<ApiResponse<SignupResponseDto>> signup(
             @Valid @RequestBody SignupRequestDto joinDto) {
         SignupResponseDto responseDto = authService.signup(joinDto);
+        return ResponseEntity.ok(ApiResponse.onSuccess(responseDto));
+    }
+
+    @Operation(
+            summary = "[테스트용] 초기 관리자 승격",
+            description =
+                    """
+                    회원가입된 사용자를 초기 관리자(ADMIN)로 승격합니다.
+                    - 관리자 계정(ADMIN/MASTER_ADMIN)이 이미 존재하면 동작하지 않습니다.
+                    - 테스트/초기 세팅 용도로만 사용하세요.
+                    """)
+    @ApiResponses(
+            value = {
+                @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                        responseCode = "200",
+                        description = "승격 성공"),
+                @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                        responseCode = "404",
+                        description = "사용자 없음"),
+                @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                        responseCode = "409",
+                        description = "이미 관리자 존재")
+            })
+    @PostMapping("/bootstrap-promote-admin")
+    public ResponseEntity<ApiResponse<SignupResponseDto>> bootstrapPromoteAdmin(
+            @Valid @RequestBody BootstrapAdminPromoteRequestDto requestDto) {
+        SignupResponseDto responseDto = authService.bootstrapPromoteAdmin(requestDto);
         return ResponseEntity.ok(ApiResponse.onSuccess(responseDto));
     }
 

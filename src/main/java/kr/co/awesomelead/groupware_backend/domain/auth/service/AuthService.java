@@ -9,6 +9,7 @@ import kr.co.awesomelead.groupware_backend.domain.approval.entity.ApprovalLineCo
 import kr.co.awesomelead.groupware_backend.domain.approval.repository.ApprovalLineConfigRepository;
 import kr.co.awesomelead.groupware_backend.domain.approval.repository.ApprovalRepository;
 import kr.co.awesomelead.groupware_backend.domain.auth.dto.request.LoginRequestDto;
+import kr.co.awesomelead.groupware_backend.domain.auth.dto.request.BootstrapAdminPromoteRequestDto;
 import kr.co.awesomelead.groupware_backend.domain.auth.dto.request.ResetPasswordByEmailRequestDto;
 import kr.co.awesomelead.groupware_backend.domain.auth.dto.request.ResetPasswordByPhoneRequestDto;
 import kr.co.awesomelead.groupware_backend.domain.auth.dto.request.ResetPasswordRequestDto;
@@ -24,6 +25,11 @@ import kr.co.awesomelead.groupware_backend.domain.notification.enums.Notificatio
 import kr.co.awesomelead.groupware_backend.domain.notification.service.NotificationService;
 import kr.co.awesomelead.groupware_backend.domain.user.dto.response.MyInfoAuthorityItemDto;
 import kr.co.awesomelead.groupware_backend.domain.user.entity.User;
+import kr.co.awesomelead.groupware_backend.domain.user.enums.Authority;
+import kr.co.awesomelead.groupware_backend.domain.user.enums.JobType;
+import kr.co.awesomelead.groupware_backend.domain.user.enums.Position;
+import kr.co.awesomelead.groupware_backend.domain.user.enums.Role;
+import kr.co.awesomelead.groupware_backend.domain.user.enums.Status;
 import kr.co.awesomelead.groupware_backend.domain.user.mapper.UserMapper;
 import kr.co.awesomelead.groupware_backend.domain.user.repository.UserRepository;
 import kr.co.awesomelead.groupware_backend.global.error.CustomException;
@@ -116,6 +122,34 @@ public class AuthService {
                 savedUser.getDisplayName());
 
         return new SignupResponseDto(savedUser.getId(), savedUser.getEmail());
+    }
+
+    @Transactional
+    public SignupResponseDto bootstrapPromoteAdmin(BootstrapAdminPromoteRequestDto requestDto) {
+        if (userRepository.existsByRole(Role.ADMIN) || userRepository.existsByRole(Role.MASTER_ADMIN)) {
+            throw new CustomException(ErrorCode.BOOTSTRAP_ADMIN_ALREADY_EXISTS);
+        }
+
+        User user =
+                userRepository
+                        .findByEmail(requestDto.getEmail())
+                        .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
+
+        user.setRole(Role.ADMIN);
+        user.setStatus(Status.AVAILABLE);
+        if (user.getJobType() == null) {
+            user.setJobType(JobType.MANAGEMENT);
+        }
+        if (user.getPosition() == null) {
+            user.setPosition(Position.STAFF);
+        }
+
+        for (Authority authority : Authority.values()) {
+            user.addAuthority(authority);
+        }
+
+        User saved = userRepository.save(user);
+        return new SignupResponseDto(saved.getId(), saved.getEmail());
     }
 
     @Transactional

@@ -117,6 +117,7 @@ public enum ErrorCode {
     DUPLICATE_PHONE_NUMBER(HttpStatus.CONFLICT, "이미 가입된 전화번호입니다."),
     DUPLICATE_REGISTRATION_NUMBER(HttpStatus.CONFLICT, "이미 가입된 주민등록번호입니다."),
     DUPLICATE_EDUCATION_CATEGORY_CODE(HttpStatus.CONFLICT, "이미 사용 중인 교육 카테고리 코드입니다."),
+    BOOTSTRAP_ADMIN_ALREADY_EXISTS(HttpStatus.CONFLICT, "이미 관리자 계정이 존재합니다."),
 
     // 500 Internal Server Error
     INTERNAL_SERVER_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "서버 내부 오류가 발생했습니다."),

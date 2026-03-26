@@ -30,10 +30,8 @@ class CommonCodeServiceTest {
     @DisplayName("부서 공통 코드 목록이 DB ID를 포함하여 정상 조회된다")
     void getDepartments_ReturnsDepartmentsWithId() {
         // given
-        Department dept1 =
-                Department.builder().id(1L).name(DepartmentName.CHUNGNAM_HQ).build();
-        Department dept2 =
-                Department.builder().id(2L).name(DepartmentName.PRODUCTION).build();
+        Department dept1 = Department.builder().id(1L).name(DepartmentName.CHUNGNAM_HQ).build();
+        Department dept2 = Department.builder().id(2L).name(DepartmentName.PRODUCTION).build();
         when(departmentRepository.findAll()).thenReturn(List.of(dept1, dept2));
 
         // when
@@ -41,9 +39,7 @@ class CommonCodeServiceTest {
 
         // then
         assertThat(departments).hasSize(2);
-        assertThat(departments)
-                .extracting(EnumCodeDto::getId)
-                .containsExactly(1L, 2L);
+        assertThat(departments).extracting(EnumCodeDto::getId).containsExactly(1L, 2L);
         assertThat(departments)
                 .extracting(EnumCodeDto::getCode)
                 .containsExactly(
@@ -61,9 +57,7 @@ class CommonCodeServiceTest {
         assertThat(positions)
                 .extracting(EnumCodeDto::getCode)
                 .contains(Position.CEO.name(), Position.STAFF.name());
-        assertThat(positions)
-                .extracting(EnumCodeDto::getId)
-                .containsOnlyNulls();
+        assertThat(positions).extracting(EnumCodeDto::getId).containsOnlyNulls();
     }
 
     @Test
@@ -77,8 +71,6 @@ class CommonCodeServiceTest {
         assertThat(jobTypes)
                 .extracting(EnumCodeDto::getCode)
                 .contains(JobType.FIELD.name(), JobType.MANAGEMENT.name());
-        assertThat(jobTypes)
-                .extracting(EnumCodeDto::getId)
-                .containsOnlyNulls();
+        assertThat(jobTypes).extracting(EnumCodeDto::getId).containsOnlyNulls();
     }
 }

@@ -78,7 +78,8 @@ public interface UserRepository extends JpaRepository<User, Long> {
             value =
                     "SELECT u.* FROM users u "
                             + "WHERE u.status = 'AVAILABLE' "
-                            + "AND MATCH(u.name_kor) AGAINST(:keyword IN BOOLEAN MODE)",
+                            + "AND MATCH(u.name_kor) AGAINST(:keyword IN BOOLEAN MODE) "
+                            + "ORDER BY u.id DESC",
             countQuery =
                     "SELECT count(*) FROM users u "
                             + "WHERE u.status = 'AVAILABLE' "

@@ -410,7 +410,7 @@ class UserServiceTest {
     class GetEmployeeListTest {
 
         @Test
-        @DisplayName("성공: AVAILABLE 상태 직원 목록을 페이징으로 반환한다")
+        @DisplayName("성공: keyword 없으면 AVAILABLE 상태 직원 목록을 페이징으로 반환한다")
         void getEmployeeList_success() {
             // given
             Pageable pageable = PageRequest.of(0, 20);
@@ -429,7 +429,7 @@ class UserServiceTest {
                     .willReturn(userPage);
 
             // when
-            Page<UserSummaryResponseDto> result = userService.getEmployeeList(pageable);
+            Page<UserSummaryResponseDto> result = userService.getEmployeeList(null, pageable);
 
             // then
             assertThat(result.getTotalElements()).isEqualTo(2);
@@ -443,6 +443,7 @@ class UserServiceTest {
             assertThat(result.getContent().get(1).getName()).isEqualTo("이영희");
 
             verify(userRepository).findAllByStatusWithDepartment(Status.AVAILABLE, pageable);
+            verify(userRepository, never()).searchByNameKorFullText(any(), any());
         }
 
         @Test
@@ -456,7 +457,7 @@ class UserServiceTest {
                     .willReturn(emptyPage);
 
             // when
-            Page<UserSummaryResponseDto> result = userService.getEmployeeList(pageable);
+            Page<UserSummaryResponseDto> result = userService.getEmployeeList(null, pageable);
 
             // then
             assertThat(result.getTotalElements()).isEqualTo(0);
@@ -477,13 +478,54 @@ class UserServiceTest {
                     .willReturn(userPage);
 
             // when
-            Page<UserSummaryResponseDto> result = userService.getEmployeeList(pageable);
+            Page<UserSummaryResponseDto> result = userService.getEmployeeList(null, pageable);
 
             // then
             assertThat(result.getTotalElements()).isEqualTo(3);
             assertThat(result.getTotalPages()).isEqualTo(3);
             assertThat(result.getNumber()).isEqualTo(1);
             assertThat(result.getContent()).hasSize(1);
+        }
+
+        @Test
+        @DisplayName("성공: keyword가 있으면 Full-Text Search를 사용한다")
+        void getEmployeeList_withKeyword_usesFullTextSearch() {
+            // given
+            Pageable pageable = PageRequest.of(0, 20);
+            User user = createTestUser();
+            Page<User> userPage = new PageImpl<>(List.of(user), pageable, 1);
+
+            given(userRepository.searchByNameKorFullText("김철", pageable)).willReturn(userPage);
+
+            // when
+            Page<UserSummaryResponseDto> result = userService.getEmployeeList("김철", pageable);
+
+            // then
+            assertThat(result.getTotalElements()).isEqualTo(1);
+            assertThat(result.getContent().get(0).getName()).isEqualTo(TEST_NAME_KOR);
+
+            verify(userRepository).searchByNameKorFullText("김철", pageable);
+            verify(userRepository, never()).findAllByStatusWithDepartment(any(), any());
+        }
+
+        @Test
+        @DisplayName("성공: keyword가 공백 문자열이면 전체 목록을 조회한다")
+        void getEmployeeList_withBlankKeyword_usesDefaultQuery() {
+            // given
+            Pageable pageable = PageRequest.of(0, 20);
+            Page<User> userPage = new PageImpl<>(List.of(createTestUser()), pageable, 1);
+
+            given(userRepository.findAllByStatusWithDepartment(Status.AVAILABLE, pageable))
+                    .willReturn(userPage);
+
+            // when
+            Page<UserSummaryResponseDto> result = userService.getEmployeeList("   ", pageable);
+
+            // then
+            assertThat(result.getTotalElements()).isEqualTo(1);
+
+            verify(userRepository).findAllByStatusWithDepartment(Status.AVAILABLE, pageable);
+            verify(userRepository, never()).searchByNameKorFullText(any(), any());
         }
     }
 

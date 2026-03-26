@@ -176,7 +176,12 @@ public class UserService {
 
     // 전 직원 목록 조회 (AVAILABLE 상태)
     @Transactional(readOnly = true)
-    public Page<UserSummaryResponseDto> getEmployeeList(Pageable pageable) {
+    public Page<UserSummaryResponseDto> getEmployeeList(String keyword, Pageable pageable) {
+        if (keyword != null && !keyword.isBlank()) {
+            return userRepository
+                    .searchByNameKorFullText(keyword, pageable)
+                    .map(UserSummaryResponseDto::from);
+        }
         return userRepository
                 .findAllByStatusWithDepartment(Status.AVAILABLE, pageable)
                 .map(UserSummaryResponseDto::from);

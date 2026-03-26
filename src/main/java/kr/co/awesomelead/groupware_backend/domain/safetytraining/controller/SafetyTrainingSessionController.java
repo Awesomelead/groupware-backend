@@ -12,6 +12,7 @@ import jakarta.validation.Valid;
 
 import kr.co.awesomelead.groupware_backend.domain.safetytraining.dto.request.SafetyTrainingSessionCreateRequestDto;
 import kr.co.awesomelead.groupware_backend.domain.safetytraining.dto.request.SafetyTrainingSessionSearchConditionDto;
+import kr.co.awesomelead.groupware_backend.domain.safetytraining.dto.response.SafetyTrainingSessionDetailResponseDto;
 import kr.co.awesomelead.groupware_backend.domain.safetytraining.dto.response.SafetyTrainingPreviewResponseDto;
 import kr.co.awesomelead.groupware_backend.domain.safetytraining.dto.response.SafetyTrainingSessionSummaryResponseDto;
 import kr.co.awesomelead.groupware_backend.domain.safetytraining.service.SafetyTrainingSessionService;
@@ -28,10 +29,15 @@ import org.springframework.data.web.PageableDefault;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestPart;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.multipart.MultipartFile;
+
+import java.io.IOException;
 
 @RestController
 @RequiredArgsConstructor
@@ -45,6 +51,7 @@ import org.springframework.web.bind.annotation.RestController;
         ### 권한
         - 조회: 일반 사용자(`본인 회사만 조회`)
         - 조회: `WRITE_SAFETY` 권한 사용자(`전체 회사 조회 가능`)
+        - 수료 처리(서명): 미수료(`PENDING`, `ABSENT`) 상태에서 본인 서명 가능
         - 생성: `WRITE_SAFETY`
 
         ### 사용 Enum
@@ -100,6 +107,147 @@ public class SafetyTrainingSessionController {
         Page<SafetyTrainingSessionSummaryResponseDto> result =
                 safetyTrainingSessionService.getSessions(userDetails.getId(), condition, pageable);
         return ResponseEntity.ok(ApiResponse.onSuccess(result));
+    }
+
+    @Operation(
+            summary = "안전보건 교육 세션 상세 조회",
+            description =
+                    "제목, 교육 정보, 보고서 파일 URL, 내 수료/미수료 및 서명 가능 여부를 조회합니다.")
+    @ApiResponses(
+            value = {
+                @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                        responseCode = "200",
+                        description = "조회 성공",
+                        content =
+                                @Content(
+                                        mediaType = "application/json",
+                                        schema = @Schema(implementation = ApiResponse.class))),
+                @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                        responseCode = "403",
+                        description = "조회 권한 없음",
+                        content =
+                                @Content(
+                                        mediaType = "application/json",
+                                        examples =
+                                                @ExampleObject(
+                                                        value =
+                                                                """
+            {
+              "isSuccess": false,
+              "code": "NO_AUTHORITY_FOR_SAFETY_READ",
+              "message": "해당 안전보건 교육 조회 권한이 없습니다.",
+              "result": null
+            }
+            """))),
+                @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                        responseCode = "404",
+                        description = "세션 또는 사용자 없음",
+                        content =
+                                @Content(
+                                        mediaType = "application/json",
+                                        examples = {
+                                            @ExampleObject(
+                                                    value =
+                                                            """
+                {
+                  "isSuccess": false,
+                  "code": "SAFETY_TRAINING_SESSION_NOT_FOUND",
+                  "message": "해당 안전보건 교육 세션을 찾을 수 없습니다.",
+                  "result": null
+                }
+                """)
+                                        }))
+            })
+    @GetMapping("/{sessionId}")
+    public ResponseEntity<ApiResponse<SafetyTrainingSessionDetailResponseDto>> getSessionDetail(
+            @PathVariable Long sessionId,
+            @Parameter(hidden = true) @AuthenticationPrincipal CustomUserDetails userDetails) {
+        SafetyTrainingSessionDetailResponseDto result =
+                safetyTrainingSessionService.getSessionDetail(sessionId, userDetails.getId());
+        return ResponseEntity.ok(ApiResponse.onSuccess(result));
+    }
+
+    @Operation(
+            summary = "안전보건 교육 수료 서명",
+            description = "본인의 미수료 상태(PENDING, ABSENT)를 PNG 서명 업로드 후 수료(SIGNED)로 변경합니다.")
+    @ApiResponses(
+            value = {
+                @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                        responseCode = "200",
+                        description = "서명 성공"),
+                @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                        responseCode = "400",
+                        description = "이미 서명됨 / 서명 파일 누락 / 서명 형식 오류",
+                        content =
+                                @Content(
+                                        mediaType = "application/json",
+                                        examples =
+                                                {
+                                                    @ExampleObject(
+                                                            name = "이미 서명됨",
+                                                            value =
+                                                                    """
+            {
+              "isSuccess": false,
+              "code": "ALREADY_MARKED_ATTENDANCE",
+              "message": "이미 출석이 체크된 교육입니다.",
+              "result": null
+            }
+            """),
+                                                    @ExampleObject(
+                                                            name = "서명 누락",
+                                                            value =
+                                                                    """
+            {
+              "isSuccess": false,
+              "code": "NO_SIGNATURE_PROVIDED",
+              "message": "서명이 제공되지 않았습니다.",
+              "result": null
+            }
+            """),
+                                                    @ExampleObject(
+                                                            name = "서명 형식 오류",
+                                                            value =
+                                                                    """
+            {
+              "isSuccess": false,
+              "code": "INVALID_SIGNATURE_FORMAT",
+              "message": "서명은 PNG 파일 형식만 지원합니다.",
+              "result": null
+            }
+            """)
+                                                })),
+                @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                        responseCode = "403",
+                        description = "서명 권한 없음(타 회사)",
+                        content =
+                                @Content(
+                                        mediaType = "application/json",
+                                        examples =
+                                                @ExampleObject(
+                                                        value =
+                                                                """
+            {
+              "isSuccess": false,
+              "code": "NO_AUTHORITY_FOR_SAFETY_READ",
+              "message": "해당 안전보건 교육 조회 권한이 없습니다.",
+              "result": null
+            }
+            """))),
+                @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                        responseCode = "404",
+                        description = "세션/대상자 없음")
+            })
+    @PostMapping(
+            value = "/{sessionId}/attendance",
+            consumes = org.springframework.http.MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ResponseEntity<ApiResponse<Void>> signAttendance(
+            @PathVariable Long sessionId,
+            @RequestPart(value = "signature", required = false) MultipartFile signature,
+            @Parameter(hidden = true) @AuthenticationPrincipal CustomUserDetails userDetails)
+            throws IOException {
+        safetyTrainingSessionService.signAttendance(sessionId, userDetails.getId(), signature);
+        return ResponseEntity.ok(ApiResponse.onSuccess(null));
     }
 
     @Operation(summary = "안전보건 교육 엑셀 미리보기", description = "입력한 값으로 DB 저장 없이 엑셀 미리보기를 생성합니다.")

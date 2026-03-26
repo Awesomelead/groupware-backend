@@ -81,6 +81,7 @@ public enum ErrorCode {
     NO_AUTHORITY_FOR_MY_INFO_UPDATE_CANCEL(HttpStatus.FORBIDDEN, "본인의 개인정보 수정 요청만 취소할 수 있습니다."),
     NO_AUTHORITY_FOR_EDU_REPORT(HttpStatus.FORBIDDEN, "교육 보고서 관리 권한이 없습니다."),
     NO_AUTHORITY_FOR_SAFETY_WRITE(HttpStatus.FORBIDDEN, "PSM/안전보건 작성 권한이 없습니다."),
+    NO_AUTHORITY_FOR_SAFETY_READ(HttpStatus.FORBIDDEN, "해당 안전보건 교육 조회 권한이 없습니다."),
     VISIT_ACCESS_DENIED(HttpStatus.FORBIDDEN, "해당 방문정보에 대한 접근 권한이 없습니다."),
     NO_AUTHORITY_FOR_NOTICE(HttpStatus.FORBIDDEN, "공지사항 작성 권한이 없습니다."),
     NO_AUTHORITY_FOR_ANNUAL_LEAVE(HttpStatus.FORBIDDEN, "연차 발송 권한이 없습니다."),
@@ -110,6 +111,8 @@ public enum ErrorCode {
     FCM_TOKEN_NOT_FOUND(HttpStatus.NOT_FOUND, "해당 FCM 토큰을 찾을 수 없습니다."),
     NOTIFICATION_NOT_FOUND(HttpStatus.NOT_FOUND, "해당 알림을 찾을 수 없습니다."),
     MY_INFO_UPDATE_REQUEST_NOT_FOUND(HttpStatus.NOT_FOUND, "해당 개인정보 수정 요청을 찾을 수 없습니다."),
+    SAFETY_TRAINING_SESSION_NOT_FOUND(HttpStatus.NOT_FOUND, "해당 안전보건 교육 세션을 찾을 수 없습니다."),
+    SAFETY_TRAINING_ATTENDEE_NOT_FOUND(HttpStatus.NOT_FOUND, "해당 안전보건 교육 대상자를 찾을 수 없습니다."),
 
     // 409 Conflict
     DUPLICATED_SIGNUP_REQUEST(HttpStatus.CONFLICT, "이미 처리된 가입 요청입니다."),

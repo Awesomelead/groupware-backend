@@ -4,12 +4,15 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 
 import kr.co.awesomelead.groupware_backend.domain.safetytraining.dto.request.SafetyTrainingSessionCreateRequestDto;
 import kr.co.awesomelead.groupware_backend.domain.safetytraining.dto.request.SafetyTrainingSessionSearchConditionDto;
+import kr.co.awesomelead.groupware_backend.domain.safetytraining.dto.response.SafetyTrainingSessionDetailResponseDto;
 import kr.co.awesomelead.groupware_backend.domain.safetytraining.dto.response.SafetyTrainingPreviewResponseDto;
 import kr.co.awesomelead.groupware_backend.domain.safetytraining.dto.response.SafetyTrainingSessionSummaryResponseDto;
 import kr.co.awesomelead.groupware_backend.domain.department.enums.Company;
 import kr.co.awesomelead.groupware_backend.domain.safetytraining.entity.SafetyTrainingSession;
 import kr.co.awesomelead.groupware_backend.domain.safetytraining.entity.SafetyTrainingSessionAttendee;
+import kr.co.awesomelead.groupware_backend.domain.safetytraining.enums.SafetyEducationMethod;
 import kr.co.awesomelead.groupware_backend.domain.safetytraining.enums.SafetyTrainingAttendeeStatus;
+import kr.co.awesomelead.groupware_backend.domain.safetytraining.enums.SafetyTrainingCompletionStatus;
 import kr.co.awesomelead.groupware_backend.domain.safetytraining.repository.SafetyTrainingSessionAttendeeRepository;
 import kr.co.awesomelead.groupware_backend.domain.safetytraining.repository.SafetyTrainingSessionRepository;
 import kr.co.awesomelead.groupware_backend.domain.user.entity.User;
@@ -27,8 +30,11 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 
+import java.util.Collections;
 import java.time.Duration;
+import java.io.IOException;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
@@ -167,6 +173,121 @@ public class SafetyTrainingSessionService {
                 .map(this::toSummaryDto);
     }
 
+    @Transactional(readOnly = true)
+    public SafetyTrainingSessionDetailResponseDto getSessionDetail(Long sessionId, Long userId) {
+        User actor =
+                userRepository
+                        .findById(userId)
+                        .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
+
+        SafetyTrainingSession session =
+                sessionRepository
+                        .findById(sessionId)
+                        .orElseThrow(
+                                () ->
+                                        new CustomException(
+                                                ErrorCode.SAFETY_TRAINING_SESSION_NOT_FOUND));
+
+        validateSessionReadAccess(actor, session);
+
+        SafetyTrainingSessionAttendee attendee =
+                attendeeRepository
+                        .findBySessionIdAndUserId(sessionId, userId)
+                        .orElse(
+                                SafetyTrainingSessionAttendee.builder()
+                                        .status(SafetyTrainingAttendeeStatus.PENDING)
+                                        .build());
+
+        SafetyTrainingAttendeeStatus myStatus = attendee.getStatus();
+        SafetyTrainingCompletionStatus completionStatus =
+                myStatus == SafetyTrainingAttendeeStatus.SIGNED
+                        ? SafetyTrainingCompletionStatus.COMPLETED
+                        : SafetyTrainingCompletionStatus.INCOMPLETE;
+
+        String reportFileUrl =
+                session.getReportFileKey() == null
+                        ? null
+                        : s3Service.getPresignedViewUrl(session.getReportFileKey());
+
+        return SafetyTrainingSessionDetailResponseDto.builder()
+                .sessionId(session.getId())
+                .title(session.getTitle())
+                .educationType(session.getEducationType())
+                .educationMethods(toMethods(session.getEducationMethodsJson()))
+                .startAt(session.getStartAt())
+                .endAt(session.getEndAt())
+                .place(session.getPlace())
+                .companyScope(session.getCompanyScope())
+                .status(session.getStatus())
+                .instructorUserId(
+                        session.getInstructorUser() == null ? null : session.getInstructorUser().getId())
+                .instructorName(session.getInstructorNameSnapshot())
+                .targetCount(session.getTargetCount())
+                .attendedCount(session.getAttendedCount())
+                .absentCount(session.getAbsentCount())
+                .reportFileUrl(reportFileUrl)
+                .myAttendanceStatus(myStatus)
+                .myCompletionStatus(completionStatus)
+                .mySignedAt(attendee.getSignedAt())
+                .mySignatureUrl(
+                        attendee.getSignatureKey() == null
+                                ? null
+                                : s3Service.getPresignedViewUrl(attendee.getSignatureKey()))
+                .canSign(myStatus != SafetyTrainingAttendeeStatus.SIGNED)
+                .build();
+    }
+
+    @Transactional
+    public void signAttendance(Long sessionId, Long userId, MultipartFile signatureFile)
+            throws IOException {
+        User actor =
+                userRepository
+                        .findById(userId)
+                        .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
+
+        SafetyTrainingSession session =
+                sessionRepository
+                        .findById(sessionId)
+                        .orElseThrow(
+                                () ->
+                                        new CustomException(
+                                                ErrorCode.SAFETY_TRAINING_SESSION_NOT_FOUND));
+
+        validateSessionReadAccess(actor, session);
+
+        SafetyTrainingSessionAttendee attendee =
+                attendeeRepository
+                        .findBySessionIdAndUserId(sessionId, userId)
+                        .orElseThrow(
+                                () ->
+                                        new CustomException(
+                                                ErrorCode.SAFETY_TRAINING_ATTENDEE_NOT_FOUND));
+
+        if (attendee.getStatus() == SafetyTrainingAttendeeStatus.SIGNED) {
+            throw new CustomException(ErrorCode.ALREADY_MARKED_ATTENDANCE);
+        }
+
+        if (signatureFile == null || signatureFile.isEmpty()) {
+            throw new CustomException(ErrorCode.NO_SIGNATURE_PROVIDED);
+        }
+        validatePngFormat(signatureFile);
+
+        String signatureKey = null;
+        try {
+            signatureKey = s3Service.uploadFile(signatureFile);
+
+            attendee.setStatus(SafetyTrainingAttendeeStatus.SIGNED);
+            attendee.setSignedAt(LocalDateTime.now());
+            attendee.setSignatureKey(signatureKey);
+            attendee.setAbsentReason(null);
+
+            syncSessionCounts(session);
+        } catch (Exception e) {
+            deleteS3FileIfExist(signatureKey);
+            throw e;
+        }
+    }
+
     private void validateSafetyWriteAuthority(User user) {
         if (!user.hasAuthority(Authority.WRITE_SAFETY)) {
             throw new CustomException(ErrorCode.NO_AUTHORITY_FOR_SAFETY_WRITE);
@@ -213,6 +334,59 @@ public class SafetyTrainingSessionService {
                 startAt.format(DATE_TIME_TEXT_FORMATTER),
                 endAt.format(DATE_TIME_TEXT_FORMATTER),
                 durationText);
+    }
+
+    private void deleteS3FileIfExist(String signatureKey) {
+        if (signatureKey == null) {
+            return;
+        }
+        try {
+            s3Service.deleteFile(signatureKey);
+        } catch (Exception ignored) {
+            // 트랜잭션 롤백 시 S3 고아 파일 정리 실패 가능
+        }
+    }
+
+    private void validatePngFormat(MultipartFile file) {
+        String contentType = file.getContentType();
+        if (contentType == null || !contentType.equals("image/png")) {
+            throw new CustomException(ErrorCode.INVALID_SIGNATURE_FORMAT);
+        }
+    }
+
+    private void validateSessionReadAccess(User actor, SafetyTrainingSession session) {
+        if (actor.hasAuthority(Authority.WRITE_SAFETY)) {
+            return;
+        }
+        if (actor.getWorkLocation() == null || actor.getWorkLocation() != session.getCompanyScope()) {
+            throw new CustomException(ErrorCode.NO_AUTHORITY_FOR_SAFETY_READ);
+        }
+    }
+
+    private List<SafetyEducationMethod> toMethods(String educationMethodsJson) {
+        if (educationMethodsJson == null || educationMethodsJson.isBlank()) {
+            return Collections.emptyList();
+        }
+        try {
+            return objectMapper.readValue(
+                    educationMethodsJson,
+                    objectMapper
+                            .getTypeFactory()
+                            .constructCollectionType(List.class, SafetyEducationMethod.class));
+        } catch (Exception e) {
+            return Collections.emptyList();
+        }
+    }
+
+    private void syncSessionCounts(SafetyTrainingSession session) {
+        long attended =
+                attendeeRepository.countBySessionIdAndStatus(
+                        session.getId(), SafetyTrainingAttendeeStatus.SIGNED);
+        long absent =
+                attendeeRepository.countBySessionIdAndStatus(
+                        session.getId(), SafetyTrainingAttendeeStatus.ABSENT);
+        session.setAttendedCount((int) attended);
+        session.setAbsentCount((int) absent);
     }
 
     private SafetyTrainingSessionSummaryResponseDto toSummaryDto(SafetyTrainingSession session) {

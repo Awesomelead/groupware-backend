@@ -4,6 +4,10 @@ import io.swagger.v3.oas.models.Operation;
 import io.swagger.v3.oas.models.Components;
 import io.swagger.v3.oas.models.OpenAPI;
 import io.swagger.v3.oas.models.info.Info;
+import io.swagger.v3.oas.models.media.Content;
+import io.swagger.v3.oas.models.media.MediaType;
+import io.swagger.v3.oas.models.media.ObjectSchema;
+import io.swagger.v3.oas.models.responses.ApiResponses;
 import io.swagger.v3.oas.models.security.SecurityRequirement;
 import io.swagger.v3.oas.models.security.SecurityScheme;
 import io.swagger.v3.oas.models.servers.Server;
@@ -27,8 +31,10 @@ import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.regex.Matcher;
@@ -99,6 +105,8 @@ public class SwaggerConfig {
         return (Operation operation, HandlerMethod handlerMethod) -> {
             String authoritySection = buildAuthoritySection(handlerMethod);
             String enumSection = buildEnumSectionForCurrentApi(handlerMethod);
+            String resolvedPath = resolveApiPath(handlerMethod);
+            boolean isPublicApi = isPublicApiPath(resolvedPath);
 
             StringBuilder append = new StringBuilder();
             append.append("\n\n---\n### 권한 정보\n").append(authoritySection);
@@ -108,8 +116,86 @@ public class SwaggerConfig {
                     (operation.getDescription() == null ? "" : operation.getDescription())
                             + append);
 
+            addDefaultErrorResponses(operation, isPublicApi);
+
             return operation;
         };
+    }
+
+    private void addDefaultErrorResponses(Operation operation, boolean isPublicApi) {
+        ApiResponses responses = operation.getResponses();
+        if (responses == null) {
+            responses = new ApiResponses();
+            operation.setResponses(responses);
+        }
+
+        putIfAbsent(
+                responses,
+                "400",
+                "요청 값 오류",
+                "COMMON400",
+                "입력값이 유효하지 않습니다.");
+        if (!isPublicApi) {
+            putIfAbsent(
+                    responses,
+                    "401",
+                    "인증 실패",
+                    "INVALID_TOKEN",
+                    "유효하지 않은 토큰입니다.");
+            putIfAbsent(
+                    responses,
+                    "403",
+                    "권한 부족",
+                    "NO_AUTHORITY_FOR_XXX",
+                    "요청 권한이 없습니다.");
+        }
+        putIfAbsent(
+                responses,
+                "404",
+                "리소스 없음",
+                "XXX_NOT_FOUND",
+                "요청한 리소스를 찾을 수 없습니다.");
+        putIfAbsent(
+                responses,
+                "409",
+                "데이터 충돌",
+                "COMMON409",
+                "데이터 무결성 위반이 발생했습니다. (중복 데이터 등)");
+        putIfAbsent(
+                responses,
+                "500",
+                "서버 내부 오류",
+                "COMMON500",
+                "서버 내부 오류가 발생했습니다.");
+    }
+
+    private void putIfAbsent(
+            ApiResponses responses,
+            String statusCode,
+            String description,
+            String errorCode,
+            String errorMessage) {
+        if (responses.containsKey(statusCode)) {
+            return;
+        }
+
+        Map<String, Object> example = new LinkedHashMap<>();
+        example.put("isSuccess", false);
+        example.put("code", errorCode);
+        example.put("message", errorMessage);
+        example.put("result", null);
+
+        io.swagger.v3.oas.models.responses.ApiResponse apiResponse =
+                new io.swagger.v3.oas.models.responses.ApiResponse()
+                        .description(description)
+                        .content(
+                                new Content()
+                                        .addMediaType(
+                                                "application/json",
+                                                new MediaType()
+                                                        .schema(new ObjectSchema())
+                                                        .example(example)));
+        responses.addApiResponse(statusCode, apiResponse);
     }
 
     private String buildAuthoritySection(HandlerMethod handlerMethod) {

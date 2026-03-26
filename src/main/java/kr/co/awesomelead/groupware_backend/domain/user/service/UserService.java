@@ -179,8 +179,7 @@ public class UserService {
     @Transactional(readOnly = true)
     public Page<UserSummaryResponseDto> getEmployeeList(String keyword, Pageable pageable) {
         if (keyword != null && !keyword.isBlank()) {
-            Pageable unsorted =
-                    PageRequest.of(pageable.getPageNumber(), pageable.getPageSize());
+            Pageable unsorted = PageRequest.of(pageable.getPageNumber(), pageable.getPageSize());
             return userRepository
                     .searchByNameKorFullText(keyword, unsorted)
                     .map(UserSummaryResponseDto::from);

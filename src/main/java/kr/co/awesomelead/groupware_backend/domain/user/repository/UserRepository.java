@@ -76,6 +76,18 @@ public interface UserRepository extends JpaRepository<User, Long> {
 
     @Query(
             value =
+                    "SELECT u.* FROM users u "
+                            + "WHERE u.status = 'AVAILABLE' "
+                            + "AND MATCH(u.name_kor) AGAINST(:keyword IN BOOLEAN MODE)",
+            countQuery =
+                    "SELECT count(*) FROM users u "
+                            + "WHERE u.status = 'AVAILABLE' "
+                            + "AND MATCH(u.name_kor) AGAINST(:keyword IN BOOLEAN MODE)",
+            nativeQuery = true)
+    Page<User> searchByNameKorFullText(@Param("keyword") String keyword, Pageable pageable);
+
+    @Query(
+            value =
                     "SELECT u FROM User u LEFT JOIN FETCH u.department d "
                             + "WHERE (:keyword IS NULL OR :keyword = '' "
                             + "OR lower(u.nameKor) LIKE lower(concat('%', :keyword, '%')) "

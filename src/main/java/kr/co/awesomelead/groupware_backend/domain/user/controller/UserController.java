@@ -29,6 +29,7 @@ import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 @Tag(
@@ -89,7 +90,11 @@ public class UserController {
 
     private final UserService userService;
 
-    @Operation(summary = "전 직원 목록 조회", description = "AVAILABLE 상태인 전 직원 목록을 페이징으로 조회합니다.")
+    @Operation(
+            summary = "전 직원 목록 조회",
+            description =
+                    "AVAILABLE 상태인 전 직원 목록을 페이징으로 조회합니다. "
+                            + "keyword 파라미터를 전달하면 N-gram Full-Text Search로 한글 이름을 검색합니다.")
     @ApiResponses(
             value = {
                 @io.swagger.v3.oas.annotations.responses.ApiResponse(
@@ -105,8 +110,14 @@ public class UserController {
             })
     @GetMapping("/list")
     public ResponseEntity<ApiResponse<Page<UserSummaryResponseDto>>> getEmployeeList(
+            @RequestParam(required = false)
+                    @io.swagger.v3.oas.annotations.Parameter(
+                            description = "직원 이름 검색어 (N-gram Full-Text Search, 미입력 시 전체 조회)",
+                            example = "김")
+                    String keyword,
             @PageableDefault(size = 20, sort = "id") Pageable pageable) {
-        return ResponseEntity.ok(ApiResponse.onSuccess(userService.getEmployeeList(pageable)));
+        return ResponseEntity.ok(
+                ApiResponse.onSuccess(userService.getEmployeeList(keyword, pageable)));
     }
 
     @Operation(summary = "직원 상세 조회", description = "특정 직원의 상세 정보를 조회합니다. 인증 토큰이 필요합니다.")

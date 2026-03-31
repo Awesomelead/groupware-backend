@@ -70,7 +70,7 @@ public class GlobalExceptionHandler {
         return ResponseEntity.badRequest()
                 .body(
                         ApiResponse.onFailure(
-                                "COMMON400", "파일 용량이 제한을 초과했습니다. (파일당 50MB, 요청당 100MB)", null));
+                                "COMMON400", "파일 용량이 제한을 초과했습니다. (서버 설정값 확인 필요)", null));
     }
 
     @ExceptionHandler(MultipartException.class)

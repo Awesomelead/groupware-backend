@@ -10,6 +10,7 @@ import kr.co.awesomelead.groupware_backend.domain.safetytraining.dto.request.Saf
 import kr.co.awesomelead.groupware_backend.domain.safetytraining.dto.response.SafetyTrainingPreviewResponseDto;
 import kr.co.awesomelead.groupware_backend.domain.safetytraining.dto.response.SafetyTrainingSessionAttendeesResponseDto;
 import kr.co.awesomelead.groupware_backend.domain.safetytraining.dto.response.SafetyTrainingSessionDetailResponseDto;
+import kr.co.awesomelead.groupware_backend.domain.safetytraining.dto.response.SafetyTrainingSessionReportResponseDto;
 import kr.co.awesomelead.groupware_backend.domain.safetytraining.dto.response.SafetyTrainingSessionSummaryResponseDto;
 import kr.co.awesomelead.groupware_backend.domain.safetytraining.entity.SafetyTrainingSession;
 import kr.co.awesomelead.groupware_backend.domain.safetytraining.entity.SafetyTrainingSessionAttendee;
@@ -38,10 +39,13 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
 import java.time.Duration;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 @Service
 @RequiredArgsConstructor
@@ -49,6 +53,8 @@ public class SafetyTrainingSessionService {
 
     private static final DateTimeFormatter DATE_TIME_TEXT_FORMATTER =
             DateTimeFormatter.ofPattern("yyyy년 MM월 dd일 HH시 mm분");
+    private static final DateTimeFormatter FILE_DATE_FORMATTER =
+            DateTimeFormatter.ofPattern("yyyyMMdd");
 
     private final SafetyTrainingSessionRepository sessionRepository;
     private final SafetyTrainingSessionAttendeeRepository attendeeRepository;
@@ -81,7 +87,10 @@ public class SafetyTrainingSessionService {
                         excelBytes,
                         "safety-training-preview-" + System.currentTimeMillis() + ".xlsx",
                         "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
-        String previewUrl = s3Service.getPresignedViewUrl(previewFileKey);
+        String previewUrl =
+                s3Service.getPresignedDownloadUrl(
+                        previewFileKey,
+                        buildExportFileName(requestDto.getStartAt(), requestDto.getTitle()));
 
         return SafetyTrainingPreviewResponseDto.builder()
                 .previewFileUrl(previewUrl)
@@ -210,7 +219,9 @@ public class SafetyTrainingSessionService {
         String reportFileUrl =
                 session.getReportFileKey() == null
                         ? null
-                        : s3Service.getPresignedViewUrl(session.getReportFileKey());
+                        : s3Service.getPresignedDownloadUrl(
+                                session.getReportFileKey(),
+                                buildExportFileName(session.getStartAt(), session.getTitle()));
 
         return SafetyTrainingSessionDetailResponseDto.builder()
                 .sessionId(session.getId())
@@ -311,6 +322,101 @@ public class SafetyTrainingSessionService {
                 .absentCount(absentCount)
                 .absentReasonSummary(session.getAbsentReasonSummary())
                 .attendees(attendeeItems)
+                .build();
+    }
+
+    @Transactional
+    public SafetyTrainingSessionReportResponseDto generateSessionReport(Long sessionId, Long userId) {
+        User actor =
+                userRepository
+                        .findById(userId)
+                        .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
+        validateSafetyWriteAuthority(actor);
+
+        SafetyTrainingSession session =
+                sessionRepository
+                        .findById(sessionId)
+                        .orElseThrow(
+                                () ->
+                                        new CustomException(
+                                                ErrorCode.SAFETY_TRAINING_SESSION_NOT_FOUND));
+
+        List<SafetyTrainingSessionAttendee> attendees =
+                attendeeRepository.findAllBySessionIdWithUser(sessionId);
+
+        syncSessionCounts(session, attendees);
+
+        Map<Long, byte[]> signatureImagesByUserId = new HashMap<>();
+        for (SafetyTrainingSessionAttendee attendee : attendees) {
+            String signatureKey = attendee.getSignatureKey();
+            if (signatureKey == null || signatureKey.isBlank()) {
+                continue;
+            }
+            try {
+                signatureImagesByUserId.put(attendee.getUser().getId(), s3Service.downloadFile(signatureKey));
+            } catch (Exception ignored) {
+                // 개별 서명 다운로드 실패 시에도 보고서 생성은 계속 진행
+            }
+        }
+
+        byte[] reportExcel =
+                safetyTrainingExcelService.buildSessionReportExcel(
+                        session,
+                        toMethods(session.getEducationMethodsJson()),
+                        attendees,
+                        signatureImagesByUserId);
+
+        String previousReportKey = session.getReportFileKey();
+        String newReportKey =
+                s3Service.uploadBytes(
+                        reportExcel,
+                        "safety-training-report-" + session.getId() + "-" + System.currentTimeMillis() + ".xlsx",
+                        "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
+        session.setReportFileKey(newReportKey);
+
+        if (previousReportKey != null && !previousReportKey.equals(newReportKey)) {
+            try {
+                s3Service.deleteFile(previousReportKey);
+            } catch (Exception ignored) {
+                // 이전 보고서 정리 실패는 현재 요청을 실패시키지 않음
+            }
+        }
+
+        return SafetyTrainingSessionReportResponseDto.builder()
+                .sessionId(session.getId())
+                .reportFileUrl(
+                        s3Service.getPresignedDownloadUrl(
+                                newReportKey,
+                                buildExportFileName(session.getStartAt(), session.getTitle())))
+                .build();
+    }
+
+    @Transactional(readOnly = true)
+    public SafetyTrainingSessionReportResponseDto getSessionReport(Long sessionId, Long userId) {
+        User actor =
+                userRepository
+                        .findById(userId)
+                        .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
+
+        SafetyTrainingSession session =
+                sessionRepository
+                        .findById(sessionId)
+                        .orElseThrow(
+                                () ->
+                                        new CustomException(
+                                                ErrorCode.SAFETY_TRAINING_SESSION_NOT_FOUND));
+        validateSessionReadAccess(actor, session);
+
+        if (session.getReportFileKey() == null || session.getReportFileKey().isBlank()) {
+            throw new CustomException(ErrorCode.SAFETY_TRAINING_REPORT_NOT_FOUND);
+        }
+
+        return SafetyTrainingSessionReportResponseDto.builder()
+                .sessionId(session.getId())
+                .reportFileUrl(
+                        s3Service.getPresignedDownloadUrl(
+                                session.getReportFileKey(),
+                                buildExportFileName(session.getStartAt(), session.getTitle())))
                 .build();
     }
 
@@ -522,6 +628,32 @@ public class SafetyTrainingSessionService {
         return trimmed.isEmpty() ? null : trimmed;
     }
 
+    private String buildExportFileName(LocalDateTime startAt, String title) {
+        String datePart =
+                (startAt == null ? LocalDate.now() : startAt.toLocalDate())
+                        .format(FILE_DATE_FORMATTER);
+        String titlePart = sanitizeFileNamePart(title);
+        return datePart + "_" + titlePart + ".xlsx";
+    }
+
+    private String sanitizeFileNamePart(String title) {
+        String value = trimToNull(title);
+        if (value == null) {
+            return "안전보건교육";
+        }
+        String sanitized =
+                value.replaceAll("[\\\\/:*?\"<>|]", " ")
+                        .replaceAll("\\s+", "_")
+                        .replaceAll("^_+|_+$", "");
+        if (sanitized.isBlank()) {
+            sanitized = "안전보건교육";
+        }
+        if (sanitized.length() > 80) {
+            sanitized = sanitized.substring(0, 80);
+        }
+        return sanitized;
+    }
+
     private String toMethodsJson(List<SafetyEducationMethod> educationMethods) {
         try {
             return objectMapper.writeValueAsString(educationMethods);
@@ -599,6 +731,23 @@ public class SafetyTrainingSessionService {
                         session.getId(), SafetyTrainingAttendeeStatus.ABSENT);
         session.setAttendedCount((int) attended);
         session.setAbsentCount((int) absent);
+    }
+
+    private void syncSessionCounts(
+            SafetyTrainingSession session, List<SafetyTrainingSessionAttendee> attendees) {
+        int attendedCount =
+                (int)
+                        attendees.stream()
+                                .filter(it -> it.getStatus() == SafetyTrainingAttendeeStatus.SIGNED)
+                                .count();
+        int absentCount =
+                (int)
+                        attendees.stream()
+                                .filter(it -> it.getStatus() == SafetyTrainingAttendeeStatus.ABSENT)
+                                .count();
+        session.setTargetCount(attendees.size());
+        session.setAttendedCount(attendedCount);
+        session.setAbsentCount(absentCount);
     }
 
     private SafetyTrainingSessionSummaryResponseDto toSummaryDto(SafetyTrainingSession session) {

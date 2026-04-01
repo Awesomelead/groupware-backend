@@ -16,6 +16,8 @@ import software.amazon.awssdk.services.s3.presigner.model.GetObjectPresignReques
 import software.amazon.awssdk.services.s3.presigner.model.PresignedGetObjectRequest;
 
 import java.io.IOException;
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.util.UUID;
 
@@ -37,14 +39,31 @@ public class S3Service {
         return generatePresignedUrl(fileKey, Duration.ofMinutes(30)); // 30분짜리 권한
     }
 
+    public String getPresignedDownloadUrl(String fileKey, String downloadFileName) {
+        return generatePresignedUrl(
+                fileKey,
+                Duration.ofMinutes(30),
+                buildAttachmentContentDisposition(downloadFileName));
+    }
+
     public String generatePresignedUrl(String fileKey, Duration duration) {
+        return generatePresignedUrl(fileKey, duration, null);
+    }
+
+    public String generatePresignedUrl(
+            String fileKey, Duration duration, String responseContentDisposition) {
         if (fileKey == null || fileKey.isBlank()) {
             return null;
         }
 
         try {
+            GetObjectRequest.Builder requestBuilder =
+                    GetObjectRequest.builder().bucket(bucketName).key(fileKey);
+            if (responseContentDisposition != null && !responseContentDisposition.isBlank()) {
+                requestBuilder.responseContentDisposition(responseContentDisposition);
+            }
             GetObjectRequest getObjectRequest =
-                    GetObjectRequest.builder().bucket(bucketName).key(fileKey).build();
+                    requestBuilder.build();
 
             GetObjectPresignRequest presignRequest =
                     GetObjectPresignRequest.builder()
@@ -58,6 +77,14 @@ public class S3Service {
             log.error("Presigned URL 생성 실패: {}", e.getMessage());
             return null;
         }
+    }
+
+    private String buildAttachmentContentDisposition(String fileName) {
+        String safeFileName = fileName == null || fileName.isBlank() ? "download.xlsx" : fileName;
+        String asciiFallback = safeFileName.replaceAll("[^\\x20-\\x7E]", "_").replace("\"", "'");
+        String encoded =
+                URLEncoder.encode(safeFileName, StandardCharsets.UTF_8).replace("+", "%20");
+        return "attachment; filename=\"" + asciiFallback + "\"; filename*=UTF-8''" + encoded;
     }
 
     public String uploadFile(MultipartFile file) throws IOException {

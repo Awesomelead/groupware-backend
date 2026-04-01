@@ -116,6 +116,7 @@ public enum ErrorCode {
     MY_INFO_UPDATE_REQUEST_NOT_FOUND(HttpStatus.NOT_FOUND, "해당 개인정보 수정 요청을 찾을 수 없습니다."),
     SAFETY_TRAINING_SESSION_NOT_FOUND(HttpStatus.NOT_FOUND, "해당 안전보건 교육 세션을 찾을 수 없습니다."),
     SAFETY_TRAINING_ATTENDEE_NOT_FOUND(HttpStatus.NOT_FOUND, "해당 안전보건 교육 대상자를 찾을 수 없습니다."),
+    SAFETY_TRAINING_REPORT_NOT_FOUND(HttpStatus.NOT_FOUND, "안전보건 교육 보고서가 아직 생성되지 않았습니다."),
 
     // 409 Conflict
     DUPLICATED_SIGNUP_REQUEST(HttpStatus.CONFLICT, "이미 처리된 가입 요청입니다."),

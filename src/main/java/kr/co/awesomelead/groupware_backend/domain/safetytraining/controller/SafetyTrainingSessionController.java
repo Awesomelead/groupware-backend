@@ -17,6 +17,7 @@ import kr.co.awesomelead.groupware_backend.domain.safetytraining.dto.request.Saf
 import kr.co.awesomelead.groupware_backend.domain.safetytraining.dto.response.SafetyTrainingPreviewResponseDto;
 import kr.co.awesomelead.groupware_backend.domain.safetytraining.dto.response.SafetyTrainingSessionAttendeesResponseDto;
 import kr.co.awesomelead.groupware_backend.domain.safetytraining.dto.response.SafetyTrainingSessionDetailResponseDto;
+import kr.co.awesomelead.groupware_backend.domain.safetytraining.dto.response.SafetyTrainingSessionReportResponseDto;
 import kr.co.awesomelead.groupware_backend.domain.safetytraining.dto.response.SafetyTrainingSessionSummaryResponseDto;
 import kr.co.awesomelead.groupware_backend.domain.safetytraining.service.SafetyTrainingSessionService;
 import kr.co.awesomelead.groupware_backend.domain.user.dto.CustomUserDetails;
@@ -57,6 +58,8 @@ import java.io.IOException;
         - 조회: `WRITE_SAFETY` 권한 사용자(`전체 회사 조회 가능`)
         - 참석자 현황 조회: `WRITE_SAFETY`
         - 세션 상태 변경/미참석 사유 입력: `WRITE_SAFETY`
+        - 보고서 생성(엑셀): `WRITE_SAFETY` (`OPEN/CLOSED/CANCELED` 모두 가능)
+        - 보고서 다운로드 URL 조회: 세션 조회 권한 사용자
         - 수료 처리(서명): 세션이 `OPEN`이고 미수료(`PENDING`, `ABSENT`) 상태일 때 본인 서명 가능
         - 생성: `WRITE_SAFETY`
 
@@ -216,6 +219,107 @@ public class SafetyTrainingSessionController {
             @Parameter(hidden = true) @AuthenticationPrincipal CustomUserDetails userDetails) {
         SafetyTrainingSessionAttendeesResponseDto result =
                 safetyTrainingSessionService.getSessionAttendees(sessionId, userDetails.getId());
+        return ResponseEntity.ok(ApiResponse.onSuccess(result));
+    }
+
+    @Operation(
+            summary = "안전보건 교육 보고서 생성",
+            description =
+                    "작성 권한(WRITE_SAFETY) 사용자가 세션 엑셀 보고서를 생성/재생성합니다. "
+                            + "세션 상태(OPEN/CLOSED/CANCELED)와 무관하게 생성 가능합니다. "
+                            + "서명 완료자의 서명 이미지는 참석자 이름 옆 칸에 반영됩니다.")
+    @ApiResponses(
+            value = {
+                @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                        responseCode = "200",
+                        description = "생성 성공",
+                        content =
+                                @Content(
+                                        mediaType = "application/json",
+                                        schema = @Schema(implementation = ApiResponse.class))),
+                @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                        responseCode = "403",
+                        description = "작성 권한 없음",
+                        content =
+                                @Content(
+                                        mediaType = "application/json",
+                                        examples =
+                                                @ExampleObject(
+                                                        value =
+                                                                """
+            {
+              "isSuccess": false,
+              "code": "NO_AUTHORITY_FOR_SAFETY_WRITE",
+              "message": "PSM/안전보건 작성 권한이 없습니다.",
+              "result": null
+            }
+            """))),
+                @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                        responseCode = "404",
+                        description = "세션/사용자 없음")
+            })
+    @PostMapping("/{sessionId}/report")
+    public ResponseEntity<ApiResponse<SafetyTrainingSessionReportResponseDto>> generateSessionReport(
+            @PathVariable Long sessionId,
+            @Parameter(hidden = true) @AuthenticationPrincipal CustomUserDetails userDetails) {
+        SafetyTrainingSessionReportResponseDto result =
+                safetyTrainingSessionService.generateSessionReport(sessionId, userDetails.getId());
+        return ResponseEntity.ok(ApiResponse.onSuccess(result));
+    }
+
+    @Operation(
+            summary = "안전보건 교육 보고서 다운로드 URL 조회",
+            description = "세션 조회 권한이 있는 사용자가 보고서 다운로드 URL을 조회합니다.")
+    @ApiResponses(
+            value = {
+                @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                        responseCode = "200",
+                        description = "조회 성공",
+                        content =
+                                @Content(
+                                        mediaType = "application/json",
+                                        schema = @Schema(implementation = ApiResponse.class))),
+                @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                        responseCode = "403",
+                        description = "조회 권한 없음",
+                        content =
+                                @Content(
+                                        mediaType = "application/json",
+                                        examples =
+                                                @ExampleObject(
+                                                        value =
+                                                                """
+            {
+              "isSuccess": false,
+              "code": "NO_AUTHORITY_FOR_SAFETY_READ",
+              "message": "해당 안전보건 교육 조회 권한이 없습니다.",
+              "result": null
+            }
+            """))),
+                @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                        responseCode = "404",
+                        description = "세션 없음 또는 보고서 미생성",
+                        content =
+                                @Content(
+                                        mediaType = "application/json",
+                                        examples =
+                                                @ExampleObject(
+                                                        value =
+                                                                """
+            {
+              "isSuccess": false,
+              "code": "SAFETY_TRAINING_REPORT_NOT_FOUND",
+              "message": "안전보건 교육 보고서가 아직 생성되지 않았습니다.",
+              "result": null
+            }
+            """)))
+            })
+    @GetMapping("/{sessionId}/report")
+    public ResponseEntity<ApiResponse<SafetyTrainingSessionReportResponseDto>> getSessionReport(
+            @PathVariable Long sessionId,
+            @Parameter(hidden = true) @AuthenticationPrincipal CustomUserDetails userDetails) {
+        SafetyTrainingSessionReportResponseDto result =
+                safetyTrainingSessionService.getSessionReport(sessionId, userDetails.getId());
         return ResponseEntity.ok(ApiResponse.onSuccess(result));
     }
 

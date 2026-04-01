@@ -12,6 +12,7 @@ import jakarta.validation.Valid;
 
 import kr.co.awesomelead.groupware_backend.domain.safetytraining.dto.request.SafetyTrainingSessionCreateRequestDto;
 import kr.co.awesomelead.groupware_backend.domain.safetytraining.dto.request.SafetyTrainingSessionSearchConditionDto;
+import kr.co.awesomelead.groupware_backend.domain.safetytraining.dto.request.SafetyTrainingSessionStatusUpdateRequestDto;
 import kr.co.awesomelead.groupware_backend.domain.safetytraining.dto.request.SafetyTrainingSessionUpdateRequestDto;
 import kr.co.awesomelead.groupware_backend.domain.safetytraining.dto.response.SafetyTrainingPreviewResponseDto;
 import kr.co.awesomelead.groupware_backend.domain.safetytraining.dto.response.SafetyTrainingSessionDetailResponseDto;
@@ -55,6 +56,7 @@ import java.io.IOException;
         - 조회: `WRITE_SAFETY` 권한 사용자(`전체 회사 조회 가능`)
         - 수료 처리(서명): 미수료(`PENDING`, `ABSENT`) 상태에서 본인 서명 가능
         - 생성: `WRITE_SAFETY`
+        - 상태 변경(OPEN/CLOSED): `WRITE_SAFETY`
 
         ### 사용 Enum
         - `SafetyEducationType`
@@ -261,6 +263,45 @@ public class SafetyTrainingSessionController {
             @Valid @RequestBody SafetyTrainingSessionUpdateRequestDto requestDto,
             @Parameter(hidden = true) @AuthenticationPrincipal CustomUserDetails userDetails) {
         Long updatedId = safetyTrainingSessionService.update(sessionId, userDetails.getId(), requestDto);
+        return ResponseEntity.ok(ApiResponse.onSuccess(updatedId));
+    }
+
+    @Operation(
+            summary = "안전보건 교육 세션 상태 변경",
+            description = "작성 권한(WRITE_SAFETY) 사용자가 세션 상태를 OPEN/CLOSED로 변경합니다.")
+    @ApiResponses(
+            value = {
+                @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                        responseCode = "200",
+                        description = "상태 변경 성공"),
+                @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                        responseCode = "403",
+                        description = "수정 권한 없음",
+                        content =
+                                @Content(
+                                        mediaType = "application/json",
+                                        examples =
+                                                @ExampleObject(
+                                                        value =
+                                                                """
+            {
+              "isSuccess": false,
+              "code": "NO_AUTHORITY_FOR_SAFETY_WRITE",
+              "message": "PSM/안전보건 작성 권한이 없습니다.",
+              "result": null
+            }
+            """))),
+                @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                        responseCode = "404",
+                        description = "세션/사용자 없음")
+            })
+    @PatchMapping("/{sessionId}/status")
+    public ResponseEntity<ApiResponse<Long>> updateStatus(
+            @PathVariable Long sessionId,
+            @Valid @RequestBody SafetyTrainingSessionStatusUpdateRequestDto requestDto,
+            @Parameter(hidden = true) @AuthenticationPrincipal CustomUserDetails userDetails) {
+        Long updatedId =
+                safetyTrainingSessionService.updateStatus(sessionId, userDetails.getId(), requestDto);
         return ResponseEntity.ok(ApiResponse.onSuccess(updatedId));
     }
 

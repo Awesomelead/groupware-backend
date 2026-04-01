@@ -304,6 +304,7 @@ public class NoticeService {
                 attachment.setS3Key(s3Key);
                 attachment.setFileSize(file.getSize());
                 notice.addAttachment(attachment);
+                noticeAttachmentRepository.save(attachment);
             }
         }
     }

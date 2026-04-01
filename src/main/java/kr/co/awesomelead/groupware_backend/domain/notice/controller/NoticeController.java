@@ -340,6 +340,7 @@ public class NoticeController {
                               "message": "요청에 성공했습니다.",
                               "result": {
                                 "id": 1,
+                                "type": "REGULAR",
                                 "title": "2025년 1월 전체 회의 안내",
                                 "content": "오는 1월 15일 오후 2시에 전체 회의가 있습니다.",
                                 "authorName": "홍길동",

@@ -338,6 +338,7 @@ class NoticeServiceTest {
             verify(s3Service).deleteFile("old-key");
             verify(s3Service).uploadFile(any());
             verify(noticeAttachmentRepository).delete(any());
+            verify(noticeAttachmentRepository).save(any(NoticeAttachment.class));
         }
 
         @Test

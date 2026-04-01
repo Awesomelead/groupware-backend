@@ -2,6 +2,8 @@ package kr.co.awesomelead.groupware_backend.domain.notice.dto.response;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 
+import kr.co.awesomelead.groupware_backend.domain.department.enums.Company;
+
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
@@ -42,6 +44,15 @@ public class NoticeDetailDto {
 
     @Schema(description = "첨부파일 목록")
     private List<AttachmentResponse> attachments;
+
+    @Schema(description = "대상 회사 목록", example = "[\"어썸리드\", \"마루이\"]")
+    private List<Company> targetCompanies;
+
+    @Schema(description = "대상 부서 ID 목록", example = "[1, 2, 3]")
+    private List<Long> targetDepartmentIds;
+
+    @Schema(description = "대상 유저 ID 목록", example = "[10, 20]")
+    private List<Long> targetUserIds;
 
     @Getter
     @Setter

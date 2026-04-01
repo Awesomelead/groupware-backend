@@ -352,7 +352,10 @@ public class NoticeController {
                                     "fileSize": 1048576,
                                     "viewUrl": "https://s3.../uuid_file.pdf"
                                   }
-                                ]
+                                ],
+                                "targetCompanies": ["어썸리드"],
+                                "targetDepartmentIds": [1, 2],
+                                "targetUserIds": [10, 20]
                               }
                             }
                             """))),

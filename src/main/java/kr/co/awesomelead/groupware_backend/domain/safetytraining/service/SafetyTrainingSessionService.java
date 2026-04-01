@@ -8,6 +8,7 @@ import kr.co.awesomelead.groupware_backend.domain.safetytraining.dto.request.Saf
 import kr.co.awesomelead.groupware_backend.domain.safetytraining.dto.request.SafetyTrainingSessionStatusUpdateRequestDto;
 import kr.co.awesomelead.groupware_backend.domain.safetytraining.dto.request.SafetyTrainingSessionUpdateRequestDto;
 import kr.co.awesomelead.groupware_backend.domain.safetytraining.dto.response.SafetyTrainingPreviewResponseDto;
+import kr.co.awesomelead.groupware_backend.domain.safetytraining.dto.response.SafetyTrainingSessionAttendeesResponseDto;
 import kr.co.awesomelead.groupware_backend.domain.safetytraining.dto.response.SafetyTrainingSessionDetailResponseDto;
 import kr.co.awesomelead.groupware_backend.domain.safetytraining.dto.response.SafetyTrainingSessionSummaryResponseDto;
 import kr.co.awesomelead.groupware_backend.domain.safetytraining.entity.SafetyTrainingSession;
@@ -240,6 +241,74 @@ public class SafetyTrainingSessionService {
                 .canSign(
                         session.getStatus() == SafetyTrainingSessionStatus.OPEN
                                 && myStatus != SafetyTrainingAttendeeStatus.SIGNED)
+                .build();
+    }
+
+    @Transactional(readOnly = true)
+    public SafetyTrainingSessionAttendeesResponseDto getSessionAttendees(Long sessionId, Long userId) {
+        User actor =
+                userRepository
+                        .findById(userId)
+                        .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
+        validateSafetyWriteAuthority(actor);
+
+        sessionRepository
+                .findById(sessionId)
+                .orElseThrow(
+                        () ->
+                                new CustomException(
+                                        ErrorCode.SAFETY_TRAINING_SESSION_NOT_FOUND));
+
+        List<SafetyTrainingSessionAttendee> attendees =
+                attendeeRepository.findAllBySessionIdWithUser(sessionId);
+
+        int attendedCount =
+                (int)
+                        attendees.stream()
+                                .filter(it -> it.getStatus() == SafetyTrainingAttendeeStatus.SIGNED)
+                                .count();
+        int absentCount =
+                (int)
+                        attendees.stream()
+                                .filter(it -> it.getStatus() == SafetyTrainingAttendeeStatus.ABSENT)
+                                .count();
+
+        List<SafetyTrainingSessionAttendeesResponseDto.AttendeeItem> attendeeItems =
+                attendees.stream()
+                        .map(
+                                attendee -> {
+                                    User user = attendee.getUser();
+                                    String departmentName =
+                                            user.getDepartment() == null || user.getDepartment().getName() == null
+                                                    ? null
+                                                    : user.getDepartment().getName().getDescription();
+                                    return SafetyTrainingSessionAttendeesResponseDto.AttendeeItem.builder()
+                                            .userId(user.getId())
+                                            .userName(user.getNameKor())
+                                            .departmentName(departmentName)
+                                            .attendanceStatus(attendee.getStatus())
+                                            .completionStatus(
+                                                    attendee.getStatus()
+                                                                    == SafetyTrainingAttendeeStatus.SIGNED
+                                                            ? SafetyTrainingCompletionStatus.COMPLETED
+                                                            : SafetyTrainingCompletionStatus.INCOMPLETE)
+                                            .signedAt(attendee.getSignedAt())
+                                            .signatureUrl(
+                                                    attendee.getSignatureKey() == null
+                                                            ? null
+                                                            : s3Service.getPresignedViewUrl(
+                                                                    attendee.getSignatureKey()))
+                                            .absentReason(attendee.getAbsentReason())
+                                            .build();
+                                })
+                        .toList();
+
+        return SafetyTrainingSessionAttendeesResponseDto.builder()
+                .sessionId(sessionId)
+                .targetCount(attendees.size())
+                .attendedCount(attendedCount)
+                .absentCount(absentCount)
+                .attendees(attendeeItems)
                 .build();
     }
 

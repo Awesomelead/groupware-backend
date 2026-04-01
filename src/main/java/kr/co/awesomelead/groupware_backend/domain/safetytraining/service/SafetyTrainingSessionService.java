@@ -257,7 +257,8 @@ public class SafetyTrainingSessionService {
     }
 
     @Transactional(readOnly = true)
-    public SafetyTrainingSessionAttendeesResponseDto getSessionAttendees(Long sessionId, Long userId) {
+    public SafetyTrainingSessionAttendeesResponseDto getSessionAttendees(
+            Long sessionId, Long userId) {
         User actor =
                 userRepository
                         .findById(userId)
@@ -266,11 +267,11 @@ public class SafetyTrainingSessionService {
 
         SafetyTrainingSession session =
                 sessionRepository
-                .findById(sessionId)
-                .orElseThrow(
-                        () ->
-                                new CustomException(
-                                        ErrorCode.SAFETY_TRAINING_SESSION_NOT_FOUND));
+                        .findById(sessionId)
+                        .orElseThrow(
+                                () ->
+                                        new CustomException(
+                                                ErrorCode.SAFETY_TRAINING_SESSION_NOT_FOUND));
 
         List<SafetyTrainingSessionAttendee> attendees =
                 attendeeRepository.findAllBySessionIdWithUser(sessionId);
@@ -292,19 +293,27 @@ public class SafetyTrainingSessionService {
                                 attendee -> {
                                     User user = attendee.getUser();
                                     String departmentName =
-                                            user.getDepartment() == null || user.getDepartment().getName() == null
+                                            user.getDepartment() == null
+                                                            || user.getDepartment().getName()
+                                                                    == null
                                                     ? null
-                                                    : user.getDepartment().getName().getDescription();
-                                    return SafetyTrainingSessionAttendeesResponseDto.AttendeeItem.builder()
+                                                    : user.getDepartment()
+                                                            .getName()
+                                                            .getDescription();
+                                    return SafetyTrainingSessionAttendeesResponseDto.AttendeeItem
+                                            .builder()
                                             .userId(user.getId())
                                             .userName(user.getNameKor())
                                             .departmentName(departmentName)
                                             .attendanceStatus(attendee.getStatus())
                                             .completionStatus(
                                                     attendee.getStatus()
-                                                                    == SafetyTrainingAttendeeStatus.SIGNED
-                                                            ? SafetyTrainingCompletionStatus.COMPLETED
-                                                            : SafetyTrainingCompletionStatus.INCOMPLETE)
+                                                                    == SafetyTrainingAttendeeStatus
+                                                                            .SIGNED
+                                                            ? SafetyTrainingCompletionStatus
+                                                                    .COMPLETED
+                                                            : SafetyTrainingCompletionStatus
+                                                                    .INCOMPLETE)
                                             .signedAt(attendee.getSignedAt())
                                             .signatureUrl(
                                                     attendee.getSignatureKey() == null
@@ -326,7 +335,8 @@ public class SafetyTrainingSessionService {
     }
 
     @Transactional
-    public SafetyTrainingSessionReportResponseDto generateSessionReport(Long sessionId, Long userId) {
+    public SafetyTrainingSessionReportResponseDto generateSessionReport(
+            Long sessionId, Long userId) {
         User actor =
                 userRepository
                         .findById(userId)
@@ -353,7 +363,8 @@ public class SafetyTrainingSessionService {
                 continue;
             }
             try {
-                signatureImagesByUserId.put(attendee.getUser().getId(), s3Service.downloadFile(signatureKey));
+                signatureImagesByUserId.put(
+                        attendee.getUser().getId(), s3Service.downloadFile(signatureKey));
             } catch (Exception ignored) {
                 // 개별 서명 다운로드 실패 시에도 보고서 생성은 계속 진행
             }
@@ -370,7 +381,11 @@ public class SafetyTrainingSessionService {
         String newReportKey =
                 s3Service.uploadBytes(
                         reportExcel,
-                        "safety-training-report-" + session.getId() + "-" + System.currentTimeMillis() + ".xlsx",
+                        "safety-training-report-"
+                                + session.getId()
+                                + "-"
+                                + System.currentTimeMillis()
+                                + ".xlsx",
                         "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
         session.setReportFileKey(newReportKey);
 
@@ -512,7 +527,8 @@ public class SafetyTrainingSessionService {
         session.setEducationMethodsJson(toMethodsJson(requestDto.getEducationMethods()));
         session.setStartAt(requestDto.getStartAt());
         session.setEndAt(requestDto.getEndAt());
-        session.setEducationDateText(toEducationDateText(requestDto.getStartAt(), requestDto.getEndAt()));
+        session.setEducationDateText(
+                toEducationDateText(requestDto.getStartAt(), requestDto.getEndAt()));
         session.setEducationContent(requestDto.getEducationContent());
         session.setPlace(requestDto.getPlace().trim());
         session.setCompanyScope(requestDto.getCompanyScope());

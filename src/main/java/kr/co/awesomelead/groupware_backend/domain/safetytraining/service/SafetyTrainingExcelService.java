@@ -10,9 +10,9 @@ import kr.co.awesomelead.groupware_backend.domain.user.entity.User;
 
 import lombok.RequiredArgsConstructor;
 
-import org.apache.poi.ss.usermodel.ClientAnchor;
 import org.apache.poi.ss.usermodel.Cell;
 import org.apache.poi.ss.usermodel.CellType;
+import org.apache.poi.ss.usermodel.ClientAnchor;
 import org.apache.poi.ss.usermodel.CreationHelper;
 import org.apache.poi.ss.usermodel.Drawing;
 import org.apache.poi.ss.usermodel.Row;
@@ -107,8 +107,7 @@ public class SafetyTrainingExcelService {
                     "교육 실시자",
                     2,
                     defaultString(session.getInstructorNameSnapshot()) + " (인)");
-            fillCellByLabel(
-                    sheet, "교육 미참석 사유", 2, defaultString(session.getAbsentReasonSummary()));
+            fillCellByLabel(sheet, "교육 미참석 사유", 2, defaultString(session.getAbsentReasonSummary()));
 
             fillCountByHeader(sheet, "교육대상", attendeeRows.size());
             fillCountByHeader(sheet, "교육참석", attendedCount);
@@ -263,8 +262,7 @@ public class SafetyTrainingExcelService {
                     SafetyTrainingSessionAttendee attendee = attendees.get(index++);
                     nameCell.setCellValue(defaultString(attendee.getUser().getNameKor()));
 
-                    byte[] signatureBytes =
-                            signatureImagesByUserId.get(attendee.getUser().getId());
+                    byte[] signatureBytes = signatureImagesByUserId.get(attendee.getUser().getId());
                     if (signatureBytes != null && signatureBytes.length > 0) {
                         addSignatureImage(
                                 workbook,

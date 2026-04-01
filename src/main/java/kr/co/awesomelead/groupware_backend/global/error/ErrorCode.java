@@ -66,8 +66,10 @@ public enum ErrorCode {
     HANBIRO_ACCOUNT_NOT_LINKED(HttpStatus.BAD_REQUEST, "한비로 계정 연동이 필요합니다."),
     EDUCATION_CATEGORY_REQUIRED(HttpStatus.BAD_REQUEST, "PSM/안전보건 교육 등록 시 카테고리는 필수입니다."),
     SAFETY_TRAINING_SESSION_CLOSED(HttpStatus.BAD_REQUEST, "마감된 안전보건 교육입니다."),
-    SAFETY_TRAINING_SESSION_HAS_SIGNED_ATTENDEE(HttpStatus.BAD_REQUEST, "서명 완료자가 존재하여 교육을 수정할 수 없습니다."),
-    SAFETY_TRAINING_ABSENT_REASON_REQUIRED(HttpStatus.BAD_REQUEST, "결석자가 있을 경우 교육 미참석 사유 입력은 필수입니다."),
+    SAFETY_TRAINING_SESSION_HAS_SIGNED_ATTENDEE(
+            HttpStatus.BAD_REQUEST, "서명 완료자가 존재하여 교육을 수정할 수 없습니다."),
+    SAFETY_TRAINING_ABSENT_REASON_REQUIRED(
+            HttpStatus.BAD_REQUEST, "결석자가 있을 경우 교육 미참석 사유 입력은 필수입니다."),
 
     // 401 Unauthorized
     INVALID_TOKEN(HttpStatus.UNAUTHORIZED, "유효하지 않은 토큰입니다."),

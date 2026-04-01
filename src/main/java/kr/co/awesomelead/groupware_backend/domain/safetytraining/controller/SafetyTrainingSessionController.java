@@ -78,8 +78,7 @@ public class SafetyTrainingSessionController {
     @Operation(
             summary = "안전보건 교육 세션 목록 조회",
             description =
-                    "일반 사용자는 본인 회사 데이터를 조회할 수 있으며, WRITE_SAFETY 권한 사용자는"
-                            + " 전체 회사/상태 조회가 가능합니다.")
+                    "일반 사용자는 본인 회사 데이터를 조회할 수 있으며, WRITE_SAFETY 권한 사용자는" + " 전체 회사/상태 조회가 가능합니다.")
     @ApiResponses(
             value = {
                 @io.swagger.v3.oas.annotations.responses.ApiResponse(
@@ -214,9 +213,11 @@ public class SafetyTrainingSessionController {
                         description = "세션/사용자 없음")
             })
     @GetMapping("/{sessionId}/attendees")
-    public ResponseEntity<ApiResponse<SafetyTrainingSessionAttendeesResponseDto>> getSessionAttendees(
-            @PathVariable Long sessionId,
-            @Parameter(hidden = true) @AuthenticationPrincipal CustomUserDetails userDetails) {
+    public ResponseEntity<ApiResponse<SafetyTrainingSessionAttendeesResponseDto>>
+            getSessionAttendees(
+                    @PathVariable Long sessionId,
+                    @Parameter(hidden = true) @AuthenticationPrincipal
+                            CustomUserDetails userDetails) {
         SafetyTrainingSessionAttendeesResponseDto result =
                 safetyTrainingSessionService.getSessionAttendees(sessionId, userDetails.getId());
         return ResponseEntity.ok(ApiResponse.onSuccess(result));
@@ -259,9 +260,11 @@ public class SafetyTrainingSessionController {
                         description = "세션/사용자 없음")
             })
     @PostMapping("/{sessionId}/report")
-    public ResponseEntity<ApiResponse<SafetyTrainingSessionReportResponseDto>> generateSessionReport(
-            @PathVariable Long sessionId,
-            @Parameter(hidden = true) @AuthenticationPrincipal CustomUserDetails userDetails) {
+    public ResponseEntity<ApiResponse<SafetyTrainingSessionReportResponseDto>>
+            generateSessionReport(
+                    @PathVariable Long sessionId,
+                    @Parameter(hidden = true) @AuthenticationPrincipal
+                            CustomUserDetails userDetails) {
         SafetyTrainingSessionReportResponseDto result =
                 safetyTrainingSessionService.generateSessionReport(sessionId, userDetails.getId());
         return ResponseEntity.ok(ApiResponse.onSuccess(result));
@@ -410,16 +413,18 @@ public class SafetyTrainingSessionController {
             @PathVariable Long sessionId,
             @Valid @RequestBody SafetyTrainingSessionUpdateRequestDto requestDto,
             @Parameter(hidden = true) @AuthenticationPrincipal CustomUserDetails userDetails) {
-        Long updatedId = safetyTrainingSessionService.update(sessionId, userDetails.getId(), requestDto);
+        Long updatedId =
+                safetyTrainingSessionService.update(sessionId, userDetails.getId(), requestDto);
         return ResponseEntity.ok(ApiResponse.onSuccess(updatedId));
     }
 
     @Operation(
             summary = "안전보건 교육 세션 상태 변경",
-            description = "작성 권한(WRITE_SAFETY) 사용자가 세션 상태를 OPEN/CLOSED/CANCELED로 변경합니다. "
-                    + "CLOSED(정상 마감) 전환 시 미서명(PENDING) 대상자는 자동으로 불참(ABSENT) 처리됩니다. "
-                    + "이때 결석자가 존재하면 absentReasonSummary를 입력해야 합니다. "
-                    + "CANCELED(오등록 종료)는 미참석 사유 입력 없이 종료할 수 있습니다.",
+            description =
+                    "작성 권한(WRITE_SAFETY) 사용자가 세션 상태를 OPEN/CLOSED/CANCELED로 변경합니다. "
+                            + "CLOSED(정상 마감) 전환 시 미서명(PENDING) 대상자는 자동으로 불참(ABSENT) 처리됩니다. "
+                            + "이때 결석자가 존재하면 absentReasonSummary를 입력해야 합니다. "
+                            + "CANCELED(오등록 종료)는 미참석 사유 입력 없이 종료할 수 있습니다.",
             requestBody =
                     @io.swagger.v3.oas.annotations.parameters.RequestBody(
                             required = true,
@@ -513,13 +518,16 @@ public class SafetyTrainingSessionController {
             @Valid @RequestBody SafetyTrainingSessionStatusUpdateRequestDto requestDto,
             @Parameter(hidden = true) @AuthenticationPrincipal CustomUserDetails userDetails) {
         Long updatedId =
-                safetyTrainingSessionService.updateStatus(sessionId, userDetails.getId(), requestDto);
+                safetyTrainingSessionService.updateStatus(
+                        sessionId, userDetails.getId(), requestDto);
         return ResponseEntity.ok(ApiResponse.onSuccess(updatedId));
     }
 
     @Operation(
             summary = "안전보건 교육 수료 서명",
-            description = "본인의 미수료 상태(PENDING, ABSENT)를 PNG 서명 업로드 후 수료(SIGNED)로 변경합니다. OPEN 상태 세션에서만 서명할 수 있습니다.")
+            description =
+                    "본인의 미수료 상태(PENDING, ABSENT)를 PNG 서명 업로드 후 수료(SIGNED)로 변경합니다. OPEN 상태 세션에서만 서명할"
+                        + " 수 있습니다.")
     @ApiResponses(
             value = {
                 @io.swagger.v3.oas.annotations.responses.ApiResponse(

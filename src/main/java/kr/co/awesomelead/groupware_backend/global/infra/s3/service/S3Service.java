@@ -62,8 +62,7 @@ public class S3Service {
             if (responseContentDisposition != null && !responseContentDisposition.isBlank()) {
                 requestBuilder.responseContentDisposition(responseContentDisposition);
             }
-            GetObjectRequest getObjectRequest =
-                    requestBuilder.build();
+            GetObjectRequest getObjectRequest = requestBuilder.build();
 
             GetObjectPresignRequest presignRequest =
                     GetObjectPresignRequest.builder()

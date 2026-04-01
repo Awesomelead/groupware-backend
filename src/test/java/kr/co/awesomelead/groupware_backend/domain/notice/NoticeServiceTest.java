@@ -278,6 +278,32 @@ class NoticeServiceTest {
             assertThat(result.getTargetDepartmentIds()).containsExactly(10L, 20L);
             assertThat(result.getTargetUserIds()).containsExactly(99L);
         }
+
+        @Test
+        @DisplayName("mapper를 통해 생성된 NoticeDetailDto의 type 필드가 영문 코드값으로 반환된다")
+        void it_returns_dto_with_english_type_code() {
+            // given
+            Notice notice = Notice.builder().title("타입조회").build();
+            ReflectionTestUtils.setField(notice, "viewCount", 0);
+            given(noticeRepository.findByIdWithDetails(1L)).willReturn(Optional.of(notice));
+            given(noticeMapper.toNoticeDetailDto(any(), any()))
+                    .willReturn(
+                            NoticeDetailDto.builder()
+                                    .title("타입조회")
+                                    .type(NoticeType.REGULAR.name())
+                                    .build());
+
+            // when
+            NoticeDetailDto result = noticeService.getNotice(1L);
+
+            // then
+            assertThat(result.getType()).isEqualTo("REGULAR");
+            assertThat(result.getType())
+                    .isIn(
+                            NoticeType.REGULAR.name(),
+                            NoticeType.MENU.name(),
+                            NoticeType.ETC.name());
+        }
     }
 
     @Nested

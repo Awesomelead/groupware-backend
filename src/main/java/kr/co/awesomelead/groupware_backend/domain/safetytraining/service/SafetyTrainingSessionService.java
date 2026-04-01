@@ -5,6 +5,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import kr.co.awesomelead.groupware_backend.domain.department.enums.Company;
 import kr.co.awesomelead.groupware_backend.domain.safetytraining.dto.request.SafetyTrainingSessionCreateRequestDto;
 import kr.co.awesomelead.groupware_backend.domain.safetytraining.dto.request.SafetyTrainingSessionSearchConditionDto;
+import kr.co.awesomelead.groupware_backend.domain.safetytraining.dto.request.SafetyTrainingSessionUpdateRequestDto;
 import kr.co.awesomelead.groupware_backend.domain.safetytraining.dto.response.SafetyTrainingPreviewResponseDto;
 import kr.co.awesomelead.groupware_backend.domain.safetytraining.dto.response.SafetyTrainingSessionDetailResponseDto;
 import kr.co.awesomelead.groupware_backend.domain.safetytraining.dto.response.SafetyTrainingSessionSummaryResponseDto;
@@ -13,6 +14,7 @@ import kr.co.awesomelead.groupware_backend.domain.safetytraining.entity.SafetyTr
 import kr.co.awesomelead.groupware_backend.domain.safetytraining.enums.SafetyEducationMethod;
 import kr.co.awesomelead.groupware_backend.domain.safetytraining.enums.SafetyTrainingAttendeeStatus;
 import kr.co.awesomelead.groupware_backend.domain.safetytraining.enums.SafetyTrainingCompletionStatus;
+import kr.co.awesomelead.groupware_backend.domain.safetytraining.enums.SafetyTrainingSessionStatus;
 import kr.co.awesomelead.groupware_backend.domain.safetytraining.repository.SafetyTrainingSessionAttendeeRepository;
 import kr.co.awesomelead.groupware_backend.domain.safetytraining.repository.SafetyTrainingSessionRepository;
 import kr.co.awesomelead.groupware_backend.domain.user.entity.User;
@@ -63,8 +65,8 @@ public class SafetyTrainingSessionService {
         validateSafetyWriteAuthority(actor);
         validateTimeRange(requestDto.getStartAt(), requestDto.getEndAt());
 
-        User instructor = findAndValidateInstructor(requestDto);
-        List<User> attendees = findTargetAttendees(requestDto);
+        User instructor = findAndValidateInstructor(requestDto.getInstructorUserId());
+        List<User> attendees = findTargetAttendees(requestDto.getCompanyScope());
         String educationDateText =
                 toEducationDateText(requestDto.getStartAt(), requestDto.getEndAt());
 
@@ -96,9 +98,9 @@ public class SafetyTrainingSessionService {
         validateSafetyWriteAuthority(actor);
         validateTimeRange(requestDto.getStartAt(), requestDto.getEndAt());
 
-        User instructor = findAndValidateInstructor(requestDto);
+        User instructor = findAndValidateInstructor(requestDto.getInstructorUserId());
 
-        String methodsJson = toMethodsJson(requestDto);
+        String methodsJson = toMethodsJson(requestDto.getEducationMethods());
         String educationDateText =
                 toEducationDateText(requestDto.getStartAt(), requestDto.getEndAt());
 
@@ -120,7 +122,7 @@ public class SafetyTrainingSessionService {
 
         SafetyTrainingSession saved = sessionRepository.save(session);
 
-        List<User> attendees = findTargetAttendees(requestDto);
+        List<User> attendees = findTargetAttendees(requestDto.getCompanyScope());
 
         List<SafetyTrainingSessionAttendee> rows =
                 attendees.stream()
@@ -155,6 +157,7 @@ public class SafetyTrainingSessionService {
         boolean canReadAllCompanies = actor.hasAuthority(Authority.WRITE_SAFETY);
         Company companyScope =
                 canReadAllCompanies ? filter.getCompanyScope() : actor.getWorkLocation();
+        SafetyTrainingSessionStatus status = canReadAllCompanies ? filter.getStatus() : null;
 
         if (!canReadAllCompanies && companyScope == null) {
             return Page.empty(pageable);
@@ -164,7 +167,7 @@ public class SafetyTrainingSessionService {
                 .findAllByFilters(
                         companyScope,
                         filter.getEducationType(),
-                        filter.getStatus(),
+                        status,
                         filter.getStartAtFrom(),
                         filter.getStartAtTo(),
                         pageable)
@@ -233,7 +236,9 @@ public class SafetyTrainingSessionService {
                         attendee.getSignatureKey() == null
                                 ? null
                                 : s3Service.getPresignedViewUrl(attendee.getSignatureKey()))
-                .canSign(myStatus != SafetyTrainingAttendeeStatus.SIGNED)
+                .canSign(
+                        session.getStatus() == SafetyTrainingSessionStatus.OPEN
+                                && myStatus != SafetyTrainingAttendeeStatus.SIGNED)
                 .build();
     }
 
@@ -252,6 +257,10 @@ public class SafetyTrainingSessionService {
                                 () ->
                                         new CustomException(
                                                 ErrorCode.SAFETY_TRAINING_SESSION_NOT_FOUND));
+
+        if (session.getStatus() == SafetyTrainingSessionStatus.CLOSED) {
+            throw new CustomException(ErrorCode.SAFETY_TRAINING_SESSION_CLOSED);
+        }
 
         validateSessionReadAccess(actor, session);
 
@@ -288,21 +297,88 @@ public class SafetyTrainingSessionService {
         }
     }
 
+    @Transactional
+    public Long update(
+            Long sessionId, Long userId, SafetyTrainingSessionUpdateRequestDto requestDto) {
+        User actor =
+                userRepository
+                        .findById(userId)
+                        .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
+        validateSafetyWriteAuthority(actor);
+        validateTimeRange(requestDto.getStartAt(), requestDto.getEndAt());
+
+        SafetyTrainingSession session =
+                sessionRepository
+                        .findById(sessionId)
+                        .orElseThrow(
+                                () ->
+                                        new CustomException(
+                                                ErrorCode.SAFETY_TRAINING_SESSION_NOT_FOUND));
+
+        if (session.getStatus() == SafetyTrainingSessionStatus.CLOSED) {
+            throw new CustomException(ErrorCode.SAFETY_TRAINING_SESSION_CLOSED);
+        }
+
+        long signedCount =
+                attendeeRepository.countBySessionIdAndStatus(
+                        sessionId, SafetyTrainingAttendeeStatus.SIGNED);
+        if (signedCount > 0) {
+            throw new CustomException(ErrorCode.SAFETY_TRAINING_SESSION_HAS_SIGNED_ATTENDEE);
+        }
+
+        User instructor = findAndValidateInstructor(requestDto.getInstructorUserId());
+        List<User> attendees = findTargetAttendees(requestDto.getCompanyScope());
+
+        session.setTitle(requestDto.getTitle().trim());
+        session.setEducationType(requestDto.getEducationType());
+        session.setEducationMethodsJson(toMethodsJson(requestDto.getEducationMethods()));
+        session.setStartAt(requestDto.getStartAt());
+        session.setEndAt(requestDto.getEndAt());
+        session.setEducationDateText(toEducationDateText(requestDto.getStartAt(), requestDto.getEndAt()));
+        session.setEducationContent(requestDto.getEducationContent());
+        session.setPlace(requestDto.getPlace().trim());
+        session.setCompanyScope(requestDto.getCompanyScope());
+        session.setInstructorUser(instructor);
+        session.setInstructorNameSnapshot(instructor.getNameKor());
+
+        attendeeRepository.deleteBySessionId(sessionId);
+        attendeeRepository.flush();
+
+        List<SafetyTrainingSessionAttendee> rows =
+                attendees.stream()
+                        .map(
+                                user ->
+                                        SafetyTrainingSessionAttendee.builder()
+                                                .session(session)
+                                                .user(user)
+                                                .status(SafetyTrainingAttendeeStatus.PENDING)
+                                                .build())
+                        .toList();
+        attendeeRepository.saveAll(rows);
+
+        session.setTargetCount(rows.size());
+        session.setAttendedCount(0);
+        session.setAbsentCount(0);
+        session.setAbsentReasonSummary(null);
+
+        return session.getId();
+    }
+
     private void validateSafetyWriteAuthority(User user) {
         if (!user.hasAuthority(Authority.WRITE_SAFETY)) {
             throw new CustomException(ErrorCode.NO_AUTHORITY_FOR_SAFETY_WRITE);
         }
     }
 
-    private User findAndValidateInstructor(SafetyTrainingSessionCreateRequestDto requestDto) {
+    private User findAndValidateInstructor(Long instructorUserId) {
         return userRepository
-                .findById(requestDto.getInstructorUserId())
+                .findById(instructorUserId)
                 .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
     }
 
-    private List<User> findTargetAttendees(SafetyTrainingSessionCreateRequestDto requestDto) {
+    private List<User> findTargetAttendees(Company companyScope) {
         return userRepository.findAllByCompanyAndStatusExcludingPosition(
-                requestDto.getCompanyScope(), Status.AVAILABLE, Position.CEO);
+                companyScope, Status.AVAILABLE, Position.CEO);
     }
 
     private void validateTimeRange(LocalDateTime startAt, LocalDateTime endAt) {
@@ -311,9 +387,9 @@ public class SafetyTrainingSessionService {
         }
     }
 
-    private String toMethodsJson(SafetyTrainingSessionCreateRequestDto requestDto) {
+    private String toMethodsJson(List<SafetyEducationMethod> educationMethods) {
         try {
-            return objectMapper.writeValueAsString(requestDto.getEducationMethods());
+            return objectMapper.writeValueAsString(educationMethods);
         } catch (Exception e) {
             throw new CustomException(ErrorCode.INVALID_ARGUMENT);
         }

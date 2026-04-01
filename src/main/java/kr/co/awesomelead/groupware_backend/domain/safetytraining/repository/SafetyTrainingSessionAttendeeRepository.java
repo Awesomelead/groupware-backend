@@ -13,4 +13,6 @@ public interface SafetyTrainingSessionAttendeeRepository
     Optional<SafetyTrainingSessionAttendee> findBySessionIdAndUserId(Long sessionId, Long userId);
 
     long countBySessionIdAndStatus(Long sessionId, SafetyTrainingAttendeeStatus status);
+
+    void deleteBySessionId(Long sessionId);
 }

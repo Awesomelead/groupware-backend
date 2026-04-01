@@ -12,6 +12,7 @@ import jakarta.validation.Valid;
 
 import kr.co.awesomelead.groupware_backend.domain.safetytraining.dto.request.SafetyTrainingSessionCreateRequestDto;
 import kr.co.awesomelead.groupware_backend.domain.safetytraining.dto.request.SafetyTrainingSessionSearchConditionDto;
+import kr.co.awesomelead.groupware_backend.domain.safetytraining.dto.request.SafetyTrainingSessionUpdateRequestDto;
 import kr.co.awesomelead.groupware_backend.domain.safetytraining.dto.response.SafetyTrainingPreviewResponseDto;
 import kr.co.awesomelead.groupware_backend.domain.safetytraining.dto.response.SafetyTrainingSessionDetailResponseDto;
 import kr.co.awesomelead.groupware_backend.domain.safetytraining.dto.response.SafetyTrainingSessionSummaryResponseDto;
@@ -29,6 +30,7 @@ import org.springframework.data.web.PageableDefault;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -68,7 +70,9 @@ public class SafetyTrainingSessionController {
 
     @Operation(
             summary = "안전보건 교육 세션 목록 조회",
-            description = "일반 사용자는 본인 회사 데이터만 조회할 수 있으며, WRITE_SAFETY 권한 사용자는 전체 회사 조회가 가능합니다.")
+            description =
+                    "일반 사용자는 본인 회사 데이터(OPEN/CLOSED)를 조회할 수 있으며, WRITE_SAFETY 권한 사용자는"
+                            + " 전체 회사/상태 조회가 가능합니다.")
     @ApiResponses(
             value = {
                 @io.swagger.v3.oas.annotations.responses.ApiResponse(
@@ -170,8 +174,99 @@ public class SafetyTrainingSessionController {
     }
 
     @Operation(
+            summary = "안전보건 교육 세션 수정",
+            description = "작성 권한(WRITE_SAFETY) 사용자가 세션을 수정합니다. OPEN 상태 + 서명 완료자 0명인 경우에만 수정 가능합니다.",
+            requestBody =
+                    @io.swagger.v3.oas.annotations.parameters.RequestBody(
+                            required = true,
+                            content =
+                                    @Content(
+                                            mediaType = "application/json",
+                                            examples =
+                                                    @ExampleObject(
+                                                            name = "수정 요청 예시",
+                                                            value =
+                                                                    """
+            {
+              "title": "2026년 1분기 정기 안전보건교육(수정)",
+              "educationType": "REGULAR",
+              "educationMethods": ["LECTURE", "AUDIOVISUAL"],
+              "startAt": "2026-03-24T08:30:00",
+              "endAt": "2026-03-24T10:30:00",
+              "educationContent": "개인정보 보호 및 사내 보안 규정 안내",
+              "place": "3층 대회의실",
+              "instructorUserId": 17,
+              "companyScope": "AWESOME"
+            }
+            """))))
+    @ApiResponses(
+            value = {
+                @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                        responseCode = "200",
+                        description = "수정 성공"),
+                @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                        responseCode = "400",
+                        description = "마감 세션 또는 서명 완료자 존재",
+                        content =
+                                @Content(
+                                        mediaType = "application/json",
+                                        examples = {
+                                            @ExampleObject(
+                                                    name = "마감 세션",
+                                                    value =
+                                                            """
+            {
+              "isSuccess": false,
+              "code": "SAFETY_TRAINING_SESSION_CLOSED",
+              "message": "마감된 안전보건 교육입니다.",
+              "result": null
+            }
+            """),
+                                            @ExampleObject(
+                                                    name = "서명 완료자 존재",
+                                                    value =
+                                                            """
+            {
+              "isSuccess": false,
+              "code": "SAFETY_TRAINING_SESSION_HAS_SIGNED_ATTENDEE",
+              "message": "서명 완료자가 존재하여 교육을 수정할 수 없습니다.",
+              "result": null
+            }
+            """)
+                                        })),
+                @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                        responseCode = "403",
+                        description = "수정 권한 없음",
+                        content =
+                                @Content(
+                                        mediaType = "application/json",
+                                        examples =
+                                                @ExampleObject(
+                                                        value =
+                                                                """
+            {
+              "isSuccess": false,
+              "code": "NO_AUTHORITY_FOR_SAFETY_WRITE",
+              "message": "PSM/안전보건 작성 권한이 없습니다.",
+              "result": null
+            }
+            """))),
+                @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                        responseCode = "404",
+                        description = "세션/사용자 없음")
+            })
+    @PatchMapping("/{sessionId}")
+    public ResponseEntity<ApiResponse<Long>> update(
+            @PathVariable Long sessionId,
+            @Valid @RequestBody SafetyTrainingSessionUpdateRequestDto requestDto,
+            @Parameter(hidden = true) @AuthenticationPrincipal CustomUserDetails userDetails) {
+        Long updatedId = safetyTrainingSessionService.update(sessionId, userDetails.getId(), requestDto);
+        return ResponseEntity.ok(ApiResponse.onSuccess(updatedId));
+    }
+
+    @Operation(
             summary = "안전보건 교육 수료 서명",
-            description = "본인의 미수료 상태(PENDING, ABSENT)를 PNG 서명 업로드 후 수료(SIGNED)로 변경합니다.")
+            description = "본인의 미수료 상태(PENDING, ABSENT)를 PNG 서명 업로드 후 수료(SIGNED)로 변경합니다. CLOSED 세션은 서명할 수 없습니다.")
     @ApiResponses(
             value = {
                 @io.swagger.v3.oas.annotations.responses.ApiResponse(

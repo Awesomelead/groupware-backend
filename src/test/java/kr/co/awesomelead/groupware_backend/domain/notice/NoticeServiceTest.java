@@ -299,10 +299,7 @@ class NoticeServiceTest {
             // then
             assertThat(result.getType()).isEqualTo("REGULAR");
             assertThat(result.getType())
-                    .isIn(
-                            NoticeType.REGULAR.name(),
-                            NoticeType.MENU.name(),
-                            NoticeType.ETC.name());
+                    .isIn(NoticeType.REGULAR.name(), NoticeType.MENU.name(), NoticeType.ETC.name());
         }
     }
 

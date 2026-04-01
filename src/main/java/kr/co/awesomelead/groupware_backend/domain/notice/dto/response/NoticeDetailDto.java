@@ -45,7 +45,10 @@ public class NoticeDetailDto {
     @Schema(description = "첨부파일 목록")
     private List<AttachmentResponse> attachments;
 
-    @Schema(description = "공지사항 유형 (영문 코드)", example = "REGULAR", allowableValues = {"REGULAR", "MENU", "ETC"})
+    @Schema(
+            description = "공지사항 유형 (영문 코드)",
+            example = "REGULAR",
+            allowableValues = {"REGULAR", "MENU", "ETC"})
     private String type;
 
     @Schema(description = "대상 회사 목록", example = "[\"어썸리드\", \"마루이\"]")

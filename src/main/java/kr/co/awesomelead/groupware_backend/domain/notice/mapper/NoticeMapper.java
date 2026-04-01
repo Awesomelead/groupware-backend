@@ -30,6 +30,9 @@ public interface NoticeMapper {
 
     @Mapping(target = "authorName", expression = "java(notice.getAuthor().getDisplayName())")
     @Mapping(target = "attachments", source = "attachments")
+    @Mapping(target = "targetCompanies", source = "notice.targetCompanies")
+    @Mapping(target = "targetDepartmentIds", source = "notice.targetDepartments")
+    @Mapping(target = "targetUserIds", source = "notice.targetUsers")
     NoticeDetailDto toNoticeDetailDto(Notice notice, @Context S3Service s3Service);
 
     @Mapping(

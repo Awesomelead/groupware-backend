@@ -254,7 +254,8 @@ class NoticeServiceTest {
         }
 
         @Test
-        @DisplayName("대상 설정 정보(targetCompanies, targetDepartmentIds, targetUserIds)를 포함한 상세 정보를 반환한다")
+        @DisplayName(
+                "대상 설정 정보(targetCompanies, targetDepartmentIds, targetUserIds)를 포함한 상세 정보를 반환한다")
         void it_returns_dto_with_target_fields() {
             // given
             Notice notice = Notice.builder().title("대상조회").build();

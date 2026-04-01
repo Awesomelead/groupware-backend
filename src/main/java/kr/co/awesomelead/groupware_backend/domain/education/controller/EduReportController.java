@@ -549,7 +549,7 @@ public class EduReportController {
           }
           """)))
             })
-    @PostMapping("/{id}/attendance")
+    @PostMapping(value = "/{id}/attendance", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<ApiResponse<Void>> markAttendance(
             @Parameter(description = "교육 보고서 ID", example = "1") @PathVariable Long id,
             @Parameter(description = "서명 이미지 파일")

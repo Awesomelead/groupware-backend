@@ -65,6 +65,11 @@ public enum ErrorCode {
     REQUEST_HISTORY_NOT_REJECTABLE(HttpStatus.BAD_REQUEST, "발급 대기 상태 요청만 반려 처리할 수 있습니다."),
     HANBIRO_ACCOUNT_NOT_LINKED(HttpStatus.BAD_REQUEST, "한비로 계정 연동이 필요합니다."),
     EDUCATION_CATEGORY_REQUIRED(HttpStatus.BAD_REQUEST, "PSM/안전보건 교육 등록 시 카테고리는 필수입니다."),
+    SAFETY_TRAINING_SESSION_CLOSED(HttpStatus.BAD_REQUEST, "마감된 안전보건 교육입니다."),
+    SAFETY_TRAINING_SESSION_HAS_SIGNED_ATTENDEE(
+            HttpStatus.BAD_REQUEST, "서명 완료자가 존재하여 교육을 수정할 수 없습니다."),
+    SAFETY_TRAINING_ABSENT_REASON_REQUIRED(
+            HttpStatus.BAD_REQUEST, "결석자가 있을 경우 교육 미참석 사유 입력은 필수입니다."),
 
     // 401 Unauthorized
     INVALID_TOKEN(HttpStatus.UNAUTHORIZED, "유효하지 않은 토큰입니다."),
@@ -81,6 +86,7 @@ public enum ErrorCode {
     NO_AUTHORITY_FOR_MY_INFO_UPDATE_CANCEL(HttpStatus.FORBIDDEN, "본인의 개인정보 수정 요청만 취소할 수 있습니다."),
     NO_AUTHORITY_FOR_EDU_REPORT(HttpStatus.FORBIDDEN, "교육 보고서 관리 권한이 없습니다."),
     NO_AUTHORITY_FOR_SAFETY_WRITE(HttpStatus.FORBIDDEN, "PSM/안전보건 작성 권한이 없습니다."),
+    NO_AUTHORITY_FOR_SAFETY_READ(HttpStatus.FORBIDDEN, "해당 안전보건 교육 조회 권한이 없습니다."),
     VISIT_ACCESS_DENIED(HttpStatus.FORBIDDEN, "해당 방문정보에 대한 접근 권한이 없습니다."),
     NO_AUTHORITY_FOR_NOTICE(HttpStatus.FORBIDDEN, "공지사항 작성 권한이 없습니다."),
     NO_AUTHORITY_FOR_ANNUAL_LEAVE(HttpStatus.FORBIDDEN, "연차 발송 권한이 없습니다."),
@@ -110,6 +116,9 @@ public enum ErrorCode {
     FCM_TOKEN_NOT_FOUND(HttpStatus.NOT_FOUND, "해당 FCM 토큰을 찾을 수 없습니다."),
     NOTIFICATION_NOT_FOUND(HttpStatus.NOT_FOUND, "해당 알림을 찾을 수 없습니다."),
     MY_INFO_UPDATE_REQUEST_NOT_FOUND(HttpStatus.NOT_FOUND, "해당 개인정보 수정 요청을 찾을 수 없습니다."),
+    SAFETY_TRAINING_SESSION_NOT_FOUND(HttpStatus.NOT_FOUND, "해당 안전보건 교육 세션을 찾을 수 없습니다."),
+    SAFETY_TRAINING_ATTENDEE_NOT_FOUND(HttpStatus.NOT_FOUND, "해당 안전보건 교육 대상자를 찾을 수 없습니다."),
+    SAFETY_TRAINING_REPORT_NOT_FOUND(HttpStatus.NOT_FOUND, "안전보건 교육 보고서가 아직 생성되지 않았습니다."),
 
     // 409 Conflict
     DUPLICATED_SIGNUP_REQUEST(HttpStatus.CONFLICT, "이미 처리된 가입 요청입니다."),
@@ -117,6 +126,7 @@ public enum ErrorCode {
     DUPLICATE_PHONE_NUMBER(HttpStatus.CONFLICT, "이미 가입된 전화번호입니다."),
     DUPLICATE_REGISTRATION_NUMBER(HttpStatus.CONFLICT, "이미 가입된 주민등록번호입니다."),
     DUPLICATE_EDUCATION_CATEGORY_CODE(HttpStatus.CONFLICT, "이미 사용 중인 교육 카테고리 코드입니다."),
+    BOOTSTRAP_ADMIN_ALREADY_EXISTS(HttpStatus.CONFLICT, "이미 관리자 계정이 존재합니다."),
 
     // 500 Internal Server Error
     INTERNAL_SERVER_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "서버 내부 오류가 발생했습니다."),

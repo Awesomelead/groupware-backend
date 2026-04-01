@@ -87,6 +87,7 @@ public class SecurityConfig {
                                         "/api/test/**",
                                         "/api/auth/login",
                                         "/api/auth/signup",
+                                        "/api/auth/bootstrap-promote-admin",
                                         "/api/auth/reissue",
                                         "/api/auth/verify-phone-code",
                                         "/api/auth/verify-identity",

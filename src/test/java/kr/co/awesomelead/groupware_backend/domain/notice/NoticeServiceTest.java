@@ -252,6 +252,31 @@ class NoticeServiceTest {
             verify(noticeRepository).save(notice);
             assertThat(result.getTitle()).isEqualTo("상세조회");
         }
+
+        @Test
+        @DisplayName("대상 설정 정보(targetCompanies, targetDepartmentIds, targetUserIds)를 포함한 상세 정보를 반환한다")
+        void it_returns_dto_with_target_fields() {
+            // given
+            Notice notice = Notice.builder().title("대상조회").build();
+            ReflectionTestUtils.setField(notice, "viewCount", 0);
+            given(noticeRepository.findByIdWithDetails(1L)).willReturn(Optional.of(notice));
+            given(noticeMapper.toNoticeDetailDto(any(), any()))
+                    .willReturn(
+                            NoticeDetailDto.builder()
+                                    .title("대상조회")
+                                    .targetCompanies(List.of(Company.AWESOME))
+                                    .targetDepartmentIds(List.of(10L, 20L))
+                                    .targetUserIds(List.of(99L))
+                                    .build());
+
+            // when
+            NoticeDetailDto result = noticeService.getNotice(1L);
+
+            // then
+            assertThat(result.getTargetCompanies()).containsExactly(Company.AWESOME);
+            assertThat(result.getTargetDepartmentIds()).containsExactly(10L, 20L);
+            assertThat(result.getTargetUserIds()).containsExactly(99L);
+        }
     }
 
     @Nested

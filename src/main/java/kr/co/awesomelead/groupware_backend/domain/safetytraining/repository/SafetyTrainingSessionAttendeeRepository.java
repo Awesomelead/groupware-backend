@@ -17,6 +17,9 @@ public interface SafetyTrainingSessionAttendeeRepository
 
     long countBySessionIdAndStatus(Long sessionId, SafetyTrainingAttendeeStatus status);
 
+    List<SafetyTrainingSessionAttendee> findAllBySessionIdAndStatus(
+            Long sessionId, SafetyTrainingAttendeeStatus status);
+
     @Query(
             """
             SELECT a

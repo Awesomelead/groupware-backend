@@ -28,6 +28,9 @@ public class SafetyTrainingSessionAttendeesResponseDto {
     @Schema(description = "교육 미참석 인원 수", example = "9")
     private int absentCount;
 
+    @Schema(description = "교육 미참석 사유(세션 단위, 결석자 없으면 null)", example = "현장 장비 점검으로 일부 인원 교육 참여 불가")
+    private String absentReasonSummary;
+
     @Schema(description = "참석자 목록")
     private List<AttendeeItem> attendees;
 
@@ -55,8 +58,5 @@ public class SafetyTrainingSessionAttendeesResponseDto {
 
         @Schema(description = "서명 이미지 URL", example = "https://...signature.png")
         private String signatureUrl;
-
-        @Schema(description = "불참 사유", example = "연차 사용")
-        private String absentReason;
     }
 }

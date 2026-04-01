@@ -62,6 +62,9 @@ public class SafetyTrainingSessionDetailResponseDto {
     @Schema(description = "교육 미참석 인원 수", example = "9")
     private int absentCount;
 
+    @Schema(description = "교육 미참석 사유(세션 단위, 결석자 없으면 null)", example = "현장 장비 점검으로 일부 인원 교육 참여 불가")
+    private String absentReasonSummary;
+
     @Schema(description = "보고서 파일 URL(확정본 생성 후)", example = "https://...presigned-url")
     private String reportFileUrl;
 

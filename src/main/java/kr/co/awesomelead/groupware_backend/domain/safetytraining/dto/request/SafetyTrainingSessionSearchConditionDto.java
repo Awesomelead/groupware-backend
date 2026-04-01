@@ -35,9 +35,9 @@ public class SafetyTrainingSessionSearchConditionDto {
     private SafetyEducationType educationType;
 
     @Schema(
-            description = "세션 상태 필터 (OPEN: 진행중, CLOSED: 마감)",
+            description = "세션 상태 필터 (OPEN: 진행중, CLOSED: 정상 마감, CANCELED: 오등록 종료)",
             example = "OPEN",
-            allowableValues = {"OPEN", "CLOSED"})
+            allowableValues = {"OPEN", "CLOSED", "CANCELED"})
     private SafetyTrainingSessionStatus status;
 
     @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME)

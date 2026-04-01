@@ -56,9 +56,9 @@ import java.io.IOException;
         - 조회: 일반 사용자(`본인 회사만 조회`)
         - 조회: `WRITE_SAFETY` 권한 사용자(`전체 회사 조회 가능`)
         - 참석자 현황 조회: `WRITE_SAFETY`
-        - 수료 처리(서명): 미수료(`PENDING`, `ABSENT`) 상태에서 본인 서명 가능
+        - 세션 상태 변경/미참석 사유 입력: `WRITE_SAFETY`
+        - 수료 처리(서명): 세션이 `OPEN`이고 미수료(`PENDING`, `ABSENT`) 상태일 때 본인 서명 가능
         - 생성: `WRITE_SAFETY`
-        - 상태 변경(OPEN/CLOSED): `WRITE_SAFETY`
 
         ### 사용 Enum
         - `SafetyEducationType`
@@ -75,7 +75,7 @@ public class SafetyTrainingSessionController {
     @Operation(
             summary = "안전보건 교육 세션 목록 조회",
             description =
-                    "일반 사용자는 본인 회사 데이터(OPEN/CLOSED)를 조회할 수 있으며, WRITE_SAFETY 권한 사용자는"
+                    "일반 사용자는 본인 회사 데이터를 조회할 수 있으며, WRITE_SAFETY 권한 사용자는"
                             + " 전체 회사/상태 조회가 가능합니다.")
     @ApiResponses(
             value = {
@@ -312,12 +312,76 @@ public class SafetyTrainingSessionController {
 
     @Operation(
             summary = "안전보건 교육 세션 상태 변경",
-            description = "작성 권한(WRITE_SAFETY) 사용자가 세션 상태를 OPEN/CLOSED로 변경합니다.")
+            description = "작성 권한(WRITE_SAFETY) 사용자가 세션 상태를 OPEN/CLOSED/CANCELED로 변경합니다. "
+                    + "CLOSED(정상 마감) 전환 시 미서명(PENDING) 대상자는 자동으로 불참(ABSENT) 처리됩니다. "
+                    + "이때 결석자가 존재하면 absentReasonSummary를 입력해야 합니다. "
+                    + "CANCELED(오등록 종료)는 미참석 사유 입력 없이 종료할 수 있습니다.",
+            requestBody =
+                    @io.swagger.v3.oas.annotations.parameters.RequestBody(
+                            required = true,
+                            content =
+                                    @Content(
+                                            mediaType = "application/json",
+                                            examples = {
+                                                @ExampleObject(
+                                                        name = "CLOSED 전환(결석자 있음)",
+                                                        value =
+                                                                """
+            {
+              "status": "CLOSED",
+              "absentReasonSummary": "현장 장비 점검으로 일부 인원 교육 참여 불가"
+            }
+            """),
+                                                @ExampleObject(
+                                                        name = "CLOSED 전환(결석자 없음)",
+                                                        value =
+                                                                """
+            {
+              "status": "CLOSED",
+              "absentReasonSummary": null
+            }
+            """),
+                                                @ExampleObject(
+                                                        name = "CANCELED 전환(오등록 종료)",
+                                                        value =
+                                                                """
+            {
+              "status": "CANCELED",
+              "absentReasonSummary": null
+            }
+            """),
+                                                @ExampleObject(
+                                                        name = "OPEN 전환",
+                                                        value =
+                                                                """
+            {
+              "status": "OPEN",
+              "absentReasonSummary": null
+            }
+            """)
+                                            })))
     @ApiResponses(
             value = {
                 @io.swagger.v3.oas.annotations.responses.ApiResponse(
                         responseCode = "200",
                         description = "상태 변경 성공"),
+                @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                        responseCode = "400",
+                        description = "CLOSED 전환 + 결석자 존재 시 미참석 사유 누락",
+                        content =
+                                @Content(
+                                        mediaType = "application/json",
+                                        examples =
+                                                @ExampleObject(
+                                                        value =
+                                                                """
+            {
+              "isSuccess": false,
+              "code": "SAFETY_TRAINING_ABSENT_REASON_REQUIRED",
+              "message": "결석자가 있을 경우 교육 미참석 사유 입력은 필수입니다.",
+              "result": null
+            }
+            """))),
                 @io.swagger.v3.oas.annotations.responses.ApiResponse(
                         responseCode = "403",
                         description = "수정 권한 없음",
@@ -351,7 +415,7 @@ public class SafetyTrainingSessionController {
 
     @Operation(
             summary = "안전보건 교육 수료 서명",
-            description = "본인의 미수료 상태(PENDING, ABSENT)를 PNG 서명 업로드 후 수료(SIGNED)로 변경합니다. CLOSED 세션은 서명할 수 없습니다.")
+            description = "본인의 미수료 상태(PENDING, ABSENT)를 PNG 서명 업로드 후 수료(SIGNED)로 변경합니다. OPEN 상태 세션에서만 서명할 수 있습니다.")
     @ApiResponses(
             value = {
                 @io.swagger.v3.oas.annotations.responses.ApiResponse(

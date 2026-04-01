@@ -230,6 +230,7 @@ public class SafetyTrainingSessionService {
                 .targetCount(session.getTargetCount())
                 .attendedCount(session.getAttendedCount())
                 .absentCount(session.getAbsentCount())
+                .absentReasonSummary(session.getAbsentReasonSummary())
                 .reportFileUrl(reportFileUrl)
                 .myAttendanceStatus(myStatus)
                 .myCompletionStatus(completionStatus)
@@ -252,7 +253,8 @@ public class SafetyTrainingSessionService {
                         .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
         validateSafetyWriteAuthority(actor);
 
-        sessionRepository
+        SafetyTrainingSession session =
+                sessionRepository
                 .findById(sessionId)
                 .orElseThrow(
                         () ->
@@ -298,7 +300,6 @@ public class SafetyTrainingSessionService {
                                                             ? null
                                                             : s3Service.getPresignedViewUrl(
                                                                     attendee.getSignatureKey()))
-                                            .absentReason(attendee.getAbsentReason())
                                             .build();
                                 })
                         .toList();
@@ -308,6 +309,7 @@ public class SafetyTrainingSessionService {
                 .targetCount(attendees.size())
                 .attendedCount(attendedCount)
                 .absentCount(absentCount)
+                .absentReasonSummary(session.getAbsentReasonSummary())
                 .attendees(attendeeItems)
                 .build();
     }
@@ -328,7 +330,7 @@ public class SafetyTrainingSessionService {
                                         new CustomException(
                                                 ErrorCode.SAFETY_TRAINING_SESSION_NOT_FOUND));
 
-        if (session.getStatus() == SafetyTrainingSessionStatus.CLOSED) {
+        if (session.getStatus() != SafetyTrainingSessionStatus.OPEN) {
             throw new CustomException(ErrorCode.SAFETY_TRAINING_SESSION_CLOSED);
         }
 
@@ -385,7 +387,7 @@ public class SafetyTrainingSessionService {
                                         new CustomException(
                                                 ErrorCode.SAFETY_TRAINING_SESSION_NOT_FOUND));
 
-        if (session.getStatus() == SafetyTrainingSessionStatus.CLOSED) {
+        if (session.getStatus() != SafetyTrainingSessionStatus.OPEN) {
             throw new CustomException(ErrorCode.SAFETY_TRAINING_SESSION_CLOSED);
         }
 
@@ -450,8 +452,42 @@ public class SafetyTrainingSessionService {
                                 () ->
                                         new CustomException(
                                                 ErrorCode.SAFETY_TRAINING_SESSION_NOT_FOUND));
+        if (requestDto.getStatus() == SafetyTrainingSessionStatus.CLOSED
+                && session.getStatus() != SafetyTrainingSessionStatus.CLOSED) {
+            List<SafetyTrainingSessionAttendee> pendingAttendees =
+                    attendeeRepository.findAllBySessionIdAndStatus(
+                            sessionId, SafetyTrainingAttendeeStatus.PENDING);
+            for (SafetyTrainingSessionAttendee attendee : pendingAttendees) {
+                attendee.setStatus(SafetyTrainingAttendeeStatus.ABSENT);
+                attendee.setAbsentReason(null);
+            }
+        }
+        if (requestDto.getStatus() == SafetyTrainingSessionStatus.CLOSED) {
+            List<SafetyTrainingSessionAttendee> absentAttendees =
+                    attendeeRepository.findAllBySessionIdAndStatus(
+                            sessionId, SafetyTrainingAttendeeStatus.ABSENT);
+            for (SafetyTrainingSessionAttendee attendee : absentAttendees) {
+                attendee.setAbsentReason(null);
+            }
+        }
 
         session.setStatus(requestDto.getStatus());
+        syncSessionCounts(session);
+
+        if (requestDto.getStatus() == SafetyTrainingSessionStatus.CLOSED) {
+            if (session.getAbsentCount() > 0) {
+                String absentReasonSummary = trimToNull(requestDto.getAbsentReasonSummary());
+                if (absentReasonSummary == null) {
+                    throw new CustomException(ErrorCode.SAFETY_TRAINING_ABSENT_REASON_REQUIRED);
+                }
+                session.setAbsentReasonSummary(absentReasonSummary);
+            } else {
+                session.setAbsentReasonSummary(null);
+            }
+        } else {
+            session.setAbsentReasonSummary(null);
+        }
+
         return session.getId();
     }
 
@@ -476,6 +512,14 @@ public class SafetyTrainingSessionService {
         if (startAt == null || endAt == null || !startAt.isBefore(endAt)) {
             throw new CustomException(ErrorCode.INVALID_TIME_RANGE);
         }
+    }
+
+    private String trimToNull(String value) {
+        if (value == null) {
+            return null;
+        }
+        String trimmed = value.trim();
+        return trimmed.isEmpty() ? null : trimmed;
     }
 
     private String toMethodsJson(List<SafetyEducationMethod> educationMethods) {

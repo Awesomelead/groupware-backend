@@ -29,6 +29,7 @@ public interface NoticeMapper {
     List<NoticeSummaryDto> toNoticeSummaryDtoList(List<Notice> notices);
 
     @Mapping(target = "authorName", expression = "java(notice.getAuthor().getDisplayName())")
+    @Mapping(target = "type", expression = "java(notice.getType().name())")
     @Mapping(target = "attachments", source = "attachments")
     @Mapping(target = "targetCompanies", source = "notice.targetCompanies")
     @Mapping(target = "targetDepartmentIds", source = "notice.targetDepartments")

@@ -45,6 +45,8 @@ public interface UserRepository extends JpaRepository<User, Long> {
 
     List<User> findAllByRole(Role role);
 
+    boolean existsByRole(Role role);
+
     @Query("SELECT u.id FROM User u WHERE u.department.id = :departmentId")
     List<Long> findAllIdsByDepartmentId(@Param("departmentId") Long departmentId);
 

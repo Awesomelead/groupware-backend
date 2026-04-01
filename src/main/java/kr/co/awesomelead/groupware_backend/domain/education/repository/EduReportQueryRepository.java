@@ -58,7 +58,8 @@ public class EduReportQueryRepository {
                 .from(eduReport)
                 .leftJoin(eduReport.category, educationCategory)
                 .where(eqEduType(type), eqCategoryId(categoryId), deptFilter(type, hasAccess, dept))
-                .orderBy(eduReport.pinned.desc(), eduReport.eduDate.desc())
+                // 같은 eduDate(일자) 내에서는 최신 생성건이 위로 오도록 id DESC를 타이브레이커로 사용
+                .orderBy(eduReport.pinned.desc(), eduReport.eduDate.desc(), eduReport.id.desc())
                 .fetch();
     }
 

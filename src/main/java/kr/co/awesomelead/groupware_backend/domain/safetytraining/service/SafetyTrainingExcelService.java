@@ -1,16 +1,23 @@
 package kr.co.awesomelead.groupware_backend.domain.safetytraining.service;
 
 import kr.co.awesomelead.groupware_backend.domain.safetytraining.dto.request.SafetyTrainingSessionCreateRequestDto;
+import kr.co.awesomelead.groupware_backend.domain.safetytraining.entity.SafetyTrainingSession;
+import kr.co.awesomelead.groupware_backend.domain.safetytraining.entity.SafetyTrainingSessionAttendee;
 import kr.co.awesomelead.groupware_backend.domain.safetytraining.enums.SafetyEducationMethod;
 import kr.co.awesomelead.groupware_backend.domain.safetytraining.enums.SafetyEducationType;
+import kr.co.awesomelead.groupware_backend.domain.safetytraining.enums.SafetyTrainingAttendeeStatus;
 import kr.co.awesomelead.groupware_backend.domain.user.entity.User;
 
 import lombok.RequiredArgsConstructor;
 
 import org.apache.poi.ss.usermodel.Cell;
 import org.apache.poi.ss.usermodel.CellType;
+import org.apache.poi.ss.usermodel.ClientAnchor;
+import org.apache.poi.ss.usermodel.CreationHelper;
+import org.apache.poi.ss.usermodel.Drawing;
 import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.ss.usermodel.Sheet;
+import org.apache.poi.ss.usermodel.Workbook;
 import org.apache.poi.ss.util.CellRangeAddress;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.springframework.core.io.ClassPathResource;
@@ -19,6 +26,7 @@ import org.springframework.stereotype.Service;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -58,6 +66,59 @@ public class SafetyTrainingExcelService {
             return baos.toByteArray();
         } catch (IOException e) {
             throw new IllegalStateException("안전보건 엑셀 미리보기 생성 중 오류가 발생했습니다.", e);
+        }
+    }
+
+    public byte[] buildSessionReportExcel(
+            SafetyTrainingSession session,
+            List<SafetyEducationMethod> educationMethods,
+            List<SafetyTrainingSessionAttendee> attendees,
+            Map<Long, byte[]> signatureImagesByUserId) {
+        List<SafetyTrainingSessionAttendee> attendeeRows =
+                attendees == null ? Collections.emptyList() : attendees;
+        Map<Long, byte[]> signatures =
+                signatureImagesByUserId == null ? Collections.emptyMap() : signatureImagesByUserId;
+
+        int attendedCount =
+                (int)
+                        attendeeRows.stream()
+                                .filter(it -> it.getStatus() == SafetyTrainingAttendeeStatus.SIGNED)
+                                .count();
+        int absentCount =
+                (int)
+                        attendeeRows.stream()
+                                .filter(it -> it.getStatus() == SafetyTrainingAttendeeStatus.ABSENT)
+                                .count();
+
+        try (InputStream is = new ClassPathResource(TEMPLATE_PATH).getInputStream();
+                XSSFWorkbook workbook = new XSSFWorkbook(is);
+                ByteArrayOutputStream baos = new ByteArrayOutputStream()) {
+
+            Sheet sheet = workbook.getSheetAt(0);
+
+            fillEducationTypeCheckboxes(sheet, session.getEducationType());
+            fillEducationMethodsCheckboxes(sheet, educationMethods);
+
+            fillCellByLabel(sheet, "교육일시", 2, defaultString(session.getEducationDateText()));
+            fillCellByLabel(sheet, "교육내용", 2, defaultString(session.getEducationContent()));
+            fillCellByLabel(sheet, "교육 장소", 2, defaultString(session.getPlace()));
+            fillCellByLabel(
+                    sheet,
+                    "교육 실시자",
+                    2,
+                    defaultString(session.getInstructorNameSnapshot()) + " (인)");
+            fillCellByLabel(sheet, "교육 미참석 사유", 2, defaultString(session.getAbsentReasonSummary()));
+
+            fillCountByHeader(sheet, "교육대상", attendeeRows.size());
+            fillCountByHeader(sheet, "교육참석", attendedCount);
+            fillCountByHeader(sheet, "교육 미참석", absentCount);
+
+            fillAttendeeNamesAndSignatures(workbook, sheet, attendeeRows, signatures);
+
+            workbook.write(baos);
+            return baos.toByteArray();
+        } catch (IOException e) {
+            throw new IllegalStateException("안전보건 엑셀 보고서 생성 중 오류가 발생했습니다.", e);
         }
     }
 
@@ -164,6 +225,119 @@ public class SafetyTrainingExcelService {
         }
     }
 
+    private void fillAttendeeNamesAndSignatures(
+            XSSFWorkbook workbook,
+            Sheet sheet,
+            List<SafetyTrainingSessionAttendee> attendees,
+            Map<Long, byte[]> signatureImagesByUserId) {
+        Row headerRow = sheet.getRow(13);
+        if (headerRow == null) {
+            return;
+        }
+
+        int perBlockRows = 15;
+        int index = 0;
+        Drawing<?> drawing = sheet.createDrawingPatriarch();
+        CreationHelper creationHelper = workbook.getCreationHelper();
+
+        for (int col = headerRow.getFirstCellNum(); col <= headerRow.getLastCellNum(); col++) {
+            Cell cell = headerRow.getCell(col);
+            if (cell == null || !"성명".equals(normalize(cell.getStringCellValue()))) {
+                continue;
+            }
+
+            int signatureCol = resolveSignatureColumn(headerRow, col);
+
+            for (int r = 14; r < 14 + perBlockRows; r++) {
+                Row row = sheet.getRow(r);
+                if (row == null) {
+                    row = sheet.createRow(r);
+                }
+                Cell nameCell = row.getCell(col);
+                if (nameCell == null) {
+                    nameCell = row.createCell(col, CellType.STRING);
+                }
+
+                if (index < attendees.size()) {
+                    SafetyTrainingSessionAttendee attendee = attendees.get(index++);
+                    nameCell.setCellValue(defaultString(attendee.getUser().getNameKor()));
+
+                    byte[] signatureBytes = signatureImagesByUserId.get(attendee.getUser().getId());
+                    if (signatureBytes != null && signatureBytes.length > 0) {
+                        addSignatureImage(
+                                workbook,
+                                sheet,
+                                drawing,
+                                creationHelper,
+                                signatureBytes,
+                                signatureCol,
+                                r);
+                    }
+                } else {
+                    nameCell.setCellValue("");
+                }
+            }
+        }
+    }
+
+    private int resolveSignatureColumn(Row headerRow, int nameCol) {
+        int maxCol = headerRow.getLastCellNum();
+        for (int col = nameCol + 1; col <= Math.min(nameCol + 4, maxCol); col++) {
+            Cell cell = headerRow.getCell(col);
+            if (cell == null || cell.getCellType() != CellType.STRING) {
+                continue;
+            }
+            if (normalize(cell.getStringCellValue()).contains("서명")) {
+                return col;
+            }
+        }
+        return nameCol + 1;
+    }
+
+    private void addSignatureImage(
+            XSSFWorkbook workbook,
+            Sheet sheet,
+            Drawing<?> drawing,
+            CreationHelper creationHelper,
+            byte[] signatureBytes,
+            int col,
+            int row) {
+        int pictureType = detectPictureType(signatureBytes);
+        int pictureIndex = workbook.addPicture(signatureBytes, pictureType);
+
+        ClientAnchor anchor = creationHelper.createClientAnchor();
+        CellRangeAddress mergedRegion = findMergedRegion(sheet, row, col);
+        if (mergedRegion != null) {
+            anchor.setCol1(mergedRegion.getFirstColumn());
+            anchor.setRow1(mergedRegion.getFirstRow());
+            anchor.setCol2(mergedRegion.getLastColumn() + 1);
+            anchor.setRow2(mergedRegion.getLastRow() + 1);
+        } else {
+            anchor.setCol1(col);
+            anchor.setRow1(row);
+            anchor.setCol2(col + 1);
+            anchor.setRow2(row + 1);
+        }
+        anchor.setAnchorType(ClientAnchor.AnchorType.MOVE_AND_RESIZE);
+        drawing.createPicture(anchor, pictureIndex);
+    }
+
+    private int detectPictureType(byte[] imageBytes) {
+        if (imageBytes.length >= 8
+                && (imageBytes[0] & 0xFF) == 0x89
+                && (imageBytes[1] & 0xFF) == 0x50
+                && (imageBytes[2] & 0xFF) == 0x4E
+                && (imageBytes[3] & 0xFF) == 0x47) {
+            return Workbook.PICTURE_TYPE_PNG;
+        }
+        if (imageBytes.length >= 2
+                && (imageBytes[0] & 0xFF) == 0xFF
+                && (imageBytes[1] & 0xFF) == 0xD8) {
+            return Workbook.PICTURE_TYPE_JPEG;
+        }
+        return Workbook.PICTURE_TYPE_PNG;
+    }
+
     private void fillCellByLabel(Sheet sheet, String label, int offsetCol, String value) {
         Cell labelCell = findCellContains(sheet, label);
         if (labelCell == null) {
@@ -236,7 +410,7 @@ public class SafetyTrainingExcelService {
 
     private String isSelected(
             List<SafetyEducationMethod> selectedMethods, SafetyEducationMethod method) {
-        return selectedMethods.contains(method) ? "■" : "□";
+        return selectedMethods != null && selectedMethods.contains(method) ? "■" : "□";
     }
 
     private Cell findCellContains(Sheet sheet, String keyword) {

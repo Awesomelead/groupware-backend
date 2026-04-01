@@ -60,6 +60,9 @@ public class SafetyTrainingSessionAttendee {
     @Column(name = "signed_at")
     private LocalDateTime signedAt;
 
+    @Column(name = "signature_key", length = 500)
+    private String signatureKey;
+
     @Column(name = "absent_reason", length = 500)
     private String absentReason;
 

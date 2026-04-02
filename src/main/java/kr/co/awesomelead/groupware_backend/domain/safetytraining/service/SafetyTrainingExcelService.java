@@ -11,6 +11,7 @@ import kr.co.awesomelead.groupware_backend.domain.user.entity.User;
 import lombok.RequiredArgsConstructor;
 
 import org.apache.poi.ss.usermodel.Cell;
+import org.apache.poi.ss.usermodel.CellStyle;
 import org.apache.poi.ss.usermodel.CellType;
 import org.apache.poi.ss.usermodel.ClientAnchor;
 import org.apache.poi.ss.usermodel.CreationHelper;
@@ -26,6 +27,7 @@ import org.springframework.stereotype.Service;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -36,6 +38,14 @@ import java.util.Map;
 public class SafetyTrainingExcelService {
 
     private static final String TEMPLATE_PATH = "templates/safety-training-template.xlsx";
+    private static final int EDUCATION_CLASSIFICATION_START_ROW_INDEX = 3; // excel row 4
+    private static final int EDUCATION_CLASSIFICATION_END_ROW_INDEX = 6; // excel row 7
+    private static final float[] EDUCATION_CLASSIFICATION_MIN_ROW_HEIGHTS =
+            new float[] {30.0f, 16.0f, 16.0f, 24.0f};
+    private static final int ATTENDEE_HEADER_ROW_INDEX = 13;
+    private static final int ATTENDEE_START_ROW_INDEX = 14;
+    private static final int ATTENDEE_ROWS_PER_BLOCK = 15;
+    private static final float DEFAULT_ATTENDEE_ROW_HEIGHT_IN_POINTS = 24.0f;
 
     public byte[] buildPreviewExcel(
             SafetyTrainingSessionCreateRequestDto requestDto,
@@ -48,6 +58,7 @@ public class SafetyTrainingExcelService {
 
             Sheet sheet = workbook.getSheetAt(0);
 
+            normalizeEducationClassificationLayout(sheet);
             fillEducationTypeCheckboxes(sheet, requestDto.getEducationType());
             fillEducationMethodsCheckboxes(sheet, requestDto.getEducationMethods());
 
@@ -96,6 +107,7 @@ public class SafetyTrainingExcelService {
 
             Sheet sheet = workbook.getSheetAt(0);
 
+            normalizeEducationClassificationLayout(sheet);
             fillEducationTypeCheckboxes(sheet, session.getEducationType());
             fillEducationMethodsCheckboxes(sheet, educationMethods);
 
@@ -191,21 +203,25 @@ public class SafetyTrainingExcelService {
     }
 
     private void fillAttendeeNames(Sheet sheet, List<User> attendees) {
-        Row headerRow = sheet.getRow(13);
+        normalizeAttendeeGridLayout(sheet);
+
+        Row headerRow = sheet.getRow(ATTENDEE_HEADER_ROW_INDEX);
         if (headerRow == null) {
             return;
         }
 
-        int perBlockRows = 15;
+        List<Integer> nameColumns = findNameColumns(headerRow);
+        if (nameColumns.isEmpty()) {
+            return;
+        }
+
+        CellStyle canonicalNameStyle =
+                buildCanonicalNameCellStyle(sheet.getWorkbook(), sheet, nameColumns.get(0));
+
         int index = 0;
+        for (int col : nameColumns) {
 
-        for (int col = headerRow.getFirstCellNum(); col <= headerRow.getLastCellNum(); col++) {
-            Cell cell = headerRow.getCell(col);
-            if (cell == null || !"성명".equals(normalize(cell.getStringCellValue()))) {
-                continue;
-            }
-
-            for (int r = 14; r < 14 + perBlockRows; r++) {
+            for (int r = ATTENDEE_START_ROW_INDEX; r < ATTENDEE_START_ROW_INDEX + ATTENDEE_ROWS_PER_BLOCK; r++) {
                 Row row = sheet.getRow(r);
                 if (row == null) {
                     row = sheet.createRow(r);
@@ -214,9 +230,10 @@ public class SafetyTrainingExcelService {
                 if (nameCell == null) {
                     nameCell = row.createCell(col, CellType.STRING);
                 }
+                applyNameCellStyle(nameCell, canonicalNameStyle);
 
                 if (index < attendees.size()) {
-                    nameCell.setCellValue(defaultString(attendees.get(index).getNameKor()));
+                    nameCell.setCellValue(normalizeDisplayName(attendees.get(index).getNameKor()));
                     index++;
                 } else {
                     nameCell.setCellValue("");
@@ -230,25 +247,30 @@ public class SafetyTrainingExcelService {
             Sheet sheet,
             List<SafetyTrainingSessionAttendee> attendees,
             Map<Long, byte[]> signatureImagesByUserId) {
-        Row headerRow = sheet.getRow(13);
+        normalizeAttendeeGridLayout(sheet);
+
+        Row headerRow = sheet.getRow(ATTENDEE_HEADER_ROW_INDEX);
         if (headerRow == null) {
             return;
         }
 
-        int perBlockRows = 15;
+        List<Integer> nameColumns = findNameColumns(headerRow);
+        if (nameColumns.isEmpty()) {
+            return;
+        }
+
+        CellStyle canonicalNameStyle =
+                buildCanonicalNameCellStyle(workbook, sheet, nameColumns.get(0));
+
         int index = 0;
         Drawing<?> drawing = sheet.createDrawingPatriarch();
         CreationHelper creationHelper = workbook.getCreationHelper();
 
-        for (int col = headerRow.getFirstCellNum(); col <= headerRow.getLastCellNum(); col++) {
-            Cell cell = headerRow.getCell(col);
-            if (cell == null || !"성명".equals(normalize(cell.getStringCellValue()))) {
-                continue;
-            }
+        for (int col : nameColumns) {
 
             int signatureCol = resolveSignatureColumn(headerRow, col);
 
-            for (int r = 14; r < 14 + perBlockRows; r++) {
+            for (int r = ATTENDEE_START_ROW_INDEX; r < ATTENDEE_START_ROW_INDEX + ATTENDEE_ROWS_PER_BLOCK; r++) {
                 Row row = sheet.getRow(r);
                 if (row == null) {
                     row = sheet.createRow(r);
@@ -257,10 +279,11 @@ public class SafetyTrainingExcelService {
                 if (nameCell == null) {
                     nameCell = row.createCell(col, CellType.STRING);
                 }
+                applyNameCellStyle(nameCell, canonicalNameStyle);
 
                 if (index < attendees.size()) {
                     SafetyTrainingSessionAttendee attendee = attendees.get(index++);
-                    nameCell.setCellValue(defaultString(attendee.getUser().getNameKor()));
+                    nameCell.setCellValue(normalizeDisplayName(attendee.getUser().getNameKor()));
 
                     byte[] signatureBytes = signatureImagesByUserId.get(attendee.getUser().getId());
                     if (signatureBytes != null && signatureBytes.length > 0) {
@@ -280,6 +303,138 @@ public class SafetyTrainingExcelService {
         }
     }
 
+    /**
+     * 상단 교육 구분 표의 행 높이를 최소값으로 보정한다.
+     * 폰트 대체/뷰어 차이로 줄바꿈 텍스트가 잘리는 현상을 줄이기 위한 정규화 단계다.
+     */
+    private void normalizeEducationClassificationLayout(Sheet sheet) {
+        int rowIndex = EDUCATION_CLASSIFICATION_START_ROW_INDEX;
+        for (float minHeight : EDUCATION_CLASSIFICATION_MIN_ROW_HEIGHTS) {
+            if (rowIndex > EDUCATION_CLASSIFICATION_END_ROW_INDEX) {
+                break;
+            }
+            Row row = sheet.getRow(rowIndex);
+            if (row == null) {
+                row = sheet.createRow(rowIndex);
+            }
+            row.setZeroHeight(false);
+            if (row.getHeightInPoints() < minHeight) {
+                row.setHeightInPoints(minHeight);
+            }
+            rowIndex++;
+        }
+    }
+
+    /**
+     * 참석자 표(번호/성명/서명)의 행 높이/컬럼 폭을 블록 간 동일하게 고정한다.
+     * 템플릿/뷰어 차이로 셀 크기가 들쭉날쭉해지는 현상을 줄이기 위한 정규화 단계다.
+     */
+    private void normalizeAttendeeGridLayout(Sheet sheet) {
+        Row headerRow = sheet.getRow(ATTENDEE_HEADER_ROW_INDEX);
+        if (headerRow == null) {
+            return;
+        }
+
+        float targetRowHeight = DEFAULT_ATTENDEE_ROW_HEIGHT_IN_POINTS;
+        Row firstDataRow = sheet.getRow(ATTENDEE_START_ROW_INDEX);
+        if (firstDataRow != null && firstDataRow.getHeightInPoints() > 0) {
+            targetRowHeight = firstDataRow.getHeightInPoints();
+        }
+
+        for (int r = ATTENDEE_START_ROW_INDEX;
+                r < ATTENDEE_START_ROW_INDEX + ATTENDEE_ROWS_PER_BLOCK;
+                r++) {
+            Row row = sheet.getRow(r);
+            if (row == null) {
+                row = sheet.createRow(r);
+            }
+            row.setZeroHeight(false);
+            row.setHeightInPoints(targetRowHeight);
+        }
+
+        List<Integer> noCols = new ArrayList<>();
+        List<Integer> nameCols = new ArrayList<>();
+        List<Integer> signCols = new ArrayList<>();
+        int noWidth = -1;
+        int signWidth = -1;
+
+        for (int col = headerRow.getFirstCellNum(); col <= headerRow.getLastCellNum(); col++) {
+            Cell cell = headerRow.getCell(col);
+            if (cell == null || cell.getCellType() != CellType.STRING) {
+                continue;
+            }
+            String text = normalize(cell.getStringCellValue());
+            if ("NO".equalsIgnoreCase(text)) {
+                noCols.add(col);
+                if (noWidth < 0) {
+                    noWidth = sheet.getColumnWidth(col);
+                }
+                continue;
+            }
+            if ("성명".equals(text)) {
+                nameCols.add(col);
+                continue;
+            }
+            if ("서명".equals(text)) {
+                signCols.add(col);
+                if (signWidth < 0) {
+                    signWidth = sheet.getColumnWidth(col);
+                }
+            }
+        }
+
+        if (noWidth > 0) {
+            for (int col : noCols) {
+                sheet.setColumnWidth(col, noWidth);
+            }
+        }
+        normalizeNameColumnWidths(sheet, nameCols);
+        if (signWidth > 0) {
+            for (int col : signCols) {
+                sheet.setColumnWidth(col, signWidth);
+            }
+        }
+    }
+
+    /**
+     * 성명 칸 폭 정규화:
+     * 첫 번째 성명 칸의 "병합 포함 실폭"을 기준으로,
+     * 단일열(비병합) 성명 칸이 과도하게 좁은 경우만 확장한다.
+     */
+    private void normalizeNameColumnWidths(Sheet sheet, List<Integer> nameCols) {
+        if (nameCols == null || nameCols.isEmpty()) {
+            return;
+        }
+
+        int targetWidth = resolveHeaderRegionWidth(sheet, nameCols.get(0));
+        if (targetWidth <= 0) {
+            return;
+        }
+
+        for (int col : nameCols) {
+            CellRangeAddress region = findMergedRegion(sheet, ATTENDEE_HEADER_ROW_INDEX, col);
+            int span = region == null ? 1 : (region.getLastColumn() - region.getFirstColumn() + 1);
+
+            // 병합되지 않은 좁은 성명 칸(H 등)만 기준 폭까지 확장한다.
+            if (span == 1 && sheet.getColumnWidth(col) < targetWidth) {
+                sheet.setColumnWidth(col, targetWidth);
+            }
+        }
+    }
+
+    private int resolveHeaderRegionWidth(Sheet sheet, int col) {
+        CellRangeAddress region = findMergedRegion(sheet, ATTENDEE_HEADER_ROW_INDEX, col);
+        if (region == null) {
+            return sheet.getColumnWidth(col);
+        }
+
+        int width = 0;
+        for (int c = region.getFirstColumn(); c <= region.getLastColumn(); c++) {
+            width += sheet.getColumnWidth(c);
+        }
+        return width;
+    }
+
     private int resolveSignatureColumn(Row headerRow, int nameCol) {
         int maxCol = headerRow.getLastCellNum();
         for (int col = nameCol + 1; col <= Math.min(nameCol + 4, maxCol); col++) {
@@ -292,6 +447,44 @@ public class SafetyTrainingExcelService {
             }
         }
         return nameCol + 1;
+    }
+
+    private List<Integer> findNameColumns(Row headerRow) {
+        List<Integer> columns = new ArrayList<>();
+        for (int col = headerRow.getFirstCellNum(); col <= headerRow.getLastCellNum(); col++) {
+            Cell cell = headerRow.getCell(col);
+            if (cell == null || cell.getCellType() != CellType.STRING) {
+                continue;
+            }
+            if ("성명".equals(normalize(cell.getStringCellValue()))) {
+                columns.add(col);
+            }
+        }
+        return columns;
+    }
+
+    private CellStyle buildCanonicalNameCellStyle(Workbook workbook, Sheet sheet, int nameCol) {
+        Row refRow = sheet.getRow(ATTENDEE_START_ROW_INDEX);
+        Cell refCell = refRow == null ? null : refRow.getCell(nameCol);
+        CellStyle style = workbook.createCellStyle();
+        if (refCell != null && refCell.getCellStyle() != null) {
+            style.cloneStyleFrom(refCell.getCellStyle());
+        }
+        // 좁은 성명 칸에서도 텍스트가 잘리지 않도록 줄바꿈을 허용하고,
+        // 글자가 과도하게 작아지지 않도록 shrink-to-fit는 비활성화한다.
+        style.setWrapText(true);
+        style.setShrinkToFit(false);
+        return style;
+    }
+
+    /**
+     * 성명 칸 스타일은 블록별 차이가 생기지 않도록 단일 기준 스타일로 통일한다.
+     */
+    private void applyNameCellStyle(Cell nameCell, CellStyle canonicalStyle) {
+        if (canonicalStyle == null) {
+            return;
+        }
+        nameCell.setCellStyle(canonicalStyle);
     }
 
     private void addSignatureImage(
@@ -448,5 +641,9 @@ public class SafetyTrainingExcelService {
 
     private String defaultString(String value) {
         return value == null ? "" : value;
+    }
+
+    private String normalizeDisplayName(String value) {
+        return defaultString(value).replace("\r", " ").replace("\n", " ").trim();
     }
 }

@@ -35,8 +35,8 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RequestPart;
 import org.springframework.web.bind.annotation.RestController;
@@ -245,8 +245,7 @@ public class EduReportController {
                     @RequestPart("requestDto")
                     @Valid
                     EduReportRequestDto requestDto,
-            @Parameter(description = "첨부 파일 목록(선택)")
-                    @RequestPart(value = "files", required = false)
+            @Parameter(description = "첨부 파일 목록(선택)") @RequestPart(value = "files", required = false)
                     List<MultipartFile> files,
             @Parameter(hidden = true) @AuthenticationPrincipal CustomUserDetails userDetails)
             throws IOException {
@@ -352,8 +351,7 @@ public class EduReportController {
                     @RequestParam(required = false)
                     EduType type,
             @Parameter(
-                            description =
-                                    "부서명 필터(`type=DEPARTMENT`에서만 사용, 그 외 타입에서는 무시)",
+                            description = "부서명 필터(`type=DEPARTMENT`에서만 사용, 그 외 타입에서는 무시)",
                             example = "SALES_DEPT")
                     @RequestParam(required = false)
                     DepartmentName departmentName,
@@ -524,7 +522,8 @@ public class EduReportController {
     })
     @PatchMapping("/{eduReportId}")
     public ResponseEntity<ApiResponse<Long>> updateDepartmentEduReport(
-            @Parameter(description = "수정할 부서교육 보고서 ID", example = "1") @PathVariable Long eduReportId,
+            @Parameter(description = "수정할 부서교육 보고서 ID", example = "1") @PathVariable
+                    Long eduReportId,
             @Valid @RequestBody EduReportUpdateRequestDto requestDto,
             @Parameter(hidden = true) @AuthenticationPrincipal CustomUserDetails userDetails) {
         Long updatedId =
@@ -587,8 +586,8 @@ public class EduReportController {
     })
     @PatchMapping("/{eduReportId}/status")
     public ResponseEntity<ApiResponse<Long>> updateDepartmentEduReportStatus(
-            @Parameter(description = "상태 변경할 부서교육 보고서 ID", example = "1")
-                    @PathVariable Long eduReportId,
+            @Parameter(description = "상태 변경할 부서교육 보고서 ID", example = "1") @PathVariable
+                    Long eduReportId,
             @Valid @RequestBody EduReportStatusUpdateRequestDto requestDto,
             @Parameter(hidden = true) @AuthenticationPrincipal CustomUserDetails userDetails) {
         Long updatedId =
@@ -597,9 +596,7 @@ public class EduReportController {
         return ResponseEntity.ok(ApiResponse.onSuccess(updatedId));
     }
 
-    @Operation(
-            summary = "교육 보고서 삭제",
-            description = "교육 보고서를 삭제합니다. `ACCESS_EDUCATION` 권한이 필요합니다.")
+    @Operation(summary = "교육 보고서 삭제", description = "교육 보고서를 삭제합니다. `ACCESS_EDUCATION` 권한이 필요합니다.")
     @ApiResponses({
         @io.swagger.v3.oas.annotations.responses.ApiResponse(
                 responseCode = "200",

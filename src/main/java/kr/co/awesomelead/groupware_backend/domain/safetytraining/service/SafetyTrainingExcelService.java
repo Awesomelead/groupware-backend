@@ -221,7 +221,9 @@ public class SafetyTrainingExcelService {
         int index = 0;
         for (int col : nameColumns) {
 
-            for (int r = ATTENDEE_START_ROW_INDEX; r < ATTENDEE_START_ROW_INDEX + ATTENDEE_ROWS_PER_BLOCK; r++) {
+            for (int r = ATTENDEE_START_ROW_INDEX;
+                    r < ATTENDEE_START_ROW_INDEX + ATTENDEE_ROWS_PER_BLOCK;
+                    r++) {
                 Row row = sheet.getRow(r);
                 if (row == null) {
                     row = sheet.createRow(r);
@@ -270,7 +272,9 @@ public class SafetyTrainingExcelService {
 
             int signatureCol = resolveSignatureColumn(headerRow, col);
 
-            for (int r = ATTENDEE_START_ROW_INDEX; r < ATTENDEE_START_ROW_INDEX + ATTENDEE_ROWS_PER_BLOCK; r++) {
+            for (int r = ATTENDEE_START_ROW_INDEX;
+                    r < ATTENDEE_START_ROW_INDEX + ATTENDEE_ROWS_PER_BLOCK;
+                    r++) {
                 Row row = sheet.getRow(r);
                 if (row == null) {
                     row = sheet.createRow(r);
@@ -303,10 +307,7 @@ public class SafetyTrainingExcelService {
         }
     }
 
-    /**
-     * 상단 교육 구분 표의 행 높이를 최소값으로 보정한다.
-     * 폰트 대체/뷰어 차이로 줄바꿈 텍스트가 잘리는 현상을 줄이기 위한 정규화 단계다.
-     */
+    /** 상단 교육 구분 표의 행 높이를 최소값으로 보정한다. 폰트 대체/뷰어 차이로 줄바꿈 텍스트가 잘리는 현상을 줄이기 위한 정규화 단계다. */
     private void normalizeEducationClassificationLayout(Sheet sheet) {
         int rowIndex = EDUCATION_CLASSIFICATION_START_ROW_INDEX;
         for (float minHeight : EDUCATION_CLASSIFICATION_MIN_ROW_HEIGHTS) {
@@ -325,10 +326,7 @@ public class SafetyTrainingExcelService {
         }
     }
 
-    /**
-     * 참석자 표(번호/성명/서명)의 행 높이/컬럼 폭을 블록 간 동일하게 고정한다.
-     * 템플릿/뷰어 차이로 셀 크기가 들쭉날쭉해지는 현상을 줄이기 위한 정규화 단계다.
-     */
+    /** 참석자 표(번호/성명/서명)의 행 높이/컬럼 폭을 블록 간 동일하게 고정한다. 템플릿/뷰어 차이로 셀 크기가 들쭉날쭉해지는 현상을 줄이기 위한 정규화 단계다. */
     private void normalizeAttendeeGridLayout(Sheet sheet) {
         Row headerRow = sheet.getRow(ATTENDEE_HEADER_ROW_INDEX);
         if (headerRow == null) {
@@ -396,11 +394,7 @@ public class SafetyTrainingExcelService {
         }
     }
 
-    /**
-     * 성명 칸 폭 정규화:
-     * 첫 번째 성명 칸의 "병합 포함 실폭"을 기준으로,
-     * 단일열(비병합) 성명 칸이 과도하게 좁은 경우만 확장한다.
-     */
+    /** 성명 칸 폭 정규화: 첫 번째 성명 칸의 "병합 포함 실폭"을 기준으로, 단일열(비병합) 성명 칸이 과도하게 좁은 경우만 확장한다. */
     private void normalizeNameColumnWidths(Sheet sheet, List<Integer> nameCols) {
         if (nameCols == null || nameCols.isEmpty()) {
             return;
@@ -477,9 +471,7 @@ public class SafetyTrainingExcelService {
         return style;
     }
 
-    /**
-     * 성명 칸 스타일은 블록별 차이가 생기지 않도록 단일 기준 스타일로 통일한다.
-     */
+    /** 성명 칸 스타일은 블록별 차이가 생기지 않도록 단일 기준 스타일로 통일한다. */
     private void applyNameCellStyle(Cell nameCell, CellStyle canonicalStyle) {
         if (canonicalStyle == null) {
             return;

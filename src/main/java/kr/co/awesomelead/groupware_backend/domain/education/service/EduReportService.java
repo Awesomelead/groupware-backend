@@ -279,7 +279,8 @@ public class EduReportService {
                         .findById(reportId)
                         .orElseThrow(() -> new CustomException(ErrorCode.EDU_REPORT_NOT_FOUND));
 
-        if (report.getEduType() == EduType.DEPARTMENT && report.getStatus() != EduReportStatus.OPEN) {
+        if (report.getEduType() == EduType.DEPARTMENT
+                && report.getStatus() != EduReportStatus.OPEN) {
             throw new CustomException(ErrorCode.EDU_REPORT_CLOSED);
         }
 

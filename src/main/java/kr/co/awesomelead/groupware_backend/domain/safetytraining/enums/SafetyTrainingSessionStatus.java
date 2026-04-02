@@ -7,8 +7,7 @@ import lombok.Getter;
 @AllArgsConstructor
 public enum SafetyTrainingSessionStatus {
     OPEN("진행중"),
-    CLOSED("정상 마감"),
-    CANCELED("오등록 종료");
+    CLOSED("정상 마감");
 
     private final String description;
 }

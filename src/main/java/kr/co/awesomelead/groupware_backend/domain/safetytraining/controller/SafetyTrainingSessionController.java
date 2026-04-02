@@ -36,6 +36,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestPart;
@@ -58,7 +59,8 @@ import java.io.IOException;
         - 조회: `WRITE_SAFETY` 권한 사용자(`전체 회사 조회 가능`)
         - 참석자 현황 조회: `WRITE_SAFETY`
         - 세션 상태 변경/미참석 사유 입력: `WRITE_SAFETY`
-        - 보고서 생성(엑셀): `WRITE_SAFETY` (`OPEN/CLOSED/CANCELED` 모두 가능)
+        - 세션 삭제: `WRITE_SAFETY`
+        - 보고서 생성(엑셀): `WRITE_SAFETY` (`OPEN/CLOSED` 모두 가능)
         - 보고서 다운로드 URL 조회: 세션 조회 권한 사용자
         - 수료 처리(서명): 세션이 `OPEN`이고 미수료(`PENDING`, `ABSENT`) 상태일 때 본인 서명 가능
         - 생성: `WRITE_SAFETY`
@@ -227,7 +229,7 @@ public class SafetyTrainingSessionController {
             summary = "안전보건 교육 보고서 생성",
             description =
                     "작성 권한(WRITE_SAFETY) 사용자가 세션 엑셀 보고서를 생성/재생성합니다. "
-                            + "세션 상태(OPEN/CLOSED/CANCELED)와 무관하게 생성 가능합니다. "
+                            + "세션 상태(OPEN/CLOSED)와 무관하게 생성 가능합니다. "
                             + "서명 완료자의 서명 이미지는 참석자 이름 옆 칸에 반영됩니다.")
     @ApiResponses(
             value = {
@@ -419,12 +421,50 @@ public class SafetyTrainingSessionController {
     }
 
     @Operation(
+            summary = "안전보건 교육 세션 삭제",
+            description =
+                    "작성 권한(WRITE_SAFETY) 사용자가 세션을 삭제합니다. "
+                            + "세션 본문, 참석자 데이터, 생성된 보고서 파일, 참석자 서명 파일을 함께 정리합니다.")
+    @ApiResponses(
+            value = {
+                @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                        responseCode = "200",
+                        description = "삭제 성공"),
+                @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                        responseCode = "403",
+                        description = "삭제 권한 없음",
+                        content =
+                                @Content(
+                                        mediaType = "application/json",
+                                        examples =
+                                                @ExampleObject(
+                                                        value =
+                                                                """
+            {
+              "isSuccess": false,
+              "code": "NO_AUTHORITY_FOR_SAFETY_WRITE",
+              "message": "PSM/안전보건 작성 권한이 없습니다.",
+              "result": null
+            }
+            """))),
+                @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                        responseCode = "404",
+                        description = "세션/사용자 없음")
+            })
+    @DeleteMapping("/{sessionId}")
+    public ResponseEntity<ApiResponse<Void>> delete(
+            @PathVariable Long sessionId,
+            @Parameter(hidden = true) @AuthenticationPrincipal CustomUserDetails userDetails) {
+        safetyTrainingSessionService.delete(sessionId, userDetails.getId());
+        return ResponseEntity.ok(ApiResponse.onNoContent());
+    }
+
+    @Operation(
             summary = "안전보건 교육 세션 상태 변경",
             description =
-                    "작성 권한(WRITE_SAFETY) 사용자가 세션 상태를 OPEN/CLOSED/CANCELED로 변경합니다. "
+                    "작성 권한(WRITE_SAFETY) 사용자가 세션 상태를 OPEN/CLOSED로 변경합니다. "
                             + "CLOSED(정상 마감) 전환 시 미서명(PENDING) 대상자는 자동으로 불참(ABSENT) 처리됩니다. "
-                            + "이때 결석자가 존재하면 absentReasonSummary를 입력해야 합니다. "
-                            + "CANCELED(오등록 종료)는 미참석 사유 입력 없이 종료할 수 있습니다.",
+                            + "이때 결석자가 존재하면 absentReasonSummary를 입력해야 합니다.",
             requestBody =
                     @io.swagger.v3.oas.annotations.parameters.RequestBody(
                             required = true,
@@ -447,15 +487,6 @@ public class SafetyTrainingSessionController {
                                                                 """
             {
               "status": "CLOSED",
-              "absentReasonSummary": null
-            }
-            """),
-                                                @ExampleObject(
-                                                        name = "CANCELED 전환(오등록 종료)",
-                                                        value =
-                                                                """
-            {
-              "status": "CANCELED",
               "absentReasonSummary": null
             }
             """),

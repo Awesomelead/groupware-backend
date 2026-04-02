@@ -23,7 +23,7 @@ public class EduReportSummaryDto {
     @Schema(description = "제목", example = "2026년 상반기 보안 교육")
     private String title;
 
-    @Schema(description = "교육 유형", example = "MANDATORY")
+    @Schema(description = "교육 유형", example = "부서 교육")
     private EduType eduType;
 
     @Schema(description = "교육 날짜", example = "2026-03-15")

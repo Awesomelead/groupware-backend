@@ -26,7 +26,7 @@ public class EduReportDetailDto {
     @Schema(description = "교육 제목", example = "안전 교육")
     private String title;
 
-    @Schema(description = "교육 유형", example = "SAFETY")
+    @Schema(description = "교육 유형", example = "안전 보건")
     private EduType eduType;
 
     @Schema(description = "교육 카테고리 ID", example = "1")

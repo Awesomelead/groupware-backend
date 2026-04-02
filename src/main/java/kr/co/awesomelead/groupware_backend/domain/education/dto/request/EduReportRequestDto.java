@@ -20,8 +20,8 @@ public class EduReportRequestDto {
 
     @Schema(
             description = "교육 유형",
-            example = "LEGAL",
-            allowableValues = {"LEGAL", "JOB", "DEPARTMENT", "OTHER"})
+            example = "부서 교육",
+            allowableValues = {"PSM", "안전 보건", "부서 교육"})
     @NotNull(message = "교육 유형은 필수입니다.")
     private EduType eduType;
 

@@ -17,6 +17,7 @@ import jakarta.persistence.PrePersist;
 import jakarta.persistence.Table;
 
 import kr.co.awesomelead.groupware_backend.domain.department.entity.Department;
+import kr.co.awesomelead.groupware_backend.domain.education.enums.EduReportStatus;
 import kr.co.awesomelead.groupware_backend.domain.education.enums.EduType;
 
 import lombok.AllArgsConstructor;
@@ -70,6 +71,11 @@ public class EduReport {
     @Column(nullable = false)
     private boolean signatureRequired = false; // true일 때만 EduAttendance.signatureKey 작성
 
+    @Builder.Default
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false, length = 20)
+    private EduReportStatus status = EduReportStatus.OPEN;
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "department_id", nullable = true) // 부서교육의 경우에만 작성
     private Department department;
@@ -82,6 +88,9 @@ public class EduReport {
     protected void prePersist() {
         if (this.eduDate == null) {
             this.eduDate = LocalDate.now();
+        }
+        if (this.status == null) {
+            this.status = EduReportStatus.OPEN;
         }
     }
 

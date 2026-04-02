@@ -485,7 +485,7 @@ public class SafetyTrainingSessionService {
 
             syncSessionCounts(session);
         } catch (Exception e) {
-            deleteS3FileIfExist(signatureKey);
+            safeDeleteFile(signatureKey);
             throw e;
         }
     }
@@ -613,6 +613,41 @@ public class SafetyTrainingSessionService {
         return session.getId();
     }
 
+    @Transactional
+    public void delete(Long sessionId, Long userId) {
+        User actor =
+                userRepository
+                        .findById(userId)
+                        .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
+        validateSafetyWriteAuthority(actor);
+
+        SafetyTrainingSession session =
+                sessionRepository
+                        .findById(sessionId)
+                        .orElseThrow(
+                                () ->
+                                        new CustomException(
+                                                ErrorCode.SAFETY_TRAINING_SESSION_NOT_FOUND));
+
+        List<SafetyTrainingSessionAttendee> attendees =
+                attendeeRepository.findAllBySessionIdWithUser(sessionId);
+        String reportFileKey = session.getReportFileKey();
+
+        attendeeRepository.deleteBySessionId(sessionId);
+        attendeeRepository.flush();
+        sessionRepository.delete(session);
+
+        if (reportFileKey != null && !reportFileKey.isBlank()) {
+            safeDeleteFile(reportFileKey);
+        }
+        for (SafetyTrainingSessionAttendee attendee : attendees) {
+            String signatureKey = attendee.getSignatureKey();
+            if (signatureKey != null && !signatureKey.isBlank()) {
+                safeDeleteFile(signatureKey);
+            }
+        }
+    }
+
     private void validateSafetyWriteAuthority(User user) {
         if (!user.hasAuthority(Authority.WRITE_SAFETY)) {
             throw new CustomException(ErrorCode.NO_AUTHORITY_FOR_SAFETY_WRITE);
@@ -695,12 +730,12 @@ public class SafetyTrainingSessionService {
                 durationText);
     }
 
-    private void deleteS3FileIfExist(String signatureKey) {
-        if (signatureKey == null) {
+    private void safeDeleteFile(String s3Key) {
+        if (s3Key == null || s3Key.isBlank()) {
             return;
         }
         try {
-            s3Service.deleteFile(signatureKey);
+            s3Service.deleteFile(s3Key);
         } catch (Exception ignored) {
             // 트랜잭션 롤백 시 S3 고아 파일 정리 실패 가능
         }

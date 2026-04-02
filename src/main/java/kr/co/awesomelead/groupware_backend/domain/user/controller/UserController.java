@@ -191,6 +191,7 @@ public class UserController {
                                                                              "departmentName": "충남사업본부",
                                                                              "position": "대리",
                                                                              "jobType": "관리직",
+                                                                             "role": "일반 사용자",
                                                                              "authorities": [
                                                                                { "code": "ACCESS_MESSAGE", "label": "메세지 작성", "enabled": true },
                                                                                { "code": "ACCESS_EDUCATION", "label": "교육 작성", "enabled": false },

@@ -21,6 +21,7 @@ public interface EduMapper {
 
     @Mapping(target = "id", ignore = true)
     @Mapping(target = "eduDate", ignore = true)
+    @Mapping(target = "status", ignore = true)
     @Mapping(target = "attachments", ignore = true)
     @Mapping(target = "department", source = "department")
     @Mapping(target = "category", source = "category")

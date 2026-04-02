@@ -7,6 +7,7 @@ import kr.co.awesomelead.groupware_backend.domain.department.enums.DepartmentNam
 import kr.co.awesomelead.groupware_backend.domain.user.entity.User;
 import kr.co.awesomelead.groupware_backend.domain.user.enums.JobType;
 import kr.co.awesomelead.groupware_backend.domain.user.enums.Position;
+import kr.co.awesomelead.groupware_backend.domain.user.enums.Role;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -68,6 +69,9 @@ public class MyInfoResponseDto {
     @Schema(description = "직종")
     private JobType jobType;
 
+    @Schema(description = "역할", example = "관리자")
+    private Role role;
+
     @Schema(description = "권한부여")
     private List<MyInfoAuthorityItemDto> authorities;
 
@@ -95,6 +99,7 @@ public class MyInfoResponseDto {
                         user.getDepartment() != null ? user.getDepartment().getName() : null)
                 .position(user.getPosition())
                 .jobType(user.getJobType())
+                .role(user.getRole())
                 .authorities(
                         java.util.Arrays.stream(
                                         kr.co.awesomelead.groupware_backend.domain.user.enums

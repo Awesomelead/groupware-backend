@@ -4,12 +4,15 @@ import kr.co.awesomelead.groupware_backend.domain.department.entity.Department;
 import kr.co.awesomelead.groupware_backend.domain.department.enums.DepartmentName;
 import kr.co.awesomelead.groupware_backend.domain.department.repository.DepartmentRepository;
 import kr.co.awesomelead.groupware_backend.domain.education.dto.request.EduReportRequestDto;
+import kr.co.awesomelead.groupware_backend.domain.education.dto.request.EduReportStatusUpdateRequestDto;
+import kr.co.awesomelead.groupware_backend.domain.education.dto.request.EduReportUpdateRequestDto;
 import kr.co.awesomelead.groupware_backend.domain.education.dto.response.EduReportDetailDto;
 import kr.co.awesomelead.groupware_backend.domain.education.dto.response.EduReportSummaryDto;
 import kr.co.awesomelead.groupware_backend.domain.education.entity.EduAttachment;
 import kr.co.awesomelead.groupware_backend.domain.education.entity.EduAttendance;
 import kr.co.awesomelead.groupware_backend.domain.education.entity.EduReport;
 import kr.co.awesomelead.groupware_backend.domain.education.entity.EducationCategory;
+import kr.co.awesomelead.groupware_backend.domain.education.enums.EduReportStatus;
 import kr.co.awesomelead.groupware_backend.domain.education.enums.EduType;
 import kr.co.awesomelead.groupware_backend.domain.education.enums.EducationCategoryType;
 import kr.co.awesomelead.groupware_backend.domain.education.mapper.EduMapper;
@@ -65,7 +68,10 @@ public class EduReportService {
         validateCreateAuthority(user, requestDto.getEduType());
 
         Department department = null;
-        if (requestDto.getEduType() == EduType.DEPARTMENT && requestDto.getDepartmentId() != null) {
+        if (requestDto.getEduType() == EduType.DEPARTMENT) {
+            if (requestDto.getDepartmentId() == null) {
+                throw new CustomException(ErrorCode.DEPARTMENT_ID_REQUIRED);
+            }
             department =
                     departmentRepository
                             .findById(requestDto.getDepartmentId())
@@ -273,6 +279,11 @@ public class EduReportService {
                         .findById(reportId)
                         .orElseThrow(() -> new CustomException(ErrorCode.EDU_REPORT_NOT_FOUND));
 
+        if (report.getEduType() == EduType.DEPARTMENT
+                && report.getStatus() != EduReportStatus.OPEN) {
+            throw new CustomException(ErrorCode.EDU_REPORT_CLOSED);
+        }
+
         if (eduAttendanceRepository.existsByEduReportAndUser(report, user)) {
             throw new CustomException(ErrorCode.ALREADY_MARKED_ATTENDANCE);
         }
@@ -303,6 +314,59 @@ public class EduReportService {
         }
     }
 
+    @Transactional
+    public Long updateDepartmentEduReport(
+            Long eduReportId, EduReportUpdateRequestDto requestDto, Long userId) {
+        User user =
+                userRepository
+                        .findById(userId)
+                        .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
+        validateDepartmentManageAuthority(user);
+
+        EduReport report =
+                eduReportRepository
+                        .findById(eduReportId)
+                        .orElseThrow(() -> new CustomException(ErrorCode.EDU_REPORT_NOT_FOUND));
+        validateDepartmentReportEditable(report);
+
+        long signedCount = eduAttendanceRepository.countByEduReportId(eduReportId);
+        if (signedCount > 0) {
+            throw new CustomException(ErrorCode.EDU_REPORT_HAS_SIGNED_ATTENDEE);
+        }
+
+        Department department =
+                departmentRepository
+                        .findById(requestDto.getDepartmentId())
+                        .orElseThrow(() -> new CustomException(ErrorCode.DEPARTMENT_NOT_FOUND));
+
+        report.setTitle(requestDto.getTitle().trim());
+        report.setContent(requestDto.getContent().trim());
+        report.setPinned(requestDto.isPinned());
+        report.setSignatureRequired(requestDto.isSignatureRequired());
+        report.setDepartment(department);
+
+        return report.getId();
+    }
+
+    @Transactional
+    public Long updateDepartmentEduReportStatus(
+            Long eduReportId, EduReportStatusUpdateRequestDto requestDto, Long userId) {
+        User user =
+                userRepository
+                        .findById(userId)
+                        .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
+        validateDepartmentManageAuthority(user);
+
+        EduReport report =
+                eduReportRepository
+                        .findById(eduReportId)
+                        .orElseThrow(() -> new CustomException(ErrorCode.EDU_REPORT_NOT_FOUND));
+        validateDepartmentReport(report);
+
+        report.setStatus(requestDto.getStatus());
+        return report.getId();
+    }
+
     // S3 파일 삭제를 위한 헬퍼 메서드
     private void deleteS3FileIfExist(String signatureKey) {
         if (signatureKey != null) {
@@ -318,6 +382,25 @@ public class EduReportService {
         String contentType = file.getContentType();
         if (contentType == null || !contentType.equals("image/png")) {
             throw new CustomException(ErrorCode.INVALID_SIGNATURE_FORMAT);
+        }
+    }
+
+    private void validateDepartmentManageAuthority(User user) {
+        if (!user.hasAuthority(Authority.ACCESS_EDUCATION)) {
+            throw new CustomException(ErrorCode.NO_AUTHORITY_FOR_EDU_REPORT);
+        }
+    }
+
+    private void validateDepartmentReport(EduReport report) {
+        if (report.getEduType() != EduType.DEPARTMENT) {
+            throw new CustomException(ErrorCode.INVALID_ARGUMENT);
+        }
+    }
+
+    private void validateDepartmentReportEditable(EduReport report) {
+        validateDepartmentReport(report);
+        if (report.getStatus() != EduReportStatus.OPEN) {
+            throw new CustomException(ErrorCode.EDU_REPORT_CLOSED);
         }
     }
 

@@ -17,9 +17,9 @@ public class SafetyTrainingSessionStatusUpdateRequestDto {
 
     @NotNull(message = "세션 상태는 필수입니다.")
     @Schema(
-            description = "세션 상태 코드 (OPEN: 진행중, CLOSED: 정상 마감, CANCELED: 오등록 종료)",
+            description = "세션 상태 코드 (OPEN: 진행중, CLOSED: 정상 마감)",
             example = "CLOSED",
-            allowableValues = {"OPEN", "CLOSED", "CANCELED"})
+            allowableValues = {"OPEN", "CLOSED"})
     private SafetyTrainingSessionStatus status;
 
     @Size(max = 2000, message = "교육 미참석 사유는 2000자 이하여야 합니다.")

@@ -14,6 +14,8 @@ public interface EduAttendanceRepository extends JpaRepository<EduAttendance, Lo
 
     boolean existsByEduReportAndUser(EduReport report, User user);
 
+    long countByEduReportId(Long reportId);
+
     @Query(
             "SELECT ea FROM EduAttendance ea "
                     + "JOIN FETCH ea.user "

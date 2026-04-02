@@ -14,6 +14,8 @@ import jakarta.validation.Valid;
 
 import kr.co.awesomelead.groupware_backend.domain.department.enums.DepartmentName;
 import kr.co.awesomelead.groupware_backend.domain.education.dto.request.EduReportRequestDto;
+import kr.co.awesomelead.groupware_backend.domain.education.dto.request.EduReportStatusUpdateRequestDto;
+import kr.co.awesomelead.groupware_backend.domain.education.dto.request.EduReportUpdateRequestDto;
 import kr.co.awesomelead.groupware_backend.domain.education.dto.response.EduReportDetailDto;
 import kr.co.awesomelead.groupware_backend.domain.education.dto.response.EduReportSummaryDto;
 import kr.co.awesomelead.groupware_backend.domain.education.enums.EduType;
@@ -30,9 +32,11 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RequestPart;
 import org.springframework.web.bind.annotation.RestController;
@@ -54,14 +58,14 @@ import java.util.List;
                 """
     ## 교육 보고서 API
 
-    교육 보고서 생성/조회/삭제, 첨부파일 다운로드, 출석(서명) 처리 API입니다.
+    교육 보고서 생성/조회/수정/상태변경/삭제, 첨부파일 다운로드, 출석(서명) 처리 API입니다.
 
     ### API별 권한
     - 생성
       - PSM/안전보건: `WRITE_SAFETY`
       - 부서교육: `ACCESS_EDUCATION`
     - 목록 조회/상세 조회/출석(서명): 로그인 사용자
-    - 삭제: `ACCESS_EDUCATION`
+    - 부서교육 수정/상태변경/삭제: `ACCESS_EDUCATION`
     - 첨부파일 다운로드: 인증 불필요(공개)
 
     ### 교육 유형(EduType)
@@ -304,6 +308,7 @@ public class EduReportController {
                 "attendance": false,
                 "pinned": false,
                 "signatureRequired": true,
+                "status": "OPEN",
                 "categoryId": null,
                 "categoryName": null
               }
@@ -412,6 +417,184 @@ public class EduReportController {
             @Parameter(hidden = true) @AuthenticationPrincipal CustomUserDetails userDetails) {
         EduReportDetailDto report = eduReportService.getEduReport(eduReportId, userDetails.getId());
         return ResponseEntity.ok(ApiResponse.onSuccess(report));
+    }
+
+    @Operation(
+            summary = "부서교육 수정",
+            description =
+                    """
+            부서교육(`eduType=부서 교육`)을 수정합니다.
+
+            - `ACCESS_EDUCATION` 권한 필요
+            - `OPEN` 상태에서만 수정 가능
+            - 서명(출석) 완료자가 1명이라도 있으면 수정 불가
+            """)
+    @ApiResponses({
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                responseCode = "200",
+                description = "수정 성공"),
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                responseCode = "400",
+                description = "잘못된 요청",
+                content =
+                        @Content(
+                                mediaType = "application/json",
+                                examples = {
+                                    @ExampleObject(
+                                            name = "부서교육이 아님",
+                                            value =
+                                                    """
+              {
+                "isSuccess": false,
+                "code": "INVALID_ARGUMENT",
+                "message": "유효하지 않은 ARGUMENT입니다.",
+                "result": null
+              }
+              """),
+                                    @ExampleObject(
+                                            name = "마감 상태",
+                                            value =
+                                                    """
+              {
+                "isSuccess": false,
+                "code": "EDU_REPORT_CLOSED",
+                "message": "마감된 부서교육입니다.",
+                "result": null
+              }
+              """),
+                                    @ExampleObject(
+                                            name = "서명 완료자 존재",
+                                            value =
+                                                    """
+              {
+                "isSuccess": false,
+                "code": "EDU_REPORT_HAS_SIGNED_ATTENDEE",
+                "message": "서명 완료자가 존재하여 부서교육을 수정할 수 없습니다.",
+                "result": null
+              }
+              """)
+                                })),
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                responseCode = "403",
+                description = "권한 없음",
+                content =
+                        @Content(
+                                mediaType = "application/json",
+                                examples =
+                                        @ExampleObject(
+                                                value =
+                                                        """
+          {
+            "isSuccess": false,
+            "code": "NO_AUTHORITY_FOR_EDU_REPORT",
+            "message": "교육 보고서 관리 권한이 없습니다.",
+            "result": null
+          }
+          """))),
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                responseCode = "404",
+                description = "리소스 없음",
+                content =
+                        @Content(
+                                mediaType = "application/json",
+                                examples = {
+                                    @ExampleObject(
+                                            name = "보고서 없음",
+                                            value =
+                                                    """
+              {
+                "isSuccess": false,
+                "code": "EDU_REPORT_NOT_FOUND",
+                "message": "해당 교육 보고서를 찾을 수 없습니다.",
+                "result": null
+              }
+              """),
+                                    @ExampleObject(
+                                            name = "부서 없음",
+                                            value =
+                                                    """
+              {
+                "isSuccess": false,
+                "code": "DEPARTMENT_NOT_FOUND",
+                "message": "해당 부서를 찾을 수 없습니다.",
+                "result": null
+              }
+              """)
+                                }))
+    })
+    @PatchMapping("/{eduReportId}")
+    public ResponseEntity<ApiResponse<Long>> updateDepartmentEduReport(
+            @Parameter(description = "수정할 부서교육 보고서 ID", example = "1") @PathVariable Long eduReportId,
+            @Valid @RequestBody EduReportUpdateRequestDto requestDto,
+            @Parameter(hidden = true) @AuthenticationPrincipal CustomUserDetails userDetails) {
+        Long updatedId =
+                eduReportService.updateDepartmentEduReport(
+                        eduReportId, requestDto, userDetails.getId());
+        return ResponseEntity.ok(ApiResponse.onSuccess(updatedId));
+    }
+
+    @Operation(
+            summary = "부서교육 상태 변경",
+            description =
+                    """
+            부서교육(`eduType=부서 교육`) 상태를 `OPEN`/`CLOSED`로 변경합니다.
+
+            - `ACCESS_EDUCATION` 권한 필요
+            - 상태 변경 후 `CLOSED`인 부서교육은 출석(서명)할 수 없습니다.
+            """)
+    @ApiResponses({
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                responseCode = "200",
+                description = "상태 변경 성공"),
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                responseCode = "400",
+                description = "잘못된 요청",
+                content =
+                        @Content(
+                                mediaType = "application/json",
+                                examples =
+                                        @ExampleObject(
+                                                name = "부서교육이 아님",
+                                                value =
+                                                        """
+          {
+            "isSuccess": false,
+            "code": "INVALID_ARGUMENT",
+            "message": "유효하지 않은 ARGUMENT입니다.",
+            "result": null
+          }
+          """))),
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                responseCode = "403",
+                description = "권한 없음",
+                content =
+                        @Content(
+                                mediaType = "application/json",
+                                examples =
+                                        @ExampleObject(
+                                                value =
+                                                        """
+          {
+            "isSuccess": false,
+            "code": "NO_AUTHORITY_FOR_EDU_REPORT",
+            "message": "교육 보고서 관리 권한이 없습니다.",
+            "result": null
+          }
+          """))),
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                responseCode = "404",
+                description = "리소스 없음")
+    })
+    @PatchMapping("/{eduReportId}/status")
+    public ResponseEntity<ApiResponse<Long>> updateDepartmentEduReportStatus(
+            @Parameter(description = "상태 변경할 부서교육 보고서 ID", example = "1")
+                    @PathVariable Long eduReportId,
+            @Valid @RequestBody EduReportStatusUpdateRequestDto requestDto,
+            @Parameter(hidden = true) @AuthenticationPrincipal CustomUserDetails userDetails) {
+        Long updatedId =
+                eduReportService.updateDepartmentEduReportStatus(
+                        eduReportId, requestDto, userDetails.getId());
+        return ResponseEntity.ok(ApiResponse.onSuccess(updatedId));
     }
 
     @Operation(
@@ -589,6 +772,17 @@ public class EduReportController {
                 "isSuccess": false,
                 "code": "INVALID_SIGNATURE_FORMAT",
                 "message": "서명은 PNG 파일 형식만 지원합니다.",
+                "result": null
+              }
+              """),
+                                            @ExampleObject(
+                                                    name = "부서교육 마감 상태",
+                                                    value =
+                                                            """
+              {
+                "isSuccess": false,
+                "code": "EDU_REPORT_CLOSED",
+                "message": "마감된 부서교육입니다.",
                 "result": null
               }
               """)

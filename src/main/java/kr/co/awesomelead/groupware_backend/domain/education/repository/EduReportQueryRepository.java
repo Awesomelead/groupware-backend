@@ -53,6 +53,7 @@ public class EduReportQueryRepository {
                                         .exists(),
                                 eduReport.pinned,
                                 eduReport.signatureRequired,
+                                eduReport.status,
                                 educationCategory.id,
                                 educationCategory.name))
                 .from(eduReport)

@@ -2,6 +2,7 @@ package kr.co.awesomelead.groupware_backend.domain.education.dto.response;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 
+import kr.co.awesomelead.groupware_backend.domain.education.enums.EduReportStatus;
 import kr.co.awesomelead.groupware_backend.domain.education.enums.EduType;
 
 import lombok.AllArgsConstructor;
@@ -40,6 +41,9 @@ public class EduReportSummaryDto {
 
     @Schema(description = "서명 필수 여부", example = "false")
     private boolean signatureRequired;
+
+    @Schema(description = "부서교육 상태", example = "OPEN")
+    private EduReportStatus status;
 
     @Schema(description = "교육 카테고리 ID", example = "1")
     private Long categoryId;

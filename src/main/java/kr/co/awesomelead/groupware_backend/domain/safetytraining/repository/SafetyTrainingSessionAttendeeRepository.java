@@ -32,5 +32,16 @@ public interface SafetyTrainingSessionAttendeeRepository
     List<SafetyTrainingSessionAttendee> findAllBySessionIdWithUser(
             @Param("sessionId") Long sessionId);
 
+    @Query(
+            """
+            SELECT a.session.id
+            FROM SafetyTrainingSessionAttendee a
+            WHERE a.user.id = :userId
+              AND a.session.id IN :sessionIds
+              AND a.status = kr.co.awesomelead.groupware_backend.domain.safetytraining.enums.SafetyTrainingAttendeeStatus.SIGNED
+            """)
+    List<Long> findSignedSessionIdsByUserIdAndSessionIds(
+            @Param("userId") Long userId, @Param("sessionIds") List<Long> sessionIds);
+
     void deleteBySessionId(Long sessionId);
 }

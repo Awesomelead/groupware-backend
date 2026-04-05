@@ -43,9 +43,11 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 @Service
 @RequiredArgsConstructor
@@ -174,15 +176,27 @@ public class SafetyTrainingSessionService {
             return Page.empty(pageable);
         }
 
-        return sessionRepository
-                .findAllByFilters(
+        Page<SafetyTrainingSession> sessionsPage =
+                sessionRepository.findAllByFilters(
                         companyScope,
                         filter.getEducationType(),
                         status,
                         filter.getStartAtFrom(),
                         filter.getStartAtTo(),
-                        pageable)
-                .map(this::toSummaryDto);
+                        pageable);
+
+        List<Long> sessionIds = sessionsPage.getContent().stream().map(SafetyTrainingSession::getId).toList();
+        Set<Long> signedSessionIds = Collections.emptySet();
+        if (!sessionIds.isEmpty()) {
+            signedSessionIds =
+                    new HashSet<>(
+                            attendeeRepository.findSignedSessionIdsByUserIdAndSessionIds(
+                                    userId, sessionIds));
+        }
+
+        Set<Long> finalSignedSessionIds = signedSessionIds;
+        return sessionsPage.map(
+                session -> toSummaryDto(session, finalSignedSessionIds.contains(session.getId())));
     }
 
     @Transactional(readOnly = true)
@@ -801,7 +815,8 @@ public class SafetyTrainingSessionService {
         session.setAbsentCount(absentCount);
     }
 
-    private SafetyTrainingSessionSummaryResponseDto toSummaryDto(SafetyTrainingSession session) {
+    private SafetyTrainingSessionSummaryResponseDto toSummaryDto(
+            SafetyTrainingSession session, boolean mySigned) {
         return SafetyTrainingSessionSummaryResponseDto.builder()
                 .sessionId(session.getId())
                 .title(session.getTitle())
@@ -819,6 +834,7 @@ public class SafetyTrainingSessionService {
                 .targetCount(session.getTargetCount())
                 .attendedCount(session.getAttendedCount())
                 .absentCount(session.getAbsentCount())
+                .mySigned(mySigned)
                 .createdAt(session.getCreatedAt())
                 .build();
     }

@@ -43,8 +43,8 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.Collections;
-import java.util.HashSet;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -89,11 +89,9 @@ public class SafetyTrainingSessionService {
                         excelBytes,
                         "safety-training-preview-" + System.currentTimeMillis() + ".xlsx",
                         "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
-        String previewFileName = buildExportFileName(requestDto.getStartAt(), requestDto.getTitle());
-        String previewUrl =
-                s3Service.getPresignedDownloadUrl(
-                        previewFileKey,
-                        previewFileName);
+        String previewFileName =
+                buildExportFileName(requestDto.getStartAt(), requestDto.getTitle());
+        String previewUrl = s3Service.getPresignedDownloadUrl(previewFileKey, previewFileName);
 
         return SafetyTrainingPreviewResponseDto.builder()
                 .previewFileUrl(previewUrl)
@@ -187,7 +185,8 @@ public class SafetyTrainingSessionService {
                         filter.getStartAtTo(),
                         pageable);
 
-        List<Long> sessionIds = sessionsPage.getContent().stream().map(SafetyTrainingSession::getId).toList();
+        List<Long> sessionIds =
+                sessionsPage.getContent().stream().map(SafetyTrainingSession::getId).toList();
         Set<Long> signedSessionIds = Collections.emptySet();
         if (!sessionIds.isEmpty()) {
             signedSessionIds =
@@ -421,10 +420,7 @@ public class SafetyTrainingSessionService {
         String reportFileName = buildExportFileName(session.getStartAt(), session.getTitle());
         return SafetyTrainingSessionReportResponseDto.builder()
                 .sessionId(session.getId())
-                .reportFileUrl(
-                        s3Service.getPresignedDownloadUrl(
-                                newReportKey,
-                                reportFileName))
+                .reportFileUrl(s3Service.getPresignedDownloadUrl(newReportKey, reportFileName))
                 .reportFileName(reportFileName)
                 .build();
     }
@@ -454,8 +450,7 @@ public class SafetyTrainingSessionService {
                 .sessionId(session.getId())
                 .reportFileUrl(
                         s3Service.getPresignedDownloadUrl(
-                                session.getReportFileKey(),
-                                reportFileName))
+                                session.getReportFileKey(), reportFileName))
                 .reportFileName(reportFileName)
                 .build();
     }

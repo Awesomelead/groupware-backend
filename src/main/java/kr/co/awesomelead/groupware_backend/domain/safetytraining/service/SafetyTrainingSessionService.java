@@ -89,13 +89,15 @@ public class SafetyTrainingSessionService {
                         excelBytes,
                         "safety-training-preview-" + System.currentTimeMillis() + ".xlsx",
                         "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
+        String previewFileName = buildExportFileName(requestDto.getStartAt(), requestDto.getTitle());
         String previewUrl =
                 s3Service.getPresignedDownloadUrl(
                         previewFileKey,
-                        buildExportFileName(requestDto.getStartAt(), requestDto.getTitle()));
+                        previewFileName);
 
         return SafetyTrainingPreviewResponseDto.builder()
                 .previewFileUrl(previewUrl)
+                .previewFileName(previewFileName)
                 .targetCount(attendees.size())
                 .attendedCount(0)
                 .absentCount(0)

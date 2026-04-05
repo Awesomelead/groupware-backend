@@ -639,7 +639,37 @@ public class SafetyTrainingSessionController {
         return ResponseEntity.ok(ApiResponse.onSuccess(null));
     }
 
-    @Operation(summary = "안전보건 교육 엑셀 미리보기", description = "입력한 값으로 DB 저장 없이 엑셀 미리보기를 생성합니다.")
+    @Operation(
+            summary = "안전보건 교육 엑셀 미리보기",
+            description = "입력한 값으로 DB 저장 없이 엑셀 미리보기를 생성합니다.",
+            requestBody =
+                    @io.swagger.v3.oas.annotations.parameters.RequestBody(
+                            required = true,
+                            content =
+                                    @Content(
+                                            mediaType = "application/json",
+                                            schema =
+                                                    @Schema(
+                                                            implementation =
+                                                                    SafetyTrainingSessionCreateRequestDto
+                                                                            .class),
+                                            examples =
+                                                    @ExampleObject(
+                                                            name = "미리보기 요청 예시",
+                                                            value =
+                                                                    """
+                    {
+                      "title": "2026년 1분기 정기 안전보건교육",
+                      "educationType": "REGULAR",
+                      "educationMethods": ["LECTURE", "AUDIOVISUAL"],
+                      "startAt": "2026-03-24T08:30:00",
+                      "endAt": "2026-03-24T10:30:00",
+                      "educationContent": "개인정보 보호 및 사내 보안 규정 안내",
+                      "place": "3층 대회의실",
+                      "instructorUserId": 17,
+                      "companyScope": "AWESOME"
+                    }
+                    """))))
     @PostMapping("/preview")
     public ResponseEntity<ApiResponse<SafetyTrainingPreviewResponseDto>> preview(
             @Parameter(hidden = true) @AuthenticationPrincipal CustomUserDetails userDetails,

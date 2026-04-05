@@ -418,12 +418,14 @@ public class SafetyTrainingSessionService {
             }
         }
 
+        String reportFileName = buildExportFileName(session.getStartAt(), session.getTitle());
         return SafetyTrainingSessionReportResponseDto.builder()
                 .sessionId(session.getId())
                 .reportFileUrl(
                         s3Service.getPresignedDownloadUrl(
                                 newReportKey,
-                                buildExportFileName(session.getStartAt(), session.getTitle())))
+                                reportFileName))
+                .reportFileName(reportFileName)
                 .build();
     }
 
@@ -447,12 +449,14 @@ public class SafetyTrainingSessionService {
             throw new CustomException(ErrorCode.SAFETY_TRAINING_REPORT_NOT_FOUND);
         }
 
+        String reportFileName = buildExportFileName(session.getStartAt(), session.getTitle());
         return SafetyTrainingSessionReportResponseDto.builder()
                 .sessionId(session.getId())
                 .reportFileUrl(
                         s3Service.getPresignedDownloadUrl(
                                 session.getReportFileKey(),
-                                buildExportFileName(session.getStartAt(), session.getTitle())))
+                                reportFileName))
+                .reportFileName(reportFileName)
                 .build();
     }
 

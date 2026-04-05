@@ -465,7 +465,8 @@ public class SafetyTrainingSessionController {
             description =
                     "작성 권한(WRITE_SAFETY) 사용자가 세션 상태를 OPEN/CLOSED로 변경합니다. "
                             + "CLOSED(정상 마감) 전환 시 미서명(PENDING) 대상자는 자동으로 불참(ABSENT) 처리됩니다. "
-                            + "이때 결석자가 존재하면 absentReasonSummary를 입력해야 합니다.",
+                            + "이때 결석자가 존재하면 absentReasonSummary를 입력해야 합니다. "
+                            + "OPEN 전환 시 기존 결석(ABSENT)은 PENDING으로 초기화되어 결석 인원은 0명이 됩니다.",
             requestBody =
                     @io.swagger.v3.oas.annotations.parameters.RequestBody(
                             required = true,

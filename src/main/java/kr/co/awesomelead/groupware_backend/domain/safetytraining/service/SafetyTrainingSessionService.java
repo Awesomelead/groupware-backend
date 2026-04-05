@@ -608,12 +608,21 @@ public class SafetyTrainingSessionService {
                 attendee.setStatus(SafetyTrainingAttendeeStatus.ABSENT);
                 attendee.setAbsentReason(null);
             }
-        }
-        if (requestDto.getStatus() == SafetyTrainingSessionStatus.CLOSED) {
+
             List<SafetyTrainingSessionAttendee> absentAttendees =
                     attendeeRepository.findAllBySessionIdAndStatus(
                             sessionId, SafetyTrainingAttendeeStatus.ABSENT);
             for (SafetyTrainingSessionAttendee attendee : absentAttendees) {
+                attendee.setAbsentReason(null);
+            }
+        } else if (requestDto.getStatus() == SafetyTrainingSessionStatus.OPEN) {
+            // 재공개(OPEN) 시 기존 결석 확정값을 초기화한다.
+            // ABSENT -> PENDING 으로 복원하면 absentCount는 0으로 계산된다.
+            List<SafetyTrainingSessionAttendee> absentAttendees =
+                    attendeeRepository.findAllBySessionIdAndStatus(
+                            sessionId, SafetyTrainingAttendeeStatus.ABSENT);
+            for (SafetyTrainingSessionAttendee attendee : absentAttendees) {
+                attendee.setStatus(SafetyTrainingAttendeeStatus.PENDING);
                 attendee.setAbsentReason(null);
             }
         }

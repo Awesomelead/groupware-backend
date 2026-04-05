@@ -8,6 +8,7 @@ import kr.co.awesomelead.groupware_backend.domain.safetytraining.enums.SafetyEdu
 import kr.co.awesomelead.groupware_backend.domain.safetytraining.enums.SafetyTrainingAttendeeStatus;
 import kr.co.awesomelead.groupware_backend.domain.safetytraining.enums.SafetyTrainingCompletionStatus;
 import kr.co.awesomelead.groupware_backend.domain.safetytraining.enums.SafetyTrainingSessionStatus;
+import kr.co.awesomelead.groupware_backend.domain.user.enums.Position;
 
 import lombok.Builder;
 import lombok.Getter;
@@ -52,6 +53,12 @@ public class SafetyTrainingSessionDetailResponseDto {
 
     @Schema(description = "교육 실시자 이름", example = "고영민")
     private String instructorName;
+
+    @Schema(description = "교육 실시자 직급", example = "대리")
+    private Position instructorPosition;
+
+    @Schema(description = "교육 내용", example = "개인정보 보호 및 사내 보안 규정 안내")
+    private String educationContent;
 
     @Schema(description = "교육 대상 인원 수", example = "49")
     private int targetCount;

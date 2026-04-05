@@ -1,5 +1,7 @@
 package kr.co.awesomelead.groupware_backend.domain.safetytraining.dto.request;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
+
 import io.swagger.v3.oas.annotations.media.Schema;
 
 import jakarta.validation.constraints.NotBlank;
@@ -53,11 +55,17 @@ public class SafetyTrainingSessionCreateRequestDto {
     private List<SafetyEducationMethod> educationMethods;
 
     @NotNull(message = "교육 시작 시간은 필수입니다.")
-    @Schema(description = "교육 시작 시각", example = "2026-03-24T08:30:00")
+    @JsonFormat(pattern = "yyyy-MM-dd'T'HH:mm:ss")
+    @Schema(
+            description = "교육 시작 시각 (ISO-8601, 초 단위, timezone 미포함)",
+            example = "2026-03-24T08:30:00")
     private LocalDateTime startAt;
 
     @NotNull(message = "교육 종료 시간은 필수입니다.")
-    @Schema(description = "교육 종료 시각", example = "2026-03-24T10:30:00")
+    @JsonFormat(pattern = "yyyy-MM-dd'T'HH:mm:ss")
+    @Schema(
+            description = "교육 종료 시각 (ISO-8601, 초 단위, timezone 미포함)",
+            example = "2026-03-24T10:30:00")
     private LocalDateTime endAt;
 
     @Schema(description = "교육 내용", example = "개인정보 보호 및 사내 보안 규정 안내")

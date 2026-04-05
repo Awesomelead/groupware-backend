@@ -80,7 +80,8 @@ public class SafetyTrainingSessionController {
     @Operation(
             summary = "안전보건 교육 세션 목록 조회",
             description =
-                    "일반 사용자는 본인 회사 데이터를 조회할 수 있으며, WRITE_SAFETY 권한 사용자는" + " 전체 회사/상태 조회가 가능합니다.")
+                    "일반 사용자는 본인 회사 데이터를 조회할 수 있으며, WRITE_SAFETY 권한 사용자는 전체 회사/상태 조회가 가능합니다. 각 세션"
+                        + " 항목에 현재 로그인 사용자의 서명 완료 여부(mySigned)를 포함합니다.")
     @ApiResponses(
             value = {
                 @io.swagger.v3.oas.annotations.responses.ApiResponse(
@@ -464,7 +465,8 @@ public class SafetyTrainingSessionController {
             description =
                     "작성 권한(WRITE_SAFETY) 사용자가 세션 상태를 OPEN/CLOSED로 변경합니다. "
                             + "CLOSED(정상 마감) 전환 시 미서명(PENDING) 대상자는 자동으로 불참(ABSENT) 처리됩니다. "
-                            + "이때 결석자가 존재하면 absentReasonSummary를 입력해야 합니다.",
+                            + "이때 결석자가 존재하면 absentReasonSummary를 입력해야 합니다. "
+                            + "OPEN 전환 시 기존 결석(ABSENT)은 PENDING으로 초기화되어 결석 인원은 0명이 됩니다.",
             requestBody =
                     @io.swagger.v3.oas.annotations.parameters.RequestBody(
                             required = true,
@@ -638,7 +640,37 @@ public class SafetyTrainingSessionController {
         return ResponseEntity.ok(ApiResponse.onSuccess(null));
     }
 
-    @Operation(summary = "안전보건 교육 엑셀 미리보기", description = "입력한 값으로 DB 저장 없이 엑셀 미리보기를 생성합니다.")
+    @Operation(
+            summary = "안전보건 교육 엑셀 미리보기",
+            description = "입력한 값으로 DB 저장 없이 엑셀 미리보기를 생성합니다.",
+            requestBody =
+                    @io.swagger.v3.oas.annotations.parameters.RequestBody(
+                            required = true,
+                            content =
+                                    @Content(
+                                            mediaType = "application/json",
+                                            schema =
+                                                    @Schema(
+                                                            implementation =
+                                                                    SafetyTrainingSessionCreateRequestDto
+                                                                            .class),
+                                            examples =
+                                                    @ExampleObject(
+                                                            name = "미리보기 요청 예시",
+                                                            value =
+                                                                    """
+                    {
+                      "title": "2026년 1분기 정기 안전보건교육",
+                      "educationType": "REGULAR",
+                      "educationMethods": ["LECTURE", "AUDIOVISUAL"],
+                      "startAt": "2026-03-24T08:30:00",
+                      "endAt": "2026-03-24T10:30:00",
+                      "educationContent": "개인정보 보호 및 사내 보안 규정 안내",
+                      "place": "3층 대회의실",
+                      "instructorUserId": 17,
+                      "companyScope": "AWESOME"
+                    }
+                    """))))
     @PostMapping("/preview")
     public ResponseEntity<ApiResponse<SafetyTrainingPreviewResponseDto>> preview(
             @Parameter(hidden = true) @AuthenticationPrincipal CustomUserDetails userDetails,

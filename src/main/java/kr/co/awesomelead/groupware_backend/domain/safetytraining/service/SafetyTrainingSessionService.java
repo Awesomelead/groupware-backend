@@ -44,8 +44,10 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 @Service
 @RequiredArgsConstructor
@@ -87,13 +89,13 @@ public class SafetyTrainingSessionService {
                         excelBytes,
                         "safety-training-preview-" + System.currentTimeMillis() + ".xlsx",
                         "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
-        String previewUrl =
-                s3Service.getPresignedDownloadUrl(
-                        previewFileKey,
-                        buildExportFileName(requestDto.getStartAt(), requestDto.getTitle()));
+        String previewFileName =
+                buildExportFileName(requestDto.getStartAt(), requestDto.getTitle());
+        String previewUrl = s3Service.getPresignedDownloadUrl(previewFileKey, previewFileName);
 
         return SafetyTrainingPreviewResponseDto.builder()
                 .previewFileUrl(previewUrl)
+                .previewFileName(previewFileName)
                 .targetCount(attendees.size())
                 .attendedCount(0)
                 .absentCount(0)
@@ -174,15 +176,28 @@ public class SafetyTrainingSessionService {
             return Page.empty(pageable);
         }
 
-        return sessionRepository
-                .findAllByFilters(
+        Page<SafetyTrainingSession> sessionsPage =
+                sessionRepository.findAllByFilters(
                         companyScope,
                         filter.getEducationType(),
                         status,
                         filter.getStartAtFrom(),
                         filter.getStartAtTo(),
-                        pageable)
-                .map(this::toSummaryDto);
+                        pageable);
+
+        List<Long> sessionIds =
+                sessionsPage.getContent().stream().map(SafetyTrainingSession::getId).toList();
+        Set<Long> signedSessionIds = Collections.emptySet();
+        if (!sessionIds.isEmpty()) {
+            signedSessionIds =
+                    new HashSet<>(
+                            attendeeRepository.findSignedSessionIdsByUserIdAndSessionIds(
+                                    userId, sessionIds));
+        }
+
+        Set<Long> finalSignedSessionIds = signedSessionIds;
+        return sessionsPage.map(
+                session -> toSummaryDto(session, finalSignedSessionIds.contains(session.getId())));
     }
 
     @Transactional(readOnly = true)
@@ -238,6 +253,11 @@ public class SafetyTrainingSessionService {
                                 ? null
                                 : session.getInstructorUser().getId())
                 .instructorName(session.getInstructorNameSnapshot())
+                .instructorPosition(
+                        session.getInstructorUser() == null
+                                ? null
+                                : session.getInstructorUser().getPosition())
+                .educationContent(session.getEducationContent())
                 .targetCount(session.getTargetCount())
                 .attendedCount(session.getAttendedCount())
                 .absentCount(session.getAbsentCount())
@@ -397,12 +417,11 @@ public class SafetyTrainingSessionService {
             }
         }
 
+        String reportFileName = buildExportFileName(session.getStartAt(), session.getTitle());
         return SafetyTrainingSessionReportResponseDto.builder()
                 .sessionId(session.getId())
-                .reportFileUrl(
-                        s3Service.getPresignedDownloadUrl(
-                                newReportKey,
-                                buildExportFileName(session.getStartAt(), session.getTitle())))
+                .reportFileUrl(s3Service.getPresignedDownloadUrl(newReportKey, reportFileName))
+                .reportFileName(reportFileName)
                 .build();
     }
 
@@ -426,12 +445,13 @@ public class SafetyTrainingSessionService {
             throw new CustomException(ErrorCode.SAFETY_TRAINING_REPORT_NOT_FOUND);
         }
 
+        String reportFileName = buildExportFileName(session.getStartAt(), session.getTitle());
         return SafetyTrainingSessionReportResponseDto.builder()
                 .sessionId(session.getId())
                 .reportFileUrl(
                         s3Service.getPresignedDownloadUrl(
-                                session.getReportFileKey(),
-                                buildExportFileName(session.getStartAt(), session.getTitle())))
+                                session.getReportFileKey(), reportFileName))
+                .reportFileName(reportFileName)
                 .build();
     }
 
@@ -583,12 +603,21 @@ public class SafetyTrainingSessionService {
                 attendee.setStatus(SafetyTrainingAttendeeStatus.ABSENT);
                 attendee.setAbsentReason(null);
             }
-        }
-        if (requestDto.getStatus() == SafetyTrainingSessionStatus.CLOSED) {
+
             List<SafetyTrainingSessionAttendee> absentAttendees =
                     attendeeRepository.findAllBySessionIdAndStatus(
                             sessionId, SafetyTrainingAttendeeStatus.ABSENT);
             for (SafetyTrainingSessionAttendee attendee : absentAttendees) {
+                attendee.setAbsentReason(null);
+            }
+        } else if (requestDto.getStatus() == SafetyTrainingSessionStatus.OPEN) {
+            // 재공개(OPEN) 시 기존 결석 확정값을 초기화한다.
+            // ABSENT -> PENDING 으로 복원하면 absentCount는 0으로 계산된다.
+            List<SafetyTrainingSessionAttendee> absentAttendees =
+                    attendeeRepository.findAllBySessionIdAndStatus(
+                            sessionId, SafetyTrainingAttendeeStatus.ABSENT);
+            for (SafetyTrainingSessionAttendee attendee : absentAttendees) {
+                attendee.setStatus(SafetyTrainingAttendeeStatus.PENDING);
                 attendee.setAbsentReason(null);
             }
         }
@@ -801,7 +830,8 @@ public class SafetyTrainingSessionService {
         session.setAbsentCount(absentCount);
     }
 
-    private SafetyTrainingSessionSummaryResponseDto toSummaryDto(SafetyTrainingSession session) {
+    private SafetyTrainingSessionSummaryResponseDto toSummaryDto(
+            SafetyTrainingSession session, boolean mySigned) {
         return SafetyTrainingSessionSummaryResponseDto.builder()
                 .sessionId(session.getId())
                 .title(session.getTitle())
@@ -819,6 +849,7 @@ public class SafetyTrainingSessionService {
                 .targetCount(session.getTargetCount())
                 .attendedCount(session.getAttendedCount())
                 .absentCount(session.getAbsentCount())
+                .mySigned(mySigned)
                 .createdAt(session.getCreatedAt())
                 .build();
     }

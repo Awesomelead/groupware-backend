@@ -24,7 +24,9 @@ public class SafetyTrainingSessionStatusUpdateRequestDto {
 
     @Size(max = 2000, message = "교육 미참석 사유는 2000자 이하여야 합니다.")
     @Schema(
-            description = "교육 미참석 사유(세션 단위). status=CLOSED + 결석자 존재 시 필수, 그 외에는 null 처리됩니다.",
+            description =
+                    "교육 미참석 사유(세션 단위). status=CLOSED + 결석자 존재 시 필수, "
+                            + "status=OPEN 전환 시에는 null로 초기화됩니다.",
             example = "현장 장비 점검으로 일부 인원 교육 참여 불가")
     private String absentReasonSummary;
 }

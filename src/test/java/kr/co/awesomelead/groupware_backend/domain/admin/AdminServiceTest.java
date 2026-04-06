@@ -817,9 +817,7 @@ class AdminServiceTest {
 
             // when & then
             assertThatThrownBy(
-                            () ->
-                                    adminService.getPendingMyInfoUpdateRequestDetail(
-                                            adminId, userId))
+                            () -> adminService.getPendingMyInfoUpdateRequestDetail(adminId, userId))
                     .isInstanceOf(CustomException.class)
                     .extracting("errorCode")
                     .isEqualTo(ErrorCode.MY_INFO_UPDATE_REQUEST_NOT_FOUND);
@@ -833,9 +831,7 @@ class AdminServiceTest {
 
             // when & then
             assertThatThrownBy(
-                            () ->
-                                    adminService.getPendingMyInfoUpdateRequestDetail(
-                                            adminId, userId))
+                            () -> adminService.getPendingMyInfoUpdateRequestDetail(adminId, userId))
                     .isInstanceOf(CustomException.class)
                     .extracting("errorCode")
                     .isEqualTo(ErrorCode.USER_NOT_FOUND);
@@ -851,9 +847,7 @@ class AdminServiceTest {
 
             // when & then
             assertThatThrownBy(
-                            () ->
-                                    adminService.getPendingMyInfoUpdateRequestDetail(
-                                            adminId, userId))
+                            () -> adminService.getPendingMyInfoUpdateRequestDetail(adminId, userId))
                     .isInstanceOf(CustomException.class)
                     .extracting("errorCode")
                     .isEqualTo(ErrorCode.NO_AUTHORITY_FOR_MY_INFO_UPDATE_APPROVAL);

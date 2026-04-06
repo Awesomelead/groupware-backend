@@ -2,11 +2,13 @@ package kr.co.awesomelead.groupware_backend.domain.admin.service;
 
 import kr.co.awesomelead.groupware_backend.domain.admin.dto.request.AdminUserUpdateRequestDto;
 import kr.co.awesomelead.groupware_backend.domain.admin.dto.request.UserApprovalRequestDto;
+import kr.co.awesomelead.groupware_backend.domain.admin.dto.response.AdminPendingMyInfoDetailResponseDto;
 import kr.co.awesomelead.groupware_backend.domain.admin.dto.response.AdminUserDetailResponseDto;
 import kr.co.awesomelead.groupware_backend.domain.admin.dto.response.AdminUserSummaryResponseDto;
 import kr.co.awesomelead.groupware_backend.domain.admin.dto.response.MyInfoUpdateRequestSummaryResponseDto;
 import kr.co.awesomelead.groupware_backend.domain.admin.dto.response.PendingUserSummaryResponseDto;
 import kr.co.awesomelead.groupware_backend.domain.admin.enums.AuthorityAction;
+import kr.co.awesomelead.groupware_backend.domain.admin.mapper.AdminMapper;
 import kr.co.awesomelead.groupware_backend.domain.aligo.service.PhoneAuthService;
 import kr.co.awesomelead.groupware_backend.domain.department.entity.Department;
 import kr.co.awesomelead.groupware_backend.domain.department.repository.DepartmentRepository;
@@ -46,6 +48,7 @@ public class AdminService {
     private final MyInfoUpdateRequestRepository myInfoUpdateRequestRepository;
     private final PhoneAuthService phoneAuthService;
     private final NotificationService notificationService;
+    private final AdminMapper adminMapper;
 
     @Transactional
     public void approveUserRegistration(
@@ -506,6 +509,31 @@ public class AdminService {
                 .stream()
                 .map(MyInfoUpdateRequestSummaryResponseDto::from)
                 .toList();
+    }
+
+    @Transactional(readOnly = true)
+    public AdminPendingMyInfoDetailResponseDto getPendingMyInfoUpdateRequestDetail(
+            Long adminId, Long userId) {
+        User admin =
+                userRepository
+                        .findById(adminId)
+                        .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
+        validateMyInfoApprovalAuthority(admin);
+
+        userRepository
+                .findById(userId)
+                .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
+
+        MyInfoUpdateRequest request =
+                myInfoUpdateRequestRepository
+                        .findFirstByUserIdAndStatusOrderByCreatedAtDesc(
+                                userId, MyInfoUpdateRequestStatus.PENDING)
+                        .orElseThrow(
+                                () ->
+                                        new CustomException(
+                                                ErrorCode.MY_INFO_UPDATE_REQUEST_NOT_FOUND));
+
+        return adminMapper.toDetailDto(request);
     }
 
     private boolean hasText(String value) {

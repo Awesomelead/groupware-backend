@@ -8,11 +8,13 @@ import static org.mockito.Mockito.when;
 
 import kr.co.awesomelead.groupware_backend.domain.admin.dto.request.AdminUserUpdateRequestDto;
 import kr.co.awesomelead.groupware_backend.domain.admin.dto.request.UserApprovalRequestDto;
+import kr.co.awesomelead.groupware_backend.domain.admin.dto.response.AdminPendingMyInfoDetailResponseDto;
 import kr.co.awesomelead.groupware_backend.domain.admin.dto.response.AdminUserDetailResponseDto;
 import kr.co.awesomelead.groupware_backend.domain.admin.dto.response.AdminUserSummaryResponseDto;
 import kr.co.awesomelead.groupware_backend.domain.admin.dto.response.MyInfoUpdateRequestSummaryResponseDto;
 import kr.co.awesomelead.groupware_backend.domain.admin.dto.response.PendingUserSummaryResponseDto;
 import kr.co.awesomelead.groupware_backend.domain.admin.enums.AuthorityAction;
+import kr.co.awesomelead.groupware_backend.domain.admin.mapper.AdminMapper;
 import kr.co.awesomelead.groupware_backend.domain.admin.service.AdminService;
 import kr.co.awesomelead.groupware_backend.domain.aligo.service.PhoneAuthService;
 import kr.co.awesomelead.groupware_backend.domain.department.entity.Department;
@@ -60,6 +62,7 @@ class AdminServiceTest {
     @Mock private MyInfoUpdateRequestRepository myInfoUpdateRequestRepository;
     @Mock private PhoneAuthService phoneAuthService;
     @Mock private NotificationService notificationService;
+    @Mock private AdminMapper adminMapper;
     @InjectMocks private AdminService adminService;
     private final Long adminId = 100L;
     private final Long userId = 1L;
@@ -744,6 +747,110 @@ class AdminServiceTest {
             assertThat(result.get(0).getRequestedNameEng()).isEqualTo("HONG");
             assertThat(result.get(0).getCurrentPhoneNumber()).isEqualTo("01011112222");
             assertThat(result.get(0).getRequestedPhoneNumber()).isEqualTo("01033334444");
+        }
+    }
+
+    @Nested
+    @DisplayName("getPendingMyInfoUpdateRequestDetail 메서드는")
+    class Describe_getPendingMyInfoUpdateRequestDetail {
+
+        @Test
+        @DisplayName("PENDING 요청이 있는 사용자의 상세 정보를 반환한다")
+        void it_returns_detail_when_pending_request_exists() {
+            // given
+            User targetUser =
+                    User.builder()
+                            .id(userId)
+                            .nameKor("홍길동")
+                            .email("hong@test.com")
+                            .nameEng("CURRENT_HONG")
+                            .phoneNumber("01011112222")
+                            .build();
+            MyInfoUpdateRequest request =
+                    MyInfoUpdateRequest.builder()
+                            .id(77L)
+                            .user(targetUser)
+                            .requestedNameEng("HONG NEW")
+                            .requestedPhoneNumber("01099998888")
+                            .status(MyInfoUpdateRequestStatus.PENDING)
+                            .build();
+            AdminPendingMyInfoDetailResponseDto expected =
+                    AdminPendingMyInfoDetailResponseDto.builder()
+                            .requestId(77L)
+                            .userId(userId)
+                            .nameKor("홍길동")
+                            .email("hong@test.com")
+                            .currentNameEng("CURRENT_HONG")
+                            .requestedNameEng("HONG NEW")
+                            .currentPhoneNumber("01011112222")
+                            .requestedPhoneNumber("01099998888")
+                            .status(MyInfoUpdateRequestStatus.PENDING)
+                            .build();
+
+            when(userRepository.findById(userId)).thenReturn(Optional.of(targetUser));
+            when(myInfoUpdateRequestRepository.findFirstByUserIdAndStatusOrderByCreatedAtDesc(
+                            userId, MyInfoUpdateRequestStatus.PENDING))
+                    .thenReturn(Optional.of(request));
+            when(adminMapper.toDetailDto(request)).thenReturn(expected);
+
+            // when
+            AdminPendingMyInfoDetailResponseDto result =
+                    adminService.getPendingMyInfoUpdateRequestDetail(adminId, userId);
+
+            // then
+            assertThat(result.getRequestId()).isEqualTo(77L);
+            assertThat(result.getUserId()).isEqualTo(userId);
+            assertThat(result.getCurrentNameEng()).isEqualTo("CURRENT_HONG");
+            assertThat(result.getRequestedNameEng()).isEqualTo("HONG NEW");
+            assertThat(result.getStatus()).isEqualTo(MyInfoUpdateRequestStatus.PENDING);
+        }
+
+        @Test
+        @DisplayName("PENDING 요청이 없는 사용자를 조회하면 MY_INFO_UPDATE_REQUEST_NOT_FOUND 에러를 던진다")
+        void it_throws_when_no_pending_request() {
+            // given
+            User targetUser = User.builder().id(userId).build();
+            when(userRepository.findById(userId)).thenReturn(Optional.of(targetUser));
+            when(myInfoUpdateRequestRepository.findFirstByUserIdAndStatusOrderByCreatedAtDesc(
+                            userId, MyInfoUpdateRequestStatus.PENDING))
+                    .thenReturn(Optional.empty());
+
+            // when & then
+            assertThatThrownBy(
+                            () -> adminService.getPendingMyInfoUpdateRequestDetail(adminId, userId))
+                    .isInstanceOf(CustomException.class)
+                    .extracting("errorCode")
+                    .isEqualTo(ErrorCode.MY_INFO_UPDATE_REQUEST_NOT_FOUND);
+        }
+
+        @Test
+        @DisplayName("존재하지 않는 사용자 ID로 조회하면 USER_NOT_FOUND 에러를 던진다")
+        void it_throws_when_user_not_found() {
+            // given
+            when(userRepository.findById(userId)).thenReturn(Optional.empty());
+
+            // when & then
+            assertThatThrownBy(
+                            () -> adminService.getPendingMyInfoUpdateRequestDetail(adminId, userId))
+                    .isInstanceOf(CustomException.class)
+                    .extracting("errorCode")
+                    .isEqualTo(ErrorCode.USER_NOT_FOUND);
+        }
+
+        @Test
+        @DisplayName("관리자 권한이 없는 사용자가 조회하면 NO_AUTHORITY_FOR_MY_INFO_UPDATE_APPROVAL 에러를 던진다")
+        void it_throws_when_requester_is_not_admin() {
+            // given
+            User normalUser = new User();
+            normalUser.setRole(Role.USER);
+            when(userRepository.findById(adminId)).thenReturn(Optional.of(normalUser));
+
+            // when & then
+            assertThatThrownBy(
+                            () -> adminService.getPendingMyInfoUpdateRequestDetail(adminId, userId))
+                    .isInstanceOf(CustomException.class)
+                    .extracting("errorCode")
+                    .isEqualTo(ErrorCode.NO_AUTHORITY_FOR_MY_INFO_UPDATE_APPROVAL);
         }
     }
 }

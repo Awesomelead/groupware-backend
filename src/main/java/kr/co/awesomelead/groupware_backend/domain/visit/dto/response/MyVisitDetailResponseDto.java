@@ -4,6 +4,7 @@ import io.swagger.v3.oas.annotations.media.Schema;
 
 import kr.co.awesomelead.groupware_backend.domain.department.enums.DepartmentName;
 import kr.co.awesomelead.groupware_backend.domain.user.enums.Position;
+import kr.co.awesomelead.groupware_backend.domain.visit.enums.AdditionalPermissionType;
 import kr.co.awesomelead.groupware_backend.domain.visit.enums.VisitCategory;
 import kr.co.awesomelead.groupware_backend.domain.visit.enums.VisitPurpose;
 import kr.co.awesomelead.groupware_backend.domain.visit.enums.VisitStatus;
@@ -72,6 +73,12 @@ public class MyVisitDetailResponseDto {
 
     @Schema(description = "방문 유형 (사전 하루 / 사전 장기 / 현장 입실)", example = "사전 하루")
     private VisitCategory visitCategory;
+
+    @Schema(description = "추가 허가 유형", example = "밀폐공간 출입")
+    private AdditionalPermissionType permissionType;
+
+    @Schema(description = "추가 허가 상세 내용", example = "B동 3층 밀폐 구역")
+    private String permissionDetail;
 
     @Schema(description = "입퇴실 및 서명 기록 리스트")
     private List<VisitRecordResponseDto> records;

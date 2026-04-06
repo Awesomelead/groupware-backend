@@ -859,22 +859,25 @@ public class VisitServiceTest {
         void it_returns_my_visit_detail_response_dto() {
             // given
             User host = createHost();
-            Visit visit = Visit.builder()
-                    .id(VISIT_ID)
-                    .password(ENCODED_PASSWORD)
-                    .status(VisitStatus.IN_PROGRESS)
-                    .visitCategory(VisitCategory.PRE_ONE_DAY)
-                    .user(host)
-                    .records(new ArrayList<>())
-                    .build();
+            Visit visit =
+                    Visit.builder()
+                            .id(VISIT_ID)
+                            .password(ENCODED_PASSWORD)
+                            .status(VisitStatus.IN_PROGRESS)
+                            .visitCategory(VisitCategory.PRE_ONE_DAY)
+                            .user(host)
+                            .records(new ArrayList<>())
+                            .build();
             given(visitRepository.findById(VISIT_ID)).willReturn(Optional.of(visit));
 
             // when
             Object result = visitService.getVisitDetailForAdmin(ADMIN_ID, VISIT_ID);
 
             // then
-            assertThat(result).isInstanceOf(
-                    kr.co.awesomelead.groupware_backend.domain.visit.dto.response.MyVisitDetailResponseDto.class);
+            assertThat(result)
+                    .isInstanceOf(
+                            kr.co.awesomelead.groupware_backend.domain.visit.dto.response
+                                    .MyVisitDetailResponseDto.class);
         }
     }
 }

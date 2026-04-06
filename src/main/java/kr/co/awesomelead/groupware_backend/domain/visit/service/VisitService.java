@@ -20,7 +20,6 @@ import kr.co.awesomelead.groupware_backend.domain.visit.dto.request.VisitRequest
 import kr.co.awesomelead.groupware_backend.domain.visit.dto.request.VisitSearchRequestDto;
 import kr.co.awesomelead.groupware_backend.domain.visit.dto.response.MyVisitDetailResponseDto;
 import kr.co.awesomelead.groupware_backend.domain.visit.dto.response.MyVisitListResponseDto;
-import kr.co.awesomelead.groupware_backend.domain.visit.dto.response.VisitDetailResponseDto;
 import kr.co.awesomelead.groupware_backend.domain.visit.dto.response.VisitListResponseDto;
 import kr.co.awesomelead.groupware_backend.domain.visit.entity.Visit;
 import kr.co.awesomelead.groupware_backend.domain.visit.entity.VisitRecord;
@@ -410,11 +409,16 @@ public class VisitService {
     // 직용원 방문 목록 조회
     @Transactional(readOnly = true)
     public List<VisitListResponseDto> getVisitsForAdmin(
-            Long userId, Long departmentId, VisitStatus status, LocalDate startDate, LocalDate endDate) {
+            Long userId,
+            Long departmentId,
+            VisitStatus status,
+            LocalDate startDate,
+            LocalDate endDate) {
         // 관리 권한 확인
         validateAdminAuthority(userId);
 
-        List<Visit> visits = visitRepository.findAllByFilters(departmentId, status, startDate, endDate);
+        List<Visit> visits =
+                visitRepository.findAllByFilters(departmentId, status, startDate, endDate);
 
         return visitMapper.toVisitListResponseDtos(visits);
     }

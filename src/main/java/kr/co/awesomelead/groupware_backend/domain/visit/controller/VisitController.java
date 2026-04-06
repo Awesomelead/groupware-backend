@@ -20,7 +20,6 @@ import kr.co.awesomelead.groupware_backend.domain.visit.dto.request.VisitProcess
 import kr.co.awesomelead.groupware_backend.domain.visit.dto.request.VisitSearchRequestDto;
 import kr.co.awesomelead.groupware_backend.domain.visit.dto.response.MyVisitDetailResponseDto;
 import kr.co.awesomelead.groupware_backend.domain.visit.dto.response.MyVisitListResponseDto;
-import kr.co.awesomelead.groupware_backend.domain.visit.dto.response.VisitDetailResponseDto;
 import kr.co.awesomelead.groupware_backend.domain.visit.dto.response.VisitListResponseDto;
 import kr.co.awesomelead.groupware_backend.domain.visit.enums.VisitStatus;
 import kr.co.awesomelead.groupware_backend.domain.visit.service.VisitService;
@@ -226,7 +225,8 @@ public class VisitController {
                     @RequestParam(name = "endDate", required = false)
                     LocalDate endDate) {
         List<VisitListResponseDto> response =
-                visitService.getVisitsForAdmin(userDetails.getId(), departmentId, status, startDate, endDate);
+                visitService.getVisitsForAdmin(
+                        userDetails.getId(), departmentId, status, startDate, endDate);
         return ResponseEntity.ok(ApiResponse.onSuccess(response));
     }
 

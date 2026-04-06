@@ -15,6 +15,7 @@ import jakarta.validation.Valid;
 import kr.co.awesomelead.groupware_backend.domain.admin.dto.request.AdminUserUpdateRequestDto;
 import kr.co.awesomelead.groupware_backend.domain.admin.dto.request.MyInfoUpdateRejectRequestDto;
 import kr.co.awesomelead.groupware_backend.domain.admin.dto.request.UserApprovalRequestDto;
+import kr.co.awesomelead.groupware_backend.domain.admin.dto.response.AdminPendingMyInfoDetailResponseDto;
 import kr.co.awesomelead.groupware_backend.domain.admin.dto.response.AdminUserDetailResponseDto;
 import kr.co.awesomelead.groupware_backend.domain.admin.dto.response.AdminUserSummaryResponseDto;
 import kr.co.awesomelead.groupware_backend.domain.admin.dto.response.MyInfoUpdateRequestSummaryResponseDto;
@@ -1035,6 +1036,93 @@ public class AdminController {
                             CustomUserDetails userDetails) {
         List<MyInfoUpdateRequestSummaryResponseDto> result =
                 adminService.getPendingMyInfoUpdateRequests(userDetails.getId());
+        return ResponseEntity.ok(ApiResponse.onSuccess(result));
+    }
+
+    @Operation(
+            summary = "개인정보 수정 요청 상세 조회",
+            description = "특정 직원의 PENDING 상태 개인정보 수정 요청을 현재 정보와 비교하여 상세 조회합니다.")
+    @ApiResponses(
+            value = {
+                @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                        responseCode = "200",
+                        description = "조회 성공",
+                        content =
+                                @Content(
+                                        mediaType = "application/json",
+                                        examples =
+                                                @ExampleObject(
+                                                        value =
+                                                                """
+                                        {
+                                          "isSuccess": true,
+                                          "code": "COMMON200",
+                                          "message": "요청에 성공했습니다.",
+                                          "result": {
+                                            "requestId": 101,
+                                            "userId": 17,
+                                            "nameKor": "홍길동",
+                                            "email": "hgd@gmail.com",
+                                            "currentNameEng": "HONG GILDONG",
+                                            "requestedNameEng": "HONG GILDONG NEW",
+                                            "currentPhoneNumber": "01012345678",
+                                            "requestedPhoneNumber": "01099999999",
+                                            "currentZipcode": "06234",
+                                            "requestedZipcode": "06235",
+                                            "currentAddress1": "서울특별시 강남구 테헤란로 123",
+                                            "requestedAddress1": "서울특별시 강남구 테헤란로 456",
+                                            "currentAddress2": "어썸리드빌딩 5층",
+                                            "requestedAddress2": "어썸리드빌딩 6층",
+                                            "status": "PENDING",
+                                            "requestedAt": "2026-02-26T15:20:00"
+                                          }
+                                        }
+                                        """))),
+                @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                        responseCode = "403",
+                        description = "권한 없음",
+                        content =
+                                @Content(
+                                        mediaType = "application/json",
+                                        examples =
+                                                @ExampleObject(
+                                                        value =
+                                                                """
+                                        {
+                                          "isSuccess": false,
+                                          "code": "NO_AUTHORITY_FOR_MY_INFO_UPDATE_APPROVAL",
+                                          "message": "개인정보 수정 승인 권한이 없습니다.",
+                                          "result": null
+                                        }
+                                        """))),
+                @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                        responseCode = "404",
+                        description = "사용자 또는 요청 없음",
+                        content =
+                                @Content(
+                                        mediaType = "application/json",
+                                        examples =
+                                                @ExampleObject(
+                                                        value =
+                                                                """
+                                        {
+                                          "isSuccess": false,
+                                          "code": "MY_INFO_UPDATE_REQUEST_NOT_FOUND",
+                                          "message": "해당 개인정보 수정 요청을 찾을 수 없습니다.",
+                                          "result": null
+                                        }
+                                        """)))
+            })
+    @GetMapping("/users/{userId}/my-info/requests/pending")
+    public ResponseEntity<ApiResponse<AdminPendingMyInfoDetailResponseDto>>
+            getPendingMyInfoUpdateRequestDetail(
+                    @Parameter(description = "조회할 사용자 ID", required = true, example = "17")
+                            @PathVariable
+                            Long userId,
+                    @Parameter(hidden = true) @AuthenticationPrincipal
+                            CustomUserDetails userDetails) {
+        AdminPendingMyInfoDetailResponseDto result =
+                adminService.getPendingMyInfoUpdateRequestDetail(userDetails.getId(), userId);
         return ResponseEntity.ok(ApiResponse.onSuccess(result));
     }
 }

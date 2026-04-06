@@ -44,6 +44,7 @@ import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 import java.io.IOException;
 import java.net.URI;
+import java.time.LocalDate;
 import java.util.List;
 
 @RestController
@@ -217,9 +218,15 @@ public class VisitController {
                     Long departmentId,
             @Parameter(description = "필터링할 방문 상태", example = "IN_PROGRESS")
                     @RequestParam(name = "status", required = false)
-                    VisitStatus status) {
+                    VisitStatus status,
+            @Parameter(description = "조회 시작일 (이 날짜 이후 종료되는 방문 포함)", example = "2024-07-01")
+                    @RequestParam(name = "startDate", required = false)
+                    LocalDate startDate,
+            @Parameter(description = "조회 종료일 (이 날짜 이전 시작되는 방문 포함)", example = "2024-07-05")
+                    @RequestParam(name = "endDate", required = false)
+                    LocalDate endDate) {
         List<VisitListResponseDto> response =
-                visitService.getVisitsForAdmin(userDetails.getId(), departmentId, status);
+                visitService.getVisitsForAdmin(userDetails.getId(), departmentId, status, startDate, endDate);
         return ResponseEntity.ok(ApiResponse.onSuccess(response));
     }
 
@@ -227,11 +234,11 @@ public class VisitController {
             summary = "직원용 내방객 상세 조회",
             description = "관리 직군이 특정 내방객의 상세 정보, 서명 이미지 및 모든 입퇴실 기록을 조회합니다.")
     @GetMapping("/admin/{visitId}")
-    public ResponseEntity<ApiResponse<VisitDetailResponseDto>> getAdminVisitDetail(
+    public ResponseEntity<ApiResponse<MyVisitDetailResponseDto>> getAdminVisitDetail(
             @Parameter(hidden = true) @AuthenticationPrincipal CustomUserDetails userDetails,
             @Parameter(description = "조회할 방문 ID", example = "1") @PathVariable("visitId")
                     Long visitId) {
-        VisitDetailResponseDto response =
+        MyVisitDetailResponseDto response =
                 visitService.getVisitDetailForAdmin(userDetails.getId(), visitId);
         return ResponseEntity.ok(ApiResponse.onSuccess(response));
     }

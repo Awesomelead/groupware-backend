@@ -780,9 +780,9 @@ class AdminServiceTest {
                             .userId(userId)
                             .nameKor("홍길동")
                             .email("hong@test.com")
-                            .currentNameEng("CURRENT_HONG")
+                            .nameEng("CURRENT_HONG")
                             .requestedNameEng("HONG NEW")
-                            .currentPhoneNumber("01011112222")
+                            .phoneNumber("01011112222")
                             .requestedPhoneNumber("01099998888")
                             .status(MyInfoUpdateRequestStatus.PENDING)
                             .build();
@@ -800,7 +800,7 @@ class AdminServiceTest {
             // then
             assertThat(result.getRequestId()).isEqualTo(77L);
             assertThat(result.getUserId()).isEqualTo(userId);
-            assertThat(result.getCurrentNameEng()).isEqualTo("CURRENT_HONG");
+            assertThat(result.getNameEng()).isEqualTo("CURRENT_HONG");
             assertThat(result.getRequestedNameEng()).isEqualTo("HONG NEW");
             assertThat(result.getStatus()).isEqualTo(MyInfoUpdateRequestStatus.PENDING);
         }

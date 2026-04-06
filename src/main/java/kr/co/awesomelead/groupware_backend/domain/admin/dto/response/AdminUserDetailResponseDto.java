@@ -12,14 +12,14 @@ import kr.co.awesomelead.groupware_backend.domain.user.enums.Position;
 import kr.co.awesomelead.groupware_backend.domain.user.enums.Role;
 import kr.co.awesomelead.groupware_backend.domain.user.enums.Status;
 
-import lombok.Builder;
 import lombok.Getter;
+import lombok.experimental.SuperBuilder;
 
 import java.time.LocalDate;
 import java.util.List;
 
 @Getter
-@Builder
+@SuperBuilder
 @Schema(description = "직원 상세 조회 응답")
 public class AdminUserDetailResponseDto {
 

@@ -410,18 +410,18 @@ public class VisitService {
     // 직용원 방문 목록 조회
     @Transactional(readOnly = true)
     public List<VisitListResponseDto> getVisitsForAdmin(
-            Long userId, Long departmentId, VisitStatus status) {
+            Long userId, Long departmentId, VisitStatus status, LocalDate startDate, LocalDate endDate) {
         // 관리 권한 확인
         validateAdminAuthority(userId);
 
-        List<Visit> visits = visitRepository.findAllByFilters(departmentId, status);
+        List<Visit> visits = visitRepository.findAllByFilters(departmentId, status, startDate, endDate);
 
         return visitMapper.toVisitListResponseDtos(visits);
     }
 
     // 직원용 방문 상세 조회
     @Transactional(readOnly = true)
-    public VisitDetailResponseDto getVisitDetailForAdmin(Long userId, Long visitId) {
+    public MyVisitDetailResponseDto getVisitDetailForAdmin(Long userId, Long visitId) {
 
         validateAdminAuthority(userId);
 
@@ -430,16 +430,16 @@ public class VisitService {
                         .findById(visitId)
                         .orElseThrow(() -> new CustomException(ErrorCode.VISIT_NOT_FOUND));
 
-        VisitDetailResponseDto responseDto = visitMapper.toVisitDetailResponseDto(visit);
+        MyVisitDetailResponseDto responseDto = visitMapper.toMyVisitDetailResponseDto(visit);
 
         if (responseDto.getRecords() != null) {
             responseDto
                     .getRecords()
                     .forEach(
-                            recordDto -> {
-                                if (StringUtils.hasText(recordDto.getSignatureUrl())) {
-                                    recordDto.setSignatureUrl(
-                                            s3Service.getFileUrl(recordDto.getSignatureUrl()));
+                            record -> {
+                                if (StringUtils.hasText(record.getSignatureUrl())) {
+                                    record.setSignatureUrl(
+                                            s3Service.getFileUrl(record.getSignatureUrl()));
                                 }
                             });
         }

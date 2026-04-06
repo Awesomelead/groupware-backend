@@ -796,4 +796,85 @@ public class VisitServiceTest {
             }
         }
     }
+
+    @Nested
+    @DisplayName("getVisitsForAdmin 메서드는")
+    class Describe_getVisitsForAdmin {
+
+        private final Long ADMIN_ID = 1L;
+
+        @BeforeEach
+        void setUpAdmin() {
+            User admin = User.builder().id(ADMIN_ID).jobType(JobType.MANAGEMENT).build();
+            admin.addAuthority(Authority.ACCESS_VISIT);
+            given(userRepository.findById(ADMIN_ID)).willReturn(Optional.of(admin));
+        }
+
+        @Test
+        @DisplayName("날짜 범위 파라미터를 포함하여 저장소를 호출한다.")
+        void it_calls_repository_with_date_range() {
+            // given
+            LocalDate startDate = LocalDate.of(2024, 7, 1);
+            LocalDate endDate = LocalDate.of(2024, 7, 5);
+            given(visitRepository.findAllByFilters(null, null, startDate, endDate))
+                    .willReturn(new ArrayList<>());
+
+            // when
+            visitService.getVisitsForAdmin(ADMIN_ID, null, null, startDate, endDate);
+
+            // then
+            verify(visitRepository).findAllByFilters(null, null, startDate, endDate);
+        }
+
+        @Test
+        @DisplayName("날짜 범위 없이 호출하면 null로 저장소를 호출한다.")
+        void it_calls_repository_with_null_dates_when_not_provided() {
+            // given
+            given(visitRepository.findAllByFilters(null, null, null, null))
+                    .willReturn(new ArrayList<>());
+
+            // when
+            visitService.getVisitsForAdmin(ADMIN_ID, null, null, null, null);
+
+            // then
+            verify(visitRepository).findAllByFilters(null, null, null, null);
+        }
+    }
+
+    @Nested
+    @DisplayName("getVisitDetailForAdmin 메서드는")
+    class Describe_getVisitDetailForAdmin {
+
+        private final Long ADMIN_ID = 1L;
+
+        @BeforeEach
+        void setUpAdmin() {
+            User admin = User.builder().id(ADMIN_ID).jobType(JobType.MANAGEMENT).build();
+            admin.addAuthority(Authority.ACCESS_VISIT);
+            given(userRepository.findById(ADMIN_ID)).willReturn(Optional.of(admin));
+        }
+
+        @Test
+        @DisplayName("MyVisitDetailResponseDto 타입으로 반환한다.")
+        void it_returns_my_visit_detail_response_dto() {
+            // given
+            User host = createHost();
+            Visit visit = Visit.builder()
+                    .id(VISIT_ID)
+                    .password(ENCODED_PASSWORD)
+                    .status(VisitStatus.IN_PROGRESS)
+                    .visitCategory(VisitCategory.PRE_ONE_DAY)
+                    .user(host)
+                    .records(new ArrayList<>())
+                    .build();
+            given(visitRepository.findById(VISIT_ID)).willReturn(Optional.of(visit));
+
+            // when
+            Object result = visitService.getVisitDetailForAdmin(ADMIN_ID, VISIT_ID);
+
+            // then
+            assertThat(result).isInstanceOf(
+                    kr.co.awesomelead.groupware_backend.domain.visit.dto.response.MyVisitDetailResponseDto.class);
+        }
+    }
 }

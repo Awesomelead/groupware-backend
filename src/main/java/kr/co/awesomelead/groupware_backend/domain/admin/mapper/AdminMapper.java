@@ -45,7 +45,10 @@ public interface AdminMapper {
     @AfterMapping
     default void setAuthorities(
             MyInfoUpdateRequest request,
-            @MappingTarget AdminPendingMyInfoDetailResponseDto.AdminPendingMyInfoDetailResponseDtoBuilder<?, ?> builder) {
+            @MappingTarget
+                    AdminPendingMyInfoDetailResponseDto.AdminPendingMyInfoDetailResponseDtoBuilder<
+                                    ?, ?>
+                            builder) {
         if (request.getUser() == null) {
             return;
         }

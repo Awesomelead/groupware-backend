@@ -666,15 +666,12 @@ class AdminServiceTest {
                             .status(MyInfoUpdateRequestStatus.PENDING)
                             .build();
 
-            when(userRepository.findById(userId)).thenReturn(Optional.of(targetUser));
-            when(myInfoUpdateRequestRepository.findFirstByUserIdAndStatusOrderByCreatedAtDesc(
-                            userId, MyInfoUpdateRequestStatus.PENDING))
-                    .thenReturn(Optional.of(request));
+            when(myInfoUpdateRequestRepository.findById(10L)).thenReturn(Optional.of(request));
             when(userRepository.existsByPhoneNumberHash(User.hashValue("01099998888")))
                     .thenReturn(false);
 
             // when
-            adminService.approveMyInfoUpdate(userId, adminId);
+            adminService.approveMyInfoUpdate(10L, adminId);
 
             // then
             assertThat(targetUser.getNameEng()).isEqualTo("NEW");
@@ -697,13 +694,10 @@ class AdminServiceTest {
                             .status(MyInfoUpdateRequestStatus.PENDING)
                             .build();
 
-            when(userRepository.findById(userId)).thenReturn(Optional.of(targetUser));
-            when(myInfoUpdateRequestRepository.findFirstByUserIdAndStatusOrderByCreatedAtDesc(
-                            userId, MyInfoUpdateRequestStatus.PENDING))
-                    .thenReturn(Optional.of(request));
+            when(myInfoUpdateRequestRepository.findById(10L)).thenReturn(Optional.of(request));
 
             // when
-            adminService.rejectMyInfoUpdate(userId, "증빙 불충분", adminId);
+            adminService.rejectMyInfoUpdate(10L, "증빙 불충분", adminId);
 
             // then
             assertThat(request.getStatus()).isEqualTo(MyInfoUpdateRequestStatus.REJECTED);

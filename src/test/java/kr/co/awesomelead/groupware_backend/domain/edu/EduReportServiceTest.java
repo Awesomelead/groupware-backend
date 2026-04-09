@@ -55,6 +55,7 @@ import java.io.IOException;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 @ExtendWith(MockitoExtension.class)
@@ -180,7 +181,8 @@ public class EduReportServiceTest {
         assertThat(savedReport.getContent()).isEqualTo("교육 보고서 내용");
 
         verify(notificationService, times(1))
-                .sendEduReportAlertToTargets(anyString(), anyString(), anyLong(), any());
+                .sendEduReportAlertToTargets(
+                        anyString(), anyString(), anyLong(), any(), any(Map.class));
     }
 
     @Test

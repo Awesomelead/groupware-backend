@@ -24,6 +24,7 @@ import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.Map;
@@ -63,11 +64,13 @@ public class NotificationController {
     @GetMapping
     public ResponseEntity<ApiResponse<Page<NotificationResponseDto>>> getNotifications(
             @RequestHeader("Authorization") String authorizationHeader,
+            @RequestParam(required = false, defaultValue = "false") boolean pendingApproval,
             @PageableDefault(size = 20, sort = "createdAt", direction = Sort.Direction.DESC)
                     Pageable pageable) {
         Long userId = extractUserId(authorizationHeader);
         return ResponseEntity.ok(
-                ApiResponse.onSuccess(notificationService.getNotifications(userId, pageable)));
+                ApiResponse.onSuccess(
+                        notificationService.getNotifications(userId, pendingApproval, pageable)));
     }
 
     @Operation(summary = "미읽음 알림 수 조회", description = "읽지 않은 알림 건수를 반환합니다.")

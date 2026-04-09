@@ -51,6 +51,7 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.test.context.ActiveProfiles;
 
 import java.time.LocalDate;
+import java.util.Map;
 import java.util.Optional;
 
 @ExtendWith(MockitoExtension.class)
@@ -209,7 +210,8 @@ class AuthServiceTest {
         verify(userRepository, times(1)).save(any(User.class));
         verify(emailAuthService, times(1)).clearVerification(signupDto.getEmail());
         verify(phoneAuthService, times(1)).clearVerification(signupDto.getPhoneNumber());
-        verify(notificationService, times(1)).sendAlertToAdmins(any(), any(), any(), any());
+        verify(notificationService, times(1))
+                .sendAlertToAdmins(any(), any(), any(), any(Map.class), any());
     }
 
     @Test

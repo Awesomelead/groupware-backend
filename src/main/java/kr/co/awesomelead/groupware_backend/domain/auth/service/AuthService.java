@@ -51,6 +51,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 
 @Slf4j
 @Service
@@ -119,6 +120,7 @@ public class AuthService {
                 NotificationMessage.SIGNUP_ADMIN_ALERT,
                 NotificationDomainType.AUTH,
                 null,
+                Map.of("targetId", savedUser.getId()),
                 savedUser.getDisplayName());
 
         return new SignupResponseDto(savedUser.getId(), savedUser.getEmail());

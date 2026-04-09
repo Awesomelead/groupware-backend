@@ -1,5 +1,8 @@
 package kr.co.awesomelead.groupware_backend.domain.notification.service;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+
 import kr.co.awesomelead.groupware_backend.domain.fcm.event.FcmSendEvent;
 import kr.co.awesomelead.groupware_backend.domain.notification.dto.response.NotificationResponseDto;
 import kr.co.awesomelead.groupware_backend.domain.notification.entity.Notification;
@@ -34,6 +37,7 @@ public class NotificationService {
     private final NotificationRepository notificationRepository;
     private final ApplicationEventPublisher eventPublisher;
     private final UserRepository userRepository;
+    private final ObjectMapper objectMapper = new ObjectMapper();
 
     @Transactional
     public void createNotification(
@@ -42,16 +46,52 @@ public class NotificationService {
             String content,
             NotificationDomainType domainType,
             Long domainId) {
-        Notification notification = Notification.of(userId, title, content, domainType, domainId);
+        createNotification(userId, title, content, domainType, domainId, null);
+    }
+
+    @Transactional
+    public void createNotification(
+            Long userId,
+            String title,
+            String content,
+            NotificationDomainType domainType,
+            Long domainId,
+            Map<String, Object> metadata) {
+        createNotification(userId, title, content, domainType, domainId, metadata, false);
+    }
+
+    @Transactional
+    public void createNotification(
+            Long userId,
+            String title,
+            String content,
+            NotificationDomainType domainType,
+            Long domainId,
+            Map<String, Object> metadata,
+            boolean requiresApproval) {
+        Notification notification =
+                Notification.of(
+                        userId, title, content, domainType, domainId, metadata, requiresApproval);
         notificationRepository.save(notification);
         log.info("알림 생성 - userId: {}, domainType: {}", userId, domainType);
     }
 
     @Transactional(readOnly = true)
-    public Page<NotificationResponseDto> getNotifications(Long userId, Pageable pageable) {
-        return notificationRepository
-                .findByUserIdOrderByCreatedAtDesc(userId, pageable)
-                .map(NotificationResponseDto::from);
+    public Page<NotificationResponseDto> getNotifications(
+            Long userId, boolean pendingApproval, Pageable pageable) {
+        Page<Notification> page =
+                pendingApproval
+                        ? notificationRepository
+                                .findByUserIdAndRequiresApprovalTrueOrderByCreatedAtDesc(
+                                        userId, pageable)
+                        : notificationRepository.findByUserIdOrderByCreatedAtDesc(userId, pageable);
+        return page.map(NotificationResponseDto::from);
+    }
+
+    @Transactional
+    public void resolveRequiresApproval(NotificationDomainType domainType, Long domainId) {
+        notificationRepository.resolveRequiresApprovalByDomainTypeAndDomainId(domainType, domainId);
+        log.info("requiresApproval 해제 - domainType: {}, domainId: {}", domainType, domainId);
     }
 
     @Transactional
@@ -87,6 +127,36 @@ public class NotificationService {
             NotificationDomainType domainType,
             Long domainId,
             Object... args) {
+        sendAlertToAdmins(template, domainType, domainId, null, args);
+    }
+
+    @Transactional
+    public void sendAlertToAdmins(
+            NotificationMessage template,
+            NotificationDomainType domainType,
+            Long domainId,
+            Map<String, Object> metadata,
+            Object... args) {
+        sendAlertToAdminsInternal(template, domainType, domainId, metadata, false, args);
+    }
+
+    @Transactional
+    public void sendAlertToAdminsRequiringApproval(
+            NotificationMessage template,
+            NotificationDomainType domainType,
+            Long domainId,
+            Map<String, Object> metadata,
+            Object... args) {
+        sendAlertToAdminsInternal(template, domainType, domainId, metadata, true, args);
+    }
+
+    private void sendAlertToAdminsInternal(
+            NotificationMessage template,
+            NotificationDomainType domainType,
+            Long domainId,
+            Map<String, Object> metadata,
+            boolean requiresApproval,
+            Object... args) {
         String title = template.getTitle();
         String content = template.formatContent(args);
 
@@ -95,12 +165,22 @@ public class NotificationService {
 
         for (User admin : admins) {
             // 1. 알림함 저장
-            createNotification(admin.getId(), title, content, domainType, domainId);
+            createNotification(
+                    admin.getId(),
+                    title,
+                    content,
+                    domainType,
+                    domainId,
+                    metadata,
+                    requiresApproval);
 
             // 2. FCM 이벤트 발행 (트랜잭션 커밋 후 비동기 발송)
             eventPublisher.publishEvent(
                     new FcmSendEvent(
-                            admin.getId(), title, content, buildFcmData(domainType, domainId)));
+                            admin.getId(),
+                            title,
+                            content,
+                            buildFcmData(domainType, domainId, metadata)));
         }
 
         log.info("관리자 그룹 알림 전송 완료 - 대상 Admin 수: {}, 템플릿: {}", admins.size(), template.name());
@@ -122,15 +202,27 @@ public class NotificationService {
             NotificationDomainType domainType,
             Long domainId,
             Object... args) {
+        sendAlertToUser(userId, template, domainType, domainId, null, args);
+    }
+
+    @Transactional
+    public void sendAlertToUser(
+            Long userId,
+            NotificationMessage template,
+            NotificationDomainType domainType,
+            Long domainId,
+            Map<String, Object> metadata,
+            Object... args) {
         String title = template.getTitle();
         String content = template.formatContent(args);
 
         // 1. 알림함 저장
-        createNotification(userId, title, content, domainType, domainId);
+        createNotification(userId, title, content, domainType, domainId, metadata);
 
         // 2. FCM 이벤트 발행 (트랜잭션 커밋 후 비동기 발송)
         eventPublisher.publishEvent(
-                new FcmSendEvent(userId, title, content, buildFcmData(domainType, domainId)));
+                new FcmSendEvent(
+                        userId, title, content, buildFcmData(domainType, domainId, metadata)));
 
         log.info("단일 유저 알림 전송 완료 - userId: {}, 템플릿: {}", userId, template.name());
     }
@@ -180,6 +272,16 @@ public class NotificationService {
     @Transactional
     public void sendEduReportAlertToTargets(
             String eduTypeLabel, String eduTitle, Long reportId, List<Long> targetUserIds) {
+        sendEduReportAlertToTargets(eduTypeLabel, eduTitle, reportId, targetUserIds, null);
+    }
+
+    @Transactional
+    public void sendEduReportAlertToTargets(
+            String eduTypeLabel,
+            String eduTitle,
+            Long reportId,
+            List<Long> targetUserIds,
+            Map<String, Object> metadata) {
         if (targetUserIds == null || targetUserIds.isEmpty()) {
             log.info("교육 알림 전송 건너뜀 - 대상 없음, reportId: {}", reportId);
             return;
@@ -191,7 +293,8 @@ public class NotificationService {
 
         for (Long userId : targetUserIds) {
             // 1. 알림함 저장
-            createNotification(userId, title, content, NotificationDomainType.EDUCATION, reportId);
+            createNotification(
+                    userId, title, content, NotificationDomainType.EDUCATION, reportId, metadata);
 
             // 2. FCM 이벤트 발행 (트랜잭션 커밋 후 비동기 발송)
             eventPublisher.publishEvent(
@@ -199,7 +302,7 @@ public class NotificationService {
                             userId,
                             title,
                             content,
-                            buildFcmData(NotificationDomainType.EDUCATION, reportId)));
+                            buildFcmData(NotificationDomainType.EDUCATION, reportId, metadata)));
         }
 
         log.info("교육 알림 전송 완료 - reportId: {}, 대상 수: {}", reportId, targetUserIds.size());
@@ -219,6 +322,16 @@ public class NotificationService {
             Long visitId,
             Long hostDepartmentId,
             Object... contentArgs) {
+        sendVisitAlertToDepartment(template, visitId, hostDepartmentId, null, contentArgs);
+    }
+
+    @Transactional
+    public void sendVisitAlertToDepartment(
+            NotificationMessage template,
+            Long visitId,
+            Long hostDepartmentId,
+            Map<String, Object> metadata,
+            Object... contentArgs) {
         List<Long> targetUserIds = userRepository.findAllIdsByDepartmentId(hostDepartmentId);
 
         if (targetUserIds.isEmpty()) {
@@ -228,10 +341,19 @@ public class NotificationService {
 
         String title = template.getTitle();
         String content = template.formatContent(contentArgs);
+        boolean requiresApproval =
+                metadata != null && Boolean.TRUE.equals(metadata.get("isApprovalTarget"));
 
         for (Long userId : targetUserIds) {
             // 1. 알림함 저장
-            createNotification(userId, title, content, NotificationDomainType.VISIT, visitId);
+            createNotification(
+                    userId,
+                    title,
+                    content,
+                    NotificationDomainType.VISIT,
+                    visitId,
+                    metadata,
+                    requiresApproval);
 
             // 2. FCM 이벤트 발행 (트랜잭션 커밋 후 비동기 발송)
             eventPublisher.publishEvent(
@@ -239,7 +361,7 @@ public class NotificationService {
                             userId,
                             title,
                             content,
-                            buildFcmData(NotificationDomainType.VISIT, visitId)));
+                            buildFcmData(NotificationDomainType.VISIT, visitId, metadata)));
         }
 
         log.info(
@@ -322,7 +444,9 @@ public class NotificationService {
                 approverTitle,
                 approverContent,
                 NotificationDomainType.APPROVAL,
-                approvalId);
+                approvalId,
+                null,
+                true);
         eventPublisher.publishEvent(
                 new FcmSendEvent(
                         firstApproverId,
@@ -366,7 +490,13 @@ public class NotificationService {
         String content = NotificationMessage.APPROVAL_CREATED_APPROVER.formatContent(docTitle);
 
         createNotification(
-                nextApproverId, title, content, NotificationDomainType.APPROVAL, approvalId);
+                nextApproverId,
+                title,
+                content,
+                NotificationDomainType.APPROVAL,
+                approvalId,
+                null,
+                true);
         eventPublisher.publishEvent(
                 new FcmSendEvent(
                         nextApproverId,
@@ -447,10 +577,62 @@ public class NotificationService {
                 viewerIds.size());
     }
 
+    /**
+     * 안전보건교육 세션 생성 시 대상 유저 전체에게 FCM 알림 전송 + Notification 저장
+     *
+     * @param sessionId 생성된 세션 ID (domainId로 저장)
+     * @param sessionTitle 세션 제목
+     * @param targetUserIds 알림을 받을 유저 ID 목록
+     */
+    @Transactional
+    public void sendSafetyTrainingSessionAlertToAttendees(
+            Long sessionId, String sessionTitle, List<Long> targetUserIds) {
+        if (targetUserIds == null || targetUserIds.isEmpty()) {
+            log.info("안전보건교육 알림 전송 건너뜀 - 대상 없음, sessionId: {}", sessionId);
+            return;
+        }
+
+        String title = NotificationMessage.SAFETY_TRAINING_SESSION_CREATED.getTitle();
+        String content =
+                NotificationMessage.SAFETY_TRAINING_SESSION_CREATED.formatContent(sessionTitle);
+        Map<String, Object> metadata = Map.of("educationType", "SAFETY", "detailType", "SESSION");
+
+        for (Long userId : targetUserIds) {
+            createNotification(
+                    userId,
+                    title,
+                    content,
+                    NotificationDomainType.SAFETY_TRAINING,
+                    sessionId,
+                    metadata);
+            eventPublisher.publishEvent(
+                    new FcmSendEvent(
+                            userId,
+                            title,
+                            content,
+                            buildFcmData(
+                                    NotificationDomainType.SAFETY_TRAINING, sessionId, metadata)));
+        }
+
+        log.info("안전보건교육 세션 알림 전송 완료 - sessionId: {}, 대상 수: {}", sessionId, targetUserIds.size());
+    }
+
     private Map<String, String> buildFcmData(NotificationDomainType domainType, Long domainId) {
+        return buildFcmData(domainType, domainId, null);
+    }
+
+    private Map<String, String> buildFcmData(
+            NotificationDomainType domainType, Long domainId, Map<String, Object> metadata) {
         Map<String, String> data = new HashMap<>();
         data.put("domainType", domainType.name());
         data.put("domainId", domainId != null ? domainId.toString() : "");
+        if (metadata != null && !metadata.isEmpty()) {
+            try {
+                data.put("metadata", objectMapper.writeValueAsString(metadata));
+            } catch (JsonProcessingException e) {
+                log.error("FCM metadata 직렬화 실패", e);
+            }
+        }
         return data;
     }
 }

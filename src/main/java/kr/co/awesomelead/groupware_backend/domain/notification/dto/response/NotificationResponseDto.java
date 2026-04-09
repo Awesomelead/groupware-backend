@@ -8,6 +8,7 @@ import kr.co.awesomelead.groupware_backend.domain.notification.enums.Notificatio
 import lombok.Getter;
 
 import java.time.LocalDateTime;
+import java.util.Map;
 
 @Getter
 @Schema(description = "알림 응답")
@@ -34,15 +35,24 @@ public class NotificationResponseDto {
     @Schema(description = "생성일시", example = "2026-02-25T01:00:00")
     private final LocalDateTime createdAt;
 
+    @Schema(
+            description = "도메인별 메타데이터 (requestId, approvalTargetId 등)",
+            example = "{\"requestId\": 10}")
+    private final Map<String, Object> metadata;
+
+    @Schema(description = "승인 대기 여부 (true인 알림만 필터링 가능)", example = "false")
+    private final boolean requiresApproval;
+
     private NotificationResponseDto(Notification notification) {
         this.id = notification.getId();
         this.title = notification.getTitle();
         this.content = notification.getContent();
         this.domainType = notification.getDomainType();
         this.domainId = notification.getDomainId();
-
         this.isRead = notification.getIsRead();
         this.createdAt = notification.getCreatedAt();
+        this.metadata = notification.getMetadata();
+        this.requiresApproval = notification.isRequiresApproval();
     }
 
     public static NotificationResponseDto from(Notification notification) {

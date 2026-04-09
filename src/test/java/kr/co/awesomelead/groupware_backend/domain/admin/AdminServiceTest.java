@@ -51,6 +51,7 @@ import org.springframework.data.domain.Pageable;
 
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 @ExtendWith(MockitoExtension.class)
@@ -681,7 +682,7 @@ class AdminServiceTest {
             assertThat(request.getStatus()).isEqualTo(MyInfoUpdateRequestStatus.APPROVED);
             verify(userRepository).save(targetUser);
             verify(myInfoUpdateRequestRepository).save(request);
-            verify(notificationService).sendAlertToUser(any(), any(), any(), any());
+            verify(notificationService).sendAlertToUser(any(), any(), any(), any(), any(Map.class));
         }
 
         @Test
@@ -708,7 +709,7 @@ class AdminServiceTest {
             assertThat(request.getStatus()).isEqualTo(MyInfoUpdateRequestStatus.REJECTED);
             assertThat(request.getRejectReason()).isEqualTo("증빙 불충분");
             verify(myInfoUpdateRequestRepository).save(request);
-            verify(notificationService).sendAlertToUser(any(), any(), any(), any(), any());
+            verify(notificationService).sendAlertToUser(any(), any(), any(), any(), any(Map.class), any());
         }
 
         @Test

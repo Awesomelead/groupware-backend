@@ -45,6 +45,7 @@ import org.springframework.security.core.userdetails.UserDetails;
 
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 @ExtendWith(MockitoExtension.class)
@@ -175,6 +176,8 @@ class UserServiceTest {
                             myInfoUpdateRequestRepository.existsByUserIdAndStatus(
                                     testUser.getId(), MyInfoUpdateRequestStatus.PENDING))
                     .willReturn(false);
+            given(myInfoUpdateRequestRepository.save(any(MyInfoUpdateRequest.class)))
+                    .willReturn(MyInfoUpdateRequest.builder().id(99L).build());
 
             // when
             MyInfoResponseDto response = userService.updateMyInfo(userDetails, requestDto);
@@ -185,7 +188,7 @@ class UserServiceTest {
 
             verify(userRepository).findByEmail(TEST_EMAIL);
             verify(myInfoUpdateRequestRepository).save(any(MyInfoUpdateRequest.class));
-            verify(notificationService).sendAlertToAdmins(any(), any(), any(), any());
+            verify(notificationService).sendAlertToAdmins(any(), any(), any(), any(Map.class), any());
         }
 
         @Test
@@ -203,6 +206,8 @@ class UserServiceTest {
                     .willReturn(false);
             given(phoneAuthService.isPhoneVerified(NEW_PHONE)).willReturn(true);
             given(userRepository.existsByPhoneNumberHash(newPhoneHash)).willReturn(false);
+            given(myInfoUpdateRequestRepository.save(any(MyInfoUpdateRequest.class)))
+                    .willReturn(MyInfoUpdateRequest.builder().id(99L).build());
 
             // when
             MyInfoResponseDto response = userService.updateMyInfo(userDetails, requestDto);
@@ -216,7 +221,7 @@ class UserServiceTest {
             verify(userRepository).existsByPhoneNumberHash(newPhoneHash);
             verify(myInfoUpdateRequestRepository).save(any(MyInfoUpdateRequest.class));
             verify(phoneAuthService).clearVerification(NEW_PHONE);
-            verify(notificationService).sendAlertToAdmins(any(), any(), any(), any());
+            verify(notificationService).sendAlertToAdmins(any(), any(), any(), any(Map.class), any());
         }
 
         @Test
@@ -235,6 +240,8 @@ class UserServiceTest {
                     .willReturn(false);
             given(phoneAuthService.isPhoneVerified(NEW_PHONE)).willReturn(true);
             given(userRepository.existsByPhoneNumberHash(newPhoneHash)).willReturn(false);
+            given(myInfoUpdateRequestRepository.save(any(MyInfoUpdateRequest.class)))
+                    .willReturn(MyInfoUpdateRequest.builder().id(99L).build());
 
             // when
             MyInfoResponseDto response = userService.updateMyInfo(userDetails, requestDto);
@@ -247,7 +254,7 @@ class UserServiceTest {
             verify(userRepository).findByEmail(TEST_EMAIL);
             verify(phoneAuthService).isPhoneVerified(NEW_PHONE);
             verify(myInfoUpdateRequestRepository).save(any(MyInfoUpdateRequest.class));
-            verify(notificationService).sendAlertToAdmins(any(), any(), any(), any());
+            verify(notificationService).sendAlertToAdmins(any(), any(), any(), any(Map.class), any());
         }
 
         @Test

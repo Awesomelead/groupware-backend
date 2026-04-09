@@ -52,6 +52,9 @@ public class Notification {
     @Column(columnDefinition = "TEXT")
     private Map<String, Object> metadata;
 
+    @Column(nullable = false)
+    private boolean requiresApproval;
+
     @Column(nullable = false, updatable = false)
     private LocalDateTime createdAt;
 
@@ -66,7 +69,8 @@ public class Notification {
             String content,
             NotificationDomainType domainType,
             Long domainId,
-            Map<String, Object> metadata) {
+            Map<String, Object> metadata,
+            boolean requiresApproval) {
         this.userId = userId;
         this.title = title;
         this.content = content;
@@ -74,6 +78,7 @@ public class Notification {
         this.domainId = domainId;
         this.metadata = metadata;
         this.isRead = false;
+        this.requiresApproval = requiresApproval;
     }
 
     public static Notification of(
@@ -83,7 +88,7 @@ public class Notification {
             NotificationDomainType domainType,
             Long domainId) {
         validate(userId, title, content, domainType);
-        return new Notification(userId, title, content, domainType, domainId, null);
+        return new Notification(userId, title, content, domainType, domainId, null, false);
     }
 
     public static Notification of(
@@ -94,7 +99,19 @@ public class Notification {
             Long domainId,
             Map<String, Object> metadata) {
         validate(userId, title, content, domainType);
-        return new Notification(userId, title, content, domainType, domainId, metadata);
+        return new Notification(userId, title, content, domainType, domainId, metadata, false);
+    }
+
+    public static Notification of(
+            Long userId,
+            String title,
+            String content,
+            NotificationDomainType domainType,
+            Long domainId,
+            Map<String, Object> metadata,
+            boolean requiresApproval) {
+        validate(userId, title, content, domainType);
+        return new Notification(userId, title, content, domainType, domainId, metadata, requiresApproval);
     }
 
     private static void validate(

@@ -138,7 +138,7 @@ public class UserService {
         }
 
         // Admin 권한 유저들에게 정보수정 승인 요청 알림 전송 (FCM + Notification DB)
-        notificationService.sendAlertToAdmins(
+        notificationService.sendAlertToAdminsRequiringApproval(
                 NotificationMessage.MY_INFO_UPDATE_REQUEST_ADMIN,
                 NotificationDomainType.MY_INFO_UPDATE,
                 saved.getId(),

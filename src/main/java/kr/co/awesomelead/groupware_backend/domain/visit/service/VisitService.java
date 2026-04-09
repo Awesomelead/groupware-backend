@@ -3,6 +3,7 @@ package kr.co.awesomelead.groupware_backend.domain.visit.service;
 import static kr.co.awesomelead.groupware_backend.domain.visit.entity.Visit.hashValue;
 
 import kr.co.awesomelead.groupware_backend.domain.department.repository.DepartmentRepository;
+import kr.co.awesomelead.groupware_backend.domain.notification.enums.NotificationDomainType;
 import kr.co.awesomelead.groupware_backend.domain.notification.enums.NotificationMessage;
 import kr.co.awesomelead.groupware_backend.domain.notification.service.NotificationService;
 import kr.co.awesomelead.groupware_backend.domain.user.entity.User;
@@ -500,5 +501,8 @@ public class VisitService {
 
         // 5. 상태 변경 처리
         visit.process(dto.getStatus(), dto.getRejectionReason());
+
+        // 6. 승인 대기 알림 해제 (승인/반려 모두)
+        notificationService.resolveRequiresApproval(NotificationDomainType.VISIT, visitId);
     }
 }

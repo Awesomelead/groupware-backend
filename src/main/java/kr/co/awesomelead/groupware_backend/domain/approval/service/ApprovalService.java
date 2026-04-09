@@ -19,6 +19,7 @@ import kr.co.awesomelead.groupware_backend.domain.approval.enums.ParticipantType
 import kr.co.awesomelead.groupware_backend.domain.approval.mapper.ApprovalMapper;
 import kr.co.awesomelead.groupware_backend.domain.approval.repository.ApprovalAttachmentRepository;
 import kr.co.awesomelead.groupware_backend.domain.approval.repository.ApprovalRepository;
+import kr.co.awesomelead.groupware_backend.domain.notification.enums.NotificationDomainType;
 import kr.co.awesomelead.groupware_backend.domain.notification.service.NotificationService;
 import kr.co.awesomelead.groupware_backend.domain.user.entity.User;
 import kr.co.awesomelead.groupware_backend.domain.user.enums.Role;
@@ -227,6 +228,9 @@ public class ApprovalService {
 
         approval.approve(approver, comment);
 
+        // 현재 결재자의 승인 대기 알림 해제
+        notificationService.resolveRequiresApproval(NotificationDomainType.APPROVAL, approvalId);
+
         // 승인 후 상태에 따라 알림 분기
         boolean allApproved =
                 approval.getSteps().stream()
@@ -280,6 +284,9 @@ public class ApprovalService {
                         .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
 
         approval.reject(approver, comment);
+
+        // 현재 결재자의 승인 대기 알림 해제
+        notificationService.resolveRequiresApproval(NotificationDomainType.APPROVAL, approvalId);
 
         // 기안자에게 반려 알림
         try {

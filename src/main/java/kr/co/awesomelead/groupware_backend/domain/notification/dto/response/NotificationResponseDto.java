@@ -38,6 +38,9 @@ public class NotificationResponseDto {
     @Schema(description = "도메인별 메타데이터 (requestId, approvalTargetId 등)", example = "{\"requestId\": 10}")
     private final Map<String, Object> metadata;
 
+    @Schema(description = "승인 대기 여부 (true인 알림만 필터링 가능)", example = "false")
+    private final boolean requiresApproval;
+
     private NotificationResponseDto(Notification notification) {
         this.id = notification.getId();
         this.title = notification.getTitle();
@@ -47,6 +50,7 @@ public class NotificationResponseDto {
         this.isRead = notification.getIsRead();
         this.createdAt = notification.getCreatedAt();
         this.metadata = notification.getMetadata();
+        this.requiresApproval = notification.isRequiresApproval();
     }
 
     public static NotificationResponseDto from(Notification notification) {

@@ -57,17 +57,40 @@ public class NotificationService {
             NotificationDomainType domainType,
             Long domainId,
             Map<String, Object> metadata) {
+        createNotification(userId, title, content, domainType, domainId, metadata, false);
+    }
+
+    @Transactional
+    public void createNotification(
+            Long userId,
+            String title,
+            String content,
+            NotificationDomainType domainType,
+            Long domainId,
+            Map<String, Object> metadata,
+            boolean requiresApproval) {
         Notification notification =
-                Notification.of(userId, title, content, domainType, domainId, metadata);
+                Notification.of(userId, title, content, domainType, domainId, metadata, requiresApproval);
         notificationRepository.save(notification);
         log.info("알림 생성 - userId: {}, domainType: {}", userId, domainType);
     }
 
     @Transactional(readOnly = true)
-    public Page<NotificationResponseDto> getNotifications(Long userId, Pageable pageable) {
-        return notificationRepository
-                .findByUserIdOrderByCreatedAtDesc(userId, pageable)
-                .map(NotificationResponseDto::from);
+    public Page<NotificationResponseDto> getNotifications(
+            Long userId, boolean pendingApproval, Pageable pageable) {
+        Page<Notification> page =
+                pendingApproval
+                        ? notificationRepository
+                                .findByUserIdAndRequiresApprovalTrueOrderByCreatedAtDesc(
+                                        userId, pageable)
+                        : notificationRepository.findByUserIdOrderByCreatedAtDesc(userId, pageable);
+        return page.map(NotificationResponseDto::from);
+    }
+
+    @Transactional
+    public void resolveRequiresApproval(NotificationDomainType domainType, Long domainId) {
+        notificationRepository.resolveRequiresApprovalByDomainTypeAndDomainId(domainType, domainId);
+        log.info("requiresApproval 해제 - domainType: {}, domainId: {}", domainType, domainId);
     }
 
     @Transactional
@@ -113,6 +136,26 @@ public class NotificationService {
             Long domainId,
             Map<String, Object> metadata,
             Object... args) {
+        sendAlertToAdminsInternal(template, domainType, domainId, metadata, false, args);
+    }
+
+    @Transactional
+    public void sendAlertToAdminsRequiringApproval(
+            NotificationMessage template,
+            NotificationDomainType domainType,
+            Long domainId,
+            Map<String, Object> metadata,
+            Object... args) {
+        sendAlertToAdminsInternal(template, domainType, domainId, metadata, true, args);
+    }
+
+    private void sendAlertToAdminsInternal(
+            NotificationMessage template,
+            NotificationDomainType domainType,
+            Long domainId,
+            Map<String, Object> metadata,
+            boolean requiresApproval,
+            Object... args) {
         String title = template.getTitle();
         String content = template.formatContent(args);
 
@@ -121,7 +164,8 @@ public class NotificationService {
 
         for (User admin : admins) {
             // 1. 알림함 저장
-            createNotification(admin.getId(), title, content, domainType, domainId, metadata);
+            createNotification(
+                    admin.getId(), title, content, domainType, domainId, metadata, requiresApproval);
 
             // 2. FCM 이벤트 발행 (트랜잭션 커밋 후 비동기 발송)
             eventPublisher.publishEvent(
@@ -290,10 +334,12 @@ public class NotificationService {
 
         String title = template.getTitle();
         String content = template.formatContent(contentArgs);
+        boolean requiresApproval = metadata != null && Boolean.TRUE.equals(metadata.get("isApprovalTarget"));
 
         for (Long userId : targetUserIds) {
             // 1. 알림함 저장
-            createNotification(userId, title, content, NotificationDomainType.VISIT, visitId, metadata);
+            createNotification(
+                    userId, title, content, NotificationDomainType.VISIT, visitId, metadata, requiresApproval);
 
             // 2. FCM 이벤트 발행 (트랜잭션 커밋 후 비동기 발송)
             eventPublisher.publishEvent(
@@ -384,7 +430,9 @@ public class NotificationService {
                 approverTitle,
                 approverContent,
                 NotificationDomainType.APPROVAL,
-                approvalId);
+                approvalId,
+                null,
+                true);
         eventPublisher.publishEvent(
                 new FcmSendEvent(
                         firstApproverId,
@@ -428,7 +476,7 @@ public class NotificationService {
         String content = NotificationMessage.APPROVAL_CREATED_APPROVER.formatContent(docTitle);
 
         createNotification(
-                nextApproverId, title, content, NotificationDomainType.APPROVAL, approvalId);
+                nextApproverId, title, content, NotificationDomainType.APPROVAL, approvalId, null, true);
         eventPublisher.publishEvent(
                 new FcmSendEvent(
                         nextApproverId,

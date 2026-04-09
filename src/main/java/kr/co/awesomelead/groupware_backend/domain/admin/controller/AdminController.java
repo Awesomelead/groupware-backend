@@ -801,7 +801,7 @@ public class AdminController {
 
     @Operation(
             summary = "내 정보 수정 요청 승인",
-            description = "해당 사용자(userId)의 최신 PENDING 개인정보 수정 요청 1건을 승인하고 실제 사용자 정보에 반영합니다.")
+            description = "requestId(MyInfoUpdateRequest PK)로 해당 PENDING 개인정보 수정 요청을 승인하고 실제 사용자 정보에 반영합니다.")
     @ApiResponses(
             value = {
                 @io.swagger.v3.oas.annotations.responses.ApiResponse(
@@ -818,7 +818,7 @@ public class AdminController {
                                           "isSuccess": true,
                                           "code": "COMMON200",
                                           "message": "요청에 성공했습니다.",
-                                          "result": "22번 사용자의 개인정보 수정 요청이 승인되었습니다."
+                                          "result": "개인정보 수정 요청이 승인되었습니다."
                                         }
                                         """))),
                 @io.swagger.v3.oas.annotations.responses.ApiResponse(
@@ -840,47 +840,35 @@ public class AdminController {
                                         """))),
                 @io.swagger.v3.oas.annotations.responses.ApiResponse(
                         responseCode = "404",
-                        description = "요청 또는 사용자 없음",
+                        description = "요청 없음",
                         content =
                                 @Content(
                                         mediaType = "application/json",
-                                        examples = {
-                                            @ExampleObject(
-                                                    name = "사용자 없음",
-                                                    value =
-                                                            """
-                                                        {
-                                                          "isSuccess": false,
-                                                          "code": "USER_NOT_FOUND",
-                                                          "message": "해당 사용자를 찾을 수 없습니다.",
-                                                          "result": null
-                                                        }
-                                                        """),
-                                            @ExampleObject(
-                                                    name = "요청 없음",
-                                                    value =
-                                                            """
-                                                        {
-                                                          "isSuccess": false,
-                                                          "code": "MY_INFO_UPDATE_REQUEST_NOT_FOUND",
-                                                          "message": "해당 개인정보 수정 요청을 찾을 수 없습니다.",
-                                                          "result": null
-                                                        }
-                                                        """)
-                                        }))
+                                        examples =
+                                                @ExampleObject(
+                                                        value =
+                                                                """
+                                        {
+                                          "isSuccess": false,
+                                          "code": "MY_INFO_UPDATE_REQUEST_NOT_FOUND",
+                                          "message": "해당 개인정보 수정 요청을 찾을 수 없습니다.",
+                                          "result": null
+                                        }
+                                        """)))
             })
-    @PatchMapping("/users/{userId}/my-info/approve")
+    @PatchMapping("/my-info/requests/{requestId}/approve")
     public ResponseEntity<ApiResponse<String>> approveMyInfoUpdate(
-            @Parameter(description = "승인 대상 사용자 ID", required = true, example = "22") @PathVariable
-                    Long userId,
+            @Parameter(description = "승인할 내 정보 수정 요청 ID", required = true, example = "10")
+                    @PathVariable
+                    Long requestId,
             @Parameter(hidden = true) @AuthenticationPrincipal CustomUserDetails userDetails) {
-        adminService.approveMyInfoUpdate(userId, userDetails.getId());
-        return ResponseEntity.ok(ApiResponse.onSuccess(userId + "번 사용자의 개인정보 수정 요청이 승인되었습니다."));
+        adminService.approveMyInfoUpdate(requestId, userDetails.getId());
+        return ResponseEntity.ok(ApiResponse.onSuccess("개인정보 수정 요청이 승인되었습니다."));
     }
 
     @Operation(
             summary = "내 정보 수정 요청 반려",
-            description = "해당 사용자(userId)의 최신 PENDING 개인정보 수정 요청 1건을 반려합니다.")
+            description = "requestId(MyInfoUpdateRequest PK)로 해당 PENDING 개인정보 수정 요청을 반려합니다.")
     @ApiResponses(
             value = {
                 @io.swagger.v3.oas.annotations.responses.ApiResponse(
@@ -897,7 +885,7 @@ public class AdminController {
                                           "isSuccess": true,
                                           "code": "COMMON200",
                                           "message": "요청에 성공했습니다.",
-                                          "result": "22번 사용자의 개인정보 수정 요청이 반려되었습니다."
+                                          "result": "개인정보 수정 요청이 반려되었습니다."
                                         }
                                         """))),
                 @io.swagger.v3.oas.annotations.responses.ApiResponse(
@@ -936,43 +924,31 @@ public class AdminController {
                                         """))),
                 @io.swagger.v3.oas.annotations.responses.ApiResponse(
                         responseCode = "404",
-                        description = "요청 또는 사용자 없음",
+                        description = "요청 없음",
                         content =
                                 @Content(
                                         mediaType = "application/json",
-                                        examples = {
-                                            @ExampleObject(
-                                                    name = "사용자 없음",
-                                                    value =
-                                                            """
-                                                        {
-                                                          "isSuccess": false,
-                                                          "code": "USER_NOT_FOUND",
-                                                          "message": "해당 사용자를 찾을 수 없습니다.",
-                                                          "result": null
-                                                        }
-                                                        """),
-                                            @ExampleObject(
-                                                    name = "요청 없음",
-                                                    value =
-                                                            """
-                                                        {
-                                                          "isSuccess": false,
-                                                          "code": "MY_INFO_UPDATE_REQUEST_NOT_FOUND",
-                                                          "message": "해당 개인정보 수정 요청을 찾을 수 없습니다.",
-                                                          "result": null
-                                                        }
-                                                        """)
-                                        }))
+                                        examples =
+                                                @ExampleObject(
+                                                        value =
+                                                                """
+                                        {
+                                          "isSuccess": false,
+                                          "code": "MY_INFO_UPDATE_REQUEST_NOT_FOUND",
+                                          "message": "해당 개인정보 수정 요청을 찾을 수 없습니다.",
+                                          "result": null
+                                        }
+                                        """)))
             })
-    @PatchMapping("/users/{userId}/my-info/reject")
+    @PatchMapping("/my-info/requests/{requestId}/reject")
     public ResponseEntity<ApiResponse<String>> rejectMyInfoUpdate(
-            @Parameter(description = "반려 대상 사용자 ID", required = true, example = "22") @PathVariable
-                    Long userId,
+            @Parameter(description = "반려할 내 정보 수정 요청 ID", required = true, example = "10")
+                    @PathVariable
+                    Long requestId,
             @Valid @RequestBody MyInfoUpdateRejectRequestDto requestDto,
             @Parameter(hidden = true) @AuthenticationPrincipal CustomUserDetails userDetails) {
-        adminService.rejectMyInfoUpdate(userId, requestDto.getReason(), userDetails.getId());
-        return ResponseEntity.ok(ApiResponse.onSuccess(userId + "번 사용자의 개인정보 수정 요청이 반려되었습니다."));
+        adminService.rejectMyInfoUpdate(requestId, requestDto.getReason(), userDetails.getId());
+        return ResponseEntity.ok(ApiResponse.onSuccess("개인정보 수정 요청이 반려되었습니다."));
     }
 
     @Operation(

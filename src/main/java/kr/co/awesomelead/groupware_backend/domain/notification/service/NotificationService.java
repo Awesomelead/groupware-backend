@@ -21,6 +21,9 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -34,6 +37,7 @@ public class NotificationService {
     private final NotificationRepository notificationRepository;
     private final ApplicationEventPublisher eventPublisher;
     private final UserRepository userRepository;
+    private final ObjectMapper objectMapper = new ObjectMapper();
 
     @Transactional
     public void createNotification(
@@ -42,7 +46,19 @@ public class NotificationService {
             String content,
             NotificationDomainType domainType,
             Long domainId) {
-        Notification notification = Notification.of(userId, title, content, domainType, domainId);
+        createNotification(userId, title, content, domainType, domainId, null);
+    }
+
+    @Transactional
+    public void createNotification(
+            Long userId,
+            String title,
+            String content,
+            NotificationDomainType domainType,
+            Long domainId,
+            Map<String, Object> metadata) {
+        Notification notification =
+                Notification.of(userId, title, content, domainType, domainId, metadata);
         notificationRepository.save(notification);
         log.info("알림 생성 - userId: {}, domainType: {}", userId, domainType);
     }
@@ -87,6 +103,16 @@ public class NotificationService {
             NotificationDomainType domainType,
             Long domainId,
             Object... args) {
+        sendAlertToAdmins(template, domainType, domainId, null, args);
+    }
+
+    @Transactional
+    public void sendAlertToAdmins(
+            NotificationMessage template,
+            NotificationDomainType domainType,
+            Long domainId,
+            Map<String, Object> metadata,
+            Object... args) {
         String title = template.getTitle();
         String content = template.formatContent(args);
 
@@ -95,12 +121,15 @@ public class NotificationService {
 
         for (User admin : admins) {
             // 1. 알림함 저장
-            createNotification(admin.getId(), title, content, domainType, domainId);
+            createNotification(admin.getId(), title, content, domainType, domainId, metadata);
 
             // 2. FCM 이벤트 발행 (트랜잭션 커밋 후 비동기 발송)
             eventPublisher.publishEvent(
                     new FcmSendEvent(
-                            admin.getId(), title, content, buildFcmData(domainType, domainId)));
+                            admin.getId(),
+                            title,
+                            content,
+                            buildFcmData(domainType, domainId, metadata)));
         }
 
         log.info("관리자 그룹 알림 전송 완료 - 대상 Admin 수: {}, 템플릿: {}", admins.size(), template.name());
@@ -122,15 +151,27 @@ public class NotificationService {
             NotificationDomainType domainType,
             Long domainId,
             Object... args) {
+        sendAlertToUser(userId, template, domainType, domainId, null, args);
+    }
+
+    @Transactional
+    public void sendAlertToUser(
+            Long userId,
+            NotificationMessage template,
+            NotificationDomainType domainType,
+            Long domainId,
+            Map<String, Object> metadata,
+            Object... args) {
         String title = template.getTitle();
         String content = template.formatContent(args);
 
         // 1. 알림함 저장
-        createNotification(userId, title, content, domainType, domainId);
+        createNotification(userId, title, content, domainType, domainId, metadata);
 
         // 2. FCM 이벤트 발행 (트랜잭션 커밋 후 비동기 발송)
         eventPublisher.publishEvent(
-                new FcmSendEvent(userId, title, content, buildFcmData(domainType, domainId)));
+                new FcmSendEvent(
+                        userId, title, content, buildFcmData(domainType, domainId, metadata)));
 
         log.info("단일 유저 알림 전송 완료 - userId: {}, 템플릿: {}", userId, template.name());
     }
@@ -448,9 +489,21 @@ public class NotificationService {
     }
 
     private Map<String, String> buildFcmData(NotificationDomainType domainType, Long domainId) {
+        return buildFcmData(domainType, domainId, null);
+    }
+
+    private Map<String, String> buildFcmData(
+            NotificationDomainType domainType, Long domainId, Map<String, Object> metadata) {
         Map<String, String> data = new HashMap<>();
         data.put("domainType", domainType.name());
         data.put("domainId", domainId != null ? domainId.toString() : "");
+        if (metadata != null && !metadata.isEmpty()) {
+            try {
+                data.put("metadata", objectMapper.writeValueAsString(metadata));
+            } catch (JsonProcessingException e) {
+                log.error("FCM metadata 직렬화 실패", e);
+            }
+        }
         return data;
     }
 }

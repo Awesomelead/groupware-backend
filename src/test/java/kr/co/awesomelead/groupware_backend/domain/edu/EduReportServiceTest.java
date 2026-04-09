@@ -181,7 +181,8 @@ public class EduReportServiceTest {
         assertThat(savedReport.getContent()).isEqualTo("교육 보고서 내용");
 
         verify(notificationService, times(1))
-                .sendEduReportAlertToTargets(anyString(), anyString(), anyLong(), any(), any(Map.class));
+                .sendEduReportAlertToTargets(
+                        anyString(), anyString(), anyLong(), any(), any(Map.class));
     }
 
     @Test

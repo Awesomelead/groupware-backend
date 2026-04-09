@@ -210,7 +210,8 @@ class AuthServiceTest {
         verify(userRepository, times(1)).save(any(User.class));
         verify(emailAuthService, times(1)).clearVerification(signupDto.getEmail());
         verify(phoneAuthService, times(1)).clearVerification(signupDto.getPhoneNumber());
-        verify(notificationService, times(1)).sendAlertToAdmins(any(), any(), any(), any(Map.class), any());
+        verify(notificationService, times(1))
+                .sendAlertToAdmins(any(), any(), any(), any(Map.class), any());
     }
 
     @Test

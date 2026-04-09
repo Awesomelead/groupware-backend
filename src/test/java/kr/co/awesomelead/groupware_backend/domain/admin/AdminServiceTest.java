@@ -703,7 +703,8 @@ class AdminServiceTest {
             assertThat(request.getStatus()).isEqualTo(MyInfoUpdateRequestStatus.REJECTED);
             assertThat(request.getRejectReason()).isEqualTo("증빙 불충분");
             verify(myInfoUpdateRequestRepository).save(request);
-            verify(notificationService).sendAlertToUser(any(), any(), any(), any(), any(Map.class), any());
+            verify(notificationService)
+                    .sendAlertToUser(any(), any(), any(), any(), any(Map.class), any());
         }
 
         @Test

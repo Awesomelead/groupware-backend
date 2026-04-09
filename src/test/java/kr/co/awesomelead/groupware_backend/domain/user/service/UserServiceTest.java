@@ -188,7 +188,8 @@ class UserServiceTest {
 
             verify(userRepository).findByEmail(TEST_EMAIL);
             verify(myInfoUpdateRequestRepository).save(any(MyInfoUpdateRequest.class));
-            verify(notificationService).sendAlertToAdminsRequiringApproval(any(), any(), any(), any(Map.class), any());
+            verify(notificationService)
+                    .sendAlertToAdminsRequiringApproval(any(), any(), any(), any(Map.class), any());
         }
 
         @Test
@@ -221,7 +222,8 @@ class UserServiceTest {
             verify(userRepository).existsByPhoneNumberHash(newPhoneHash);
             verify(myInfoUpdateRequestRepository).save(any(MyInfoUpdateRequest.class));
             verify(phoneAuthService).clearVerification(NEW_PHONE);
-            verify(notificationService).sendAlertToAdminsRequiringApproval(any(), any(), any(), any(Map.class), any());
+            verify(notificationService)
+                    .sendAlertToAdminsRequiringApproval(any(), any(), any(), any(Map.class), any());
         }
 
         @Test
@@ -254,7 +256,8 @@ class UserServiceTest {
             verify(userRepository).findByEmail(TEST_EMAIL);
             verify(phoneAuthService).isPhoneVerified(NEW_PHONE);
             verify(myInfoUpdateRequestRepository).save(any(MyInfoUpdateRequest.class));
-            verify(notificationService).sendAlertToAdminsRequiringApproval(any(), any(), any(), any(Map.class), any());
+            verify(notificationService)
+                    .sendAlertToAdminsRequiringApproval(any(), any(), any(), any(Map.class), any());
         }
 
         @Test

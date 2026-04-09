@@ -111,7 +111,8 @@ public class Notification {
             Map<String, Object> metadata,
             boolean requiresApproval) {
         validate(userId, title, content, domainType);
-        return new Notification(userId, title, content, domainType, domainId, metadata, requiresApproval);
+        return new Notification(
+                userId, title, content, domainType, domainId, metadata, requiresApproval);
     }
 
     private static void validate(

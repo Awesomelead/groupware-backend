@@ -48,8 +48,7 @@ class NotificationServiceTest {
     @Test
     @DisplayName("createNotification - metadata 없이 호출 시 metadata가 null로 저장된다")
     void createNotification_withoutMetadata_savesNotification() {
-        notificationService.createNotification(
-                1L, "제목", "내용", NotificationDomainType.VISIT, 10L);
+        notificationService.createNotification(1L, "제목", "내용", NotificationDomainType.VISIT, 10L);
 
         ArgumentCaptor<Notification> captor = forClass(Notification.class);
         verify(notificationRepository).save(captor.capture());
@@ -99,8 +98,10 @@ class NotificationServiceTest {
         User masterAdmin = mock(User.class);
         when(masterAdmin.getId()).thenReturn(20L);
 
-        when(userRepository.findAllByRole(Role.ADMIN)).thenReturn(new java.util.ArrayList<>(List.of(admin1)));
-        when(userRepository.findAllByRole(Role.MASTER_ADMIN)).thenReturn(new java.util.ArrayList<>(List.of(masterAdmin)));
+        when(userRepository.findAllByRole(Role.ADMIN))
+                .thenReturn(new java.util.ArrayList<>(List.of(admin1)));
+        when(userRepository.findAllByRole(Role.MASTER_ADMIN))
+                .thenReturn(new java.util.ArrayList<>(List.of(masterAdmin)));
 
         Map<String, Object> metadata = Map.of("visitId", 77);
 

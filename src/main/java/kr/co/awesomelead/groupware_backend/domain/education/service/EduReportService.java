@@ -132,8 +132,10 @@ public class EduReportService {
         Map<String, Object> metadata =
                 requestDto.getEduType() == EduType.SAFETY
                         ? Map.of(
-                                "educationType", requestDto.getEduType().name(),
-                                "detailType", "GENERAL")
+                                "educationType",
+                                requestDto.getEduType().name(),
+                                "detailType",
+                                "GENERAL")
                         : Map.of("educationType", requestDto.getEduType().name());
         notificationService.sendEduReportAlertToTargets(
                 requestDto.getEduType().getDescription(),

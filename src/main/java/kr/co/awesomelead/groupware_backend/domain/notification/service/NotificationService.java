@@ -1,5 +1,8 @@
 package kr.co.awesomelead.groupware_backend.domain.notification.service;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+
 import kr.co.awesomelead.groupware_backend.domain.fcm.event.FcmSendEvent;
 import kr.co.awesomelead.groupware_backend.domain.notification.dto.response.NotificationResponseDto;
 import kr.co.awesomelead.groupware_backend.domain.notification.entity.Notification;
@@ -20,9 +23,6 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
 
 import java.util.HashMap;
 import java.util.List;
@@ -70,7 +70,8 @@ public class NotificationService {
             Map<String, Object> metadata,
             boolean requiresApproval) {
         Notification notification =
-                Notification.of(userId, title, content, domainType, domainId, metadata, requiresApproval);
+                Notification.of(
+                        userId, title, content, domainType, domainId, metadata, requiresApproval);
         notificationRepository.save(notification);
         log.info("알림 생성 - userId: {}, domainType: {}", userId, domainType);
     }
@@ -165,7 +166,13 @@ public class NotificationService {
         for (User admin : admins) {
             // 1. 알림함 저장
             createNotification(
-                    admin.getId(), title, content, domainType, domainId, metadata, requiresApproval);
+                    admin.getId(),
+                    title,
+                    content,
+                    domainType,
+                    domainId,
+                    metadata,
+                    requiresApproval);
 
             // 2. FCM 이벤트 발행 (트랜잭션 커밋 후 비동기 발송)
             eventPublisher.publishEvent(
@@ -334,12 +341,19 @@ public class NotificationService {
 
         String title = template.getTitle();
         String content = template.formatContent(contentArgs);
-        boolean requiresApproval = metadata != null && Boolean.TRUE.equals(metadata.get("isApprovalTarget"));
+        boolean requiresApproval =
+                metadata != null && Boolean.TRUE.equals(metadata.get("isApprovalTarget"));
 
         for (Long userId : targetUserIds) {
             // 1. 알림함 저장
             createNotification(
-                    userId, title, content, NotificationDomainType.VISIT, visitId, metadata, requiresApproval);
+                    userId,
+                    title,
+                    content,
+                    NotificationDomainType.VISIT,
+                    visitId,
+                    metadata,
+                    requiresApproval);
 
             // 2. FCM 이벤트 발행 (트랜잭션 커밋 후 비동기 발송)
             eventPublisher.publishEvent(
@@ -476,7 +490,13 @@ public class NotificationService {
         String content = NotificationMessage.APPROVAL_CREATED_APPROVER.formatContent(docTitle);
 
         createNotification(
-                nextApproverId, title, content, NotificationDomainType.APPROVAL, approvalId, null, true);
+                nextApproverId,
+                title,
+                content,
+                NotificationDomainType.APPROVAL,
+                approvalId,
+                null,
+                true);
         eventPublisher.publishEvent(
                 new FcmSendEvent(
                         nextApproverId,
@@ -575,8 +595,7 @@ public class NotificationService {
         String title = NotificationMessage.SAFETY_TRAINING_SESSION_CREATED.getTitle();
         String content =
                 NotificationMessage.SAFETY_TRAINING_SESSION_CREATED.formatContent(sessionTitle);
-        Map<String, Object> metadata =
-                Map.of("educationType", "SAFETY", "detailType", "SESSION");
+        Map<String, Object> metadata = Map.of("educationType", "SAFETY", "detailType", "SESSION");
 
         for (Long userId : targetUserIds) {
             createNotification(
@@ -595,10 +614,7 @@ public class NotificationService {
                                     NotificationDomainType.SAFETY_TRAINING, sessionId, metadata)));
         }
 
-        log.info(
-                "안전보건교육 세션 알림 전송 완료 - sessionId: {}, 대상 수: {}",
-                sessionId,
-                targetUserIds.size());
+        log.info("안전보건교육 세션 알림 전송 완료 - sessionId: {}, 대상 수: {}", sessionId, targetUserIds.size());
     }
 
     private Map<String, String> buildFcmData(NotificationDomainType domainType, Long domainId) {

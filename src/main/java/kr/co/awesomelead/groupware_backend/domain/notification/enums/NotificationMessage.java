@@ -36,7 +36,10 @@ public enum NotificationMessage {
     APPROVAL_CREATED_APPROVER("결재 요청", "[%s] 결재 요청이 도착했습니다."),
     APPROVAL_CREATED_REFERRER("결재 참조", "[%s] 문서가 참조되었습니다."),
     APPROVAL_REJECTED("결재 반려", "[%s] 문서가 반려되었습니다. 사유: %s"),
-    APPROVAL_FINALLY_APPROVED("결재 최종 승인", "[%s] 문서가 최종 승인되었습니다.");
+    APPROVAL_FINALLY_APPROVED("결재 최종 승인", "[%s] 문서가 최종 승인되었습니다."),
+
+    // 안전보건교육 세션
+    SAFETY_TRAINING_SESSION_CREATED("새 안전보건교육 등록", "[안전보건교육] %s 교육이 등록되었습니다.");
 
     private final String title;
     private final String contentPattern;

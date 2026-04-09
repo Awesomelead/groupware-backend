@@ -21,6 +21,8 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
 import org.springframework.data.domain.Page;
+
+import java.util.Map;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -129,7 +131,7 @@ public class UserService {
                         .requestedAddress2(requestedAddress2)
                         .status(MyInfoUpdateRequestStatus.PENDING)
                         .build();
-        myInfoUpdateRequestRepository.save(request);
+        MyInfoUpdateRequest saved = myInfoUpdateRequestRepository.save(request);
 
         if (requestedPhoneNumber != null) {
             phoneAuthService.clearVerification(requestedPhoneNumber);
@@ -139,10 +141,11 @@ public class UserService {
         notificationService.sendAlertToAdmins(
                 NotificationMessage.MY_INFO_UPDATE_REQUEST_ADMIN,
                 NotificationDomainType.MY_INFO_UPDATE,
-                request.getId(),
+                saved.getId(),
+                Map.of("requestId", saved.getId()),
                 user.getDisplayName());
 
-        log.info("내 정보 수정 요청 생성 - 사용자 ID: {}, 요청 ID: {}", user.getId(), request.getId());
+        log.info("내 정보 수정 요청 생성 - 사용자 ID: {}, 요청 ID: {}", user.getId(), saved.getId());
 
         return MyInfoResponseDto.from(user);
     }

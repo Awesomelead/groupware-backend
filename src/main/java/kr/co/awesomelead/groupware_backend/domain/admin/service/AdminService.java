@@ -36,6 +36,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -455,7 +456,8 @@ public class AdminService {
                 userId,
                 NotificationMessage.MY_INFO_UPDATE_APPROVED,
                 NotificationDomainType.MY_INFO_UPDATE,
-                request.getId());
+                request.getId(),
+                Map.of("requestId", request.getId()));
     }
 
     @Transactional
@@ -492,6 +494,7 @@ public class AdminService {
                 NotificationMessage.MY_INFO_UPDATE_REJECTED,
                 NotificationDomainType.MY_INFO_UPDATE,
                 request.getId(),
+                Map.of("requestId", request.getId()),
                 reason.trim());
     }
 

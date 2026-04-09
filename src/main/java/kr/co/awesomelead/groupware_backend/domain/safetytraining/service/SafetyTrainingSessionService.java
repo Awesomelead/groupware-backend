@@ -3,6 +3,7 @@ package kr.co.awesomelead.groupware_backend.domain.safetytraining.service;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import kr.co.awesomelead.groupware_backend.domain.department.enums.Company;
+import kr.co.awesomelead.groupware_backend.domain.notification.service.NotificationService;
 import kr.co.awesomelead.groupware_backend.domain.safetytraining.dto.request.SafetyTrainingSessionCreateRequestDto;
 import kr.co.awesomelead.groupware_backend.domain.safetytraining.dto.request.SafetyTrainingSessionSearchConditionDto;
 import kr.co.awesomelead.groupware_backend.domain.safetytraining.dto.request.SafetyTrainingSessionStatusUpdateRequestDto;
@@ -64,6 +65,7 @@ public class SafetyTrainingSessionService {
     private final ObjectMapper objectMapper;
     private final SafetyTrainingExcelService safetyTrainingExcelService;
     private final S3Service s3Service;
+    private final NotificationService notificationService;
 
     @Transactional(readOnly = true)
     public SafetyTrainingPreviewResponseDto preview(
@@ -153,6 +155,11 @@ public class SafetyTrainingSessionService {
         saved.setTargetCount(rows.size());
         saved.setAttendedCount(0);
         saved.setAbsentCount(0);
+
+        // 안전보건교육 세션 생성 알림 전송
+        List<Long> attendeeIds = attendees.stream().map(User::getId).toList();
+        notificationService.sendSafetyTrainingSessionAlertToAttendees(
+                saved.getId(), saved.getTitle(), attendeeIds);
 
         return saved.getId();
     }

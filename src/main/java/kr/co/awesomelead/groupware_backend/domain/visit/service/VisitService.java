@@ -38,6 +38,8 @@ import lombok.extern.slf4j.Slf4j;
 
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+
+import java.util.Map;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 
@@ -82,6 +84,7 @@ public class VisitService {
                     NotificationMessage.VISIT_ONE_DAY_PRE,
                     visitId,
                     hostDeptId,
+                    Map.of("isApprovalTarget", false, "status", VisitStatus.PENDING.name()),
                     visit.getVisitorName(),
                     visit.getStartDate(),
                     dto.getPlannedEntryTime(),
@@ -115,6 +118,7 @@ public class VisitService {
                     NotificationMessage.VISIT_LONG_TERM_PRE,
                     visitId,
                     hostDeptId,
+                    Map.of("status", VisitStatus.PENDING.name(), "isApprovalTarget", true),
                     visit.getVisitorName(),
                     dto.getStartDate(),
                     dto.getEndDate());
@@ -158,6 +162,7 @@ public class VisitService {
                     NotificationMessage.VISIT_CHECK_IN,
                     visitId,
                     hostDeptId,
+                    Map.of("isApprovalTarget", false, "status", VisitStatus.IN_PROGRESS.name()),
                     visit.getVisitorName(),
                     record.getEntryTime().toLocalTime());
         }
@@ -254,6 +259,7 @@ public class VisitService {
                     NotificationMessage.VISIT_CHECK_IN,
                     visit.getId(),
                     host.getDepartment().getId(),
+                    Map.of("isApprovalTarget", false, "status", VisitStatus.IN_PROGRESS.name()),
                     visit.getVisitorName(),
                     entryTime.toLocalTime());
         }

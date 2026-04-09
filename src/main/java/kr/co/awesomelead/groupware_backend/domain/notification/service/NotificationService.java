@@ -221,6 +221,16 @@ public class NotificationService {
     @Transactional
     public void sendEduReportAlertToTargets(
             String eduTypeLabel, String eduTitle, Long reportId, List<Long> targetUserIds) {
+        sendEduReportAlertToTargets(eduTypeLabel, eduTitle, reportId, targetUserIds, null);
+    }
+
+    @Transactional
+    public void sendEduReportAlertToTargets(
+            String eduTypeLabel,
+            String eduTitle,
+            Long reportId,
+            List<Long> targetUserIds,
+            Map<String, Object> metadata) {
         if (targetUserIds == null || targetUserIds.isEmpty()) {
             log.info("교육 알림 전송 건너뜀 - 대상 없음, reportId: {}", reportId);
             return;
@@ -232,7 +242,8 @@ public class NotificationService {
 
         for (Long userId : targetUserIds) {
             // 1. 알림함 저장
-            createNotification(userId, title, content, NotificationDomainType.EDUCATION, reportId);
+            createNotification(
+                    userId, title, content, NotificationDomainType.EDUCATION, reportId, metadata);
 
             // 2. FCM 이벤트 발행 (트랜잭션 커밋 후 비동기 발송)
             eventPublisher.publishEvent(
@@ -240,7 +251,7 @@ public class NotificationService {
                             userId,
                             title,
                             content,
-                            buildFcmData(NotificationDomainType.EDUCATION, reportId)));
+                            buildFcmData(NotificationDomainType.EDUCATION, reportId, metadata)));
         }
 
         log.info("교육 알림 전송 완료 - reportId: {}, 대상 수: {}", reportId, targetUserIds.size());
@@ -260,6 +271,16 @@ public class NotificationService {
             Long visitId,
             Long hostDepartmentId,
             Object... contentArgs) {
+        sendVisitAlertToDepartment(template, visitId, hostDepartmentId, null, contentArgs);
+    }
+
+    @Transactional
+    public void sendVisitAlertToDepartment(
+            NotificationMessage template,
+            Long visitId,
+            Long hostDepartmentId,
+            Map<String, Object> metadata,
+            Object... contentArgs) {
         List<Long> targetUserIds = userRepository.findAllIdsByDepartmentId(hostDepartmentId);
 
         if (targetUserIds.isEmpty()) {
@@ -272,7 +293,7 @@ public class NotificationService {
 
         for (Long userId : targetUserIds) {
             // 1. 알림함 저장
-            createNotification(userId, title, content, NotificationDomainType.VISIT, visitId);
+            createNotification(userId, title, content, NotificationDomainType.VISIT, visitId, metadata);
 
             // 2. FCM 이벤트 발행 (트랜잭션 커밋 후 비동기 발송)
             eventPublisher.publishEvent(
@@ -280,7 +301,7 @@ public class NotificationService {
                             userId,
                             title,
                             content,
-                            buildFcmData(NotificationDomainType.VISIT, visitId)));
+                            buildFcmData(NotificationDomainType.VISIT, visitId, metadata)));
         }
 
         log.info(
@@ -486,6 +507,50 @@ public class NotificationService {
                 approvalId,
                 drafterId,
                 viewerIds.size());
+    }
+
+    /**
+     * 안전보건교육 세션 생성 시 대상 유저 전체에게 FCM 알림 전송 + Notification 저장
+     *
+     * @param sessionId 생성된 세션 ID (domainId로 저장)
+     * @param sessionTitle 세션 제목
+     * @param targetUserIds 알림을 받을 유저 ID 목록
+     */
+    @Transactional
+    public void sendSafetyTrainingSessionAlertToAttendees(
+            Long sessionId, String sessionTitle, List<Long> targetUserIds) {
+        if (targetUserIds == null || targetUserIds.isEmpty()) {
+            log.info("안전보건교육 알림 전송 건너뜀 - 대상 없음, sessionId: {}", sessionId);
+            return;
+        }
+
+        String title = NotificationMessage.SAFETY_TRAINING_SESSION_CREATED.getTitle();
+        String content =
+                NotificationMessage.SAFETY_TRAINING_SESSION_CREATED.formatContent(sessionTitle);
+        Map<String, Object> metadata =
+                Map.of("educationType", "SAFETY", "detailType", "SESSION");
+
+        for (Long userId : targetUserIds) {
+            createNotification(
+                    userId,
+                    title,
+                    content,
+                    NotificationDomainType.SAFETY_TRAINING,
+                    sessionId,
+                    metadata);
+            eventPublisher.publishEvent(
+                    new FcmSendEvent(
+                            userId,
+                            title,
+                            content,
+                            buildFcmData(
+                                    NotificationDomainType.SAFETY_TRAINING, sessionId, metadata)));
+        }
+
+        log.info(
+                "안전보건교육 세션 알림 전송 완료 - sessionId: {}, 대상 수: {}",
+                sessionId,
+                targetUserIds.size());
     }
 
     private Map<String, String> buildFcmData(NotificationDomainType domainType, Long domainId) {

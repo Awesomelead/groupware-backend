@@ -36,6 +36,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -404,26 +405,26 @@ public class AdminService {
     }
 
     @Transactional
-    public void approveMyInfoUpdate(Long userId, Long adminId) {
+    public void approveMyInfoUpdate(Long requestId, Long adminId) {
         User admin =
                 userRepository
                         .findById(adminId)
                         .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
         validateMyInfoApprovalAuthority(admin);
 
-        User targetUser =
-                userRepository
-                        .findById(userId)
-                        .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
-
         MyInfoUpdateRequest request =
                 myInfoUpdateRequestRepository
-                        .findFirstByUserIdAndStatusOrderByCreatedAtDesc(
-                                userId, MyInfoUpdateRequestStatus.PENDING)
+                        .findById(requestId)
                         .orElseThrow(
                                 () ->
                                         new CustomException(
                                                 ErrorCode.MY_INFO_UPDATE_REQUEST_NOT_FOUND));
+
+        if (request.getStatus() != MyInfoUpdateRequestStatus.PENDING) {
+            throw new CustomException(ErrorCode.MY_INFO_UPDATE_REQUEST_NOT_FOUND);
+        }
+
+        User targetUser = request.getUser();
 
         if (request.getRequestedNameEng() != null) {
             targetUser.setNameEng(request.getRequestedNameEng());
@@ -450,16 +451,21 @@ public class AdminService {
         userRepository.save(targetUser);
         myInfoUpdateRequestRepository.save(request);
 
+        // 관리자들의 승인 대기 알림 해제
+        notificationService.resolveRequiresApproval(
+                NotificationDomainType.MY_INFO_UPDATE, request.getId());
+
         // 요청 승인 알림 전송 (FCM + Notification DB)
         notificationService.sendAlertToUser(
-                userId,
+                targetUser.getId(),
                 NotificationMessage.MY_INFO_UPDATE_APPROVED,
                 NotificationDomainType.MY_INFO_UPDATE,
-                request.getId());
+                request.getId(),
+                Map.of("requestId", request.getId()));
     }
 
     @Transactional
-    public void rejectMyInfoUpdate(Long userId, String reason, Long adminId) {
+    public void rejectMyInfoUpdate(Long requestId, String reason, Long adminId) {
         User admin =
                 userRepository
                         .findById(adminId)
@@ -470,28 +476,32 @@ public class AdminService {
             throw new CustomException(ErrorCode.MY_INFO_UPDATE_REJECT_REASON_REQUIRED);
         }
 
-        userRepository
-                .findById(userId)
-                .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
-
         MyInfoUpdateRequest request =
                 myInfoUpdateRequestRepository
-                        .findFirstByUserIdAndStatusOrderByCreatedAtDesc(
-                                userId, MyInfoUpdateRequestStatus.PENDING)
+                        .findById(requestId)
                         .orElseThrow(
                                 () ->
                                         new CustomException(
                                                 ErrorCode.MY_INFO_UPDATE_REQUEST_NOT_FOUND));
 
+        if (request.getStatus() != MyInfoUpdateRequestStatus.PENDING) {
+            throw new CustomException(ErrorCode.MY_INFO_UPDATE_REQUEST_NOT_FOUND);
+        }
+
         request.reject(admin, reason.trim());
         myInfoUpdateRequestRepository.save(request);
 
+        // 관리자들의 승인 대기 알림 해제
+        notificationService.resolveRequiresApproval(
+                NotificationDomainType.MY_INFO_UPDATE, request.getId());
+
         // 요청 반려 알림 전송 (FCM + Notification DB)
         notificationService.sendAlertToUser(
-                userId,
+                request.getUser().getId(),
                 NotificationMessage.MY_INFO_UPDATE_REJECTED,
                 NotificationDomainType.MY_INFO_UPDATE,
                 request.getId(),
+                Map.of("requestId", request.getId()),
                 reason.trim());
     }
 

@@ -39,6 +39,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
 import java.util.List;
+import java.util.Map;
 
 @Slf4j
 @Service
@@ -128,11 +129,20 @@ public class EduReportService {
         } else {
             targetUserIds = userRepository.findAllIdsByDepartmentId(requestDto.getDepartmentId());
         }
+        Map<String, Object> metadata =
+                requestDto.getEduType() == EduType.SAFETY
+                        ? Map.of(
+                                "educationType",
+                                requestDto.getEduType().name(),
+                                "detailType",
+                                "GENERAL")
+                        : Map.of("educationType", requestDto.getEduType().name());
         notificationService.sendEduReportAlertToTargets(
                 requestDto.getEduType().getDescription(),
                 requestDto.getTitle(),
                 savedReport.getId(),
-                targetUserIds);
+                targetUserIds,
+                metadata);
 
         return savedReport.getId();
     }

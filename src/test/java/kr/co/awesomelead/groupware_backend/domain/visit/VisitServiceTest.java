@@ -10,6 +10,7 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 
 import kr.co.awesomelead.groupware_backend.domain.department.enums.Company;
+import kr.co.awesomelead.groupware_backend.domain.notification.service.NotificationService;
 import kr.co.awesomelead.groupware_backend.domain.user.entity.User;
 import kr.co.awesomelead.groupware_backend.domain.user.enums.Authority;
 import kr.co.awesomelead.groupware_backend.domain.user.enums.JobType;
@@ -66,6 +67,7 @@ public class VisitServiceTest {
     @Mock private UserRepository userRepository;
     @Mock private S3Service s3Service;
     @Mock private PasswordEncoder passwordEncoder;
+    @Mock private NotificationService notificationService;
 
     private static final Long HOST_ID = 1L;
     private static final Long VISIT_ID = 100L;

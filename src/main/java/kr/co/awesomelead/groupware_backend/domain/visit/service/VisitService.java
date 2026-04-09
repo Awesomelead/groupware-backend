@@ -3,6 +3,7 @@ package kr.co.awesomelead.groupware_backend.domain.visit.service;
 import static kr.co.awesomelead.groupware_backend.domain.visit.entity.Visit.hashValue;
 
 import kr.co.awesomelead.groupware_backend.domain.department.repository.DepartmentRepository;
+import kr.co.awesomelead.groupware_backend.domain.notification.enums.NotificationDomainType;
 import kr.co.awesomelead.groupware_backend.domain.notification.enums.NotificationMessage;
 import kr.co.awesomelead.groupware_backend.domain.notification.service.NotificationService;
 import kr.co.awesomelead.groupware_backend.domain.user.entity.User;
@@ -45,6 +46,7 @@ import java.io.IOException;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
 
 @Slf4j
 @Service
@@ -82,6 +84,7 @@ public class VisitService {
                     NotificationMessage.VISIT_ONE_DAY_PRE,
                     visitId,
                     hostDeptId,
+                    Map.of("isApprovalTarget", false, "status", VisitStatus.PENDING.name()),
                     visit.getVisitorName(),
                     visit.getStartDate(),
                     dto.getPlannedEntryTime(),
@@ -115,6 +118,7 @@ public class VisitService {
                     NotificationMessage.VISIT_LONG_TERM_PRE,
                     visitId,
                     hostDeptId,
+                    Map.of("status", VisitStatus.PENDING.name(), "isApprovalTarget", true),
                     visit.getVisitorName(),
                     dto.getStartDate(),
                     dto.getEndDate());
@@ -158,6 +162,7 @@ public class VisitService {
                     NotificationMessage.VISIT_CHECK_IN,
                     visitId,
                     hostDeptId,
+                    Map.of("isApprovalTarget", false, "status", VisitStatus.IN_PROGRESS.name()),
                     visit.getVisitorName(),
                     record.getEntryTime().toLocalTime());
         }
@@ -254,6 +259,7 @@ public class VisitService {
                     NotificationMessage.VISIT_CHECK_IN,
                     visit.getId(),
                     host.getDepartment().getId(),
+                    Map.of("isApprovalTarget", false, "status", VisitStatus.IN_PROGRESS.name()),
                     visit.getVisitorName(),
                     entryTime.toLocalTime());
         }
@@ -494,5 +500,8 @@ public class VisitService {
 
         // 5. 상태 변경 처리
         visit.process(dto.getStatus(), dto.getRejectionReason());
+
+        // 6. 승인 대기 알림 해제 (승인/반려 모두)
+        notificationService.resolveRequiresApproval(NotificationDomainType.VISIT, visitId);
     }
 }

@@ -27,6 +27,8 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.Map;
+
 @Slf4j
 @Service
 @RequiredArgsConstructor
@@ -129,20 +131,21 @@ public class UserService {
                         .requestedAddress2(requestedAddress2)
                         .status(MyInfoUpdateRequestStatus.PENDING)
                         .build();
-        myInfoUpdateRequestRepository.save(request);
+        MyInfoUpdateRequest saved = myInfoUpdateRequestRepository.save(request);
 
         if (requestedPhoneNumber != null) {
             phoneAuthService.clearVerification(requestedPhoneNumber);
         }
 
         // Admin 권한 유저들에게 정보수정 승인 요청 알림 전송 (FCM + Notification DB)
-        notificationService.sendAlertToAdmins(
+        notificationService.sendAlertToAdminsRequiringApproval(
                 NotificationMessage.MY_INFO_UPDATE_REQUEST_ADMIN,
                 NotificationDomainType.MY_INFO_UPDATE,
-                request.getId(),
+                saved.getId(),
+                Map.of("requestId", saved.getId()),
                 user.getDisplayName());
 
-        log.info("내 정보 수정 요청 생성 - 사용자 ID: {}, 요청 ID: {}", user.getId(), request.getId());
+        log.info("내 정보 수정 요청 생성 - 사용자 ID: {}, 요청 ID: {}", user.getId(), saved.getId());
 
         return MyInfoResponseDto.from(user);
     }

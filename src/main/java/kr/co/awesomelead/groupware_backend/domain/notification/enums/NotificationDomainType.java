@@ -13,7 +13,8 @@ public enum NotificationDomainType {
     PAYSLIP,
     REQUEST_HISTORY,
     MY_INFO_UPDATE,
-    CHECK_SHEET;
+    CHECK_SHEET,
+    SAFETY_TRAINING;
 
     @JsonValue
     public String getValue() {

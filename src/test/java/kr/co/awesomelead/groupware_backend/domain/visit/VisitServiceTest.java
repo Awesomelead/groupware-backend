@@ -28,6 +28,7 @@ import kr.co.awesomelead.groupware_backend.domain.visit.enums.VisitCategory;
 import kr.co.awesomelead.groupware_backend.domain.visit.enums.VisitPurpose;
 import kr.co.awesomelead.groupware_backend.domain.visit.enums.VisitStatus;
 import kr.co.awesomelead.groupware_backend.domain.visit.mapper.VisitMapper;
+import kr.co.awesomelead.groupware_backend.domain.notification.service.NotificationService;
 import kr.co.awesomelead.groupware_backend.domain.visit.repository.VisitRepository;
 import kr.co.awesomelead.groupware_backend.domain.visit.service.VisitService;
 import kr.co.awesomelead.groupware_backend.global.error.CustomException;
@@ -66,6 +67,7 @@ public class VisitServiceTest {
     @Mock private UserRepository userRepository;
     @Mock private S3Service s3Service;
     @Mock private PasswordEncoder passwordEncoder;
+    @Mock private NotificationService notificationService;
 
     private static final Long HOST_ID = 1L;
     private static final Long VISIT_ID = 100L;

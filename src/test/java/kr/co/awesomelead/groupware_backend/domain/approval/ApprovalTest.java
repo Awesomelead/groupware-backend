@@ -38,6 +38,7 @@ import kr.co.awesomelead.groupware_backend.domain.approval.repository.ApprovalRe
 import kr.co.awesomelead.groupware_backend.domain.approval.repository.querydsl.ApprovalQueryRepository;
 import kr.co.awesomelead.groupware_backend.domain.approval.service.ApprovalService;
 import kr.co.awesomelead.groupware_backend.domain.department.entity.Department;
+import kr.co.awesomelead.groupware_backend.domain.notification.service.NotificationService;
 import kr.co.awesomelead.groupware_backend.domain.department.enums.Company;
 import kr.co.awesomelead.groupware_backend.domain.department.enums.DepartmentName;
 import kr.co.awesomelead.groupware_backend.domain.user.entity.User;
@@ -85,6 +86,8 @@ public class ApprovalTest {
     @Mock private ApprovalMapper approvalMapper;
 
     @Mock private S3Service s3Service;
+
+    @Mock private NotificationService notificationService;
 
     private User drafter;
     private Department department;

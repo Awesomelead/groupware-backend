@@ -414,7 +414,7 @@ class AdminServiceTest {
             dto.setPosition(Position.STAFF);
             dto.setJobType(JobType.MANAGEMENT);
             dto.setRole(Role.USER);
-            dto.setAuthorities(List.of(Authority.ACCESS_MESSAGE));
+            dto.setAuthorities(List.of(Authority.SEND_NOTIFICATION));
 
             // when
             adminService.updateUserInfo(17L, dto, adminId);
@@ -424,7 +424,7 @@ class AdminServiceTest {
             assertThat(targetUser.getPhoneNumber()).isEqualTo("01099998888");
             assertThat(targetUser.getDepartment().getId()).isEqualTo(11L);
             assertThat(targetUser.getWorkLocation()).isEqualTo(Company.AWESOME);
-            assertThat(targetUser.hasAuthority(Authority.ACCESS_MESSAGE)).isEqualTo(true);
+            assertThat(targetUser.hasAuthority(Authority.SEND_NOTIFICATION)).isEqualTo(true);
             verify(phoneAuthService).clearVerification("01099998888");
             verify(userRepository).save(targetUser);
         }
@@ -480,7 +480,7 @@ class AdminServiceTest {
                 // then
                 assertThat(user.getRole()).isEqualTo(Role.ADMIN);
                 assertThat(user.hasAuthority(Authority.ACCESS_NOTICE)).isEqualTo(true);
-                assertThat(user.hasAuthority(Authority.MANAGE_EMPLOYEE_DATA)).isEqualTo(true);
+                assertThat(user.hasAuthority(Authority.EDIT_EMPLOYEE_INFO)).isEqualTo(true);
             }
         }
 
@@ -534,14 +534,14 @@ class AdminServiceTest {
             User targetUser = User.builder().id(userId).role(Role.USER).build();
             when(userRepository.findById(userId)).thenReturn(Optional.of(targetUser));
 
-            List<Authority> authorities = List.of(Authority.ACCESS_NOTICE, Authority.ACCESS_VISIT);
+            List<Authority> authorities = List.of(Authority.ACCESS_NOTICE, Authority.MANAGE_VISITOR);
 
             // when
             adminService.updateUserAuthority(userId, authorities, AuthorityAction.ADD, adminId);
 
             // then
             assertThat(targetUser.hasAuthority(Authority.ACCESS_NOTICE)).isEqualTo(true);
-            assertThat(targetUser.hasAuthority(Authority.ACCESS_VISIT)).isEqualTo(true);
+            assertThat(targetUser.hasAuthority(Authority.MANAGE_VISITOR)).isEqualTo(true);
             verify(userRepository).save(targetUser);
         }
 
@@ -551,17 +551,17 @@ class AdminServiceTest {
             // given
             User targetUser = User.builder().id(userId).role(Role.USER).build();
             targetUser.addAuthority(Authority.ACCESS_NOTICE);
-            targetUser.addAuthority(Authority.ACCESS_VISIT);
+            targetUser.addAuthority(Authority.MANAGE_VISITOR);
             when(userRepository.findById(userId)).thenReturn(Optional.of(targetUser));
 
-            List<Authority> authorities = List.of(Authority.ACCESS_NOTICE, Authority.ACCESS_VISIT);
+            List<Authority> authorities = List.of(Authority.ACCESS_NOTICE, Authority.MANAGE_VISITOR);
 
             // when
             adminService.updateUserAuthority(userId, authorities, AuthorityAction.REMOVE, adminId);
 
             // then
             assertThat(targetUser.hasAuthority(Authority.ACCESS_NOTICE)).isEqualTo(false);
-            assertThat(targetUser.hasAuthority(Authority.ACCESS_VISIT)).isEqualTo(false);
+            assertThat(targetUser.hasAuthority(Authority.MANAGE_VISITOR)).isEqualTo(false);
             verify(userRepository).save(targetUser);
         }
 

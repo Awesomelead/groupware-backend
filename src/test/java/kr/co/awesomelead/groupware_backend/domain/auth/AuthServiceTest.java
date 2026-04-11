@@ -102,7 +102,7 @@ class AuthServiceTest {
         loginRequestDto.setEmail(TEST_EMAIL);
         loginRequestDto.setPassword(OLD_PASSWORD);
 
-        testUser.addAuthority(Authority.ACCESS_EDUCATION);
+        testUser.addAuthority(Authority.WRITE_DEPARTMENT_EDUCATION);
 
         Authentication authentication = org.mockito.Mockito.mock(Authentication.class);
         org.springframework.security.core.GrantedAuthority grantedAuthority = () -> "ROLE_USER";
@@ -127,8 +127,8 @@ class AuthServiceTest {
         assertThat(response.getAuthorities().size()).isEqualTo(1);
 
         MyInfoAuthorityItemDto authorityDto = response.getAuthorities().get(0);
-        assertThat(authorityDto.getCode()).isEqualTo(Authority.ACCESS_EDUCATION.name());
-        assertThat(authorityDto.getLabel()).isEqualTo(Authority.ACCESS_EDUCATION.getDescription());
+        assertThat(authorityDto.getCode()).isEqualTo(Authority.WRITE_DEPARTMENT_EDUCATION.name());
+        assertThat(authorityDto.getLabel()).isEqualTo(Authority.WRITE_DEPARTMENT_EDUCATION.getDescription());
         assertThat(authorityDto.isEnabled()).isTrue();
     }
 

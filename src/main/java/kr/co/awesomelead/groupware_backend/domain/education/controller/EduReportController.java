@@ -63,9 +63,9 @@ import java.util.List;
     ### API별 권한
     - 생성
       - PSM/안전보건: `WRITE_SAFETY`
-      - 부서교육: `ACCESS_EDUCATION`
+      - 부서교육: `WRITE_DEPARTMENT_EDUCATION`
     - 목록 조회/상세 조회/출석(서명): 로그인 사용자
-    - 부서교육 수정/상태변경/삭제: `ACCESS_EDUCATION`
+    - 부서교육 수정/상태변경/삭제: `WRITE_DEPARTMENT_EDUCATION`
     - 첨부파일 다운로드: 인증 불필요(공개)
 
     ### 교육 유형(EduType)
@@ -279,8 +279,8 @@ public class EduReportController {
 
             - `type` 미지정 시 전체 유형 조회
             - `categoryId`는 PSM/안전보건 카테고리 필터 용도
-            - `departmentName`은 `type=DEPARTMENT` + `ACCESS_EDUCATION` 권한 사용자일 때만 유효
-            - `ACCESS_EDUCATION` 권한이 없는 사용자는 부서교육의 경우 본인 부서 데이터만 조회
+            - `departmentName`은 `type=DEPARTMENT` + `WRITE_DEPARTMENT_EDUCATION` 권한 사용자일 때만 유효
+            - `WRITE_DEPARTMENT_EDUCATION` 권한이 없는 사용자는 부서교육의 경우 본인 부서 데이터만 조회
             """)
     @ApiResponses({
         @io.swagger.v3.oas.annotations.responses.ApiResponse(
@@ -371,7 +371,7 @@ public class EduReportController {
                     """
             교육 보고서 상세 정보를 조회합니다.
 
-            - `ACCESS_EDUCATION` 권한 사용자는 `attendees`, `numberOfPeople`, `numberOfAttendees`를 조회할 수 있습니다.
+            - `WRITE_DEPARTMENT_EDUCATION` 권한 사용자는 `attendees`, `numberOfPeople`, `numberOfAttendees`를 조회할 수 있습니다.
             - 일반 사용자는 위 필드가 `null`로 반환됩니다.
             """)
     @ApiResponses({
@@ -423,7 +423,7 @@ public class EduReportController {
                     """
             부서교육(`eduType=부서 교육`)을 수정합니다.
 
-            - `ACCESS_EDUCATION` 권한 필요
+            - `WRITE_DEPARTMENT_EDUCATION` 권한 필요
             - `OPEN` 상태에서만 수정 가능
             - 서명(출석) 완료자가 1명이라도 있으면 수정 불가
             """)
@@ -538,7 +538,7 @@ public class EduReportController {
                     """
             부서교육(`eduType=부서 교육`) 상태를 `OPEN`/`CLOSED`로 변경합니다.
 
-            - `ACCESS_EDUCATION` 권한 필요
+            - `WRITE_DEPARTMENT_EDUCATION` 권한 필요
             - 상태 변경 후 `CLOSED`인 부서교육은 출석(서명)할 수 없습니다.
             """)
     @ApiResponses({
@@ -596,7 +596,7 @@ public class EduReportController {
         return ResponseEntity.ok(ApiResponse.onSuccess(updatedId));
     }
 
-    @Operation(summary = "교육 보고서 삭제", description = "교육 보고서를 삭제합니다. `ACCESS_EDUCATION` 권한이 필요합니다.")
+    @Operation(summary = "교육 보고서 삭제", description = "교육 보고서를 삭제합니다. `WRITE_DEPARTMENT_EDUCATION` 권한이 필요합니다.")
     @ApiResponses({
         @io.swagger.v3.oas.annotations.responses.ApiResponse(
                 responseCode = "200",

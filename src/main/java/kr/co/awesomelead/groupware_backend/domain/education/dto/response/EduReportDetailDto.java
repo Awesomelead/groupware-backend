@@ -57,13 +57,13 @@ public class EduReportDetailDto {
     @Schema(description = "첨부 파일 목록")
     private List<AttachmentResponse> attachments;
 
-    @Schema(description = "교육 대상 인원 수 (ACCESS_EDUCATION 권한 없으면 null)", example = "50")
+    @Schema(description = "교육 대상 인원 수 (WRITE_DEPARTMENT_EDUCATION 권한 없으면 null)", example = "50")
     private Integer numberOfPeople;
 
-    @Schema(description = "출석 인원 수 (ACCESS_EDUCATION 권한 없으면 null)", example = "45")
+    @Schema(description = "출석 인원 수 (WRITE_DEPARTMENT_EDUCATION 권한 없으면 null)", example = "45")
     private Integer numberOfAttendees;
 
-    @Schema(description = "출석자 목록 (ACCESS_EDUCATION 권한 없으면 null)")
+    @Schema(description = "출석자 목록 (WRITE_DEPARTMENT_EDUCATION 권한 없으면 null)")
     private List<AttendeeInfo> attendees;
 
     @Getter

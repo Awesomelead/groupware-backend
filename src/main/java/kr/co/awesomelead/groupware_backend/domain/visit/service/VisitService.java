@@ -464,7 +464,8 @@ public class VisitService {
                         .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
 
         // MANAGEMENT 직군이고 방문 관리 권한이 있는지 확인
-        if (user.getJobType() != JobType.MANAGEMENT || !user.hasAuthority(Authority.MANAGE_VISITOR)) {
+        if (user.getJobType() != JobType.MANAGEMENT
+                || !user.hasAuthority(Authority.MANAGE_VISITOR)) {
             throw new CustomException(ErrorCode.VISIT_ACCESS_DENIED);
         }
     }

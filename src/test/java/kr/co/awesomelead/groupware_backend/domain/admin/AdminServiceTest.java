@@ -534,7 +534,8 @@ class AdminServiceTest {
             User targetUser = User.builder().id(userId).role(Role.USER).build();
             when(userRepository.findById(userId)).thenReturn(Optional.of(targetUser));
 
-            List<Authority> authorities = List.of(Authority.ACCESS_NOTICE, Authority.MANAGE_VISITOR);
+            List<Authority> authorities =
+                    List.of(Authority.ACCESS_NOTICE, Authority.MANAGE_VISITOR);
 
             // when
             adminService.updateUserAuthority(userId, authorities, AuthorityAction.ADD, adminId);
@@ -554,7 +555,8 @@ class AdminServiceTest {
             targetUser.addAuthority(Authority.MANAGE_VISITOR);
             when(userRepository.findById(userId)).thenReturn(Optional.of(targetUser));
 
-            List<Authority> authorities = List.of(Authority.ACCESS_NOTICE, Authority.MANAGE_VISITOR);
+            List<Authority> authorities =
+                    List.of(Authority.ACCESS_NOTICE, Authority.MANAGE_VISITOR);
 
             // when
             adminService.updateUserAuthority(userId, authorities, AuthorityAction.REMOVE, adminId);

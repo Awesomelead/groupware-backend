@@ -21,9 +21,9 @@ import kr.co.awesomelead.groupware_backend.domain.auth.dto.request.ResetPassword
 import kr.co.awesomelead.groupware_backend.domain.auth.dto.request.SendAuthCodeRequestDto;
 import kr.co.awesomelead.groupware_backend.domain.auth.dto.request.SendEmailAuthCodeRequestDto;
 import kr.co.awesomelead.groupware_backend.domain.auth.dto.request.SignupRequestDto;
-import kr.co.awesomelead.groupware_backend.domain.auth.dto.request.VerifyAuthCodeRequestDto;
 import kr.co.awesomelead.groupware_backend.domain.auth.dto.request.VerifyAccountByEmailRequestDto;
 import kr.co.awesomelead.groupware_backend.domain.auth.dto.request.VerifyAccountByPhoneRequestDto;
+import kr.co.awesomelead.groupware_backend.domain.auth.dto.request.VerifyAuthCodeRequestDto;
 import kr.co.awesomelead.groupware_backend.domain.auth.dto.request.VerifyEmailAuthCodeRequestDto;
 import kr.co.awesomelead.groupware_backend.domain.auth.dto.request.VerifyIdentityRequestDto;
 import kr.co.awesomelead.groupware_backend.domain.auth.dto.response.AuthTokensDto;
@@ -791,8 +791,7 @@ public class AuthController {
 
     @Operation(
             summary = "이메일 비밀번호 찾기용 계정 검증",
-            description =
-                    "이메일 인증번호 검증 완료 후, 비밀번호 찾기 버튼에서 입력한 이메일 계정 존재 여부를 최종 검증합니다.")
+            description = "이메일 인증번호 검증 완료 후, 비밀번호 찾기 버튼에서 입력한 이메일 계정 존재 여부를 최종 검증합니다.")
     @ApiResponses(
             value = {
                 @io.swagger.v3.oas.annotations.responses.ApiResponse(
@@ -872,7 +871,8 @@ public class AuthController {
     @Operation(
             summary = "이메일로 비밀번호 재설정",
             description =
-                    "이메일 계정 검증(`POST /api/auth/verify-account/email`)과 이메일 인증을 완료한 후, 비밀번호를 재설정합니다.")
+                    "이메일 계정 검증(`POST /api/auth/verify-account/email`)과 이메일 인증을 완료한 후, 비밀번호를"
+                        + " 재설정합니다.")
     @ApiResponses(
             value = {
                 @io.swagger.v3.oas.annotations.responses.ApiResponse(
@@ -949,8 +949,7 @@ public class AuthController {
 
     @Operation(
             summary = "휴대폰 비밀번호 찾기용 계정 검증",
-            description =
-                    "휴대폰 인증번호 검증 완료 후, 비밀번호 찾기 버튼에서 입력한 이메일/전화번호가 동일 계정인지 최종 검증합니다.")
+            description = "휴대폰 인증번호 검증 완료 후, 비밀번호 찾기 버튼에서 입력한 이메일/전화번호가 동일 계정인지 최종 검증합니다.")
     @ApiResponses(
             value = {
                 @io.swagger.v3.oas.annotations.responses.ApiResponse(
@@ -1041,7 +1040,8 @@ public class AuthController {
     @Operation(
             summary = "휴대폰으로 비밀번호 재설정",
             description =
-                    "이메일/전화번호 계정 검증(`POST /api/auth/verify-account/phone`)과 휴대폰 인증을 완료한 후, 비밀번호를 재설정합니다.")
+                    "이메일/전화번호 계정 검증(`POST /api/auth/verify-account/phone`)과 휴대폰 인증을 완료한 후, 비밀번호를"
+                        + " 재설정합니다.")
     @ApiResponses(
             value = {
                 @io.swagger.v3.oas.annotations.responses.ApiResponse(

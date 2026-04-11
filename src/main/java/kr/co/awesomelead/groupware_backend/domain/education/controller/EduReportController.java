@@ -596,7 +596,9 @@ public class EduReportController {
         return ResponseEntity.ok(ApiResponse.onSuccess(updatedId));
     }
 
-    @Operation(summary = "교육 보고서 삭제", description = "교육 보고서를 삭제합니다. `WRITE_DEPARTMENT_EDUCATION` 권한이 필요합니다.")
+    @Operation(
+            summary = "교육 보고서 삭제",
+            description = "교육 보고서를 삭제합니다. `WRITE_DEPARTMENT_EDUCATION` 권한이 필요합니다.")
     @ApiResponses({
         @io.swagger.v3.oas.annotations.responses.ApiResponse(
                 responseCode = "200",

@@ -82,7 +82,7 @@ public class VisitServiceTest {
                         .workLocation(Company.AWESOME)
                         .jobType(JobType.MANAGEMENT)
                         .build();
-        host.addAuthority(Authority.ACCESS_VISIT);
+        host.addAuthority(Authority.MANAGE_VISITOR);
         return host;
     }
 
@@ -557,7 +557,7 @@ public class VisitServiceTest {
         @BeforeEach
         void setUpAdmin() {
             User admin = User.builder().id(ADMIN_ID).jobType(JobType.MANAGEMENT).build();
-            admin.addAuthority(Authority.ACCESS_VISIT);
+            admin.addAuthority(Authority.MANAGE_VISITOR);
             given(userRepository.findById(ADMIN_ID)).willReturn(Optional.of(admin));
         }
 
@@ -808,7 +808,7 @@ public class VisitServiceTest {
         @BeforeEach
         void setUpAdmin() {
             User admin = User.builder().id(ADMIN_ID).jobType(JobType.MANAGEMENT).build();
-            admin.addAuthority(Authority.ACCESS_VISIT);
+            admin.addAuthority(Authority.MANAGE_VISITOR);
             given(userRepository.findById(ADMIN_ID)).willReturn(Optional.of(admin));
         }
 
@@ -852,7 +852,7 @@ public class VisitServiceTest {
         @BeforeEach
         void setUpAdmin() {
             User admin = User.builder().id(ADMIN_ID).jobType(JobType.MANAGEMENT).build();
-            admin.addAuthority(Authority.ACCESS_VISIT);
+            admin.addAuthority(Authority.MANAGE_VISITOR);
             given(userRepository.findById(ADMIN_ID)).willReturn(Optional.of(admin));
         }
 

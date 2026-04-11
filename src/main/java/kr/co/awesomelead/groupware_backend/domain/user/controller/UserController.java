@@ -78,10 +78,12 @@ import org.springframework.web.bind.annotation.RestController;
               - SUSPENDED: 비활성
 
             - **Authority**: 권한
-              - WRITE_MESSAGE: 메세지 작성 권한 -> jobType이 관리직일 경우 부여하고 시작
-              - WRITE_EDUCATION: 교육 작성 권한 -> jobType이 관리직일 경우 부여하고 시작
-              - WRITE_NOTICE: 공지 작성 권한
-              - UPLOAD_ANNUAL_LEAVE: 연차 업로드 권한
+              - SEND_NOTIFICATION: 알림 전송 권한 -> jobType이 관리직일 경우 부여하고 시작
+              - WRITE_DEPARTMENT_EDUCATION: 부서 교육 작성 -> jobType이 관리직일 경우 부여하고 시작
+              - ACCESS_NOTICE: 공지 작성 권한
+              - MANAGE_VISITOR: 내방객 관리 권한
+              - EDIT_EMPLOYEE_INFO: 직원 정보 수정 권한
+              - MANAGE_APPROVAL_LINE: 결재선 설정 관리 권한
             """)
 @RestController
 @RequestMapping("/api/users")
@@ -193,11 +195,11 @@ public class UserController {
                                                                              "jobType": "관리직",
                                                                              "role": "일반 사용자",
                                                                              "authorities": [
-                                                                               { "code": "ACCESS_MESSAGE", "label": "메세지 작성", "enabled": true },
-                                                                               { "code": "ACCESS_EDUCATION", "label": "교육 작성", "enabled": false },
+                                                                               { "code": "SEND_NOTIFICATION", "label": "알림 전송", "enabled": true },
+                                                                               { "code": "WRITE_DEPARTMENT_EDUCATION", "label": "부서 교육 작성", "enabled": false },
                                                                                { "code": "ACCESS_NOTICE", "label": "공지 작성", "enabled": false },
-                                                                               { "code": "ACCESS_VISIT", "label": "방문자 관리 접근", "enabled": false },
-                                                                               { "code": "MANAGE_EMPLOYEE_DATA", "label": "사원 데이터 관리", "enabled": false }
+                                                                               { "code": "MANAGE_VISITOR", "label": "내방객 관리", "enabled": false },
+                                                                               { "code": "EDIT_EMPLOYEE_INFO", "label": "직원 정보 수정", "enabled": false }
                                                                              ],
                                                                              "hireDate": "2024-03-01",
                                                                              "resignationDate": null

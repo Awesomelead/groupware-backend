@@ -38,7 +38,7 @@ public class ApprovalConfigService {
                         .findById(userId)
                         .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
 
-        if (!user.hasAuthority(Authority.MANAGE_APPROVAL_CONFIG)) {
+        if (!user.hasAuthority(Authority.MANAGE_APPROVAL_LINE)) {
             throw new CustomException(ErrorCode.NO_AUTHORITY_FOR_APPROVAL_CONFIG);
         }
 

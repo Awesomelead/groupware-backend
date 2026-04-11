@@ -72,7 +72,7 @@ public class PayslipServiceTest {
             void it_throws_no_authority_exception() {
                 // given
                 given(userRepository.findById(1L)).willReturn(Optional.of(admin));
-                // admin.hasAuthority(MANAGE_EMPLOYEE_DATA) 가 false인 상황 (기본값)
+                // admin.hasAuthority(EDIT_EMPLOYEE_INFO) 가 false인 상황 (기본값)
 
                 // when & then
                 assertThatThrownBy(() -> payslipService.sendPayslip(List.of(), 1L))
@@ -90,7 +90,7 @@ public class PayslipServiceTest {
             @DisplayName("ONLY_PDF_ALLOWED 예외를 던진다.")
             void it_throws_only_pdf_exception() {
                 // given
-                admin.getAuthorities().add(Authority.MANAGE_EMPLOYEE_DATA); // 권한 부여
+                admin.getAuthorities().add(Authority.EDIT_EMPLOYEE_INFO); // 권한 부여
                 given(userRepository.findById(1L)).willReturn(Optional.of(admin));
 
                 MockMultipartFile txtFile =
@@ -112,7 +112,7 @@ public class PayslipServiceTest {
             @DisplayName("S3에 업로드하고 정보를 저장한다.")
             void it_uploads_to_s3_and_saves_info() throws IOException, IOException {
                 // given
-                admin.getAuthorities().add(Authority.MANAGE_EMPLOYEE_DATA);
+                admin.getAuthorities().add(Authority.EDIT_EMPLOYEE_INFO);
                 given(userRepository.findById(1L)).willReturn(Optional.of(admin));
 
                 MockMultipartFile pdfFile =

@@ -55,8 +55,8 @@ public class SafetyTrainingSessionSummaryResponseDto {
     @Schema(description = "미참석 인원 수", example = "9")
     private int absentCount;
 
-    @Schema(description = "현재 로그인 사용자의 서명 완료 여부", example = "true")
-    private boolean mySigned;
+    @Schema(description = "현재 로그인 사용자의 서명 완료 여부 (대표이사/마스터 관리자/타회사 세션은 null)", example = "true")
+    private Boolean mySigned;
 
     @Schema(description = "생성 시각", example = "2026-03-24T11:00:00")
     private LocalDateTime createdAt;

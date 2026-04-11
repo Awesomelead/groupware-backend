@@ -155,7 +155,7 @@ public class EduReportService {
             return;
         }
 
-        if (!user.hasAuthority(Authority.ACCESS_EDUCATION)) {
+        if (!user.hasAuthority(Authority.WRITE_DEPARTMENT_EDUCATION)) {
             throw new CustomException(ErrorCode.NO_AUTHORITY_FOR_EDU_REPORT);
         }
     }
@@ -169,7 +169,7 @@ public class EduReportService {
                         .findById(id)
                         .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
 
-        boolean hasAccess = user.hasAuthority(Authority.ACCESS_EDUCATION);
+        boolean hasAccess = user.hasAuthority(Authority.WRITE_DEPARTMENT_EDUCATION);
 
         Department dept;
         if (hasAccess) {
@@ -204,13 +204,13 @@ public class EduReportService {
                         .findById(eduReportId)
                         .orElseThrow(() -> new CustomException(ErrorCode.EDU_REPORT_NOT_FOUND));
 
-        boolean hasAccess = user.hasAuthority(Authority.ACCESS_EDUCATION);
+        boolean hasAccess = user.hasAuthority(Authority.WRITE_DEPARTMENT_EDUCATION);
 
         List<EduAttendance> attendances = null;
         long numberOfPeople = -1L;
 
         if (hasAccess) {
-            // ACCESS_EDUCATION 권한 있음: 출석자 목록과 통계 포함
+            // WRITE_DEPARTMENT_EDUCATION 권한 있음: 출석자 목록과 통계 포함
             attendances = eduAttendanceRepository.findAllByEduReportIdWithUser(eduReportId);
             numberOfPeople = calculateTargetPeopleCount(report);
         }
@@ -232,7 +232,7 @@ public class EduReportService {
                         .findById(id)
                         .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
 
-        if (!user.hasAuthority(Authority.ACCESS_EDUCATION)) {
+        if (!user.hasAuthority(Authority.WRITE_DEPARTMENT_EDUCATION)) {
             throw new CustomException(ErrorCode.NO_AUTHORITY_FOR_EDU_REPORT);
         }
 
@@ -396,7 +396,7 @@ public class EduReportService {
     }
 
     private void validateDepartmentManageAuthority(User user) {
-        if (!user.hasAuthority(Authority.ACCESS_EDUCATION)) {
+        if (!user.hasAuthority(Authority.WRITE_DEPARTMENT_EDUCATION)) {
             throw new CustomException(ErrorCode.NO_AUTHORITY_FOR_EDU_REPORT);
         }
     }

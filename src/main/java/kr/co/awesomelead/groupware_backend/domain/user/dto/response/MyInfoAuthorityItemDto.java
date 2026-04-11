@@ -13,10 +13,10 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 public class MyInfoAuthorityItemDto {
 
-    @Schema(description = "권한 코드", example = "ACCESS_MESSAGE")
+    @Schema(description = "권한 코드", example = "SEND_NOTIFICATION")
     private String code;
 
-    @Schema(description = "권한 라벨", example = "메세지 작성")
+    @Schema(description = "권한 라벨", example = "알림 전송")
     private String label;
 
     @Schema(description = "보유 여부", example = "true")

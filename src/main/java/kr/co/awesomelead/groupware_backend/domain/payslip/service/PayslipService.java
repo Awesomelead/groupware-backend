@@ -48,7 +48,7 @@ public class PayslipService {
                 userRepository
                         .findById(userId)
                         .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
-        if (!user.hasAuthority(Authority.MANAGE_EMPLOYEE_DATA)) {
+        if (!user.hasAuthority(Authority.EDIT_EMPLOYEE_INFO)) {
             throw new CustomException(ErrorCode.NO_AUTHORITY_FOR_PAYSLIP);
         }
 

@@ -49,7 +49,7 @@ class ApprovalConfigServiceTest {
     @BeforeEach
     void setUp() {
         adminUser = User.builder().id(ADMIN_ID).build();
-        adminUser.addAuthority(Authority.MANAGE_APPROVAL_CONFIG);
+        adminUser.addAuthority(Authority.MANAGE_APPROVAL_LINE);
 
         normalUser = User.builder().id(2L).build();
     }
@@ -130,7 +130,7 @@ class ApprovalConfigServiceTest {
         class FailureCases {
 
             @Test
-            @DisplayName("MANAGE_APPROVAL_CONFIG 권한이 없으면 403 예외가 발생한다")
+            @DisplayName("MANAGE_APPROVAL_LINE 권한이 없으면 403 예외가 발생한다")
             void saveConfig_withoutAuthority_throwsForbidden() {
                 ApprovalConfigSaveRequestDto request = new ApprovalConfigSaveRequestDto();
                 request.setDocumentType(DocumentType.BASIC);

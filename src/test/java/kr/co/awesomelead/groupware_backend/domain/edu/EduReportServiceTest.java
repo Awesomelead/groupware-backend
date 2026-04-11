@@ -248,7 +248,7 @@ public class EduReportServiceTest {
                         .build();
 
         User user = createNormalUser();
-        user.addAuthority(Authority.ACCESS_EDUCATION);
+        user.addAuthority(Authority.WRITE_DEPARTMENT_EDUCATION);
 
         when(userRepository.findById(1L)).thenReturn(Optional.of(user));
         when(departmentRepository.findById(999L)).thenReturn(Optional.empty());
@@ -266,7 +266,7 @@ public class EduReportServiceTest {
     @DisplayName("교육 보고서 목록 조회 성공 - 권한 없는 유저 (자신의 부서만 조회)")
     void getEduReports_Success() {
         // given
-        User user = createNormalUser(); // ACCESS_EDUCATION 권한 없음
+        User user = createNormalUser(); // WRITE_DEPARTMENT_EDUCATION 권한 없음
         Department department = defaultDept;
 
         EduReportSummaryDto report1 =
@@ -300,11 +300,11 @@ public class EduReportServiceTest {
     }
 
     @Test
-    @DisplayName("교육 보고서 목록 조회 성공 - ACCESS_EDUCATION 권한 있음, 부서 미지정 → 전체 조회")
+    @DisplayName("교육 보고서 목록 조회 성공 - WRITE_DEPARTMENT_EDUCATION 권한 있음, 부서 미지정 → 전체 조회")
     void getEduReports_WithAccess_ReturnsAll() {
         // given
         User user = createNormalUser();
-        user.addAuthority(Authority.ACCESS_EDUCATION);
+        user.addAuthority(Authority.WRITE_DEPARTMENT_EDUCATION);
 
         EduReportSummaryDto report1 =
                 EduReportSummaryDto.builder()
@@ -336,11 +336,11 @@ public class EduReportServiceTest {
     }
 
     @Test
-    @DisplayName("교육 보고서 목록 조회 성공 - ACCESS_EDUCATION 권한 있음, 특정 부서 필터")
+    @DisplayName("교육 보고서 목록 조회 성공 - WRITE_DEPARTMENT_EDUCATION 권한 있음, 특정 부서 필터")
     void getEduReports_WithAccess_FilterByDept() {
         // given
         User user = createNormalUser();
-        user.addAuthority(Authority.ACCESS_EDUCATION);
+        user.addAuthority(Authority.WRITE_DEPARTMENT_EDUCATION);
 
         Department salesDept = Department.builder().id(2L).name(DepartmentName.SALES_DEPT).build();
 
@@ -398,7 +398,7 @@ public class EduReportServiceTest {
         // given
         Long reportId = 1L;
         Long userId = 99L;
-        User user = createNormalUser(); // ACCESS_EDUCATION 권한 없음
+        User user = createNormalUser(); // WRITE_DEPARTMENT_EDUCATION 권한 없음
 
         EduReport report = EduReport.builder().id(reportId).title("단일 조회 테스트 제목").build();
 
@@ -469,7 +469,7 @@ public class EduReportServiceTest {
         Long reportId = 1L;
         Long userId = 99L; // 관리자 유저 아이디
         User adminUser = createAdminUser();
-        adminUser.addAuthority(Authority.ACCESS_EDUCATION);
+        adminUser.addAuthority(Authority.WRITE_DEPARTMENT_EDUCATION);
 
         EduAttachment attachment1 =
                 EduAttachment.builder()
@@ -544,7 +544,7 @@ public class EduReportServiceTest {
         // given
         Long userId = 99L; // 관리자 유저 아이디
         User adminUser = createAdminUser();
-        adminUser.addAuthority(Authority.ACCESS_EDUCATION);
+        adminUser.addAuthority(Authority.WRITE_DEPARTMENT_EDUCATION);
 
         when(userRepository.findById(userId)).thenReturn(Optional.of(adminUser));
         when(eduReportRepository.findById(10L)).thenReturn(Optional.empty());
@@ -694,13 +694,13 @@ public class EduReportServiceTest {
     }
 
     @Test
-    @DisplayName("교육 보고서 조회 - ACCESS_EDUCATION 권한 있음 → attendees 포함")
+    @DisplayName("교육 보고서 조회 - WRITE_DEPARTMENT_EDUCATION 권한 있음 → attendees 포함")
     void getEduReport_WithAccess_IncludesAttendees() {
         // given
         Long reportId = 1L;
         Long userId = 99L;
         User user = createNormalUser();
-        user.addAuthority(Authority.ACCESS_EDUCATION);
+        user.addAuthority(Authority.WRITE_DEPARTMENT_EDUCATION);
 
         EduReport report =
                 EduReport.builder().id(reportId).title("권한 보고서").eduType(EduType.SAFETY).build();
@@ -737,7 +737,7 @@ public class EduReportServiceTest {
     }
 
     @Test
-    @DisplayName("교육 보고서 조회 - ACCESS_EDUCATION 권한 없음 → attendees=null")
+    @DisplayName("교육 보고서 조회 - WRITE_DEPARTMENT_EDUCATION 권한 없음 → attendees=null")
     void getEduReport_WithoutAccess_AttendeesIsNull() {
         // given
         Long reportId = 1L;

@@ -24,7 +24,7 @@ public interface NotificationRepository extends JpaRepository<Notification, Long
     @Modifying
     @Query(
             "UPDATE Notification n SET n.requiresApproval = false WHERE n.domainType = :domainType"
-                + " AND n.domainId = :domainId AND n.requiresApproval = true")
+                    + " AND n.domainId = :domainId AND n.requiresApproval = true")
     void resolveRequiresApprovalByDomainTypeAndDomainId(
             @Param("domainType") NotificationDomainType domainType,
             @Param("domainId") Long domainId);

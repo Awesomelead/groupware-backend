@@ -31,7 +31,7 @@ public interface EduMapper {
     /**
      * EduReport → EduReportDetailDto 변환
      *
-     * @param attendances 출석자 목록 (ACCESS_EDUCATION 권한 없으면 null)
+     * @param attendances 출석자 목록 (WRITE_DEPARTMENT_EDUCATION 권한 없으면 null)
      * @param numberOfPeople 교육 대상 인원 수 (-1L이면 null로 처리)
      */
     @Mapping(target = "attendance", ignore = true)

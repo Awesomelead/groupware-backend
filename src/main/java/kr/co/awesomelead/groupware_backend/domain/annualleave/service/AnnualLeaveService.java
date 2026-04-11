@@ -52,7 +52,7 @@ public class AnnualLeaveService {
                 userRepository
                         .findById(userId)
                         .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
-        if (!currentUser.hasAuthority(Authority.MANAGE_EMPLOYEE_DATA)) {
+        if (!currentUser.hasAuthority(Authority.EDIT_EMPLOYEE_INFO)) {
             throw new CustomException(ErrorCode.NO_AUTHORITY_FOR_ANNUAL_LEAVE);
         }
 

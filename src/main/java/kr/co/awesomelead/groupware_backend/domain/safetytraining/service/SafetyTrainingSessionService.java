@@ -24,6 +24,7 @@ import kr.co.awesomelead.groupware_backend.domain.safetytraining.repository.Safe
 import kr.co.awesomelead.groupware_backend.domain.user.entity.User;
 import kr.co.awesomelead.groupware_backend.domain.user.enums.Authority;
 import kr.co.awesomelead.groupware_backend.domain.user.enums.Position;
+import kr.co.awesomelead.groupware_backend.domain.user.enums.Role;
 import kr.co.awesomelead.groupware_backend.domain.user.enums.Status;
 import kr.co.awesomelead.groupware_backend.domain.user.repository.UserRepository;
 import kr.co.awesomelead.groupware_backend.global.error.CustomException;
@@ -195,7 +196,7 @@ public class SafetyTrainingSessionService {
         List<Long> sessionIds =
                 sessionsPage.getContent().stream().map(SafetyTrainingSession::getId).toList();
         Set<Long> signedSessionIds = Collections.emptySet();
-        if (!sessionIds.isEmpty()) {
+        if (!sessionIds.isEmpty() && canExposeMySigned(actor)) {
             signedSessionIds =
                     new HashSet<>(
                             attendeeRepository.findSignedSessionIdsByUserIdAndSessionIds(
@@ -204,7 +205,13 @@ public class SafetyTrainingSessionService {
 
         Set<Long> finalSignedSessionIds = signedSessionIds;
         return sessionsPage.map(
-                session -> toSummaryDto(session, finalSignedSessionIds.contains(session.getId())));
+                session ->
+                        toSummaryDto(
+                                session,
+                                resolveMySigned(
+                                        actor,
+                                        session,
+                                        finalSignedSessionIds.contains(session.getId()))));
     }
 
     @Transactional(readOnly = true)
@@ -264,6 +271,16 @@ public class SafetyTrainingSessionService {
                         session.getInstructorUser() == null
                                 ? null
                                 : session.getInstructorUser().getPosition())
+                .instructorDepartmentName(
+                        session.getInstructorUser() == null
+                                        || session.getInstructorUser().getDepartment() == null
+                                        || session.getInstructorUser().getDepartment().getName()
+                                                == null
+                                ? null
+                                : session.getInstructorUser()
+                                        .getDepartment()
+                                        .getName()
+                                        .getDescription())
                 .educationContent(session.getEducationContent())
                 .targetCount(session.getTargetCount())
                 .attendedCount(session.getAttendedCount())
@@ -277,9 +294,7 @@ public class SafetyTrainingSessionService {
                         attendee.getSignatureKey() == null
                                 ? null
                                 : s3Service.getPresignedViewUrl(attendee.getSignatureKey()))
-                .canSign(
-                        session.getStatus() == SafetyTrainingSessionStatus.OPEN
-                                && myStatus != SafetyTrainingAttendeeStatus.SIGNED)
+                .canSign(canSignSession(actor, session, myStatus))
                 .build();
     }
 
@@ -794,6 +809,36 @@ public class SafetyTrainingSessionService {
         }
     }
 
+    private boolean canSignSession(
+            User actor, SafetyTrainingSession session, SafetyTrainingAttendeeStatus myStatus) {
+        if (actor.getPosition() == Position.CEO || actor.getRole() == Role.MASTER_ADMIN) {
+            return false;
+        }
+
+        if (actor.getWorkLocation() == null
+                || actor.getWorkLocation() != session.getCompanyScope()) {
+            return false;
+        }
+
+        return session.getStatus() == SafetyTrainingSessionStatus.OPEN
+                && myStatus != SafetyTrainingAttendeeStatus.SIGNED;
+    }
+
+    private boolean canExposeMySigned(User actor) {
+        return actor.getPosition() != Position.CEO && actor.getRole() != Role.MASTER_ADMIN;
+    }
+
+    private Boolean resolveMySigned(User actor, SafetyTrainingSession session, boolean signed) {
+        if (!canExposeMySigned(actor)) {
+            return null;
+        }
+        if (actor.getWorkLocation() == null
+                || actor.getWorkLocation() != session.getCompanyScope()) {
+            return null;
+        }
+        return signed;
+    }
+
     private List<SafetyEducationMethod> toMethods(String educationMethodsJson) {
         if (educationMethodsJson == null || educationMethodsJson.isBlank()) {
             return Collections.emptyList();
@@ -838,7 +883,7 @@ public class SafetyTrainingSessionService {
     }
 
     private SafetyTrainingSessionSummaryResponseDto toSummaryDto(
-            SafetyTrainingSession session, boolean mySigned) {
+            SafetyTrainingSession session, Boolean mySigned) {
         return SafetyTrainingSessionSummaryResponseDto.builder()
                 .sessionId(session.getId())
                 .title(session.getTitle())

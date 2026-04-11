@@ -39,14 +39,14 @@ public class ApprovalConfigController {
             summary = "결재선 설정 저장",
             description =
                     "문서 양식(DocumentType)별 기본 결재자/참조자 ID 목록을 저장합니다. 기존 설정이 있으면 덮어씁니다."
-                            + " `MANAGE_APPROVAL_CONFIG` 권한이 필요합니다.")
+                            + " `MANAGE_APPROVAL_LINE` 권한이 필요합니다.")
     @ApiResponses({
         @io.swagger.v3.oas.annotations.responses.ApiResponse(
                 responseCode = "200",
                 description = "저장 성공"),
         @io.swagger.v3.oas.annotations.responses.ApiResponse(
                 responseCode = "403",
-                description = "결재 설정 관리 권한 없음")
+                description = "결재선 설정 관리 권한 없음")
     })
     @PostMapping
     public ResponseEntity<ApiResponse<ApprovalConfigResponseDto>> saveConfig(

@@ -183,8 +183,8 @@ public class AdminController {
                                             "position": "사원",
                                             "jobType": "관리직",
                                             "authorities": [
-                                              { "code": "ACCESS_MESSAGE", "label": "메세지 작성", "enabled": true },
-                                              { "code": "ACCESS_EDUCATION", "label": "교육 작성", "enabled": false }
+                                              { "code": "SEND_NOTIFICATION", "label": "알림 전송", "enabled": true },
+                                              { "code": "WRITE_DEPARTMENT_EDUCATION", "label": "부서 교육 작성", "enabled": false }
                                             ],
                                             "hireDate": "2025-09-22",
                                             "resignationDate": null,
@@ -380,7 +380,7 @@ public class AdminController {
                                               "departmentName": "경영지원부",
                                               "position": "사원",
                                               "jobType": "관리직",
-                                              "authorities": ["메세지 작성"],
+                                              "authorities": ["알림 전송"],
                                               "hireDate": "2025-09-22",
                                               "resignationDate": null,
                                               "role": "일반 사용자",
@@ -553,7 +553,7 @@ public class AdminController {
                                                           "departmentName": "경영지원부",
                                                           "position": "사원",
                                                           "jobType": "관리직",
-                                                          "authorities": ["메세지 작성"],
+                                                          "authorities": ["알림 전송"],
                                                           "hireDate": "2025-09-22",
                                                           "resignationDate": null,
                                                           "role": "일반 사용자"
@@ -578,11 +578,11 @@ public class AdminController {
                                                           "position": "사원",
                                                           "jobType": "관리직",
                                                           "authorities": [
-                                                            "메세지 작성",
-                                                            "교육 작성",
+                                                            "알림 전송",
+                                                            "부서 교육 작성",
                                                             "공지 작성",
-                                                            "방문자 관리 접근",
-                                                            "사원 데이터 관리"
+                                                            "내방객 관리",
+                                                            "직원 정보 수정"
                                                           ],
                                                           "hireDate": "2025-09-22",
                                                           "resignationDate": null,
@@ -803,7 +803,7 @@ public class AdminController {
             summary = "내 정보 수정 요청 승인",
             description =
                     "requestId(MyInfoUpdateRequest PK)로 해당 PENDING 개인정보 수정 요청을 승인하고 실제 사용자 정보에"
-                        + " 반영합니다.")
+                            + " 반영합니다.")
     @ApiResponses(
             value = {
                 @io.swagger.v3.oas.annotations.responses.ApiResponse(
@@ -1054,8 +1054,8 @@ public class AdminController {
                                             "position": "사원",
                                             "jobType": "사무직",
                                             "authorities": [
-                                              { "code": "ACCESS_MESSAGE", "label": "메세지 이용", "enabled": false },
-                                              { "code": "ACCESS_EDUCATION", "label": "교육 이용", "enabled": true }
+                                              { "code": "SEND_NOTIFICATION", "label": "알림 전송", "enabled": false },
+                                              { "code": "WRITE_DEPARTMENT_EDUCATION", "label": "부서 교육 작성", "enabled": true }
                                             ],
                                             "hireDate": "2025-09-22",
                                             "resignationDate": null,

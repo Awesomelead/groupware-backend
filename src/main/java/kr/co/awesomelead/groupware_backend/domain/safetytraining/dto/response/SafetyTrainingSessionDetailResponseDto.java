@@ -57,6 +57,9 @@ public class SafetyTrainingSessionDetailResponseDto {
     @Schema(description = "교육 실시자 직급", example = "대리")
     private Position instructorPosition;
 
+    @Schema(description = "교육 실시자 부서명", example = "경영지원부")
+    private String instructorDepartmentName;
+
     @Schema(description = "교육 내용", example = "개인정보 보호 및 사내 보안 규정 안내")
     private String educationContent;
 

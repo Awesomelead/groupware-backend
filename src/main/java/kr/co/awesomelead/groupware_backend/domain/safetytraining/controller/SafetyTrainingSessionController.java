@@ -127,7 +127,8 @@ public class SafetyTrainingSessionController {
 
     @Operation(
             summary = "안전보건 교육 세션 상세 조회",
-            description = "제목, 교육 정보, 보고서 파일 URL, 내 수료/미수료 및 서명 가능 여부를 조회합니다.")
+            description =
+                    "제목, 교육 정보(실시자 이름/직급/부서 포함), 보고서 파일 URL, 내 수료/미수료 및 서명 가능 여부를 조회합니다.")
     @ApiResponses(
             value = {
                 @io.swagger.v3.oas.annotations.responses.ApiResponse(

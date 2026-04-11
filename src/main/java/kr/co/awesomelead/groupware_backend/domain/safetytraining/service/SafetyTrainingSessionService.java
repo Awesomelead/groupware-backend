@@ -264,6 +264,16 @@ public class SafetyTrainingSessionService {
                         session.getInstructorUser() == null
                                 ? null
                                 : session.getInstructorUser().getPosition())
+                .instructorDepartmentName(
+                        session.getInstructorUser() == null
+                                        || session.getInstructorUser().getDepartment() == null
+                                        || session.getInstructorUser().getDepartment().getName()
+                                                == null
+                                ? null
+                                : session.getInstructorUser()
+                                        .getDepartment()
+                                        .getName()
+                                        .getDescription())
                 .educationContent(session.getEducationContent())
                 .targetCount(session.getTargetCount())
                 .attendedCount(session.getAttendedCount())

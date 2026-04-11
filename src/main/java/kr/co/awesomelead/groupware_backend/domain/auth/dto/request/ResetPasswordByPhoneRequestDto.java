@@ -20,11 +20,6 @@ public class ResetPasswordByPhoneRequestDto {
     @Email(message = "유효한 이메일 형식이 아닙니다.")
     private String email;
 
-    @Schema(description = "전화번호 ('-' 없이 10~11자리)", example = "01012345678", required = true)
-    @NotBlank(message = "전화번호는 필수입니다.")
-    @Pattern(regexp = "^\\d{10,11}$", message = "전화번호는 '-' 없이 10~11자리 숫자로 입력해주세요.")
-    private String phoneNumber;
-
     @Schema(
             description = "새 비밀번호 (영문, 숫자, 특수문자 포함 8자 이상)",
             example = "newPassword123!",

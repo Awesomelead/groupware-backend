@@ -426,7 +426,6 @@ class AuthServiceTest {
         void setUp() {
             requestDto = new ResetPasswordByPhoneRequestDto();
             requestDto.setEmail(TEST_EMAIL);
-            requestDto.setPhoneNumber(TEST_PHONE);
             requestDto.setNewPassword(NEW_PASSWORD);
             requestDto.setNewPasswordConfirm(NEW_PASSWORD);
         }
@@ -435,9 +434,6 @@ class AuthServiceTest {
         @DisplayName("성공: 휴대폰 인증 후 비밀번호가 정상적으로 재설정된다")
         void resetPasswordByPhone_Success() {
             // given
-            String phoneHash = User.hashValue(TEST_PHONE);
-            testUser.setPhoneNumberHash(phoneHash); // 테스트 유저의 전화번호 해시 설정
-
             given(userRepository.findByEmail(TEST_EMAIL)).willReturn(Optional.of(testUser));
             given(phoneAuthService.isPhoneVerified(TEST_PHONE)).willReturn(true);
             given(bCryptPasswordEncoder.encode(NEW_PASSWORD)).willReturn(ENCODED_NEW_PASSWORD);
@@ -488,32 +484,9 @@ class AuthServiceTest {
         }
 
         @Test
-        @DisplayName("실패: 전화번호가 계정과 일치하지 않는 경우")
-        void resetPasswordByPhone_PhoneNumberMismatch() {
-            // given
-            String differentPhoneHash = User.hashValue("01099999999"); // 다른 전화번호
-            testUser.setPhoneNumberHash(differentPhoneHash);
-
-            given(userRepository.findByEmail(TEST_EMAIL)).willReturn(Optional.of(testUser));
-            given(phoneAuthService.isPhoneVerified(TEST_PHONE)).willReturn(true);
-
-            // when & then
-            assertThatThrownBy(() -> authService.resetPasswordByPhone(requestDto))
-                    .isInstanceOf(CustomException.class)
-                    .hasFieldOrPropertyWithValue("errorCode", ErrorCode.PHONE_NUMBER_MISMATCH);
-
-            verify(userRepository).findByEmail(TEST_EMAIL);
-            verify(phoneAuthService).isPhoneVerified(TEST_PHONE);
-            verify(userRepository, never()).save(any());
-            verify(phoneAuthService, never()).clearVerification(anyString());
-        }
-
-        @Test
         @DisplayName("실패: 비밀번호 확인이 일치하지 않는 경우")
         void resetPasswordByPhone_PasswordMismatch() {
             // given
-            String phoneHash = User.hashValue(TEST_PHONE);
-            testUser.setPhoneNumberHash(phoneHash);
             requestDto.setNewPasswordConfirm("differentPassword!@#");
 
             given(userRepository.findByEmail(TEST_EMAIL)).willReturn(Optional.of(testUser));
@@ -528,6 +501,74 @@ class AuthServiceTest {
             verify(phoneAuthService).isPhoneVerified(TEST_PHONE);
             verify(userRepository, never()).save(any());
             verify(phoneAuthService, never()).clearVerification(anyString());
+        }
+    }
+
+    @Nested
+    @DisplayName("휴대폰 비밀번호 찾기 계정 검증")
+    class VerifyAccountByPhoneTest {
+
+        @Test
+        @DisplayName("성공: 이메일과 전화번호가 동일 계정과 일치하면 통과한다")
+        void verifyAccountByPhone_Success() {
+            // given
+            testUser.setPhoneNumberHash(User.hashValue(TEST_PHONE));
+            given(userRepository.findByEmail(TEST_EMAIL)).willReturn(Optional.of(testUser));
+            given(phoneAuthService.isPhoneVerified(TEST_PHONE)).willReturn(true);
+
+            // when
+            authService.verifyAccountByPhone(TEST_EMAIL, TEST_PHONE);
+
+            // then
+            verify(userRepository).findByEmail(TEST_EMAIL);
+            verify(phoneAuthService).isPhoneVerified(TEST_PHONE);
+        }
+
+        @Test
+        @DisplayName("실패: 이메일이 존재하지 않으면 USER_NOT_FOUND")
+        void verifyAccountByPhone_UserNotFound() {
+            // given
+            given(userRepository.findByEmail(TEST_EMAIL)).willReturn(Optional.empty());
+
+            // when & then
+            assertThatThrownBy(() -> authService.verifyAccountByPhone(TEST_EMAIL, TEST_PHONE))
+                    .isInstanceOf(CustomException.class)
+                    .hasFieldOrPropertyWithValue("errorCode", ErrorCode.USER_NOT_FOUND);
+
+            verify(userRepository).findByEmail(TEST_EMAIL);
+        }
+
+        @Test
+        @DisplayName("실패: 전화번호가 계정과 다르면 PHONE_NUMBER_MISMATCH")
+        void verifyAccountByPhone_PhoneNumberMismatch() {
+            // given
+            testUser.setPhoneNumberHash(User.hashValue("01099999999"));
+            given(userRepository.findByEmail(TEST_EMAIL)).willReturn(Optional.of(testUser));
+
+            // when & then
+            assertThatThrownBy(() -> authService.verifyAccountByPhone(TEST_EMAIL, TEST_PHONE))
+                    .isInstanceOf(CustomException.class)
+                    .hasFieldOrPropertyWithValue("errorCode", ErrorCode.PHONE_NUMBER_MISMATCH);
+
+            verify(userRepository).findByEmail(TEST_EMAIL);
+            verify(phoneAuthService, never()).isPhoneVerified(anyString());
+        }
+
+        @Test
+        @DisplayName("실패: 전화번호 인증이 완료되지 않으면 PHONE_NOT_VERIFIED")
+        void verifyAccountByPhone_NotVerified() {
+            // given
+            testUser.setPhoneNumberHash(User.hashValue(TEST_PHONE));
+            given(userRepository.findByEmail(TEST_EMAIL)).willReturn(Optional.of(testUser));
+            given(phoneAuthService.isPhoneVerified(TEST_PHONE)).willReturn(false);
+
+            // when & then
+            assertThatThrownBy(() -> authService.verifyAccountByPhone(TEST_EMAIL, TEST_PHONE))
+                    .isInstanceOf(CustomException.class)
+                    .hasFieldOrPropertyWithValue("errorCode", ErrorCode.PHONE_NOT_VERIFIED);
+
+            verify(userRepository).findByEmail(TEST_EMAIL);
+            verify(phoneAuthService).isPhoneVerified(TEST_PHONE);
         }
     }
 

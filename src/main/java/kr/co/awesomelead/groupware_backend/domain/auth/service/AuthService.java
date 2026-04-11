@@ -306,6 +306,22 @@ public class AuthService {
         log.info("비밀번호 재설정 완료 (이메일 인증) - 사용자 ID: {}", user.getId());
     }
 
+    public void verifyAccountByPhone(String email, String phoneNumber) {
+        User user =
+                userRepository
+                        .findByEmail(email)
+                        .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
+
+        String phoneNumberHash = User.hashValue(phoneNumber);
+        if (!phoneNumberHash.equals(user.getPhoneNumberHash())) {
+            throw new CustomException(ErrorCode.PHONE_NUMBER_MISMATCH);
+        }
+
+        if (!phoneAuthService.isPhoneVerified(phoneNumber)) {
+            throw new CustomException(ErrorCode.PHONE_NOT_VERIFIED);
+        }
+    }
+
     public void resetPasswordByPhone(ResetPasswordByPhoneRequestDto requestDto) {
 
         // 1. 이메일로 사용자 조회
@@ -314,28 +330,24 @@ public class AuthService {
                         .findByEmail(requestDto.getEmail())
                         .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
 
-        // 2. 휴대폰 인증 여부 확인
-        if (!phoneAuthService.isPhoneVerified(requestDto.getPhoneNumber())) {
+        String registeredPhoneNumber = user.getPhoneNumber();
+
+        // 2. 등록된 휴대폰 번호 인증 여부 확인
+        if (!phoneAuthService.isPhoneVerified(registeredPhoneNumber)) {
             throw new CustomException(ErrorCode.PHONE_NOT_VERIFIED);
         }
 
-        // 3. 해시로 전화번호 일치 여부 확인
-        String phoneNumberHash = User.hashValue(requestDto.getPhoneNumber());
-        if (!user.getPhoneNumberHash().equals(phoneNumberHash)) {
-            throw new CustomException(ErrorCode.PHONE_NUMBER_MISMATCH);
-        }
-
-        // 4. 새 비밀번호 일치 확인
+        // 3. 새 비밀번호 일치 확인
         if (!requestDto.getNewPassword().equals(requestDto.getNewPasswordConfirm())) {
             throw new CustomException(ErrorCode.PASSWORD_MISMATCH);
         }
 
-        // 5. 비밀번호 변경
+        // 4. 비밀번호 변경
         user.setPassword(bCryptPasswordEncoder.encode(requestDto.getNewPassword()));
         userRepository.save(user);
 
-        // 6. 인증 플래그 삭제
-        phoneAuthService.clearVerification(requestDto.getPhoneNumber());
+        // 5. 인증 플래그 삭제
+        phoneAuthService.clearVerification(registeredPhoneNumber);
 
         log.info("비밀번호 재설정 완료 (휴대폰 인증) - 사용자 ID: {}, 이메일: {}", user.getId(), user.getEmail());
     }

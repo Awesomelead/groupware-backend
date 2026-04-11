@@ -417,6 +417,57 @@ class AuthServiceTest {
     }
 
     @Nested
+    @DisplayName("이메일 비밀번호 찾기 계정 검증")
+    class VerifyAccountByEmailTest {
+
+        @Test
+        @DisplayName("성공: 이메일 인증 완료 및 계정 존재 시 통과한다")
+        void verifyAccountByEmail_Success() {
+            // given
+            given(emailAuthService.isEmailVerified(TEST_EMAIL)).willReturn(true);
+            given(userRepository.findByEmail(TEST_EMAIL)).willReturn(Optional.of(testUser));
+
+            // when
+            authService.verifyAccountByEmail(TEST_EMAIL);
+
+            // then
+            verify(emailAuthService).isEmailVerified(TEST_EMAIL);
+            verify(userRepository).findByEmail(TEST_EMAIL);
+        }
+
+        @Test
+        @DisplayName("실패: 이메일 인증이 완료되지 않으면 EMAIL_NOT_VERIFIED")
+        void verifyAccountByEmail_NotVerified() {
+            // given
+            given(emailAuthService.isEmailVerified(TEST_EMAIL)).willReturn(false);
+
+            // when & then
+            assertThatThrownBy(() -> authService.verifyAccountByEmail(TEST_EMAIL))
+                    .isInstanceOf(CustomException.class)
+                    .hasFieldOrPropertyWithValue("errorCode", ErrorCode.EMAIL_NOT_VERIFIED);
+
+            verify(emailAuthService).isEmailVerified(TEST_EMAIL);
+            verify(userRepository, never()).findByEmail(anyString());
+        }
+
+        @Test
+        @DisplayName("실패: 이메일 계정이 존재하지 않으면 USER_NOT_FOUND")
+        void verifyAccountByEmail_UserNotFound() {
+            // given
+            given(emailAuthService.isEmailVerified(TEST_EMAIL)).willReturn(true);
+            given(userRepository.findByEmail(TEST_EMAIL)).willReturn(Optional.empty());
+
+            // when & then
+            assertThatThrownBy(() -> authService.verifyAccountByEmail(TEST_EMAIL))
+                    .isInstanceOf(CustomException.class)
+                    .hasFieldOrPropertyWithValue("errorCode", ErrorCode.USER_NOT_FOUND);
+
+            verify(emailAuthService).isEmailVerified(TEST_EMAIL);
+            verify(userRepository).findByEmail(TEST_EMAIL);
+        }
+    }
+
+    @Nested
     @DisplayName("휴대폰 인증 후 비밀번호 재설정")
     class ResetPasswordByPhoneTest {
 

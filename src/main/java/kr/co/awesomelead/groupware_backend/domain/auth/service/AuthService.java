@@ -306,6 +306,16 @@ public class AuthService {
         log.info("비밀번호 재설정 완료 (이메일 인증) - 사용자 ID: {}", user.getId());
     }
 
+    public void verifyAccountByEmail(String email) {
+        if (!emailAuthService.isEmailVerified(email)) {
+            throw new CustomException(ErrorCode.EMAIL_NOT_VERIFIED);
+        }
+
+        userRepository
+                .findByEmail(email)
+                .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
+    }
+
     public void verifyAccountByPhone(String email, String phoneNumber) {
         User user =
                 userRepository

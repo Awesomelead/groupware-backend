@@ -196,7 +196,7 @@ public class SafetyTrainingSessionService {
         List<Long> sessionIds =
                 sessionsPage.getContent().stream().map(SafetyTrainingSession::getId).toList();
         Set<Long> signedSessionIds = Collections.emptySet();
-        if (!sessionIds.isEmpty()) {
+        if (!sessionIds.isEmpty() && canExposeMySigned(actor)) {
             signedSessionIds =
                     new HashSet<>(
                             attendeeRepository.findSignedSessionIdsByUserIdAndSessionIds(
@@ -205,7 +205,13 @@ public class SafetyTrainingSessionService {
 
         Set<Long> finalSignedSessionIds = signedSessionIds;
         return sessionsPage.map(
-                session -> toSummaryDto(session, finalSignedSessionIds.contains(session.getId())));
+                session ->
+                        toSummaryDto(
+                                session,
+                                resolveMySigned(
+                                        actor,
+                                        session,
+                                        finalSignedSessionIds.contains(session.getId()))));
     }
 
     @Transactional(readOnly = true)
@@ -818,6 +824,21 @@ public class SafetyTrainingSessionService {
                 && myStatus != SafetyTrainingAttendeeStatus.SIGNED;
     }
 
+    private boolean canExposeMySigned(User actor) {
+        return actor.getPosition() != Position.CEO && actor.getRole() != Role.MASTER_ADMIN;
+    }
+
+    private Boolean resolveMySigned(User actor, SafetyTrainingSession session, boolean signed) {
+        if (!canExposeMySigned(actor)) {
+            return null;
+        }
+        if (actor.getWorkLocation() == null
+                || actor.getWorkLocation() != session.getCompanyScope()) {
+            return null;
+        }
+        return signed;
+    }
+
     private List<SafetyEducationMethod> toMethods(String educationMethodsJson) {
         if (educationMethodsJson == null || educationMethodsJson.isBlank()) {
             return Collections.emptyList();
@@ -862,7 +883,7 @@ public class SafetyTrainingSessionService {
     }
 
     private SafetyTrainingSessionSummaryResponseDto toSummaryDto(
-            SafetyTrainingSession session, boolean mySigned) {
+            SafetyTrainingSession session, Boolean mySigned) {
         return SafetyTrainingSessionSummaryResponseDto.builder()
                 .sessionId(session.getId())
                 .title(session.getTitle())

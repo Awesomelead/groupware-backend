@@ -24,6 +24,7 @@ import kr.co.awesomelead.groupware_backend.domain.safetytraining.repository.Safe
 import kr.co.awesomelead.groupware_backend.domain.user.entity.User;
 import kr.co.awesomelead.groupware_backend.domain.user.enums.Authority;
 import kr.co.awesomelead.groupware_backend.domain.user.enums.Position;
+import kr.co.awesomelead.groupware_backend.domain.user.enums.Role;
 import kr.co.awesomelead.groupware_backend.domain.user.enums.Status;
 import kr.co.awesomelead.groupware_backend.domain.user.repository.UserRepository;
 import kr.co.awesomelead.groupware_backend.global.error.CustomException;
@@ -287,9 +288,7 @@ public class SafetyTrainingSessionService {
                         attendee.getSignatureKey() == null
                                 ? null
                                 : s3Service.getPresignedViewUrl(attendee.getSignatureKey()))
-                .canSign(
-                        session.getStatus() == SafetyTrainingSessionStatus.OPEN
-                                && myStatus != SafetyTrainingAttendeeStatus.SIGNED)
+                .canSign(canSignSession(actor, session, myStatus))
                 .build();
     }
 
@@ -802,6 +801,21 @@ public class SafetyTrainingSessionService {
                 || actor.getWorkLocation() != session.getCompanyScope()) {
             throw new CustomException(ErrorCode.NO_AUTHORITY_FOR_SAFETY_READ);
         }
+    }
+
+    private boolean canSignSession(
+            User actor, SafetyTrainingSession session, SafetyTrainingAttendeeStatus myStatus) {
+        if (actor.getPosition() == Position.CEO || actor.getRole() == Role.MASTER_ADMIN) {
+            return false;
+        }
+
+        if (actor.getWorkLocation() == null
+                || actor.getWorkLocation() != session.getCompanyScope()) {
+            return false;
+        }
+
+        return session.getStatus() == SafetyTrainingSessionStatus.OPEN
+                && myStatus != SafetyTrainingAttendeeStatus.SIGNED;
     }
 
     private List<SafetyEducationMethod> toMethods(String educationMethodsJson) {

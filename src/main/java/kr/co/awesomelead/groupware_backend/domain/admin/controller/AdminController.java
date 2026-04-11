@@ -803,7 +803,7 @@ public class AdminController {
             summary = "내 정보 수정 요청 승인",
             description =
                     "requestId(MyInfoUpdateRequest PK)로 해당 PENDING 개인정보 수정 요청을 승인하고 실제 사용자 정보에"
-                        + " 반영합니다.")
+                            + " 반영합니다.")
     @ApiResponses(
             value = {
                 @io.swagger.v3.oas.annotations.responses.ApiResponse(

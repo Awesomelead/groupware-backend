@@ -21,7 +21,7 @@ import java.util.List;
 
 @Getter
 @NoArgsConstructor
-@Schema(description = "안전보건 교육 세션 수정 요청")
+@Schema(description = "안전보건 교육일지 수정 요청")
 public class SafetyTrainingSessionUpdateRequestDto {
 
     @NotBlank(message = "제목은 필수입니다.")

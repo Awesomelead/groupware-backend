@@ -21,7 +21,7 @@ import java.util.List;
 @Builder
 public class EduReportDetailDto {
 
-    @Schema(description = "교육 보고서 ID", example = "1")
+    @Schema(description = "교육 게시물 ID", example = "1")
     private Long id;
 
     @Schema(description = "교육 제목", example = "안전 교육")
@@ -51,7 +51,7 @@ public class EduReportDetailDto {
     @Schema(description = "서명 필수 여부", example = "false")
     private boolean signatureRequired;
 
-    @Schema(description = "부서교육 상태", example = "OPEN")
+    @Schema(description = "교육 상태", example = "OPEN")
     private EduReportStatus status;
 
     @Schema(description = "첨부 파일 목록")

@@ -52,17 +52,17 @@ import java.io.IOException;
         name = "Safety Training",
         description =
                 """
-        안전보건 교육 세션 API
+        안전보건 교육일지 API
 
         ### 권한
         - 조회: 일반 사용자(`본인 회사만 조회`)
         - 조회: `WRITE_SAFETY` 권한 사용자(`전체 회사 조회 가능`)
         - 참석자 현황 조회: `WRITE_SAFETY`
-        - 세션 상태 변경/미참석 사유 입력: `WRITE_SAFETY`
-        - 세션 삭제: `WRITE_SAFETY`
-        - 보고서 생성(엑셀): `WRITE_SAFETY` (`OPEN/CLOSED` 모두 가능)
-        - 보고서 다운로드 URL 조회: 세션 조회 권한 사용자
-        - 수료 처리(서명): 세션이 `OPEN`이고 미수료(`PENDING`, `ABSENT`) 상태일 때 본인 서명 가능
+        - 교육일지 상태 변경/미참석 사유 입력: `WRITE_SAFETY`
+        - 교육일지 삭제: `WRITE_SAFETY`
+        - 엑셀 파일 생성: `WRITE_SAFETY` (`OPEN/CLOSED` 모두 가능)
+        - 엑셀 파일 조회: 교육일지 조회 권한 사용자
+        - 수료 처리(서명): 교육일지가 `OPEN`이고 미수료(`PENDING`, `ABSENT`) 상태일 때 본인 서명 가능
         - 생성: `WRITE_SAFETY`
 
         ### 사용 Enum
@@ -78,9 +78,9 @@ public class SafetyTrainingSessionController {
     private final SafetyTrainingSessionService safetyTrainingSessionService;
 
     @Operation(
-            summary = "안전보건 교육 세션 목록 조회",
+            summary = "안전보건 교육일지 목록 조회",
             description =
-                    "일반 사용자는 본인 회사 데이터를 조회할 수 있으며, WRITE_SAFETY 권한 사용자는 전체 회사/상태 조회가 가능합니다. 각 세션"
+                    "일반 사용자는 본인 회사 데이터를 조회할 수 있으며, WRITE_SAFETY 권한 사용자는 전체 회사/상태 조회가 가능합니다. 각 교육일지"
                             + " 항목에 현재 로그인 사용자의 서명 완료 여부(mySigned)를 포함합니다.")
     @ApiResponses(
             value = {
@@ -126,8 +126,8 @@ public class SafetyTrainingSessionController {
     }
 
     @Operation(
-            summary = "안전보건 교육 세션 상세 조회",
-            description = "제목, 교육 정보(실시자 이름/직급/부서 포함), 보고서 파일 URL, 내 수료/미수료 및 서명 가능 여부를 조회합니다.")
+            summary = "안전보건 교육일지 상세 조회",
+            description = "제목, 교육 정보(실시자 이름/직급/부서 포함), 엑셀 파일 URL, 내 수료/미수료 및 서명 가능 여부를 조회합니다.")
     @ApiResponses(
             value = {
                 @io.swagger.v3.oas.annotations.responses.ApiResponse(
@@ -156,7 +156,7 @@ public class SafetyTrainingSessionController {
             """))),
                 @io.swagger.v3.oas.annotations.responses.ApiResponse(
                         responseCode = "404",
-                        description = "세션 또는 사용자 없음",
+                        description = "교육일지 또는 사용자 없음",
                         content =
                                 @Content(
                                         mediaType = "application/json",
@@ -167,7 +167,7 @@ public class SafetyTrainingSessionController {
                 {
                   "isSuccess": false,
                   "code": "SAFETY_TRAINING_SESSION_NOT_FOUND",
-                  "message": "해당 안전보건 교육 세션을 찾을 수 없습니다.",
+                  "message": "해당 안전보건 교육일지를 찾을 수 없습니다.",
                   "result": null
                 }
                 """)
@@ -184,7 +184,7 @@ public class SafetyTrainingSessionController {
 
     @Operation(
             summary = "안전보건 교육 참석자 현황 조회",
-            description = "작성 권한(WRITE_SAFETY) 사용자가 세션의 참석자 상태(PENDING/SIGNED/ABSENT)를 조회합니다.")
+            description = "작성 권한(WRITE_SAFETY) 사용자가 교육일지의 참석자 상태(PENDING/SIGNED/ABSENT)를 조회합니다.")
     @ApiResponses(
             value = {
                 @io.swagger.v3.oas.annotations.responses.ApiResponse(
@@ -213,7 +213,7 @@ public class SafetyTrainingSessionController {
             """))),
                 @io.swagger.v3.oas.annotations.responses.ApiResponse(
                         responseCode = "404",
-                        description = "세션/사용자 없음")
+                        description = "교육일지/사용자 없음")
             })
     @GetMapping("/{sessionId}/attendees")
     public ResponseEntity<ApiResponse<SafetyTrainingSessionAttendeesResponseDto>>
@@ -227,10 +227,10 @@ public class SafetyTrainingSessionController {
     }
 
     @Operation(
-            summary = "안전보건 교육 보고서 생성",
+            summary = "안전보건 교육 엑셀 파일 생성",
             description =
-                    "작성 권한(WRITE_SAFETY) 사용자가 세션 엑셀 보고서를 생성/재생성합니다. "
-                            + "세션 상태(OPEN/CLOSED)와 무관하게 생성 가능합니다. "
+                    "작성 권한(WRITE_SAFETY) 사용자가 교육일지 엑셀 파일을 생성/재생성합니다. "
+                            + "교육일지 상태(OPEN/CLOSED)와 무관하게 생성 가능합니다. "
                             + "서명 완료자의 서명 이미지는 참석자 이름 옆 칸에 반영됩니다.")
     @ApiResponses(
             value = {
@@ -260,7 +260,7 @@ public class SafetyTrainingSessionController {
             """))),
                 @io.swagger.v3.oas.annotations.responses.ApiResponse(
                         responseCode = "404",
-                        description = "세션/사용자 없음")
+                        description = "교육일지/사용자 없음")
             })
     @PostMapping("/{sessionId}/report")
     public ResponseEntity<ApiResponse<SafetyTrainingSessionReportResponseDto>>
@@ -274,8 +274,8 @@ public class SafetyTrainingSessionController {
     }
 
     @Operation(
-            summary = "안전보건 교육 보고서 다운로드 URL 조회",
-            description = "세션 조회 권한이 있는 사용자가 보고서 다운로드 URL을 조회합니다.")
+            summary = "안전보건 교육 엑셀 파일 조회",
+            description = "교육일지 조회 권한이 있는 사용자가 엑셀 파일 다운로드 URL을 조회합니다.")
     @ApiResponses(
             value = {
                 @io.swagger.v3.oas.annotations.responses.ApiResponse(
@@ -304,7 +304,7 @@ public class SafetyTrainingSessionController {
             """))),
                 @io.swagger.v3.oas.annotations.responses.ApiResponse(
                         responseCode = "404",
-                        description = "세션 없음 또는 보고서 미생성",
+                        description = "교육일지 없음 또는 엑셀 파일 미생성",
                         content =
                                 @Content(
                                         mediaType = "application/json",
@@ -315,7 +315,7 @@ public class SafetyTrainingSessionController {
             {
               "isSuccess": false,
               "code": "SAFETY_TRAINING_REPORT_NOT_FOUND",
-              "message": "안전보건 교육 보고서가 아직 생성되지 않았습니다.",
+              "message": "안전보건 교육 엑셀 파일이 아직 생성되지 않았습니다.",
               "result": null
             }
             """)))
@@ -330,8 +330,9 @@ public class SafetyTrainingSessionController {
     }
 
     @Operation(
-            summary = "안전보건 교육 세션 수정",
-            description = "작성 권한(WRITE_SAFETY) 사용자가 세션을 수정합니다. OPEN 상태 + 서명 완료자 0명인 경우에만 수정 가능합니다.",
+            summary = "안전보건 교육일지 수정",
+            description =
+                    "작성 권한(WRITE_SAFETY) 사용자가 교육일지를 수정합니다. OPEN 상태 + 서명 완료자 0명인 경우에만 수정 가능합니다.",
             requestBody =
                     @io.swagger.v3.oas.annotations.parameters.RequestBody(
                             required = true,
@@ -362,13 +363,13 @@ public class SafetyTrainingSessionController {
                         description = "수정 성공"),
                 @io.swagger.v3.oas.annotations.responses.ApiResponse(
                         responseCode = "400",
-                        description = "마감 세션 또는 서명 완료자 존재",
+                        description = "마감 교육일지 또는 서명 완료자 존재",
                         content =
                                 @Content(
                                         mediaType = "application/json",
                                         examples = {
                                             @ExampleObject(
-                                                    name = "마감 세션",
+                                                    name = "마감 교육일지",
                                                     value =
                                                             """
             {
@@ -409,7 +410,7 @@ public class SafetyTrainingSessionController {
             """))),
                 @io.swagger.v3.oas.annotations.responses.ApiResponse(
                         responseCode = "404",
-                        description = "세션/사용자 없음")
+                        description = "교육일지/사용자 없음")
             })
     @PatchMapping("/{sessionId}")
     public ResponseEntity<ApiResponse<Long>> update(
@@ -422,10 +423,10 @@ public class SafetyTrainingSessionController {
     }
 
     @Operation(
-            summary = "안전보건 교육 세션 삭제",
+            summary = "안전보건 교육일지 삭제",
             description =
-                    "작성 권한(WRITE_SAFETY) 사용자가 세션을 삭제합니다. "
-                            + "세션 본문, 참석자 데이터, 생성된 보고서 파일, 참석자 서명 파일을 함께 정리합니다.")
+                    "작성 권한(WRITE_SAFETY) 사용자가 교육일지를 삭제합니다. "
+                            + "교육일지 본문, 참석자 데이터, 생성된 엑셀 파일, 참석자 서명 파일을 함께 정리합니다.")
     @ApiResponses(
             value = {
                 @io.swagger.v3.oas.annotations.responses.ApiResponse(
@@ -450,7 +451,7 @@ public class SafetyTrainingSessionController {
             """))),
                 @io.swagger.v3.oas.annotations.responses.ApiResponse(
                         responseCode = "404",
-                        description = "세션/사용자 없음")
+                        description = "교육일지/사용자 없음")
             })
     @DeleteMapping("/{sessionId}")
     public ResponseEntity<ApiResponse<Void>> delete(
@@ -461,9 +462,9 @@ public class SafetyTrainingSessionController {
     }
 
     @Operation(
-            summary = "안전보건 교육 세션 상태 변경",
+            summary = "안전보건 교육일지 상태 변경",
             description =
-                    "작성 권한(WRITE_SAFETY) 사용자가 세션 상태를 OPEN/CLOSED로 변경합니다. "
+                    "작성 권한(WRITE_SAFETY) 사용자가 교육일지 상태를 OPEN/CLOSED로 변경합니다. "
                             + "CLOSED(정상 마감) 전환 시 미서명(PENDING) 대상자는 자동으로 불참(ABSENT) 처리됩니다. "
                             + "이때 결석자가 존재하면 absentReasonSummary를 입력해야 합니다. "
                             + "OPEN 전환 시 기존 결석(ABSENT)은 PENDING으로 초기화되어 결석 인원은 0명이 됩니다.",
@@ -543,7 +544,7 @@ public class SafetyTrainingSessionController {
             """))),
                 @io.swagger.v3.oas.annotations.responses.ApiResponse(
                         responseCode = "404",
-                        description = "세션/사용자 없음")
+                        description = "교육일지/사용자 없음")
             })
     @PatchMapping("/{sessionId}/status")
     public ResponseEntity<ApiResponse<Long>> updateStatus(
@@ -557,10 +558,10 @@ public class SafetyTrainingSessionController {
     }
 
     @Operation(
-            summary = "안전보건 교육 수료 서명",
+            summary = "안전보건 교육일지 수료 서명",
             description =
-                    "본인의 미수료 상태(PENDING, ABSENT)를 PNG 서명 업로드 후 수료(SIGNED)로 변경합니다. OPEN 상태 세션에서만 서명할"
-                            + " 수 있습니다.")
+                    "본인의 미수료 상태(PENDING, ABSENT)를 PNG 서명 업로드 후 수료(SIGNED)로 변경합니다. OPEN 상태 교육일지에서만"
+                        + " 서명할 수 있습니다.")
     @ApiResponses(
             value = {
                 @io.swagger.v3.oas.annotations.responses.ApiResponse(
@@ -626,7 +627,7 @@ public class SafetyTrainingSessionController {
             """))),
                 @io.swagger.v3.oas.annotations.responses.ApiResponse(
                         responseCode = "404",
-                        description = "세션/대상자 없음")
+                        description = "교육일지/대상자 없음")
             })
     @PostMapping(
             value = "/{sessionId}/attendance",
@@ -641,8 +642,8 @@ public class SafetyTrainingSessionController {
     }
 
     @Operation(
-            summary = "안전보건 교육 엑셀 미리보기",
-            description = "입력한 값으로 DB 저장 없이 엑셀 미리보기를 생성합니다.",
+            summary = "안전보건 교육 엑셀 파일 미리보기",
+            description = "입력한 값으로 DB 저장 없이 엑셀 파일 미리보기를 생성합니다.",
             requestBody =
                     @io.swagger.v3.oas.annotations.parameters.RequestBody(
                             required = true,
@@ -681,8 +682,8 @@ public class SafetyTrainingSessionController {
     }
 
     @Operation(
-            summary = "안전보건 교육 세션 생성",
-            description = "PSM/안전보건 작성 권한 사용자가 교육 세션을 생성합니다.",
+            summary = "안전보건 교육일지 등록",
+            description = "PSM/안전보건 작성 권한 사용자가 교육일지를 등록합니다.",
             requestBody =
                     @io.swagger.v3.oas.annotations.parameters.RequestBody(
                             required = true,

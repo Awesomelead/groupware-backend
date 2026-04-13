@@ -17,7 +17,7 @@ import java.time.LocalDateTime;
 @Getter
 @Setter
 @NoArgsConstructor
-@Schema(description = "안전보건 교육 세션 목록 조회 필터")
+@Schema(description = "안전보건 교육일지 목록 조회 필터")
 public class SafetyTrainingSessionSearchConditionDto {
 
     @Schema(
@@ -35,7 +35,7 @@ public class SafetyTrainingSessionSearchConditionDto {
     private SafetyEducationType educationType;
 
     @Schema(
-            description = "세션 상태 필터 (OPEN: 진행중, CLOSED: 정상 마감)",
+            description = "교육일지 상태 필터 (OPEN: 진행중, CLOSED: 정상 마감)",
             example = "OPEN",
             allowableValues = {"OPEN", "CLOSED"})
     private SafetyTrainingSessionStatus status;

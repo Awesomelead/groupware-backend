@@ -13,10 +13,10 @@ import java.util.List;
 
 @Getter
 @Builder
-@Schema(description = "안전보건 교육 세션 참석자 현황 응답")
+@Schema(description = "안전보건 교육일지 참석자 현황 응답")
 public class SafetyTrainingSessionAttendeesResponseDto {
 
-    @Schema(description = "세션 ID", example = "12")
+    @Schema(description = "교육일지 ID", example = "12")
     private Long sessionId;
 
     @Schema(description = "교육 대상 인원 수", example = "49")
@@ -28,7 +28,7 @@ public class SafetyTrainingSessionAttendeesResponseDto {
     @Schema(description = "교육 미참석 인원 수", example = "9")
     private int absentCount;
 
-    @Schema(description = "교육 미참석 사유(세션 단위, 결석자 없으면 null)", example = "현장 장비 점검으로 일부 인원 교육 참여 불가")
+    @Schema(description = "교육 미참석 사유(교육일지 단위, 결석자 없으면 null)", example = "현장 장비 점검으로 일부 인원 교육 참여 불가")
     private String absentReasonSummary;
 
     @Schema(description = "참석자 목록")

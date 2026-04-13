@@ -7,7 +7,7 @@ import lombok.Getter;
 
 @Getter
 @Builder
-@Schema(description = "안전보건 교육 엑셀 미리보기 응답")
+@Schema(description = "안전보건 교육 엑셀 파일 미리보기 응답")
 public class SafetyTrainingPreviewResponseDto {
 
     @Schema(description = "미리보기 파일 URL", example = "https://...presigned-url")

@@ -323,7 +323,10 @@ public class EduReportService {
 
     @Transactional
     public Long updateEduReport(
-            Long eduReportId, EduReportUpdateRequestDto requestDto, List<MultipartFile> files, Long userId) {
+            Long eduReportId,
+            EduReportUpdateRequestDto requestDto,
+            List<MultipartFile> files,
+            Long userId) {
         User user =
                 userRepository
                         .findById(userId)
@@ -355,7 +358,8 @@ public class EduReportService {
                 Department department =
                         departmentRepository
                                 .findById(requestDto.getDepartmentId())
-                                .orElseThrow(() -> new CustomException(ErrorCode.DEPARTMENT_NOT_FOUND));
+                                .orElseThrow(
+                                        () -> new CustomException(ErrorCode.DEPARTMENT_NOT_FOUND));
                 report.setDepartment(department);
                 report.setCategory(null);
             } else {
@@ -455,7 +459,8 @@ public class EduReportService {
             EduAttachment attachment =
                     eduAttachmentRepository
                             .findById(attachmentId)
-                            .orElseThrow(() -> new CustomException(ErrorCode.EDU_ATTACHMENT_NOT_FOUND));
+                            .orElseThrow(
+                                    () -> new CustomException(ErrorCode.EDU_ATTACHMENT_NOT_FOUND));
 
             if (attachment.getEduReport() == null
                     || !attachment.getEduReport().getId().equals(report.getId())) {
@@ -504,7 +509,8 @@ public class EduReportService {
         EducationCategory category =
                 educationCategoryRepository
                         .findById(categoryId)
-                        .orElseThrow(() -> new CustomException(ErrorCode.EDUCATION_CATEGORY_NOT_FOUND));
+                        .orElseThrow(
+                                () -> new CustomException(ErrorCode.EDUCATION_CATEGORY_NOT_FOUND));
 
         EducationCategoryType expectedType =
                 eduType == EduType.PSM ? EducationCategoryType.PSM : EducationCategoryType.SAFETY;

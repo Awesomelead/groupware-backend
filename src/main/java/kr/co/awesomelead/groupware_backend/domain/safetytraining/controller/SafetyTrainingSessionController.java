@@ -331,7 +331,8 @@ public class SafetyTrainingSessionController {
 
     @Operation(
             summary = "안전보건 교육일지 수정",
-            description = "작성 권한(WRITE_SAFETY) 사용자가 교육일지를 수정합니다. OPEN 상태 + 서명 완료자 0명인 경우에만 수정 가능합니다.",
+            description =
+                    "작성 권한(WRITE_SAFETY) 사용자가 교육일지를 수정합니다. OPEN 상태 + 서명 완료자 0명인 경우에만 수정 가능합니다.",
             requestBody =
                     @io.swagger.v3.oas.annotations.parameters.RequestBody(
                             required = true,
@@ -559,8 +560,8 @@ public class SafetyTrainingSessionController {
     @Operation(
             summary = "안전보건 교육일지 수료 서명",
             description =
-                    "본인의 미수료 상태(PENDING, ABSENT)를 PNG 서명 업로드 후 수료(SIGNED)로 변경합니다. OPEN 상태 교육일지에서만 서명할"
-                            + " 수 있습니다.")
+                    "본인의 미수료 상태(PENDING, ABSENT)를 PNG 서명 업로드 후 수료(SIGNED)로 변경합니다. OPEN 상태 교육일지에서만"
+                        + " 서명할 수 있습니다.")
     @ApiResponses(
             value = {
                 @io.swagger.v3.oas.annotations.responses.ApiResponse(

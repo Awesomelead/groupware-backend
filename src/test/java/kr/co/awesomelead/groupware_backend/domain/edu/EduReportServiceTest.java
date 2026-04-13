@@ -880,9 +880,15 @@ public class EduReportServiceTest {
         user.addAuthority(Authority.WRITE_SAFETY);
 
         EducationCategory oldCategory =
-                EducationCategory.builder().id(1L).categoryType(EducationCategoryType.SAFETY).build();
+                EducationCategory.builder()
+                        .id(1L)
+                        .categoryType(EducationCategoryType.SAFETY)
+                        .build();
         EducationCategory newCategory =
-                EducationCategory.builder().id(2L).categoryType(EducationCategoryType.SAFETY).build();
+                EducationCategory.builder()
+                        .id(2L)
+                        .categoryType(EducationCategoryType.SAFETY)
+                        .build();
 
         EduReport report =
                 EduReport.builder()
@@ -938,10 +944,7 @@ public class EduReportServiceTest {
                         .build();
 
         EduReportUpdateRequestDto requestDto =
-                EduReportUpdateRequestDto.builder()
-                        .title("수정 제목")
-                        .content("수정 내용")
-                        .build();
+                EduReportUpdateRequestDto.builder().title("수정 제목").content("수정 내용").build();
 
         when(userRepository.findById(userId)).thenReturn(Optional.of(user));
         when(eduReportRepository.findById(reportId)).thenReturn(Optional.of(report));
@@ -970,10 +973,7 @@ public class EduReportServiceTest {
                         .build();
 
         EduReportUpdateRequestDto requestDto =
-                EduReportUpdateRequestDto.builder()
-                        .title("수정 제목")
-                        .content("수정 내용")
-                        .build();
+                EduReportUpdateRequestDto.builder().title("수정 제목").content("수정 내용").build();
 
         when(userRepository.findById(userId)).thenReturn(Optional.of(user));
         when(eduReportRepository.findById(reportId)).thenReturn(Optional.of(report));
@@ -1029,7 +1029,8 @@ public class EduReportServiceTest {
         when(userRepository.findById(userId)).thenReturn(Optional.of(user));
         when(eduReportRepository.findById(reportId)).thenReturn(Optional.of(report));
         when(eduAttendanceRepository.countByEduReportId(reportId)).thenReturn(0L);
-        when(departmentRepository.findById(defaultDept.getId())).thenReturn(Optional.of(defaultDept));
+        when(departmentRepository.findById(defaultDept.getId()))
+                .thenReturn(Optional.of(defaultDept));
         when(eduAttachmentRepository.findById(100L)).thenReturn(Optional.of(oldAttachment));
         when(s3Service.uploadFile(newFile)).thenReturn("new-s3-key");
 
@@ -1090,7 +1091,8 @@ public class EduReportServiceTest {
         when(userRepository.findById(userId)).thenReturn(Optional.of(user));
         when(eduReportRepository.findById(reportId)).thenReturn(Optional.of(report));
         when(eduAttendanceRepository.countByEduReportId(reportId)).thenReturn(0L);
-        when(departmentRepository.findById(defaultDept.getId())).thenReturn(Optional.of(defaultDept));
+        when(departmentRepository.findById(defaultDept.getId()))
+                .thenReturn(Optional.of(defaultDept));
         when(eduAttachmentRepository.findById(777L)).thenReturn(Optional.of(foreignAttachment));
 
         // when & then

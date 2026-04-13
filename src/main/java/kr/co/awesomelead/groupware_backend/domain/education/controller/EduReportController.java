@@ -1,8 +1,8 @@
 package kr.co.awesomelead.groupware_backend.domain.education.controller;
 
+import io.swagger.v3.oas.annotations.Hidden;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
-import io.swagger.v3.oas.annotations.Hidden;
 import io.swagger.v3.oas.annotations.media.ArraySchema;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Encoding;
@@ -425,8 +425,7 @@ public class EduReportController {
     })
     @GetMapping("/{educationId}")
     public ResponseEntity<ApiResponse<EduReportDetailDto>> getEduReport(
-            @Parameter(description = "조회할 교육 게시물 ID", example = "1") @PathVariable
-                    Long educationId,
+            @Parameter(description = "조회할 교육 게시물 ID", example = "1") @PathVariable Long educationId,
             @Parameter(hidden = true) @AuthenticationPrincipal CustomUserDetails userDetails) {
         EduReportDetailDto report = eduReportService.getEduReport(educationId, userDetails.getId());
         return ResponseEntity.ok(ApiResponse.onSuccess(report));
@@ -527,10 +526,10 @@ public class EduReportController {
                         @Content(
                                 mediaType = "application/json",
                                 examples = {
-                                        @ExampleObject(
-                                                name = "부서교육 관리 권한 없음",
-                                                value =
-                                                        """
+                                    @ExampleObject(
+                                            name = "부서교육 관리 권한 없음",
+                                            value =
+                                                    """
           {
             "isSuccess": false,
             "code": "NO_AUTHORITY_FOR_EDU_REPORT",
@@ -538,10 +537,10 @@ public class EduReportController {
             "result": null
           }
           """),
-                                        @ExampleObject(
-                                                name = "PSM/안전보건 작성 권한 없음",
-                                                value =
-                                                        """
+                                    @ExampleObject(
+                                            name = "PSM/안전보건 작성 권한 없음",
+                                            value =
+                                                    """
           {
             "isSuccess": false,
             "code": "NO_AUTHORITY_FOR_SAFETY_WRITE",
@@ -605,8 +604,7 @@ public class EduReportController {
     })
     @PatchMapping(value = "/{educationId}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<ApiResponse<Long>> updateEducation(
-            @Parameter(description = "수정할 교육 게시물 ID", example = "1") @PathVariable
-                    Long educationId,
+            @Parameter(description = "수정할 교육 게시물 ID", example = "1") @PathVariable Long educationId,
             @Parameter(description = "교육 수정 정보(JSON)", required = true)
                     @RequestPart("requestDto")
                     @Valid
@@ -627,7 +625,8 @@ public class EduReportController {
             @PathVariable Long educationId,
             @Valid @RequestBody EduReportUpdateRequestDto requestDto,
             @Parameter(hidden = true) @AuthenticationPrincipal CustomUserDetails userDetails) {
-        Long updatedId = eduReportService.updateEduReport(educationId, requestDto, userDetails.getId());
+        Long updatedId =
+                eduReportService.updateEduReport(educationId, requestDto, userDetails.getId());
         return ResponseEntity.ok(ApiResponse.onSuccess(updatedId));
     }
 
@@ -655,10 +654,10 @@ public class EduReportController {
                         @Content(
                                 mediaType = "application/json",
                                 examples = {
-                                        @ExampleObject(
-                                                name = "부서교육 관리 권한 없음",
-                                                value =
-                                                        """
+                                    @ExampleObject(
+                                            name = "부서교육 관리 권한 없음",
+                                            value =
+                                                    """
           {
             "isSuccess": false,
             "code": "NO_AUTHORITY_FOR_EDU_REPORT",
@@ -666,10 +665,10 @@ public class EduReportController {
             "result": null
           }
           """),
-                                        @ExampleObject(
-                                                name = "PSM/안전보건 작성 권한 없음",
-                                                value =
-                                                        """
+                                    @ExampleObject(
+                                            name = "PSM/안전보건 작성 권한 없음",
+                                            value =
+                                                    """
           {
             "isSuccess": false,
             "code": "NO_AUTHORITY_FOR_SAFETY_WRITE",
@@ -704,7 +703,8 @@ public class EduReportController {
             @Valid @RequestBody EduReportStatusUpdateRequestDto requestDto,
             @Parameter(hidden = true) @AuthenticationPrincipal CustomUserDetails userDetails) {
         Long updatedId =
-                eduReportService.updateEduReportStatus(educationId, requestDto, userDetails.getId());
+                eduReportService.updateEduReportStatus(
+                        educationId, requestDto, userDetails.getId());
         return ResponseEntity.ok(ApiResponse.onSuccess(updatedId));
     }
 
@@ -765,8 +765,7 @@ public class EduReportController {
     })
     @DeleteMapping("/{educationId}")
     public ResponseEntity<ApiResponse<Void>> deleteEduReport(
-            @Parameter(description = "삭제할 교육 게시물 ID", example = "1") @PathVariable
-                    Long educationId,
+            @Parameter(description = "삭제할 교육 게시물 ID", example = "1") @PathVariable Long educationId,
             @Parameter(hidden = true) @AuthenticationPrincipal CustomUserDetails userDetails)
             throws IOException {
         eduReportService.deleteEduReport(educationId, userDetails.getId());
@@ -930,7 +929,9 @@ public class EduReportController {
           """)
                                         }))
             })
-    @PostMapping(value = "/{educationId}/attendance", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @PostMapping(
+            value = "/{educationId}/attendance",
+            consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<ApiResponse<Void>> markAttendance(
             @Parameter(description = "교육 게시물 ID", example = "1") @PathVariable Long educationId,
             @Parameter(description = "서명 PNG 파일(signatureRequired=true인 경우 필수)")

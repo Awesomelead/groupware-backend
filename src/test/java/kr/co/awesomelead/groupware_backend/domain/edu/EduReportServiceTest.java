@@ -15,12 +15,15 @@ import kr.co.awesomelead.groupware_backend.domain.department.entity.Department;
 import kr.co.awesomelead.groupware_backend.domain.department.enums.DepartmentName;
 import kr.co.awesomelead.groupware_backend.domain.department.repository.DepartmentRepository;
 import kr.co.awesomelead.groupware_backend.domain.education.dto.request.EduReportRequestDto;
+import kr.co.awesomelead.groupware_backend.domain.education.dto.request.EduReportStatusUpdateRequestDto;
+import kr.co.awesomelead.groupware_backend.domain.education.dto.request.EduReportUpdateRequestDto;
 import kr.co.awesomelead.groupware_backend.domain.education.dto.response.EduReportDetailDto;
 import kr.co.awesomelead.groupware_backend.domain.education.dto.response.EduReportSummaryDto;
 import kr.co.awesomelead.groupware_backend.domain.education.entity.EduAttachment;
 import kr.co.awesomelead.groupware_backend.domain.education.entity.EduAttendance;
 import kr.co.awesomelead.groupware_backend.domain.education.entity.EduReport;
 import kr.co.awesomelead.groupware_backend.domain.education.entity.EducationCategory;
+import kr.co.awesomelead.groupware_backend.domain.education.enums.EduReportStatus;
 import kr.co.awesomelead.groupware_backend.domain.education.enums.EduType;
 import kr.co.awesomelead.groupware_backend.domain.education.enums.EducationCategoryType;
 import kr.co.awesomelead.groupware_backend.domain.education.mapper.EduMapper;
@@ -768,5 +771,177 @@ public class EduReportServiceTest {
         assertThat(result.getNumberOfPeople()).isNull();
 
         verify(eduAttendanceRepository, never()).findAllByEduReportIdWithUser(anyLong());
+    }
+
+    @Test
+    @DisplayName("교육 수정 성공 - 안전보건은 WRITE_SAFETY 권한으로 수정 가능")
+    void updateEduReport_Safety_Success() {
+        // given
+        Long reportId = 10L;
+        Long userId = 1L;
+        User user = createNormalUser();
+        user.addAuthority(Authority.WRITE_SAFETY);
+
+        EducationCategory oldCategory =
+                EducationCategory.builder().id(1L).categoryType(EducationCategoryType.SAFETY).build();
+        EducationCategory newCategory =
+                EducationCategory.builder().id(2L).categoryType(EducationCategoryType.SAFETY).build();
+
+        EduReport report =
+                EduReport.builder()
+                        .id(reportId)
+                        .eduType(EduType.SAFETY)
+                        .title("기존 제목")
+                        .content("기존 내용")
+                        .pinned(false)
+                        .signatureRequired(false)
+                        .status(EduReportStatus.OPEN)
+                        .category(oldCategory)
+                        .build();
+
+        EduReportUpdateRequestDto requestDto =
+                EduReportUpdateRequestDto.builder()
+                        .title("수정 제목")
+                        .content("수정 내용")
+                        .pinned(true)
+                        .signatureRequired(false)
+                        .categoryId(2L)
+                        .build();
+
+        when(userRepository.findById(userId)).thenReturn(Optional.of(user));
+        when(eduReportRepository.findById(reportId)).thenReturn(Optional.of(report));
+        when(eduAttendanceRepository.countByEduReportId(reportId)).thenReturn(0L);
+        when(educationCategoryRepository.findById(2L)).thenReturn(Optional.of(newCategory));
+
+        // when
+        Long updatedId = eduReportService.updateEduReport(reportId, requestDto, userId);
+
+        // then
+        assertThat(updatedId).isEqualTo(reportId);
+        assertThat(report.getTitle()).isEqualTo("수정 제목");
+        assertThat(report.getContent()).isEqualTo("수정 내용");
+        assertThat(report.isPinned()).isTrue();
+        assertThat(report.getCategory()).isEqualTo(newCategory);
+        verify(departmentRepository, never()).findById(anyLong());
+    }
+
+    @Test
+    @DisplayName("교육 수정 실패 - 안전보건은 WRITE_SAFETY 권한이 없으면 수정 불가")
+    void updateEduReport_Safety_Fail_NoAuthority() {
+        // given
+        Long reportId = 10L;
+        Long userId = 1L;
+        User user = createNormalUser();
+
+        EduReport report =
+                EduReport.builder()
+                        .id(reportId)
+                        .eduType(EduType.SAFETY)
+                        .status(EduReportStatus.OPEN)
+                        .build();
+
+        EduReportUpdateRequestDto requestDto =
+                EduReportUpdateRequestDto.builder()
+                        .title("수정 제목")
+                        .content("수정 내용")
+                        .build();
+
+        when(userRepository.findById(userId)).thenReturn(Optional.of(user));
+        when(eduReportRepository.findById(reportId)).thenReturn(Optional.of(report));
+
+        // when & then
+        assertThatThrownBy(() -> eduReportService.updateEduReport(reportId, requestDto, userId))
+                .isInstanceOf(CustomException.class)
+                .hasFieldOrPropertyWithValue("errorCode", ErrorCode.NO_AUTHORITY_FOR_SAFETY_WRITE);
+        verify(eduAttendanceRepository, never()).countByEduReportId(anyLong());
+    }
+
+    @Test
+    @DisplayName("교육 수정 실패 - 부서 교육 수정 시 departmentId 필수")
+    void updateEduReport_Department_Fail_DepartmentIdRequired() {
+        // given
+        Long reportId = 10L;
+        Long userId = 1L;
+        User user = createNormalUser();
+        user.addAuthority(Authority.WRITE_DEPARTMENT_EDUCATION);
+
+        EduReport report =
+                EduReport.builder()
+                        .id(reportId)
+                        .eduType(EduType.DEPARTMENT)
+                        .status(EduReportStatus.OPEN)
+                        .build();
+
+        EduReportUpdateRequestDto requestDto =
+                EduReportUpdateRequestDto.builder()
+                        .title("수정 제목")
+                        .content("수정 내용")
+                        .build();
+
+        when(userRepository.findById(userId)).thenReturn(Optional.of(user));
+        when(eduReportRepository.findById(reportId)).thenReturn(Optional.of(report));
+        when(eduAttendanceRepository.countByEduReportId(reportId)).thenReturn(0L);
+
+        // when & then
+        assertThatThrownBy(() -> eduReportService.updateEduReport(reportId, requestDto, userId))
+                .isInstanceOf(CustomException.class)
+                .hasFieldOrPropertyWithValue("errorCode", ErrorCode.DEPARTMENT_ID_REQUIRED);
+        verify(departmentRepository, never()).findById(anyLong());
+    }
+
+    @Test
+    @DisplayName("교육 상태 변경 성공 - 안전보건은 WRITE_SAFETY 권한으로 상태 변경 가능")
+    void updateEduReportStatus_Safety_Success() {
+        // given
+        Long reportId = 11L;
+        Long userId = 1L;
+        User user = createNormalUser();
+        user.addAuthority(Authority.WRITE_SAFETY);
+
+        EduReport report =
+                EduReport.builder()
+                        .id(reportId)
+                        .eduType(EduType.SAFETY)
+                        .status(EduReportStatus.OPEN)
+                        .build();
+
+        EduReportStatusUpdateRequestDto requestDto =
+                org.mockito.Mockito.mock(EduReportStatusUpdateRequestDto.class);
+        when(requestDto.getStatus()).thenReturn(EduReportStatus.CLOSED);
+
+        when(userRepository.findById(userId)).thenReturn(Optional.of(user));
+        when(eduReportRepository.findById(reportId)).thenReturn(Optional.of(report));
+
+        // when
+        Long updatedId = eduReportService.updateEduReportStatus(reportId, requestDto, userId);
+
+        // then
+        assertThat(updatedId).isEqualTo(reportId);
+        assertThat(report.getStatus()).isEqualTo(EduReportStatus.CLOSED);
+    }
+
+    @Test
+    @DisplayName("출석 체크 실패 - 마감된 안전보건 교육")
+    void markAttendance_Fail_ClosedSafetyReport() {
+        // given
+        Long reportId = 1L;
+        Long userId = 1L;
+        User user = createNormalUser();
+        EduReport report =
+                EduReport.builder()
+                        .id(reportId)
+                        .eduType(EduType.SAFETY)
+                        .status(EduReportStatus.CLOSED)
+                        .signatureRequired(false)
+                        .build();
+
+        when(userRepository.findById(userId)).thenReturn(Optional.of(user));
+        when(eduReportRepository.findById(reportId)).thenReturn(Optional.of(report));
+
+        // when & then
+        assertThatThrownBy(() -> eduReportService.markAttendance(reportId, null, userId))
+                .isInstanceOf(CustomException.class)
+                .hasFieldOrPropertyWithValue("errorCode", ErrorCode.EDU_REPORT_CLOSED);
+        verify(eduAttendanceRepository, never()).save(any());
     }
 }

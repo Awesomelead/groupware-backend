@@ -84,22 +84,7 @@ public class EduReportService {
             if (requestDto.getCategoryId() == null) {
                 throw new CustomException(ErrorCode.EDUCATION_CATEGORY_REQUIRED);
             }
-
-            category =
-                    educationCategoryRepository
-                            .findById(requestDto.getCategoryId())
-                            .orElseThrow(
-                                    () ->
-                                            new CustomException(
-                                                    ErrorCode.EDUCATION_CATEGORY_NOT_FOUND));
-
-            EducationCategoryType expectedType =
-                    requestDto.getEduType() == EduType.PSM
-                            ? EducationCategoryType.PSM
-                            : EducationCategoryType.SAFETY;
-            if (category.getCategoryType() != expectedType) {
-                throw new CustomException(ErrorCode.INVALID_ARGUMENT);
-            }
+            category = getValidatedCategory(requestDto.getEduType(), requestDto.getCategoryId());
         }
 
         EduReport report = eduMapper.toEduReportEntity(requestDto, department, category);
@@ -289,8 +274,7 @@ public class EduReportService {
                         .findById(reportId)
                         .orElseThrow(() -> new CustomException(ErrorCode.EDU_REPORT_NOT_FOUND));
 
-        if (report.getEduType() == EduType.DEPARTMENT
-                && report.getStatus() != EduReportStatus.OPEN) {
+        if (report.getStatus() != EduReportStatus.OPEN) {
             throw new CustomException(ErrorCode.EDU_REPORT_CLOSED);
         }
 
@@ -325,53 +309,66 @@ public class EduReportService {
     }
 
     @Transactional
-    public Long updateDepartmentEduReport(
+    public Long updateEduReport(
             Long eduReportId, EduReportUpdateRequestDto requestDto, Long userId) {
         User user =
                 userRepository
                         .findById(userId)
                         .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
-        validateDepartmentManageAuthority(user);
 
         EduReport report =
                 eduReportRepository
                         .findById(eduReportId)
                         .orElseThrow(() -> new CustomException(ErrorCode.EDU_REPORT_NOT_FOUND));
-        validateDepartmentReportEditable(report);
+        validateCreateAuthority(user, report.getEduType());
+        validateReportEditable(report);
 
         long signedCount = eduAttendanceRepository.countByEduReportId(eduReportId);
         if (signedCount > 0) {
             throw new CustomException(ErrorCode.EDU_REPORT_HAS_SIGNED_ATTENDEE);
         }
 
-        Department department =
-                departmentRepository
-                        .findById(requestDto.getDepartmentId())
-                        .orElseThrow(() -> new CustomException(ErrorCode.DEPARTMENT_NOT_FOUND));
-
         report.setTitle(requestDto.getTitle().trim());
         report.setContent(requestDto.getContent().trim());
         report.setPinned(requestDto.isPinned());
         report.setSignatureRequired(requestDto.isSignatureRequired());
-        report.setDepartment(department);
+
+        if (report.getEduType() == EduType.DEPARTMENT) {
+            if (requestDto.getDepartmentId() == null) {
+                throw new CustomException(ErrorCode.DEPARTMENT_ID_REQUIRED);
+            }
+            Department department =
+                    departmentRepository
+                            .findById(requestDto.getDepartmentId())
+                            .orElseThrow(() -> new CustomException(ErrorCode.DEPARTMENT_NOT_FOUND));
+            report.setDepartment(department);
+            report.setCategory(null);
+        } else {
+            if (requestDto.getCategoryId() != null) {
+                EducationCategory category = getValidatedCategory(report.getEduType(), requestDto.getCategoryId());
+                report.setCategory(category);
+            } else if (report.getCategory() == null) {
+                throw new CustomException(ErrorCode.EDUCATION_CATEGORY_REQUIRED);
+            }
+            report.setDepartment(null);
+        }
 
         return report.getId();
     }
 
     @Transactional
-    public Long updateDepartmentEduReportStatus(
+    public Long updateEduReportStatus(
             Long eduReportId, EduReportStatusUpdateRequestDto requestDto, Long userId) {
         User user =
                 userRepository
                         .findById(userId)
                         .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
-        validateDepartmentManageAuthority(user);
 
         EduReport report =
                 eduReportRepository
                         .findById(eduReportId)
                         .orElseThrow(() -> new CustomException(ErrorCode.EDU_REPORT_NOT_FOUND));
-        validateDepartmentReport(report);
+        validateCreateAuthority(user, report.getEduType());
 
         report.setStatus(requestDto.getStatus());
         return report.getId();
@@ -395,23 +392,28 @@ public class EduReportService {
         }
     }
 
-    private void validateDepartmentManageAuthority(User user) {
-        if (!user.hasAuthority(Authority.WRITE_DEPARTMENT_EDUCATION)) {
-            throw new CustomException(ErrorCode.NO_AUTHORITY_FOR_EDU_REPORT);
-        }
-    }
-
-    private void validateDepartmentReport(EduReport report) {
-        if (report.getEduType() != EduType.DEPARTMENT) {
-            throw new CustomException(ErrorCode.INVALID_ARGUMENT);
-        }
-    }
-
-    private void validateDepartmentReportEditable(EduReport report) {
-        validateDepartmentReport(report);
+    private void validateReportEditable(EduReport report) {
         if (report.getStatus() != EduReportStatus.OPEN) {
             throw new CustomException(ErrorCode.EDU_REPORT_CLOSED);
         }
+    }
+
+    private EducationCategory getValidatedCategory(EduType eduType, Long categoryId) {
+        if (eduType != EduType.PSM && eduType != EduType.SAFETY) {
+            return null;
+        }
+
+        EducationCategory category =
+                educationCategoryRepository
+                        .findById(categoryId)
+                        .orElseThrow(() -> new CustomException(ErrorCode.EDUCATION_CATEGORY_NOT_FOUND));
+
+        EducationCategoryType expectedType =
+                eduType == EduType.PSM ? EducationCategoryType.PSM : EducationCategoryType.SAFETY;
+        if (category.getCategoryType() != expectedType) {
+            throw new CustomException(ErrorCode.INVALID_ARGUMENT);
+        }
+        return category;
     }
 
     private long calculateTargetPeopleCount(EduReport report) {

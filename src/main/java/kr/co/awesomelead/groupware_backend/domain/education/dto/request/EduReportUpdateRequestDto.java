@@ -3,7 +3,6 @@ package kr.co.awesomelead.groupware_backend.domain.education.dto.request;
 import io.swagger.v3.oas.annotations.media.Schema;
 
 import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotNull;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -14,7 +13,7 @@ import lombok.NoArgsConstructor;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-@Schema(description = "부서교육 수정 요청")
+@Schema(description = "교육 수정 요청")
 public class EduReportUpdateRequestDto {
 
     @Schema(description = "교육 제목", example = "2026년 상반기 보안 교육 (수정)")
@@ -31,7 +30,9 @@ public class EduReportUpdateRequestDto {
     @Schema(description = "서명 필요 여부", example = "true", defaultValue = "false")
     private boolean signatureRequired;
 
-    @Schema(description = "부서 ID", example = "3")
-    @NotNull(message = "부서 ID는 필수입니다.")
+    @Schema(description = "부서 ID (부서 교육 수정 시 필수)", example = "3")
     private Long departmentId;
+
+    @Schema(description = "카테고리 ID (PSM/안전보건 수정 시 선택)", example = "2")
+    private Long categoryId;
 }

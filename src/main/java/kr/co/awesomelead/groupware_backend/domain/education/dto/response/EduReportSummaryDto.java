@@ -18,7 +18,7 @@ import java.time.LocalDate;
 @Builder
 public class EduReportSummaryDto {
 
-    @Schema(description = "보고서 ID", example = "101")
+    @Schema(description = "게시물 ID", example = "101")
     private Long id;
 
     @Schema(description = "제목", example = "2026년 상반기 보안 교육")
@@ -42,7 +42,7 @@ public class EduReportSummaryDto {
     @Schema(description = "서명 필수 여부", example = "false")
     private boolean signatureRequired;
 
-    @Schema(description = "부서교육 상태", example = "OPEN")
+    @Schema(description = "교육 상태", example = "OPEN")
     private EduReportStatus status;
 
     @Schema(description = "교육 카테고리 ID", example = "1")

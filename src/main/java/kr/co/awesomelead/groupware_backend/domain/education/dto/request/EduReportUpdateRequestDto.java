@@ -9,6 +9,8 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
+import java.util.List;
+
 @Getter
 @Builder
 @NoArgsConstructor
@@ -35,4 +37,7 @@ public class EduReportUpdateRequestDto {
 
     @Schema(description = "카테고리 ID (PSM/안전보건 수정 시 선택)", example = "2")
     private Long categoryId;
+
+    @Schema(description = "삭제할 첨부파일 ID 목록(선택)", example = "[10, 11]")
+    private List<Long> deleteAttachmentIds;
 }

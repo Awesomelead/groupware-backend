@@ -890,6 +890,123 @@ public class EduReportServiceTest {
     }
 
     @Test
+    @DisplayName("교육 수정 성공 - 첨부파일 삭제 및 추가")
+    void updateEduReport_WithAttachmentChanges_Success() throws IOException {
+        // given
+        Long reportId = 20L;
+        Long userId = 1L;
+        User user = createNormalUser();
+        user.addAuthority(Authority.WRITE_DEPARTMENT_EDUCATION);
+
+        EduReport report =
+                EduReport.builder()
+                        .id(reportId)
+                        .eduType(EduType.DEPARTMENT)
+                        .status(EduReportStatus.OPEN)
+                        .build();
+
+        EduAttachment oldAttachment =
+                EduAttachment.builder()
+                        .id(100L)
+                        .originalFileName("old.pdf")
+                        .s3Key("old-s3-key")
+                        .fileSize(123L)
+                        .build();
+        report.addAttachment(oldAttachment);
+
+        MultipartFile newFile = org.mockito.Mockito.mock(MultipartFile.class);
+        when(newFile.isEmpty()).thenReturn(false);
+        when(newFile.getOriginalFilename()).thenReturn("new.pdf");
+        when(newFile.getSize()).thenReturn(456L);
+
+        EduReportUpdateRequestDto requestDto =
+                EduReportUpdateRequestDto.builder()
+                        .title("수정 제목")
+                        .content("수정 내용")
+                        .pinned(false)
+                        .signatureRequired(false)
+                        .departmentId(defaultDept.getId())
+                        .deleteAttachmentIds(List.of(100L))
+                        .build();
+
+        when(userRepository.findById(userId)).thenReturn(Optional.of(user));
+        when(eduReportRepository.findById(reportId)).thenReturn(Optional.of(report));
+        when(eduAttendanceRepository.countByEduReportId(reportId)).thenReturn(0L);
+        when(departmentRepository.findById(defaultDept.getId())).thenReturn(Optional.of(defaultDept));
+        when(eduAttachmentRepository.findById(100L)).thenReturn(Optional.of(oldAttachment));
+        when(s3Service.uploadFile(newFile)).thenReturn("new-s3-key");
+
+        // when
+        Long updatedId =
+                eduReportService.updateEduReport(reportId, requestDto, List.of(newFile), userId);
+
+        // then
+        assertThat(updatedId).isEqualTo(reportId);
+        assertThat(report.getAttachments().size()).isEqualTo(1);
+        assertThat(report.getAttachments().get(0).getS3Key()).isEqualTo("new-s3-key");
+        verify(s3Service, times(1)).deleteFile("old-s3-key");
+        verify(eduAttachmentRepository, times(1)).delete(oldAttachment);
+        verify(s3Service, times(1)).uploadFile(newFile);
+    }
+
+    @Test
+    @DisplayName("교육 수정 실패 - 다른 게시물의 첨부파일 삭제 시도")
+    void updateEduReport_Fail_DeleteForeignAttachment() {
+        // given
+        Long reportId = 21L;
+        Long userId = 1L;
+        User user = createNormalUser();
+        user.addAuthority(Authority.WRITE_DEPARTMENT_EDUCATION);
+
+        EduReport report =
+                EduReport.builder()
+                        .id(reportId)
+                        .eduType(EduType.DEPARTMENT)
+                        .status(EduReportStatus.OPEN)
+                        .build();
+
+        EduReport otherReport =
+                EduReport.builder()
+                        .id(999L)
+                        .eduType(EduType.DEPARTMENT)
+                        .status(EduReportStatus.OPEN)
+                        .build();
+
+        EduAttachment foreignAttachment =
+                EduAttachment.builder()
+                        .id(777L)
+                        .originalFileName("foreign.pdf")
+                        .s3Key("foreign-s3-key")
+                        .build();
+        otherReport.addAttachment(foreignAttachment);
+
+        EduReportUpdateRequestDto requestDto =
+                EduReportUpdateRequestDto.builder()
+                        .title("수정 제목")
+                        .content("수정 내용")
+                        .pinned(false)
+                        .signatureRequired(false)
+                        .departmentId(defaultDept.getId())
+                        .deleteAttachmentIds(List.of(777L))
+                        .build();
+
+        when(userRepository.findById(userId)).thenReturn(Optional.of(user));
+        when(eduReportRepository.findById(reportId)).thenReturn(Optional.of(report));
+        when(eduAttendanceRepository.countByEduReportId(reportId)).thenReturn(0L);
+        when(departmentRepository.findById(defaultDept.getId())).thenReturn(Optional.of(defaultDept));
+        when(eduAttachmentRepository.findById(777L)).thenReturn(Optional.of(foreignAttachment));
+
+        // when & then
+        assertThatThrownBy(
+                        () ->
+                                eduReportService.updateEduReport(
+                                        reportId, requestDto, List.<MultipartFile>of(), userId))
+                .isInstanceOf(CustomException.class)
+                .hasFieldOrPropertyWithValue("errorCode", ErrorCode.EDU_ATTACHMENT_NOT_FOUND);
+        verify(s3Service, never()).deleteFile("foreign-s3-key");
+    }
+
+    @Test
     @DisplayName("교육 상태 변경 성공 - 안전보건은 WRITE_SAFETY 권한으로 상태 변경 가능")
     void updateEduReportStatus_Safety_Success() {
         // given

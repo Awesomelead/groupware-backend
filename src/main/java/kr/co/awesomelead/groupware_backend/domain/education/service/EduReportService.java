@@ -38,6 +38,8 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 
@@ -311,6 +313,12 @@ public class EduReportService {
     @Transactional
     public Long updateEduReport(
             Long eduReportId, EduReportUpdateRequestDto requestDto, Long userId) {
+        return updateEduReport(eduReportId, requestDto, null, userId);
+    }
+
+    @Transactional
+    public Long updateEduReport(
+            Long eduReportId, EduReportUpdateRequestDto requestDto, List<MultipartFile> files, Long userId) {
         User user =
                 userRepository
                         .findById(userId)
@@ -328,29 +336,39 @@ public class EduReportService {
             throw new CustomException(ErrorCode.EDU_REPORT_HAS_SIGNED_ATTENDEE);
         }
 
-        report.setTitle(requestDto.getTitle().trim());
-        report.setContent(requestDto.getContent().trim());
-        report.setPinned(requestDto.isPinned());
-        report.setSignatureRequired(requestDto.isSignatureRequired());
+        List<String> uploadedAttachmentKeys = new ArrayList<>();
+        try {
+            report.setTitle(requestDto.getTitle().trim());
+            report.setContent(requestDto.getContent().trim());
+            report.setPinned(requestDto.isPinned());
+            report.setSignatureRequired(requestDto.isSignatureRequired());
 
-        if (report.getEduType() == EduType.DEPARTMENT) {
-            if (requestDto.getDepartmentId() == null) {
-                throw new CustomException(ErrorCode.DEPARTMENT_ID_REQUIRED);
+            if (report.getEduType() == EduType.DEPARTMENT) {
+                if (requestDto.getDepartmentId() == null) {
+                    throw new CustomException(ErrorCode.DEPARTMENT_ID_REQUIRED);
+                }
+                Department department =
+                        departmentRepository
+                                .findById(requestDto.getDepartmentId())
+                                .orElseThrow(() -> new CustomException(ErrorCode.DEPARTMENT_NOT_FOUND));
+                report.setDepartment(department);
+                report.setCategory(null);
+            } else {
+                if (requestDto.getCategoryId() != null) {
+                    EducationCategory category =
+                            getValidatedCategory(report.getEduType(), requestDto.getCategoryId());
+                    report.setCategory(category);
+                } else if (report.getCategory() == null) {
+                    throw new CustomException(ErrorCode.EDUCATION_CATEGORY_REQUIRED);
+                }
+                report.setDepartment(null);
             }
-            Department department =
-                    departmentRepository
-                            .findById(requestDto.getDepartmentId())
-                            .orElseThrow(() -> new CustomException(ErrorCode.DEPARTMENT_NOT_FOUND));
-            report.setDepartment(department);
-            report.setCategory(null);
-        } else {
-            if (requestDto.getCategoryId() != null) {
-                EducationCategory category = getValidatedCategory(report.getEduType(), requestDto.getCategoryId());
-                report.setCategory(category);
-            } else if (report.getCategory() == null) {
-                throw new CustomException(ErrorCode.EDUCATION_CATEGORY_REQUIRED);
-            }
-            report.setDepartment(null);
+
+            deleteAttachments(report, requestDto.getDeleteAttachmentIds());
+            addAttachments(report, files, uploadedAttachmentKeys);
+        } catch (Exception e) {
+            uploadedAttachmentKeys.forEach(this::deleteS3FileIfExist);
+            throw e;
         }
 
         return report.getId();
@@ -395,6 +413,56 @@ public class EduReportService {
     private void validateReportEditable(EduReport report) {
         if (report.getStatus() != EduReportStatus.OPEN) {
             throw new CustomException(ErrorCode.EDU_REPORT_CLOSED);
+        }
+    }
+
+    private void deleteAttachments(EduReport report, List<Long> deleteAttachmentIds) {
+        if (deleteAttachmentIds == null || deleteAttachmentIds.isEmpty()) {
+            return;
+        }
+
+        for (Long attachmentId : new LinkedHashSet<>(deleteAttachmentIds)) {
+            EduAttachment attachment =
+                    eduAttachmentRepository
+                            .findById(attachmentId)
+                            .orElseThrow(() -> new CustomException(ErrorCode.EDU_ATTACHMENT_NOT_FOUND));
+
+            if (attachment.getEduReport() == null
+                    || !attachment.getEduReport().getId().equals(report.getId())) {
+                throw new CustomException(ErrorCode.EDU_ATTACHMENT_NOT_FOUND);
+            }
+
+            s3Service.deleteFile(attachment.getS3Key());
+            report.getAttachments().remove(attachment);
+            eduAttachmentRepository.delete(attachment);
+        }
+    }
+
+    private void addAttachments(
+            EduReport report, List<MultipartFile> files, List<String> uploadedAttachmentKeys) {
+        if (files == null || files.isEmpty()) {
+            return;
+        }
+
+        for (MultipartFile file : files) {
+            if (file == null || file.isEmpty()) {
+                continue;
+            }
+
+            String s3Key;
+            try {
+                s3Key = s3Service.uploadFile(file);
+            } catch (IOException e) {
+                throw new CustomException(ErrorCode.FILE_UPLOAD_ERROR);
+            }
+
+            uploadedAttachmentKeys.add(s3Key);
+
+            EduAttachment attachment = new EduAttachment();
+            attachment.setOriginalFileName(file.getOriginalFilename());
+            attachment.setS3Key(s3Key);
+            attachment.setFileSize(file.getSize());
+            report.addAttachment(attachment);
         }
     }
 

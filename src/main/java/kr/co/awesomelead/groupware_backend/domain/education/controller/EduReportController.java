@@ -2,6 +2,7 @@ package kr.co.awesomelead.groupware_backend.domain.education.controller;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.Hidden;
 import io.swagger.v3.oas.annotations.media.ArraySchema;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Encoding;
@@ -274,6 +275,16 @@ public class EduReportController {
         public List<String> files;
     }
 
+    @Schema(name = "EduReportUpdateMultipartRequestDoc", description = "교육 수정 multipart 요청")
+    static class EduReportUpdateMultipartRequestDoc {
+
+        @Schema(description = "교육 수정 정보(JSON 파트)", requiredMode = Schema.RequiredMode.REQUIRED)
+        public EduReportUpdateRequestDto requestDto;
+
+        @ArraySchema(schema = @Schema(type = "string", format = "binary"))
+        public List<String> files;
+    }
+
     @Operation(
             summary = "교육 게시물 목록 조회",
             description =
@@ -425,13 +436,34 @@ public class EduReportController {
             summary = "교육 수정",
             description =
                     """
-            교육 게시물을 수정합니다.
+            `multipart/form-data`로 교육 게시물을 수정합니다.
 
             - 부서 교육(`eduType=부서 교육`): `WRITE_DEPARTMENT_EDUCATION` 권한 필요
             - PSM/안전보건(`eduType=PSM/안전 보건`): `WRITE_SAFETY` 권한 필요
             - `OPEN` 상태에서만 수정 가능
             - 출석 완료자가 1명이라도 있으면 수정 불가
-            """)
+            - `requestDto`(JSON 파트)는 필수입니다.
+            - `files`(파일 파트)는 선택이며, 전달 시 기존 첨부파일 뒤에 추가됩니다.
+            - 삭제할 첨부파일 ID는 `requestDto.deleteAttachmentIds`에 전달합니다.
+            """,
+            requestBody =
+                    @io.swagger.v3.oas.annotations.parameters.RequestBody(
+                            required = true,
+                            content =
+                                    @Content(
+                                            mediaType = MediaType.MULTIPART_FORM_DATA_VALUE,
+                                            schema =
+                                                    @Schema(
+                                                            implementation =
+                                                                    EduReportUpdateMultipartRequestDoc
+                                                                            .class),
+                                            encoding = {
+                                                @Encoding(
+                                                        name = "requestDto",
+                                                        contentType =
+                                                                MediaType.APPLICATION_JSON_VALUE),
+                                                @Encoding(name = "files", contentType = "*/*")
+                                            })))
     @ApiResponses({
         @io.swagger.v3.oas.annotations.responses.ApiResponse(
                 responseCode = "200",
@@ -557,13 +589,42 @@ public class EduReportController {
                 "message": "해당 교육 카테고리를 찾을 수 없습니다.",
                 "result": null
               }
+              """),
+                                    @ExampleObject(
+                                            name = "첨부파일 없음",
+                                            value =
+                                                    """
+              {
+                "isSuccess": false,
+                "code": "EDU_ATTACHMENT_NOT_FOUND",
+                "message": "해당 교육 첨부파일을 찾을 수 없습니다.",
+                "result": null
+              }
               """)
                                 }))
     })
-    @PatchMapping("/{educationId}")
+    @PatchMapping(value = "/{educationId}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<ApiResponse<Long>> updateEducation(
             @Parameter(description = "수정할 교육 게시물 ID", example = "1") @PathVariable
                     Long educationId,
+            @Parameter(description = "교육 수정 정보(JSON)", required = true)
+                    @RequestPart("requestDto")
+                    @Valid
+                    EduReportUpdateRequestDto requestDto,
+            @Parameter(description = "추가할 첨부 파일 목록(선택)")
+                    @RequestPart(value = "files", required = false)
+                    List<MultipartFile> files,
+            @Parameter(hidden = true) @AuthenticationPrincipal CustomUserDetails userDetails) {
+        Long updatedId =
+                eduReportService.updateEduReport(
+                        educationId, requestDto, files, userDetails.getId());
+        return ResponseEntity.ok(ApiResponse.onSuccess(updatedId));
+    }
+
+    @Hidden
+    @PatchMapping(value = "/{educationId}", consumes = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<ApiResponse<Long>> updateEducationJsonFallback(
+            @PathVariable Long educationId,
             @Valid @RequestBody EduReportUpdateRequestDto requestDto,
             @Parameter(hidden = true) @AuthenticationPrincipal CustomUserDetails userDetails) {
         Long updatedId = eduReportService.updateEduReport(educationId, requestDto, userDetails.getId());

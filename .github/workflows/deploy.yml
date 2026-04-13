@@ -96,6 +96,7 @@ jobs:
             HANBIRO_SSO_CREATE_TOKEN_PATH=${{ secrets.HANBIRO_SSO_CREATE_TOKEN_PATH }}
             HANBIRO_SSO_RAW=${{ secrets.HANBIRO_SSO_RAW }}
             HANBIRO_SSO_METHOD=${{ secrets.HANBIRO_SSO_METHOD }}
+            SPRING_JPA_HIBERNATE_DDL_AUTO=${{ secrets.SPRING_JPA_HIBERNATE_DDL_AUTO }}
             TZ=Asia/Seoul
             JAVA_TOOL_OPTIONS=-Duser.timezone=Asia/Seoul
             EOF

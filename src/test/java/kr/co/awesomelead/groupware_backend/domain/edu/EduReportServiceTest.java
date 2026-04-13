@@ -15,12 +15,15 @@ import kr.co.awesomelead.groupware_backend.domain.department.entity.Department;
 import kr.co.awesomelead.groupware_backend.domain.department.enums.DepartmentName;
 import kr.co.awesomelead.groupware_backend.domain.department.repository.DepartmentRepository;
 import kr.co.awesomelead.groupware_backend.domain.education.dto.request.EduReportRequestDto;
+import kr.co.awesomelead.groupware_backend.domain.education.dto.request.EduReportStatusUpdateRequestDto;
+import kr.co.awesomelead.groupware_backend.domain.education.dto.request.EduReportUpdateRequestDto;
 import kr.co.awesomelead.groupware_backend.domain.education.dto.response.EduReportDetailDto;
 import kr.co.awesomelead.groupware_backend.domain.education.dto.response.EduReportSummaryDto;
 import kr.co.awesomelead.groupware_backend.domain.education.entity.EduAttachment;
 import kr.co.awesomelead.groupware_backend.domain.education.entity.EduAttendance;
 import kr.co.awesomelead.groupware_backend.domain.education.entity.EduReport;
 import kr.co.awesomelead.groupware_backend.domain.education.entity.EducationCategory;
+import kr.co.awesomelead.groupware_backend.domain.education.enums.EduReportStatus;
 import kr.co.awesomelead.groupware_backend.domain.education.enums.EduType;
 import kr.co.awesomelead.groupware_backend.domain.education.enums.EducationCategoryType;
 import kr.co.awesomelead.groupware_backend.domain.education.mapper.EduMapper;
@@ -48,10 +51,12 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
@@ -183,6 +188,101 @@ public class EduReportServiceTest {
         verify(notificationService, times(1))
                 .sendEduReportAlertToTargets(
                         anyString(), anyString(), anyLong(), any(), any(Map.class));
+    }
+
+    @Test
+    @DisplayName("교육 게시물 생성 시 파일명이 없는 files 파트는 첨부파일로 저장하지 않음")
+    void createEduReport_IgnoresPlaceholderFilePart() throws IOException {
+        // given
+        EduReportRequestDto requestDto =
+                EduReportRequestDto.builder()
+                        .title("교육 제목")
+                        .content("교육 내용")
+                        .eduType(EduType.SAFETY)
+                        .categoryId(1L)
+                        .build();
+
+        MultipartFile placeholderFile = org.mockito.Mockito.mock(MultipartFile.class);
+        when(placeholderFile.isEmpty()).thenReturn(false);
+        when(placeholderFile.getOriginalFilename()).thenReturn(null);
+
+        EduReport report =
+                EduReport.builder()
+                        .id(1L)
+                        .eduType(EduType.SAFETY)
+                        .title("교육 제목")
+                        .content("교육 내용")
+                        .build();
+
+        User user = createNormalUser();
+        user.addAuthority(Authority.WRITE_SAFETY);
+        EducationCategory category =
+                EducationCategory.builder()
+                        .id(1L)
+                        .categoryType(EducationCategoryType.SAFETY)
+                        .build();
+
+        when(userRepository.findById(1L)).thenReturn(Optional.of(user));
+        when(educationCategoryRepository.findById(1L)).thenReturn(Optional.of(category));
+        when(eduMapper.toEduReportEntity(any(EduReportRequestDto.class), any(), any()))
+                .thenReturn(report);
+        when(eduReportRepository.save(report)).thenReturn(report);
+
+        // when
+        eduReportService.createEduReport(requestDto, List.of(placeholderFile), 1L);
+
+        // then
+        verify(s3Service, never()).uploadFile(any(MultipartFile.class));
+        assertThat(report.getAttachments().size()).isEqualTo(0);
+    }
+
+    @Test
+    @DisplayName("교육 게시물 생성 시 swagger placeholder(blob:string) files 파트는 첨부파일로 저장하지 않음")
+    void createEduReport_IgnoresSwaggerBlobStringPlaceholder() throws IOException {
+        // given
+        EduReportRequestDto requestDto =
+                EduReportRequestDto.builder()
+                        .title("교육 제목")
+                        .content("교육 내용")
+                        .eduType(EduType.SAFETY)
+                        .categoryId(1L)
+                        .build();
+
+        MultipartFile placeholderFile =
+                new MockMultipartFile(
+                        "files",
+                        "blob",
+                        "application/octet-stream",
+                        "string".getBytes(StandardCharsets.UTF_8));
+
+        EduReport report =
+                EduReport.builder()
+                        .id(1L)
+                        .eduType(EduType.SAFETY)
+                        .title("교육 제목")
+                        .content("교육 내용")
+                        .build();
+
+        User user = createNormalUser();
+        user.addAuthority(Authority.WRITE_SAFETY);
+        EducationCategory category =
+                EducationCategory.builder()
+                        .id(1L)
+                        .categoryType(EducationCategoryType.SAFETY)
+                        .build();
+
+        when(userRepository.findById(1L)).thenReturn(Optional.of(user));
+        when(educationCategoryRepository.findById(1L)).thenReturn(Optional.of(category));
+        when(eduMapper.toEduReportEntity(any(EduReportRequestDto.class), any(), any()))
+                .thenReturn(report);
+        when(eduReportRepository.save(report)).thenReturn(report);
+
+        // when
+        eduReportService.createEduReport(requestDto, List.of(placeholderFile), 1L);
+
+        // then
+        verify(s3Service, never()).uploadFile(any(MultipartFile.class));
+        assertThat(report.getAttachments().size()).isEqualTo(0);
     }
 
     @Test
@@ -768,5 +868,296 @@ public class EduReportServiceTest {
         assertThat(result.getNumberOfPeople()).isNull();
 
         verify(eduAttendanceRepository, never()).findAllByEduReportIdWithUser(anyLong());
+    }
+
+    @Test
+    @DisplayName("교육 수정 성공 - 안전보건은 WRITE_SAFETY 권한으로 수정 가능")
+    void updateEduReport_Safety_Success() {
+        // given
+        Long reportId = 10L;
+        Long userId = 1L;
+        User user = createNormalUser();
+        user.addAuthority(Authority.WRITE_SAFETY);
+
+        EducationCategory oldCategory =
+                EducationCategory.builder()
+                        .id(1L)
+                        .categoryType(EducationCategoryType.SAFETY)
+                        .build();
+        EducationCategory newCategory =
+                EducationCategory.builder()
+                        .id(2L)
+                        .categoryType(EducationCategoryType.SAFETY)
+                        .build();
+
+        EduReport report =
+                EduReport.builder()
+                        .id(reportId)
+                        .eduType(EduType.SAFETY)
+                        .title("기존 제목")
+                        .content("기존 내용")
+                        .pinned(false)
+                        .signatureRequired(false)
+                        .status(EduReportStatus.OPEN)
+                        .category(oldCategory)
+                        .build();
+
+        EduReportUpdateRequestDto requestDto =
+                EduReportUpdateRequestDto.builder()
+                        .title("수정 제목")
+                        .content("수정 내용")
+                        .pinned(true)
+                        .signatureRequired(false)
+                        .categoryId(2L)
+                        .build();
+
+        when(userRepository.findById(userId)).thenReturn(Optional.of(user));
+        when(eduReportRepository.findById(reportId)).thenReturn(Optional.of(report));
+        when(eduAttendanceRepository.countByEduReportId(reportId)).thenReturn(0L);
+        when(educationCategoryRepository.findById(2L)).thenReturn(Optional.of(newCategory));
+
+        // when
+        Long updatedId = eduReportService.updateEduReport(reportId, requestDto, userId);
+
+        // then
+        assertThat(updatedId).isEqualTo(reportId);
+        assertThat(report.getTitle()).isEqualTo("수정 제목");
+        assertThat(report.getContent()).isEqualTo("수정 내용");
+        assertThat(report.isPinned()).isTrue();
+        assertThat(report.getCategory()).isEqualTo(newCategory);
+        verify(departmentRepository, never()).findById(anyLong());
+    }
+
+    @Test
+    @DisplayName("교육 수정 실패 - 안전보건은 WRITE_SAFETY 권한이 없으면 수정 불가")
+    void updateEduReport_Safety_Fail_NoAuthority() {
+        // given
+        Long reportId = 10L;
+        Long userId = 1L;
+        User user = createNormalUser();
+
+        EduReport report =
+                EduReport.builder()
+                        .id(reportId)
+                        .eduType(EduType.SAFETY)
+                        .status(EduReportStatus.OPEN)
+                        .build();
+
+        EduReportUpdateRequestDto requestDto =
+                EduReportUpdateRequestDto.builder().title("수정 제목").content("수정 내용").build();
+
+        when(userRepository.findById(userId)).thenReturn(Optional.of(user));
+        when(eduReportRepository.findById(reportId)).thenReturn(Optional.of(report));
+
+        // when & then
+        assertThatThrownBy(() -> eduReportService.updateEduReport(reportId, requestDto, userId))
+                .isInstanceOf(CustomException.class)
+                .hasFieldOrPropertyWithValue("errorCode", ErrorCode.NO_AUTHORITY_FOR_SAFETY_WRITE);
+        verify(eduAttendanceRepository, never()).countByEduReportId(anyLong());
+    }
+
+    @Test
+    @DisplayName("교육 수정 실패 - 부서 교육 수정 시 departmentId 필수")
+    void updateEduReport_Department_Fail_DepartmentIdRequired() {
+        // given
+        Long reportId = 10L;
+        Long userId = 1L;
+        User user = createNormalUser();
+        user.addAuthority(Authority.WRITE_DEPARTMENT_EDUCATION);
+
+        EduReport report =
+                EduReport.builder()
+                        .id(reportId)
+                        .eduType(EduType.DEPARTMENT)
+                        .status(EduReportStatus.OPEN)
+                        .build();
+
+        EduReportUpdateRequestDto requestDto =
+                EduReportUpdateRequestDto.builder().title("수정 제목").content("수정 내용").build();
+
+        when(userRepository.findById(userId)).thenReturn(Optional.of(user));
+        when(eduReportRepository.findById(reportId)).thenReturn(Optional.of(report));
+        when(eduAttendanceRepository.countByEduReportId(reportId)).thenReturn(0L);
+
+        // when & then
+        assertThatThrownBy(() -> eduReportService.updateEduReport(reportId, requestDto, userId))
+                .isInstanceOf(CustomException.class)
+                .hasFieldOrPropertyWithValue("errorCode", ErrorCode.DEPARTMENT_ID_REQUIRED);
+        verify(departmentRepository, never()).findById(anyLong());
+    }
+
+    @Test
+    @DisplayName("교육 수정 성공 - 첨부파일 삭제 및 추가")
+    void updateEduReport_WithAttachmentChanges_Success() throws IOException {
+        // given
+        Long reportId = 20L;
+        Long userId = 1L;
+        User user = createNormalUser();
+        user.addAuthority(Authority.WRITE_DEPARTMENT_EDUCATION);
+
+        EduReport report =
+                EduReport.builder()
+                        .id(reportId)
+                        .eduType(EduType.DEPARTMENT)
+                        .status(EduReportStatus.OPEN)
+                        .build();
+
+        EduAttachment oldAttachment =
+                EduAttachment.builder()
+                        .id(100L)
+                        .originalFileName("old.pdf")
+                        .s3Key("old-s3-key")
+                        .fileSize(123L)
+                        .build();
+        report.addAttachment(oldAttachment);
+
+        MultipartFile newFile = org.mockito.Mockito.mock(MultipartFile.class);
+        when(newFile.isEmpty()).thenReturn(false);
+        when(newFile.getOriginalFilename()).thenReturn("new.pdf");
+        when(newFile.getSize()).thenReturn(456L);
+
+        EduReportUpdateRequestDto requestDto =
+                EduReportUpdateRequestDto.builder()
+                        .title("수정 제목")
+                        .content("수정 내용")
+                        .pinned(false)
+                        .signatureRequired(false)
+                        .departmentId(defaultDept.getId())
+                        .deleteAttachmentIds(List.of(100L))
+                        .build();
+
+        when(userRepository.findById(userId)).thenReturn(Optional.of(user));
+        when(eduReportRepository.findById(reportId)).thenReturn(Optional.of(report));
+        when(eduAttendanceRepository.countByEduReportId(reportId)).thenReturn(0L);
+        when(departmentRepository.findById(defaultDept.getId()))
+                .thenReturn(Optional.of(defaultDept));
+        when(eduAttachmentRepository.findById(100L)).thenReturn(Optional.of(oldAttachment));
+        when(s3Service.uploadFile(newFile)).thenReturn("new-s3-key");
+
+        // when
+        Long updatedId =
+                eduReportService.updateEduReport(reportId, requestDto, List.of(newFile), userId);
+
+        // then
+        assertThat(updatedId).isEqualTo(reportId);
+        assertThat(report.getAttachments().size()).isEqualTo(1);
+        assertThat(report.getAttachments().get(0).getS3Key()).isEqualTo("new-s3-key");
+        verify(s3Service, times(1)).deleteFile("old-s3-key");
+        verify(eduAttachmentRepository, times(1)).delete(oldAttachment);
+        verify(s3Service, times(1)).uploadFile(newFile);
+    }
+
+    @Test
+    @DisplayName("교육 수정 실패 - 다른 게시물의 첨부파일 삭제 시도")
+    void updateEduReport_Fail_DeleteForeignAttachment() {
+        // given
+        Long reportId = 21L;
+        Long userId = 1L;
+        User user = createNormalUser();
+        user.addAuthority(Authority.WRITE_DEPARTMENT_EDUCATION);
+
+        EduReport report =
+                EduReport.builder()
+                        .id(reportId)
+                        .eduType(EduType.DEPARTMENT)
+                        .status(EduReportStatus.OPEN)
+                        .build();
+
+        EduReport otherReport =
+                EduReport.builder()
+                        .id(999L)
+                        .eduType(EduType.DEPARTMENT)
+                        .status(EduReportStatus.OPEN)
+                        .build();
+
+        EduAttachment foreignAttachment =
+                EduAttachment.builder()
+                        .id(777L)
+                        .originalFileName("foreign.pdf")
+                        .s3Key("foreign-s3-key")
+                        .build();
+        otherReport.addAttachment(foreignAttachment);
+
+        EduReportUpdateRequestDto requestDto =
+                EduReportUpdateRequestDto.builder()
+                        .title("수정 제목")
+                        .content("수정 내용")
+                        .pinned(false)
+                        .signatureRequired(false)
+                        .departmentId(defaultDept.getId())
+                        .deleteAttachmentIds(List.of(777L))
+                        .build();
+
+        when(userRepository.findById(userId)).thenReturn(Optional.of(user));
+        when(eduReportRepository.findById(reportId)).thenReturn(Optional.of(report));
+        when(eduAttendanceRepository.countByEduReportId(reportId)).thenReturn(0L);
+        when(departmentRepository.findById(defaultDept.getId()))
+                .thenReturn(Optional.of(defaultDept));
+        when(eduAttachmentRepository.findById(777L)).thenReturn(Optional.of(foreignAttachment));
+
+        // when & then
+        assertThatThrownBy(
+                        () ->
+                                eduReportService.updateEduReport(
+                                        reportId, requestDto, List.<MultipartFile>of(), userId))
+                .isInstanceOf(CustomException.class)
+                .hasFieldOrPropertyWithValue("errorCode", ErrorCode.EDU_ATTACHMENT_NOT_FOUND);
+        verify(s3Service, never()).deleteFile("foreign-s3-key");
+    }
+
+    @Test
+    @DisplayName("교육 상태 변경 성공 - 안전보건은 WRITE_SAFETY 권한으로 상태 변경 가능")
+    void updateEduReportStatus_Safety_Success() {
+        // given
+        Long reportId = 11L;
+        Long userId = 1L;
+        User user = createNormalUser();
+        user.addAuthority(Authority.WRITE_SAFETY);
+
+        EduReport report =
+                EduReport.builder()
+                        .id(reportId)
+                        .eduType(EduType.SAFETY)
+                        .status(EduReportStatus.OPEN)
+                        .build();
+
+        EduReportStatusUpdateRequestDto requestDto =
+                org.mockito.Mockito.mock(EduReportStatusUpdateRequestDto.class);
+        when(requestDto.getStatus()).thenReturn(EduReportStatus.CLOSED);
+
+        when(userRepository.findById(userId)).thenReturn(Optional.of(user));
+        when(eduReportRepository.findById(reportId)).thenReturn(Optional.of(report));
+
+        // when
+        Long updatedId = eduReportService.updateEduReportStatus(reportId, requestDto, userId);
+
+        // then
+        assertThat(updatedId).isEqualTo(reportId);
+        assertThat(report.getStatus()).isEqualTo(EduReportStatus.CLOSED);
+    }
+
+    @Test
+    @DisplayName("출석 체크 실패 - 마감된 안전보건 교육")
+    void markAttendance_Fail_ClosedSafetyReport() {
+        // given
+        Long reportId = 1L;
+        Long userId = 1L;
+        User user = createNormalUser();
+        EduReport report =
+                EduReport.builder()
+                        .id(reportId)
+                        .eduType(EduType.SAFETY)
+                        .status(EduReportStatus.CLOSED)
+                        .signatureRequired(false)
+                        .build();
+
+        when(userRepository.findById(userId)).thenReturn(Optional.of(user));
+        when(eduReportRepository.findById(reportId)).thenReturn(Optional.of(report));
+
+        // when & then
+        assertThatThrownBy(() -> eduReportService.markAttendance(reportId, null, userId))
+                .isInstanceOf(CustomException.class)
+                .hasFieldOrPropertyWithValue("errorCode", ErrorCode.EDU_REPORT_CLOSED);
+        verify(eduAttendanceRepository, never()).save(any());
     }
 }

@@ -18,10 +18,10 @@ import java.util.List;
 
 @Getter
 @Builder
-@Schema(description = "안전보건 교육 세션 상세 응답")
+@Schema(description = "안전보건 교육일지 상세 응답")
 public class SafetyTrainingSessionDetailResponseDto {
 
-    @Schema(description = "세션 ID", example = "12")
+    @Schema(description = "교육일지 ID", example = "12")
     private Long sessionId;
 
     @Schema(description = "교육 제목", example = "2026년 1분기 정기 안전보건교육")
@@ -45,7 +45,7 @@ public class SafetyTrainingSessionDetailResponseDto {
     @Schema(description = "회사 범위", example = "AWESOME")
     private Company companyScope;
 
-    @Schema(description = "세션 상태", example = "OPEN")
+    @Schema(description = "교육일지 상태", example = "OPEN")
     private SafetyTrainingSessionStatus status;
 
     @Schema(description = "교육 실시자 userId", example = "17")
@@ -72,10 +72,10 @@ public class SafetyTrainingSessionDetailResponseDto {
     @Schema(description = "교육 미참석 인원 수", example = "9")
     private int absentCount;
 
-    @Schema(description = "교육 미참석 사유(세션 단위, 결석자 없으면 null)", example = "현장 장비 점검으로 일부 인원 교육 참여 불가")
+    @Schema(description = "교육 미참석 사유(교육일지 단위, 결석자 없으면 null)", example = "현장 장비 점검으로 일부 인원 교육 참여 불가")
     private String absentReasonSummary;
 
-    @Schema(description = "보고서 파일 URL(확정본 생성 후)", example = "https://...presigned-url")
+    @Schema(description = "엑셀 파일 URL(확정본 생성 후)", example = "https://...presigned-url")
     private String reportFileUrl;
 
     @Schema(description = "내 참석 상태", example = "SIGNED")

@@ -872,7 +872,7 @@ public class AuthController {
             summary = "이메일로 비밀번호 재설정",
             description =
                     "이메일 계정 검증(`POST /api/auth/verify-account/email`)과 이메일 인증을 완료한 후, 비밀번호를"
-                        + " 재설정합니다.")
+                            + " 재설정합니다.")
     @ApiResponses(
             value = {
                 @io.swagger.v3.oas.annotations.responses.ApiResponse(
@@ -1041,7 +1041,7 @@ public class AuthController {
             summary = "휴대폰으로 비밀번호 재설정",
             description =
                     "이메일/전화번호 계정 검증(`POST /api/auth/verify-account/phone`)과 휴대폰 인증을 완료한 후, 비밀번호를"
-                        + " 재설정합니다.")
+                            + " 재설정합니다.")
     @ApiResponses(
             value = {
                 @io.swagger.v3.oas.annotations.responses.ApiResponse(

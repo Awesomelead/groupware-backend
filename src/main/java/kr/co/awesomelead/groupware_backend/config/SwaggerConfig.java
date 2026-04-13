@@ -71,7 +71,7 @@ public class SwaggerConfig {
                     "/api/auth/find-email",
                     "/api/auth/reset-password/phone",
                     "/api/auth/reset-password/email",
-                    "/api/edu-reports/attachments/{id}/download",
+                    "/api/educations/attachments/{id}/download",
                     "/api/departments/hierarchy",
                     "/api/departments/{departmentId}/users",
                     "/api/visits/**",

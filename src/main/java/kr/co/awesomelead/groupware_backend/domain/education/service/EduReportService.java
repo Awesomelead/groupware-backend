@@ -38,6 +38,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -93,6 +94,10 @@ public class EduReportService {
 
         if (files != null && !files.isEmpty()) {
             for (MultipartFile file : files) {
+                if (!isRealAttachmentFile(file)) {
+                    continue;
+                }
+
                 // S3 업로드 후 고유 키 반환
                 String s3Key = s3Service.uploadFile(file);
 
@@ -410,6 +415,31 @@ public class EduReportService {
         }
     }
 
+    private boolean isRealAttachmentFile(MultipartFile file) {
+        if (file == null || file.isEmpty()) {
+            return false;
+        }
+
+        String originalFileName = file.getOriginalFilename();
+        if (originalFileName == null || originalFileName.isBlank()) {
+            return false;
+        }
+
+        // Swagger UI generated curl can send placeholder part: files=string -> filename "blob"
+        if ("blob".equalsIgnoreCase(originalFileName) && file.getSize() <= 32) {
+            try {
+                String payload = new String(file.getBytes(), StandardCharsets.UTF_8).trim();
+                if (payload.isEmpty() || "string".equalsIgnoreCase(payload)) {
+                    return false;
+                }
+            } catch (IOException ignored) {
+                // Ignore and treat as real file when content cannot be read.
+            }
+        }
+
+        return true;
+    }
+
     private void validateReportEditable(EduReport report) {
         if (report.getStatus() != EduReportStatus.OPEN) {
             throw new CustomException(ErrorCode.EDU_REPORT_CLOSED);
@@ -445,7 +475,7 @@ public class EduReportService {
         }
 
         for (MultipartFile file : files) {
-            if (file == null || file.isEmpty()) {
+            if (!isRealAttachmentFile(file)) {
                 continue;
             }
 

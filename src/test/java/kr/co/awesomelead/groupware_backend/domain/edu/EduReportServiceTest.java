@@ -51,10 +51,12 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
@@ -186,6 +188,101 @@ public class EduReportServiceTest {
         verify(notificationService, times(1))
                 .sendEduReportAlertToTargets(
                         anyString(), anyString(), anyLong(), any(), any(Map.class));
+    }
+
+    @Test
+    @DisplayName("교육 게시물 생성 시 파일명이 없는 files 파트는 첨부파일로 저장하지 않음")
+    void createEduReport_IgnoresPlaceholderFilePart() throws IOException {
+        // given
+        EduReportRequestDto requestDto =
+                EduReportRequestDto.builder()
+                        .title("교육 제목")
+                        .content("교육 내용")
+                        .eduType(EduType.SAFETY)
+                        .categoryId(1L)
+                        .build();
+
+        MultipartFile placeholderFile = org.mockito.Mockito.mock(MultipartFile.class);
+        when(placeholderFile.isEmpty()).thenReturn(false);
+        when(placeholderFile.getOriginalFilename()).thenReturn(null);
+
+        EduReport report =
+                EduReport.builder()
+                        .id(1L)
+                        .eduType(EduType.SAFETY)
+                        .title("교육 제목")
+                        .content("교육 내용")
+                        .build();
+
+        User user = createNormalUser();
+        user.addAuthority(Authority.WRITE_SAFETY);
+        EducationCategory category =
+                EducationCategory.builder()
+                        .id(1L)
+                        .categoryType(EducationCategoryType.SAFETY)
+                        .build();
+
+        when(userRepository.findById(1L)).thenReturn(Optional.of(user));
+        when(educationCategoryRepository.findById(1L)).thenReturn(Optional.of(category));
+        when(eduMapper.toEduReportEntity(any(EduReportRequestDto.class), any(), any()))
+                .thenReturn(report);
+        when(eduReportRepository.save(report)).thenReturn(report);
+
+        // when
+        eduReportService.createEduReport(requestDto, List.of(placeholderFile), 1L);
+
+        // then
+        verify(s3Service, never()).uploadFile(any(MultipartFile.class));
+        assertThat(report.getAttachments().size()).isEqualTo(0);
+    }
+
+    @Test
+    @DisplayName("교육 게시물 생성 시 swagger placeholder(blob:string) files 파트는 첨부파일로 저장하지 않음")
+    void createEduReport_IgnoresSwaggerBlobStringPlaceholder() throws IOException {
+        // given
+        EduReportRequestDto requestDto =
+                EduReportRequestDto.builder()
+                        .title("교육 제목")
+                        .content("교육 내용")
+                        .eduType(EduType.SAFETY)
+                        .categoryId(1L)
+                        .build();
+
+        MultipartFile placeholderFile =
+                new MockMultipartFile(
+                        "files",
+                        "blob",
+                        "application/octet-stream",
+                        "string".getBytes(StandardCharsets.UTF_8));
+
+        EduReport report =
+                EduReport.builder()
+                        .id(1L)
+                        .eduType(EduType.SAFETY)
+                        .title("교육 제목")
+                        .content("교육 내용")
+                        .build();
+
+        User user = createNormalUser();
+        user.addAuthority(Authority.WRITE_SAFETY);
+        EducationCategory category =
+                EducationCategory.builder()
+                        .id(1L)
+                        .categoryType(EducationCategoryType.SAFETY)
+                        .build();
+
+        when(userRepository.findById(1L)).thenReturn(Optional.of(user));
+        when(educationCategoryRepository.findById(1L)).thenReturn(Optional.of(category));
+        when(eduMapper.toEduReportEntity(any(EduReportRequestDto.class), any(), any()))
+                .thenReturn(report);
+        when(eduReportRepository.save(report)).thenReturn(report);
+
+        // when
+        eduReportService.createEduReport(requestDto, List.of(placeholderFile), 1L);
+
+        // then
+        verify(s3Service, never()).uploadFile(any(MultipartFile.class));
+        assertThat(report.getAttachments().size()).isEqualTo(0);
     }
 
     @Test

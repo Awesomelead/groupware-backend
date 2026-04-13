@@ -13,10 +13,10 @@ import java.time.LocalDateTime;
 
 @Getter
 @Builder
-@Schema(description = "안전보건 교육 세션 목록 항목")
+@Schema(description = "안전보건 교육일지 목록 항목")
 public class SafetyTrainingSessionSummaryResponseDto {
 
-    @Schema(description = "세션 ID", example = "12")
+    @Schema(description = "교육일지 ID", example = "12")
     private Long sessionId;
 
     @Schema(description = "교육 제목", example = "2026년 1분기 정기 안전보건교육")
@@ -43,7 +43,7 @@ public class SafetyTrainingSessionSummaryResponseDto {
     @Schema(description = "교육 실시자 이름(스냅샷)", example = "고영민")
     private String instructorName;
 
-    @Schema(description = "세션 상태", example = "OPEN")
+    @Schema(description = "교육일지 상태", example = "OPEN")
     private SafetyTrainingSessionStatus status;
 
     @Schema(description = "대상 인원 수", example = "49")
@@ -55,7 +55,7 @@ public class SafetyTrainingSessionSummaryResponseDto {
     @Schema(description = "미참석 인원 수", example = "9")
     private int absentCount;
 
-    @Schema(description = "현재 로그인 사용자의 서명 완료 여부 (대표이사/마스터 관리자/타회사 세션은 null)", example = "true")
+    @Schema(description = "현재 로그인 사용자의 서명 완료 여부 (대표이사/마스터 관리자/타회사 교육일지는 null)", example = "true")
     private Boolean mySigned;
 
     @Schema(description = "생성 시각", example = "2026-03-24T11:00:00")

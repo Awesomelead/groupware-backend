@@ -76,7 +76,7 @@ public class SafetyTrainingExcelService {
             workbook.write(baos);
             return baos.toByteArray();
         } catch (IOException e) {
-            throw new IllegalStateException("안전보건 엑셀 미리보기 생성 중 오류가 발생했습니다.", e);
+            throw new IllegalStateException("안전보건 엑셀 파일 미리보기 생성 중 오류가 발생했습니다.", e);
         }
     }
 
@@ -130,7 +130,7 @@ public class SafetyTrainingExcelService {
             workbook.write(baos);
             return baos.toByteArray();
         } catch (IOException e) {
-            throw new IllegalStateException("안전보건 엑셀 보고서 생성 중 오류가 발생했습니다.", e);
+            throw new IllegalStateException("안전보건 엑셀 파일 생성 중 오류가 발생했습니다.", e);
         }
     }
 

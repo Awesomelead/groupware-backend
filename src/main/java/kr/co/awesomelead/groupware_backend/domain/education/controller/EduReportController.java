@@ -22,13 +22,11 @@ import kr.co.awesomelead.groupware_backend.domain.education.dto.response.EduRepo
 import kr.co.awesomelead.groupware_backend.domain.education.dto.response.EduReportSummaryDto;
 import kr.co.awesomelead.groupware_backend.domain.education.enums.EduType;
 import kr.co.awesomelead.groupware_backend.domain.education.service.EduReportService;
-import kr.co.awesomelead.groupware_backend.domain.education.service.EduReportService.FileDownloadDto;
 import kr.co.awesomelead.groupware_backend.domain.user.dto.CustomUserDetails;
 import kr.co.awesomelead.groupware_backend.global.common.response.ApiResponse;
 
 import lombok.RequiredArgsConstructor;
 
-import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -44,11 +42,9 @@ import org.springframework.web.bind.annotation.RequestPart;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
-import org.springframework.web.util.UriUtils;
 
 import java.io.IOException;
 import java.net.URI;
-import java.nio.charset.StandardCharsets;
 import java.util.List;
 
 @RestController
@@ -1209,53 +1205,6 @@ public class EduReportController {
             throws IOException {
         eduReportService.deleteEduReport(educationId, userDetails.getId());
         return ResponseEntity.ok().body(ApiResponse.onNoContent());
-    }
-
-    @Operation(
-            tags = {"부서교육", "PSM", "안전보건"},
-            summary = "교육 첨부파일 다운로드",
-            description = "교육 게시물 첨부파일을 다운로드합니다.")
-    @ApiResponses({
-        @io.swagger.v3.oas.annotations.responses.ApiResponse(
-                responseCode = "200",
-                description = "다운로드 성공",
-                content =
-                        @Content(
-                                mediaType = MediaType.APPLICATION_OCTET_STREAM_VALUE,
-                                schema = @Schema(type = "string", format = "binary"))),
-        @io.swagger.v3.oas.annotations.responses.ApiResponse(
-                responseCode = "404",
-                description = "파일 없음",
-                content =
-                        @Content(
-                                mediaType = "application/json",
-                                examples =
-                                        @ExampleObject(
-                                                value =
-                                                        """
-          {
-            "isSuccess": false,
-            "code": "EDU_ATTACHMENT_NOT_FOUND",
-            "message": "해당 교육 첨부파일을 찾을 수 없습니다.",
-            "result": null
-          }
-          """)))
-    })
-    @GetMapping("/attachments/{id}/download")
-    public ResponseEntity<byte[]> downloadAttachment(
-            @Parameter(description = "다운로드할 파일 ID", example = "5") @PathVariable Long id) {
-        FileDownloadDto downloadDto = eduReportService.getFileForDownload(id);
-
-        String encodedFileName =
-                UriUtils.encode(downloadDto.originalFileName(), StandardCharsets.UTF_8);
-
-        return ResponseEntity.ok()
-                .header(
-                        HttpHeaders.CONTENT_DISPOSITION,
-                        "attachment; filename=\"" + encodedFileName + "\"")
-                .contentType(MediaType.APPLICATION_OCTET_STREAM)
-                .contentLength(downloadDto.fileSize())
-                .body(downloadDto.fileData());
     }
 
     @Operation(

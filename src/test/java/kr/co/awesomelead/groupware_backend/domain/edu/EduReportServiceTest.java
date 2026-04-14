@@ -151,7 +151,7 @@ public class EduReportServiceTest {
                         .build();
 
         User user = createNormalUser();
-        user.addAuthority(Authority.WRITE_SAFETY);
+        user.addAuthority(Authority.MANAGE_SAFETY);
         EducationCategory category =
                 EducationCategory.builder()
                         .id(1L)
@@ -215,7 +215,7 @@ public class EduReportServiceTest {
                         .build();
 
         User user = createNormalUser();
-        user.addAuthority(Authority.WRITE_SAFETY);
+        user.addAuthority(Authority.MANAGE_SAFETY);
         EducationCategory category =
                 EducationCategory.builder()
                         .id(1L)
@@ -264,7 +264,7 @@ public class EduReportServiceTest {
                         .build();
 
         User user = createNormalUser();
-        user.addAuthority(Authority.WRITE_SAFETY);
+        user.addAuthority(Authority.MANAGE_SAFETY);
         EducationCategory category =
                 EducationCategory.builder()
                         .id(1L)
@@ -336,6 +336,32 @@ public class EduReportServiceTest {
     }
 
     @Test
+    @DisplayName("교육 보고서 생성 실패 - PSM은 MANAGE_PSM 권한이 없는 경우")
+    void createEduReport_Fail_NO_AUTHORITY_FOR_PSM_MANAGE() {
+        // given
+        EduReportRequestDto requestDto =
+                EduReportRequestDto.builder()
+                        .title("PSM 교육 제목")
+                        .content("PSM 교육 내용")
+                        .eduType(EduType.PSM)
+                        .categoryId(1L)
+                        .build();
+
+        User user = createNormalUser();
+        user.addAuthority(Authority.MANAGE_SAFETY);
+
+        when(userRepository.findById(1L)).thenReturn(Optional.of(user));
+
+        // when & then
+        assertThatThrownBy(() -> eduReportService.createEduReport(requestDto, null, 1L))
+                .isInstanceOf(CustomException.class)
+                .extracting("errorCode")
+                .isEqualTo(ErrorCode.NO_AUTHORITY_FOR_PSM_MANAGE);
+
+        verify(eduReportRepository, never()).save(any());
+    }
+
+    @Test
     @DisplayName("교육 보고서 생성 실패 - 부서 교육인데 부서가 없는 경우")
     void createEduReport_Fail_DepartmentNotFound() {
         // given
@@ -348,7 +374,7 @@ public class EduReportServiceTest {
                         .build();
 
         User user = createNormalUser();
-        user.addAuthority(Authority.WRITE_DEPARTMENT_EDUCATION);
+        user.addAuthority(Authority.MANAGE_DEPARTMENT_EDUCATION);
 
         when(userRepository.findById(1L)).thenReturn(Optional.of(user));
         when(departmentRepository.findById(999L)).thenReturn(Optional.empty());
@@ -366,7 +392,7 @@ public class EduReportServiceTest {
     @DisplayName("교육 보고서 목록 조회 성공 - 권한 없는 유저 (자신의 부서만 조회)")
     void getEduReports_Success() {
         // given
-        User user = createNormalUser(); // WRITE_DEPARTMENT_EDUCATION 권한 없음
+        User user = createNormalUser(); // MANAGE_DEPARTMENT_EDUCATION 권한 없음
         Department department = defaultDept;
 
         EduReportSummaryDto report1 =
@@ -400,11 +426,11 @@ public class EduReportServiceTest {
     }
 
     @Test
-    @DisplayName("교육 보고서 목록 조회 성공 - WRITE_DEPARTMENT_EDUCATION 권한 있음, 부서 미지정 → 전체 조회")
+    @DisplayName("교육 보고서 목록 조회 성공 - MANAGE_DEPARTMENT_EDUCATION 권한 있음, 부서 미지정 → 전체 조회")
     void getEduReports_WithAccess_ReturnsAll() {
         // given
         User user = createNormalUser();
-        user.addAuthority(Authority.WRITE_DEPARTMENT_EDUCATION);
+        user.addAuthority(Authority.MANAGE_DEPARTMENT_EDUCATION);
 
         EduReportSummaryDto report1 =
                 EduReportSummaryDto.builder()
@@ -436,11 +462,11 @@ public class EduReportServiceTest {
     }
 
     @Test
-    @DisplayName("교육 보고서 목록 조회 성공 - WRITE_DEPARTMENT_EDUCATION 권한 있음, 특정 부서 필터")
+    @DisplayName("교육 보고서 목록 조회 성공 - MANAGE_DEPARTMENT_EDUCATION 권한 있음, 특정 부서 필터")
     void getEduReports_WithAccess_FilterByDept() {
         // given
         User user = createNormalUser();
-        user.addAuthority(Authority.WRITE_DEPARTMENT_EDUCATION);
+        user.addAuthority(Authority.MANAGE_DEPARTMENT_EDUCATION);
 
         Department salesDept = Department.builder().id(2L).name(DepartmentName.SALES_DEPT).build();
 
@@ -498,7 +524,7 @@ public class EduReportServiceTest {
         // given
         Long reportId = 1L;
         Long userId = 99L;
-        User user = createNormalUser(); // WRITE_DEPARTMENT_EDUCATION 권한 없음
+        User user = createNormalUser(); // MANAGE_DEPARTMENT_EDUCATION 권한 없음
 
         EduReport report = EduReport.builder().id(reportId).title("단일 조회 테스트 제목").build();
 
@@ -569,7 +595,7 @@ public class EduReportServiceTest {
         Long reportId = 1L;
         Long userId = 99L; // 관리자 유저 아이디
         User adminUser = createAdminUser();
-        adminUser.addAuthority(Authority.WRITE_DEPARTMENT_EDUCATION);
+        adminUser.addAuthority(Authority.MANAGE_DEPARTMENT_EDUCATION);
 
         EduAttachment attachment1 =
                 EduAttachment.builder()
@@ -644,7 +670,7 @@ public class EduReportServiceTest {
         // given
         Long userId = 99L; // 관리자 유저 아이디
         User adminUser = createAdminUser();
-        adminUser.addAuthority(Authority.WRITE_DEPARTMENT_EDUCATION);
+        adminUser.addAuthority(Authority.MANAGE_DEPARTMENT_EDUCATION);
 
         when(userRepository.findById(userId)).thenReturn(Optional.of(adminUser));
         when(eduReportRepository.findById(10L)).thenReturn(Optional.empty());
@@ -794,13 +820,13 @@ public class EduReportServiceTest {
     }
 
     @Test
-    @DisplayName("교육 보고서 조회 - WRITE_DEPARTMENT_EDUCATION 권한 있음 → attendees 포함")
+    @DisplayName("교육 보고서 조회 - MANAGE_DEPARTMENT_EDUCATION 권한 있음 → attendees 포함")
     void getEduReport_WithAccess_IncludesAttendees() {
         // given
         Long reportId = 1L;
         Long userId = 99L;
         User user = createNormalUser();
-        user.addAuthority(Authority.WRITE_DEPARTMENT_EDUCATION);
+        user.addAuthority(Authority.MANAGE_DEPARTMENT_EDUCATION);
 
         EduReport report =
                 EduReport.builder().id(reportId).title("권한 보고서").eduType(EduType.SAFETY).build();
@@ -837,7 +863,7 @@ public class EduReportServiceTest {
     }
 
     @Test
-    @DisplayName("교육 보고서 조회 - WRITE_DEPARTMENT_EDUCATION 권한 없음 → attendees=null")
+    @DisplayName("교육 보고서 조회 - MANAGE_DEPARTMENT_EDUCATION 권한 없음 → attendees=null")
     void getEduReport_WithoutAccess_AttendeesIsNull() {
         // given
         Long reportId = 1L;
@@ -871,13 +897,13 @@ public class EduReportServiceTest {
     }
 
     @Test
-    @DisplayName("교육 수정 성공 - 안전보건은 WRITE_SAFETY 권한으로 수정 가능")
+    @DisplayName("교육 수정 성공 - 안전보건은 MANAGE_SAFETY 권한으로 수정 가능")
     void updateEduReport_Safety_Success() {
         // given
         Long reportId = 10L;
         Long userId = 1L;
         User user = createNormalUser();
-        user.addAuthority(Authority.WRITE_SAFETY);
+        user.addAuthority(Authority.MANAGE_SAFETY);
 
         EducationCategory oldCategory =
                 EducationCategory.builder()
@@ -929,7 +955,7 @@ public class EduReportServiceTest {
     }
 
     @Test
-    @DisplayName("교육 수정 실패 - 안전보건은 WRITE_SAFETY 권한이 없으면 수정 불가")
+    @DisplayName("교육 수정 실패 - 안전보건은 MANAGE_SAFETY 권한이 없으면 수정 불가")
     void updateEduReport_Safety_Fail_NoAuthority() {
         // given
         Long reportId = 10L;
@@ -963,7 +989,7 @@ public class EduReportServiceTest {
         Long reportId = 10L;
         Long userId = 1L;
         User user = createNormalUser();
-        user.addAuthority(Authority.WRITE_DEPARTMENT_EDUCATION);
+        user.addAuthority(Authority.MANAGE_DEPARTMENT_EDUCATION);
 
         EduReport report =
                 EduReport.builder()
@@ -993,7 +1019,7 @@ public class EduReportServiceTest {
         Long reportId = 20L;
         Long userId = 1L;
         User user = createNormalUser();
-        user.addAuthority(Authority.WRITE_DEPARTMENT_EDUCATION);
+        user.addAuthority(Authority.MANAGE_DEPARTMENT_EDUCATION);
 
         EduReport report =
                 EduReport.builder()
@@ -1054,7 +1080,7 @@ public class EduReportServiceTest {
         Long reportId = 21L;
         Long userId = 1L;
         User user = createNormalUser();
-        user.addAuthority(Authority.WRITE_DEPARTMENT_EDUCATION);
+        user.addAuthority(Authority.MANAGE_DEPARTMENT_EDUCATION);
 
         EduReport report =
                 EduReport.builder()
@@ -1106,13 +1132,13 @@ public class EduReportServiceTest {
     }
 
     @Test
-    @DisplayName("교육 상태 변경 성공 - 안전보건은 WRITE_SAFETY 권한으로 상태 변경 가능")
+    @DisplayName("교육 상태 변경 성공 - 안전보건은 MANAGE_SAFETY 권한으로 상태 변경 가능")
     void updateEduReportStatus_Safety_Success() {
         // given
         Long reportId = 11L;
         Long userId = 1L;
         User user = createNormalUser();
-        user.addAuthority(Authority.WRITE_SAFETY);
+        user.addAuthority(Authority.MANAGE_SAFETY);
 
         EduReport report =
                 EduReport.builder()

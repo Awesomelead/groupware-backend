@@ -140,15 +140,22 @@ public class EduReportService {
     }
 
     private void validateCreateAuthority(User user, EduType eduType) {
-        if (eduType == EduType.PSM || eduType == EduType.SAFETY) {
-            if (!user.hasAuthority(Authority.WRITE_SAFETY)) {
-                throw new CustomException(ErrorCode.NO_AUTHORITY_FOR_SAFETY_WRITE);
+        if (eduType == EduType.DEPARTMENT) {
+            if (!user.hasAuthority(Authority.MANAGE_DEPARTMENT_EDUCATION)) {
+                throw new CustomException(ErrorCode.NO_AUTHORITY_FOR_EDU_REPORT);
             }
             return;
         }
 
-        if (!user.hasAuthority(Authority.WRITE_DEPARTMENT_EDUCATION)) {
-            throw new CustomException(ErrorCode.NO_AUTHORITY_FOR_EDU_REPORT);
+        if (eduType == EduType.PSM) {
+            if (!user.hasAuthority(Authority.MANAGE_PSM)) {
+                throw new CustomException(ErrorCode.NO_AUTHORITY_FOR_PSM_MANAGE);
+            }
+            return;
+        }
+
+        if (eduType == EduType.SAFETY && !user.hasAuthority(Authority.MANAGE_SAFETY)) {
+            throw new CustomException(ErrorCode.NO_AUTHORITY_FOR_SAFETY_WRITE);
         }
     }
 
@@ -161,7 +168,7 @@ public class EduReportService {
                         .findById(id)
                         .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
 
-        boolean hasAccess = user.hasAuthority(Authority.WRITE_DEPARTMENT_EDUCATION);
+        boolean hasAccess = user.hasAuthority(Authority.MANAGE_DEPARTMENT_EDUCATION);
 
         Department dept;
         if (hasAccess) {
@@ -184,6 +191,11 @@ public class EduReportService {
     }
 
     @Transactional(readOnly = true)
+    public List<EduReportSummaryDto> getDepartmentEduReports(DepartmentName departmentName, Long id) {
+        return getEduReports(EduType.DEPARTMENT, departmentName, null, id);
+    }
+
+    @Transactional(readOnly = true)
     public EduReportDetailDto getEduReport(Long eduReportId, Long id) {
 
         User user =
@@ -196,13 +208,13 @@ public class EduReportService {
                         .findById(eduReportId)
                         .orElseThrow(() -> new CustomException(ErrorCode.EDU_REPORT_NOT_FOUND));
 
-        boolean hasAccess = user.hasAuthority(Authority.WRITE_DEPARTMENT_EDUCATION);
+        boolean hasAccess = user.hasAuthority(Authority.MANAGE_DEPARTMENT_EDUCATION);
 
         List<EduAttendance> attendances = null;
         long numberOfPeople = -1L;
 
         if (hasAccess) {
-            // WRITE_DEPARTMENT_EDUCATION 권한 있음: 출석자 목록과 통계 포함
+            // MANAGE_DEPARTMENT_EDUCATION 권한 있음: 출석자 목록과 통계 포함
             attendances = eduAttendanceRepository.findAllByEduReportIdWithUser(eduReportId);
             numberOfPeople = calculateTargetPeopleCount(report);
         }
@@ -224,7 +236,7 @@ public class EduReportService {
                         .findById(id)
                         .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
 
-        if (!user.hasAuthority(Authority.WRITE_DEPARTMENT_EDUCATION)) {
+        if (!user.hasAuthority(Authority.MANAGE_DEPARTMENT_EDUCATION)) {
             throw new CustomException(ErrorCode.NO_AUTHORITY_FOR_EDU_REPORT);
         }
 

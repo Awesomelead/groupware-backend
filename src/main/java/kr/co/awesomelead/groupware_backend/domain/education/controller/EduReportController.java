@@ -63,13 +63,15 @@ import java.util.List;
 
     ### API별 권한
     - 생성
-      - PSM/안전보건: `WRITE_SAFETY`
-      - 부서교육: `WRITE_DEPARTMENT_EDUCATION`
+      - PSM: `MANAGE_PSM`
+      - 안전 보건: `MANAGE_SAFETY`
+      - 부서교육: `MANAGE_DEPARTMENT_EDUCATION`
     - 목록 조회/상세 조회/출석(서명): 로그인 사용자
     - 교육 수정/상태변경
-      - 부서 교육: `WRITE_DEPARTMENT_EDUCATION`
-      - PSM/안전보건: `WRITE_SAFETY`
-    - 교육 삭제: `WRITE_DEPARTMENT_EDUCATION`
+      - 부서 교육: `MANAGE_DEPARTMENT_EDUCATION`
+      - PSM: `MANAGE_PSM`
+      - 안전 보건: `MANAGE_SAFETY`
+    - 교육 삭제: `MANAGE_DEPARTMENT_EDUCATION`
     - 첨부파일 다운로드: 인증 불필요(공개)
 
     ### 교육 유형(EduType)
@@ -179,13 +181,24 @@ public class EduReportController {
                                         mediaType = "application/json",
                                         examples = {
                                             @ExampleObject(
-                                                    name = "PSM/안전보건 작성 권한 없음",
+                                                    name = "PSM 관리 권한 없음",
+                                                    value =
+                                                            """
+              {
+                "isSuccess": false,
+                "code": "NO_AUTHORITY_FOR_PSM_MANAGE",
+                "message": "PSM 관리 권한이 없습니다.",
+                "result": null
+              }
+              """),
+                                            @ExampleObject(
+                                                    name = "안전 보건 관리 권한 없음",
                                                     value =
                                                             """
               {
                 "isSuccess": false,
                 "code": "NO_AUTHORITY_FOR_SAFETY_WRITE",
-                "message": "PSM/안전보건 작성 권한이 없습니다.",
+                "message": "안전 보건 관리 권한이 없습니다.",
                 "result": null
               }
               """),
@@ -286,6 +299,90 @@ public class EduReportController {
     }
 
     @Operation(
+            tags = {"부서교육"},
+            summary = "부서 교육 게시물 목록 조회",
+            description =
+                    """
+            부서 교육 게시물 목록을 조회합니다.
+
+            - `MANAGE_DEPARTMENT_EDUCATION` 권한 사용자는 `departmentName`으로 전체 부서 대상 필터 조회가 가능합니다.
+            - `MANAGE_DEPARTMENT_EDUCATION` 권한이 없는 사용자는 본인 소속 부서 게시물만 조회됩니다.
+            """)
+    @ApiResponses({
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                responseCode = "200",
+                description = "조회 성공",
+                content =
+                        @Content(
+                                mediaType = "application/json",
+                                examples =
+                                        @ExampleObject(
+                                                value =
+                                                        """
+          {
+            "isSuccess": true,
+            "code": "COMMON200",
+            "message": "요청에 성공했습니다.",
+            "result": [
+              {
+                "id": 202,
+                "title": "경영지원부 교육",
+                "eduType": "부서 교육",
+                "eduDate": "2026-03-16",
+                "content": "부서교육 게시글입니다.",
+                "attendance": false,
+                "pinned": false,
+                "signatureRequired": true,
+                "status": "OPEN",
+                "categoryId": null,
+                "categoryName": null
+              }
+            ]
+          }
+          """))),
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                responseCode = "404",
+                description = "리소스 없음",
+                content =
+                        @Content(
+                                mediaType = "application/json",
+                                examples = {
+                                    @ExampleObject(
+                                            name = "사용자 없음",
+                                            value =
+                                                    """
+          {
+            "isSuccess": false,
+            "code": "USER_NOT_FOUND",
+            "message": "해당 사용자를 찾을 수 없습니다.",
+            "result": null
+          }
+          """),
+                                    @ExampleObject(
+                                            name = "부서 없음",
+                                            value =
+                                                    """
+          {
+            "isSuccess": false,
+            "code": "DEPARTMENT_NOT_FOUND",
+            "message": "해당 부서를 찾을 수 없습니다.",
+            "result": null
+          }
+          """)
+                                }))
+    })
+    @GetMapping("/department")
+    public ResponseEntity<ApiResponse<List<EduReportSummaryDto>>> getDepartmentEduReports(
+            @Parameter(description = "부서명 필터(권한 사용자 전용)", example = "SALES_DEPT")
+                    @RequestParam(required = false)
+                    DepartmentName departmentName,
+            @Parameter(hidden = true) @AuthenticationPrincipal CustomUserDetails userDetails) {
+        List<EduReportSummaryDto> reports =
+                eduReportService.getDepartmentEduReports(departmentName, userDetails.getId());
+        return ResponseEntity.ok(ApiResponse.onSuccess(reports));
+    }
+
+    @Operation(
             summary = "교육 게시물 목록 조회",
             description =
                     """
@@ -293,8 +390,8 @@ public class EduReportController {
 
             - `type` 미지정 시 전체 유형 조회
             - `categoryId`는 PSM/안전보건 카테고리 필터 용도
-            - `departmentName`은 `type=DEPARTMENT` + `WRITE_DEPARTMENT_EDUCATION` 권한 사용자일 때만 유효
-            - `WRITE_DEPARTMENT_EDUCATION` 권한이 없는 사용자는 부서교육의 경우 본인 부서 데이터만 조회
+            - `departmentName`은 `type=DEPARTMENT` + `MANAGE_DEPARTMENT_EDUCATION` 권한 사용자일 때만 유효
+            - `MANAGE_DEPARTMENT_EDUCATION` 권한이 없는 사용자는 부서교육의 경우 본인 부서 데이터만 조회
             """)
     @ApiResponses({
         @io.swagger.v3.oas.annotations.responses.ApiResponse(
@@ -385,7 +482,7 @@ public class EduReportController {
                     """
             교육 게시물 상세 정보를 조회합니다.
 
-            - `WRITE_DEPARTMENT_EDUCATION` 권한 사용자는 `attendees`, `numberOfPeople`, `numberOfAttendees`를 조회할 수 있습니다.
+            - `MANAGE_DEPARTMENT_EDUCATION` 권한 사용자는 `attendees`, `numberOfPeople`, `numberOfAttendees`를 조회할 수 있습니다.
             - 일반 사용자는 위 필드가 `null`로 반환됩니다.
             """)
     @ApiResponses({
@@ -437,8 +534,9 @@ public class EduReportController {
                     """
             `multipart/form-data`로 교육 게시물을 수정합니다.
 
-            - 부서 교육(`eduType=부서 교육`): `WRITE_DEPARTMENT_EDUCATION` 권한 필요
-            - PSM/안전보건(`eduType=PSM/안전 보건`): `WRITE_SAFETY` 권한 필요
+            - 부서 교육(`eduType=부서 교육`): `MANAGE_DEPARTMENT_EDUCATION` 권한 필요
+            - PSM(`eduType=PSM`): `MANAGE_PSM` 권한 필요
+            - 안전 보건(`eduType=안전 보건`): `MANAGE_SAFETY` 권한 필요
             - `OPEN` 상태에서만 수정 가능
             - 출석 완료자가 1명이라도 있으면 수정 불가
             - `requestDto`(JSON 파트)는 필수입니다.
@@ -538,13 +636,24 @@ public class EduReportController {
           }
           """),
                                     @ExampleObject(
-                                            name = "PSM/안전보건 작성 권한 없음",
+                                            name = "PSM 관리 권한 없음",
+                                            value =
+                                                    """
+          {
+            "isSuccess": false,
+            "code": "NO_AUTHORITY_FOR_PSM_MANAGE",
+            "message": "PSM 관리 권한이 없습니다.",
+            "result": null
+          }
+          """),
+                                    @ExampleObject(
+                                            name = "안전 보건 관리 권한 없음",
                                             value =
                                                     """
           {
             "isSuccess": false,
             "code": "NO_AUTHORITY_FOR_SAFETY_WRITE",
-            "message": "PSM/안전보건 작성 권한이 없습니다.",
+            "message": "안전 보건 관리 권한이 없습니다.",
             "result": null
           }
           """)
@@ -636,8 +745,9 @@ public class EduReportController {
                     """
             교육 게시물 상태를 `OPEN`/`CLOSED`로 변경합니다.
 
-            - 부서 교육(`eduType=부서 교육`): `WRITE_DEPARTMENT_EDUCATION` 권한 필요
-            - PSM/안전보건(`eduType=PSM/안전 보건`): `WRITE_SAFETY` 권한 필요
+            - 부서 교육(`eduType=부서 교육`): `MANAGE_DEPARTMENT_EDUCATION` 권한 필요
+            - PSM(`eduType=PSM`): `MANAGE_PSM` 권한 필요
+            - 안전 보건(`eduType=안전 보건`): `MANAGE_SAFETY` 권한 필요
             - 상태가 `CLOSED`인 게시물은 출석(서명)할 수 없습니다.
             """)
     @ApiResponses({
@@ -666,13 +776,24 @@ public class EduReportController {
           }
           """),
                                     @ExampleObject(
-                                            name = "PSM/안전보건 작성 권한 없음",
+                                            name = "PSM 관리 권한 없음",
+                                            value =
+                                                    """
+          {
+            "isSuccess": false,
+            "code": "NO_AUTHORITY_FOR_PSM_MANAGE",
+            "message": "PSM 관리 권한이 없습니다.",
+            "result": null
+          }
+          """),
+                                    @ExampleObject(
+                                            name = "안전 보건 관리 권한 없음",
                                             value =
                                                     """
           {
             "isSuccess": false,
             "code": "NO_AUTHORITY_FOR_SAFETY_WRITE",
-            "message": "PSM/안전보건 작성 권한이 없습니다.",
+            "message": "안전 보건 관리 권한이 없습니다.",
             "result": null
           }
           """)
@@ -710,7 +831,7 @@ public class EduReportController {
 
     @Operation(
             summary = "교육 게시물 삭제",
-            description = "교육 게시물을 삭제합니다. `WRITE_DEPARTMENT_EDUCATION` 권한이 필요합니다.")
+            description = "교육 게시물을 삭제합니다. `MANAGE_DEPARTMENT_EDUCATION` 권한이 필요합니다.")
     @ApiResponses({
         @io.swagger.v3.oas.annotations.responses.ApiResponse(
                 responseCode = "200",

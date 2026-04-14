@@ -31,7 +31,7 @@ public class EduReportQueryRepository {
      * @param type 교육 유형 필터 (null 이면 전체)
      * @param dept 부서 필터 엔티티
      * @param userId 출석 여부 서브쿼리에 사용할 현재 사용자 ID
-     * @param hasAccess WRITE_DEPARTMENT_EDUCATION 권한 보유 여부
+     * @param hasAccess MANAGE_DEPARTMENT_EDUCATION 권한 보유 여부
      */
     public List<EduReportSummaryDto> findEduReports(
             EduType type, Department dept, Long categoryId, Long userId, boolean hasAccess) {
@@ -86,7 +86,7 @@ public class EduReportQueryRepository {
      */
     private BooleanExpression deptFilter(EduType type, boolean hasAccess, Department dept) {
         if (hasAccess) {
-            // WRITE_DEPARTMENT_EDUCATION 권한 있음:
+            // MANAGE_DEPARTMENT_EDUCATION 권한 있음:
             // - DEPARTMENT 조회일 때만 departmentName 필터 적용
             // - PSM/SAFETY 조회는 departmentName 무시
             if (type == EduType.DEPARTMENT && dept != null) {
@@ -94,7 +94,7 @@ public class EduReportQueryRepository {
             }
             return null;
         }
-        // WRITE_DEPARTMENT_EDUCATION 권한 없음: 기존 로직 유지
+        // MANAGE_DEPARTMENT_EDUCATION 권한 없음: 기존 로직 유지
         // - DEPARTMENT 타입이 아닌 교육(PSM, SAFETY)은 모두 보임
         // - DEPARTMENT 타입이면 자신의 부서 교육만 보임
         return eduReport.eduType.ne(EduType.DEPARTMENT).or(eduReport.department.eq(dept));

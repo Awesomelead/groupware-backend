@@ -188,10 +188,10 @@ public class EduReportQueryRepository {
         }
 
         if (company == null) {
-            return eduReport.id.isNull();
+            return eduReport.company.isNull();
         }
 
-        return eduReport.company.eq(company);
+        return eduReport.company.eq(company).or(eduReport.company.isNull());
     }
 
     private BooleanExpression psmFilter(Company psmCompany, boolean canReadAllPsmCompanies) {
@@ -200,9 +200,13 @@ public class EduReportQueryRepository {
         }
 
         if (psmCompany == null) {
-            return eduReport.eduType.ne(EduType.PSM);
+            return eduReport.eduType.ne(EduType.PSM).or(eduReport.company.isNull());
         }
 
-        return eduReport.eduType.ne(EduType.PSM).or(eduReport.company.eq(psmCompany));
+        return eduReport
+                .eduType
+                .ne(EduType.PSM)
+                .or(eduReport.company.eq(psmCompany))
+                .or(eduReport.company.isNull());
     }
 }

@@ -18,6 +18,7 @@ import kr.co.awesomelead.groupware_backend.domain.education.dto.request.Departme
 import kr.co.awesomelead.groupware_backend.domain.education.dto.request.EduReportRequestDto;
 import kr.co.awesomelead.groupware_backend.domain.education.dto.request.EduReportStatusUpdateRequestDto;
 import kr.co.awesomelead.groupware_backend.domain.education.dto.request.EduReportUpdateRequestDto;
+import kr.co.awesomelead.groupware_backend.domain.education.dto.request.PsmEduReportCreateRequestDto;
 import kr.co.awesomelead.groupware_backend.domain.education.dto.response.EduReportDetailDto;
 import kr.co.awesomelead.groupware_backend.domain.education.dto.response.EduReportSummaryDto;
 import kr.co.awesomelead.groupware_backend.domain.education.enums.EduType;
@@ -180,6 +181,111 @@ public class EduReportController {
 
         Long reportId =
                 eduReportService.createDepartmentEduReport(requestDto, files, userDetails.getId());
+
+        URI location =
+                ServletUriComponentsBuilder.fromCurrentContextPath()
+                        .path("/api/educations/{id}")
+                        .buildAndExpand(reportId)
+                        .toUri();
+
+        return ResponseEntity.created(location).body(ApiResponse.onCreated(reportId));
+    }
+
+    @Operation(
+            tags = {"PSM"},
+            summary = "PSM 게시물 생성",
+            description =
+                    """
+            `multipart/form-data`로 PSM 게시물을 생성합니다.
+
+            - `requestDto`(JSON 파트)는 필수입니다.
+            - `files`(파일 파트)는 선택입니다.
+            - PSM 관리 권한(`MANAGE_PSM`)이 있어야 생성할 수 있습니다.
+            - `companyScope`를 지정하면 해당 회사 게시물, `null`이면 모든 회사 공통 게시물로 생성됩니다.
+            """,
+            requestBody =
+                    @io.swagger.v3.oas.annotations.parameters.RequestBody(
+                            required = true,
+                            content =
+                                    @Content(
+                                            mediaType = MediaType.MULTIPART_FORM_DATA_VALUE,
+                                            schema =
+                                                    @Schema(
+                                                            implementation =
+                                                                    PsmEduReportCreateMultipartRequestDoc
+                                                                            .class),
+                                            encoding = {
+                                                @Encoding(
+                                                        name = "requestDto",
+                                                        contentType =
+                                                                MediaType.APPLICATION_JSON_VALUE),
+                                                @Encoding(name = "files", contentType = "*/*")
+                                            })))
+    @ApiResponses({
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                responseCode = "201",
+                description = "생성 성공",
+                content =
+                        @Content(
+                                mediaType = "application/json",
+                                examples =
+                                        @ExampleObject(
+                                                value =
+                                                        """
+          {
+            "isSuccess": true,
+            "code": "COMMON201",
+            "message": "성공적으로 생성되었습니다.",
+            "result": 2
+          }
+          """))),
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                responseCode = "403",
+                description = "권한 없음",
+                content =
+                        @Content(
+                                mediaType = "application/json",
+                                examples =
+                                        @ExampleObject(
+                                                value =
+                                                        """
+          {
+            "isSuccess": false,
+            "code": "NO_AUTHORITY_FOR_PSM_MANAGE",
+            "message": "PSM 관리 권한이 없습니다.",
+            "result": null
+          }
+          """))),
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                responseCode = "404",
+                description = "리소스 없음",
+                content =
+                        @Content(
+                                mediaType = "application/json",
+                                examples =
+                                        @ExampleObject(
+                                                value =
+                                                        """
+          {
+            "isSuccess": false,
+            "code": "EDUCATION_CATEGORY_NOT_FOUND",
+            "message": "해당 교육 카테고리를 찾을 수 없습니다.",
+            "result": null
+          }
+          """)))
+    })
+    @PostMapping(value = "/psm", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ResponseEntity<ApiResponse<Long>> createPsmEduReport(
+            @Parameter(description = "PSM 게시물 생성 정보(JSON)", required = true)
+                    @RequestPart("requestDto")
+                    @Valid
+                    PsmEduReportCreateRequestDto requestDto,
+            @Parameter(description = "첨부 파일 목록(선택)") @RequestPart(value = "files", required = false)
+                    List<MultipartFile> files,
+            @Parameter(hidden = true) @AuthenticationPrincipal CustomUserDetails userDetails)
+            throws IOException {
+
+        Long reportId = eduReportService.createPsmEduReport(requestDto, files, userDetails.getId());
 
         URI location =
                 ServletUriComponentsBuilder.fromCurrentContextPath()
@@ -402,6 +508,16 @@ public class EduReportController {
 
         @Schema(description = "부서 교육 게시물 생성 정보(JSON 파트)", requiredMode = Schema.RequiredMode.REQUIRED)
         public DepartmentEduReportCreateRequestDto requestDto;
+
+        @ArraySchema(schema = @Schema(type = "string", format = "binary"))
+        public List<String> files;
+    }
+
+    @Schema(name = "PsmEduReportCreateMultipartRequestDoc", description = "PSM 게시물 생성 multipart 요청")
+    static class PsmEduReportCreateMultipartRequestDoc {
+
+        @Schema(description = "PSM 게시물 생성 정보(JSON 파트)", requiredMode = Schema.RequiredMode.REQUIRED)
+        public PsmEduReportCreateRequestDto requestDto;
 
         @ArraySchema(schema = @Schema(type = "string", format = "binary"))
         public List<String> files;

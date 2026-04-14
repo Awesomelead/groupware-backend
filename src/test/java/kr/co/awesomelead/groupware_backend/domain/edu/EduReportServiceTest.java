@@ -18,6 +18,7 @@ import kr.co.awesomelead.groupware_backend.domain.department.repository.Departme
 import kr.co.awesomelead.groupware_backend.domain.education.dto.request.EduReportRequestDto;
 import kr.co.awesomelead.groupware_backend.domain.education.dto.request.EduReportStatusUpdateRequestDto;
 import kr.co.awesomelead.groupware_backend.domain.education.dto.request.EduReportUpdateRequestDto;
+import kr.co.awesomelead.groupware_backend.domain.education.dto.request.PsmEduReportCreateRequestDto;
 import kr.co.awesomelead.groupware_backend.domain.education.dto.response.EduReportDetailDto;
 import kr.co.awesomelead.groupware_backend.domain.education.dto.response.EduReportSummaryDto;
 import kr.co.awesomelead.groupware_backend.domain.education.entity.EduAttachment;
@@ -361,6 +362,97 @@ public class EduReportServiceTest {
                 .isEqualTo(ErrorCode.NO_AUTHORITY_FOR_PSM_MANAGE);
 
         verify(eduReportRepository, never()).save(any());
+    }
+
+    @Test
+    @DisplayName("PSM 게시물 생성 - 대상 회사 지정 시 해당 회사로 저장")
+    void createPsmEduReport_WithCompanyScope_SetsTargetCompany() throws IOException {
+        // given
+        PsmEduReportCreateRequestDto requestDto =
+                PsmEduReportCreateRequestDto.builder()
+                        .title("PSM 게시물")
+                        .content("PSM 내용")
+                        .pinned(false)
+                        .categoryId(1L)
+                        .companyScope(Company.MARUI)
+                        .build();
+
+        EduReport report =
+                EduReport.builder()
+                        .id(101L)
+                        .eduType(EduType.PSM)
+                        .title("PSM 게시물")
+                        .content("PSM 내용")
+                        .build();
+
+        User user = createNormalUser();
+        user.addAuthority(Authority.MANAGE_PSM);
+        EducationCategory category =
+                EducationCategory.builder()
+                        .id(1L)
+                        .categoryType(EducationCategoryType.PSM)
+                        .build();
+
+        when(userRepository.findById(1L)).thenReturn(Optional.of(user));
+        when(educationCategoryRepository.findById(1L)).thenReturn(Optional.of(category));
+        when(eduMapper.toEduReportEntity(any(EduReportRequestDto.class), any(), any()))
+                .thenReturn(report);
+        when(eduReportRepository.save(report)).thenReturn(report);
+        when(userRepository.findAllIdsByCompany(Company.MARUI)).thenReturn(List.of(1L));
+
+        // when
+        Long reportId = eduReportService.createPsmEduReport(requestDto, null, 1L);
+
+        // then
+        assertThat(reportId).isEqualTo(101L);
+        assertThat(report.getCompany()).isEqualTo(Company.MARUI);
+        verify(userRepository, times(1)).findAllIdsByCompany(Company.MARUI);
+    }
+
+    @Test
+    @DisplayName("PSM 게시물 생성 - 대상 회사 미지정 시 모든 회사 공통으로 저장")
+    void createPsmEduReport_WithNullCompanyScope_SetsCommonCompany() throws IOException {
+        // given
+        PsmEduReportCreateRequestDto requestDto =
+                PsmEduReportCreateRequestDto.builder()
+                        .title("PSM 공통 게시물")
+                        .content("PSM 공통 내용")
+                        .pinned(false)
+                        .categoryId(1L)
+                        .companyScope(null)
+                        .build();
+
+        EduReport report =
+                EduReport.builder()
+                        .id(102L)
+                        .eduType(EduType.PSM)
+                        .title("PSM 공통 게시물")
+                        .content("PSM 공통 내용")
+                        .build();
+
+        User user = createNormalUser();
+        user.addAuthority(Authority.MANAGE_PSM);
+        EducationCategory category =
+                EducationCategory.builder()
+                        .id(1L)
+                        .categoryType(EducationCategoryType.PSM)
+                        .build();
+
+        when(userRepository.findById(1L)).thenReturn(Optional.of(user));
+        when(educationCategoryRepository.findById(1L)).thenReturn(Optional.of(category));
+        when(eduMapper.toEduReportEntity(any(EduReportRequestDto.class), any(), any()))
+                .thenReturn(report);
+        when(eduReportRepository.save(report)).thenReturn(report);
+        when(userRepository.findAllActiveUserIds()).thenReturn(List.of(1L, 2L));
+
+        // when
+        Long reportId = eduReportService.createPsmEduReport(requestDto, null, 1L);
+
+        // then
+        assertThat(reportId).isEqualTo(102L);
+        assertThat(report.getCompany()).isNull();
+        verify(userRepository, times(1)).findAllActiveUserIds();
+        verify(userRepository, never()).findAllIdsByCompany(any(Company.class));
     }
 
     @Test

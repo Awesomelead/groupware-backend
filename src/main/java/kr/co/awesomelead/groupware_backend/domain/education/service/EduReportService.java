@@ -8,6 +8,8 @@ import kr.co.awesomelead.groupware_backend.domain.education.dto.request.Departme
 import kr.co.awesomelead.groupware_backend.domain.education.dto.request.EduReportRequestDto;
 import kr.co.awesomelead.groupware_backend.domain.education.dto.request.EduReportStatusUpdateRequestDto;
 import kr.co.awesomelead.groupware_backend.domain.education.dto.request.EduReportUpdateRequestDto;
+import kr.co.awesomelead.groupware_backend.domain.education.dto.request.PsmEduReportCreateRequestDto;
+import kr.co.awesomelead.groupware_backend.domain.education.dto.request.SafetyEduReportCreateRequestDto;
 import kr.co.awesomelead.groupware_backend.domain.education.dto.response.EduReportDetailDto;
 import kr.co.awesomelead.groupware_backend.domain.education.dto.response.EduReportSummaryDto;
 import kr.co.awesomelead.groupware_backend.domain.education.entity.EduAttachment;
@@ -65,6 +67,48 @@ public class EduReportService {
     @Transactional
     public Long createEduReport(EduReportRequestDto requestDto, List<MultipartFile> files, Long id)
             throws IOException {
+        return createEduReportInternal(requestDto, files, id, false, null);
+    }
+
+    @Transactional
+    public Long createPsmEduReport(
+            PsmEduReportCreateRequestDto requestDto, List<MultipartFile> files, Long id)
+            throws IOException {
+        EduReportRequestDto baseRequest =
+                EduReportRequestDto.builder()
+                        .eduType(EduType.PSM)
+                        .title(requestDto.getTitle())
+                        .content(requestDto.getContent())
+                        .pinned(requestDto.isPinned())
+                        .signatureRequired(false)
+                        .categoryId(requestDto.getCategoryId())
+                        .build();
+        return createEduReportInternal(baseRequest, files, id, true, requestDto.getCompanyScope());
+    }
+
+    @Transactional
+    public Long createSafetyEduReport(
+            SafetyEduReportCreateRequestDto requestDto, List<MultipartFile> files, Long id)
+            throws IOException {
+        EduReportRequestDto baseRequest =
+                EduReportRequestDto.builder()
+                        .eduType(EduType.SAFETY)
+                        .title(requestDto.getTitle())
+                        .content(requestDto.getContent())
+                        .pinned(requestDto.isPinned())
+                        .signatureRequired(false)
+                        .categoryId(requestDto.getCategoryId())
+                        .build();
+        return createEduReportInternal(baseRequest, files, id, true, requestDto.getCompanyScope());
+    }
+
+    private Long createEduReportInternal(
+            EduReportRequestDto requestDto,
+            List<MultipartFile> files,
+            Long id,
+            boolean useCompanyOverride,
+            Company companyOverride)
+            throws IOException {
 
         User user =
                 userRepository
@@ -94,7 +138,7 @@ public class EduReportService {
 
         EduReport report = eduMapper.toEduReportEntity(requestDto, department, category);
         if (requestDto.getEduType() == EduType.PSM || requestDto.getEduType() == EduType.SAFETY) {
-            report.setCompany(user.getWorkLocation());
+            report.setCompany(useCompanyOverride ? companyOverride : user.getWorkLocation());
         } else {
             report.setCompany(null);
         }
@@ -124,7 +168,11 @@ public class EduReportService {
         // 알림 발송 대상 조회 및 전송
         List<Long> targetUserIds;
         if (requestDto.getEduType() == EduType.PSM || requestDto.getEduType() == EduType.SAFETY) {
-            targetUserIds = userRepository.findAllActiveUserIds();
+            if (report.getCompany() == null) {
+                targetUserIds = userRepository.findAllActiveUserIds();
+            } else {
+                targetUserIds = userRepository.findAllIdsByCompany(report.getCompany());
+            }
         } else {
             targetUserIds = userRepository.findAllIdsByDepartmentId(requestDto.getDepartmentId());
         }
@@ -442,9 +490,6 @@ public class EduReportService {
                     throw new CustomException(ErrorCode.EDUCATION_CATEGORY_REQUIRED);
                 }
                 report.setDepartment(null);
-                if (report.getCompany() == null) {
-                    report.setCompany(user.getWorkLocation());
-                }
             }
 
             deleteAttachments(report, requestDto.getDeleteAttachmentIds());

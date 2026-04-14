@@ -113,6 +113,39 @@ public class EduReportQueryRepository {
                 .fetch();
     }
 
+    public List<EduReportSummaryDto> findSafetyEduReports(
+            Long categoryId, Long userId, Company company, boolean canReadAllCompanies) {
+
+        return queryFactory
+                .select(
+                        Projections.constructor(
+                                EduReportSummaryDto.class,
+                                eduReport.id,
+                                eduReport.title,
+                                eduReport.eduType,
+                                eduReport.eduDate,
+                                eduReport.content,
+                                JPAExpressions.selectOne()
+                                        .from(eduAttendance)
+                                        .where(
+                                                eduAttendance.eduReport.eq(eduReport),
+                                                eduAttendance.user.id.eq(userId))
+                                        .exists(),
+                                eduReport.pinned,
+                                eduReport.signatureRequired,
+                                eduReport.status,
+                                educationCategory.id,
+                                educationCategory.name))
+                .from(eduReport)
+                .leftJoin(eduReport.category, educationCategory)
+                .where(
+                        eduReport.eduType.eq(EduType.SAFETY),
+                        eqCategoryId(categoryId),
+                        psmCompanyFilter(company, canReadAllCompanies))
+                .orderBy(eduReport.pinned.desc(), eduReport.eduDate.desc(), eduReport.id.desc())
+                .fetch();
+    }
+
     // ── BooleanExpression 모듈 ──────────────────────────────────────
 
     /** 교육 유형 필터 — null 이면 조건 없음 (전체) */

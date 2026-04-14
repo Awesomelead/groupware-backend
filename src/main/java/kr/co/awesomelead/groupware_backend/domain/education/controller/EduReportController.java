@@ -14,6 +14,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 
 import kr.co.awesomelead.groupware_backend.domain.department.enums.DepartmentName;
+import kr.co.awesomelead.groupware_backend.domain.education.dto.request.DepartmentEduReportCreateRequestDto;
 import kr.co.awesomelead.groupware_backend.domain.education.dto.request.EduReportRequestDto;
 import kr.co.awesomelead.groupware_backend.domain.education.dto.request.EduReportStatusUpdateRequestDto;
 import kr.co.awesomelead.groupware_backend.domain.education.dto.request.EduReportUpdateRequestDto;
@@ -82,6 +83,112 @@ import java.util.List;
 public class EduReportController {
 
     private final EduReportService eduReportService;
+
+    @Operation(
+            tags = {"부서교육"},
+            summary = "부서 교육 게시물 생성",
+            description =
+                    """
+            `multipart/form-data`로 부서 교육 게시물을 생성합니다.
+
+            - `requestDto`(JSON 파트)는 필수입니다.
+            - `files`(파일 파트)는 선택입니다.
+            - 부서 교육 관리 권한(`MANAGE_DEPARTMENT_EDUCATION`)이 있어야 생성할 수 있습니다.
+            """,
+            requestBody =
+                    @io.swagger.v3.oas.annotations.parameters.RequestBody(
+                            required = true,
+                            content =
+                                    @Content(
+                                            mediaType = MediaType.MULTIPART_FORM_DATA_VALUE,
+                                            schema =
+                                                    @Schema(
+                                                            implementation =
+                                                                    DepartmentEduReportCreateMultipartRequestDoc
+                                                                            .class),
+                                            encoding = {
+                                                @Encoding(
+                                                        name = "requestDto",
+                                                        contentType =
+                                                                MediaType.APPLICATION_JSON_VALUE),
+                                                @Encoding(name = "files", contentType = "*/*")
+                                            })))
+    @ApiResponses({
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                responseCode = "201",
+                description = "생성 성공",
+                content =
+                        @Content(
+                                mediaType = "application/json",
+                                schema = @Schema(implementation = ApiResponse.class),
+                                examples =
+                                        @ExampleObject(
+                                                value =
+                                                        """
+          {
+            "isSuccess": true,
+            "code": "COMMON201",
+            "message": "성공적으로 생성되었습니다.",
+            "result": 1
+          }
+          """))),
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                responseCode = "403",
+                description = "권한 없음",
+                content =
+                        @Content(
+                                mediaType = "application/json",
+                                examples =
+                                        @ExampleObject(
+                                                value =
+                                                        """
+          {
+            "isSuccess": false,
+            "code": "NO_AUTHORITY_FOR_EDU_REPORT",
+            "message": "교육 게시물 관리 권한이 없습니다.",
+            "result": null
+          }
+          """))),
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                responseCode = "404",
+                description = "리소스 없음",
+                content =
+                        @Content(
+                                mediaType = "application/json",
+                                examples =
+                                        @ExampleObject(
+                                                value =
+                                                        """
+          {
+            "isSuccess": false,
+            "code": "DEPARTMENT_NOT_FOUND",
+            "message": "해당 부서를 찾을 수 없습니다.",
+            "result": null
+          }
+          """)))
+    })
+    @PostMapping(value = "/department", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ResponseEntity<ApiResponse<Long>> createDepartmentEduReport(
+            @Parameter(description = "부서 교육 게시물 생성 정보(JSON)", required = true)
+                    @RequestPart("requestDto")
+                    @Valid
+                    DepartmentEduReportCreateRequestDto requestDto,
+            @Parameter(description = "첨부 파일 목록(선택)") @RequestPart(value = "files", required = false)
+                    List<MultipartFile> files,
+            @Parameter(hidden = true) @AuthenticationPrincipal CustomUserDetails userDetails)
+            throws IOException {
+
+        Long reportId =
+                eduReportService.createDepartmentEduReport(requestDto, files, userDetails.getId());
+
+        URI location =
+                ServletUriComponentsBuilder.fromCurrentContextPath()
+                        .path("/api/educations/{id}")
+                        .buildAndExpand(reportId)
+                        .toUri();
+
+        return ResponseEntity.created(location).body(ApiResponse.onCreated(reportId));
+    }
 
     @Operation(
             summary = "교육 게시물 생성",
@@ -288,6 +395,18 @@ public class EduReportController {
         public List<String> files;
     }
 
+    @Schema(
+            name = "DepartmentEduReportCreateMultipartRequestDoc",
+            description = "부서 교육 게시물 생성 multipart 요청")
+    static class DepartmentEduReportCreateMultipartRequestDoc {
+
+        @Schema(description = "부서 교육 게시물 생성 정보(JSON 파트)", requiredMode = Schema.RequiredMode.REQUIRED)
+        public DepartmentEduReportCreateRequestDto requestDto;
+
+        @ArraySchema(schema = @Schema(type = "string", format = "binary"))
+        public List<String> files;
+    }
+
     @Schema(name = "EduReportUpdateMultipartRequestDoc", description = "교육 수정 multipart 요청")
     static class EduReportUpdateMultipartRequestDoc {
 
@@ -456,16 +575,14 @@ public class EduReportController {
     }
 
     @Operation(
-            summary = "교육 게시물 목록 조회",
+            tags = {"안전보건"},
+            summary = "안전 보건 게시물 목록 조회",
             description =
                     """
-            교육 게시물 목록을 조회합니다.
+            안전 보건 게시물 목록을 조회합니다.
 
-            - `type` 미지정 시 전체 유형 조회
-            - `categoryId`는 PSM/안전보건 카테고리 필터 용도
-            - `departmentName`은 `type=DEPARTMENT` + `MANAGE_DEPARTMENT_EDUCATION` 권한 사용자일 때만 유효
-            - `MANAGE_DEPARTMENT_EDUCATION` 권한이 없는 사용자는 부서교육의 경우 본인 부서 데이터만 조회
-            - `MANAGE_PSM` 권한이 없는 사용자는 PSM 게시물의 경우 본인 소속 회사 데이터만 조회
+            - `MANAGE_SAFETY` 권한 사용자는 모든 회사의 안전 보건 게시물을 조회할 수 있습니다.
+            - `MANAGE_SAFETY` 권한이 없는 사용자는 본인 소속 회사의 안전 보건 게시물만 조회됩니다.
             """)
     @ApiResponses({
         @io.swagger.v3.oas.annotations.responses.ApiResponse(
@@ -484,17 +601,17 @@ public class EduReportController {
             "message": "요청에 성공했습니다.",
             "result": [
               {
-                "id": 202,
-                "title": "경영지원부 교육",
-                "eduType": "부서 교육",
-                "eduDate": "2026-03-16",
-                "content": "부서교육 게시글입니다.",
+                "id": 401,
+                "title": "안전 보건 정기교육",
+                "eduType": "안전 보건",
+                "eduDate": "2026-04-14",
+                "content": "안전 보건 교육 게시글입니다.",
                 "attendance": false,
                 "pinned": false,
                 "signatureRequired": true,
                 "status": "OPEN",
-                "categoryId": null,
-                "categoryName": null
+                "categoryId": 3,
+                "categoryName": "정기교육"
               }
             ]
           }
@@ -505,7 +622,7 @@ public class EduReportController {
                 content =
                         @Content(
                                 mediaType = "application/json",
-                                examples = {
+                                        examples = {
                                     @ExampleObject(
                                             name = "사용자 없음",
                                             value =
@@ -516,37 +633,17 @@ public class EduReportController {
             "message": "해당 사용자를 찾을 수 없습니다.",
             "result": null
           }
-          """),
-                                    @ExampleObject(
-                                            name = "부서 없음",
-                                            value =
-                                                    """
-          {
-            "isSuccess": false,
-            "code": "DEPARTMENT_NOT_FOUND",
-            "message": "해당 부서를 찾을 수 없습니다.",
-            "result": null
-          }
           """)
                                 }))
     })
-    @GetMapping
-    public ResponseEntity<ApiResponse<List<EduReportSummaryDto>>> getEduReports(
-            @Parameter(description = "교육 유형 필터", example = "DEPARTMENT")
-                    @RequestParam(required = false)
-                    EduType type,
-            @Parameter(
-                            description = "부서명 필터(`type=DEPARTMENT`에서만 사용, 그 외 타입에서는 무시)",
-                            example = "SALES_DEPT")
-                    @RequestParam(required = false)
-                    DepartmentName departmentName,
-            @Parameter(description = "카테고리 ID 필터(PSM/안전보건)", example = "1")
+    @GetMapping("/safety")
+    public ResponseEntity<ApiResponse<List<EduReportSummaryDto>>> getSafetyEduReports(
+            @Parameter(description = "카테고리 ID 필터(안전 보건)", example = "1")
                     @RequestParam(required = false)
                     Long categoryId,
             @Parameter(hidden = true) @AuthenticationPrincipal CustomUserDetails userDetails) {
         List<EduReportSummaryDto> reports =
-                eduReportService.getEduReports(
-                        type, departmentName, categoryId, userDetails.getId());
+                eduReportService.getSafetyEduReports(categoryId, userDetails.getId());
         return ResponseEntity.ok(ApiResponse.onSuccess(reports));
     }
 

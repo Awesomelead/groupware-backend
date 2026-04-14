@@ -583,6 +583,53 @@ public class EduReportServiceTest {
     }
 
     @Test
+    @DisplayName("안전 보건 게시물 목록 조회 - MANAGE_SAFETY 권한 있으면 전체 회사 조회")
+    void getSafetyEduReports_WithManageSafety_ReturnsAllCompanies() {
+        // given
+        User user = createNormalUser();
+        user.addAuthority(Authority.MANAGE_SAFETY);
+
+        EduReportSummaryDto safetyReport =
+                EduReportSummaryDto.builder()
+                        .id(21L)
+                        .title("안전 보건 전사 교육")
+                        .eduType(EduType.SAFETY)
+                        .build();
+
+        when(userRepository.findById(1L)).thenReturn(Optional.of(user));
+        when(eduReportQueryRepository.findSafetyEduReports(null, 1L, null, true))
+                .thenReturn(List.of(safetyReport));
+
+        // when
+        List<EduReportSummaryDto> result = eduReportService.getSafetyEduReports(null, 1L);
+
+        // then
+        assertThat(result).isNotNull();
+        assertThat(result.size()).isEqualTo(1);
+        assertThat(result.get(0).getEduType()).isEqualTo(EduType.SAFETY);
+        verify(eduReportQueryRepository, times(1)).findSafetyEduReports(null, 1L, null, true);
+    }
+
+    @Test
+    @DisplayName("안전 보건 게시물 목록 조회 - MANAGE_SAFETY 권한 없으면 본인 회사 조회")
+    void getSafetyEduReports_WithoutManageSafety_ReturnsOnlyMyCompany() {
+        // given
+        User user = createNormalUser(); // workLocation=AWESOME
+
+        when(userRepository.findById(1L)).thenReturn(Optional.of(user));
+        when(eduReportQueryRepository.findSafetyEduReports(null, 1L, Company.AWESOME, false))
+                .thenReturn(List.of());
+
+        // when
+        List<EduReportSummaryDto> result = eduReportService.getSafetyEduReports(null, 1L);
+
+        // then
+        assertThat(result).isNotNull();
+        verify(eduReportQueryRepository, times(1))
+                .findSafetyEduReports(null, 1L, Company.AWESOME, false);
+    }
+
+    @Test
     @DisplayName("교육 보고서 조회 성공테스트 - 권한 없는 유저 (attendees=null)")
     void getEduReport_Success() {
         // given

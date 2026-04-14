@@ -4,6 +4,7 @@ import kr.co.awesomelead.groupware_backend.domain.department.entity.Department;
 import kr.co.awesomelead.groupware_backend.domain.department.enums.Company;
 import kr.co.awesomelead.groupware_backend.domain.department.enums.DepartmentName;
 import kr.co.awesomelead.groupware_backend.domain.department.repository.DepartmentRepository;
+import kr.co.awesomelead.groupware_backend.domain.education.dto.request.DepartmentEduReportCreateRequestDto;
 import kr.co.awesomelead.groupware_backend.domain.education.dto.request.EduReportRequestDto;
 import kr.co.awesomelead.groupware_backend.domain.education.dto.request.EduReportStatusUpdateRequestDto;
 import kr.co.awesomelead.groupware_backend.domain.education.dto.request.EduReportUpdateRequestDto;
@@ -145,6 +146,22 @@ public class EduReportService {
         return savedReport.getId();
     }
 
+    @Transactional
+    public Long createDepartmentEduReport(
+            DepartmentEduReportCreateRequestDto requestDto, List<MultipartFile> files, Long id)
+            throws IOException {
+        EduReportRequestDto baseRequest =
+                EduReportRequestDto.builder()
+                        .eduType(EduType.DEPARTMENT)
+                        .title(requestDto.getTitle())
+                        .content(requestDto.getContent())
+                        .pinned(requestDto.isPinned())
+                        .signatureRequired(requestDto.isSignatureRequired())
+                        .departmentId(requestDto.getDepartmentId())
+                        .build();
+        return createEduReport(baseRequest, files, id);
+    }
+
     private void validateCreateAuthority(User user, EduType eduType) {
         if (eduType == EduType.DEPARTMENT) {
             if (!user.hasAuthority(Authority.MANAGE_DEPARTMENT_EDUCATION)) {
@@ -220,6 +237,19 @@ public class EduReportService {
         boolean canReadAllCompanies = user.hasAuthority(Authority.MANAGE_PSM);
         Company companyFilter = canReadAllCompanies ? null : user.getWorkLocation();
         return eduReportQueryRepository.findPsmEduReports(
+                categoryId, id, companyFilter, canReadAllCompanies);
+    }
+
+    @Transactional(readOnly = true)
+    public List<EduReportSummaryDto> getSafetyEduReports(Long categoryId, Long id) {
+        User user =
+                userRepository
+                        .findById(id)
+                        .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
+
+        boolean canReadAllCompanies = user.hasAuthority(Authority.MANAGE_SAFETY);
+        Company companyFilter = canReadAllCompanies ? null : user.getWorkLocation();
+        return eduReportQueryRepository.findSafetyEduReports(
                 categoryId, id, companyFilter, canReadAllCompanies);
     }
 

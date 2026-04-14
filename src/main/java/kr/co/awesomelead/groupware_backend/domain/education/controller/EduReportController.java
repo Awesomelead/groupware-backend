@@ -20,7 +20,6 @@ import kr.co.awesomelead.groupware_backend.domain.education.dto.request.PsmEduRe
 import kr.co.awesomelead.groupware_backend.domain.education.dto.request.SafetyEduReportCreateRequestDto;
 import kr.co.awesomelead.groupware_backend.domain.education.dto.response.EduReportDetailDto;
 import kr.co.awesomelead.groupware_backend.domain.education.dto.response.EduReportSummaryDto;
-import kr.co.awesomelead.groupware_backend.domain.education.enums.EduType;
 import kr.co.awesomelead.groupware_backend.domain.education.service.EduReportService;
 import kr.co.awesomelead.groupware_backend.domain.user.dto.CustomUserDetails;
 import kr.co.awesomelead.groupware_backend.global.common.response.ApiResponse;
@@ -359,7 +358,8 @@ public class EduReportController {
             @Parameter(hidden = true) @AuthenticationPrincipal CustomUserDetails userDetails)
             throws IOException {
 
-        Long reportId = eduReportService.createSafetyEduReport(requestDto, files, userDetails.getId());
+        Long reportId =
+                eduReportService.createSafetyEduReport(requestDto, files, userDetails.getId());
 
         URI location =
                 ServletUriComponentsBuilder.fromCurrentContextPath()
@@ -375,7 +375,9 @@ public class EduReportController {
             description = "부서 교육 게시물 생성 multipart 요청")
     static class DepartmentEduReportCreateMultipartRequestDoc {
 
-        @Schema(description = "부서 교육 게시물 생성 정보(JSON 파트)", requiredMode = Schema.RequiredMode.REQUIRED)
+        @Schema(
+                description = "부서 교육 게시물 생성 정보(JSON 파트)",
+                requiredMode = Schema.RequiredMode.REQUIRED)
         public DepartmentEduReportCreateRequestDto requestDto;
 
         @ArraySchema(schema = @Schema(type = "string", format = "binary"))
@@ -392,10 +394,14 @@ public class EduReportController {
         public List<String> files;
     }
 
-    @Schema(name = "SafetyEduReportCreateMultipartRequestDoc", description = "안전 보건 게시물 생성 multipart 요청")
+    @Schema(
+            name = "SafetyEduReportCreateMultipartRequestDoc",
+            description = "안전 보건 게시물 생성 multipart 요청")
     static class SafetyEduReportCreateMultipartRequestDoc {
 
-        @Schema(description = "안전 보건 게시물 생성 정보(JSON 파트)", requiredMode = Schema.RequiredMode.REQUIRED)
+        @Schema(
+                description = "안전 보건 게시물 생성 정보(JSON 파트)",
+                requiredMode = Schema.RequiredMode.REQUIRED)
         public SafetyEduReportCreateRequestDto requestDto;
 
         @ArraySchema(schema = @Schema(type = "string", format = "binary"))
@@ -617,7 +623,7 @@ public class EduReportController {
                 content =
                         @Content(
                                 mediaType = "application/json",
-                                        examples = {
+                                examples = {
                                     @ExampleObject(
                                             name = "사용자 없음",
                                             value =
@@ -702,7 +708,8 @@ public class EduReportController {
     })
     @GetMapping("/department/{educationId}")
     public ResponseEntity<ApiResponse<EduReportDetailDto>> getDepartmentEduReport(
-            @Parameter(description = "조회할 부서 교육 게시물 ID", example = "1") @PathVariable Long educationId,
+            @Parameter(description = "조회할 부서 교육 게시물 ID", example = "1") @PathVariable
+                    Long educationId,
             @Parameter(hidden = true) @AuthenticationPrincipal CustomUserDetails userDetails) {
         EduReportDetailDto report =
                 eduReportService.getDepartmentEduReport(educationId, userDetails.getId());
@@ -768,9 +775,11 @@ public class EduReportController {
     })
     @GetMapping("/psm/{educationId}")
     public ResponseEntity<ApiResponse<EduReportDetailDto>> getPsmEduReport(
-            @Parameter(description = "조회할 PSM 게시물 ID", example = "1") @PathVariable Long educationId,
+            @Parameter(description = "조회할 PSM 게시물 ID", example = "1") @PathVariable
+                    Long educationId,
             @Parameter(hidden = true) @AuthenticationPrincipal CustomUserDetails userDetails) {
-        EduReportDetailDto report = eduReportService.getPsmEduReport(educationId, userDetails.getId());
+        EduReportDetailDto report =
+                eduReportService.getPsmEduReport(educationId, userDetails.getId());
         return ResponseEntity.ok(ApiResponse.onSuccess(report));
     }
 
@@ -833,9 +842,11 @@ public class EduReportController {
     })
     @GetMapping("/safety/{educationId}")
     public ResponseEntity<ApiResponse<EduReportDetailDto>> getSafetyEduReport(
-            @Parameter(description = "조회할 안전 보건 게시물 ID", example = "1") @PathVariable Long educationId,
+            @Parameter(description = "조회할 안전 보건 게시물 ID", example = "1") @PathVariable
+                    Long educationId,
             @Parameter(hidden = true) @AuthenticationPrincipal CustomUserDetails userDetails) {
-        EduReportDetailDto report = eduReportService.getSafetyEduReport(educationId, userDetails.getId());
+        EduReportDetailDto report =
+                eduReportService.getSafetyEduReport(educationId, userDetails.getId());
         return ResponseEntity.ok(ApiResponse.onSuccess(report));
     }
 

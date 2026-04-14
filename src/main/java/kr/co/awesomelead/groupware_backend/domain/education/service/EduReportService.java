@@ -261,17 +261,12 @@ public class EduReportService {
         }
 
         return eduReportQueryRepository.findEduReports(
-                type,
-                dept,
-                categoryId,
-                id,
-                hasAccess,
-                psmCompanyFilter,
-                canReadAllPsmCompanies);
+                type, dept, categoryId, id, hasAccess, psmCompanyFilter, canReadAllPsmCompanies);
     }
 
     @Transactional(readOnly = true)
-    public List<EduReportSummaryDto> getDepartmentEduReports(DepartmentName departmentName, Long id) {
+    public List<EduReportSummaryDto> getDepartmentEduReports(
+            DepartmentName departmentName, Long id) {
         return getEduReports(EduType.DEPARTMENT, departmentName, null, id);
     }
 
@@ -408,7 +403,8 @@ public class EduReportService {
         return buildEduReportDetailDto(user, report, hasAccess);
     }
 
-    private EduReportDetailDto buildEduReportDetailDto(User user, EduReport report, boolean hasAccess) {
+    private EduReportDetailDto buildEduReportDetailDto(
+            User user, EduReport report, boolean hasAccess) {
         List<EduAttendance> attendances = null;
         long numberOfPeople = -1L;
 

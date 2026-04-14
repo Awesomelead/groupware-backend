@@ -389,10 +389,7 @@ public class EduReportServiceTest {
         User user = createNormalUser();
         user.addAuthority(Authority.MANAGE_PSM);
         EducationCategory category =
-                EducationCategory.builder()
-                        .id(1L)
-                        .categoryType(EducationCategoryType.PSM)
-                        .build();
+                EducationCategory.builder().id(1L).categoryType(EducationCategoryType.PSM).build();
 
         when(userRepository.findById(1L)).thenReturn(Optional.of(user));
         when(educationCategoryRepository.findById(1L)).thenReturn(Optional.of(category));
@@ -434,10 +431,7 @@ public class EduReportServiceTest {
         User user = createNormalUser();
         user.addAuthority(Authority.MANAGE_PSM);
         EducationCategory category =
-                EducationCategory.builder()
-                        .id(1L)
-                        .categoryType(EducationCategoryType.PSM)
-                        .build();
+                EducationCategory.builder().id(1L).categoryType(EducationCategoryType.PSM).build();
 
         when(userRepository.findById(1L)).thenReturn(Optional.of(user));
         when(educationCategoryRepository.findById(1L)).thenReturn(Optional.of(category));
@@ -595,9 +589,8 @@ public class EduReportServiceTest {
         List<EduReportSummaryDto> mockList = List.of(report1);
 
         when(userRepository.findById(1L)).thenReturn(Optional.of(user));
-        when(
-                        eduReportQueryRepository.findEduReports(
-                                EduType.SAFETY, department, null, 1L, false, Company.AWESOME, false))
+        when(eduReportQueryRepository.findEduReports(
+                        EduType.SAFETY, department, null, 1L, false, Company.AWESOME, false))
                 .thenReturn(mockList);
 
         // when
@@ -636,9 +629,8 @@ public class EduReportServiceTest {
 
         when(userRepository.findById(1L)).thenReturn(Optional.of(user));
         // dept=null + PSM 조회 범위는 본인 회사 제한
-        when(
-                        eduReportQueryRepository.findEduReports(
-                                null, null, null, 1L, true, Company.AWESOME, false))
+        when(eduReportQueryRepository.findEduReports(
+                        null, null, null, 1L, true, Company.AWESOME, false))
                 .thenReturn(mockList);
 
         // when
@@ -676,15 +668,8 @@ public class EduReportServiceTest {
         when(userRepository.findById(1L)).thenReturn(Optional.of(user));
         when(departmentRepository.findByName(DepartmentName.SALES_DEPT))
                 .thenReturn(Optional.of(salesDept));
-        when(
-                        eduReportQueryRepository.findEduReports(
-                                EduType.DEPARTMENT,
-                                salesDept,
-                                null,
-                                1L,
-                                true,
-                                Company.AWESOME,
-                                false))
+        when(eduReportQueryRepository.findEduReports(
+                        EduType.DEPARTMENT, salesDept, null, 1L, true, Company.AWESOME, false))
                 .thenReturn(List.of(report1));
 
         // when

@@ -884,6 +884,73 @@ public class EduReportServiceTest {
     }
 
     @Test
+    @DisplayName("부서 교육 상세 조회 - 권한이 없고 타 부서 게시물이면 조회할 수 없음")
+    void getDepartmentEduReport_WithoutAuthority_OtherDepartment_Fail() {
+        // given
+        Long reportId = 1L;
+        Long userId = 1L;
+
+        Department otherDepartment =
+                Department.builder().id(2L).name(DepartmentName.MANAGEMENT_SUPPORT).build();
+        User user = createNormalUser(); // defaultDept(SALES_DEPT)
+
+        EduReport report =
+                EduReport.builder()
+                        .id(reportId)
+                        .eduType(EduType.DEPARTMENT)
+                        .department(otherDepartment)
+                        .title("타 부서 교육")
+                        .build();
+
+        when(userRepository.findById(userId)).thenReturn(Optional.of(user));
+        when(eduReportRepository.findById(reportId)).thenReturn(Optional.of(report));
+
+        // when & then
+        assertThatThrownBy(() -> eduReportService.getDepartmentEduReport(reportId, userId))
+                .isInstanceOf(CustomException.class)
+                .hasFieldOrPropertyWithValue("errorCode", ErrorCode.EDU_REPORT_NOT_FOUND);
+
+        verify(eduMapper, never()).toDetailDto(any(), any(), anyLong(), any());
+    }
+
+    @Test
+    @DisplayName("부서 교육 상세 조회 - 권한이 없어도 본인 부서 게시물은 조회 가능")
+    void getDepartmentEduReport_WithoutAuthority_OwnDepartment_Success() {
+        // given
+        Long reportId = 1L;
+        Long userId = 1L;
+        User user = createNormalUser(); // defaultDept(SALES_DEPT)
+
+        EduReport report =
+                EduReport.builder()
+                        .id(reportId)
+                        .eduType(EduType.DEPARTMENT)
+                        .department(defaultDept)
+                        .title("본인 부서 교육")
+                        .build();
+
+        EduReportDetailDto mockDto =
+                EduReportDetailDto.builder()
+                        .id(reportId)
+                        .title("본인 부서 교육")
+                        .eduType(EduType.DEPARTMENT)
+                        .build();
+
+        when(userRepository.findById(userId)).thenReturn(Optional.of(user));
+        when(eduReportRepository.findById(reportId)).thenReturn(Optional.of(report));
+        when(eduMapper.toDetailDto(report, null, -1L, s3Service)).thenReturn(mockDto);
+        when(eduAttendanceRepository.existsByEduReportAndUser(report, user)).thenReturn(false);
+
+        // when
+        EduReportDetailDto result = eduReportService.getDepartmentEduReport(reportId, userId);
+
+        // then
+        assertThat(result).isNotNull();
+        assertThat(result.getEduType()).isEqualTo(EduType.DEPARTMENT);
+        verify(eduAttendanceRepository, never()).findAllByEduReportIdWithUser(anyLong());
+    }
+
+    @Test
     @DisplayName("교육 보고서 삭제 성공 테스트")
     void deleteEduReport_Success() throws IOException {
         // given

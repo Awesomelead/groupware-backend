@@ -315,13 +315,44 @@ public class EduReportService {
                         .orElseThrow(() -> new CustomException(ErrorCode.EDU_REPORT_NOT_FOUND));
 
         boolean hasAccess = user.hasAuthority(Authority.MANAGE_DEPARTMENT_EDUCATION);
+        return buildEduReportDetailDto(user, report, hasAccess);
+    }
 
+    @Transactional(readOnly = true)
+    public EduReportDetailDto getDepartmentEduReport(Long eduReportId, Long id) {
+        User user =
+                userRepository
+                        .findById(id)
+                        .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
+
+        EduReport report =
+                eduReportRepository
+                        .findById(eduReportId)
+                        .orElseThrow(() -> new CustomException(ErrorCode.EDU_REPORT_NOT_FOUND));
+
+        if (report.getEduType() != EduType.DEPARTMENT) {
+            throw new CustomException(ErrorCode.EDU_REPORT_NOT_FOUND);
+        }
+
+        boolean hasAccess = user.hasAuthority(Authority.MANAGE_DEPARTMENT_EDUCATION);
+        if (!hasAccess) {
+            if (user.getDepartment() == null
+                    || report.getDepartment() == null
+                    || !report.getDepartment().getId().equals(user.getDepartment().getId())) {
+                throw new CustomException(ErrorCode.EDU_REPORT_NOT_FOUND);
+            }
+        }
+
+        return buildEduReportDetailDto(user, report, hasAccess);
+    }
+
+    private EduReportDetailDto buildEduReportDetailDto(User user, EduReport report, boolean hasAccess) {
         List<EduAttendance> attendances = null;
         long numberOfPeople = -1L;
 
         if (hasAccess) {
             // MANAGE_DEPARTMENT_EDUCATION 권한 있음: 출석자 목록과 통계 포함
-            attendances = eduAttendanceRepository.findAllByEduReportIdWithUser(eduReportId);
+            attendances = eduAttendanceRepository.findAllByEduReportIdWithUser(report.getId());
             numberOfPeople = calculateTargetPeopleCount(report);
         }
 
@@ -330,16 +361,6 @@ public class EduReportService {
 
         boolean isAttended = eduAttendanceRepository.existsByEduReportAndUser(report, user);
         dto.setAttendance(isAttended);
-
-        return dto;
-    }
-
-    @Transactional(readOnly = true)
-    public EduReportDetailDto getDepartmentEduReport(Long eduReportId, Long id) {
-        EduReportDetailDto dto = getEduReport(eduReportId, id);
-        if (dto.getEduType() != EduType.DEPARTMENT) {
-            throw new CustomException(ErrorCode.EDU_REPORT_NOT_FOUND);
-        }
         return dto;
     }
 

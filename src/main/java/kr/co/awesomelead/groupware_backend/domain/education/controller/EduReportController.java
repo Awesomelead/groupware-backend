@@ -779,6 +779,71 @@ public class EduReportController {
     }
 
     @Operation(
+            tags = {"안전보건"},
+            summary = "안전 보건 게시물 상세 조회",
+            description =
+                    """
+            안전 보건 게시물 상세 정보를 조회합니다.
+
+            - `MANAGE_SAFETY` 권한 사용자는 모든 회사의 안전 보건 게시물을 조회할 수 있습니다.
+            - 권한이 없는 사용자는 본인 소속 회사 게시물과 공통 게시물(`companyScope=null`)만 조회할 수 있습니다.
+            - 권한이 없는 사용자가 타 회사 게시물을 조회하면 `EDU_REPORT_NOT_FOUND(404)`가 반환됩니다.
+            """)
+    @ApiResponses({
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                responseCode = "200",
+                description = "조회 성공"),
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                responseCode = "404",
+                description = "리소스 없음",
+                content =
+                        @Content(
+                                mediaType = "application/json",
+                                examples = {
+                                    @ExampleObject(
+                                            name = "게시물 없음",
+                                            value =
+                                                    """
+              {
+                "isSuccess": false,
+                "code": "EDU_REPORT_NOT_FOUND",
+                "message": "해당 교육 게시물을 찾을 수 없습니다.",
+                "result": null
+              }
+              """),
+                                    @ExampleObject(
+                                            name = "타 회사 접근",
+                                            value =
+                                                    """
+              {
+                "isSuccess": false,
+                "code": "EDU_REPORT_NOT_FOUND",
+                "message": "해당 교육 게시물을 찾을 수 없습니다.",
+                "result": null
+              }
+              """),
+                                    @ExampleObject(
+                                            name = "사용자 없음",
+                                            value =
+                                                    """
+              {
+                "isSuccess": false,
+                "code": "USER_NOT_FOUND",
+                "message": "해당 사용자를 찾을 수 없습니다.",
+                "result": null
+              }
+              """)
+                                }))
+    })
+    @GetMapping("/safety/{educationId}")
+    public ResponseEntity<ApiResponse<EduReportDetailDto>> getSafetyEduReport(
+            @Parameter(description = "조회할 안전 보건 게시물 ID", example = "1") @PathVariable Long educationId,
+            @Parameter(hidden = true) @AuthenticationPrincipal CustomUserDetails userDetails) {
+        EduReportDetailDto report = eduReportService.getSafetyEduReport(educationId, userDetails.getId());
+        return ResponseEntity.ok(ApiResponse.onSuccess(report));
+    }
+
+    @Operation(
             tags = {"부서교육", "PSM", "안전보건"},
             summary = "교육 수정",
             description =

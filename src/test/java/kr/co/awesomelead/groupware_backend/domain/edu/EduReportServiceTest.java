@@ -1040,6 +1040,95 @@ public class EduReportServiceTest {
     }
 
     @Test
+    @DisplayName("안전 보건 상세 조회 - 권한이 없고 타 회사 게시물이면 조회할 수 없음")
+    void getSafetyEduReport_WithoutAuthority_OtherCompany_Fail() {
+        // given
+        Long reportId = 21L;
+        Long userId = 1L;
+        User user = createNormalUser(); // workLocation=AWESOME
+
+        EduReport report =
+                EduReport.builder()
+                        .id(reportId)
+                        .eduType(EduType.SAFETY)
+                        .company(Company.MARUI)
+                        .title("마루이 안전보건")
+                        .build();
+
+        when(userRepository.findById(userId)).thenReturn(Optional.of(user));
+        when(eduReportRepository.findById(reportId)).thenReturn(Optional.of(report));
+
+        // when & then
+        assertThatThrownBy(() -> eduReportService.getSafetyEduReport(reportId, userId))
+                .isInstanceOf(CustomException.class)
+                .hasFieldOrPropertyWithValue("errorCode", ErrorCode.EDU_REPORT_NOT_FOUND);
+        verify(eduMapper, never()).toDetailDto(any(), any(), anyLong(), any());
+    }
+
+    @Test
+    @DisplayName("안전 보건 상세 조회 - 권한이 없어도 본인 회사 게시물은 조회 가능")
+    void getSafetyEduReport_WithoutAuthority_OwnCompany_Success() {
+        // given
+        Long reportId = 22L;
+        Long userId = 1L;
+        User user = createNormalUser(); // workLocation=AWESOME
+
+        EduReport report =
+                EduReport.builder()
+                        .id(reportId)
+                        .eduType(EduType.SAFETY)
+                        .company(Company.AWESOME)
+                        .title("어썸 안전보건")
+                        .build();
+        EduReportDetailDto mockDto =
+                EduReportDetailDto.builder().id(reportId).eduType(EduType.SAFETY).build();
+
+        when(userRepository.findById(userId)).thenReturn(Optional.of(user));
+        when(eduReportRepository.findById(reportId)).thenReturn(Optional.of(report));
+        when(eduMapper.toDetailDto(report, null, -1L, s3Service)).thenReturn(mockDto);
+        when(eduAttendanceRepository.existsByEduReportAndUser(report, user)).thenReturn(false);
+
+        // when
+        EduReportDetailDto result = eduReportService.getSafetyEduReport(reportId, userId);
+
+        // then
+        assertThat(result).isNotNull();
+        assertThat(result.getEduType()).isEqualTo(EduType.SAFETY);
+    }
+
+    @Test
+    @DisplayName("안전 보건 상세 조회 - MANAGE_SAFETY 권한 있으면 타 회사 게시물도 조회 가능")
+    void getSafetyEduReport_WithManageSafety_OtherCompany_Success() {
+        // given
+        Long reportId = 23L;
+        Long userId = 1L;
+        User user = createNormalUser();
+        user.addAuthority(Authority.MANAGE_SAFETY);
+
+        EduReport report =
+                EduReport.builder()
+                        .id(reportId)
+                        .eduType(EduType.SAFETY)
+                        .company(Company.MARUI)
+                        .title("마루이 안전보건")
+                        .build();
+        EduReportDetailDto mockDto =
+                EduReportDetailDto.builder().id(reportId).eduType(EduType.SAFETY).build();
+
+        when(userRepository.findById(userId)).thenReturn(Optional.of(user));
+        when(eduReportRepository.findById(reportId)).thenReturn(Optional.of(report));
+        when(eduMapper.toDetailDto(report, null, -1L, s3Service)).thenReturn(mockDto);
+        when(eduAttendanceRepository.existsByEduReportAndUser(report, user)).thenReturn(false);
+
+        // when
+        EduReportDetailDto result = eduReportService.getSafetyEduReport(reportId, userId);
+
+        // then
+        assertThat(result).isNotNull();
+        assertThat(result.getEduType()).isEqualTo(EduType.SAFETY);
+    }
+
+    @Test
     @DisplayName("교육 보고서 삭제 성공 테스트")
     void deleteEduReport_Success() throws IOException {
         // given

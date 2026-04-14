@@ -16,6 +16,7 @@ import jakarta.persistence.OneToMany;
 import jakarta.persistence.PrePersist;
 import jakarta.persistence.Table;
 
+import kr.co.awesomelead.groupware_backend.domain.department.enums.Company;
 import kr.co.awesomelead.groupware_backend.domain.department.entity.Department;
 import kr.co.awesomelead.groupware_backend.domain.education.enums.EduReportStatus;
 import kr.co.awesomelead.groupware_backend.domain.education.enums.EduType;
@@ -83,6 +84,10 @@ public class EduReport {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "category_id")
     private EducationCategory category;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "company", length = 20)
+    private Company company;
 
     @PrePersist
     protected void prePersist() {

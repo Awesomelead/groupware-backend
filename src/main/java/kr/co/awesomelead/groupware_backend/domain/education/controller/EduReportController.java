@@ -383,6 +383,79 @@ public class EduReportController {
     }
 
     @Operation(
+            tags = {"PSM"},
+            summary = "PSM 게시물 목록 조회",
+            description =
+                    """
+            PSM 게시물 목록을 조회합니다.
+
+            - `MANAGE_PSM` 권한 사용자는 모든 회사의 PSM 게시물을 조회할 수 있습니다.
+            - `MANAGE_PSM` 권한이 없는 사용자는 본인 소속 회사의 PSM 게시물만 조회됩니다.
+            """)
+    @ApiResponses({
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                responseCode = "200",
+                description = "조회 성공",
+                content =
+                        @Content(
+                                mediaType = "application/json",
+                                examples =
+                                        @ExampleObject(
+                                                value =
+                                                        """
+          {
+            "isSuccess": true,
+            "code": "COMMON200",
+            "message": "요청에 성공했습니다.",
+            "result": [
+              {
+                "id": 301,
+                "title": "PSM 변경관리 교육",
+                "eduType": "PSM",
+                "eduDate": "2026-04-14",
+                "content": "PSM 교육 게시글입니다.",
+                "attendance": false,
+                "pinned": false,
+                "signatureRequired": false,
+                "status": "OPEN",
+                "categoryId": 2,
+                "categoryName": "변경관리"
+              }
+            ]
+          }
+          """))),
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                responseCode = "404",
+                description = "리소스 없음",
+                content =
+                        @Content(
+                                mediaType = "application/json",
+                                examples = {
+                                    @ExampleObject(
+                                            name = "사용자 없음",
+                                            value =
+                                                    """
+          {
+            "isSuccess": false,
+            "code": "USER_NOT_FOUND",
+            "message": "해당 사용자를 찾을 수 없습니다.",
+            "result": null
+          }
+          """)
+                                }))
+    })
+    @GetMapping("/psm")
+    public ResponseEntity<ApiResponse<List<EduReportSummaryDto>>> getPsmEduReports(
+            @Parameter(description = "카테고리 ID 필터(PSM)", example = "1")
+                    @RequestParam(required = false)
+                    Long categoryId,
+            @Parameter(hidden = true) @AuthenticationPrincipal CustomUserDetails userDetails) {
+        List<EduReportSummaryDto> reports =
+                eduReportService.getPsmEduReports(categoryId, userDetails.getId());
+        return ResponseEntity.ok(ApiResponse.onSuccess(reports));
+    }
+
+    @Operation(
             summary = "교육 게시물 목록 조회",
             description =
                     """
@@ -392,6 +465,7 @@ public class EduReportController {
             - `categoryId`는 PSM/안전보건 카테고리 필터 용도
             - `departmentName`은 `type=DEPARTMENT` + `MANAGE_DEPARTMENT_EDUCATION` 권한 사용자일 때만 유효
             - `MANAGE_DEPARTMENT_EDUCATION` 권한이 없는 사용자는 부서교육의 경우 본인 부서 데이터만 조회
+            - `MANAGE_PSM` 권한이 없는 사용자는 PSM 게시물의 경우 본인 소속 회사 데이터만 조회
             """)
     @ApiResponses({
         @io.swagger.v3.oas.annotations.responses.ApiResponse(

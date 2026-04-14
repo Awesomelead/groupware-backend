@@ -1,6 +1,7 @@
 package kr.co.awesomelead.groupware_backend.domain.education.service;
 
 import kr.co.awesomelead.groupware_backend.domain.department.entity.Department;
+import kr.co.awesomelead.groupware_backend.domain.department.enums.Company;
 import kr.co.awesomelead.groupware_backend.domain.department.enums.DepartmentName;
 import kr.co.awesomelead.groupware_backend.domain.department.repository.DepartmentRepository;
 import kr.co.awesomelead.groupware_backend.domain.education.dto.request.EduReportRequestDto;
@@ -91,6 +92,11 @@ public class EduReportService {
         }
 
         EduReport report = eduMapper.toEduReportEntity(requestDto, department, category);
+        if (requestDto.getEduType() == EduType.PSM || requestDto.getEduType() == EduType.SAFETY) {
+            report.setCompany(user.getWorkLocation());
+        } else {
+            report.setCompany(null);
+        }
 
         if (files != null && !files.isEmpty()) {
             for (MultipartFile file : files) {
@@ -169,6 +175,8 @@ public class EduReportService {
                         .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
 
         boolean hasAccess = user.hasAuthority(Authority.MANAGE_DEPARTMENT_EDUCATION);
+        boolean canReadAllPsmCompanies = user.hasAuthority(Authority.MANAGE_PSM);
+        Company psmCompanyFilter = canReadAllPsmCompanies ? null : user.getWorkLocation();
 
         Department dept;
         if (hasAccess) {
@@ -187,12 +195,32 @@ public class EduReportService {
             dept = user.getDepartment();
         }
 
-        return eduReportQueryRepository.findEduReports(type, dept, categoryId, id, hasAccess);
+        return eduReportQueryRepository.findEduReports(
+                type,
+                dept,
+                categoryId,
+                id,
+                hasAccess,
+                psmCompanyFilter,
+                canReadAllPsmCompanies);
     }
 
     @Transactional(readOnly = true)
     public List<EduReportSummaryDto> getDepartmentEduReports(DepartmentName departmentName, Long id) {
         return getEduReports(EduType.DEPARTMENT, departmentName, null, id);
+    }
+
+    @Transactional(readOnly = true)
+    public List<EduReportSummaryDto> getPsmEduReports(Long categoryId, Long id) {
+        User user =
+                userRepository
+                        .findById(id)
+                        .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
+
+        boolean canReadAllCompanies = user.hasAuthority(Authority.MANAGE_PSM);
+        Company companyFilter = canReadAllCompanies ? null : user.getWorkLocation();
+        return eduReportQueryRepository.findPsmEduReports(
+                categoryId, id, companyFilter, canReadAllCompanies);
     }
 
     @Transactional(readOnly = true)
@@ -374,6 +402,7 @@ public class EduReportService {
                                         () -> new CustomException(ErrorCode.DEPARTMENT_NOT_FOUND));
                 report.setDepartment(department);
                 report.setCategory(null);
+                report.setCompany(null);
             } else {
                 if (requestDto.getCategoryId() != null) {
                     EducationCategory category =
@@ -383,6 +412,9 @@ public class EduReportService {
                     throw new CustomException(ErrorCode.EDUCATION_CATEGORY_REQUIRED);
                 }
                 report.setDepartment(null);
+                if (report.getCompany() == null) {
+                    report.setCompany(user.getWorkLocation());
+                }
             }
 
             deleteAttachments(report, requestDto.getDeleteAttachmentIds());

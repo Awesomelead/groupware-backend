@@ -12,6 +12,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import kr.co.awesomelead.groupware_backend.domain.department.entity.Department;
+import kr.co.awesomelead.groupware_backend.domain.department.enums.Company;
 import kr.co.awesomelead.groupware_backend.domain.department.enums.DepartmentName;
 import kr.co.awesomelead.groupware_backend.domain.department.repository.DepartmentRepository;
 import kr.co.awesomelead.groupware_backend.domain.education.dto.request.EduReportRequestDto;
@@ -94,6 +95,7 @@ public class EduReportServiceTest {
                 .nameKor("일반직원")
                 .nameEng("Normal User")
                 .email("user@awesomelead.co.kr")
+                .workLocation(Company.AWESOME)
                 .role(Role.USER)
                 .status(Status.AVAILABLE)
                 .department(defaultDept)
@@ -409,7 +411,9 @@ public class EduReportServiceTest {
         List<EduReportSummaryDto> mockList = List.of(report1);
 
         when(userRepository.findById(1L)).thenReturn(Optional.of(user));
-        when(eduReportQueryRepository.findEduReports(EduType.SAFETY, department, null, 1L, false))
+        when(
+                        eduReportQueryRepository.findEduReports(
+                                EduType.SAFETY, department, null, 1L, false, Company.AWESOME, false))
                 .thenReturn(mockList);
 
         // when
@@ -422,7 +426,8 @@ public class EduReportServiceTest {
         assertThat(result.get(0).getTitle()).isEqualTo("안전 교육 보고서");
 
         verify(eduReportQueryRepository, times(1))
-                .findEduReports(EduType.SAFETY, department, null, 1L, false);
+                .findEduReports(
+                        EduType.SAFETY, department, null, 1L, false, Company.AWESOME, false);
     }
 
     @Test
@@ -446,8 +451,10 @@ public class EduReportServiceTest {
         List<EduReportSummaryDto> mockList = List.of(report1);
 
         when(userRepository.findById(1L)).thenReturn(Optional.of(user));
-        // dept=null → 전체 조회
-        when(eduReportQueryRepository.findEduReports(null, null, null, 1L, true))
+        // dept=null + PSM 조회 범위는 본인 회사 제한
+        when(
+                        eduReportQueryRepository.findEduReports(
+                                null, null, null, 1L, true, Company.AWESOME, false))
                 .thenReturn(mockList);
 
         // when
@@ -457,8 +464,9 @@ public class EduReportServiceTest {
         assertThat(result).isNotNull();
         assertThat(result.size()).isEqualTo(1);
 
-        // hasAccess=true, dept=null → QueryRepository에 null 부서로 호출
-        verify(eduReportQueryRepository, times(1)).findEduReports(null, null, null, 1L, true);
+        // hasAccess=true, dept=null + PSM 조회 범위는 본인 회사 제한
+        verify(eduReportQueryRepository, times(1))
+                .findEduReports(null, null, null, 1L, true, Company.AWESOME, false);
     }
 
     @Test
@@ -484,7 +492,15 @@ public class EduReportServiceTest {
         when(userRepository.findById(1L)).thenReturn(Optional.of(user));
         when(departmentRepository.findByName(DepartmentName.SALES_DEPT))
                 .thenReturn(Optional.of(salesDept));
-        when(eduReportQueryRepository.findEduReports(EduType.DEPARTMENT, salesDept, null, 1L, true))
+        when(
+                        eduReportQueryRepository.findEduReports(
+                                EduType.DEPARTMENT,
+                                salesDept,
+                                null,
+                                1L,
+                                true,
+                                Company.AWESOME,
+                                false))
                 .thenReturn(List.of(report1));
 
         // when
@@ -499,7 +515,8 @@ public class EduReportServiceTest {
 
         verify(departmentRepository, times(1)).findByName(DepartmentName.SALES_DEPT);
         verify(eduReportQueryRepository, times(1))
-                .findEduReports(EduType.DEPARTMENT, salesDept, null, 1L, true);
+                .findEduReports(
+                        EduType.DEPARTMENT, salesDept, null, 1L, true, Company.AWESOME, false);
     }
 
     @Test
@@ -515,7 +532,54 @@ public class EduReportServiceTest {
                 .isEqualTo(ErrorCode.USER_NOT_FOUND);
 
         verify(eduReportQueryRepository, never())
-                .findEduReports(any(), any(), any(), anyLong(), anyBoolean());
+                .findEduReports(any(), any(), any(), anyLong(), anyBoolean(), any(), anyBoolean());
+    }
+
+    @Test
+    @DisplayName("PSM 게시물 목록 조회 - MANAGE_PSM 권한 있으면 전체 회사 조회")
+    void getPsmEduReports_WithManagePsm_ReturnsAllCompanies() {
+        // given
+        User user = createNormalUser();
+        user.addAuthority(Authority.MANAGE_PSM);
+
+        EduReportSummaryDto psmReport =
+                EduReportSummaryDto.builder()
+                        .id(11L)
+                        .title("PSM 전사 교육")
+                        .eduType(EduType.PSM)
+                        .build();
+
+        when(userRepository.findById(1L)).thenReturn(Optional.of(user));
+        when(eduReportQueryRepository.findPsmEduReports(null, 1L, null, true))
+                .thenReturn(List.of(psmReport));
+
+        // when
+        List<EduReportSummaryDto> result = eduReportService.getPsmEduReports(null, 1L);
+
+        // then
+        assertThat(result).isNotNull();
+        assertThat(result.size()).isEqualTo(1);
+        assertThat(result.get(0).getEduType()).isEqualTo(EduType.PSM);
+        verify(eduReportQueryRepository, times(1)).findPsmEduReports(null, 1L, null, true);
+    }
+
+    @Test
+    @DisplayName("PSM 게시물 목록 조회 - MANAGE_PSM 권한 없으면 본인 회사 조회")
+    void getPsmEduReports_WithoutManagePsm_ReturnsOnlyMyCompany() {
+        // given
+        User user = createNormalUser(); // workLocation=AWESOME
+
+        when(userRepository.findById(1L)).thenReturn(Optional.of(user));
+        when(eduReportQueryRepository.findPsmEduReports(null, 1L, Company.AWESOME, false))
+                .thenReturn(List.of());
+
+        // when
+        List<EduReportSummaryDto> result = eduReportService.getPsmEduReports(null, 1L);
+
+        // then
+        assertThat(result).isNotNull();
+        verify(eduReportQueryRepository, times(1))
+                .findPsmEduReports(null, 1L, Company.AWESOME, false);
     }
 
     @Test

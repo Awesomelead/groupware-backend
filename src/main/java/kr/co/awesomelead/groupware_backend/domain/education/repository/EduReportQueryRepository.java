@@ -9,6 +9,7 @@ import com.querydsl.core.types.dsl.BooleanExpression;
 import com.querydsl.jpa.JPAExpressions;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 
+import kr.co.awesomelead.groupware_backend.domain.department.enums.Company;
 import kr.co.awesomelead.groupware_backend.domain.department.entity.Department;
 import kr.co.awesomelead.groupware_backend.domain.education.dto.response.EduReportSummaryDto;
 import kr.co.awesomelead.groupware_backend.domain.education.enums.EduType;
@@ -35,6 +36,17 @@ public class EduReportQueryRepository {
      */
     public List<EduReportSummaryDto> findEduReports(
             EduType type, Department dept, Long categoryId, Long userId, boolean hasAccess) {
+        return findEduReports(type, dept, categoryId, userId, hasAccess, null, true);
+    }
+
+    public List<EduReportSummaryDto> findEduReports(
+            EduType type,
+            Department dept,
+            Long categoryId,
+            Long userId,
+            boolean hasAccess,
+            Company psmCompany,
+            boolean canReadAllPsmCompanies) {
 
         return queryFactory
                 .select(
@@ -58,8 +70,45 @@ public class EduReportQueryRepository {
                                 educationCategory.name))
                 .from(eduReport)
                 .leftJoin(eduReport.category, educationCategory)
-                .where(eqEduType(type), eqCategoryId(categoryId), deptFilter(type, hasAccess, dept))
+                .where(
+                        eqEduType(type),
+                        eqCategoryId(categoryId),
+                        deptFilter(type, hasAccess, dept),
+                        psmFilter(psmCompany, canReadAllPsmCompanies))
                 // 같은 eduDate(일자) 내에서는 최신 생성건이 위로 오도록 id DESC를 타이브레이커로 사용
+                .orderBy(eduReport.pinned.desc(), eduReport.eduDate.desc(), eduReport.id.desc())
+                .fetch();
+    }
+
+    public List<EduReportSummaryDto> findPsmEduReports(
+            Long categoryId, Long userId, Company company, boolean canReadAllCompanies) {
+
+        return queryFactory
+                .select(
+                        Projections.constructor(
+                                EduReportSummaryDto.class,
+                                eduReport.id,
+                                eduReport.title,
+                                eduReport.eduType,
+                                eduReport.eduDate,
+                                eduReport.content,
+                                JPAExpressions.selectOne()
+                                        .from(eduAttendance)
+                                        .where(
+                                                eduAttendance.eduReport.eq(eduReport),
+                                                eduAttendance.user.id.eq(userId))
+                                        .exists(),
+                                eduReport.pinned,
+                                eduReport.signatureRequired,
+                                eduReport.status,
+                                educationCategory.id,
+                                educationCategory.name))
+                .from(eduReport)
+                .leftJoin(eduReport.category, educationCategory)
+                .where(
+                        eduReport.eduType.eq(EduType.PSM),
+                        eqCategoryId(categoryId),
+                        psmCompanyFilter(company, canReadAllCompanies))
                 .orderBy(eduReport.pinned.desc(), eduReport.eduDate.desc(), eduReport.id.desc())
                 .fetch();
     }
@@ -98,5 +147,29 @@ public class EduReportQueryRepository {
         // - DEPARTMENT 타입이 아닌 교육(PSM, SAFETY)은 모두 보임
         // - DEPARTMENT 타입이면 자신의 부서 교육만 보임
         return eduReport.eduType.ne(EduType.DEPARTMENT).or(eduReport.department.eq(dept));
+    }
+
+    private BooleanExpression psmCompanyFilter(Company company, boolean canReadAllCompanies) {
+        if (canReadAllCompanies) {
+            return null;
+        }
+
+        if (company == null) {
+            return eduReport.id.isNull();
+        }
+
+        return eduReport.company.eq(company);
+    }
+
+    private BooleanExpression psmFilter(Company psmCompany, boolean canReadAllPsmCompanies) {
+        if (canReadAllPsmCompanies) {
+            return null;
+        }
+
+        if (psmCompany == null) {
+            return eduReport.eduType.ne(EduType.PSM);
+        }
+
+        return eduReport.eduType.ne(EduType.PSM).or(eduReport.company.eq(psmCompany));
     }
 }

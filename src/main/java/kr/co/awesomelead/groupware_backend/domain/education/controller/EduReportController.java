@@ -647,11 +647,11 @@ public class EduReportController {
     }
 
     @Operation(
-            tags = {"부서교육", "PSM", "안전보건"},
-            summary = "교육 게시물 상세 조회",
+            tags = {"부서교육"},
+            summary = "부서 교육 게시물 상세 조회",
             description =
                     """
-            교육 게시물 상세 정보를 조회합니다.
+            부서 교육 게시물 상세 정보를 조회합니다.
 
             - `MANAGE_DEPARTMENT_EDUCATION` 권한 사용자는 `attendees`, `numberOfPeople`, `numberOfAttendees`를 조회할 수 있습니다.
             - 일반 사용자는 위 필드가 `null`로 반환됩니다.
@@ -691,11 +691,12 @@ public class EduReportController {
               """)
                                 }))
     })
-    @GetMapping("/{educationId}")
-    public ResponseEntity<ApiResponse<EduReportDetailDto>> getEduReport(
-            @Parameter(description = "조회할 교육 게시물 ID", example = "1") @PathVariable Long educationId,
+    @GetMapping("/department/{educationId}")
+    public ResponseEntity<ApiResponse<EduReportDetailDto>> getDepartmentEduReport(
+            @Parameter(description = "조회할 부서 교육 게시물 ID", example = "1") @PathVariable Long educationId,
             @Parameter(hidden = true) @AuthenticationPrincipal CustomUserDetails userDetails) {
-        EduReportDetailDto report = eduReportService.getEduReport(educationId, userDetails.getId());
+        EduReportDetailDto report =
+                eduReportService.getDepartmentEduReport(educationId, userDetails.getId());
         return ResponseEntity.ok(ApiResponse.onSuccess(report));
     }
 

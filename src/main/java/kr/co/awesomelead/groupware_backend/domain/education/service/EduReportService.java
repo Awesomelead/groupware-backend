@@ -334,6 +334,15 @@ public class EduReportService {
         return dto;
     }
 
+    @Transactional(readOnly = true)
+    public EduReportDetailDto getDepartmentEduReport(Long eduReportId, Long id) {
+        EduReportDetailDto dto = getEduReport(eduReportId, id);
+        if (dto.getEduType() != EduType.DEPARTMENT) {
+            throw new CustomException(ErrorCode.EDU_REPORT_NOT_FOUND);
+        }
+        return dto;
+    }
+
     @Transactional
     public void deleteEduReport(Long eduReportId, Long id) {
 

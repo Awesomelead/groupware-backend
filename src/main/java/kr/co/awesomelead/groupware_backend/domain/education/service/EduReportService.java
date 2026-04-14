@@ -346,6 +346,37 @@ public class EduReportService {
         return buildEduReportDetailDto(user, report, hasAccess);
     }
 
+    @Transactional(readOnly = true)
+    public EduReportDetailDto getPsmEduReport(Long eduReportId, Long id) {
+        User user =
+                userRepository
+                        .findById(id)
+                        .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
+
+        EduReport report =
+                eduReportRepository
+                        .findById(eduReportId)
+                        .orElseThrow(() -> new CustomException(ErrorCode.EDU_REPORT_NOT_FOUND));
+
+        if (report.getEduType() != EduType.PSM) {
+            throw new CustomException(ErrorCode.EDU_REPORT_NOT_FOUND);
+        }
+
+        boolean canReadAllCompanies = user.hasAuthority(Authority.MANAGE_PSM);
+        if (!canReadAllCompanies) {
+            Company userCompany = user.getWorkLocation();
+            if (userCompany == null) {
+                throw new CustomException(ErrorCode.EDU_REPORT_NOT_FOUND);
+            }
+            if (report.getCompany() != null && report.getCompany() != userCompany) {
+                throw new CustomException(ErrorCode.EDU_REPORT_NOT_FOUND);
+            }
+        }
+
+        boolean hasAccess = user.hasAuthority(Authority.MANAGE_DEPARTMENT_EDUCATION);
+        return buildEduReportDetailDto(user, report, hasAccess);
+    }
+
     private EduReportDetailDto buildEduReportDetailDto(User user, EduReport report, boolean hasAccess) {
         List<EduAttendance> attendances = null;
         long numberOfPeople = -1L;

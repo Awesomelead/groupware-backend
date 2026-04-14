@@ -951,6 +951,95 @@ public class EduReportServiceTest {
     }
 
     @Test
+    @DisplayName("PSM 상세 조회 - 권한이 없고 타 회사 게시물이면 조회할 수 없음")
+    void getPsmEduReport_WithoutAuthority_OtherCompany_Fail() {
+        // given
+        Long reportId = 11L;
+        Long userId = 1L;
+        User user = createNormalUser(); // workLocation=AWESOME
+
+        EduReport report =
+                EduReport.builder()
+                        .id(reportId)
+                        .eduType(EduType.PSM)
+                        .company(Company.MARUI)
+                        .title("마루이 PSM")
+                        .build();
+
+        when(userRepository.findById(userId)).thenReturn(Optional.of(user));
+        when(eduReportRepository.findById(reportId)).thenReturn(Optional.of(report));
+
+        // when & then
+        assertThatThrownBy(() -> eduReportService.getPsmEduReport(reportId, userId))
+                .isInstanceOf(CustomException.class)
+                .hasFieldOrPropertyWithValue("errorCode", ErrorCode.EDU_REPORT_NOT_FOUND);
+        verify(eduMapper, never()).toDetailDto(any(), any(), anyLong(), any());
+    }
+
+    @Test
+    @DisplayName("PSM 상세 조회 - 권한이 없어도 본인 회사 게시물은 조회 가능")
+    void getPsmEduReport_WithoutAuthority_OwnCompany_Success() {
+        // given
+        Long reportId = 12L;
+        Long userId = 1L;
+        User user = createNormalUser(); // workLocation=AWESOME
+
+        EduReport report =
+                EduReport.builder()
+                        .id(reportId)
+                        .eduType(EduType.PSM)
+                        .company(Company.AWESOME)
+                        .title("어썸 PSM")
+                        .build();
+        EduReportDetailDto mockDto =
+                EduReportDetailDto.builder().id(reportId).eduType(EduType.PSM).build();
+
+        when(userRepository.findById(userId)).thenReturn(Optional.of(user));
+        when(eduReportRepository.findById(reportId)).thenReturn(Optional.of(report));
+        when(eduMapper.toDetailDto(report, null, -1L, s3Service)).thenReturn(mockDto);
+        when(eduAttendanceRepository.existsByEduReportAndUser(report, user)).thenReturn(false);
+
+        // when
+        EduReportDetailDto result = eduReportService.getPsmEduReport(reportId, userId);
+
+        // then
+        assertThat(result).isNotNull();
+        assertThat(result.getEduType()).isEqualTo(EduType.PSM);
+    }
+
+    @Test
+    @DisplayName("PSM 상세 조회 - MANAGE_PSM 권한 있으면 타 회사 게시물도 조회 가능")
+    void getPsmEduReport_WithManagePsm_OtherCompany_Success() {
+        // given
+        Long reportId = 13L;
+        Long userId = 1L;
+        User user = createNormalUser();
+        user.addAuthority(Authority.MANAGE_PSM);
+
+        EduReport report =
+                EduReport.builder()
+                        .id(reportId)
+                        .eduType(EduType.PSM)
+                        .company(Company.MARUI)
+                        .title("마루이 PSM")
+                        .build();
+        EduReportDetailDto mockDto =
+                EduReportDetailDto.builder().id(reportId).eduType(EduType.PSM).build();
+
+        when(userRepository.findById(userId)).thenReturn(Optional.of(user));
+        when(eduReportRepository.findById(reportId)).thenReturn(Optional.of(report));
+        when(eduMapper.toDetailDto(report, null, -1L, s3Service)).thenReturn(mockDto);
+        when(eduAttendanceRepository.existsByEduReportAndUser(report, user)).thenReturn(false);
+
+        // when
+        EduReportDetailDto result = eduReportService.getPsmEduReport(reportId, userId);
+
+        // then
+        assertThat(result).isNotNull();
+        assertThat(result.getEduType()).isEqualTo(EduType.PSM);
+    }
+
+    @Test
     @DisplayName("교육 보고서 삭제 성공 테스트")
     void deleteEduReport_Success() throws IOException {
         // given

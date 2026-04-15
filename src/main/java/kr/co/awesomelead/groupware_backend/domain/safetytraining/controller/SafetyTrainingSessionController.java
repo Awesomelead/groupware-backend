@@ -561,7 +561,7 @@ public class SafetyTrainingSessionController {
             summary = "안전보건 교육일지 수료 서명",
             description =
                     "본인의 미수료 상태(PENDING, ABSENT)를 PNG 서명 업로드 후 수료(SIGNED)로 변경합니다. OPEN 상태 교육일지에서만"
-                        + " 서명할 수 있습니다.")
+                            + " 서명할 수 있습니다.")
     @ApiResponses(
             value = {
                 @io.swagger.v3.oas.annotations.responses.ApiResponse(

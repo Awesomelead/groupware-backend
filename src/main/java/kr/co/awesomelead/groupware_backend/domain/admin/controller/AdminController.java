@@ -184,7 +184,7 @@ public class AdminController {
                                             "jobType": "관리직",
                                             "authorities": [
                                               { "code": "SEND_NOTIFICATION", "label": "알림 전송", "enabled": true },
-                                              { "code": "WRITE_DEPARTMENT_EDUCATION", "label": "부서 교육 작성", "enabled": false }
+                                              { "code": "MANAGE_DEPARTMENT_EDUCATION", "label": "부서 교육 관리", "enabled": false }
                                             ],
                                             "hireDate": "2025-09-22",
                                             "resignationDate": null,
@@ -579,7 +579,7 @@ public class AdminController {
                                                           "jobType": "관리직",
                                                           "authorities": [
                                                             "알림 전송",
-                                                            "부서 교육 작성",
+                                                            "부서 교육 관리",
                                                             "공지 작성",
                                                             "내방객 관리",
                                                             "직원 정보 수정"
@@ -1055,7 +1055,7 @@ public class AdminController {
                                             "jobType": "사무직",
                                             "authorities": [
                                               { "code": "SEND_NOTIFICATION", "label": "알림 전송", "enabled": false },
-                                              { "code": "WRITE_DEPARTMENT_EDUCATION", "label": "부서 교육 작성", "enabled": true }
+                                              { "code": "MANAGE_DEPARTMENT_EDUCATION", "label": "부서 교육 관리", "enabled": true }
                                             ],
                                             "hireDate": "2025-09-22",
                                             "resignationDate": null,

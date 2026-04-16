@@ -1276,6 +1276,31 @@ public class EduReportServiceTest {
     }
 
     @Test
+    @DisplayName("부서 교육 출석 처리 실패 - 타입 불일치(PSM 게시물을 부서 경로로 요청)")
+    void markDepartmentAttendance_Fail_TypeMismatch() {
+        // given
+        Long reportId = 32L;
+        Long userId = 1L;
+        User user = createNormalUser();
+        EduReport report =
+                EduReport.builder()
+                        .id(reportId)
+                        .eduType(EduType.PSM)
+                        .status(EduReportStatus.OPEN)
+                        .signatureRequired(false)
+                        .build();
+
+        when(userRepository.findById(userId)).thenReturn(Optional.of(user));
+        when(eduReportRepository.findById(reportId)).thenReturn(Optional.of(report));
+
+        // when & then
+        assertThatThrownBy(() -> eduReportService.markDepartmentAttendance(reportId, null, userId))
+                .isInstanceOf(CustomException.class)
+                .hasFieldOrPropertyWithValue("errorCode", ErrorCode.EDU_REPORT_NOT_FOUND);
+        verify(eduAttendanceRepository, never()).save(any());
+    }
+
+    @Test
     @DisplayName("출석 체크 성공 테스트")
     void markAttendance_Success() throws IOException {
         // given

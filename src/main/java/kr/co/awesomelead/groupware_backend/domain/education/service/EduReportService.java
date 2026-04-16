@@ -522,6 +522,36 @@ public class EduReportService {
                         .findById(reportId)
                         .orElseThrow(() -> new CustomException(ErrorCode.EDU_REPORT_NOT_FOUND));
 
+        markAttendanceInternal(user, report, signatureFile, report.isSignatureRequired());
+    }
+
+    @Transactional
+    public void markDepartmentAttendance(Long reportId, MultipartFile signatureFile, Long userId)
+            throws IOException {
+        markAttendanceByType(reportId, signatureFile, userId, EduType.DEPARTMENT);
+    }
+
+    private void markAttendanceByType(
+            Long reportId, MultipartFile signatureFile, Long userId, EduType expectedType)
+            throws IOException {
+        User user =
+                userRepository
+                        .findById(userId)
+                        .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
+
+        EduReport report =
+                eduReportRepository
+                        .findById(reportId)
+                        .orElseThrow(() -> new CustomException(ErrorCode.EDU_REPORT_NOT_FOUND));
+        validateExpectedType(report, expectedType);
+
+        boolean requireSignature = expectedType == EduType.DEPARTMENT && report.isSignatureRequired();
+        markAttendanceInternal(user, report, signatureFile, requireSignature);
+    }
+
+    private void markAttendanceInternal(
+            User user, EduReport report, MultipartFile signatureFile, boolean requireSignature)
+            throws IOException {
         if (report.getStatus() != EduReportStatus.OPEN) {
             throw new CustomException(ErrorCode.EDU_REPORT_CLOSED);
         }
@@ -533,7 +563,7 @@ public class EduReportService {
         String signatureKey = null;
         try {
             // 서명 업로드 (S3)
-            if (report.isSignatureRequired()) {
+            if (requireSignature) {
                 if (signatureFile == null || signatureFile.isEmpty()) {
                     throw new CustomException(ErrorCode.NO_SIGNATURE_PROVIDED);
                 }

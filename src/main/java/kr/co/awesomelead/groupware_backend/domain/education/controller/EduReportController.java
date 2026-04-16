@@ -1242,11 +1242,11 @@ public class EduReportController {
     }
 
     @Operation(
-            tags = {"부서교육", "PSM", "안전보건"},
-            summary = "교육 출석(서명) 처리",
+            tags = {"부서교육"},
+            summary = "부서 교육 게시물 출석(서명) 처리",
             description =
                     """
-            교육 게시물 출석을 처리합니다.
+            부서 교육 게시물 출석을 처리합니다.
 
             - `signatureRequired=true` 게시물은 PNG 서명 파일(`signature`)이 필수입니다.
             - `signatureRequired=false` 게시물은 파일 없이도 출석 처리됩니다.
@@ -1274,100 +1274,22 @@ public class EduReportController {
                         description = "출석 처리 성공"),
                 @io.swagger.v3.oas.annotations.responses.ApiResponse(
                         responseCode = "400",
-                        description = "잘못된 요청",
-                        content =
-                                @Content(
-                                        mediaType = "application/json",
-                                        examples = {
-                                            @ExampleObject(
-                                                    name = "이미 출석함",
-                                                    value =
-                                                            """
-              {
-                "isSuccess": false,
-                "code": "ALREADY_MARKED_ATTENDANCE",
-                "message": "이미 출석이 체크된 교육입니다.",
-                "result": null
-              }
-              """),
-                                            @ExampleObject(
-                                                    name = "서명 누락",
-                                                    value =
-                                                            """
-              {
-                "isSuccess": false,
-                "code": "NO_SIGNATURE_PROVIDED",
-                "message": "서명이 제공되지 않았습니다.",
-                "result": null
-              }
-              """),
-                                            @ExampleObject(
-                                                    name = "서명 포맷 오류",
-                                                    value =
-                                                            """
-              {
-                "isSuccess": false,
-                "code": "INVALID_SIGNATURE_FORMAT",
-                "message": "서명은 PNG 파일 형식만 지원합니다.",
-                "result": null
-              }
-              """),
-                                            @ExampleObject(
-                                                    name = "교육 마감 상태",
-                                                    value =
-                                                            """
-              {
-                "isSuccess": false,
-                "code": "EDU_REPORT_CLOSED",
-                "message": "마감된 교육입니다.",
-                "result": null
-              }
-              """)
-                                        })),
+                        description = "잘못된 요청"),
                 @io.swagger.v3.oas.annotations.responses.ApiResponse(
                         responseCode = "404",
-                        description = "리소스 없음",
-                        content =
-                                @Content(
-                                        mediaType = "application/json",
-                                        examples = {
-                                            @ExampleObject(
-                                                    name = "게시물 없음",
-                                                    value =
-                                                            """
-          {
-            "isSuccess": false,
-            "code": "EDU_REPORT_NOT_FOUND",
-            "message": "해당 교육 게시물을 찾을 수 없습니다.",
-            "result": null
-          }
-          """),
-                                            @ExampleObject(
-                                                    name = "사용자 없음",
-                                                    value =
-                                                            """
-          {
-            "isSuccess": false,
-            "code": "USER_NOT_FOUND",
-            "message": "해당 사용자를 찾을 수 없습니다.",
-            "result": null
-          }
-          """)
-                                        }))
+                        description = "리소스 없음")
             })
     @PostMapping(
-            value = "/{educationId}/attendance",
+            value = "/department/{educationId}/attendance",
             consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    public ResponseEntity<ApiResponse<Void>> markAttendance(
-            @Parameter(description = "교육 게시물 ID", example = "1") @PathVariable Long educationId,
+    public ResponseEntity<ApiResponse<Void>> markDepartmentAttendance(
+            @Parameter(description = "부서 교육 게시물 ID", example = "1") @PathVariable Long educationId,
             @Parameter(description = "서명 PNG 파일(signatureRequired=true인 경우 필수)")
                     @RequestPart(value = "signature", required = false)
                     MultipartFile signature,
             @Parameter(hidden = true) @AuthenticationPrincipal CustomUserDetails userDetails)
             throws IOException {
-
-        eduReportService.markAttendance(educationId, signature, userDetails.getId());
-
+        eduReportService.markDepartmentAttendance(educationId, signature, userDetails.getId());
         return ResponseEntity.ok(ApiResponse.onNoContent());
     }
 

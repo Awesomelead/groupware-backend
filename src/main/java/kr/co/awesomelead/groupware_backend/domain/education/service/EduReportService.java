@@ -545,7 +545,8 @@ public class EduReportService {
                         .orElseThrow(() -> new CustomException(ErrorCode.EDU_REPORT_NOT_FOUND));
         validateExpectedType(report, expectedType);
 
-        boolean requireSignature = expectedType == EduType.DEPARTMENT && report.isSignatureRequired();
+        boolean requireSignature =
+                expectedType == EduType.DEPARTMENT && report.isSignatureRequired();
         markAttendanceInternal(user, report, signatureFile, requireSignature);
     }
 
@@ -608,7 +609,8 @@ public class EduReportService {
     }
 
     @Transactional
-    public Long updatePsmEduReport(Long eduReportId, EduReportUpdateRequestDto requestDto, Long userId) {
+    public Long updatePsmEduReport(
+            Long eduReportId, EduReportUpdateRequestDto requestDto, Long userId) {
         return updatePsmEduReport(eduReportId, requestDto, null, userId);
     }
 

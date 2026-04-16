@@ -895,9 +895,12 @@ public class EduReportController {
                 responseCode = "404",
                 description = "리소스 없음")
     })
-    @PatchMapping(value = "/department/{educationId}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @PatchMapping(
+            value = "/department/{educationId}",
+            consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<ApiResponse<Long>> updateDepartmentEducation(
-            @Parameter(description = "수정할 부서 교육 게시물 ID", example = "1") @PathVariable Long educationId,
+            @Parameter(description = "수정할 부서 교육 게시물 ID", example = "1") @PathVariable
+                    Long educationId,
             @Parameter(description = "부서 교육 수정 정보(JSON)", required = true)
                     @RequestPart("requestDto")
                     @Valid
@@ -971,7 +974,8 @@ public class EduReportController {
     })
     @PatchMapping(value = "/psm/{educationId}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<ApiResponse<Long>> updatePsmEducation(
-            @Parameter(description = "수정할 PSM 게시물 ID", example = "1") @PathVariable Long educationId,
+            @Parameter(description = "수정할 PSM 게시물 ID", example = "1") @PathVariable
+                    Long educationId,
             @Parameter(description = "PSM 수정 정보(JSON)", required = true)
                     @RequestPart("requestDto")
                     @Valid
@@ -981,7 +985,8 @@ public class EduReportController {
                     List<MultipartFile> files,
             @Parameter(hidden = true) @AuthenticationPrincipal CustomUserDetails userDetails) {
         Long updatedId =
-                eduReportService.updatePsmEduReport(educationId, requestDto, files, userDetails.getId());
+                eduReportService.updatePsmEduReport(
+                        educationId, requestDto, files, userDetails.getId());
         return ResponseEntity.ok(ApiResponse.onSuccess(updatedId));
     }
 
@@ -991,7 +996,8 @@ public class EduReportController {
             @PathVariable Long educationId,
             @Valid @RequestBody EduReportUpdateRequestDto requestDto,
             @Parameter(hidden = true) @AuthenticationPrincipal CustomUserDetails userDetails) {
-        Long updatedId = eduReportService.updatePsmEduReport(educationId, requestDto, userDetails.getId());
+        Long updatedId =
+                eduReportService.updatePsmEduReport(educationId, requestDto, userDetails.getId());
         return ResponseEntity.ok(ApiResponse.onSuccess(updatedId));
     }
 
@@ -1042,7 +1048,8 @@ public class EduReportController {
     })
     @PatchMapping(value = "/safety/{educationId}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<ApiResponse<Long>> updateSafetyEducation(
-            @Parameter(description = "수정할 안전 보건 게시물 ID", example = "1") @PathVariable Long educationId,
+            @Parameter(description = "수정할 안전 보건 게시물 ID", example = "1") @PathVariable
+                    Long educationId,
             @Parameter(description = "안전 보건 수정 정보(JSON)", required = true)
                     @RequestPart("requestDto")
                     @Valid
@@ -1064,7 +1071,8 @@ public class EduReportController {
             @Valid @RequestBody EduReportUpdateRequestDto requestDto,
             @Parameter(hidden = true) @AuthenticationPrincipal CustomUserDetails userDetails) {
         Long updatedId =
-                eduReportService.updateSafetyEduReport(educationId, requestDto, userDetails.getId());
+                eduReportService.updateSafetyEduReport(
+                        educationId, requestDto, userDetails.getId());
         return ResponseEntity.ok(ApiResponse.onSuccess(updatedId));
     }
 
@@ -1128,7 +1136,8 @@ public class EduReportController {
     })
     @PatchMapping("/psm/{educationId}/status")
     public ResponseEntity<ApiResponse<Long>> updatePsmEducationStatus(
-            @Parameter(description = "상태 변경할 PSM 게시물 ID", example = "1") @PathVariable Long educationId,
+            @Parameter(description = "상태 변경할 PSM 게시물 ID", example = "1") @PathVariable
+                    Long educationId,
             @Valid @RequestBody EduReportStatusUpdateRequestDto requestDto,
             @Parameter(hidden = true) @AuthenticationPrincipal CustomUserDetails userDetails) {
         Long updatedId =
@@ -1189,7 +1198,8 @@ public class EduReportController {
     })
     @DeleteMapping("/department/{educationId}")
     public ResponseEntity<ApiResponse<Void>> deleteDepartmentEduReport(
-            @Parameter(description = "삭제할 부서 교육 게시물 ID", example = "1") @PathVariable Long educationId,
+            @Parameter(description = "삭제할 부서 교육 게시물 ID", example = "1") @PathVariable
+                    Long educationId,
             @Parameter(hidden = true) @AuthenticationPrincipal CustomUserDetails userDetails) {
         eduReportService.deleteDepartmentEduReport(educationId, userDetails.getId());
         return ResponseEntity.ok().body(ApiResponse.onNoContent());
@@ -1212,7 +1222,8 @@ public class EduReportController {
     })
     @DeleteMapping("/psm/{educationId}")
     public ResponseEntity<ApiResponse<Void>> deletePsmEduReport(
-            @Parameter(description = "삭제할 PSM 게시물 ID", example = "1") @PathVariable Long educationId,
+            @Parameter(description = "삭제할 PSM 게시물 ID", example = "1") @PathVariable
+                    Long educationId,
             @Parameter(hidden = true) @AuthenticationPrincipal CustomUserDetails userDetails) {
         eduReportService.deletePsmEduReport(educationId, userDetails.getId());
         return ResponseEntity.ok().body(ApiResponse.onNoContent());
@@ -1235,7 +1246,8 @@ public class EduReportController {
     })
     @DeleteMapping("/safety/{educationId}")
     public ResponseEntity<ApiResponse<Void>> deleteSafetyEduReport(
-            @Parameter(description = "삭제할 안전 보건 게시물 ID", example = "1") @PathVariable Long educationId,
+            @Parameter(description = "삭제할 안전 보건 게시물 ID", example = "1") @PathVariable
+                    Long educationId,
             @Parameter(hidden = true) @AuthenticationPrincipal CustomUserDetails userDetails) {
         eduReportService.deleteSafetyEduReport(educationId, userDetails.getId());
         return ResponseEntity.ok().body(ApiResponse.onNoContent());

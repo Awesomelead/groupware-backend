@@ -263,14 +263,16 @@ public class NoticeController {
                                         "type": "REGULAR",
                                         "title": "2026년 신년 휴무 안내",
                                         "isPinned": true,
-                                        "updatedDate": "2026-01-01T09:00:00"
+                                        "authorName": "홍길동",
+                                        "createdDate": "2026-01-01T09:00:00"
                                       },
                                       {
                                         "id": 5,
                                         "type": "MENU",
                                         "title": "1월 식단표 안내",
                                         "isPinned": false,
-                                        "updatedDate": "2026-01-10T14:30:00"
+                                        "authorName": "이순신",
+                                        "createdDate": "2026-01-10T14:30:00"
                                       }
                                     ],
                                     "pageable": {
@@ -344,7 +346,7 @@ public class NoticeController {
                                 "title": "2025년 1월 전체 회의 안내",
                                 "content": "오는 1월 15일 오후 2시에 전체 회의가 있습니다.",
                                 "authorName": "홍길동",
-                                "updatedDate": "2025-01-10T14:30:00",
+                                "createdDate": "2025-01-10T14:30:00",
                                 "viewCount": 43,
                                 "attachments": [
                                   {
@@ -356,7 +358,19 @@ public class NoticeController {
                                 ],
                                 "targetCompanies": ["어썸리드"],
                                 "targetDepartmentIds": [1, 2],
-                                "targetUserIds": [10, 20]
+                                "targetUserIds": [10, 20],
+                                "prevNotice": {
+                                  "id": 9,
+                                  "title": "이전 공지 제목",
+                                  "authorName": "김철수",
+                                  "createdDate": "2025-01-09T10:00:00"
+                                },
+                                "nextNotice": {
+                                  "id": 11,
+                                  "title": "다음 공지 제목",
+                                  "authorName": "박영희",
+                                  "createdDate": "2025-01-11T10:00:00"
+                                }
                               }
                             }
                             """))),
@@ -381,8 +395,9 @@ public class NoticeController {
     @GetMapping("/{noticeId}")
     public ResponseEntity<ApiResponse<NoticeDetailDto>> getNotice(
             @Parameter(description = "조회할 공지사항 ID", example = "1", required = true) @PathVariable
-                    Long noticeId) {
-        NoticeDetailDto dto = noticeService.getNotice(noticeId);
+                    Long noticeId,
+            @Parameter(hidden = true) @AuthenticationPrincipal CustomUserDetails userDetails) {
+        NoticeDetailDto dto = noticeService.getNotice(noticeId, userDetails.getId());
         return ResponseEntity.ok(ApiResponse.onSuccess(dto));
     }
 

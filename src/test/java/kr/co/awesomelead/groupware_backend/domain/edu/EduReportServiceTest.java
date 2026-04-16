@@ -1209,6 +1209,27 @@ public class EduReportServiceTest {
     }
 
     @Test
+    @DisplayName("안전보건 게시물 삭제 실패 - 타입 불일치(PSM 게시물을 안전보건 삭제 경로로 요청)")
+    void deleteSafetyEduReport_Fail_TypeMismatch() {
+        // given
+        Long reportId = 15L;
+        Long userId = 1L;
+        User user = createNormalUser();
+        user.addAuthority(Authority.MANAGE_SAFETY);
+
+        EduReport report = EduReport.builder().id(reportId).eduType(EduType.PSM).build();
+
+        when(userRepository.findById(userId)).thenReturn(Optional.of(user));
+        when(eduReportRepository.findById(reportId)).thenReturn(Optional.of(report));
+
+        // when & then
+        assertThatThrownBy(() -> eduReportService.deleteSafetyEduReport(reportId, userId))
+                .isInstanceOf(CustomException.class)
+                .hasFieldOrPropertyWithValue("errorCode", ErrorCode.EDU_REPORT_NOT_FOUND);
+        verify(eduReportRepository, never()).delete(any(EduReport.class));
+    }
+
+    @Test
     @DisplayName("첨부파일 다운로드 성공 테스트")
     void getFileForDownload_Success() {
         // given
@@ -1538,6 +1559,38 @@ public class EduReportServiceTest {
     }
 
     @Test
+    @DisplayName("부서 교육 수정 실패 - 타입 불일치(PSM 게시물을 부서 교육 수정 경로로 요청)")
+    void updateDepartmentEduReport_Fail_TypeMismatch() {
+        // given
+        Long reportId = 16L;
+        Long userId = 1L;
+        User user = createNormalUser();
+        user.addAuthority(Authority.MANAGE_DEPARTMENT_EDUCATION);
+
+        EduReport report =
+                EduReport.builder()
+                        .id(reportId)
+                        .eduType(EduType.PSM)
+                        .status(EduReportStatus.OPEN)
+                        .build();
+
+        EduReportUpdateRequestDto requestDto =
+                EduReportUpdateRequestDto.builder().title("수정 제목").content("수정 내용").build();
+
+        when(userRepository.findById(userId)).thenReturn(Optional.of(user));
+        when(eduReportRepository.findById(reportId)).thenReturn(Optional.of(report));
+
+        // when & then
+        assertThatThrownBy(
+                        () ->
+                                eduReportService.updateDepartmentEduReport(
+                                        reportId, requestDto, userId))
+                .isInstanceOf(CustomException.class)
+                .hasFieldOrPropertyWithValue("errorCode", ErrorCode.EDU_REPORT_NOT_FOUND);
+        verify(eduAttendanceRepository, never()).countByEduReportId(anyLong());
+    }
+
+    @Test
     @DisplayName("교육 수정 성공 - 첨부파일 삭제 및 추가")
     void updateEduReport_WithAttachmentChanges_Success() throws IOException {
         // given
@@ -1685,6 +1738,28 @@ public class EduReportServiceTest {
         // then
         assertThat(updatedId).isEqualTo(reportId);
         assertThat(report.getStatus()).isEqualTo(EduReportStatus.CLOSED);
+    }
+
+    @Test
+    @DisplayName("PSM 상태 변경 실패 - PSM 관리 권한 없음")
+    void updatePsmEduReportStatus_Fail_NoAuthority() {
+        // given
+        Long reportId = 17L;
+        Long userId = 1L;
+        User user = createNormalUser();
+        EduReportStatusUpdateRequestDto requestDto =
+                org.mockito.Mockito.mock(EduReportStatusUpdateRequestDto.class);
+
+        when(userRepository.findById(userId)).thenReturn(Optional.of(user));
+
+        // when & then
+        assertThatThrownBy(
+                        () ->
+                                eduReportService.updatePsmEduReportStatus(
+                                        reportId, requestDto, userId))
+                .isInstanceOf(CustomException.class)
+                .hasFieldOrPropertyWithValue("errorCode", ErrorCode.NO_AUTHORITY_FOR_PSM_MANAGE);
+        verify(eduReportRepository, never()).findById(anyLong());
     }
 
     @Test

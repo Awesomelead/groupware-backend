@@ -423,6 +423,21 @@ public class EduReportService {
     }
 
     @Transactional
+    public void deleteDepartmentEduReport(Long eduReportId, Long id) {
+        deleteEduReportByType(eduReportId, id, EduType.DEPARTMENT);
+    }
+
+    @Transactional
+    public void deletePsmEduReport(Long eduReportId, Long id) {
+        deleteEduReportByType(eduReportId, id, EduType.PSM);
+    }
+
+    @Transactional
+    public void deleteSafetyEduReport(Long eduReportId, Long id) {
+        deleteEduReportByType(eduReportId, id, EduType.SAFETY);
+    }
+
+    @Transactional
     public void deleteEduReport(Long eduReportId, Long id) {
 
         User user =
@@ -439,6 +454,26 @@ public class EduReportService {
                         .findById(eduReportId)
                         .orElseThrow(() -> new CustomException(ErrorCode.EDU_REPORT_NOT_FOUND));
 
+        performDeleteEduReport(report);
+    }
+
+    private void deleteEduReportByType(Long eduReportId, Long userId, EduType expectedType) {
+        User user =
+                userRepository
+                        .findById(userId)
+                        .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
+        validateCreateAuthority(user, expectedType);
+
+        EduReport report =
+                eduReportRepository
+                        .findById(eduReportId)
+                        .orElseThrow(() -> new CustomException(ErrorCode.EDU_REPORT_NOT_FOUND));
+        validateExpectedType(report, expectedType);
+
+        performDeleteEduReport(report);
+    }
+
+    private void performDeleteEduReport(EduReport report) {
         report.getAttachments()
                 .forEach(
                         attachment -> {
@@ -528,6 +563,50 @@ public class EduReportService {
     }
 
     @Transactional
+    public Long updateDepartmentEduReport(
+            Long eduReportId, EduReportUpdateRequestDto requestDto, Long userId) {
+        return updateDepartmentEduReport(eduReportId, requestDto, null, userId);
+    }
+
+    @Transactional
+    public Long updateDepartmentEduReport(
+            Long eduReportId,
+            EduReportUpdateRequestDto requestDto,
+            List<MultipartFile> files,
+            Long userId) {
+        return updateEduReportByType(eduReportId, requestDto, files, userId, EduType.DEPARTMENT);
+    }
+
+    @Transactional
+    public Long updatePsmEduReport(Long eduReportId, EduReportUpdateRequestDto requestDto, Long userId) {
+        return updatePsmEduReport(eduReportId, requestDto, null, userId);
+    }
+
+    @Transactional
+    public Long updatePsmEduReport(
+            Long eduReportId,
+            EduReportUpdateRequestDto requestDto,
+            List<MultipartFile> files,
+            Long userId) {
+        return updateEduReportByType(eduReportId, requestDto, files, userId, EduType.PSM);
+    }
+
+    @Transactional
+    public Long updateSafetyEduReport(
+            Long eduReportId, EduReportUpdateRequestDto requestDto, Long userId) {
+        return updateSafetyEduReport(eduReportId, requestDto, null, userId);
+    }
+
+    @Transactional
+    public Long updateSafetyEduReport(
+            Long eduReportId,
+            EduReportUpdateRequestDto requestDto,
+            List<MultipartFile> files,
+            Long userId) {
+        return updateEduReportByType(eduReportId, requestDto, files, userId, EduType.SAFETY);
+    }
+
+    @Transactional
     public Long updateEduReport(
             Long eduReportId,
             EduReportUpdateRequestDto requestDto,
@@ -543,6 +622,35 @@ public class EduReportService {
                         .findById(eduReportId)
                         .orElseThrow(() -> new CustomException(ErrorCode.EDU_REPORT_NOT_FOUND));
         validateCreateAuthority(user, report.getEduType());
+        return updateEduReportInternal(eduReportId, report, requestDto, files);
+    }
+
+    private Long updateEduReportByType(
+            Long eduReportId,
+            EduReportUpdateRequestDto requestDto,
+            List<MultipartFile> files,
+            Long userId,
+            EduType expectedType) {
+        User user =
+                userRepository
+                        .findById(userId)
+                        .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
+        validateCreateAuthority(user, expectedType);
+
+        EduReport report =
+                eduReportRepository
+                        .findById(eduReportId)
+                        .orElseThrow(() -> new CustomException(ErrorCode.EDU_REPORT_NOT_FOUND));
+        validateExpectedType(report, expectedType);
+
+        return updateEduReportInternal(eduReportId, report, requestDto, files);
+    }
+
+    private Long updateEduReportInternal(
+            Long eduReportId,
+            EduReport report,
+            EduReportUpdateRequestDto requestDto,
+            List<MultipartFile> files) {
         validateReportEditable(report);
 
         long signedCount = eduAttendanceRepository.countByEduReportId(eduReportId);
@@ -603,7 +711,49 @@ public class EduReportService {
                         .findById(eduReportId)
                         .orElseThrow(() -> new CustomException(ErrorCode.EDU_REPORT_NOT_FOUND));
         validateCreateAuthority(user, report.getEduType());
+        return updateEduReportStatusInternal(report, requestDto);
+    }
 
+    @Transactional
+    public Long updateDepartmentEduReportStatus(
+            Long eduReportId, EduReportStatusUpdateRequestDto requestDto, Long userId) {
+        return updateEduReportStatusByType(eduReportId, requestDto, userId, EduType.DEPARTMENT);
+    }
+
+    @Transactional
+    public Long updatePsmEduReportStatus(
+            Long eduReportId, EduReportStatusUpdateRequestDto requestDto, Long userId) {
+        return updateEduReportStatusByType(eduReportId, requestDto, userId, EduType.PSM);
+    }
+
+    @Transactional
+    public Long updateSafetyEduReportStatus(
+            Long eduReportId, EduReportStatusUpdateRequestDto requestDto, Long userId) {
+        return updateEduReportStatusByType(eduReportId, requestDto, userId, EduType.SAFETY);
+    }
+
+    private Long updateEduReportStatusByType(
+            Long eduReportId,
+            EduReportStatusUpdateRequestDto requestDto,
+            Long userId,
+            EduType expectedType) {
+        User user =
+                userRepository
+                        .findById(userId)
+                        .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
+        validateCreateAuthority(user, expectedType);
+
+        EduReport report =
+                eduReportRepository
+                        .findById(eduReportId)
+                        .orElseThrow(() -> new CustomException(ErrorCode.EDU_REPORT_NOT_FOUND));
+        validateExpectedType(report, expectedType);
+
+        return updateEduReportStatusInternal(report, requestDto);
+    }
+
+    private Long updateEduReportStatusInternal(
+            EduReport report, EduReportStatusUpdateRequestDto requestDto) {
         report.setStatus(requestDto.getStatus());
         return report.getId();
     }
@@ -654,6 +804,12 @@ public class EduReportService {
     private void validateReportEditable(EduReport report) {
         if (report.getStatus() != EduReportStatus.OPEN) {
             throw new CustomException(ErrorCode.EDU_REPORT_CLOSED);
+        }
+    }
+
+    private void validateExpectedType(EduReport report, EduType expectedType) {
+        if (report.getEduType() != expectedType) {
+            throw new CustomException(ErrorCode.EDU_REPORT_NOT_FOUND);
         }
     }
 

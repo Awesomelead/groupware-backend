@@ -12,11 +12,14 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import kr.co.awesomelead.groupware_backend.domain.department.entity.Department;
+import kr.co.awesomelead.groupware_backend.domain.department.enums.Company;
 import kr.co.awesomelead.groupware_backend.domain.department.enums.DepartmentName;
 import kr.co.awesomelead.groupware_backend.domain.department.repository.DepartmentRepository;
 import kr.co.awesomelead.groupware_backend.domain.education.dto.request.EduReportRequestDto;
 import kr.co.awesomelead.groupware_backend.domain.education.dto.request.EduReportStatusUpdateRequestDto;
 import kr.co.awesomelead.groupware_backend.domain.education.dto.request.EduReportUpdateRequestDto;
+import kr.co.awesomelead.groupware_backend.domain.education.dto.request.PsmEduReportCreateRequestDto;
+import kr.co.awesomelead.groupware_backend.domain.education.dto.request.SafetyEduReportCreateRequestDto;
 import kr.co.awesomelead.groupware_backend.domain.education.dto.response.EduReportDetailDto;
 import kr.co.awesomelead.groupware_backend.domain.education.dto.response.EduReportSummaryDto;
 import kr.co.awesomelead.groupware_backend.domain.education.entity.EduAttachment;
@@ -94,6 +97,7 @@ public class EduReportServiceTest {
                 .nameKor("일반직원")
                 .nameEng("Normal User")
                 .email("user@awesomelead.co.kr")
+                .workLocation(Company.AWESOME)
                 .role(Role.USER)
                 .status(Status.AVAILABLE)
                 .department(defaultDept)
@@ -151,7 +155,7 @@ public class EduReportServiceTest {
                         .build();
 
         User user = createNormalUser();
-        user.addAuthority(Authority.WRITE_SAFETY);
+        user.addAuthority(Authority.MANAGE_SAFETY);
         EducationCategory category =
                 EducationCategory.builder()
                         .id(1L)
@@ -215,7 +219,7 @@ public class EduReportServiceTest {
                         .build();
 
         User user = createNormalUser();
-        user.addAuthority(Authority.WRITE_SAFETY);
+        user.addAuthority(Authority.MANAGE_SAFETY);
         EducationCategory category =
                 EducationCategory.builder()
                         .id(1L)
@@ -264,7 +268,7 @@ public class EduReportServiceTest {
                         .build();
 
         User user = createNormalUser();
-        user.addAuthority(Authority.WRITE_SAFETY);
+        user.addAuthority(Authority.MANAGE_SAFETY);
         EducationCategory category =
                 EducationCategory.builder()
                         .id(1L)
@@ -336,6 +340,208 @@ public class EduReportServiceTest {
     }
 
     @Test
+    @DisplayName("교육 보고서 생성 실패 - PSM은 MANAGE_PSM 권한이 없는 경우")
+    void createEduReport_Fail_NO_AUTHORITY_FOR_PSM_MANAGE() {
+        // given
+        EduReportRequestDto requestDto =
+                EduReportRequestDto.builder()
+                        .title("PSM 교육 제목")
+                        .content("PSM 교육 내용")
+                        .eduType(EduType.PSM)
+                        .categoryId(1L)
+                        .build();
+
+        User user = createNormalUser();
+        user.addAuthority(Authority.MANAGE_SAFETY);
+
+        when(userRepository.findById(1L)).thenReturn(Optional.of(user));
+
+        // when & then
+        assertThatThrownBy(() -> eduReportService.createEduReport(requestDto, null, 1L))
+                .isInstanceOf(CustomException.class)
+                .extracting("errorCode")
+                .isEqualTo(ErrorCode.NO_AUTHORITY_FOR_PSM_MANAGE);
+
+        verify(eduReportRepository, never()).save(any());
+    }
+
+    @Test
+    @DisplayName("PSM 게시물 생성 - 대상 회사 지정 시 해당 회사로 저장")
+    void createPsmEduReport_WithCompanyScope_SetsTargetCompany() throws IOException {
+        // given
+        PsmEduReportCreateRequestDto requestDto =
+                PsmEduReportCreateRequestDto.builder()
+                        .title("PSM 게시물")
+                        .content("PSM 내용")
+                        .pinned(false)
+                        .categoryId(1L)
+                        .companyScope(Company.MARUI)
+                        .build();
+
+        EduReport report =
+                EduReport.builder()
+                        .id(101L)
+                        .eduType(EduType.PSM)
+                        .title("PSM 게시물")
+                        .content("PSM 내용")
+                        .build();
+
+        User user = createNormalUser();
+        user.addAuthority(Authority.MANAGE_PSM);
+        EducationCategory category =
+                EducationCategory.builder().id(1L).categoryType(EducationCategoryType.PSM).build();
+
+        when(userRepository.findById(1L)).thenReturn(Optional.of(user));
+        when(educationCategoryRepository.findById(1L)).thenReturn(Optional.of(category));
+        when(eduMapper.toEduReportEntity(any(EduReportRequestDto.class), any(), any()))
+                .thenReturn(report);
+        when(eduReportRepository.save(report)).thenReturn(report);
+        when(userRepository.findAllIdsByCompany(Company.MARUI)).thenReturn(List.of(1L));
+
+        // when
+        Long reportId = eduReportService.createPsmEduReport(requestDto, null, 1L);
+
+        // then
+        assertThat(reportId).isEqualTo(101L);
+        assertThat(report.getCompany()).isEqualTo(Company.MARUI);
+        verify(userRepository, times(1)).findAllIdsByCompany(Company.MARUI);
+    }
+
+    @Test
+    @DisplayName("PSM 게시물 생성 - 대상 회사 미지정 시 모든 회사 공통으로 저장")
+    void createPsmEduReport_WithNullCompanyScope_SetsCommonCompany() throws IOException {
+        // given
+        PsmEduReportCreateRequestDto requestDto =
+                PsmEduReportCreateRequestDto.builder()
+                        .title("PSM 공통 게시물")
+                        .content("PSM 공통 내용")
+                        .pinned(false)
+                        .categoryId(1L)
+                        .companyScope(null)
+                        .build();
+
+        EduReport report =
+                EduReport.builder()
+                        .id(102L)
+                        .eduType(EduType.PSM)
+                        .title("PSM 공통 게시물")
+                        .content("PSM 공통 내용")
+                        .build();
+
+        User user = createNormalUser();
+        user.addAuthority(Authority.MANAGE_PSM);
+        EducationCategory category =
+                EducationCategory.builder().id(1L).categoryType(EducationCategoryType.PSM).build();
+
+        when(userRepository.findById(1L)).thenReturn(Optional.of(user));
+        when(educationCategoryRepository.findById(1L)).thenReturn(Optional.of(category));
+        when(eduMapper.toEduReportEntity(any(EduReportRequestDto.class), any(), any()))
+                .thenReturn(report);
+        when(eduReportRepository.save(report)).thenReturn(report);
+        when(userRepository.findAllActiveUserIds()).thenReturn(List.of(1L, 2L));
+
+        // when
+        Long reportId = eduReportService.createPsmEduReport(requestDto, null, 1L);
+
+        // then
+        assertThat(reportId).isEqualTo(102L);
+        assertThat(report.getCompany()).isNull();
+        verify(userRepository, times(1)).findAllActiveUserIds();
+        verify(userRepository, never()).findAllIdsByCompany(any(Company.class));
+    }
+
+    @Test
+    @DisplayName("안전 보건 게시물 생성 - 대상 회사 지정 시 해당 회사로 저장")
+    void createSafetyEduReport_WithCompanyScope_SetsTargetCompany() throws IOException {
+        // given
+        SafetyEduReportCreateRequestDto requestDto =
+                SafetyEduReportCreateRequestDto.builder()
+                        .title("안전 보건 게시물")
+                        .content("안전 보건 내용")
+                        .pinned(false)
+                        .categoryId(2L)
+                        .companyScope(Company.AWESOME)
+                        .build();
+
+        EduReport report =
+                EduReport.builder()
+                        .id(201L)
+                        .eduType(EduType.SAFETY)
+                        .title("안전 보건 게시물")
+                        .content("안전 보건 내용")
+                        .build();
+
+        User user = createNormalUser();
+        user.addAuthority(Authority.MANAGE_SAFETY);
+        EducationCategory category =
+                EducationCategory.builder()
+                        .id(2L)
+                        .categoryType(EducationCategoryType.SAFETY)
+                        .build();
+
+        when(userRepository.findById(1L)).thenReturn(Optional.of(user));
+        when(educationCategoryRepository.findById(2L)).thenReturn(Optional.of(category));
+        when(eduMapper.toEduReportEntity(any(EduReportRequestDto.class), any(), any()))
+                .thenReturn(report);
+        when(eduReportRepository.save(report)).thenReturn(report);
+        when(userRepository.findAllIdsByCompany(Company.AWESOME)).thenReturn(List.of(1L));
+
+        // when
+        Long reportId = eduReportService.createSafetyEduReport(requestDto, null, 1L);
+
+        // then
+        assertThat(reportId).isEqualTo(201L);
+        assertThat(report.getCompany()).isEqualTo(Company.AWESOME);
+        verify(userRepository, times(1)).findAllIdsByCompany(Company.AWESOME);
+    }
+
+    @Test
+    @DisplayName("안전 보건 게시물 생성 - 대상 회사 미지정 시 모든 회사 공통으로 저장")
+    void createSafetyEduReport_WithNullCompanyScope_SetsCommonCompany() throws IOException {
+        // given
+        SafetyEduReportCreateRequestDto requestDto =
+                SafetyEduReportCreateRequestDto.builder()
+                        .title("안전 보건 공통 게시물")
+                        .content("안전 보건 공통 내용")
+                        .pinned(false)
+                        .categoryId(2L)
+                        .companyScope(null)
+                        .build();
+
+        EduReport report =
+                EduReport.builder()
+                        .id(202L)
+                        .eduType(EduType.SAFETY)
+                        .title("안전 보건 공통 게시물")
+                        .content("안전 보건 공통 내용")
+                        .build();
+
+        User user = createNormalUser();
+        user.addAuthority(Authority.MANAGE_SAFETY);
+        EducationCategory category =
+                EducationCategory.builder()
+                        .id(2L)
+                        .categoryType(EducationCategoryType.SAFETY)
+                        .build();
+
+        when(userRepository.findById(1L)).thenReturn(Optional.of(user));
+        when(educationCategoryRepository.findById(2L)).thenReturn(Optional.of(category));
+        when(eduMapper.toEduReportEntity(any(EduReportRequestDto.class), any(), any()))
+                .thenReturn(report);
+        when(eduReportRepository.save(report)).thenReturn(report);
+        when(userRepository.findAllActiveUserIds()).thenReturn(List.of(1L, 2L));
+
+        // when
+        Long reportId = eduReportService.createSafetyEduReport(requestDto, null, 1L);
+
+        // then
+        assertThat(reportId).isEqualTo(202L);
+        assertThat(report.getCompany()).isNull();
+        verify(userRepository, times(1)).findAllActiveUserIds();
+        verify(userRepository, never()).findAllIdsByCompany(any(Company.class));
+    }
+
+    @Test
     @DisplayName("교육 보고서 생성 실패 - 부서 교육인데 부서가 없는 경우")
     void createEduReport_Fail_DepartmentNotFound() {
         // given
@@ -348,7 +554,7 @@ public class EduReportServiceTest {
                         .build();
 
         User user = createNormalUser();
-        user.addAuthority(Authority.WRITE_DEPARTMENT_EDUCATION);
+        user.addAuthority(Authority.MANAGE_DEPARTMENT_EDUCATION);
 
         when(userRepository.findById(1L)).thenReturn(Optional.of(user));
         when(departmentRepository.findById(999L)).thenReturn(Optional.empty());
@@ -366,7 +572,7 @@ public class EduReportServiceTest {
     @DisplayName("교육 보고서 목록 조회 성공 - 권한 없는 유저 (자신의 부서만 조회)")
     void getEduReports_Success() {
         // given
-        User user = createNormalUser(); // WRITE_DEPARTMENT_EDUCATION 권한 없음
+        User user = createNormalUser(); // MANAGE_DEPARTMENT_EDUCATION 권한 없음
         Department department = defaultDept;
 
         EduReportSummaryDto report1 =
@@ -383,7 +589,8 @@ public class EduReportServiceTest {
         List<EduReportSummaryDto> mockList = List.of(report1);
 
         when(userRepository.findById(1L)).thenReturn(Optional.of(user));
-        when(eduReportQueryRepository.findEduReports(EduType.SAFETY, department, null, 1L, false))
+        when(eduReportQueryRepository.findEduReports(
+                        EduType.SAFETY, department, null, 1L, false, Company.AWESOME, false))
                 .thenReturn(mockList);
 
         // when
@@ -396,15 +603,16 @@ public class EduReportServiceTest {
         assertThat(result.get(0).getTitle()).isEqualTo("안전 교육 보고서");
 
         verify(eduReportQueryRepository, times(1))
-                .findEduReports(EduType.SAFETY, department, null, 1L, false);
+                .findEduReports(
+                        EduType.SAFETY, department, null, 1L, false, Company.AWESOME, false);
     }
 
     @Test
-    @DisplayName("교육 보고서 목록 조회 성공 - WRITE_DEPARTMENT_EDUCATION 권한 있음, 부서 미지정 → 전체 조회")
+    @DisplayName("교육 보고서 목록 조회 성공 - MANAGE_DEPARTMENT_EDUCATION 권한 있음, 부서 미지정 → 전체 조회")
     void getEduReports_WithAccess_ReturnsAll() {
         // given
         User user = createNormalUser();
-        user.addAuthority(Authority.WRITE_DEPARTMENT_EDUCATION);
+        user.addAuthority(Authority.MANAGE_DEPARTMENT_EDUCATION);
 
         EduReportSummaryDto report1 =
                 EduReportSummaryDto.builder()
@@ -420,8 +628,9 @@ public class EduReportServiceTest {
         List<EduReportSummaryDto> mockList = List.of(report1);
 
         when(userRepository.findById(1L)).thenReturn(Optional.of(user));
-        // dept=null → 전체 조회
-        when(eduReportQueryRepository.findEduReports(null, null, null, 1L, true))
+        // dept=null + PSM 조회 범위는 본인 회사 제한
+        when(eduReportQueryRepository.findEduReports(
+                        null, null, null, 1L, true, Company.AWESOME, false))
                 .thenReturn(mockList);
 
         // when
@@ -431,16 +640,17 @@ public class EduReportServiceTest {
         assertThat(result).isNotNull();
         assertThat(result.size()).isEqualTo(1);
 
-        // hasAccess=true, dept=null → QueryRepository에 null 부서로 호출
-        verify(eduReportQueryRepository, times(1)).findEduReports(null, null, null, 1L, true);
+        // hasAccess=true, dept=null + PSM 조회 범위는 본인 회사 제한
+        verify(eduReportQueryRepository, times(1))
+                .findEduReports(null, null, null, 1L, true, Company.AWESOME, false);
     }
 
     @Test
-    @DisplayName("교육 보고서 목록 조회 성공 - WRITE_DEPARTMENT_EDUCATION 권한 있음, 특정 부서 필터")
+    @DisplayName("교육 보고서 목록 조회 성공 - MANAGE_DEPARTMENT_EDUCATION 권한 있음, 특정 부서 필터")
     void getEduReports_WithAccess_FilterByDept() {
         // given
         User user = createNormalUser();
-        user.addAuthority(Authority.WRITE_DEPARTMENT_EDUCATION);
+        user.addAuthority(Authority.MANAGE_DEPARTMENT_EDUCATION);
 
         Department salesDept = Department.builder().id(2L).name(DepartmentName.SALES_DEPT).build();
 
@@ -458,7 +668,8 @@ public class EduReportServiceTest {
         when(userRepository.findById(1L)).thenReturn(Optional.of(user));
         when(departmentRepository.findByName(DepartmentName.SALES_DEPT))
                 .thenReturn(Optional.of(salesDept));
-        when(eduReportQueryRepository.findEduReports(EduType.DEPARTMENT, salesDept, null, 1L, true))
+        when(eduReportQueryRepository.findEduReports(
+                        EduType.DEPARTMENT, salesDept, null, 1L, true, Company.AWESOME, false))
                 .thenReturn(List.of(report1));
 
         // when
@@ -473,7 +684,8 @@ public class EduReportServiceTest {
 
         verify(departmentRepository, times(1)).findByName(DepartmentName.SALES_DEPT);
         verify(eduReportQueryRepository, times(1))
-                .findEduReports(EduType.DEPARTMENT, salesDept, null, 1L, true);
+                .findEduReports(
+                        EduType.DEPARTMENT, salesDept, null, 1L, true, Company.AWESOME, false);
     }
 
     @Test
@@ -489,7 +701,101 @@ public class EduReportServiceTest {
                 .isEqualTo(ErrorCode.USER_NOT_FOUND);
 
         verify(eduReportQueryRepository, never())
-                .findEduReports(any(), any(), any(), anyLong(), anyBoolean());
+                .findEduReports(any(), any(), any(), anyLong(), anyBoolean(), any(), anyBoolean());
+    }
+
+    @Test
+    @DisplayName("PSM 게시물 목록 조회 - MANAGE_PSM 권한 있으면 전체 회사 조회")
+    void getPsmEduReports_WithManagePsm_ReturnsAllCompanies() {
+        // given
+        User user = createNormalUser();
+        user.addAuthority(Authority.MANAGE_PSM);
+
+        EduReportSummaryDto psmReport =
+                EduReportSummaryDto.builder()
+                        .id(11L)
+                        .title("PSM 전사 교육")
+                        .eduType(EduType.PSM)
+                        .build();
+
+        when(userRepository.findById(1L)).thenReturn(Optional.of(user));
+        when(eduReportQueryRepository.findPsmEduReports(null, 1L, null, true))
+                .thenReturn(List.of(psmReport));
+
+        // when
+        List<EduReportSummaryDto> result = eduReportService.getPsmEduReports(null, 1L);
+
+        // then
+        assertThat(result).isNotNull();
+        assertThat(result.size()).isEqualTo(1);
+        assertThat(result.get(0).getEduType()).isEqualTo(EduType.PSM);
+        verify(eduReportQueryRepository, times(1)).findPsmEduReports(null, 1L, null, true);
+    }
+
+    @Test
+    @DisplayName("PSM 게시물 목록 조회 - MANAGE_PSM 권한 없으면 본인 회사 조회")
+    void getPsmEduReports_WithoutManagePsm_ReturnsOnlyMyCompany() {
+        // given
+        User user = createNormalUser(); // workLocation=AWESOME
+
+        when(userRepository.findById(1L)).thenReturn(Optional.of(user));
+        when(eduReportQueryRepository.findPsmEduReports(null, 1L, Company.AWESOME, false))
+                .thenReturn(List.of());
+
+        // when
+        List<EduReportSummaryDto> result = eduReportService.getPsmEduReports(null, 1L);
+
+        // then
+        assertThat(result).isNotNull();
+        verify(eduReportQueryRepository, times(1))
+                .findPsmEduReports(null, 1L, Company.AWESOME, false);
+    }
+
+    @Test
+    @DisplayName("안전 보건 게시물 목록 조회 - MANAGE_SAFETY 권한 있으면 전체 회사 조회")
+    void getSafetyEduReports_WithManageSafety_ReturnsAllCompanies() {
+        // given
+        User user = createNormalUser();
+        user.addAuthority(Authority.MANAGE_SAFETY);
+
+        EduReportSummaryDto safetyReport =
+                EduReportSummaryDto.builder()
+                        .id(21L)
+                        .title("안전 보건 전사 교육")
+                        .eduType(EduType.SAFETY)
+                        .build();
+
+        when(userRepository.findById(1L)).thenReturn(Optional.of(user));
+        when(eduReportQueryRepository.findSafetyEduReports(null, 1L, null, true))
+                .thenReturn(List.of(safetyReport));
+
+        // when
+        List<EduReportSummaryDto> result = eduReportService.getSafetyEduReports(null, 1L);
+
+        // then
+        assertThat(result).isNotNull();
+        assertThat(result.size()).isEqualTo(1);
+        assertThat(result.get(0).getEduType()).isEqualTo(EduType.SAFETY);
+        verify(eduReportQueryRepository, times(1)).findSafetyEduReports(null, 1L, null, true);
+    }
+
+    @Test
+    @DisplayName("안전 보건 게시물 목록 조회 - MANAGE_SAFETY 권한 없으면 본인 회사 조회")
+    void getSafetyEduReports_WithoutManageSafety_ReturnsOnlyMyCompany() {
+        // given
+        User user = createNormalUser(); // workLocation=AWESOME
+
+        when(userRepository.findById(1L)).thenReturn(Optional.of(user));
+        when(eduReportQueryRepository.findSafetyEduReports(null, 1L, Company.AWESOME, false))
+                .thenReturn(List.of());
+
+        // when
+        List<EduReportSummaryDto> result = eduReportService.getSafetyEduReports(null, 1L);
+
+        // then
+        assertThat(result).isNotNull();
+        verify(eduReportQueryRepository, times(1))
+                .findSafetyEduReports(null, 1L, Company.AWESOME, false);
     }
 
     @Test
@@ -498,7 +804,7 @@ public class EduReportServiceTest {
         // given
         Long reportId = 1L;
         Long userId = 99L;
-        User user = createNormalUser(); // WRITE_DEPARTMENT_EDUCATION 권한 없음
+        User user = createNormalUser(); // MANAGE_DEPARTMENT_EDUCATION 권한 없음
 
         EduReport report = EduReport.builder().id(reportId).title("단일 조회 테스트 제목").build();
 
@@ -563,13 +869,258 @@ public class EduReportServiceTest {
     }
 
     @Test
+    @DisplayName("부서 교육 상세 조회 - 권한이 없고 타 부서 게시물이면 조회할 수 없음")
+    void getDepartmentEduReport_WithoutAuthority_OtherDepartment_Fail() {
+        // given
+        Long reportId = 1L;
+        Long userId = 1L;
+
+        Department otherDepartment =
+                Department.builder().id(2L).name(DepartmentName.MANAGEMENT_SUPPORT).build();
+        User user = createNormalUser(); // defaultDept(SALES_DEPT)
+
+        EduReport report =
+                EduReport.builder()
+                        .id(reportId)
+                        .eduType(EduType.DEPARTMENT)
+                        .department(otherDepartment)
+                        .title("타 부서 교육")
+                        .build();
+
+        when(userRepository.findById(userId)).thenReturn(Optional.of(user));
+        when(eduReportRepository.findById(reportId)).thenReturn(Optional.of(report));
+
+        // when & then
+        assertThatThrownBy(() -> eduReportService.getDepartmentEduReport(reportId, userId))
+                .isInstanceOf(CustomException.class)
+                .hasFieldOrPropertyWithValue("errorCode", ErrorCode.EDU_REPORT_NOT_FOUND);
+
+        verify(eduMapper, never()).toDetailDto(any(), any(), anyLong(), any());
+    }
+
+    @Test
+    @DisplayName("부서 교육 상세 조회 - 권한이 없어도 본인 부서 게시물은 조회 가능")
+    void getDepartmentEduReport_WithoutAuthority_OwnDepartment_Success() {
+        // given
+        Long reportId = 1L;
+        Long userId = 1L;
+        User user = createNormalUser(); // defaultDept(SALES_DEPT)
+
+        EduReport report =
+                EduReport.builder()
+                        .id(reportId)
+                        .eduType(EduType.DEPARTMENT)
+                        .department(defaultDept)
+                        .title("본인 부서 교육")
+                        .build();
+
+        EduReportDetailDto mockDto =
+                EduReportDetailDto.builder()
+                        .id(reportId)
+                        .title("본인 부서 교육")
+                        .eduType(EduType.DEPARTMENT)
+                        .build();
+
+        when(userRepository.findById(userId)).thenReturn(Optional.of(user));
+        when(eduReportRepository.findById(reportId)).thenReturn(Optional.of(report));
+        when(eduMapper.toDetailDto(report, null, -1L, s3Service)).thenReturn(mockDto);
+        when(eduAttendanceRepository.existsByEduReportAndUser(report, user)).thenReturn(false);
+
+        // when
+        EduReportDetailDto result = eduReportService.getDepartmentEduReport(reportId, userId);
+
+        // then
+        assertThat(result).isNotNull();
+        assertThat(result.getEduType()).isEqualTo(EduType.DEPARTMENT);
+        verify(eduAttendanceRepository, never()).findAllByEduReportIdWithUser(anyLong());
+    }
+
+    @Test
+    @DisplayName("PSM 상세 조회 - 권한이 없고 타 회사 게시물이면 조회할 수 없음")
+    void getPsmEduReport_WithoutAuthority_OtherCompany_Fail() {
+        // given
+        Long reportId = 11L;
+        Long userId = 1L;
+        User user = createNormalUser(); // workLocation=AWESOME
+
+        EduReport report =
+                EduReport.builder()
+                        .id(reportId)
+                        .eduType(EduType.PSM)
+                        .company(Company.MARUI)
+                        .title("마루이 PSM")
+                        .build();
+
+        when(userRepository.findById(userId)).thenReturn(Optional.of(user));
+        when(eduReportRepository.findById(reportId)).thenReturn(Optional.of(report));
+
+        // when & then
+        assertThatThrownBy(() -> eduReportService.getPsmEduReport(reportId, userId))
+                .isInstanceOf(CustomException.class)
+                .hasFieldOrPropertyWithValue("errorCode", ErrorCode.EDU_REPORT_NOT_FOUND);
+        verify(eduMapper, never()).toDetailDto(any(), any(), anyLong(), any());
+    }
+
+    @Test
+    @DisplayName("PSM 상세 조회 - 권한이 없어도 본인 회사 게시물은 조회 가능")
+    void getPsmEduReport_WithoutAuthority_OwnCompany_Success() {
+        // given
+        Long reportId = 12L;
+        Long userId = 1L;
+        User user = createNormalUser(); // workLocation=AWESOME
+
+        EduReport report =
+                EduReport.builder()
+                        .id(reportId)
+                        .eduType(EduType.PSM)
+                        .company(Company.AWESOME)
+                        .title("어썸 PSM")
+                        .build();
+        EduReportDetailDto mockDto =
+                EduReportDetailDto.builder().id(reportId).eduType(EduType.PSM).build();
+
+        when(userRepository.findById(userId)).thenReturn(Optional.of(user));
+        when(eduReportRepository.findById(reportId)).thenReturn(Optional.of(report));
+        when(eduMapper.toDetailDto(report, null, -1L, s3Service)).thenReturn(mockDto);
+        when(eduAttendanceRepository.existsByEduReportAndUser(report, user)).thenReturn(false);
+
+        // when
+        EduReportDetailDto result = eduReportService.getPsmEduReport(reportId, userId);
+
+        // then
+        assertThat(result).isNotNull();
+        assertThat(result.getEduType()).isEqualTo(EduType.PSM);
+    }
+
+    @Test
+    @DisplayName("PSM 상세 조회 - MANAGE_PSM 권한 있으면 타 회사 게시물도 조회 가능")
+    void getPsmEduReport_WithManagePsm_OtherCompany_Success() {
+        // given
+        Long reportId = 13L;
+        Long userId = 1L;
+        User user = createNormalUser();
+        user.addAuthority(Authority.MANAGE_PSM);
+
+        EduReport report =
+                EduReport.builder()
+                        .id(reportId)
+                        .eduType(EduType.PSM)
+                        .company(Company.MARUI)
+                        .title("마루이 PSM")
+                        .build();
+        EduReportDetailDto mockDto =
+                EduReportDetailDto.builder().id(reportId).eduType(EduType.PSM).build();
+
+        when(userRepository.findById(userId)).thenReturn(Optional.of(user));
+        when(eduReportRepository.findById(reportId)).thenReturn(Optional.of(report));
+        when(eduMapper.toDetailDto(report, null, -1L, s3Service)).thenReturn(mockDto);
+        when(eduAttendanceRepository.existsByEduReportAndUser(report, user)).thenReturn(false);
+
+        // when
+        EduReportDetailDto result = eduReportService.getPsmEduReport(reportId, userId);
+
+        // then
+        assertThat(result).isNotNull();
+        assertThat(result.getEduType()).isEqualTo(EduType.PSM);
+    }
+
+    @Test
+    @DisplayName("안전 보건 상세 조회 - 권한이 없고 타 회사 게시물이면 조회할 수 없음")
+    void getSafetyEduReport_WithoutAuthority_OtherCompany_Fail() {
+        // given
+        Long reportId = 21L;
+        Long userId = 1L;
+        User user = createNormalUser(); // workLocation=AWESOME
+
+        EduReport report =
+                EduReport.builder()
+                        .id(reportId)
+                        .eduType(EduType.SAFETY)
+                        .company(Company.MARUI)
+                        .title("마루이 안전보건")
+                        .build();
+
+        when(userRepository.findById(userId)).thenReturn(Optional.of(user));
+        when(eduReportRepository.findById(reportId)).thenReturn(Optional.of(report));
+
+        // when & then
+        assertThatThrownBy(() -> eduReportService.getSafetyEduReport(reportId, userId))
+                .isInstanceOf(CustomException.class)
+                .hasFieldOrPropertyWithValue("errorCode", ErrorCode.EDU_REPORT_NOT_FOUND);
+        verify(eduMapper, never()).toDetailDto(any(), any(), anyLong(), any());
+    }
+
+    @Test
+    @DisplayName("안전 보건 상세 조회 - 권한이 없어도 본인 회사 게시물은 조회 가능")
+    void getSafetyEduReport_WithoutAuthority_OwnCompany_Success() {
+        // given
+        Long reportId = 22L;
+        Long userId = 1L;
+        User user = createNormalUser(); // workLocation=AWESOME
+
+        EduReport report =
+                EduReport.builder()
+                        .id(reportId)
+                        .eduType(EduType.SAFETY)
+                        .company(Company.AWESOME)
+                        .title("어썸 안전보건")
+                        .build();
+        EduReportDetailDto mockDto =
+                EduReportDetailDto.builder().id(reportId).eduType(EduType.SAFETY).build();
+
+        when(userRepository.findById(userId)).thenReturn(Optional.of(user));
+        when(eduReportRepository.findById(reportId)).thenReturn(Optional.of(report));
+        when(eduMapper.toDetailDto(report, null, -1L, s3Service)).thenReturn(mockDto);
+        when(eduAttendanceRepository.existsByEduReportAndUser(report, user)).thenReturn(false);
+
+        // when
+        EduReportDetailDto result = eduReportService.getSafetyEduReport(reportId, userId);
+
+        // then
+        assertThat(result).isNotNull();
+        assertThat(result.getEduType()).isEqualTo(EduType.SAFETY);
+    }
+
+    @Test
+    @DisplayName("안전 보건 상세 조회 - MANAGE_SAFETY 권한 있으면 타 회사 게시물도 조회 가능")
+    void getSafetyEduReport_WithManageSafety_OtherCompany_Success() {
+        // given
+        Long reportId = 23L;
+        Long userId = 1L;
+        User user = createNormalUser();
+        user.addAuthority(Authority.MANAGE_SAFETY);
+
+        EduReport report =
+                EduReport.builder()
+                        .id(reportId)
+                        .eduType(EduType.SAFETY)
+                        .company(Company.MARUI)
+                        .title("마루이 안전보건")
+                        .build();
+        EduReportDetailDto mockDto =
+                EduReportDetailDto.builder().id(reportId).eduType(EduType.SAFETY).build();
+
+        when(userRepository.findById(userId)).thenReturn(Optional.of(user));
+        when(eduReportRepository.findById(reportId)).thenReturn(Optional.of(report));
+        when(eduMapper.toDetailDto(report, null, -1L, s3Service)).thenReturn(mockDto);
+        when(eduAttendanceRepository.existsByEduReportAndUser(report, user)).thenReturn(false);
+
+        // when
+        EduReportDetailDto result = eduReportService.getSafetyEduReport(reportId, userId);
+
+        // then
+        assertThat(result).isNotNull();
+        assertThat(result.getEduType()).isEqualTo(EduType.SAFETY);
+    }
+
+    @Test
     @DisplayName("교육 보고서 삭제 성공 테스트")
     void deleteEduReport_Success() throws IOException {
         // given
         Long reportId = 1L;
         Long userId = 99L; // 관리자 유저 아이디
         User adminUser = createAdminUser();
-        adminUser.addAuthority(Authority.WRITE_DEPARTMENT_EDUCATION);
+        adminUser.addAuthority(Authority.MANAGE_DEPARTMENT_EDUCATION);
 
         EduAttachment attachment1 =
                 EduAttachment.builder()
@@ -644,7 +1195,7 @@ public class EduReportServiceTest {
         // given
         Long userId = 99L; // 관리자 유저 아이디
         User adminUser = createAdminUser();
-        adminUser.addAuthority(Authority.WRITE_DEPARTMENT_EDUCATION);
+        adminUser.addAuthority(Authority.MANAGE_DEPARTMENT_EDUCATION);
 
         when(userRepository.findById(userId)).thenReturn(Optional.of(adminUser));
         when(eduReportRepository.findById(10L)).thenReturn(Optional.empty());
@@ -655,6 +1206,27 @@ public class EduReportServiceTest {
                 .hasFieldOrPropertyWithValue("errorCode", ErrorCode.EDU_REPORT_NOT_FOUND);
 
         verify(eduReportRepository, times(1)).findById(10L);
+    }
+
+    @Test
+    @DisplayName("안전보건 게시물 삭제 실패 - 타입 불일치(PSM 게시물을 안전보건 삭제 경로로 요청)")
+    void deleteSafetyEduReport_Fail_TypeMismatch() {
+        // given
+        Long reportId = 15L;
+        Long userId = 1L;
+        User user = createNormalUser();
+        user.addAuthority(Authority.MANAGE_SAFETY);
+
+        EduReport report = EduReport.builder().id(reportId).eduType(EduType.PSM).build();
+
+        when(userRepository.findById(userId)).thenReturn(Optional.of(user));
+        when(eduReportRepository.findById(reportId)).thenReturn(Optional.of(report));
+
+        // when & then
+        assertThatThrownBy(() -> eduReportService.deleteSafetyEduReport(reportId, userId))
+                .isInstanceOf(CustomException.class)
+                .hasFieldOrPropertyWithValue("errorCode", ErrorCode.EDU_REPORT_NOT_FOUND);
+        verify(eduReportRepository, never()).delete(any(EduReport.class));
     }
 
     @Test
@@ -701,6 +1273,31 @@ public class EduReportServiceTest {
                 .hasFieldOrPropertyWithValue("errorCode", ErrorCode.EDU_ATTACHMENT_NOT_FOUND);
 
         verify(s3Service, never()).downloadFile(anyString());
+    }
+
+    @Test
+    @DisplayName("부서 교육 출석 처리 실패 - 타입 불일치(PSM 게시물을 부서 경로로 요청)")
+    void markDepartmentAttendance_Fail_TypeMismatch() {
+        // given
+        Long reportId = 32L;
+        Long userId = 1L;
+        User user = createNormalUser();
+        EduReport report =
+                EduReport.builder()
+                        .id(reportId)
+                        .eduType(EduType.PSM)
+                        .status(EduReportStatus.OPEN)
+                        .signatureRequired(false)
+                        .build();
+
+        when(userRepository.findById(userId)).thenReturn(Optional.of(user));
+        when(eduReportRepository.findById(reportId)).thenReturn(Optional.of(report));
+
+        // when & then
+        assertThatThrownBy(() -> eduReportService.markDepartmentAttendance(reportId, null, userId))
+                .isInstanceOf(CustomException.class)
+                .hasFieldOrPropertyWithValue("errorCode", ErrorCode.EDU_REPORT_NOT_FOUND);
+        verify(eduAttendanceRepository, never()).save(any());
     }
 
     @Test
@@ -794,13 +1391,13 @@ public class EduReportServiceTest {
     }
 
     @Test
-    @DisplayName("교육 보고서 조회 - WRITE_DEPARTMENT_EDUCATION 권한 있음 → attendees 포함")
+    @DisplayName("교육 보고서 조회 - MANAGE_DEPARTMENT_EDUCATION 권한 있음 → attendees 포함")
     void getEduReport_WithAccess_IncludesAttendees() {
         // given
         Long reportId = 1L;
         Long userId = 99L;
         User user = createNormalUser();
-        user.addAuthority(Authority.WRITE_DEPARTMENT_EDUCATION);
+        user.addAuthority(Authority.MANAGE_DEPARTMENT_EDUCATION);
 
         EduReport report =
                 EduReport.builder().id(reportId).title("권한 보고서").eduType(EduType.SAFETY).build();
@@ -837,7 +1434,7 @@ public class EduReportServiceTest {
     }
 
     @Test
-    @DisplayName("교육 보고서 조회 - WRITE_DEPARTMENT_EDUCATION 권한 없음 → attendees=null")
+    @DisplayName("교육 보고서 조회 - MANAGE_DEPARTMENT_EDUCATION 권한 없음 → attendees=null")
     void getEduReport_WithoutAccess_AttendeesIsNull() {
         // given
         Long reportId = 1L;
@@ -871,13 +1468,13 @@ public class EduReportServiceTest {
     }
 
     @Test
-    @DisplayName("교육 수정 성공 - 안전보건은 WRITE_SAFETY 권한으로 수정 가능")
+    @DisplayName("교육 수정 성공 - 안전보건은 MANAGE_SAFETY 권한으로 수정 가능")
     void updateEduReport_Safety_Success() {
         // given
         Long reportId = 10L;
         Long userId = 1L;
         User user = createNormalUser();
-        user.addAuthority(Authority.WRITE_SAFETY);
+        user.addAuthority(Authority.MANAGE_SAFETY);
 
         EducationCategory oldCategory =
                 EducationCategory.builder()
@@ -929,7 +1526,7 @@ public class EduReportServiceTest {
     }
 
     @Test
-    @DisplayName("교육 수정 실패 - 안전보건은 WRITE_SAFETY 권한이 없으면 수정 불가")
+    @DisplayName("교육 수정 실패 - 안전보건은 MANAGE_SAFETY 권한이 없으면 수정 불가")
     void updateEduReport_Safety_Fail_NoAuthority() {
         // given
         Long reportId = 10L;
@@ -963,7 +1560,7 @@ public class EduReportServiceTest {
         Long reportId = 10L;
         Long userId = 1L;
         User user = createNormalUser();
-        user.addAuthority(Authority.WRITE_DEPARTMENT_EDUCATION);
+        user.addAuthority(Authority.MANAGE_DEPARTMENT_EDUCATION);
 
         EduReport report =
                 EduReport.builder()
@@ -987,13 +1584,45 @@ public class EduReportServiceTest {
     }
 
     @Test
+    @DisplayName("부서 교육 수정 실패 - 타입 불일치(PSM 게시물을 부서 교육 수정 경로로 요청)")
+    void updateDepartmentEduReport_Fail_TypeMismatch() {
+        // given
+        Long reportId = 16L;
+        Long userId = 1L;
+        User user = createNormalUser();
+        user.addAuthority(Authority.MANAGE_DEPARTMENT_EDUCATION);
+
+        EduReport report =
+                EduReport.builder()
+                        .id(reportId)
+                        .eduType(EduType.PSM)
+                        .status(EduReportStatus.OPEN)
+                        .build();
+
+        EduReportUpdateRequestDto requestDto =
+                EduReportUpdateRequestDto.builder().title("수정 제목").content("수정 내용").build();
+
+        when(userRepository.findById(userId)).thenReturn(Optional.of(user));
+        when(eduReportRepository.findById(reportId)).thenReturn(Optional.of(report));
+
+        // when & then
+        assertThatThrownBy(
+                        () ->
+                                eduReportService.updateDepartmentEduReport(
+                                        reportId, requestDto, userId))
+                .isInstanceOf(CustomException.class)
+                .hasFieldOrPropertyWithValue("errorCode", ErrorCode.EDU_REPORT_NOT_FOUND);
+        verify(eduAttendanceRepository, never()).countByEduReportId(anyLong());
+    }
+
+    @Test
     @DisplayName("교육 수정 성공 - 첨부파일 삭제 및 추가")
     void updateEduReport_WithAttachmentChanges_Success() throws IOException {
         // given
         Long reportId = 20L;
         Long userId = 1L;
         User user = createNormalUser();
-        user.addAuthority(Authority.WRITE_DEPARTMENT_EDUCATION);
+        user.addAuthority(Authority.MANAGE_DEPARTMENT_EDUCATION);
 
         EduReport report =
                 EduReport.builder()
@@ -1054,7 +1683,7 @@ public class EduReportServiceTest {
         Long reportId = 21L;
         Long userId = 1L;
         User user = createNormalUser();
-        user.addAuthority(Authority.WRITE_DEPARTMENT_EDUCATION);
+        user.addAuthority(Authority.MANAGE_DEPARTMENT_EDUCATION);
 
         EduReport report =
                 EduReport.builder()
@@ -1106,13 +1735,13 @@ public class EduReportServiceTest {
     }
 
     @Test
-    @DisplayName("교육 상태 변경 성공 - 안전보건은 WRITE_SAFETY 권한으로 상태 변경 가능")
+    @DisplayName("교육 상태 변경 성공 - 안전보건은 MANAGE_SAFETY 권한으로 상태 변경 가능")
     void updateEduReportStatus_Safety_Success() {
         // given
         Long reportId = 11L;
         Long userId = 1L;
         User user = createNormalUser();
-        user.addAuthority(Authority.WRITE_SAFETY);
+        user.addAuthority(Authority.MANAGE_SAFETY);
 
         EduReport report =
                 EduReport.builder()
@@ -1134,6 +1763,28 @@ public class EduReportServiceTest {
         // then
         assertThat(updatedId).isEqualTo(reportId);
         assertThat(report.getStatus()).isEqualTo(EduReportStatus.CLOSED);
+    }
+
+    @Test
+    @DisplayName("PSM 상태 변경 실패 - PSM 관리 권한 없음")
+    void updatePsmEduReportStatus_Fail_NoAuthority() {
+        // given
+        Long reportId = 17L;
+        Long userId = 1L;
+        User user = createNormalUser();
+        EduReportStatusUpdateRequestDto requestDto =
+                org.mockito.Mockito.mock(EduReportStatusUpdateRequestDto.class);
+
+        when(userRepository.findById(userId)).thenReturn(Optional.of(user));
+
+        // when & then
+        assertThatThrownBy(
+                        () ->
+                                eduReportService.updatePsmEduReportStatus(
+                                        reportId, requestDto, userId))
+                .isInstanceOf(CustomException.class)
+                .hasFieldOrPropertyWithValue("errorCode", ErrorCode.NO_AUTHORITY_FOR_PSM_MANAGE);
+        verify(eduReportRepository, never()).findById(anyLong());
     }
 
     @Test

@@ -175,7 +175,7 @@ public class SafetyTrainingSessionService {
         SafetyTrainingSessionSearchConditionDto filter =
                 condition == null ? new SafetyTrainingSessionSearchConditionDto() : condition;
 
-        boolean canReadAllCompanies = actor.hasAuthority(Authority.WRITE_SAFETY);
+        boolean canReadAllCompanies = actor.hasAuthority(Authority.MANAGE_SAFETY);
         Company companyScope =
                 canReadAllCompanies ? filter.getCompanyScope() : actor.getWorkLocation();
         SafetyTrainingSessionStatus status = canReadAllCompanies ? filter.getStatus() : null;
@@ -700,7 +700,7 @@ public class SafetyTrainingSessionService {
     }
 
     private void validateSafetyWriteAuthority(User user) {
-        if (!user.hasAuthority(Authority.WRITE_SAFETY)) {
+        if (!user.hasAuthority(Authority.MANAGE_SAFETY)) {
             throw new CustomException(ErrorCode.NO_AUTHORITY_FOR_SAFETY_WRITE);
         }
     }
@@ -800,7 +800,7 @@ public class SafetyTrainingSessionService {
     }
 
     private void validateSessionReadAccess(User actor, SafetyTrainingSession session) {
-        if (actor.hasAuthority(Authority.WRITE_SAFETY)) {
+        if (actor.hasAuthority(Authority.MANAGE_SAFETY)) {
             return;
         }
         if (actor.getWorkLocation() == null

@@ -20,12 +20,11 @@ import lombok.RequiredArgsConstructor;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
-
-import java.time.LocalDateTime;
 import org.springframework.data.support.PageableExecutionUtils;
 import org.springframework.stereotype.Repository;
 import org.springframework.util.StringUtils;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 @Repository
@@ -123,8 +122,9 @@ public class NoticeQueryRepository {
                 .from(notice)
                 .innerJoin(notice.author, author)
                 .where(
-                        notice.createdDate.lt(createdDate).or(
-                                notice.createdDate.eq(createdDate).and(notice.id.lt(noticeId))),
+                        notice.createdDate
+                                .lt(createdDate)
+                                .or(notice.createdDate.eq(createdDate).and(notice.id.lt(noticeId))),
                         noticeAccessible(hasAccessNotice, userId))
                 .orderBy(notice.createdDate.desc(), notice.id.desc())
                 .limit(1)
@@ -147,8 +147,9 @@ public class NoticeQueryRepository {
                 .from(notice)
                 .innerJoin(notice.author, author)
                 .where(
-                        notice.createdDate.gt(createdDate).or(
-                                notice.createdDate.eq(createdDate).and(notice.id.gt(noticeId))),
+                        notice.createdDate
+                                .gt(createdDate)
+                                .or(notice.createdDate.eq(createdDate).and(notice.id.gt(noticeId))),
                         noticeAccessible(hasAccessNotice, userId))
                 .orderBy(notice.createdDate.asc(), notice.id.asc())
                 .limit(1)

@@ -2,10 +2,13 @@ package kr.co.awesomelead.groupware_backend.domain.notice.respository;
 
 import com.querydsl.core.types.Projections;
 import com.querydsl.core.types.dsl.BooleanExpression;
+import com.querydsl.core.types.dsl.CaseBuilder;
+import com.querydsl.core.types.dsl.StringExpression;
 import com.querydsl.jpa.JPAExpressions;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 
 import kr.co.awesomelead.groupware_backend.domain.notice.dto.request.NoticeSearchConditionDto;
+import kr.co.awesomelead.groupware_backend.domain.notice.dto.response.NoticeDetailDto;
 import kr.co.awesomelead.groupware_backend.domain.notice.dto.response.NoticeSummaryDto;
 import kr.co.awesomelead.groupware_backend.domain.notice.entity.QNotice;
 import kr.co.awesomelead.groupware_backend.domain.notice.entity.QNoticeTarget;
@@ -17,6 +20,8 @@ import lombok.RequiredArgsConstructor;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+
+import java.time.LocalDateTime;
 import org.springframework.data.support.PageableExecutionUtils;
 import org.springframework.stereotype.Repository;
 import org.springframework.util.StringUtils;
@@ -53,8 +58,9 @@ public class NoticeQueryRepository {
                                         notice.type,
                                         notice.title,
                                         notice.pinned,
-                                        notice.updatedDate))
-                        .orderBy(notice.pinned.desc(), notice.updatedDate.desc())
+                                        displayNameExpr(author),
+                                        notice.createdDate))
+                        .orderBy(notice.pinned.desc(), notice.createdDate.desc())
                         .offset(pageable.getOffset())
                         .limit(pageable.getPageSize())
                         .fetch();
@@ -81,6 +87,7 @@ public class NoticeQueryRepository {
 
     public List<NoticeSummaryDto> findTop3Notices(Long userId, boolean hasAccessNotice) {
         QNotice notice = QNotice.notice;
+        QUser author = QUser.user;
 
         return queryFactory
                 .select(
@@ -90,12 +97,69 @@ public class NoticeQueryRepository {
                                 notice.type,
                                 notice.title,
                                 notice.pinned,
-                                notice.updatedDate))
+                                displayNameExpr(author),
+                                notice.createdDate))
                 .from(notice)
+                .innerJoin(notice.author, author)
                 .where(noticeAccessible(hasAccessNotice, userId))
-                .orderBy(notice.pinned.desc(), notice.updatedDate.desc())
+                .orderBy(notice.pinned.desc(), notice.createdDate.desc())
                 .limit(3)
                 .fetch();
+    }
+
+    public NoticeDetailDto.NoticeInfo findPrevNotice(
+            Long noticeId, LocalDateTime createdDate, Long userId, boolean hasAccessNotice) {
+        QNotice notice = QNotice.notice;
+        QUser author = QUser.user;
+
+        return queryFactory
+                .select(
+                        Projections.constructor(
+                                NoticeDetailDto.NoticeInfo.class,
+                                notice.id,
+                                notice.title,
+                                displayNameExpr(author),
+                                notice.createdDate))
+                .from(notice)
+                .innerJoin(notice.author, author)
+                .where(
+                        notice.createdDate.lt(createdDate).or(
+                                notice.createdDate.eq(createdDate).and(notice.id.lt(noticeId))),
+                        noticeAccessible(hasAccessNotice, userId))
+                .orderBy(notice.createdDate.desc(), notice.id.desc())
+                .limit(1)
+                .fetchOne();
+    }
+
+    public NoticeDetailDto.NoticeInfo findNextNotice(
+            Long noticeId, LocalDateTime createdDate, Long userId, boolean hasAccessNotice) {
+        QNotice notice = QNotice.notice;
+        QUser author = QUser.user;
+
+        return queryFactory
+                .select(
+                        Projections.constructor(
+                                NoticeDetailDto.NoticeInfo.class,
+                                notice.id,
+                                notice.title,
+                                displayNameExpr(author),
+                                notice.createdDate))
+                .from(notice)
+                .innerJoin(notice.author, author)
+                .where(
+                        notice.createdDate.gt(createdDate).or(
+                                notice.createdDate.eq(createdDate).and(notice.id.gt(noticeId))),
+                        noticeAccessible(hasAccessNotice, userId))
+                .orderBy(notice.createdDate.asc(), notice.id.asc())
+                .limit(1)
+                .fetchOne();
+    }
+
+    private StringExpression displayNameExpr(QUser author) {
+        return new CaseBuilder()
+                .when(author.nameKor.isNotNull().and(author.nameKor.ne("")))
+                .then(author.nameKor)
+                .otherwise(author.nameEng);
     }
 
     private BooleanExpression noticeAccessible(boolean hasAccessNotice, Long userId) {

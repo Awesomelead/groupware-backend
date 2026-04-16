@@ -3,6 +3,7 @@ package kr.co.awesomelead.groupware_backend.domain.notice;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.never;
@@ -241,11 +242,16 @@ class NoticeServiceTest {
             Notice notice = Notice.builder().title("상세조회").build();
             ReflectionTestUtils.setField(notice, "viewCount", 0);
             given(noticeRepository.findByIdWithDetails(1L)).willReturn(Optional.of(notice));
+            given(userRepository.findById(1L)).willReturn(Optional.of(adminUser));
             given(noticeMapper.toNoticeDetailDto(any(), any()))
                     .willReturn(NoticeDetailDto.builder().title("상세조회").build());
+            given(noticeQueryRepository.findPrevNotice(any(), any(), any(), anyBoolean()))
+                    .willReturn(null);
+            given(noticeQueryRepository.findNextNotice(any(), any(), any(), anyBoolean()))
+                    .willReturn(null);
 
             // when
-            NoticeDetailDto result = noticeService.getNotice(1L);
+            NoticeDetailDto result = noticeService.getNotice(1L, 1L);
 
             // then
             assertThat(notice.getViewCount()).isEqualTo(1);
@@ -261,6 +267,7 @@ class NoticeServiceTest {
             Notice notice = Notice.builder().title("대상조회").build();
             ReflectionTestUtils.setField(notice, "viewCount", 0);
             given(noticeRepository.findByIdWithDetails(1L)).willReturn(Optional.of(notice));
+            given(userRepository.findById(1L)).willReturn(Optional.of(adminUser));
             given(noticeMapper.toNoticeDetailDto(any(), any()))
                     .willReturn(
                             NoticeDetailDto.builder()
@@ -269,9 +276,13 @@ class NoticeServiceTest {
                                     .targetDepartmentIds(List.of(10L, 20L))
                                     .targetUserIds(List.of(99L))
                                     .build());
+            given(noticeQueryRepository.findPrevNotice(any(), any(), any(), anyBoolean()))
+                    .willReturn(null);
+            given(noticeQueryRepository.findNextNotice(any(), any(), any(), anyBoolean()))
+                    .willReturn(null);
 
             // when
-            NoticeDetailDto result = noticeService.getNotice(1L);
+            NoticeDetailDto result = noticeService.getNotice(1L, 1L);
 
             // then
             assertThat(result.getTargetCompanies()).containsExactly(Company.AWESOME);
@@ -286,20 +297,64 @@ class NoticeServiceTest {
             Notice notice = Notice.builder().title("타입조회").build();
             ReflectionTestUtils.setField(notice, "viewCount", 0);
             given(noticeRepository.findByIdWithDetails(1L)).willReturn(Optional.of(notice));
+            given(userRepository.findById(1L)).willReturn(Optional.of(adminUser));
             given(noticeMapper.toNoticeDetailDto(any(), any()))
                     .willReturn(
                             NoticeDetailDto.builder()
                                     .title("타입조회")
                                     .type(NoticeType.REGULAR.name())
                                     .build());
+            given(noticeQueryRepository.findPrevNotice(any(), any(), any(), anyBoolean()))
+                    .willReturn(null);
+            given(noticeQueryRepository.findNextNotice(any(), any(), any(), anyBoolean()))
+                    .willReturn(null);
 
             // when
-            NoticeDetailDto result = noticeService.getNotice(1L);
+            NoticeDetailDto result = noticeService.getNotice(1L, 1L);
 
             // then
             assertThat(result.getType()).isEqualTo("REGULAR");
             assertThat(result.getType())
                     .isIn(NoticeType.REGULAR.name(), NoticeType.MENU.name(), NoticeType.ETC.name());
+        }
+
+        @Test
+        @DisplayName("이전/다음 공지사항 정보를 포함하여 반환한다")
+        void it_returns_dto_with_prev_next_notice() {
+            // given
+            Notice notice = Notice.builder().title("이전다음조회").build();
+            ReflectionTestUtils.setField(notice, "viewCount", 0);
+
+            NoticeDetailDto.NoticeInfo prevInfo =
+                    NoticeDetailDto.NoticeInfo.builder()
+                            .id(9L)
+                            .title("이전 공지")
+                            .authorName("홍길동")
+                            .build();
+            NoticeDetailDto.NoticeInfo nextInfo =
+                    NoticeDetailDto.NoticeInfo.builder()
+                            .id(11L)
+                            .title("다음 공지")
+                            .authorName("이순신")
+                            .build();
+
+            given(noticeRepository.findByIdWithDetails(10L)).willReturn(Optional.of(notice));
+            given(userRepository.findById(1L)).willReturn(Optional.of(adminUser));
+            given(noticeMapper.toNoticeDetailDto(any(), any()))
+                    .willReturn(NoticeDetailDto.builder().title("이전다음조회").build());
+            given(noticeQueryRepository.findPrevNotice(any(), any(), any(), anyBoolean()))
+                    .willReturn(prevInfo);
+            given(noticeQueryRepository.findNextNotice(any(), any(), any(), anyBoolean()))
+                    .willReturn(nextInfo);
+
+            // when
+            NoticeDetailDto result = noticeService.getNotice(10L, 1L);
+
+            // then
+            assertThat(result.getPrevNotice()).isNotNull();
+            assertThat(result.getPrevNotice().getId()).isEqualTo(9L);
+            assertThat(result.getNextNotice()).isNotNull();
+            assertThat(result.getNextNotice().getId()).isEqualTo(11L);
         }
     }
 

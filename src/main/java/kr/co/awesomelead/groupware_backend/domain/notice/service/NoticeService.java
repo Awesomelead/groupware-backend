@@ -130,7 +130,7 @@ public class NoticeService {
     }
 
     @Transactional
-    public NoticeDetailDto getNotice(Long noticeId) {
+    public NoticeDetailDto getNotice(Long noticeId, Long userId) {
         Notice notice =
                 noticeRepository
                         .findByIdWithDetails(noticeId)
@@ -140,7 +140,21 @@ public class NoticeService {
         notice.increaseViewCount();
         noticeRepository.save(notice);
 
-        return noticeMapper.toNoticeDetailDto(notice, s3Service);
+        User user =
+                userRepository
+                        .findById(userId)
+                        .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
+        boolean hasAccessNotice = user.hasAuthority(Authority.ACCESS_NOTICE);
+
+        NoticeDetailDto dto = noticeMapper.toNoticeDetailDto(notice, s3Service);
+        dto.setPrevNotice(
+                noticeQueryRepository.findPrevNotice(
+                        noticeId, notice.getCreatedDate(), userId, hasAccessNotice));
+        dto.setNextNotice(
+                noticeQueryRepository.findNextNotice(
+                        noticeId, notice.getCreatedDate(), userId, hasAccessNotice));
+
+        return dto;
     }
 
     @Transactional

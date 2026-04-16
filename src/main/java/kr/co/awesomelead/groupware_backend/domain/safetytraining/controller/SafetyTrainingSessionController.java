@@ -49,7 +49,7 @@ import java.io.IOException;
 @RequiredArgsConstructor
 @RequestMapping("/api/safety-trainings")
 @Tag(
-        name = "Safety Training",
+        name = "안전보건 교육일지",
         description =
                 """
         안전보건 교육일지 API

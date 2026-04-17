@@ -21,6 +21,7 @@ import kr.co.awesomelead.groupware_backend.domain.education.dto.request.EduRepor
 import kr.co.awesomelead.groupware_backend.domain.education.dto.request.PsmEduReportCreateRequestDto;
 import kr.co.awesomelead.groupware_backend.domain.education.dto.request.SafetyEduReportCreateRequestDto;
 import kr.co.awesomelead.groupware_backend.domain.education.dto.response.EduReportDetailDto;
+import kr.co.awesomelead.groupware_backend.domain.education.dto.response.EduReportSignatureStatusDto;
 import kr.co.awesomelead.groupware_backend.domain.education.dto.response.EduReportSummaryDto;
 import kr.co.awesomelead.groupware_backend.domain.education.entity.EduAttachment;
 import kr.co.awesomelead.groupware_backend.domain.education.entity.EduAttendance;
@@ -39,6 +40,7 @@ import kr.co.awesomelead.groupware_backend.domain.education.service.EduReportSer
 import kr.co.awesomelead.groupware_backend.domain.notification.service.NotificationService;
 import kr.co.awesomelead.groupware_backend.domain.user.entity.User;
 import kr.co.awesomelead.groupware_backend.domain.user.enums.Authority;
+import kr.co.awesomelead.groupware_backend.domain.user.enums.Position;
 import kr.co.awesomelead.groupware_backend.domain.user.enums.Role;
 import kr.co.awesomelead.groupware_backend.domain.user.enums.Status;
 import kr.co.awesomelead.groupware_backend.domain.user.repository.UserRepository;
@@ -1785,6 +1787,105 @@ public class EduReportServiceTest {
                 .isInstanceOf(CustomException.class)
                 .hasFieldOrPropertyWithValue("errorCode", ErrorCode.NO_AUTHORITY_FOR_PSM_MANAGE);
         verify(eduReportRepository, never()).findById(anyLong());
+    }
+
+    @Test
+    @DisplayName("서명 현황 조회 성공 - 부서 교육 MANAGE_DEPARTMENT_EDUCATION 권한으로 서명자 포함 목록 반환")
+    void getSignatureStatuses_DepartmentEdu_Success() {
+        // Given
+        Long reportId = 100L;
+        Long userId = 1L;
+        User user = createNormalUser();
+        user.addAuthority(Authority.MANAGE_DEPARTMENT_EDUCATION);
+
+        EduReport report =
+                EduReport.builder()
+                        .id(reportId)
+                        .eduType(EduType.DEPARTMENT)
+                        .department(defaultDept)
+                        .signatureRequired(true)
+                        .build();
+
+        EduReportQueryRepository.SignatureStatusRow signedRow =
+                new EduReportQueryRepository.SignatureStatusRow(
+                        "홍길동", null, DepartmentName.SALES_DEPT, Position.STAFF, "sig-key-123");
+        EduReportQueryRepository.SignatureStatusRow unsignedRow =
+                new EduReportQueryRepository.SignatureStatusRow(
+                        "김철수", null, DepartmentName.SALES_DEPT, Position.MANAGER, null);
+
+        when(userRepository.findById(userId)).thenReturn(Optional.of(user));
+        when(eduReportRepository.findById(reportId)).thenReturn(Optional.of(report));
+        when(eduReportQueryRepository.findSignatureStatuses(report, null))
+                .thenReturn(List.of(signedRow, unsignedRow));
+        when(s3Service.getPresignedViewUrl("sig-key-123")).thenReturn("https://s3/sig-key-123");
+
+        // When
+        List<EduReportSignatureStatusDto> result =
+                eduReportService.getSignatureStatuses(reportId, null, userId);
+
+        // Then
+        assertThat(result).isNotNull();
+        assertThat(result.size()).isEqualTo(2);
+        assertThat(result.get(0).getDisplayName()).isEqualTo("홍길동");
+        assertThat(result.get(0).isSigned()).isTrue();
+        assertThat(result.get(0).getSignatureUrl()).isEqualTo("https://s3/sig-key-123");
+        assertThat(result.get(1).isSigned()).isFalse();
+        assertThat(result.get(1).getSignatureUrl()).isNull();
+    }
+
+    @Test
+    @DisplayName("서명 현황 조회 실패 - 사용자 없음")
+    void getSignatureStatuses_Fail_UserNotFound() {
+        // Given
+        when(userRepository.findById(1L)).thenReturn(Optional.empty());
+
+        // When & Then
+        assertThatThrownBy(() -> eduReportService.getSignatureStatuses(100L, null, 1L))
+                .isInstanceOf(CustomException.class)
+                .extracting("errorCode")
+                .isEqualTo(ErrorCode.USER_NOT_FOUND);
+
+        verify(eduReportRepository, never()).findById(anyLong());
+    }
+
+    @Test
+    @DisplayName("서명 현황 조회 실패 - 게시물 없음")
+    void getSignatureStatuses_Fail_EduReportNotFound() {
+        // Given
+        User user = createNormalUser();
+        user.addAuthority(Authority.MANAGE_DEPARTMENT_EDUCATION);
+
+        when(userRepository.findById(1L)).thenReturn(Optional.of(user));
+        when(eduReportRepository.findById(100L)).thenReturn(Optional.empty());
+
+        // When & Then
+        assertThatThrownBy(() -> eduReportService.getSignatureStatuses(100L, null, 1L))
+                .isInstanceOf(CustomException.class)
+                .extracting("errorCode")
+                .isEqualTo(ErrorCode.EDU_REPORT_NOT_FOUND);
+    }
+
+    @Test
+    @DisplayName("서명 현황 조회 실패 - 부서 교육 권한 없음")
+    void getSignatureStatuses_Fail_NoAuthority() {
+        // Given
+        User user = createNormalUser(); // 권한 없음
+
+        EduReport report =
+                EduReport.builder()
+                        .id(100L)
+                        .eduType(EduType.DEPARTMENT)
+                        .department(defaultDept)
+                        .build();
+
+        when(userRepository.findById(1L)).thenReturn(Optional.of(user));
+        when(eduReportRepository.findById(100L)).thenReturn(Optional.of(report));
+
+        // When & Then
+        assertThatThrownBy(() -> eduReportService.getSignatureStatuses(100L, null, 1L))
+                .isInstanceOf(CustomException.class)
+                .extracting("errorCode")
+                .isEqualTo(ErrorCode.NO_AUTHORITY_FOR_EDU_REPORT);
     }
 
     @Test

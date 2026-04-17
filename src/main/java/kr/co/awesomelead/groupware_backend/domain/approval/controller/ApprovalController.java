@@ -146,7 +146,190 @@ public class ApprovalController {
             })
     @PostMapping
     public ResponseEntity<ApiResponse<Long>> createApproval(
-            @Parameter(description = "상신할 결재 문서 정보 (타입별 상세 필드 포함)", required = true)
+            @io.swagger.v3.oas.annotations.parameters.RequestBody(
+                            description = "상신할 결재 문서 정보. documentType 값에 따라 필수 필드가 달라집니다.",
+                            required = true,
+                            content =
+                                    @Content(
+                                            mediaType = "application/json",
+                                            schema =
+                                                    @Schema(
+                                                            implementation =
+                                                                    ApprovalCreateRequestDto.class),
+                                            examples = {
+                                                @ExampleObject(
+                                                        name = "기본양식 (BASIC)",
+                                                        summary = "기본 기안문 예시",
+                                                        value =
+                                                                """
+                        {
+                          "title": "비품 구매 요청",
+                          "content": "<p>사무용 노트북 1대 구매를 요청합니다.</p>",
+                          "documentType": "기본양식",
+                          "approvalSteps": [
+                            { "approverId": 2, "sequence": 1 },
+                            { "approverId": 3, "sequence": 2 }
+                          ],
+                          "participants": [
+                            { "userId": 10, "participantType": "참조자" }
+                          ]
+                        }
+                        """),
+                                                @ExampleObject(
+                                                        name = "근태신청서 (LEAVE)",
+                                                        summary = "휴가 신청 예시",
+                                                        value =
+                                                                """
+                        {
+                          "title": "2026년 하계 휴가 신청",
+                          "content": "<p>계획된 휴가 신청합니다.</p>",
+                          "documentType": "근태신청서",
+                          "approvalSteps": [
+                            { "approverId": 2, "sequence": 1 },
+                            { "approverId": 3, "sequence": 2 }
+                          ],
+                          "participants": [
+                            { "userId": 10, "participantType": "참조자" }
+                          ],
+                          "startDate": "2026-07-01T09:00:00",
+                          "endDate": "2026-07-05T18:00:00",
+                          "leaveType": "휴가",
+                          "leaveDetailType": "연차",
+                          "reason": "정기 휴가",
+                          "emergencyContact": "010-1234-5678"
+                        }
+                        """),
+                                                @ExampleObject(
+                                                        name = "기안및지출결의 (EXPENSE_DRAFT)",
+                                                        summary = "지출결의 예시",
+                                                        value =
+                                                                """
+                        {
+                          "title": "2026년 3월 사무용품 구매",
+                          "content": "<p>사무용품 구매 지출 결의합니다.</p>",
+                          "documentType": "기안및지출결의",
+                          "approvalSteps": [
+                            { "approverId": 2, "sequence": 1 },
+                            { "approverId": 3, "sequence": 2 }
+                          ],
+                          "participants": [],
+                          "details": [
+                            {
+                              "evidenceDate": "2026-03-10",
+                              "clientName": "(주)오피스디포",
+                              "content": "A4 용지 5박스",
+                              "supplyAmount": 50000,
+                              "vatAmount": 5000,
+                              "totalAmount": 55000,
+                              "paymentRequestDate": "2026-03-31",
+                              "expenseType": "법인카드"
+                            }
+                          ]
+                        }
+                        """),
+                                                @ExampleObject(
+                                                        name = "차량유류정산지출결의 (CAR_FUEL)",
+                                                        summary = "차량 유류비 정산 예시",
+                                                        value =
+                                                                """
+                        {
+                          "title": "2026년 3월 차량 유류비 정산",
+                          "content": "<p>3월 차량 운행 유류비 정산 요청합니다.</p>",
+                          "documentType": "차량유류정산지출결의",
+                          "approvalSteps": [
+                            { "approverId": 2, "sequence": 1 }
+                          ],
+                          "participants": [],
+                          "agreementDepartment": "관리본부",
+                          "carTypeNumber": "카니발 / 12가 3456",
+                          "fuelType": "휘발유",
+                          "totalDistanceKm": 150.5,
+                          "fuelClaimAmount": 25000,
+                          "totalAmount": 30000,
+                          "bankName": "국민은행",
+                          "accountNumber": "123-456-7890",
+                          "accountHolder": "홍길동",
+                          "details": [
+                            {
+                              "driveDate": "2026-03-02",
+                              "purpose": "A업체 기술 지원 외근",
+                              "route": "본사 → 화성 공장 → 본사",
+                              "distanceKm": 50.2,
+                              "tollParkingFee": 5000
+                            }
+                          ]
+                        }
+                        """),
+                                                @ExampleObject(
+                                                        name = "국외출장여비정산서 (OVERSEAS_TRIP)",
+                                                        summary = "국외 출장비 정산 예시",
+                                                        value =
+                                                                """
+                        {
+                          "title": "2026년 3월 미국 출장 여비 정산",
+                          "content": "<p>샌프란시스코 기술 컨퍼런스 참가 여비 정산합니다.</p>",
+                          "documentType": "국외출장여비정산서",
+                          "approvalSteps": [
+                            { "approverId": 2, "sequence": 1 },
+                            { "approverId": 3, "sequence": 2 }
+                          ],
+                          "participants": [
+                            { "userId": 10, "participantType": "참조자" }
+                          ],
+                          "companion": "박지민 팀장",
+                          "destination": "미국 샌프란시스코 (Google 본사)",
+                          "tripPeriod": "2026-03-01 ~ 2026-03-10",
+                          "purpose": "글로벌 기술 컨퍼런스 참가 및 파트너사 미팅",
+                          "currencyUnit": "USD",
+                          "exchangeRate": 1350.5,
+                          "advanceCash": 500000,
+                          "advanceCard": 1000000,
+                          "advanceTotal": 1500000,
+                          "advanceReturn": 200000,
+                          "additionalClaim": 0,
+                          "details": [
+                            {
+                              "evidenceNumber": "REC-20260301-001",
+                              "evidenceDate": "2026-03-01",
+                              "usageType": "숙박비",
+                              "description": "샌프란시스코 힐튼 호텔 1박",
+                              "foreignCurrency": 250.0,
+                              "exchangeRate": 1348.0,
+                              "cashAmount": 337000,
+                              "cardAmount": 0,
+                              "totalAmount": 337000
+                            }
+                          ]
+                        }
+                        """),
+                                                @ExampleObject(
+                                                        name = "기안및지출결의_복리후생 (WELFARE_EXPENSE)",
+                                                        summary = "복리후생 지출결의 예시",
+                                                        value =
+                                                                """
+                        {
+                          "title": "2026년 3월 임직원 경조사 지원",
+                          "content": "<p>임직원 경조사 지원금 지출 결의합니다.</p>",
+                          "documentType": "기안및지출결의_복리후생",
+                          "approvalSteps": [
+                            { "approverId": 2, "sequence": 1 }
+                          ],
+                          "participants": [],
+                          "details": [
+                            {
+                              "evidenceDate": "2026-03-15",
+                              "clientName": "홍길동",
+                              "content": "결혼 축하금",
+                              "supplyAmount": 100000,
+                              "vatAmount": 0,
+                              "totalAmount": 100000,
+                              "paymentRequestDate": "2026-03-20",
+                              "expenseType": "개인경비"
+                            }
+                          ]
+                        }
+                        """)
+                                            }))
                     @RequestBody
                     @Valid
                     ApprovalCreateRequestDto requestDto,

@@ -147,21 +147,21 @@ public class ApprovalController {
     @PostMapping
     public ResponseEntity<ApiResponse<Long>> createApproval(
             @io.swagger.v3.oas.annotations.parameters.RequestBody(
-                    description = "상신할 결재 문서 정보. documentType 값에 따라 필수 필드가 달라집니다.",
-                    required = true,
-                    content =
-                            @Content(
-                                    mediaType = "application/json",
-                                    schema =
-                                            @Schema(
-                                                    implementation =
-                                                            ApprovalCreateRequestDto.class),
-                                    examples = {
-                                        @ExampleObject(
-                                                name = "기본양식 (BASIC)",
-                                                summary = "기본 기안문 예시",
-                                                value =
-                                                        """
+                            description = "상신할 결재 문서 정보. documentType 값에 따라 필수 필드가 달라집니다.",
+                            required = true,
+                            content =
+                                    @Content(
+                                            mediaType = "application/json",
+                                            schema =
+                                                    @Schema(
+                                                            implementation =
+                                                                    ApprovalCreateRequestDto.class),
+                                            examples = {
+                                                @ExampleObject(
+                                                        name = "기본양식 (BASIC)",
+                                                        summary = "기본 기안문 예시",
+                                                        value =
+                                                                """
                         {
                           "title": "비품 구매 요청",
                           "content": "<p>사무용 노트북 1대 구매를 요청합니다.</p>",
@@ -175,11 +175,11 @@ public class ApprovalController {
                           ]
                         }
                         """),
-                                        @ExampleObject(
-                                                name = "근태신청서 (LEAVE)",
-                                                summary = "휴가 신청 예시",
-                                                value =
-                                                        """
+                                                @ExampleObject(
+                                                        name = "근태신청서 (LEAVE)",
+                                                        summary = "휴가 신청 예시",
+                                                        value =
+                                                                """
                         {
                           "title": "2026년 하계 휴가 신청",
                           "content": "<p>계획된 휴가 신청합니다.</p>",
@@ -199,11 +199,11 @@ public class ApprovalController {
                           "emergencyContact": "010-1234-5678"
                         }
                         """),
-                                        @ExampleObject(
-                                                name = "기안및지출결의 (EXPENSE_DRAFT)",
-                                                summary = "지출결의 예시",
-                                                value =
-                                                        """
+                                                @ExampleObject(
+                                                        name = "기안및지출결의 (EXPENSE_DRAFT)",
+                                                        summary = "지출결의 예시",
+                                                        value =
+                                                                """
                         {
                           "title": "2026년 3월 사무용품 구매",
                           "content": "<p>사무용품 구매 지출 결의합니다.</p>",
@@ -227,11 +227,11 @@ public class ApprovalController {
                           ]
                         }
                         """),
-                                        @ExampleObject(
-                                                name = "차량유류정산지출결의 (CAR_FUEL)",
-                                                summary = "차량 유류비 정산 예시",
-                                                value =
-                                                        """
+                                                @ExampleObject(
+                                                        name = "차량유류정산지출결의 (CAR_FUEL)",
+                                                        summary = "차량 유류비 정산 예시",
+                                                        value =
+                                                                """
                         {
                           "title": "2026년 3월 차량 유류비 정산",
                           "content": "<p>3월 차량 운행 유류비 정산 요청합니다.</p>",
@@ -260,11 +260,11 @@ public class ApprovalController {
                           ]
                         }
                         """),
-                                        @ExampleObject(
-                                                name = "국외출장여비정산서 (OVERSEAS_TRIP)",
-                                                summary = "국외 출장비 정산 예시",
-                                                value =
-                                                        """
+                                                @ExampleObject(
+                                                        name = "국외출장여비정산서 (OVERSEAS_TRIP)",
+                                                        summary = "국외 출장비 정산 예시",
+                                                        value =
+                                                                """
                         {
                           "title": "2026년 3월 미국 출장 여비 정산",
                           "content": "<p>샌프란시스코 기술 컨퍼런스 참가 여비 정산합니다.</p>",
@@ -302,11 +302,11 @@ public class ApprovalController {
                           ]
                         }
                         """),
-                                        @ExampleObject(
-                                                name = "기안및지출결의_복리후생 (WELFARE_EXPENSE)",
-                                                summary = "복리후생 지출결의 예시",
-                                                value =
-                                                        """
+                                                @ExampleObject(
+                                                        name = "기안및지출결의_복리후생 (WELFARE_EXPENSE)",
+                                                        summary = "복리후생 지출결의 예시",
+                                                        value =
+                                                                """
                         {
                           "title": "2026년 3월 임직원 경조사 지원",
                           "content": "<p>임직원 경조사 지원금 지출 결의합니다.</p>",
@@ -329,7 +329,7 @@ public class ApprovalController {
                           ]
                         }
                         """)
-                                    }))
+                                            }))
                     @RequestBody
                     @Valid
                     ApprovalCreateRequestDto requestDto,

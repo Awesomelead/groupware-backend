@@ -945,8 +945,7 @@ public class EduReportService {
                 row.departmentName() != null ? row.departmentName().getDescription() : null;
         String positionStr = row.position() != null ? row.position().getDescription() : null;
         boolean isSigned = row.signatureKey() != null;
-        String signatureUrl =
-                isSigned ? s3Service.getPresignedViewUrl(row.signatureKey()) : null;
+        String signatureUrl = isSigned ? s3Service.getPresignedViewUrl(row.signatureKey()) : null;
 
         return EduReportSignatureStatusDto.builder()
                 .displayName(displayName)

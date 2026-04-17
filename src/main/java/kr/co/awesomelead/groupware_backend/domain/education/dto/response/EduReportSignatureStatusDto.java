@@ -23,7 +23,9 @@ public class EduReportSignatureStatusDto {
     @Schema(description = "직급", example = "사원")
     private String position;
 
-    @Schema(description = "서명 이미지 Presigned URL (서명 없으면 null)", example = "https://s3.amazonaws.com/...")
+    @Schema(
+            description = "서명 이미지 Presigned URL (서명 없으면 null)",
+            example = "https://s3.amazonaws.com/...")
     private String signatureUrl;
 
     @Schema(description = "서명 여부", example = "true")

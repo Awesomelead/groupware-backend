@@ -11,6 +11,7 @@ import kr.co.awesomelead.groupware_backend.domain.education.dto.request.EduRepor
 import kr.co.awesomelead.groupware_backend.domain.education.dto.request.PsmEduReportCreateRequestDto;
 import kr.co.awesomelead.groupware_backend.domain.education.dto.request.SafetyEduReportCreateRequestDto;
 import kr.co.awesomelead.groupware_backend.domain.education.dto.response.EduReportDetailDto;
+import kr.co.awesomelead.groupware_backend.domain.education.dto.response.EduReportSignatureStatusDto;
 import kr.co.awesomelead.groupware_backend.domain.education.dto.response.EduReportSummaryDto;
 import kr.co.awesomelead.groupware_backend.domain.education.entity.EduAttachment;
 import kr.co.awesomelead.groupware_backend.domain.education.entity.EduAttendance;
@@ -913,6 +914,46 @@ public class EduReportService {
             throw new CustomException(ErrorCode.INVALID_ARGUMENT);
         }
         return category;
+    }
+
+    @Transactional(readOnly = true)
+    public List<EduReportSignatureStatusDto> getSignatureStatuses(
+            Long educationId, String name, Long userId) {
+
+        User user =
+                userRepository
+                        .findById(userId)
+                        .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
+
+        EduReport report =
+                eduReportRepository
+                        .findById(educationId)
+                        .orElseThrow(() -> new CustomException(ErrorCode.EDU_REPORT_NOT_FOUND));
+
+        validateCreateAuthority(user, report.getEduType());
+
+        return eduReportQueryRepository.findSignatureStatuses(report, name).stream()
+                .map(row -> toSignatureStatusDto(row))
+                .toList();
+    }
+
+    private EduReportSignatureStatusDto toSignatureStatusDto(
+            EduReportQueryRepository.SignatureStatusRow row) {
+        String displayName =
+                (row.nameKor() != null && !row.nameKor().isBlank()) ? row.nameKor() : row.nameEng();
+        String deptName =
+                row.departmentName() != null ? row.departmentName().getDescription() : null;
+        String positionStr = row.position() != null ? row.position().getDescription() : null;
+        boolean isSigned = row.signatureKey() != null;
+        String signatureUrl = isSigned ? s3Service.getPresignedViewUrl(row.signatureKey()) : null;
+
+        return EduReportSignatureStatusDto.builder()
+                .displayName(displayName)
+                .departmentName(deptName)
+                .position(positionStr)
+                .isSigned(isSigned)
+                .signatureUrl(signatureUrl)
+                .build();
     }
 
     private long calculateTargetPeopleCount(EduReport report) {

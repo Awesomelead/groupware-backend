@@ -4,6 +4,7 @@ import static kr.co.awesomelead.groupware_backend.domain.education.entity.QEduAt
 import static kr.co.awesomelead.groupware_backend.domain.education.entity.QEduReport.eduReport;
 import static kr.co.awesomelead.groupware_backend.domain.education.entity.QEducationCategory.educationCategory;
 
+import com.querydsl.core.Tuple;
 import com.querydsl.core.types.Projections;
 import com.querydsl.core.types.dsl.BooleanExpression;
 import com.querydsl.jpa.JPAExpressions;
@@ -11,12 +12,19 @@ import com.querydsl.jpa.impl.JPAQueryFactory;
 
 import kr.co.awesomelead.groupware_backend.domain.department.entity.Department;
 import kr.co.awesomelead.groupware_backend.domain.department.enums.Company;
+import kr.co.awesomelead.groupware_backend.domain.department.enums.DepartmentName;
 import kr.co.awesomelead.groupware_backend.domain.education.dto.response.EduReportSummaryDto;
+import kr.co.awesomelead.groupware_backend.domain.education.entity.EduReport;
+import kr.co.awesomelead.groupware_backend.domain.education.entity.QEduAttendance;
 import kr.co.awesomelead.groupware_backend.domain.education.enums.EduType;
+import kr.co.awesomelead.groupware_backend.domain.user.entity.QUser;
+import kr.co.awesomelead.groupware_backend.domain.user.enums.Position;
+import kr.co.awesomelead.groupware_backend.domain.user.enums.Status;
 
 import lombok.RequiredArgsConstructor;
 
 import org.springframework.stereotype.Repository;
+import org.springframework.util.StringUtils;
 
 import java.util.List;
 
@@ -144,6 +152,70 @@ public class EduReportQueryRepository {
                         psmCompanyFilter(company, canReadAllCompanies))
                 .orderBy(eduReport.pinned.desc(), eduReport.eduDate.desc(), eduReport.id.desc())
                 .fetch();
+    }
+
+    public record SignatureStatusRow(
+            String nameKor,
+            String nameEng,
+            DepartmentName departmentName,
+            Position position,
+            String signatureKey) {}
+
+    public List<SignatureStatusRow> findSignatureStatuses(EduReport report, String name) {
+        QUser user = QUser.user;
+        QEduAttendance att = new QEduAttendance("signatureAtt");
+
+        List<Tuple> tuples =
+                queryFactory
+                        .select(
+                                user.nameKor,
+                                user.nameEng,
+                                user.department.name,
+                                user.position,
+                                att.signatureKey)
+                        .from(user)
+                        .leftJoin(att)
+                        .on(att.eduReport.id.eq(report.getId()).and(att.user.eq(user)))
+                        .where(
+                                user.status.eq(Status.AVAILABLE),
+                                signatureMembershipFilter(report, user),
+                                signatureNameFilter(name, user))
+                        .orderBy(user.nameKor.asc().nullsLast(), user.nameEng.asc().nullsLast())
+                        .fetch();
+
+        return tuples.stream()
+                .map(
+                        t ->
+                                new SignatureStatusRow(
+                                        t.get(user.nameKor),
+                                        t.get(user.nameEng),
+                                        t.get(user.department.name),
+                                        t.get(user.position),
+                                        t.get(att.signatureKey)))
+                .toList();
+    }
+
+    private BooleanExpression signatureMembershipFilter(EduReport report, QUser user) {
+        if (report.getEduType() == EduType.DEPARTMENT) {
+            if (report.getDepartment() == null) {
+                return user.id.isNull(); // 결과 없음
+            }
+            return user.department.eq(report.getDepartment());
+        }
+        Company company = report.getCompany();
+        if (company == null) {
+            return null; // 전사 대상
+        }
+        return user.workLocation.eq(company);
+    }
+
+    private BooleanExpression signatureNameFilter(String name, QUser user) {
+        if (!StringUtils.hasText(name)) {
+            return null;
+        }
+        return user.nameKor
+                .containsIgnoreCase(name)
+                .or(user.nameEng.isNotNull().and(user.nameEng.containsIgnoreCase(name)));
     }
 
     // ── BooleanExpression 모듈 ──────────────────────────────────────

@@ -95,7 +95,7 @@ dependencies {
 }
 
 // Querydsl 설정부 (QClass 생성 위치 지정)
-def querydslDir = layout.buildDirectory.dir("generated/querydsl").get().asFile
+def querydslDir = "$projectDir/src/main/generated"
 
 sourceSets {
     main {

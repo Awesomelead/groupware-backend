@@ -55,7 +55,7 @@ public abstract class ApprovalCreateRequestDto {
     @Valid
     private List<StepRequestDto> approvalSteps;
 
-    @Schema(description = "참조 및 열람자 리스트")
+    @Schema(description = "참조/열람자 리스트. 참조자(참조자)는 기안 시점에 알림을 받으며, 열람권자(열람권자)는 결재 완료 후 문서 열람 권한을 가집니다. (선택 사항)")
     @Valid
     private List<ParticipantRequestDto> participants;
 
@@ -85,7 +85,9 @@ public abstract class ApprovalCreateRequestDto {
         @NotNull(message = "대상자 ID는 필수입니다.")
         private Long userId; // 대상자 User ID
 
-        @Schema(description = "참여 유형 (REFERRER: 참조자, VIEWER: 열람권자)", example = "REFERRER")
+        @Schema(
+                description = "참여 유형 (참조자: 기안 시 알림 수신, 열람권자: 결재 완료 후 열람 권한 부여)",
+                example = "참조자")
         @NotNull(message = "참여 유형을 선택해주세요.")
         private ParticipantType participantType; // REFERRER, VIEWER
     }

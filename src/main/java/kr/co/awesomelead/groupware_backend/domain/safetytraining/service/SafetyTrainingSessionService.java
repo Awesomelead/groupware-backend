@@ -241,9 +241,7 @@ public class SafetyTrainingSessionService {
 
         SafetyTrainingAttendeeStatus myStatus = attendee.getStatus();
         SafetyTrainingCompletionStatus completionStatus =
-                myStatus == SafetyTrainingAttendeeStatus.SIGNED
-                        ? SafetyTrainingCompletionStatus.COMPLETED
-                        : SafetyTrainingCompletionStatus.INCOMPLETE;
+                resolveMyCompletionStatus(actor, session, myStatus);
 
         String reportFileUrl =
                 session.getReportFileKey() == null
@@ -837,6 +835,20 @@ public class SafetyTrainingSessionService {
             return null;
         }
         return signed;
+    }
+
+    private SafetyTrainingCompletionStatus resolveMyCompletionStatus(
+            User actor, SafetyTrainingSession session, SafetyTrainingAttendeeStatus myStatus) {
+        if (!canExposeMySigned(actor)) {
+            return null;
+        }
+        if (actor.getWorkLocation() == null
+                || actor.getWorkLocation() != session.getCompanyScope()) {
+            return null;
+        }
+        return myStatus == SafetyTrainingAttendeeStatus.SIGNED
+                ? SafetyTrainingCompletionStatus.COMPLETED
+                : SafetyTrainingCompletionStatus.INCOMPLETE;
     }
 
     private List<SafetyEducationMethod> toMethods(String educationMethodsJson) {

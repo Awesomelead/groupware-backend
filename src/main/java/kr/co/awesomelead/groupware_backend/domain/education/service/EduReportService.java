@@ -84,7 +84,8 @@ public class EduReportService {
                         .signatureRequired(false)
                         .categoryId(requestDto.getCategoryId())
                         .build();
-        return createEduReportInternal(baseRequest, files, id, true, requestDto.getCompanyScope());
+        Company companyOverride = resolveCompanyScopeOverride(requestDto.getCompanyScope());
+        return createEduReportInternal(baseRequest, files, id, true, companyOverride);
     }
 
     @Transactional
@@ -100,7 +101,8 @@ public class EduReportService {
                         .signatureRequired(false)
                         .categoryId(requestDto.getCategoryId())
                         .build();
-        return createEduReportInternal(baseRequest, files, id, true, requestDto.getCompanyScope());
+        Company companyOverride = resolveCompanyScopeOverride(requestDto.getCompanyScope());
+        return createEduReportInternal(baseRequest, files, id, true, companyOverride);
     }
 
     private Long createEduReportInternal(
@@ -311,7 +313,7 @@ public class EduReportService {
                         .orElseThrow(() -> new CustomException(ErrorCode.EDU_REPORT_NOT_FOUND));
 
         boolean hasAccess = user.hasAuthority(Authority.MANAGE_DEPARTMENT_EDUCATION);
-        return buildEduReportDetailDto(user, report, hasAccess);
+        return buildEduReportDetailDto(user, report, hasAccess, false);
     }
 
     @Transactional(readOnly = true)
@@ -339,7 +341,7 @@ public class EduReportService {
             }
         }
 
-        return buildEduReportDetailDto(user, report, hasAccess);
+        return buildEduReportDetailDto(user, report, hasAccess, true);
     }
 
     @Transactional(readOnly = true)
@@ -370,7 +372,9 @@ public class EduReportService {
         }
 
         boolean hasAccess = user.hasAuthority(Authority.MANAGE_DEPARTMENT_EDUCATION);
-        return buildEduReportDetailDto(user, report, hasAccess);
+        EduReportDetailDto dto = buildEduReportDetailDto(user, report, hasAccess, false);
+        dto.setCompanyScope(toCompanyScopeList(report.getCompany()));
+        return dto;
     }
 
     @Transactional(readOnly = true)
@@ -401,11 +405,13 @@ public class EduReportService {
         }
 
         boolean hasAccess = user.hasAuthority(Authority.MANAGE_DEPARTMENT_EDUCATION);
-        return buildEduReportDetailDto(user, report, hasAccess);
+        EduReportDetailDto dto = buildEduReportDetailDto(user, report, hasAccess, false);
+        dto.setCompanyScope(toCompanyScopeList(report.getCompany()));
+        return dto;
     }
 
     private EduReportDetailDto buildEduReportDetailDto(
-            User user, EduReport report, boolean hasAccess) {
+            User user, EduReport report, boolean hasAccess, boolean includeSignatureCounts) {
         List<EduAttendance> attendances = null;
         long numberOfPeople = -1L;
 
@@ -417,6 +423,16 @@ public class EduReportService {
 
         EduReportDetailDto dto =
                 eduMapper.toDetailDto(report, attendances, numberOfPeople, s3Service);
+
+        if (includeSignatureCounts) {
+            long targetCount = calculateTargetPeopleCount(report);
+            long signedCount = eduAttendanceRepository.countByEduReportId(report.getId());
+            long unsignedCount = Math.max(targetCount - signedCount, 0L);
+
+            dto.setTargetCount(safeToInteger(targetCount));
+            dto.setSignedCount(safeToInteger(signedCount));
+            dto.setUnsignedCount(safeToInteger(unsignedCount));
+        }
 
         boolean isAttended = eduAttendanceRepository.existsByEduReportAndUser(report, user);
         dto.setAttendance(isAttended);
@@ -961,5 +977,43 @@ public class EduReportService {
             return userRepository.countByDepartment(report.getDepartment());
         }
         return userRepository.count();
+    }
+
+    private Company resolveCompanyScopeOverride(List<Company> companyScopes) {
+        if (companyScopes == null || companyScopes.isEmpty()) {
+            return null; // 모든 회사 공통
+        }
+
+        LinkedHashSet<Company> normalized = new LinkedHashSet<>(companyScopes);
+        if (normalized.contains(null)) {
+            throw new CustomException(ErrorCode.INVALID_ARGUMENT);
+        }
+
+        if (normalized.size() == 1) {
+            return normalized.iterator().next();
+        }
+
+        if (normalized.size() == Company.values().length) {
+            return null; // 전체 회사 선택은 공통 게시물로 저장
+        }
+
+        throw new CustomException(ErrorCode.INVALID_ARGUMENT);
+    }
+
+    private List<String> toCompanyScopeList(Company storedCompany) {
+        if (storedCompany == null) {
+            return List.of(Company.AWESOME.name(), Company.MARUI.name());
+        }
+        return List.of(storedCompany.name());
+    }
+
+    private Integer safeToInteger(long value) {
+        if (value < 0L) {
+            return null;
+        }
+        if (value > Integer.MAX_VALUE) {
+            return Integer.MAX_VALUE;
+        }
+        return (int) value;
     }
 }

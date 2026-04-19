@@ -14,12 +14,21 @@ import java.util.List;
 @Configuration
 public class CorsConfig implements WebMvcConfigurer {
 
+    private static final List<String> ALLOWED_ORIGIN_PATTERNS =
+            List.of(
+                    "http://localhost:*",
+                    "http://127.0.0.1:*",
+                    "https://api.awesomelead.co.kr",
+                    "https://*.awesomelead.co.kr");
+
+    private static final List<String> ALLOWED_METHODS =
+            List.of("GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS");
+
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
-        configuration.setAllowedOriginPatterns(List.of("http://localhost:*", "http://127.0.0.1:*"));
-        configuration.setAllowedMethods(
-                List.of("GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"));
+        configuration.setAllowedOriginPatterns(ALLOWED_ORIGIN_PATTERNS);
+        configuration.setAllowedMethods(ALLOWED_METHODS);
         configuration.setAllowedHeaders(List.of("*"));
         configuration.setAllowCredentials(false);
         configuration.setMaxAge(3600L);
@@ -32,8 +41,8 @@ public class CorsConfig implements WebMvcConfigurer {
     @Override
     public void addCorsMappings(CorsRegistry registry) {
         registry.addMapping("/**")
-                .allowedOriginPatterns("*")
-                .allowedMethods("*")
+                .allowedOriginPatterns(ALLOWED_ORIGIN_PATTERNS.toArray(new String[0]))
+                .allowedMethods(ALLOWED_METHODS.toArray(new String[0]))
                 .allowedHeaders("*")
                 .allowCredentials(false) // Swagger UI는 인증쿠키를 보내지 않으므로 false 권장
                 .maxAge(3600);

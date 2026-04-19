@@ -377,7 +377,7 @@ public class EduReportServiceTest {
                         .content("PSM 내용")
                         .pinned(false)
                         .categoryId(1L)
-                        .companyScope(Company.MARUI)
+                        .companyScope(List.of(Company.MARUI))
                         .build();
 
         EduReport report =
@@ -462,7 +462,7 @@ public class EduReportServiceTest {
                         .content("안전 보건 내용")
                         .pinned(false)
                         .categoryId(2L)
-                        .companyScope(Company.AWESOME)
+                        .companyScope(List.of(Company.AWESOME))
                         .build();
 
         EduReport report =

@@ -311,7 +311,7 @@ public class EduReportService {
                         .orElseThrow(() -> new CustomException(ErrorCode.EDU_REPORT_NOT_FOUND));
 
         boolean hasAccess = user.hasAuthority(Authority.MANAGE_DEPARTMENT_EDUCATION);
-        return buildEduReportDetailDto(user, report, hasAccess);
+        return buildEduReportDetailDto(user, report, hasAccess, false);
     }
 
     @Transactional(readOnly = true)
@@ -339,7 +339,7 @@ public class EduReportService {
             }
         }
 
-        return buildEduReportDetailDto(user, report, hasAccess);
+        return buildEduReportDetailDto(user, report, hasAccess, true);
     }
 
     @Transactional(readOnly = true)
@@ -370,7 +370,7 @@ public class EduReportService {
         }
 
         boolean hasAccess = user.hasAuthority(Authority.MANAGE_DEPARTMENT_EDUCATION);
-        return buildEduReportDetailDto(user, report, hasAccess);
+        return buildEduReportDetailDto(user, report, hasAccess, false);
     }
 
     @Transactional(readOnly = true)
@@ -401,11 +401,11 @@ public class EduReportService {
         }
 
         boolean hasAccess = user.hasAuthority(Authority.MANAGE_DEPARTMENT_EDUCATION);
-        return buildEduReportDetailDto(user, report, hasAccess);
+        return buildEduReportDetailDto(user, report, hasAccess, false);
     }
 
     private EduReportDetailDto buildEduReportDetailDto(
-            User user, EduReport report, boolean hasAccess) {
+            User user, EduReport report, boolean hasAccess, boolean includeSignatureCounts) {
         List<EduAttendance> attendances = null;
         long numberOfPeople = -1L;
 
@@ -417,6 +417,16 @@ public class EduReportService {
 
         EduReportDetailDto dto =
                 eduMapper.toDetailDto(report, attendances, numberOfPeople, s3Service);
+
+        if (includeSignatureCounts) {
+            long targetCount = calculateTargetPeopleCount(report);
+            long signedCount = eduAttendanceRepository.countByEduReportId(report.getId());
+            long unsignedCount = Math.max(targetCount - signedCount, 0L);
+
+            dto.setTargetCount(safeToInteger(targetCount));
+            dto.setSignedCount(safeToInteger(signedCount));
+            dto.setUnsignedCount(safeToInteger(unsignedCount));
+        }
 
         boolean isAttended = eduAttendanceRepository.existsByEduReportAndUser(report, user);
         dto.setAttendance(isAttended);
@@ -961,5 +971,15 @@ public class EduReportService {
             return userRepository.countByDepartment(report.getDepartment());
         }
         return userRepository.count();
+    }
+
+    private Integer safeToInteger(long value) {
+        if (value < 0L) {
+            return null;
+        }
+        if (value > Integer.MAX_VALUE) {
+            return Integer.MAX_VALUE;
+        }
+        return (int) value;
     }
 }

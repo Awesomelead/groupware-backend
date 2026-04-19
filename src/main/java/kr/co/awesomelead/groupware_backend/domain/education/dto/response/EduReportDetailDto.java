@@ -63,6 +63,15 @@ public class EduReportDetailDto {
     @Schema(description = "출석 인원 수 (MANAGE_DEPARTMENT_EDUCATION 권한 없으면 null)", example = "45")
     private Integer numberOfAttendees;
 
+    @Schema(description = "대상 인원 수(부서교육 상세 조회 기준)", example = "50")
+    private Integer targetCount;
+
+    @Schema(description = "서명 인원 수(부서교육 상세 조회 기준)", example = "45")
+    private Integer signedCount;
+
+    @Schema(description = "미서명 인원 수(부서교육 상세 조회 기준)", example = "5")
+    private Integer unsignedCount;
+
     @Schema(description = "출석자 목록 (MANAGE_DEPARTMENT_EDUCATION 권한 없으면 null)")
     private List<AttendeeInfo> attendees;
 

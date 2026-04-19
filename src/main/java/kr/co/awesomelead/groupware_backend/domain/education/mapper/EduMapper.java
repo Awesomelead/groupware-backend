@@ -55,6 +55,9 @@ public interface EduMapper {
     @Mapping(
             target = "numberOfAttendees",
             expression = "java(attendances != null ? attendances.size() : null)")
+    @Mapping(target = "targetCount", ignore = true)
+    @Mapping(target = "signedCount", ignore = true)
+    @Mapping(target = "unsignedCount", ignore = true)
     @Mapping(target = "attendees", source = "attendances")
     EduReportDetailDto toDetailDto(
             EduReport report,

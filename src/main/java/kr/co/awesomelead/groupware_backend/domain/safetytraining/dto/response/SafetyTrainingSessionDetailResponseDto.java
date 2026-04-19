@@ -81,7 +81,10 @@ public class SafetyTrainingSessionDetailResponseDto {
     @Schema(description = "내 참석 상태", example = "SIGNED")
     private SafetyTrainingAttendeeStatus myAttendanceStatus;
 
-    @Schema(description = "내 수료 상태", example = "COMPLETED")
+    @Schema(
+            description = "내 수료 상태(대표이사/MASTER_ADMIN 또는 세션 회사와 내 회사가 다르면 null)",
+            example = "COMPLETED",
+            nullable = true)
     private SafetyTrainingCompletionStatus myCompletionStatus;
 
     @Schema(description = "내 서명 시각", example = "2026-03-24T10:31:00")

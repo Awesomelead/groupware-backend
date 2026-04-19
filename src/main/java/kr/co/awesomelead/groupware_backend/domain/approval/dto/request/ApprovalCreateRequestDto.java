@@ -58,7 +58,7 @@ public abstract class ApprovalCreateRequestDto {
     @Schema(
             description =
                     "참조/열람자 리스트. 참조자(참조자)는 기안 시점에 알림을 받으며, 열람권자(열람권자)는 결재 완료 후 문서 열람 권한을 가집니다. (선택"
-                        + " 사항)")
+                            + " 사항)")
     @Valid
     private List<ParticipantRequestDto> participants;
 

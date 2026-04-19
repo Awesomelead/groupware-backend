@@ -36,7 +36,9 @@ public class EduReportDetailDto {
     @Schema(description = "교육 카테고리명", example = "유해위험물질")
     private String categoryName;
 
-    @Schema(description = "회사 범위(안전보건/PSM 대상). 공통 게시물은 전체 회사 목록으로 응답", example = "[\"AWESOME\", \"MARUI\"]")
+    @Schema(
+            description = "회사 범위(안전보건/PSM 대상). 공통 게시물은 전체 회사 목록으로 응답",
+            example = "[\"AWESOME\", \"MARUI\"]")
     private List<String> companyScope;
 
     @Schema(description = "부서 교육 시 대상 부서명 (부서 교육이 아닌 경우 null)", example = "영업부")

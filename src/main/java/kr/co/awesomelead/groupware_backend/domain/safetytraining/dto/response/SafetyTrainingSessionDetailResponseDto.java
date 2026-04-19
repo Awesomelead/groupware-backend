@@ -82,8 +82,7 @@ public class SafetyTrainingSessionDetailResponseDto {
     private SafetyTrainingAttendeeStatus myAttendanceStatus;
 
     @Schema(
-            description =
-                    "내 수료 상태(대표이사/MASTER_ADMIN 또는 세션 회사와 내 회사가 다르면 null)",
+            description = "내 수료 상태(대표이사/MASTER_ADMIN 또는 세션 회사와 내 회사가 다르면 null)",
             example = "COMPLETED",
             nullable = true)
     private SafetyTrainingCompletionStatus myCompletionStatus;

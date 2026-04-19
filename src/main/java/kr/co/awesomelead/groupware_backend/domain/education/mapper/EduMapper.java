@@ -44,6 +44,7 @@ public interface EduMapper {
             target = "categoryName",
             expression =
                     "java(report.getCategory() != null ? report.getCategory().getName() : null)")
+    @Mapping(target = "companyScope", ignore = true)
     @Mapping(
             target = "departmentName",
             expression =

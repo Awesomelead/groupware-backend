@@ -275,7 +275,9 @@ public class EduReportController {
                 - `requestDto`(JSON 파트)는 필수입니다.
                 - `files`(파일 파트)는 선택입니다.
                 - 안전 보건 관리 권한(`MANAGE_SAFETY`)이 있어야 생성할 수 있습니다.
-                - `companyScope`를 지정하면 해당 회사 게시물, `null`이면 모든 회사 공통 게시물로 생성됩니다.
+                - `companyScope`는 회사 목록 배열입니다.
+                - `[AWESOME]`처럼 1개를 보내면 해당 회사 게시물로 생성됩니다.
+                - `[AWESOME, MARUI]`, `null`, `[]`는 모든 회사 공통 게시물로 생성됩니다.
                 """,
             requestBody =
                     @io.swagger.v3.oas.annotations.parameters.RequestBody(
@@ -726,7 +728,7 @@ public class EduReportController {
                 PSM 게시물 상세 정보를 조회합니다.
 
                 - `MANAGE_PSM` 권한 사용자는 모든 회사의 PSM 게시물을 조회할 수 있습니다.
-                - 권한이 없는 사용자는 본인 소속 회사 게시물과 공통 게시물(`companyScope=null`)만 조회할 수 있습니다.
+                - 권한이 없는 사용자는 본인 소속 회사 게시물과 공통 게시물(`company` 컬럼이 null인 게시물)만 조회할 수 있습니다.
                 - 권한이 없는 사용자가 타 회사 게시물을 조회하면 `EDU_REPORT_NOT_FOUND(404)`가 반환됩니다.
                 """)
     @ApiResponses({
@@ -793,8 +795,10 @@ public class EduReportController {
                 안전 보건 게시물 상세 정보를 조회합니다.
 
                 - `MANAGE_SAFETY` 권한 사용자는 모든 회사의 안전 보건 게시물을 조회할 수 있습니다.
-                - 권한이 없는 사용자는 본인 소속 회사 게시물과 공통 게시물(`companyScope=null`)만 조회할 수 있습니다.
+                - 권한이 없는 사용자는 본인 소속 회사 게시물과 공통 게시물(`company` 컬럼이 null인 게시물)만 조회할 수 있습니다.
                 - 권한이 없는 사용자가 타 회사 게시물을 조회하면 `EDU_REPORT_NOT_FOUND(404)`가 반환됩니다.
+                - 응답의 `companyScope`는 회사 목록 배열로 반환됩니다.
+                - 공통 게시물은 `companyScope: ["AWESOME", "MARUI"]`로 응답됩니다.
                 """)
     @ApiResponses({
         @io.swagger.v3.oas.annotations.responses.ApiResponse(

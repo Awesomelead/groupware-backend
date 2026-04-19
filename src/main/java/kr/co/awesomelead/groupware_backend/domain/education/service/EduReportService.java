@@ -84,7 +84,8 @@ public class EduReportService {
                         .signatureRequired(false)
                         .categoryId(requestDto.getCategoryId())
                         .build();
-        return createEduReportInternal(baseRequest, files, id, true, requestDto.getCompanyScope());
+        Company companyOverride = resolveCompanyScopeOverride(requestDto.getCompanyScope());
+        return createEduReportInternal(baseRequest, files, id, true, companyOverride);
     }
 
     @Transactional
@@ -371,7 +372,9 @@ public class EduReportService {
         }
 
         boolean hasAccess = user.hasAuthority(Authority.MANAGE_DEPARTMENT_EDUCATION);
-        return buildEduReportDetailDto(user, report, hasAccess, false);
+        EduReportDetailDto dto = buildEduReportDetailDto(user, report, hasAccess, false);
+        dto.setCompanyScope(toCompanyScopeList(report.getCompany()));
+        return dto;
     }
 
     @Transactional(readOnly = true)

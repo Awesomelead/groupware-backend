@@ -936,8 +936,7 @@ public class AuthController {
 
     @Operation(
             summary = "휴대폰 인증 요청 전 계정 존재 검증",
-            description =
-                    "휴대폰 인증번호 발송 전, 입력한 이메일/전화번호 조합이 실제 회원 계정과 일치하는지 검증합니다.")
+            description = "휴대폰 인증번호 발송 전, 입력한 이메일/전화번호 조합이 실제 회원 계정과 일치하는지 검증합니다.")
     @ApiResponses(
             value = {
                 @io.swagger.v3.oas.annotations.responses.ApiResponse(

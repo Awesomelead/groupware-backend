@@ -316,7 +316,7 @@ public class AuthService {
                 .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
     }
 
-    public void verifyAccountByPhone(String email, String phoneNumber) {
+    public void checkAccountByPhone(String email, String phoneNumber) {
         User user =
                 userRepository
                         .findByEmail(email)
@@ -326,6 +326,10 @@ public class AuthService {
         if (!phoneNumberHash.equals(user.getPhoneNumberHash())) {
             throw new CustomException(ErrorCode.PHONE_NUMBER_MISMATCH);
         }
+    }
+
+    public void verifyAccountByPhone(String email, String phoneNumber) {
+        checkAccountByPhone(email, phoneNumber);
 
         if (!phoneAuthService.isPhoneVerified(phoneNumber)) {
             throw new CustomException(ErrorCode.PHONE_NOT_VERIFIED);

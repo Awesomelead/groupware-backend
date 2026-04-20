@@ -561,6 +561,52 @@ class AuthServiceTest {
     class VerifyAccountByPhoneTest {
 
         @Test
+        @DisplayName("성공: 이메일/전화번호 계정 선검증 통과")
+        void checkAccountByPhone_Success() {
+            // given
+            testUser.setPhoneNumberHash(User.hashValue(TEST_PHONE));
+            given(userRepository.findByEmail(TEST_EMAIL)).willReturn(Optional.of(testUser));
+
+            // when
+            authService.checkAccountByPhone(TEST_EMAIL, TEST_PHONE);
+
+            // then
+            verify(userRepository).findByEmail(TEST_EMAIL);
+            verify(phoneAuthService, never()).isPhoneVerified(anyString());
+        }
+
+        @Test
+        @DisplayName("실패: 선검증 시 이메일이 존재하지 않으면 USER_NOT_FOUND")
+        void checkAccountByPhone_UserNotFound() {
+            // given
+            given(userRepository.findByEmail(TEST_EMAIL)).willReturn(Optional.empty());
+
+            // when & then
+            assertThatThrownBy(() -> authService.checkAccountByPhone(TEST_EMAIL, TEST_PHONE))
+                    .isInstanceOf(CustomException.class)
+                    .hasFieldOrPropertyWithValue("errorCode", ErrorCode.USER_NOT_FOUND);
+
+            verify(userRepository).findByEmail(TEST_EMAIL);
+            verify(phoneAuthService, never()).isPhoneVerified(anyString());
+        }
+
+        @Test
+        @DisplayName("실패: 선검증 시 전화번호가 계정과 다르면 PHONE_NUMBER_MISMATCH")
+        void checkAccountByPhone_PhoneNumberMismatch() {
+            // given
+            testUser.setPhoneNumberHash(User.hashValue("01099999999"));
+            given(userRepository.findByEmail(TEST_EMAIL)).willReturn(Optional.of(testUser));
+
+            // when & then
+            assertThatThrownBy(() -> authService.checkAccountByPhone(TEST_EMAIL, TEST_PHONE))
+                    .isInstanceOf(CustomException.class)
+                    .hasFieldOrPropertyWithValue("errorCode", ErrorCode.PHONE_NUMBER_MISMATCH);
+
+            verify(userRepository).findByEmail(TEST_EMAIL);
+            verify(phoneAuthService, never()).isPhoneVerified(anyString());
+        }
+
+        @Test
         @DisplayName("성공: 이메일과 전화번호가 동일 계정과 일치하면 통과한다")
         void verifyAccountByPhone_Success() {
             // given

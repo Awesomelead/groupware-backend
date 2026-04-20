@@ -948,6 +948,86 @@ public class AuthController {
     }
 
     @Operation(
+            summary = "휴대폰 인증 요청 전 계정 존재 검증",
+            description =
+                    "휴대폰 인증번호 발송 전, 입력한 이메일/전화번호 조합이 실제 회원 계정과 일치하는지 검증합니다.")
+    @ApiResponses(
+            value = {
+                @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                        responseCode = "200",
+                        description = "계정 확인 성공",
+                        content =
+                                @Content(
+                                        mediaType = "application/json",
+                                        examples =
+                                                @ExampleObject(
+                                                        value =
+                                                                """
+                                        {
+                                          "isSuccess": true,
+                                          "code": "COMMON204",
+                                          "message": "계정 확인이 완료되었습니다.",
+                                          "result": null
+                                        }
+                                        """))),
+                @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                        responseCode = "400",
+                        description = "입력값 검증 실패 또는 전화번호 불일치",
+                        content =
+                                @Content(
+                                        mediaType = "application/json",
+                                        examples = {
+                                            @ExampleObject(
+                                                    name = "입력값 검증 실패",
+                                                    value =
+                                                            """
+                                                        {
+                                                          "isSuccess": false,
+                                                          "code": "COMMON400",
+                                                          "message": "입력값이 유효하지 않습니다.",
+                                                          "result": {
+                                                            "email": "유효한 이메일 형식이 아닙니다."
+                                                          }
+                                                        }
+                                                        """),
+                                            @ExampleObject(
+                                                    name = "전화번호 불일치",
+                                                    value =
+                                                            """
+                                                        {
+                                                          "isSuccess": false,
+                                                          "code": "PHONE_NUMBER_MISMATCH",
+                                                          "message": "입력한 전화번호가 계정의 전화번호와 일치하지 않습니다.",
+                                                          "result": null
+                                                        }
+                                                        """)
+                                        })),
+                @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                        responseCode = "404",
+                        description = "사용자를 찾을 수 없음",
+                        content =
+                                @Content(
+                                        mediaType = "application/json",
+                                        examples =
+                                                @ExampleObject(
+                                                        value =
+                                                                """
+                                        {
+                                          "isSuccess": false,
+                                          "code": "USER_NOT_FOUND",
+                                          "message": "해당 사용자를 찾을 수 없습니다.",
+                                          "result": null
+                                        }
+                                        """)))
+            })
+    @PostMapping("/check-account/phone")
+    public ResponseEntity<ApiResponse<Void>> checkAccountByPhone(
+            @Valid @RequestBody VerifyAccountByPhoneRequestDto requestDto) {
+        authService.checkAccountByPhone(requestDto.getEmail(), requestDto.getPhoneNumber());
+        return ResponseEntity.ok(ApiResponse.onNoContent("계정 확인이 완료되었습니다."));
+    }
+
+    @Operation(
             summary = "휴대폰 비밀번호 찾기용 계정 검증",
             description = "휴대폰 인증번호 검증 완료 후, 비밀번호 찾기 버튼에서 입력한 이메일/전화번호가 동일 계정인지 최종 검증합니다.")
     @ApiResponses(

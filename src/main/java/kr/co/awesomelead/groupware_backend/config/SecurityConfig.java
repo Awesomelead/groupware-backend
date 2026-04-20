@@ -93,6 +93,7 @@ public class SecurityConfig {
                                         "/api/auth/reissue",
                                         "/api/auth/verify-phone-code",
                                         "/api/auth/verify-account/email",
+                                        "/api/auth/check-account/phone",
                                         "/api/auth/verify-account/phone",
                                         "/api/auth/verify-identity",
                                         "/api/auth/verify-email-code",

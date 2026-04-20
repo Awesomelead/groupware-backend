@@ -77,6 +77,9 @@ public class EduReportDetailDto {
     @Schema(description = "미서명 인원 수(부서교육 상세 조회 기준)", example = "5")
     private Integer unsignedCount;
 
+    @Schema(description = "현재 사용자의 서명 가능 여부(부서교육 상세 조회 기준)", example = "true")
+    private boolean canSign;
+
     @Schema(description = "출석자 목록 (MANAGE_DEPARTMENT_EDUCATION 권한 없으면 null)")
     private List<AttendeeInfo> attendees;
 

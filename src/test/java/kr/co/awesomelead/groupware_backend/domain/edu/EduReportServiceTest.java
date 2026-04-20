@@ -934,6 +934,7 @@ public class EduReportServiceTest {
         // then
         assertThat(result).isNotNull();
         assertThat(result.getEduType()).isEqualTo(EduType.DEPARTMENT);
+        assertThat(result.isCanSign()).isTrue();
         verify(eduAttendanceRepository, never()).findAllByEduReportIdWithUser(anyLong());
     }
 
@@ -992,6 +993,7 @@ public class EduReportServiceTest {
         // then
         assertThat(result).isNotNull();
         assertThat(result.getEduType()).isEqualTo(EduType.PSM);
+        assertThat(result.isCanSign()).isFalse();
     }
 
     @Test
@@ -1024,6 +1026,7 @@ public class EduReportServiceTest {
         // then
         assertThat(result).isNotNull();
         assertThat(result.getEduType()).isEqualTo(EduType.PSM);
+        assertThat(result.isCanSign()).isFalse();
     }
 
     @Test
@@ -1081,6 +1084,7 @@ public class EduReportServiceTest {
         // then
         assertThat(result).isNotNull();
         assertThat(result.getEduType()).isEqualTo(EduType.SAFETY);
+        assertThat(result.isCanSign()).isFalse();
     }
 
     @Test
@@ -1113,6 +1117,7 @@ public class EduReportServiceTest {
         // then
         assertThat(result).isNotNull();
         assertThat(result.getEduType()).isEqualTo(EduType.SAFETY);
+        assertThat(result.isCanSign()).isFalse();
     }
 
     @Test

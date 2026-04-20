@@ -54,7 +54,8 @@ class ApprovalConfigServiceTest {
 
         normalUser = User.builder().id(2L).build();
 
-        lenient().when(userRepository.findAllById(org.mockito.ArgumentMatchers.anyIterable()))
+        lenient()
+                .when(userRepository.findAllById(org.mockito.ArgumentMatchers.anyIterable()))
                 .thenReturn(List.of());
     }
 

@@ -251,26 +251,35 @@ public class AuthService {
             throw new CustomException(ErrorCode.PHONE_NOT_VERIFIED);
         }
 
-        // 2. 해시로 사용자 찾기
+        // 2. 이름+전화번호 계정 검증
+        User user = findUserByNameAndPhone(name, phoneNumber);
+
+        long endTime = System.currentTimeMillis();
+        log.info("해시 검색 방식 소요 시간: {}ms", endTime - startTime);
+
+        // 3. 인증 플래그 삭제
+        phoneAuthService.clearVerification(phoneNumber);
+
+        // 4. 응답 생성
+        return new FindEmailResponseDto(maskEmail(user.getEmail()));
+    }
+
+    public void checkAccountForFindEmail(String name, String phoneNumber) {
+        findUserByNameAndPhone(name, phoneNumber);
+    }
+
+    private User findUserByNameAndPhone(String name, String phoneNumber) {
         String phoneNumberHash = User.hashValue(phoneNumber);
         User user =
                 userRepository
                         .findByPhoneNumberHash(phoneNumberHash)
                         .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
 
-        // 3. 이름 검증
         if (!user.getNameKor().equals(name)) {
             throw new CustomException(ErrorCode.USER_NOT_FOUND);
         }
 
-        long endTime = System.currentTimeMillis();
-        log.info("해시 검색 방식 소요 시간: {}ms", endTime - startTime);
-
-        // 4. 인증 플래그 삭제
-        phoneAuthService.clearVerification(phoneNumber);
-
-        // 5. 응답 생성
-        return new FindEmailResponseDto(maskEmail(user.getEmail()));
+        return user;
     }
 
     private String maskEmail(String email) {

@@ -4,6 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.BDDMockito.given;
+import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 
@@ -52,6 +53,10 @@ class ApprovalConfigServiceTest {
         adminUser.addAuthority(Authority.MANAGE_APPROVAL_LINE);
 
         normalUser = User.builder().id(2L).build();
+
+        lenient()
+                .when(userRepository.findAllById(org.mockito.ArgumentMatchers.anyIterable()))
+                .thenReturn(List.of());
     }
 
     @Nested
@@ -78,9 +83,9 @@ class ApprovalConfigServiceTest {
                         approvalConfigService.saveConfig(request, ADMIN_ID);
 
                 verify(approvalLineConfigRepository).save(any(ApprovalLineConfig.class));
-                assertThat(response.getDocumentType()).isEqualTo(DocumentType.BASIC);
-                assertThat(response.getApproverIds()).containsExactly(10L, 20L, 30L);
-                assertThat(response.getReferrerIds()).containsExactly(40L);
+                assertThat(response.getDocumentType()).isEqualTo(DocumentType.BASIC.name());
+                assertThat(response.getApprovers()).isEmpty();
+                assertThat(response.getReferrers()).isEmpty();
             }
 
             @Test
@@ -102,8 +107,8 @@ class ApprovalConfigServiceTest {
                         approvalConfigService.saveConfig(request, ADMIN_ID);
 
                 verify(approvalLineConfigRepository, never()).save(any());
-                assertThat(response.getApproverIds()).containsExactly(10L, 20L);
-                assertThat(response.getReferrerIds()).containsExactly(99L);
+                assertThat(response.getApprovers()).isEmpty();
+                assertThat(response.getReferrers()).isEmpty();
             }
 
             @Test
@@ -117,11 +122,22 @@ class ApprovalConfigServiceTest {
                 given(userRepository.findById(ADMIN_ID)).willReturn(Optional.of(adminUser));
                 given(approvalLineConfigRepository.findById(DocumentType.LEAVE))
                         .willReturn(Optional.empty());
+                given(userRepository.findAllById(org.mockito.ArgumentMatchers.anyIterable()))
+                        .willAnswer(
+                                invocation -> {
+                                    User u5 = User.builder().id(5L).nameKor("u5").build();
+                                    User u3 = User.builder().id(3L).nameKor("u3").build();
+                                    User u7 = User.builder().id(7L).nameKor("u7").build();
+                                    User u1 = User.builder().id(1L).nameKor("u1").build();
+                                    return List.of(u5, u3, u7, u1);
+                                });
 
                 ApprovalConfigResponseDto response =
                         approvalConfigService.saveConfig(request, ADMIN_ID);
 
-                assertThat(response.getApproverIds()).containsExactly(5L, 3L, 7L, 1L);
+                assertThat(response.getApprovers())
+                        .extracting(ApprovalConfigResponseDto.ApprovalLineUserDto::getId)
+                        .containsExactly(5L, 3L, 7L, 1L);
             }
         }
 
@@ -162,24 +178,36 @@ class ApprovalConfigServiceTest {
                     ApprovalLineConfig.of(DocumentType.BASIC, List.of(10L, 20L), List.of(30L));
 
             given(approvalLineConfigRepository.findAll()).willReturn(List.of(basicConfig));
+            given(userRepository.findAllById(org.mockito.ArgumentMatchers.anyIterable()))
+                    .willAnswer(
+                            invocation -> {
+                                User u10 = User.builder().id(10L).nameKor("u10").build();
+                                User u20 = User.builder().id(20L).nameKor("u20").build();
+                                User u30 = User.builder().id(30L).nameKor("u30").build();
+                                return List.of(u10, u20, u30);
+                            });
 
             List<ApprovalConfigResponseDto> result = approvalConfigService.getAllConfigs();
 
             assertThat(result).hasSize(DocumentType.values().length);
             ApprovalConfigResponseDto basicResult =
                     result.stream()
-                            .filter(r -> r.getDocumentType() == DocumentType.BASIC)
+                            .filter(r -> DocumentType.BASIC.name().equals(r.getDocumentType()))
                             .findFirst()
                             .orElseThrow();
-            assertThat(basicResult.getApproverIds()).containsExactly(10L, 20L);
-            assertThat(basicResult.getReferrerIds()).containsExactly(30L);
+            assertThat(basicResult.getApprovers())
+                    .extracting(ApprovalConfigResponseDto.ApprovalLineUserDto::getId)
+                    .containsExactly(10L, 20L);
+            assertThat(basicResult.getReferrers())
+                    .extracting(ApprovalConfigResponseDto.ApprovalLineUserDto::getId)
+                    .containsExactly(30L);
 
             result.stream()
-                    .filter(r -> r.getDocumentType() != DocumentType.BASIC)
+                    .filter(r -> !DocumentType.BASIC.name().equals(r.getDocumentType()))
                     .forEach(
                             r -> {
-                                assertThat(r.getApproverIds()).isEmpty();
-                                assertThat(r.getReferrerIds()).isEmpty();
+                                assertThat(r.getApprovers()).isEmpty();
+                                assertThat(r.getReferrers()).isEmpty();
                             });
         }
     }
@@ -197,13 +225,25 @@ class ApprovalConfigServiceTest {
 
             given(approvalLineConfigRepository.findById(DocumentType.EXPENSE_DRAFT))
                     .willReturn(Optional.of(config));
+            given(userRepository.findAllById(org.mockito.ArgumentMatchers.anyIterable()))
+                    .willAnswer(
+                            invocation -> {
+                                User u10 = User.builder().id(10L).nameKor("u10").build();
+                                User u20 = User.builder().id(20L).nameKor("u20").build();
+                                User u30 = User.builder().id(30L).nameKor("u30").build();
+                                return List.of(u10, u20, u30);
+                            });
 
             ApprovalConfigResponseDto response =
                     approvalConfigService.getConfig(DocumentType.EXPENSE_DRAFT);
 
-            assertThat(response.getDocumentType()).isEqualTo(DocumentType.EXPENSE_DRAFT);
-            assertThat(response.getApproverIds()).containsExactly(10L, 20L);
-            assertThat(response.getReferrerIds()).containsExactly(30L);
+            assertThat(response.getDocumentType()).isEqualTo(DocumentType.EXPENSE_DRAFT.name());
+            assertThat(response.getApprovers())
+                    .extracting(ApprovalConfigResponseDto.ApprovalLineUserDto::getId)
+                    .containsExactly(10L, 20L);
+            assertThat(response.getReferrers())
+                    .extracting(ApprovalConfigResponseDto.ApprovalLineUserDto::getId)
+                    .containsExactly(30L);
         }
 
         @Test
@@ -215,9 +255,9 @@ class ApprovalConfigServiceTest {
             ApprovalConfigResponseDto response =
                     approvalConfigService.getConfig(DocumentType.CAR_FUEL);
 
-            assertThat(response.getDocumentType()).isEqualTo(DocumentType.CAR_FUEL);
-            assertThat(response.getApproverIds()).isEmpty();
-            assertThat(response.getReferrerIds()).isEmpty();
+            assertThat(response.getDocumentType()).isEqualTo(DocumentType.CAR_FUEL.name());
+            assertThat(response.getApprovers()).isEmpty();
+            assertThat(response.getReferrers()).isEmpty();
         }
     }
 }

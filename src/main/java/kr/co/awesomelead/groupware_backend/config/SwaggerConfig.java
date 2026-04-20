@@ -64,6 +64,7 @@ public class SwaggerConfig {
                     "/api/auth/verify-phone-code",
                     "/api/auth/check-account/email",
                     "/api/auth/check-account/phone",
+                    "/api/auth/check-account/find-email",
                     "/api/auth/verify-identity",
                     "/api/auth/verify-email-code",
                     "/api/auth/send-phone-code",

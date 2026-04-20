@@ -436,7 +436,18 @@ public class EduReportService {
 
         boolean isAttended = eduAttendanceRepository.existsByEduReportAndUser(report, user);
         dto.setAttendance(isAttended);
+        dto.setCanSign(canSignDepartmentEduReport(report, isAttended));
         return dto;
+    }
+
+    private boolean canSignDepartmentEduReport(EduReport report, boolean isAttended) {
+        if (report.getEduType() != EduType.DEPARTMENT) {
+            return false;
+        }
+        if (report.getStatus() != EduReportStatus.OPEN) {
+            return false;
+        }
+        return !isAttended;
     }
 
     @Transactional

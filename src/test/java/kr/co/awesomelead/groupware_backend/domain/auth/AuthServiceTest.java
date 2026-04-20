@@ -586,6 +586,59 @@ class AuthServiceTest {
     }
 
     @Nested
+    @DisplayName("이메일 찾기 인증요청 전 계정 선검증")
+    class CheckAccountForFindEmailTest {
+
+        @Test
+        @DisplayName("성공: 이름과 전화번호가 일치하면 통과")
+        void checkAccountForFindEmail_Success() {
+            // given
+            testUser.setNameKor("홍길동");
+            testUser.setPhoneNumberHash(User.hashValue(TEST_PHONE));
+            given(userRepository.findByPhoneNumberHash(User.hashValue(TEST_PHONE)))
+                    .willReturn(Optional.of(testUser));
+
+            // when
+            authService.checkAccountForFindEmail("홍길동", TEST_PHONE);
+
+            // then
+            verify(userRepository).findByPhoneNumberHash(User.hashValue(TEST_PHONE));
+        }
+
+        @Test
+        @DisplayName("실패: 전화번호로 사용자를 찾을 수 없으면 USER_NOT_FOUND")
+        void checkAccountForFindEmail_UserNotFound() {
+            // given
+            given(userRepository.findByPhoneNumberHash(User.hashValue(TEST_PHONE)))
+                    .willReturn(Optional.empty());
+
+            // when & then
+            assertThatThrownBy(() -> authService.checkAccountForFindEmail("홍길동", TEST_PHONE))
+                    .isInstanceOf(CustomException.class)
+                    .hasFieldOrPropertyWithValue("errorCode", ErrorCode.USER_NOT_FOUND);
+
+            verify(userRepository).findByPhoneNumberHash(User.hashValue(TEST_PHONE));
+        }
+
+        @Test
+        @DisplayName("실패: 이름이 일치하지 않으면 USER_NOT_FOUND")
+        void checkAccountForFindEmail_NameMismatch() {
+            // given
+            testUser.setNameKor("김철수");
+            testUser.setPhoneNumberHash(User.hashValue(TEST_PHONE));
+            given(userRepository.findByPhoneNumberHash(User.hashValue(TEST_PHONE)))
+                    .willReturn(Optional.of(testUser));
+
+            // when & then
+            assertThatThrownBy(() -> authService.checkAccountForFindEmail("홍길동", TEST_PHONE))
+                    .isInstanceOf(CustomException.class)
+                    .hasFieldOrPropertyWithValue("errorCode", ErrorCode.USER_NOT_FOUND);
+
+            verify(userRepository).findByPhoneNumberHash(User.hashValue(TEST_PHONE));
+        }
+    }
+
+    @Nested
     @DisplayName("휴대폰 비밀번호 찾기 계정 검증")
     class VerifyAccountByPhoneTest {
 

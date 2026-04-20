@@ -18,9 +18,11 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -58,7 +60,7 @@ public class ApprovalConfigService {
             approvalLineConfigRepository.save(config);
         }
 
-        return ApprovalConfigResponseDto.from(config);
+        return ApprovalConfigResponseDto.from(config, loadUsersByIds(config));
     }
 
     @Transactional(readOnly = true)
@@ -70,19 +72,23 @@ public class ApprovalConfigService {
                                 Collectors.toMap(
                                         ApprovalLineConfig::getDocumentType, Function.identity()));
 
-        return Arrays.stream(DocumentType.values())
-                .map(
-                        type -> {
-                            ApprovalLineConfig config =
-                                    configMap.getOrDefault(
-                                            type,
-                                            ApprovalLineConfig.of(
-                                                    type,
-                                                    Collections.emptyList(),
-                                                    Collections.emptyList()));
-                            return ApprovalConfigResponseDto.from(config);
-                        })
-                .collect(Collectors.toList());
+        List<ApprovalLineConfig> resolvedConfigs =
+                Arrays.stream(DocumentType.values())
+                        .map(
+                                type ->
+                                        configMap.getOrDefault(
+                                                type,
+                                                ApprovalLineConfig.of(
+                                                        type,
+                                                        Collections.emptyList(),
+                                                        Collections.emptyList())))
+                        .toList();
+
+        Map<Long, User> usersById = loadUsersByIds(resolvedConfigs);
+
+        return resolvedConfigs.stream()
+                .map(config -> ApprovalConfigResponseDto.from(config, usersById))
+                .toList();
     }
 
     @Transactional(readOnly = true)
@@ -97,6 +103,34 @@ public class ApprovalConfigService {
                                                 java.util.Collections.emptyList(),
                                                 java.util.Collections.emptyList()));
 
-        return ApprovalConfigResponseDto.from(config);
+        return ApprovalConfigResponseDto.from(config, loadUsersByIds(config));
+    }
+
+    private Map<Long, User> loadUsersByIds(ApprovalLineConfig config) {
+        Set<Long> userIds = new HashSet<>();
+        userIds.addAll(config.getApproverIds());
+        userIds.addAll(config.getReferrerIds());
+
+        return loadUsersByIds(userIds);
+    }
+
+    private Map<Long, User> loadUsersByIds(List<ApprovalLineConfig> configs) {
+        Set<Long> userIds = new HashSet<>();
+        for (ApprovalLineConfig config : configs) {
+            userIds.addAll(config.getApproverIds());
+            userIds.addAll(config.getReferrerIds());
+        }
+
+        return loadUsersByIds(userIds);
+    }
+
+    private Map<Long, User> loadUsersByIds(Set<Long> userIds) {
+
+        if (userIds.isEmpty()) {
+            return Collections.emptyMap();
+        }
+
+        return userRepository.findAllById(userIds).stream()
+                .collect(Collectors.toMap(User::getId, Function.identity()));
     }
 }

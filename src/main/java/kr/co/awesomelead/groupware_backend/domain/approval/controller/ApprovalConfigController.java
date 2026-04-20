@@ -39,7 +39,8 @@ public class ApprovalConfigController {
             summary = "결재선 설정 저장",
             description =
                     "문서 양식(DocumentType)별 기본 결재자/참조자 ID 목록을 저장합니다. 기존 설정이 있으면 덮어씁니다."
-                            + " `MANAGE_APPROVAL_LINE` 권한이 필요합니다.")
+                            + " 응답에는 `documentType`(영문 enum), `documentTypeLabel`(한글) 및 결재자/참조자 상세"
+                            + " 정보가 포함됩니다. `MANAGE_APPROVAL_LINE` 권한이 필요합니다.")
     @ApiResponses({
         @io.swagger.v3.oas.annotations.responses.ApiResponse(
                 responseCode = "200",
@@ -57,7 +58,11 @@ public class ApprovalConfigController {
         return ResponseEntity.ok(ApiResponse.onSuccess(response));
     }
 
-    @Operation(summary = "전체 결재선 설정 조회", description = "모든 문서 양식에 대한 기본 결재선 설정을 목록으로 조회합니다.")
+    @Operation(
+            summary = "전체 결재선 설정 조회",
+            description =
+                    "모든 문서 양식에 대한 기본 결재선 설정을 목록으로 조회합니다. `documentType`은 영문 enum,"
+                            + " `documentTypeLabel`은 한글 라벨로 반환됩니다.")
     @ApiResponses({
         @io.swagger.v3.oas.annotations.responses.ApiResponse(
                 responseCode = "200",
@@ -72,7 +77,8 @@ public class ApprovalConfigController {
             summary = "결재선 설정 조회",
             description =
                     "문서 양식(DocumentType)에 해당하는 기본 결재선 설정을 조회합니다."
-                            + " 설정이 없는 경우 빈 목록을 반환합니다. 인증된 사용자라면 누구나 조회할 수 있습니다.")
+                            + " 설정이 없는 경우 빈 목록을 반환합니다. 인증된 사용자라면 누구나 조회할 수 있습니다."
+                            + " 응답에는 결재자/참조자 상세 정보가 제공됩니다.")
     @ApiResponses({
         @io.swagger.v3.oas.annotations.responses.ApiResponse(
                 responseCode = "200",

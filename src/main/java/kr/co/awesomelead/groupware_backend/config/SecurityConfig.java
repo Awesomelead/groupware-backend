@@ -92,6 +92,7 @@ public class SecurityConfig {
                                         "/api/auth/bootstrap-promote-admin",
                                         "/api/auth/reissue",
                                         "/api/auth/verify-phone-code",
+                                        "/api/auth/check-account/email",
                                         "/api/auth/verify-account/email",
                                         "/api/auth/check-account/phone",
                                         "/api/auth/verify-account/phone",

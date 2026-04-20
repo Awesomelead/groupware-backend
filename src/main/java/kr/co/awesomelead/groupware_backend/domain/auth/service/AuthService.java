@@ -311,6 +311,10 @@ public class AuthService {
             throw new CustomException(ErrorCode.EMAIL_NOT_VERIFIED);
         }
 
+        checkAccountByEmail(email);
+    }
+
+    public void checkAccountByEmail(String email) {
         userRepository
                 .findByEmail(email)
                 .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));

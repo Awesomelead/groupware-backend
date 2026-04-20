@@ -790,6 +790,72 @@ public class AuthController {
     }
 
     @Operation(
+            summary = "이메일 인증 요청 전 계정 존재 검증",
+            description = "이메일 인증번호 발송 전, 입력한 이메일 계정 존재 여부를 검증합니다.")
+    @ApiResponses(
+            value = {
+                @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                        responseCode = "200",
+                        description = "계정 확인 성공",
+                        content =
+                                @Content(
+                                        mediaType = "application/json",
+                                        examples =
+                                                @ExampleObject(
+                                                        value =
+                                                                """
+                                        {
+                                          "isSuccess": true,
+                                          "code": "COMMON204",
+                                          "message": "계정 확인이 완료되었습니다.",
+                                          "result": null
+                                        }
+                                        """))),
+                @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                        responseCode = "400",
+                        description = "입력값 검증 실패",
+                        content =
+                                @Content(
+                                        mediaType = "application/json",
+                                        examples =
+                                                @ExampleObject(
+                                                        value =
+                                                                """
+                                                        {
+                                                          "isSuccess": false,
+                                                          "code": "COMMON400",
+                                                          "message": "입력값이 유효하지 않습니다.",
+                                                          "result": {
+                                                            "email": "유효한 이메일 형식이 아닙니다."
+                                                          }
+                                                        }
+                                                        """))),
+                @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                        responseCode = "404",
+                        description = "사용자를 찾을 수 없음",
+                        content =
+                                @Content(
+                                        mediaType = "application/json",
+                                        examples =
+                                                @ExampleObject(
+                                                        value =
+                                                                """
+                                        {
+                                          "isSuccess": false,
+                                          "code": "USER_NOT_FOUND",
+                                          "message": "해당 사용자를 찾을 수 없습니다.",
+                                          "result": null
+                                        }
+                                        """)))
+            })
+    @PostMapping("/check-account/email")
+    public ResponseEntity<ApiResponse<Void>> checkAccountByEmail(
+            @Valid @RequestBody VerifyAccountByEmailRequestDto requestDto) {
+        authService.checkAccountByEmail(requestDto.getEmail());
+        return ResponseEntity.ok(ApiResponse.onNoContent("계정 확인이 완료되었습니다."));
+    }
+
+    @Operation(
             summary = "이메일 비밀번호 찾기용 계정 검증",
             description = "이메일 인증번호 검증 완료 후, 비밀번호 찾기 버튼에서 입력한 이메일 계정 존재 여부를 최종 검증합니다.")
     @ApiResponses(

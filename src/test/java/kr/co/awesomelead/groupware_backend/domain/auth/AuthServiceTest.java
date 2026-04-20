@@ -422,6 +422,35 @@ class AuthServiceTest {
     class VerifyAccountByEmailTest {
 
         @Test
+        @DisplayName("성공: 이메일 계정 선검증 통과")
+        void checkAccountByEmail_Success() {
+            // given
+            given(userRepository.findByEmail(TEST_EMAIL)).willReturn(Optional.of(testUser));
+
+            // when
+            authService.checkAccountByEmail(TEST_EMAIL);
+
+            // then
+            verify(userRepository).findByEmail(TEST_EMAIL);
+            verify(emailAuthService, never()).isEmailVerified(anyString());
+        }
+
+        @Test
+        @DisplayName("실패: 선검증 시 이메일 계정이 존재하지 않으면 USER_NOT_FOUND")
+        void checkAccountByEmail_UserNotFound() {
+            // given
+            given(userRepository.findByEmail(TEST_EMAIL)).willReturn(Optional.empty());
+
+            // when & then
+            assertThatThrownBy(() -> authService.checkAccountByEmail(TEST_EMAIL))
+                    .isInstanceOf(CustomException.class)
+                    .hasFieldOrPropertyWithValue("errorCode", ErrorCode.USER_NOT_FOUND);
+
+            verify(userRepository).findByEmail(TEST_EMAIL);
+            verify(emailAuthService, never()).isEmailVerified(anyString());
+        }
+
+        @Test
         @DisplayName("성공: 이메일 인증 완료 및 계정 존재 시 통과한다")
         void verifyAccountByEmail_Success() {
             // given

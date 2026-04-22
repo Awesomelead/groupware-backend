@@ -913,6 +913,7 @@ public class EduReportServiceTest {
                         .id(reportId)
                         .eduType(EduType.DEPARTMENT)
                         .department(defaultDept)
+                        .signatureRequired(true)
                         .title("본인 부서 교육")
                         .build();
 
@@ -936,6 +937,87 @@ public class EduReportServiceTest {
         assertThat(result.getEduType()).isEqualTo(EduType.DEPARTMENT);
         assertThat(result.isCanSign()).isTrue();
         verify(eduAttendanceRepository, never()).findAllByEduReportIdWithUser(anyLong());
+    }
+
+    @Test
+    @DisplayName("부서 교육 상세 조회 - 본인 부서라도 signatureRequired=false면 canSign=false")
+    void getDepartmentEduReport_OwnDepartment_SignatureNotRequired_CanSignFalse() {
+        // given
+        Long reportId = 3L;
+        Long userId = 1L;
+        User user = createNormalUser();
+
+        EduReport report =
+                EduReport.builder()
+                        .id(reportId)
+                        .eduType(EduType.DEPARTMENT)
+                        .department(defaultDept)
+                        .signatureRequired(false)
+                        .status(EduReportStatus.OPEN)
+                        .title("서명 불필요 부서 교육")
+                        .build();
+
+        EduReportDetailDto mockDto =
+                EduReportDetailDto.builder()
+                        .id(reportId)
+                        .title("서명 불필요 부서 교육")
+                        .eduType(EduType.DEPARTMENT)
+                        .build();
+
+        when(userRepository.findById(userId)).thenReturn(Optional.of(user));
+        when(eduReportRepository.findById(reportId)).thenReturn(Optional.of(report));
+        when(eduMapper.toDetailDto(report, null, -1L, s3Service)).thenReturn(mockDto);
+        when(eduAttendanceRepository.existsByEduReportAndUser(report, user)).thenReturn(false);
+
+        // when
+        EduReportDetailDto result = eduReportService.getDepartmentEduReport(reportId, userId);
+
+        // then
+        assertThat(result).isNotNull();
+        assertThat(result.isCanSign()).isFalse();
+    }
+
+    @Test
+    @DisplayName("부서 교육 상세 조회 - 권한이 있어도 타 부서 게시물은 canSign=false")
+    void getDepartmentEduReport_WithAuthority_OtherDepartment_CanSignFalse() {
+        // given
+        Long reportId = 2L;
+        Long userId = 1L;
+        User user = createNormalUser();
+        user.addAuthority(Authority.MANAGE_DEPARTMENT_EDUCATION);
+
+        Department otherDepartment =
+                Department.builder().id(2L).name(DepartmentName.MANAGEMENT_SUPPORT).build();
+
+        EduReport report =
+                EduReport.builder()
+                        .id(reportId)
+                        .eduType(EduType.DEPARTMENT)
+                        .department(otherDepartment)
+                        .status(EduReportStatus.OPEN)
+                        .title("타 부서 교육")
+                        .build();
+
+        EduReportDetailDto mockDto =
+                EduReportDetailDto.builder()
+                        .id(reportId)
+                        .title("타 부서 교육")
+                        .eduType(EduType.DEPARTMENT)
+                        .build();
+
+        when(userRepository.findById(userId)).thenReturn(Optional.of(user));
+        when(eduReportRepository.findById(reportId)).thenReturn(Optional.of(report));
+        when(eduAttendanceRepository.findAllByEduReportIdWithUser(reportId))
+                .thenReturn(new ArrayList<>());
+        when(eduMapper.toDetailDto(report, new ArrayList<>(), 0L, s3Service)).thenReturn(mockDto);
+        when(eduAttendanceRepository.existsByEduReportAndUser(report, user)).thenReturn(false);
+
+        // when
+        EduReportDetailDto result = eduReportService.getDepartmentEduReport(reportId, userId);
+
+        // then
+        assertThat(result).isNotNull();
+        assertThat(result.isCanSign()).isFalse();
     }
 
     @Test

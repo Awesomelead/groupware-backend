@@ -436,15 +436,23 @@ public class EduReportService {
 
         boolean isAttended = eduAttendanceRepository.existsByEduReportAndUser(report, user);
         dto.setAttendance(isAttended);
-        dto.setCanSign(canSignDepartmentEduReport(report, isAttended));
+        dto.setCanSign(canSignDepartmentEduReport(report, user, isAttended));
         return dto;
     }
 
-    private boolean canSignDepartmentEduReport(EduReport report, boolean isAttended) {
+    private boolean canSignDepartmentEduReport(EduReport report, User user, boolean isAttended) {
         if (report.getEduType() != EduType.DEPARTMENT) {
             return false;
         }
+        if (!report.isSignatureRequired()) {
+            return false;
+        }
         if (report.getStatus() != EduReportStatus.OPEN) {
+            return false;
+        }
+        if (user.getDepartment() == null
+                || report.getDepartment() == null
+                || !report.getDepartment().getId().equals(user.getDepartment().getId())) {
             return false;
         }
         return !isAttended;

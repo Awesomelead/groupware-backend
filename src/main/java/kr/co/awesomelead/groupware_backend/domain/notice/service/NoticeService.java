@@ -149,10 +149,18 @@ public class NoticeService {
         NoticeDetailDto dto = noticeMapper.toNoticeDetailDto(notice, s3Service);
         dto.setPrevNotice(
                 noticeQueryRepository.findPrevNotice(
-                        noticeId, notice.getCreatedDate(), userId, hasAccessNotice));
+                        noticeId,
+                        notice.getCreatedDate(),
+                        notice.getType(),
+                        userId,
+                        hasAccessNotice));
         dto.setNextNotice(
                 noticeQueryRepository.findNextNotice(
-                        noticeId, notice.getCreatedDate(), userId, hasAccessNotice));
+                        noticeId,
+                        notice.getCreatedDate(),
+                        notice.getType(),
+                        userId,
+                        hasAccessNotice));
 
         return dto;
     }

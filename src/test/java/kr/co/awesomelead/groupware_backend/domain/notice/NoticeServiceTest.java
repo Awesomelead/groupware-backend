@@ -245,9 +245,9 @@ class NoticeServiceTest {
             given(userRepository.findById(1L)).willReturn(Optional.of(adminUser));
             given(noticeMapper.toNoticeDetailDto(any(), any()))
                     .willReturn(NoticeDetailDto.builder().title("상세조회").build());
-            given(noticeQueryRepository.findPrevNotice(any(), any(), any(), anyBoolean()))
+            given(noticeQueryRepository.findPrevNotice(any(), any(), any(), any(), anyBoolean()))
                     .willReturn(null);
-            given(noticeQueryRepository.findNextNotice(any(), any(), any(), anyBoolean()))
+            given(noticeQueryRepository.findNextNotice(any(), any(), any(), any(), anyBoolean()))
                     .willReturn(null);
 
             // when
@@ -276,9 +276,9 @@ class NoticeServiceTest {
                                     .targetDepartmentIds(List.of(10L, 20L))
                                     .targetUserIds(List.of(99L))
                                     .build());
-            given(noticeQueryRepository.findPrevNotice(any(), any(), any(), anyBoolean()))
+            given(noticeQueryRepository.findPrevNotice(any(), any(), any(), any(), anyBoolean()))
                     .willReturn(null);
-            given(noticeQueryRepository.findNextNotice(any(), any(), any(), anyBoolean()))
+            given(noticeQueryRepository.findNextNotice(any(), any(), any(), any(), anyBoolean()))
                     .willReturn(null);
 
             // when
@@ -304,9 +304,9 @@ class NoticeServiceTest {
                                     .title("타입조회")
                                     .type(NoticeType.REGULAR.name())
                                     .build());
-            given(noticeQueryRepository.findPrevNotice(any(), any(), any(), anyBoolean()))
+            given(noticeQueryRepository.findPrevNotice(any(), any(), any(), any(), anyBoolean()))
                     .willReturn(null);
-            given(noticeQueryRepository.findNextNotice(any(), any(), any(), anyBoolean()))
+            given(noticeQueryRepository.findNextNotice(any(), any(), any(), any(), anyBoolean()))
                     .willReturn(null);
 
             // when
@@ -342,9 +342,9 @@ class NoticeServiceTest {
             given(userRepository.findById(1L)).willReturn(Optional.of(adminUser));
             given(noticeMapper.toNoticeDetailDto(any(), any()))
                     .willReturn(NoticeDetailDto.builder().title("이전다음조회").build());
-            given(noticeQueryRepository.findPrevNotice(any(), any(), any(), anyBoolean()))
+            given(noticeQueryRepository.findPrevNotice(any(), any(), any(), any(), anyBoolean()))
                     .willReturn(prevInfo);
-            given(noticeQueryRepository.findNextNotice(any(), any(), any(), anyBoolean()))
+            given(noticeQueryRepository.findNextNotice(any(), any(), any(), any(), anyBoolean()))
                     .willReturn(nextInfo);
 
             // when

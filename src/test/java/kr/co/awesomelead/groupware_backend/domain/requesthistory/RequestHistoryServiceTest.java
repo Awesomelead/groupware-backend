@@ -234,8 +234,7 @@ class RequestHistoryServiceTest {
             ReflectionTestUtils.setField(requestHistory, "id", 10L);
             ReflectionTestUtils.setField(requestHistory, "name", "홍길동");
 
-            PageRequest pageable =
-                    PageRequest.of(0, 20, Sort.by(Sort.Direction.DESC, "createdAt"));
+            PageRequest pageable = PageRequest.of(0, 20, Sort.by(Sort.Direction.DESC, "createdAt"));
             Page<RequestHistory> page = new PageImpl<>(List.of(requestHistory), pageable, 1);
 
             given(userRepository.findById(100L)).willReturn(Optional.of(admin));
@@ -248,7 +247,6 @@ class RequestHistoryServiceTest {
             Page<AdminRequestHistorySummaryResponseDto> result =
                     requestHistoryService.getAllRequestsForAdmin(
                             100L, RequestHistoryStatus.PENDING, pageable);
-
 
             // then
             assertThat(result.getTotalElements()).isEqualTo(1);

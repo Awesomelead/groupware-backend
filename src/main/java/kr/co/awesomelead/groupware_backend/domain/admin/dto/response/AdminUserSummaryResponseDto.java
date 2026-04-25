@@ -11,6 +11,8 @@ import kr.co.awesomelead.groupware_backend.domain.user.enums.Status;
 import lombok.Builder;
 import lombok.Getter;
 
+import java.time.LocalDate;
+
 @Getter
 @Builder
 @Schema(description = "직원 관리 목록 응답")
@@ -37,6 +39,12 @@ public class AdminUserSummaryResponseDto {
     @Schema(description = "개인정보 수정 요청 대기 여부", example = "false")
     private boolean hasPendingMyInfoRequest;
 
+    @Schema(description = "입사일", example = "2025-09-22")
+    private LocalDate hireDate;
+
+    @Schema(description = "퇴사일", example = "2025-09-22")
+    private LocalDate resignationDate;
+
     public static AdminUserSummaryResponseDto from(User user, boolean hasPendingMyInfoRequest) {
         return AdminUserSummaryResponseDto.builder()
                 .userId(user.getId())
@@ -47,6 +55,8 @@ public class AdminUserSummaryResponseDto {
                         user.getDepartment() != null ? user.getDepartment().getName() : null)
                 .signupStatus(user.getStatus())
                 .hasPendingMyInfoRequest(hasPendingMyInfoRequest)
+                .hireDate(user.getHireDate())
+                .resignationDate(user.getResignationDate())
                 .build();
     }
 }

@@ -107,7 +107,11 @@ public class NoticeQueryRepository {
     }
 
     public NoticeDetailDto.NoticeInfo findPrevNotice(
-            Long noticeId, LocalDateTime createdDate, NoticeType type, Long userId, boolean hasAccessNotice) {
+            Long noticeId,
+            LocalDateTime createdDate,
+            NoticeType type,
+            Long userId,
+            boolean hasAccessNotice) {
         QNotice notice = QNotice.notice;
         QUser author = QUser.user;
 
@@ -133,7 +137,11 @@ public class NoticeQueryRepository {
     }
 
     public NoticeDetailDto.NoticeInfo findNextNotice(
-            Long noticeId, LocalDateTime createdDate, NoticeType type, Long userId, boolean hasAccessNotice) {
+            Long noticeId,
+            LocalDateTime createdDate,
+            NoticeType type,
+            Long userId,
+            boolean hasAccessNotice) {
         QNotice notice = QNotice.notice;
         QUser author = QUser.user;
 

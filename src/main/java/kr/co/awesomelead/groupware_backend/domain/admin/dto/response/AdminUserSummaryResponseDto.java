@@ -2,6 +2,8 @@ package kr.co.awesomelead.groupware_backend.domain.admin.dto.response;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 
+import java.time.LocalDate;
+
 import kr.co.awesomelead.groupware_backend.domain.department.enums.DepartmentName;
 import kr.co.awesomelead.groupware_backend.domain.user.entity.User;
 import kr.co.awesomelead.groupware_backend.domain.user.enums.JobType;
@@ -37,6 +39,12 @@ public class AdminUserSummaryResponseDto {
     @Schema(description = "개인정보 수정 요청 대기 여부", example = "false")
     private boolean hasPendingMyInfoRequest;
 
+    @Schema(description = "입사일", example = "2025-09-22")
+    private LocalDate hireDate;
+
+    @Schema(description = "퇴사일", example = "2025-09-22")
+    private LocalDate resignationDate;
+
     public static AdminUserSummaryResponseDto from(User user, boolean hasPendingMyInfoRequest) {
         return AdminUserSummaryResponseDto.builder()
                 .userId(user.getId())
@@ -47,6 +55,8 @@ public class AdminUserSummaryResponseDto {
                         user.getDepartment() != null ? user.getDepartment().getName() : null)
                 .signupStatus(user.getStatus())
                 .hasPendingMyInfoRequest(hasPendingMyInfoRequest)
+                .hireDate(user.getHireDate())
+                .resignationDate(user.getResignationDate())
                 .build();
     }
 }

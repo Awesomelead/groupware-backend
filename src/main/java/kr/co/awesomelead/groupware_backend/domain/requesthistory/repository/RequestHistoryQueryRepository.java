@@ -65,12 +65,21 @@ public class RequestHistoryQueryRepository {
         List<OrderSpecifier<?>> orders = new ArrayList<>();
 
         for (Sort.Order order : pageable.getSort()) {
-            Order direction = order.isAscending() ? Order.ASC : Order.DESC;
             String property = order.getProperty();
+
+            if (property == null || property.isBlank()) {
+                continue;
+            }
+
+            Order direction = order.isAscending() ? Order.ASC : Order.DESC;
 
             // createdAt은 엔티티 필드명 requestDate에 매핑
             if ("createdAt".equals(property)) {
                 property = "requestDate";
+            }
+            // status는 엔티티 필드명 approvalStatus에 매핑
+            if ("status".equals(property)) {
+                property = "approvalStatus";
             }
 
             PathBuilder<RequestHistory> path =

@@ -18,6 +18,7 @@ import kr.co.awesomelead.groupware_backend.domain.requesthistory.dto.response.Re
 import kr.co.awesomelead.groupware_backend.domain.requesthistory.entity.RequestHistory;
 import kr.co.awesomelead.groupware_backend.domain.requesthistory.enums.RequestHistoryStatus;
 import kr.co.awesomelead.groupware_backend.domain.requesthistory.enums.RequestType;
+import kr.co.awesomelead.groupware_backend.domain.requesthistory.repository.RequestHistoryQueryRepository;
 import kr.co.awesomelead.groupware_backend.domain.requesthistory.repository.RequestHistoryRepository;
 import kr.co.awesomelead.groupware_backend.domain.requesthistory.service.RequestHistoryService;
 import kr.co.awesomelead.groupware_backend.domain.user.entity.User;
@@ -37,6 +38,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
 import org.springframework.test.util.ReflectionTestUtils;
 
 import java.time.LocalDate;
@@ -49,6 +51,7 @@ class RequestHistoryServiceTest {
 
     @InjectMocks private RequestHistoryService requestHistoryService;
     @Mock private RequestHistoryRepository requestHistoryRepository;
+    @Mock private RequestHistoryQueryRepository requestHistoryQueryRepository;
     @Mock private UserRepository userRepository;
     @Mock private NotificationService notificationService;
     @Mock private NotificationRepository notificationRepository;
@@ -231,12 +234,13 @@ class RequestHistoryServiceTest {
             ReflectionTestUtils.setField(requestHistory, "id", 10L);
             ReflectionTestUtils.setField(requestHistory, "name", "홍길동");
 
-            PageRequest pageable = PageRequest.of(0, 20);
+            PageRequest pageable =
+                    PageRequest.of(0, 20, Sort.by(Sort.Direction.DESC, "createdAt"));
             Page<RequestHistory> page = new PageImpl<>(List.of(requestHistory), pageable, 1);
 
             given(userRepository.findById(100L)).willReturn(Optional.of(admin));
             given(
-                            requestHistoryRepository.findAllWithUserAndDepartmentByStatus(
+                            requestHistoryQueryRepository.findAllWithUserAndDepartmentByStatus(
                                     RequestHistoryStatus.PENDING, pageable))
                     .willReturn(page);
 
@@ -244,6 +248,7 @@ class RequestHistoryServiceTest {
             Page<AdminRequestHistorySummaryResponseDto> result =
                     requestHistoryService.getAllRequestsForAdmin(
                             100L, RequestHistoryStatus.PENDING, pageable);
+
 
             // then
             assertThat(result.getTotalElements()).isEqualTo(1);

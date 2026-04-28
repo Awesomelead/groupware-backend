@@ -432,6 +432,7 @@ public class EduReportController {
 
                 - `MANAGE_DEPARTMENT_EDUCATION` 권한 사용자는 `departmentName`으로 전체 부서 대상 필터 조회가 가능합니다.
                 - `MANAGE_DEPARTMENT_EDUCATION` 권한이 없는 사용자는 본인 소속 부서 게시물만 조회됩니다.
+                - `canSign`은 목록 기준 서명 가능 여부이며, `signatureRequired=true` + `OPEN` 상태 + 미서명 + 본인 소속 부서 게시물일 때 `true`입니다.
                 """)
     @ApiResponses({
         @io.swagger.v3.oas.annotations.responses.ApiResponse(
@@ -456,6 +457,7 @@ public class EduReportController {
                                   "eduDate": "2026-03-16",
                                   "content": "부서교육 게시글입니다.",
                                   "attendance": false,
+                                  "canSign": true,
                                   "pinned": false,
                                   "signatureRequired": true,
                                   "status": "OPEN",
@@ -540,6 +542,7 @@ public class EduReportController {
                                   "eduDate": "2026-04-14",
                                   "content": "PSM 교육 게시글입니다.",
                                   "attendance": false,
+                                  "canSign": false,
                                   "pinned": false,
                                   "signatureRequired": false,
                                   "status": "OPEN",
@@ -613,6 +616,7 @@ public class EduReportController {
                                   "eduDate": "2026-04-14",
                                   "content": "안전 보건 교육 게시글입니다.",
                                   "attendance": false,
+                                  "canSign": false,
                                   "pinned": false,
                                   "signatureRequired": true,
                                   "status": "OPEN",

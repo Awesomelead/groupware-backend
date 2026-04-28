@@ -93,13 +93,13 @@ public class ApprovalConfigService {
                                         configMap.getOrDefault(
                                                 type,
                                                 ApprovalLineConfig.of(
-                                                type,
-                                                Collections.emptyList(),
-                                                Collections.emptyList(),
-                                                Collections.emptyList(),
-                                                Collections.emptyList(),
-                                                Collections.emptyList(),
-                                                Collections.emptyList())))
+                                                        type,
+                                                        Collections.emptyList(),
+                                                        Collections.emptyList(),
+                                                        Collections.emptyList(),
+                                                        Collections.emptyList(),
+                                                        Collections.emptyList(),
+                                                        Collections.emptyList())))
                         .toList();
 
         Map<Long, User> usersById = loadUsersByIds(resolvedConfigs);

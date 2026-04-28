@@ -405,7 +405,8 @@ class ApprovalConfigServiceTest {
             given(approvalLineConfigRepository.findById(DocumentType.CAR_FUEL))
                     .willReturn(Optional.empty());
 
-            ApprovalConfigResponseDto response = approvalConfigService.getConfig(DocumentType.CAR_FUEL);
+            ApprovalConfigResponseDto response =
+                    approvalConfigService.getConfig(DocumentType.CAR_FUEL);
 
             assertThat(response.getDocumentType()).isEqualTo(DocumentType.CAR_FUEL.name());
             assertThat(response.getApprovers().getTargetUser()).isEmpty();

@@ -61,7 +61,9 @@ public class EduReportQueryRepository {
         BooleanExpression attendanceExists =
                 JPAExpressions.selectOne()
                         .from(eduAttendance)
-                        .where(eduAttendance.eduReport.eq(eduReport), eduAttendance.user.id.eq(userId))
+                        .where(
+                                eduAttendance.eduReport.eq(eduReport),
+                                eduAttendance.user.id.eq(userId))
                         .exists();
         BooleanExpression canSignDepartment =
                 eduReport
@@ -109,7 +111,9 @@ public class EduReportQueryRepository {
         BooleanExpression attendanceExists =
                 JPAExpressions.selectOne()
                         .from(eduAttendance)
-                        .where(eduAttendance.eduReport.eq(eduReport), eduAttendance.user.id.eq(userId))
+                        .where(
+                                eduAttendance.eduReport.eq(eduReport),
+                                eduAttendance.user.id.eq(userId))
                         .exists();
 
         return queryFactory
@@ -143,7 +147,9 @@ public class EduReportQueryRepository {
         BooleanExpression attendanceExists =
                 JPAExpressions.selectOne()
                         .from(eduAttendance)
-                        .where(eduAttendance.eduReport.eq(eduReport), eduAttendance.user.id.eq(userId))
+                        .where(
+                                eduAttendance.eduReport.eq(eduReport),
+                                eduAttendance.user.id.eq(userId))
                         .exists();
 
         return queryFactory

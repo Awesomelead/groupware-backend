@@ -39,7 +39,9 @@ public class ApprovalConfigResponseDto {
     private ApprovalTargetResponseDto referrers;
 
     public static ApprovalConfigResponseDto from(
-            ApprovalLineConfig config, Map<Long, User> usersById, Map<Long, Department> departmentsById) {
+            ApprovalLineConfig config,
+            Map<Long, User> usersById,
+            Map<Long, Department> departmentsById) {
         return ApprovalConfigResponseDto.builder()
                 .documentType(config.getDocumentType().name())
                 .documentTypeLabel(config.getDocumentType().getDescription())
@@ -84,11 +86,15 @@ public class ApprovalConfigResponseDto {
                                                 .name(
                                                         department.getName() == null
                                                                 ? null
-                                                                : department.getName().getDescription())
+                                                                : department
+                                                                        .getName()
+                                                                        .getDescription())
                                                 .company(
                                                         department.getCompany() == null
                                                                 ? null
-                                                                : department.getCompany().getDescription())
+                                                                : department
+                                                                        .getCompany()
+                                                                        .getDescription())
                                                 .build())
                         .toList();
 
@@ -104,10 +110,12 @@ public class ApprovalConfigResponseDto {
                                                 .position(
                                                         user.getPosition() == null
                                                                 ? null
-                                                                : user.getPosition().getDescription())
+                                                                : user.getPosition()
+                                                                        .getDescription())
                                                 .departmentName(
                                                         user.getDepartment() == null
-                                                                        || user.getDepartment().getName()
+                                                                        || user.getDepartment()
+                                                                                        .getName()
                                                                                 == null
                                                                 ? null
                                                                 : user.getDepartment()

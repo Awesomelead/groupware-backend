@@ -7,6 +7,7 @@ import static kr.co.awesomelead.groupware_backend.domain.education.entity.QEduca
 import com.querydsl.core.Tuple;
 import com.querydsl.core.types.Projections;
 import com.querydsl.core.types.dsl.BooleanExpression;
+import com.querydsl.core.types.dsl.Expressions;
 import com.querydsl.jpa.JPAExpressions;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 
@@ -16,6 +17,7 @@ import kr.co.awesomelead.groupware_backend.domain.department.enums.DepartmentNam
 import kr.co.awesomelead.groupware_backend.domain.education.dto.response.EduReportSummaryDto;
 import kr.co.awesomelead.groupware_backend.domain.education.entity.EduReport;
 import kr.co.awesomelead.groupware_backend.domain.education.entity.QEduAttendance;
+import kr.co.awesomelead.groupware_backend.domain.education.enums.EduReportStatus;
 import kr.co.awesomelead.groupware_backend.domain.education.enums.EduType;
 import kr.co.awesomelead.groupware_backend.domain.user.entity.QUser;
 import kr.co.awesomelead.groupware_backend.domain.user.enums.Position;
@@ -55,6 +57,26 @@ public class EduReportQueryRepository {
             boolean hasAccess,
             Company psmCompany,
             boolean canReadAllPsmCompanies) {
+        QUser currentUser = new QUser("currentUserForCanSign");
+        BooleanExpression attendanceExists =
+                JPAExpressions.selectOne()
+                        .from(eduAttendance)
+                        .where(
+                                eduAttendance.eduReport.eq(eduReport),
+                                eduAttendance.user.id.eq(userId))
+                        .exists();
+        BooleanExpression canSignDepartment =
+                eduReport
+                        .eduType
+                        .eq(EduType.DEPARTMENT)
+                        .and(eduReport.signatureRequired.isTrue())
+                        .and(eduReport.status.eq(EduReportStatus.OPEN))
+                        .and(attendanceExists.not())
+                        .and(
+                                eduReport.department.id.eq(
+                                        JPAExpressions.select(currentUser.department.id)
+                                                .from(currentUser)
+                                                .where(currentUser.id.eq(userId))));
 
         return queryFactory
                 .select(
@@ -65,12 +87,8 @@ public class EduReportQueryRepository {
                                 eduReport.eduType,
                                 eduReport.eduDate,
                                 eduReport.content,
-                                JPAExpressions.selectOne()
-                                        .from(eduAttendance)
-                                        .where(
-                                                eduAttendance.eduReport.eq(eduReport),
-                                                eduAttendance.user.id.eq(userId))
-                                        .exists(),
+                                attendanceExists,
+                                canSignDepartment,
                                 eduReport.pinned,
                                 eduReport.signatureRequired,
                                 eduReport.status,
@@ -90,6 +108,13 @@ public class EduReportQueryRepository {
 
     public List<EduReportSummaryDto> findPsmEduReports(
             Long categoryId, Long userId, Company company, boolean canReadAllCompanies) {
+        BooleanExpression attendanceExists =
+                JPAExpressions.selectOne()
+                        .from(eduAttendance)
+                        .where(
+                                eduAttendance.eduReport.eq(eduReport),
+                                eduAttendance.user.id.eq(userId))
+                        .exists();
 
         return queryFactory
                 .select(
@@ -100,12 +125,8 @@ public class EduReportQueryRepository {
                                 eduReport.eduType,
                                 eduReport.eduDate,
                                 eduReport.content,
-                                JPAExpressions.selectOne()
-                                        .from(eduAttendance)
-                                        .where(
-                                                eduAttendance.eduReport.eq(eduReport),
-                                                eduAttendance.user.id.eq(userId))
-                                        .exists(),
+                                attendanceExists,
+                                Expressions.constant(false),
                                 eduReport.pinned,
                                 eduReport.signatureRequired,
                                 eduReport.status,
@@ -123,6 +144,13 @@ public class EduReportQueryRepository {
 
     public List<EduReportSummaryDto> findSafetyEduReports(
             Long categoryId, Long userId, Company company, boolean canReadAllCompanies) {
+        BooleanExpression attendanceExists =
+                JPAExpressions.selectOne()
+                        .from(eduAttendance)
+                        .where(
+                                eduAttendance.eduReport.eq(eduReport),
+                                eduAttendance.user.id.eq(userId))
+                        .exists();
 
         return queryFactory
                 .select(
@@ -133,12 +161,8 @@ public class EduReportQueryRepository {
                                 eduReport.eduType,
                                 eduReport.eduDate,
                                 eduReport.content,
-                                JPAExpressions.selectOne()
-                                        .from(eduAttendance)
-                                        .where(
-                                                eduAttendance.eduReport.eq(eduReport),
-                                                eduAttendance.user.id.eq(userId))
-                                        .exists(),
+                                attendanceExists,
+                                Expressions.constant(false),
                                 eduReport.pinned,
                                 eduReport.signatureRequired,
                                 eduReport.status,

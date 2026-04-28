@@ -36,6 +36,9 @@ public class EduReportSummaryDto {
     @Schema(description = "출석 여부", example = "true")
     private boolean attendance;
 
+    @Schema(description = "현재 사용자의 서명 가능 여부(목록 기준)", example = "true")
+    private boolean canSign;
+
     @Schema(description = "상단 고정 여부", example = "false")
     private boolean pinned;
 

@@ -107,32 +107,11 @@ public class NoticeQueryRepository {
     }
 
     public NoticeDetailDto.NoticeInfo findPrevNotice(
-            Long noticeId, LocalDateTime createdDate, Long userId, boolean hasAccessNotice) {
-        QNotice notice = QNotice.notice;
-        QUser author = QUser.user;
-
-        return queryFactory
-                .select(
-                        Projections.constructor(
-                                NoticeDetailDto.NoticeInfo.class,
-                                notice.id,
-                                notice.title,
-                                displayNameExpr(author),
-                                notice.createdDate))
-                .from(notice)
-                .innerJoin(notice.author, author)
-                .where(
-                        notice.createdDate
-                                .lt(createdDate)
-                                .or(notice.createdDate.eq(createdDate).and(notice.id.lt(noticeId))),
-                        noticeAccessible(hasAccessNotice, userId))
-                .orderBy(notice.createdDate.desc(), notice.id.desc())
-                .limit(1)
-                .fetchOne();
-    }
-
-    public NoticeDetailDto.NoticeInfo findNextNotice(
-            Long noticeId, LocalDateTime createdDate, Long userId, boolean hasAccessNotice) {
+            Long noticeId,
+            LocalDateTime createdDate,
+            NoticeType type,
+            Long userId,
+            boolean hasAccessNotice) {
         QNotice notice = QNotice.notice;
         QUser author = QUser.user;
 
@@ -150,8 +129,39 @@ public class NoticeQueryRepository {
                         notice.createdDate
                                 .gt(createdDate)
                                 .or(notice.createdDate.eq(createdDate).and(notice.id.gt(noticeId))),
+                        notice.type.eq(type),
                         noticeAccessible(hasAccessNotice, userId))
                 .orderBy(notice.createdDate.asc(), notice.id.asc())
+                .limit(1)
+                .fetchOne();
+    }
+
+    public NoticeDetailDto.NoticeInfo findNextNotice(
+            Long noticeId,
+            LocalDateTime createdDate,
+            NoticeType type,
+            Long userId,
+            boolean hasAccessNotice) {
+        QNotice notice = QNotice.notice;
+        QUser author = QUser.user;
+
+        return queryFactory
+                .select(
+                        Projections.constructor(
+                                NoticeDetailDto.NoticeInfo.class,
+                                notice.id,
+                                notice.title,
+                                displayNameExpr(author),
+                                notice.createdDate))
+                .from(notice)
+                .innerJoin(notice.author, author)
+                .where(
+                        notice.createdDate
+                                .lt(createdDate)
+                                .or(notice.createdDate.eq(createdDate).and(notice.id.lt(noticeId))),
+                        notice.type.eq(type),
+                        noticeAccessible(hasAccessNotice, userId))
+                .orderBy(notice.createdDate.desc(), notice.id.desc())
                 .limit(1)
                 .fetchOne();
     }

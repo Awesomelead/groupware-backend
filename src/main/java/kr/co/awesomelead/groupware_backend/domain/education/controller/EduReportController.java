@@ -432,6 +432,7 @@ public class EduReportController {
 
                 - `MANAGE_DEPARTMENT_EDUCATION` 권한 사용자는 `departmentName`으로 전체 부서 대상 필터 조회가 가능합니다.
                 - `MANAGE_DEPARTMENT_EDUCATION` 권한이 없는 사용자는 본인 소속 부서 게시물만 조회됩니다.
+                - `canSign`은 목록 기준 서명 가능 여부이며, `signatureRequired=true` + `OPEN` 상태 + 미서명 + 본인 소속 부서 게시물일 때 `true`입니다.
                 """)
     @ApiResponses({
         @io.swagger.v3.oas.annotations.responses.ApiResponse(
@@ -456,6 +457,7 @@ public class EduReportController {
                                   "eduDate": "2026-03-16",
                                   "content": "부서교육 게시글입니다.",
                                   "attendance": false,
+                                  "canSign": true,
                                   "pinned": false,
                                   "signatureRequired": true,
                                   "status": "OPEN",
@@ -540,6 +542,7 @@ public class EduReportController {
                                   "eduDate": "2026-04-14",
                                   "content": "PSM 교육 게시글입니다.",
                                   "attendance": false,
+                                  "canSign": false,
                                   "pinned": false,
                                   "signatureRequired": false,
                                   "status": "OPEN",
@@ -613,6 +616,7 @@ public class EduReportController {
                                   "eduDate": "2026-04-14",
                                   "content": "안전 보건 교육 게시글입니다.",
                                   "attendance": false,
+                                  "canSign": false,
                                   "pinned": false,
                                   "signatureRequired": true,
                                   "status": "OPEN",
@@ -665,6 +669,7 @@ public class EduReportController {
                 - 권한이 없는 사용자가 타 부서 게시물을 조회하면 `EDU_REPORT_NOT_FOUND(404)`가 반환됩니다.
                 - `MANAGE_DEPARTMENT_EDUCATION` 권한 사용자는 `attendees`, `numberOfPeople`, `numberOfAttendees`를 조회할 수 있으며, 권한이 없는 사용자는 위 필드가 `null`로 반환됩니다.
                 - `targetCount`, `signedCount`, `unsignedCount`는 부서 교육 상세에서 공통으로 제공됩니다.
+                - `canSign`은 현재 사용자의 서명 가능 여부를 의미하며, `signatureRequired=true` + `OPEN` 상태 + 미서명 + 본인 소속 부서 게시물인 경우 `true`입니다.
                 """)
     @ApiResponses({
         @io.swagger.v3.oas.annotations.responses.ApiResponse(

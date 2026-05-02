@@ -251,26 +251,35 @@ public class AuthService {
             throw new CustomException(ErrorCode.PHONE_NOT_VERIFIED);
         }
 
-        // 2. 해시로 사용자 찾기
+        // 2. 이름+전화번호 계정 검증
+        User user = findUserByNameAndPhone(name, phoneNumber);
+
+        long endTime = System.currentTimeMillis();
+        log.info("해시 검색 방식 소요 시간: {}ms", endTime - startTime);
+
+        // 3. 인증 플래그 삭제
+        phoneAuthService.clearVerification(phoneNumber);
+
+        // 4. 응답 생성
+        return new FindEmailResponseDto(maskEmail(user.getEmail()));
+    }
+
+    public void checkAccountForFindEmail(String name, String phoneNumber) {
+        findUserByNameAndPhone(name, phoneNumber);
+    }
+
+    private User findUserByNameAndPhone(String name, String phoneNumber) {
         String phoneNumberHash = User.hashValue(phoneNumber);
         User user =
                 userRepository
                         .findByPhoneNumberHash(phoneNumberHash)
                         .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
 
-        // 3. 이름 검증
         if (!user.getNameKor().equals(name)) {
             throw new CustomException(ErrorCode.USER_NOT_FOUND);
         }
 
-        long endTime = System.currentTimeMillis();
-        log.info("해시 검색 방식 소요 시간: {}ms", endTime - startTime);
-
-        // 4. 인증 플래그 삭제
-        phoneAuthService.clearVerification(phoneNumber);
-
-        // 5. 응답 생성
-        return new FindEmailResponseDto(maskEmail(user.getEmail()));
+        return user;
     }
 
     private String maskEmail(String email) {
@@ -451,14 +460,29 @@ public class AuthService {
         // 2) 결재선 설정에서 해당 유저 ID 제거
         List<ApprovalLineConfig> configs = approvalLineConfigRepository.findAll();
         for (ApprovalLineConfig config : configs) {
-            boolean hasApprover = config.getApproverIds().contains(userId);
-            boolean hasReferrer = config.getReferrerIds().contains(userId);
-            if (hasApprover || hasReferrer) {
+            boolean hasApprover = config.getApproverTargetUserIds().contains(userId);
+            boolean hasViewer = config.getViewerTargetUserIds().contains(userId);
+            boolean hasReferrer = config.getReferrerTargetUserIds().contains(userId);
+            if (hasApprover || hasViewer || hasReferrer) {
                 List<Long> newApprovers =
-                        config.getApproverIds().stream().filter(id -> !id.equals(userId)).toList();
+                        config.getApproverTargetUserIds().stream()
+                                .filter(id -> !id.equals(userId))
+                                .toList();
+                List<Long> newViewers =
+                        config.getViewerTargetUserIds().stream()
+                                .filter(id -> !id.equals(userId))
+                                .toList();
                 List<Long> newReferrers =
-                        config.getReferrerIds().stream().filter(id -> !id.equals(userId)).toList();
-                config.update(newApprovers, newReferrers);
+                        config.getReferrerTargetUserIds().stream()
+                                .filter(id -> !id.equals(userId))
+                                .toList();
+                config.update(
+                        newApprovers,
+                        new java.util.ArrayList<>(config.getApproverTargetDepartmentIds()),
+                        newViewers,
+                        new java.util.ArrayList<>(config.getViewerTargetDepartmentIds()),
+                        newReferrers,
+                        new java.util.ArrayList<>(config.getReferrerTargetDepartmentIds()));
             }
         }
 

@@ -11,6 +11,7 @@ import kr.co.awesomelead.groupware_backend.domain.requesthistory.dto.response.Re
 import kr.co.awesomelead.groupware_backend.domain.requesthistory.dto.response.RequestHistorySummaryResponseDto;
 import kr.co.awesomelead.groupware_backend.domain.requesthistory.entity.RequestHistory;
 import kr.co.awesomelead.groupware_backend.domain.requesthistory.enums.RequestHistoryStatus;
+import kr.co.awesomelead.groupware_backend.domain.requesthistory.repository.RequestHistoryQueryRepository;
 import kr.co.awesomelead.groupware_backend.domain.requesthistory.repository.RequestHistoryRepository;
 import kr.co.awesomelead.groupware_backend.domain.user.entity.User;
 import kr.co.awesomelead.groupware_backend.domain.user.enums.Authority;
@@ -34,6 +35,7 @@ import java.util.List;
 public class RequestHistoryService {
 
     private final RequestHistoryRepository requestHistoryRepository;
+    private final RequestHistoryQueryRepository requestHistoryQueryRepository;
     private final UserRepository userRepository;
     private final NotificationService notificationService;
     private final NotificationRepository notificationRepository;
@@ -127,7 +129,7 @@ public class RequestHistoryService {
                         .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
         validateAdminAuthority(admin);
 
-        return requestHistoryRepository
+        return requestHistoryQueryRepository
                 .findAllWithUserAndDepartmentByStatus(status, pageable)
                 .map(AdminRequestHistorySummaryResponseDto::from);
     }

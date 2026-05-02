@@ -269,7 +269,14 @@ class AdminServiceTest {
             // given
             Department department =
                     Department.builder().id(1L).name(DepartmentName.MANAGEMENT_SUPPORT).build();
-            User user = User.builder().id(17L).nameKor("고영민").department(department).build();
+            User user =
+                    User.builder()
+                            .id(17L)
+                            .nameKor("고영민")
+                            .department(department)
+                            .hireDate(LocalDate.of(2025, 9, 22))
+                            .resignationDate(LocalDate.of(2026, 3, 31))
+                            .build();
             user.setStatus(Status.AVAILABLE);
 
             Pageable pageable = PageRequest.of(0, 20);
@@ -297,6 +304,10 @@ class AdminServiceTest {
             assertThat(result.getContent().get(0).getUserId()).isEqualTo(17L);
             assertThat(result.getContent().get(0).isHasPendingMyInfoRequest()).isEqualTo(true);
             assertThat(result.getContent().get(0).getSignupStatus()).isEqualTo(Status.AVAILABLE);
+            assertThat(result.getContent().get(0).getHireDate())
+                    .isEqualTo(LocalDate.of(2025, 9, 22));
+            assertThat(result.getContent().get(0).getResignationDate())
+                    .isEqualTo(LocalDate.of(2026, 3, 31));
         }
 
         @Test

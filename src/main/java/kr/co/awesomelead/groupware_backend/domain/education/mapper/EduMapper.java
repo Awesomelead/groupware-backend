@@ -59,6 +59,7 @@ public interface EduMapper {
     @Mapping(target = "targetCount", ignore = true)
     @Mapping(target = "signedCount", ignore = true)
     @Mapping(target = "unsignedCount", ignore = true)
+    @Mapping(target = "canSign", ignore = true)
     @Mapping(target = "attendees", source = "attendances")
     EduReportDetailDto toDetailDto(
             EduReport report,

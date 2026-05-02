@@ -13,7 +13,6 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import kr.co.awesomelead.groupware_backend.domain.aligo.service.PhoneAuthService;
-import kr.co.awesomelead.groupware_backend.domain.approval.repository.ApprovalRepository;
 import kr.co.awesomelead.groupware_backend.domain.auth.dto.request.LoginRequestDto;
 import kr.co.awesomelead.groupware_backend.domain.auth.dto.request.ResetPasswordByEmailRequestDto;
 import kr.co.awesomelead.groupware_backend.domain.auth.dto.request.ResetPasswordByPhoneRequestDto;
@@ -72,7 +71,6 @@ class AuthServiceTest {
     @Mock private AuthenticationManager authenticationManager;
     @Mock private JWTUtil jwtUtil;
     @Mock private RefreshTokenService refreshTokenService;
-    @Mock private ApprovalRepository approvalRepository;
 
     @InjectMocks private AuthService authService;
 

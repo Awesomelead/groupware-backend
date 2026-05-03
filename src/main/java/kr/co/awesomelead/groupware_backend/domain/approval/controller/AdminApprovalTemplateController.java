@@ -34,7 +34,64 @@ import java.util.List;
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/api/admin")
-@Tag(name = "전자결재 양식관리", description = "전자결재 양식구분/양식 CRUD API")
+@Tag(
+        name = "전자결재 양식관리",
+        description =
+                """
+        전자결재 양식구분/양식 CRUD API
+
+        ### 권한 정보
+        - 로그인 필요
+        - 명시된 @PreAuthorize 없음 (서비스 레이어 권한 검증)
+
+        ### 사용 Enum
+        - Company
+          - AWESOME (어썸리드)
+          - MARUI (마루이)
+        - JobType
+          - FIELD (현장직)
+          - MANAGEMENT (관리직)
+        - Position
+          - CEO (대표이사)
+          - VICE_PRESIDENT (부사장)
+          - SENIOR_MANAGING_DIRECTOR (전무이사)
+          - MANAGING_DIRECTOR (상무이사)
+          - DIRECTOR (이사)
+          - GENERAL_MANAGER (부장)
+          - DEPUTY_GENERAL_MANAGER (차장)
+          - MANAGER (과장)
+          - ASSISTANT_MANAGER (대리)
+          - SENIOR_STAFF (주임)
+          - STAFF (사원)
+          - SECTION_HEAD (반장)
+          - ADVISOR (전문위원)
+          - SECURITY_GUARD (경비원)
+        - Role
+          - ADMIN (관리자)
+          - USER (일반 사용자)
+          - MASTER_ADMIN (마스터 관리자)
+        - Status
+          - PENDING
+          - AVAILABLE
+          - SUSPENDED
+        - ApprovalLinePolicy
+          - FIXED (고정 결재선)
+          - FLEXIBLE (가변 결재선)
+        - ApprovalEditorType
+          - QUILL
+          - HTML
+          - EXCEL
+        - ApprovalRouteRole
+          - APPROVAL_LINE (결재선)
+          - AGREEMENT_REQUIRED (합의부서 필수)
+          - AGREEMENT_OPTIONAL (합의부서 선택)
+          - REFERENCE (참조자)
+          - VIEWER (열람권자)
+          - RECEIVER_DEPARTMENT (수신부서)
+        - ApprovalTargetType
+          - USER (사용자)
+          - DEPARTMENT (부서)
+        """)
 public class AdminApprovalTemplateController {
 
     private final ApprovalTemplateAdminService approvalTemplateAdminService;

@@ -92,6 +92,8 @@ public enum ErrorCode {
     NO_AUTHORITY_FOR_PSM_MANAGE(HttpStatus.FORBIDDEN, "PSM 관리 권한이 없습니다."),
     NO_AUTHORITY_FOR_SAFETY_WRITE(HttpStatus.FORBIDDEN, "안전 보건 관리 권한이 없습니다."),
     NO_AUTHORITY_FOR_SAFETY_READ(HttpStatus.FORBIDDEN, "해당 안전보건 교육 조회 권한이 없습니다."),
+    NO_AUTHORITY_FOR_DEPARTMENT_APPROVAL_LINE(HttpStatus.FORBIDDEN, "부서 결재선 관리 권한이 없습니다."),
+    NO_AUTHORITY_FOR_SAVED_APPROVAL_LINE_READ(HttpStatus.FORBIDDEN, "해당 결재선에 대한 접근 권한이 없습니다."),
     VISIT_ACCESS_DENIED(HttpStatus.FORBIDDEN, "해당 방문정보에 대한 접근 권한이 없습니다."),
     NO_AUTHORITY_FOR_NOTICE(HttpStatus.FORBIDDEN, "공지사항 작성 권한이 없습니다."),
     NO_AUTHORITY_FOR_ANNUAL_LEAVE(HttpStatus.FORBIDDEN, "연차 발송 권한이 없습니다."),
@@ -126,6 +128,7 @@ public enum ErrorCode {
     SAFETY_TRAINING_REPORT_NOT_FOUND(HttpStatus.NOT_FOUND, "안전보건 교육 엑셀 파일이 아직 생성되지 않았습니다."),
     APPROVAL_TEMPLATE_CATEGORY_NOT_FOUND(HttpStatus.NOT_FOUND, "해당 전자결재 양식구분을 찾을 수 없습니다."),
     APPROVAL_TEMPLATE_NOT_FOUND(HttpStatus.NOT_FOUND, "해당 전자결재 양식을 찾을 수 없습니다."),
+    SAVED_APPROVAL_LINE_NOT_FOUND(HttpStatus.NOT_FOUND, "해당 저장 결재선을 찾을 수 없습니다."),
 
     // 409 Conflict
     DUPLICATED_SIGNUP_REQUEST(HttpStatus.CONFLICT, "이미 처리된 가입 요청입니다."),

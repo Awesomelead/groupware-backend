@@ -110,7 +110,8 @@ public class AdminApprovalTemplateController {
     public ResponseEntity<ApiResponse<List<ApprovalTemplateCategoryResponseDto>>> getCategories(
             @Parameter(hidden = true) @AuthenticationPrincipal CustomUserDetails userDetails) {
         return ResponseEntity.ok(
-                ApiResponse.onSuccess(approvalTemplateAdminService.getCategories(userDetails.getId())));
+                ApiResponse.onSuccess(
+                        approvalTemplateAdminService.getCategories(userDetails.getId())));
     }
 
     @Operation(summary = "전자결재 양식구분 상세 조회")
@@ -156,7 +157,8 @@ public class AdminApprovalTemplateController {
     public ResponseEntity<ApiResponse<List<ApprovalTemplateAdminResponseDto>>> getTemplates(
             @Parameter(hidden = true) @AuthenticationPrincipal CustomUserDetails userDetails) {
         return ResponseEntity.ok(
-                ApiResponse.onSuccess(approvalTemplateAdminService.getTemplates(userDetails.getId())));
+                ApiResponse.onSuccess(
+                        approvalTemplateAdminService.getTemplates(userDetails.getId())));
     }
 
     @Operation(summary = "전자결재 양식 상세 조회")

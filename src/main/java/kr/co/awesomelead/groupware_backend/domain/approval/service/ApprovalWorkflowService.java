@@ -1,7 +1,7 @@
 package kr.co.awesomelead.groupware_backend.domain.approval.service;
 
-import kr.co.awesomelead.groupware_backend.domain.approval.dto.request.ApprovalDraftUpsertRequestDto;
 import kr.co.awesomelead.groupware_backend.domain.approval.dto.request.ApprovalDirectSubmitRequestDto;
+import kr.co.awesomelead.groupware_backend.domain.approval.dto.request.ApprovalDraftUpsertRequestDto;
 import kr.co.awesomelead.groupware_backend.domain.approval.dto.request.ApprovalLineRequestDto;
 import kr.co.awesomelead.groupware_backend.domain.approval.dto.request.ApprovalSubmitRequestDto;
 import kr.co.awesomelead.groupware_backend.domain.approval.dto.response.ApprovalDraftResponseDto;
@@ -71,9 +71,7 @@ public class ApprovalWorkflowService {
                                                             category.getId());
 
                                     List<ApprovalTemplateListResponseDto.TemplateDto> templateDtos =
-                                            templates.stream()
-                                                    .map(this::toTemplateDto)
-                                                    .toList();
+                                            templates.stream().map(this::toTemplateDto).toList();
 
                                     return ApprovalTemplateListResponseDto.CategoryDto.builder()
                                             .id(category.getId())
@@ -89,7 +87,8 @@ public class ApprovalWorkflowService {
     }
 
     @Transactional
-    public ApprovalDraftResponseDto upsertDraft(Long userId, ApprovalDraftUpsertRequestDto request) {
+    public ApprovalDraftResponseDto upsertDraft(
+            Long userId, ApprovalDraftUpsertRequestDto request) {
         User drafter = getUser(userId);
         ApprovalTemplate template = getActiveTemplate(request.getTemplateId());
 
@@ -140,7 +139,8 @@ public class ApprovalWorkflowService {
     }
 
     @Transactional
-    public ApprovalSubmitResponseDto submit(Long userId, Long documentId, ApprovalSubmitRequestDto request) {
+    public ApprovalSubmitResponseDto submit(
+            Long userId, Long documentId, ApprovalSubmitRequestDto request) {
         User actor = getUser(userId);
         ApprovalDocument document =
                 approvalDocumentRepository
@@ -162,8 +162,12 @@ public class ApprovalWorkflowService {
                 StringUtils.hasText(request.getContentDelta())
                         ? request.getContentDelta()
                         : document.getContentDelta(),
-                request.getContentHtml() != null ? request.getContentHtml() : document.getContentHtml(),
-                request.getApprovalType() != null ? request.getApprovalType() : document.getApprovalType(),
+                request.getContentHtml() != null
+                        ? request.getContentHtml()
+                        : document.getContentHtml(),
+                request.getApprovalType() != null
+                        ? request.getApprovalType()
+                        : document.getApprovalType(),
                 request.getReceiverDepartmentId(),
                 true);
 
@@ -171,7 +175,9 @@ public class ApprovalWorkflowService {
         if (request.getLines() != null) {
             lines = replaceDocumentLines(document, request.getLines(), true);
         } else {
-            lines = approvalDocumentLineRepository.findByDocumentIdOrderBySequenceNoAscIdAsc(documentId);
+            lines =
+                    approvalDocumentLineRepository.findByDocumentIdOrderBySequenceNoAscIdAsc(
+                            documentId);
             if (lines.isEmpty()) {
                 lines = replaceDocumentLines(document, toLineRequestsFromTemplate(template), true);
             } else {
@@ -208,7 +214,8 @@ public class ApprovalWorkflowService {
     }
 
     @Transactional
-    public ApprovalSubmitResponseDto submitDirect(Long userId, ApprovalDirectSubmitRequestDto request) {
+    public ApprovalSubmitResponseDto submitDirect(
+            Long userId, ApprovalDirectSubmitRequestDto request) {
         ApprovalDraftUpsertRequestDto draftRequest = new ApprovalDraftUpsertRequestDto();
         draftRequest.setDocumentId(null);
         draftRequest.setTemplateId(request.getTemplateId());
@@ -234,7 +241,8 @@ public class ApprovalWorkflowService {
 
     private ApprovalTemplateListResponseDto.TemplateDto toTemplateDto(ApprovalTemplate template) {
         List<ApprovalTemplateLine> lines =
-                approvalTemplateLineRepository.findByTemplateIdOrderBySequenceNoAscIdAsc(template.getId());
+                approvalTemplateLineRepository.findByTemplateIdOrderBySequenceNoAscIdAsc(
+                        template.getId());
 
         List<ApprovalTemplateListResponseDto.LineDto> lineDtos =
                 lines.stream()
@@ -340,7 +348,8 @@ public class ApprovalWorkflowService {
 
     private List<ApprovalLineRequestDto> toLineRequestsFromTemplate(ApprovalTemplate template) {
         List<ApprovalTemplateLine> templateLines =
-                approvalTemplateLineRepository.findByTemplateIdOrderBySequenceNoAscIdAsc(template.getId());
+                approvalTemplateLineRepository.findByTemplateIdOrderBySequenceNoAscIdAsc(
+                        template.getId());
 
         List<ApprovalLineRequestDto> requests = new ArrayList<>();
         for (ApprovalTemplateLine templateLine : templateLines) {
@@ -348,7 +357,9 @@ public class ApprovalWorkflowService {
             lineRequest.setRole(templateLine.getRole());
             lineRequest.setTargetType(templateLine.getTargetType());
             lineRequest.setTargetUserId(
-                    templateLine.getTargetUser() != null ? templateLine.getTargetUser().getId() : null);
+                    templateLine.getTargetUser() != null
+                            ? templateLine.getTargetUser().getId()
+                            : null);
             lineRequest.setTargetDepartmentId(
                     templateLine.getTargetDepartment() != null
                             ? templateLine.getTargetDepartment().getId()
@@ -361,7 +372,9 @@ public class ApprovalWorkflowService {
     }
 
     private List<ApprovalDocumentLine> replaceDocumentLines(
-            ApprovalDocument document, List<ApprovalLineRequestDto> lineRequests, boolean forSubmit) {
+            ApprovalDocument document,
+            List<ApprovalLineRequestDto> lineRequests,
+            boolean forSubmit) {
         if (document.getId() == null) {
             throw new CustomException(ErrorCode.INTERNAL_SERVER_ERROR);
         }
@@ -432,7 +445,8 @@ public class ApprovalWorkflowService {
         for (int i = 0; i < approvalLines.size(); i++) {
             ApprovalDocumentLine line = approvalLines.get(i);
             line.setSequenceNo(i + 1);
-            line.setLineStatus(i == 0 && forSubmit ? ApprovalLineStatus.PENDING : ApprovalLineStatus.WAITING);
+            line.setLineStatus(
+                    i == 0 && forSubmit ? ApprovalLineStatus.PENDING : ApprovalLineStatus.WAITING);
             line.setProcessedAt(null);
             line.setProcessedByUser(null);
             line.setProcessedComment(null);
@@ -477,9 +491,7 @@ public class ApprovalWorkflowService {
                         ? targetUser.getNameKor()
                         : targetUser.getNameEng();
         String position =
-                targetUser.getPosition() != null
-                        ? targetUser.getPosition().getDescription()
-                        : null;
+                targetUser.getPosition() != null ? targetUser.getPosition().getDescription() : null;
 
         if (StringUtils.hasText(position)) {
             return "[" + departmentName + "] " + name + " (" + position + ")";

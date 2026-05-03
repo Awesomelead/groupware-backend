@@ -98,7 +98,8 @@ public class SavedApprovalLineController {
     public ResponseEntity<ApiResponse<List<SavedApprovalLineResponseDto>>> getPersonalLines(
             @Parameter(hidden = true) @AuthenticationPrincipal CustomUserDetails userDetails) {
         return ResponseEntity.ok(
-                ApiResponse.onSuccess(savedApprovalLineService.getPersonalLines(userDetails.getId())));
+                ApiResponse.onSuccess(
+                        savedApprovalLineService.getPersonalLines(userDetails.getId())));
     }
 
     @Operation(summary = "개인 결재선 상세 조회")
@@ -150,7 +151,8 @@ public class SavedApprovalLineController {
     public ResponseEntity<ApiResponse<List<SavedApprovalLineResponseDto>>> getDepartmentLines(
             @Parameter(hidden = true) @AuthenticationPrincipal CustomUserDetails userDetails) {
         return ResponseEntity.ok(
-                ApiResponse.onSuccess(savedApprovalLineService.getDepartmentLines(userDetails.getId())));
+                ApiResponse.onSuccess(
+                        savedApprovalLineService.getDepartmentLines(userDetails.getId())));
     }
 
     @Operation(summary = "부서 결재선 상세 조회")

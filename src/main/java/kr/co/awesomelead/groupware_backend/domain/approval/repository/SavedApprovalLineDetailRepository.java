@@ -4,7 +4,8 @@ import kr.co.awesomelead.groupware_backend.domain.approval.entity.SavedApprovalL
 
 import org.springframework.data.jpa.repository.JpaRepository;
 
-public interface SavedApprovalLineDetailRepository extends JpaRepository<SavedApprovalLineDetail, Long> {
+public interface SavedApprovalLineDetailRepository
+        extends JpaRepository<SavedApprovalLineDetail, Long> {
 
     void deleteBySavedLineId(Long savedLineId);
 }

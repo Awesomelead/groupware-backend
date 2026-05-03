@@ -21,7 +21,8 @@ public interface SavedApprovalLineRepository extends JpaRepository<SavedApproval
                     + "and l.lineType = :lineType and l.isActive = true "
                     + "order by l.modifiedAt desc, l.id desc")
     List<SavedApprovalLine> findAllPersonalWithDetails(
-            @Param("ownerUserId") Long ownerUserId, @Param("lineType") ApprovalSavedLineType lineType);
+            @Param("ownerUserId") Long ownerUserId,
+            @Param("lineType") ApprovalSavedLineType lineType);
 
     @Query(
             "select distinct l from SavedApprovalLine l "
@@ -32,7 +33,8 @@ public interface SavedApprovalLineRepository extends JpaRepository<SavedApproval
                     + "and l.lineType = :lineType and l.isActive = true "
                     + "order by l.modifiedAt desc, l.id desc")
     List<SavedApprovalLine> findAllDepartmentWithDetails(
-            @Param("departmentId") Long departmentId, @Param("lineType") ApprovalSavedLineType lineType);
+            @Param("departmentId") Long departmentId,
+            @Param("lineType") ApprovalSavedLineType lineType);
 
     @Query(
             "select distinct l from SavedApprovalLine l "

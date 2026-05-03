@@ -120,7 +120,8 @@ public class SavedApprovalLineService {
         User user = getUser(userId);
         SavedApprovalLine line = getSavedLine(lineId);
 
-        if (line.getLineType() != ApprovalSavedLineType.DEPARTMENT || line.getDepartment() == null) {
+        if (line.getLineType() != ApprovalSavedLineType.DEPARTMENT
+                || line.getDepartment() == null) {
             throw new CustomException(ErrorCode.SAVED_APPROVAL_LINE_NOT_FOUND);
         }
 
@@ -132,7 +133,8 @@ public class SavedApprovalLineService {
     }
 
     @Transactional
-    public Long createDepartmentLine(Long userId, SavedDepartmentApprovalLineUpsertRequestDto request) {
+    public Long createDepartmentLine(
+            Long userId, SavedDepartmentApprovalLineUpsertRequestDto request) {
         User actor = getUser(userId);
         validateDepartmentLineManageAuthority(actor);
 
@@ -159,7 +161,8 @@ public class SavedApprovalLineService {
         validateDepartmentLineManageAuthority(actor);
 
         SavedApprovalLine line = getSavedLine(lineId);
-        if (line.getLineType() != ApprovalSavedLineType.DEPARTMENT || line.getDepartment() == null) {
+        if (line.getLineType() != ApprovalSavedLineType.DEPARTMENT
+                || line.getDepartment() == null) {
             throw new CustomException(ErrorCode.SAVED_APPROVAL_LINE_NOT_FOUND);
         }
 
@@ -179,7 +182,8 @@ public class SavedApprovalLineService {
         validateDepartmentLineManageAuthority(actor);
 
         SavedApprovalLine line = getSavedLine(lineId);
-        if (line.getLineType() != ApprovalSavedLineType.DEPARTMENT || line.getDepartment() == null) {
+        if (line.getLineType() != ApprovalSavedLineType.DEPARTMENT
+                || line.getDepartment() == null) {
             throw new CustomException(ErrorCode.SAVED_APPROVAL_LINE_NOT_FOUND);
         }
 
@@ -214,7 +218,8 @@ public class SavedApprovalLineService {
                 User targetUser = getUser(request.getTargetUserId());
                 detail.setTargetUser(targetUser);
                 detail.setTargetDepartment(null);
-                detail.setTargetNameSnapshot(toTargetName(ApprovalTargetType.USER, targetUser, null));
+                detail.setTargetNameSnapshot(
+                        toTargetName(ApprovalTargetType.USER, targetUser, null));
             } else {
                 Department targetDepartment = getDepartment(request.getTargetDepartmentId());
                 detail.setTargetDepartment(targetDepartment);
@@ -323,7 +328,9 @@ public class SavedApprovalLineService {
                                 : line.getOwnerUser().getNameEng())
                         : null;
         String departmentName =
-                line.getDepartment() != null ? line.getDepartment().getName().getDescription() : null;
+                line.getDepartment() != null
+                        ? line.getDepartment().getName().getDescription()
+                        : null;
         String createdByUserName =
                 line.getCreatedByUser() != null
                         ? (StringUtils.hasText(line.getCreatedByUser().getNameKor())
@@ -340,7 +347,8 @@ public class SavedApprovalLineService {
                 .ownerUserName(ownerUserName)
                 .departmentId(line.getDepartment() != null ? line.getDepartment().getId() : null)
                 .departmentName(departmentName)
-                .createdByUserId(line.getCreatedByUser() != null ? line.getCreatedByUser().getId() : null)
+                .createdByUserId(
+                        line.getCreatedByUser() != null ? line.getCreatedByUser().getId() : null)
                 .createdByUserName(createdByUserName)
                 .createdAt(line.getCreatedAt())
                 .modifiedAt(line.getModifiedAt())
@@ -348,7 +356,8 @@ public class SavedApprovalLineService {
                 .build();
     }
 
-    private SavedApprovalLineResponseDto.LineDetailDto toDetailResponse(SavedApprovalLineDetail detail) {
+    private SavedApprovalLineResponseDto.LineDetailDto toDetailResponse(
+            SavedApprovalLineDetail detail) {
         User targetUser = detail.getTargetUser();
         Department targetDepartment = detail.getTargetDepartment();
 
@@ -388,7 +397,9 @@ public class SavedApprovalLineService {
     private String toTargetName(
             ApprovalTargetType targetType, User targetUser, Department targetDepartment) {
         if (targetType == ApprovalTargetType.DEPARTMENT) {
-            return targetDepartment != null ? "[" + targetDepartment.getName().getDescription() + "]" : null;
+            return targetDepartment != null
+                    ? "[" + targetDepartment.getName().getDescription() + "]"
+                    : null;
         }
 
         if (targetUser == null) {

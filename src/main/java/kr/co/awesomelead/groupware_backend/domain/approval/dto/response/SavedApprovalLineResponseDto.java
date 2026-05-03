@@ -20,8 +20,13 @@ import java.util.List;
 public class SavedApprovalLineResponseDto {
 
     private Long id;
-    @Schema(description = "결재선 타입", example = "PERSONAL", allowableValues = {"PERSONAL", "DEPARTMENT"})
+
+    @Schema(
+            description = "결재선 타입",
+            example = "PERSONAL",
+            allowableValues = {"PERSONAL", "DEPARTMENT"})
     private ApprovalSavedLineType lineType;
+
     private String lineTypeLabel;
     private String lineName;
     private Long ownerUserId;
@@ -40,6 +45,7 @@ public class SavedApprovalLineResponseDto {
     @Schema(description = "저장 결재선 상세 항목")
     public static class LineDetailDto {
         private Long id;
+
         @Schema(
                 description = "결재선 역할",
                 example = "APPROVAL_LINE",
@@ -52,8 +58,13 @@ public class SavedApprovalLineResponseDto {
                     "RECEIVER_DEPARTMENT"
                 })
         private ApprovalRouteRole role;
-        @Schema(description = "타겟 타입", example = "USER", allowableValues = {"USER", "DEPARTMENT"})
+
+        @Schema(
+                description = "타겟 타입",
+                example = "USER",
+                allowableValues = {"USER", "DEPARTMENT"})
         private ApprovalTargetType targetType;
+
         private Long targetUserId;
         private String targetUserName;
         private String targetUserPosition;

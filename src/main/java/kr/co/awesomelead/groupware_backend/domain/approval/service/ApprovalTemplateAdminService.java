@@ -136,7 +136,8 @@ public class ApprovalTemplateAdminService {
     @Transactional(readOnly = true)
     public List<ApprovalTemplateAdminResponseDto> getTemplates(Long userId) {
         validateAuthority(userId);
-        List<ApprovalTemplate> templates = approvalTemplateRepository.findAll(Sort.by("id").ascending());
+        List<ApprovalTemplate> templates =
+                approvalTemplateRepository.findAll(Sort.by("id").ascending());
         return templates.stream().map(this::toTemplateResponse).toList();
     }
 
@@ -148,12 +149,14 @@ public class ApprovalTemplateAdminService {
     }
 
     @Transactional
-    public void updateTemplate(Long userId, Long templateId, ApprovalTemplateUpdateRequestDto request) {
+    public void updateTemplate(
+            Long userId, Long templateId, ApprovalTemplateUpdateRequestDto request) {
         validateAuthority(userId);
         ApprovalTemplate template = getTemplateEntity(templateId);
 
         String newCode = request.getCode().trim();
-        if (!template.getCode().equals(newCode) && approvalTemplateRepository.existsByCode(newCode)) {
+        if (!template.getCode().equals(newCode)
+                && approvalTemplateRepository.existsByCode(newCode)) {
             throw new CustomException(ErrorCode.DUPLICATE_APPROVAL_TEMPLATE_CODE);
         }
 
@@ -240,7 +243,8 @@ public class ApprovalTemplateAdminService {
 
     private ApprovalTemplateAdminResponseDto toTemplateResponse(ApprovalTemplate template) {
         List<ApprovalTemplateLine> lines =
-                approvalTemplateLineRepository.findByTemplateIdOrderBySequenceNoAscIdAsc(template.getId());
+                approvalTemplateLineRepository.findByTemplateIdOrderBySequenceNoAscIdAsc(
+                        template.getId());
 
         List<ApprovalTemplateAdminResponseDto.LineDto> lineDtos =
                 lines.stream()
@@ -261,7 +265,8 @@ public class ApprovalTemplateAdminService {
                                                     : null;
                                     String targetUserDepartmentName =
                                             targetUser != null && targetUser.getDepartment() != null
-                                                    ? targetUser.getDepartment()
+                                                    ? targetUser
+                                                            .getDepartment()
                                                             .getName()
                                                             .getDescription()
                                                     : null;
@@ -315,7 +320,9 @@ public class ApprovalTemplateAdminService {
     private String toTargetName(
             ApprovalTargetType targetType, User targetUser, Department targetDepartment) {
         if (targetType == ApprovalTargetType.DEPARTMENT) {
-            return targetDepartment != null ? "[" + targetDepartment.getName().getDescription() + "]" : null;
+            return targetDepartment != null
+                    ? "[" + targetDepartment.getName().getDescription() + "]"
+                    : null;
         }
 
         if (targetUser == null) {
@@ -362,7 +369,8 @@ public class ApprovalTemplateAdminService {
     private ApprovalTemplateCategory getCategoryEntity(Long categoryId) {
         return approvalTemplateCategoryRepository
                 .findById(categoryId)
-                .orElseThrow(() -> new CustomException(ErrorCode.APPROVAL_TEMPLATE_CATEGORY_NOT_FOUND));
+                .orElseThrow(
+                        () -> new CustomException(ErrorCode.APPROVAL_TEMPLATE_CATEGORY_NOT_FOUND));
     }
 
     private ApprovalTemplate getTemplateEntity(Long templateId) {

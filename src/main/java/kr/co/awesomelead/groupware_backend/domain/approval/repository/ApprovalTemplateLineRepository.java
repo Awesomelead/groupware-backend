@@ -9,4 +9,6 @@ import java.util.List;
 public interface ApprovalTemplateLineRepository extends JpaRepository<ApprovalTemplateLine, Long> {
 
     List<ApprovalTemplateLine> findByTemplateIdOrderBySequenceNoAscIdAsc(Long templateId);
+
+    void deleteByTemplateId(Long templateId);
 }

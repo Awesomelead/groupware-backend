@@ -65,6 +65,10 @@ public class ApprovalDocumentLine extends BaseTimeEntity {
 
     private Integer sequenceNo;
 
+    @Column(nullable = false)
+    @Builder.Default
+    private Boolean isRequired = true;
+
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 20)
     @Builder.Default

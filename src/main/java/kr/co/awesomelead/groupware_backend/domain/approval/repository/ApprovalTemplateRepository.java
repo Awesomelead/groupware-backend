@@ -11,5 +11,11 @@ public interface ApprovalTemplateRepository extends JpaRepository<ApprovalTempla
 
     Optional<ApprovalTemplate> findByCode(String code);
 
+    boolean existsByCode(String code);
+
+    boolean existsByCategoryId(Long categoryId);
+
+    List<ApprovalTemplate> findByCategoryIdAndIsActiveTrueOrderByIdAsc(Long categoryId);
+
     List<ApprovalTemplate> findByIsActiveTrueOrderByIdAsc();
 }

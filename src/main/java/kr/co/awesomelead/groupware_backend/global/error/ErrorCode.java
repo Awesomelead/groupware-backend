@@ -50,6 +50,8 @@ public enum ErrorCode {
     INVALID_APPROVAL_STEP(HttpStatus.BAD_REQUEST, "결재선은 최소 한 명이 필요합니다."),
     ALREADY_PROCESSED_STEP(HttpStatus.BAD_REQUEST, "이미 처리된 결재 단계입니다."),
     NOT_YOUR_TURN(HttpStatus.BAD_REQUEST, "아직 본인의 결재 순서가 아닙니다."),
+    APPROVAL_TEMPLATE_CATEGORY_IN_USE(HttpStatus.BAD_REQUEST, "해당 양식구분을 사용하는 전자결재 양식이 존재합니다."),
+    APPROVAL_TEMPLATE_IN_USE(HttpStatus.BAD_REQUEST, "해당 전자결재 양식을 사용하는 결재 문서가 존재합니다."),
     NOT_APPROVER(HttpStatus.FORBIDDEN, "해당 결재 문서의 결재 대상자가 아닙니다."),
     APPROVAL_NOT_FOUND(HttpStatus.NOT_FOUND, "해당 결재 문서를 찾을 수 없습니다."),
     INVALID_LEAVE_DETAIL_TYPE(HttpStatus.BAD_REQUEST, "휴가 유형에 맞지 않는 소분류입니다."),
@@ -122,6 +124,8 @@ public enum ErrorCode {
     SAFETY_TRAINING_SESSION_NOT_FOUND(HttpStatus.NOT_FOUND, "해당 안전보건 교육일지를 찾을 수 없습니다."),
     SAFETY_TRAINING_ATTENDEE_NOT_FOUND(HttpStatus.NOT_FOUND, "해당 안전보건 교육 대상자를 찾을 수 없습니다."),
     SAFETY_TRAINING_REPORT_NOT_FOUND(HttpStatus.NOT_FOUND, "안전보건 교육 엑셀 파일이 아직 생성되지 않았습니다."),
+    APPROVAL_TEMPLATE_CATEGORY_NOT_FOUND(HttpStatus.NOT_FOUND, "해당 전자결재 양식구분을 찾을 수 없습니다."),
+    APPROVAL_TEMPLATE_NOT_FOUND(HttpStatus.NOT_FOUND, "해당 전자결재 양식을 찾을 수 없습니다."),
 
     // 409 Conflict
     DUPLICATED_SIGNUP_REQUEST(HttpStatus.CONFLICT, "이미 처리된 가입 요청입니다."),
@@ -129,6 +133,8 @@ public enum ErrorCode {
     DUPLICATE_PHONE_NUMBER(HttpStatus.CONFLICT, "이미 가입된 전화번호입니다."),
     DUPLICATE_REGISTRATION_NUMBER(HttpStatus.CONFLICT, "이미 가입된 주민등록번호입니다."),
     DUPLICATE_EDUCATION_CATEGORY_CODE(HttpStatus.CONFLICT, "이미 사용 중인 교육 카테고리 코드입니다."),
+    DUPLICATE_APPROVAL_TEMPLATE_CATEGORY_CODE(HttpStatus.CONFLICT, "이미 사용 중인 전자결재 양식구분 코드입니다."),
+    DUPLICATE_APPROVAL_TEMPLATE_CODE(HttpStatus.CONFLICT, "이미 사용 중인 전자결재 양식 코드입니다."),
     BOOTSTRAP_ADMIN_ALREADY_EXISTS(HttpStatus.CONFLICT, "이미 관리자 계정이 존재합니다."),
 
     // 500 Internal Server Error

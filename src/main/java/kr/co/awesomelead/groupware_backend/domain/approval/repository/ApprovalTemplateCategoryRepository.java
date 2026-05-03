@@ -12,5 +12,9 @@ public interface ApprovalTemplateCategoryRepository
 
     Optional<ApprovalTemplateCategory> findByCode(String code);
 
+    boolean existsByCode(String code);
+
+    List<ApprovalTemplateCategory> findAllByOrderBySortOrderAscIdAsc();
+
     List<ApprovalTemplateCategory> findByIsActiveTrueOrderBySortOrderAscIdAsc();
 }

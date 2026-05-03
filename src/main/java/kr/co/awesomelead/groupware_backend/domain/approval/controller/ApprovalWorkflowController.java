@@ -7,6 +7,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 
 import kr.co.awesomelead.groupware_backend.domain.approval.dto.request.ApprovalDraftUpsertRequestDto;
+import kr.co.awesomelead.groupware_backend.domain.approval.dto.request.ApprovalDirectSubmitRequestDto;
 import kr.co.awesomelead.groupware_backend.domain.approval.dto.request.ApprovalSubmitRequestDto;
 import kr.co.awesomelead.groupware_backend.domain.approval.dto.response.ApprovalDraftResponseDto;
 import kr.co.awesomelead.groupware_backend.domain.approval.dto.response.ApprovalSubmitResponseDto;
@@ -22,6 +23,7 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -35,8 +37,14 @@ import org.springframework.web.bind.annotation.RestController;
                 """
         전자결재 작성 1차 API
         - 양식 목록 조회
-        - 임시저장
+        - 임시저장 생성/수정
         - 상신(상신 시점 결재선 스냅샷 고정)
+
+        ### 권장 엔드포인트(헷갈림 방지)
+        - 임시저장 생성: POST /api/approvals/drafts
+        - 임시저장 수정: PUT /api/approvals/drafts/{documentId}
+        - 상신: POST /api/approvals/drafts/{documentId}/submit
+        - 바로 상신(임시저장 없이 1회 요청): POST /api/approvals/submit-direct
 
         ### 권한 정보
         - 로그인 필요
@@ -96,24 +104,63 @@ public class ApprovalWorkflowController {
         return ResponseEntity.ok(ApiResponse.onSuccess(approvalWorkflowService.getTemplateList()));
     }
 
-    @Operation(summary = "전자결재 임시저장")
-    @PostMapping("/approvals/draft")
-    public ResponseEntity<ApiResponse<ApprovalDraftResponseDto>> upsertDraft(
+    @Operation(summary = "전자결재 임시저장 생성")
+    @PostMapping("/approvals/drafts")
+    public ResponseEntity<ApiResponse<ApprovalDraftResponseDto>> createDraft(
             @Valid @RequestBody ApprovalDraftUpsertRequestDto request,
             @Parameter(hidden = true) @AuthenticationPrincipal CustomUserDetails userDetails) {
+        request.setDocumentId(null);
         ApprovalDraftResponseDto result =
                 approvalWorkflowService.upsertDraft(userDetails.getId(), request);
         return ResponseEntity.ok(ApiResponse.onSuccess(result));
     }
 
-    @Operation(summary = "전자결재 상신")
-    @PostMapping("/approvals/{documentId}/submit")
-    public ResponseEntity<ApiResponse<ApprovalSubmitResponseDto>> submit(
+    @Operation(summary = "전자결재 임시저장 수정")
+    @PutMapping("/approvals/drafts/{documentId}")
+    public ResponseEntity<ApiResponse<ApprovalDraftResponseDto>> updateDraft(
+            @PathVariable Long documentId,
+            @Valid @RequestBody ApprovalDraftUpsertRequestDto request,
+            @Parameter(hidden = true) @AuthenticationPrincipal CustomUserDetails userDetails) {
+        request.setDocumentId(documentId);
+        ApprovalDraftResponseDto result =
+                approvalWorkflowService.upsertDraft(userDetails.getId(), request);
+        return ResponseEntity.ok(ApiResponse.onSuccess(result));
+    }
+
+    @Operation(
+            summary = "전자결재 상신",
+            description =
+                    """
+            이미 임시저장된 문서를 상신합니다.
+
+            - {documentId}: POST /api/approvals/drafts 로 생성한 임시저장 문서 ID
+            - 임시저장 문서가 없으면 먼저 생성 후 상신해야 합니다.
+            """)
+    @PostMapping("/approvals/drafts/{documentId}/submit")
+    public ResponseEntity<ApiResponse<ApprovalSubmitResponseDto>> submitDraft(
             @PathVariable Long documentId,
             @Valid @RequestBody ApprovalSubmitRequestDto request,
             @Parameter(hidden = true) @AuthenticationPrincipal CustomUserDetails userDetails) {
         ApprovalSubmitResponseDto result =
                 approvalWorkflowService.submit(userDetails.getId(), documentId, request);
+        return ResponseEntity.ok(ApiResponse.onSuccess(result));
+    }
+
+    @Operation(
+            summary = "전자결재 바로 상신",
+            description =
+                    """
+            임시저장 생성과 상신을 한 번에 처리합니다.
+
+            - 내부 동작: 임시저장 생성 -> 상신
+            - 결과로 최종 상신된 documentId를 반환합니다.
+            """)
+    @PostMapping("/approvals/submit-direct")
+    public ResponseEntity<ApiResponse<ApprovalSubmitResponseDto>> submitDirect(
+            @Valid @RequestBody ApprovalDirectSubmitRequestDto request,
+            @Parameter(hidden = true) @AuthenticationPrincipal CustomUserDetails userDetails) {
+        ApprovalSubmitResponseDto result =
+                approvalWorkflowService.submitDirect(userDetails.getId(), request);
         return ResponseEntity.ok(ApiResponse.onSuccess(result));
     }
 }

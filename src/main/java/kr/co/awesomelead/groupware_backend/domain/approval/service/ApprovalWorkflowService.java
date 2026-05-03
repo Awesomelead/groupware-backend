@@ -1,6 +1,7 @@
 package kr.co.awesomelead.groupware_backend.domain.approval.service;
 
 import kr.co.awesomelead.groupware_backend.domain.approval.dto.request.ApprovalDraftUpsertRequestDto;
+import kr.co.awesomelead.groupware_backend.domain.approval.dto.request.ApprovalDirectSubmitRequestDto;
 import kr.co.awesomelead.groupware_backend.domain.approval.dto.request.ApprovalLineRequestDto;
 import kr.co.awesomelead.groupware_backend.domain.approval.dto.request.ApprovalSubmitRequestDto;
 import kr.co.awesomelead.groupware_backend.domain.approval.dto.response.ApprovalDraftResponseDto;
@@ -204,6 +205,31 @@ public class ApprovalWorkflowService {
                 .status(document.getStatus())
                 .submittedAt(document.getSubmittedAt())
                 .build();
+    }
+
+    @Transactional
+    public ApprovalSubmitResponseDto submitDirect(Long userId, ApprovalDirectSubmitRequestDto request) {
+        ApprovalDraftUpsertRequestDto draftRequest = new ApprovalDraftUpsertRequestDto();
+        draftRequest.setDocumentId(null);
+        draftRequest.setTemplateId(request.getTemplateId());
+        draftRequest.setTitle(request.getTitle());
+        draftRequest.setContentDelta(request.getContentDelta());
+        draftRequest.setContentHtml(request.getContentHtml());
+        draftRequest.setApprovalType(request.getApprovalType());
+        draftRequest.setReceiverDepartmentId(request.getReceiverDepartmentId());
+        draftRequest.setLines(request.getLines());
+
+        ApprovalDraftResponseDto draftResult = upsertDraft(userId, draftRequest);
+
+        ApprovalSubmitRequestDto submitRequest = new ApprovalSubmitRequestDto();
+        submitRequest.setTitle(request.getTitle());
+        submitRequest.setContentDelta(request.getContentDelta());
+        submitRequest.setContentHtml(request.getContentHtml());
+        submitRequest.setApprovalType(request.getApprovalType());
+        submitRequest.setReceiverDepartmentId(request.getReceiverDepartmentId());
+        submitRequest.setLines(request.getLines());
+
+        return submit(userId, draftResult.getDocumentId(), submitRequest);
     }
 
     private ApprovalTemplateListResponseDto.TemplateDto toTemplateDto(ApprovalTemplate template) {

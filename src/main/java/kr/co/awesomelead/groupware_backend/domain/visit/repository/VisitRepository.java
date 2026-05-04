@@ -20,7 +20,8 @@ public interface VisitRepository extends JpaRepository<Visit, Long> {
                     + "WHERE (:departmentId IS NULL OR d.id = :departmentId) "
                     + "AND (:status IS NULL OR v.status = :status) "
                     + "AND (:startDate IS NULL OR v.endDate >= :startDate) "
-                    + "AND (:endDate IS NULL OR v.startDate <= :endDate)")
+                    + "AND (:endDate IS NULL OR v.startDate <= :endDate) "
+                    + "ORDER BY v.id DESC")
     List<Visit> findAllByFilters(
             @Param("departmentId") Long departmentId,
             @Param("status") VisitStatus status,

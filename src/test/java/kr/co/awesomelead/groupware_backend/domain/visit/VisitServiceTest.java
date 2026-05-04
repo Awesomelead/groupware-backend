@@ -22,6 +22,7 @@ import kr.co.awesomelead.groupware_backend.domain.visit.dto.request.MyVisitUpdat
 import kr.co.awesomelead.groupware_backend.domain.visit.dto.request.OnSiteVisitRequestDto;
 import kr.co.awesomelead.groupware_backend.domain.visit.dto.request.OneDayVisitRequestDto;
 import kr.co.awesomelead.groupware_backend.domain.visit.dto.request.VisitProcessRequestDto;
+import kr.co.awesomelead.groupware_backend.domain.visit.dto.response.VisitListResponseDto;
 import kr.co.awesomelead.groupware_backend.domain.visit.entity.Visit;
 import kr.co.awesomelead.groupware_backend.domain.visit.entity.VisitRecord;
 import kr.co.awesomelead.groupware_backend.domain.visit.enums.AdditionalPermissionType;
@@ -30,6 +31,7 @@ import kr.co.awesomelead.groupware_backend.domain.visit.enums.VisitPurpose;
 import kr.co.awesomelead.groupware_backend.domain.visit.enums.VisitStatus;
 import kr.co.awesomelead.groupware_backend.domain.visit.mapper.VisitMapper;
 import kr.co.awesomelead.groupware_backend.domain.visit.repository.VisitRepository;
+import kr.co.awesomelead.groupware_backend.domain.visit.repository.querydsl.VisitQueryRepository;
 import kr.co.awesomelead.groupware_backend.domain.visit.service.VisitService;
 import kr.co.awesomelead.groupware_backend.global.error.CustomException;
 import kr.co.awesomelead.groupware_backend.global.infra.s3.service.S3Service;
@@ -43,6 +45,10 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.Spy;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.test.context.ActiveProfiles;
@@ -52,6 +58,7 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.ArrayList;
+import java.util.List;
 import java.util.Optional;
 
 @ExtendWith(MockitoExtension.class)
@@ -64,6 +71,7 @@ public class VisitServiceTest {
     @InjectMocks private VisitService visitService;
 
     @Mock private VisitRepository visitRepository;
+    @Mock private VisitQueryRepository visitQueryRepository;
     @Mock private UserRepository userRepository;
     @Mock private S3Service s3Service;
     @Mock private PasswordEncoder passwordEncoder;
@@ -804,6 +812,7 @@ public class VisitServiceTest {
     class Describe_getVisitsForAdmin {
 
         private final Long ADMIN_ID = 1L;
+        private final Pageable pageable = PageRequest.of(0, 20);
 
         @BeforeEach
         void setUpAdmin() {
@@ -818,28 +827,32 @@ public class VisitServiceTest {
             // given
             LocalDate startDate = LocalDate.of(2024, 7, 1);
             LocalDate endDate = LocalDate.of(2024, 7, 5);
-            given(visitRepository.findAllByFilters(null, null, startDate, endDate))
-                    .willReturn(new ArrayList<>());
+            given(visitQueryRepository.findVisitsForAdmin(null, null, startDate, endDate, pageable))
+                    .willReturn(new PageImpl<>(List.of()));
 
             // when
-            visitService.getVisitsForAdmin(ADMIN_ID, null, null, startDate, endDate);
+            Page<VisitListResponseDto> result =
+                    visitService.getVisitsForAdmin(
+                            ADMIN_ID, null, null, startDate, endDate, pageable);
 
             // then
-            verify(visitRepository).findAllByFilters(null, null, startDate, endDate);
+            verify(visitQueryRepository)
+                    .findVisitsForAdmin(null, null, startDate, endDate, pageable);
+            assertThat(result.getContent()).isEmpty();
         }
 
         @Test
         @DisplayName("날짜 범위 없이 호출하면 null로 저장소를 호출한다.")
         void it_calls_repository_with_null_dates_when_not_provided() {
             // given
-            given(visitRepository.findAllByFilters(null, null, null, null))
-                    .willReturn(new ArrayList<>());
+            given(visitQueryRepository.findVisitsForAdmin(null, null, null, null, pageable))
+                    .willReturn(new PageImpl<>(List.of()));
 
             // when
-            visitService.getVisitsForAdmin(ADMIN_ID, null, null, null, null);
+            visitService.getVisitsForAdmin(ADMIN_ID, null, null, null, null, pageable);
 
             // then
-            verify(visitRepository).findAllByFilters(null, null, null, null);
+            verify(visitQueryRepository).findVisitsForAdmin(null, null, null, null, pageable);
         }
     }
 

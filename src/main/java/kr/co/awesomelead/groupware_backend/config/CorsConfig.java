@@ -18,6 +18,7 @@ public class CorsConfig implements WebMvcConfigurer {
             List.of(
                     "http://localhost:*",
                     "http://127.0.0.1:*",
+                    "https://awesomelead.co.kr",
                     "https://api.awesomelead.co.kr",
                     "https://*.awesomelead.co.kr");
 

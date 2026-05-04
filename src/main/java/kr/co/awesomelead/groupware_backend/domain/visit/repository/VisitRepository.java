@@ -5,28 +5,11 @@ import kr.co.awesomelead.groupware_backend.domain.visit.enums.VisitCategory;
 import kr.co.awesomelead.groupware_backend.domain.visit.enums.VisitStatus;
 
 import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.data.jpa.repository.Query;
-import org.springframework.data.repository.query.Param;
 
 import java.time.LocalDate;
 import java.util.List;
 
 public interface VisitRepository extends JpaRepository<Visit, Long> {
-
-    @Query(
-            "SELECT v FROM Visit v "
-                    + "JOIN FETCH v.user u "
-                    + "JOIN FETCH u.department d "
-                    + "WHERE (:departmentId IS NULL OR d.id = :departmentId) "
-                    + "AND (:status IS NULL OR v.status = :status) "
-                    + "AND (:startDate IS NULL OR v.endDate >= :startDate) "
-                    + "AND (:endDate IS NULL OR v.startDate <= :endDate) "
-                    + "ORDER BY v.id DESC")
-    List<Visit> findAllByFilters(
-            @Param("departmentId") Long departmentId,
-            @Param("status") VisitStatus status,
-            @Param("startDate") LocalDate startDate,
-            @Param("endDate") LocalDate endDate);
 
     List<Visit> findByVisitorNameAndPhoneNumberHash(String name, String inputPhoneHash);
 

@@ -832,10 +832,12 @@ public class VisitServiceTest {
 
             // when
             Page<VisitListResponseDto> result =
-                    visitService.getVisitsForAdmin(ADMIN_ID, null, null, startDate, endDate, pageable);
+                    visitService.getVisitsForAdmin(
+                            ADMIN_ID, null, null, startDate, endDate, pageable);
 
             // then
-            verify(visitQueryRepository).findVisitsForAdmin(null, null, startDate, endDate, pageable);
+            verify(visitQueryRepository)
+                    .findVisitsForAdmin(null, null, startDate, endDate, pageable);
             assertThat(result.getContent()).isEmpty();
         }
 

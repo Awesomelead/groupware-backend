@@ -22,9 +22,6 @@ import kr.co.awesomelead.groupware_backend.domain.visit.dto.request.VisitSearchR
 import kr.co.awesomelead.groupware_backend.domain.visit.dto.response.MyVisitDetailResponseDto;
 import kr.co.awesomelead.groupware_backend.domain.visit.dto.response.MyVisitListResponseDto;
 import kr.co.awesomelead.groupware_backend.domain.visit.dto.response.VisitListResponseDto;
-
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
 import kr.co.awesomelead.groupware_backend.domain.visit.entity.Visit;
 import kr.co.awesomelead.groupware_backend.domain.visit.entity.VisitRecord;
 import kr.co.awesomelead.groupware_backend.domain.visit.enums.AdditionalPermissionType;
@@ -41,6 +38,8 @@ import kr.co.awesomelead.groupware_backend.global.infra.s3.service.S3Service;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;

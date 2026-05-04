@@ -35,8 +35,10 @@ public class VisitQueryRepository {
         List<Visit> content =
                 queryFactory
                         .selectFrom(visit)
-                        .join(visit.user).fetchJoin()
-                        .join(visit.user.department).fetchJoin()
+                        .join(visit.user)
+                        .fetchJoin()
+                        .join(visit.user.department)
+                        .fetchJoin()
                         .where(
                                 departmentIdEq(departmentId),
                                 statusEq(status),

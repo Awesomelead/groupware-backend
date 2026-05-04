@@ -22,6 +22,9 @@ import kr.co.awesomelead.groupware_backend.domain.visit.dto.request.VisitSearchR
 import kr.co.awesomelead.groupware_backend.domain.visit.dto.response.MyVisitDetailResponseDto;
 import kr.co.awesomelead.groupware_backend.domain.visit.dto.response.MyVisitListResponseDto;
 import kr.co.awesomelead.groupware_backend.domain.visit.dto.response.VisitListResponseDto;
+
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import kr.co.awesomelead.groupware_backend.domain.visit.entity.Visit;
 import kr.co.awesomelead.groupware_backend.domain.visit.entity.VisitRecord;
 import kr.co.awesomelead.groupware_backend.domain.visit.enums.AdditionalPermissionType;
@@ -30,6 +33,7 @@ import kr.co.awesomelead.groupware_backend.domain.visit.enums.VisitPurpose;
 import kr.co.awesomelead.groupware_backend.domain.visit.enums.VisitStatus;
 import kr.co.awesomelead.groupware_backend.domain.visit.mapper.VisitMapper;
 import kr.co.awesomelead.groupware_backend.domain.visit.repository.VisitRepository;
+import kr.co.awesomelead.groupware_backend.domain.visit.repository.querydsl.VisitQueryRepository;
 import kr.co.awesomelead.groupware_backend.global.error.CustomException;
 import kr.co.awesomelead.groupware_backend.global.error.ErrorCode;
 import kr.co.awesomelead.groupware_backend.global.infra.s3.service.S3Service;
@@ -54,6 +58,7 @@ import java.util.Map;
 public class VisitService {
 
     private final VisitRepository visitRepository;
+    private final VisitQueryRepository visitQueryRepository;
     private final UserRepository userRepository;
     private final DepartmentRepository departmentRepository;
     private final VisitMapper visitMapper;
@@ -414,19 +419,18 @@ public class VisitService {
 
     // 직용원 방문 목록 조회
     @Transactional(readOnly = true)
-    public List<VisitListResponseDto> getVisitsForAdmin(
+    public Page<VisitListResponseDto> getVisitsForAdmin(
             Long userId,
             Long departmentId,
             VisitStatus status,
             LocalDate startDate,
-            LocalDate endDate) {
-        // 관리 권한 확인
+            LocalDate endDate,
+            Pageable pageable) {
         validateAdminAuthority(userId);
 
-        List<Visit> visits =
-                visitRepository.findAllByFilters(departmentId, status, startDate, endDate);
-
-        return visitMapper.toVisitListResponseDtos(visits);
+        return visitQueryRepository
+                .findVisitsForAdmin(departmentId, status, startDate, endDate, pageable)
+                .map(visitMapper::toVisitListResponseDto);
     }
 
     // 직원용 방문 상세 조회

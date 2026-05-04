@@ -27,6 +27,10 @@ import kr.co.awesomelead.groupware_backend.global.common.response.ApiResponse;
 
 import lombok.RequiredArgsConstructor;
 
+import org.springdoc.core.annotations.ParameterObject;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -208,9 +212,47 @@ public class VisitController {
 
     @Operation(
             summary = "직원용 내방객 목록 조회",
-            description = "관리 직군이 전체 내방객 목록을 조회합니다. 부서 및 상태별 필터링이 가능합니다.")
+            description = "관리 직군이 전체 내방객 목록을 조회합니다. 부서 및 상태별 필터링과 페이징이 가능합니다.")
+    @ApiResponses({
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                responseCode = "200",
+                description = "조회 성공",
+                content =
+                        @Content(
+                                mediaType = "application/json",
+                                examples =
+                                        @ExampleObject(
+                                                value =
+                                                        """
+                    {
+                      "isSuccess": true,
+                      "code": "COMMON200",
+                      "message": "요청에 성공했습니다.",
+                      "result": {
+                        "content": [
+                          {
+                            "id": 1,
+                            "visitorCompany": "어썸테크",
+                            "visitorName": "홍길동",
+                            "hostDepartmentName": "경영지원부",
+                            "startDate": "2026-07-01",
+                            "endDate": "2026-07-01",
+                            "status": "방문 중"
+                          }
+                        ],
+                        "totalPages": 1,
+                        "totalElements": 1,
+                        "size": 20,
+                        "number": 0
+                      }
+                    }
+                    """))),
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                responseCode = "403",
+                description = "권한 없음")
+    })
     @GetMapping("/admin/list")
-    public ResponseEntity<ApiResponse<List<VisitListResponseDto>>> getAdminVisitList(
+    public ResponseEntity<ApiResponse<Page<VisitListResponseDto>>> getAdminVisitList(
             @Parameter(hidden = true) @AuthenticationPrincipal CustomUserDetails userDetails,
             @Parameter(description = "필터링할 부서 ID", example = "10")
                     @RequestParam(name = "departmentId", required = false)
@@ -223,10 +265,11 @@ public class VisitController {
                     LocalDate startDate,
             @Parameter(description = "조회 종료일 (이 날짜 이전 시작되는 방문 포함)", example = "2024-07-05")
                     @RequestParam(name = "endDate", required = false)
-                    LocalDate endDate) {
-        List<VisitListResponseDto> response =
+                    LocalDate endDate,
+            @ParameterObject @PageableDefault(page = 0, size = 20) Pageable pageable) {
+        Page<VisitListResponseDto> response =
                 visitService.getVisitsForAdmin(
-                        userDetails.getId(), departmentId, status, startDate, endDate);
+                        userDetails.getId(), departmentId, status, startDate, endDate, pageable);
         return ResponseEntity.ok(ApiResponse.onSuccess(response));
     }
 

@@ -342,7 +342,12 @@ public class EduReportService {
             }
         }
 
-        return buildEduReportDetailDto(user, report, hasAccess, true);
+        EduReportDetailDto dto = buildEduReportDetailDto(user, report, hasAccess, true);
+        dto.setPrevReport(
+                eduReportQueryRepository.findPrevDepartmentReport(report.getId(), report.getDepartment()));
+        dto.setNextReport(
+                eduReportQueryRepository.findNextDepartmentReport(report.getId(), report.getDepartment()));
+        return dto;
     }
 
     @Transactional(readOnly = true)
@@ -375,6 +380,21 @@ public class EduReportService {
         boolean hasAccess = user.hasAuthority(Authority.MANAGE_DEPARTMENT_EDUCATION);
         EduReportDetailDto dto = buildEduReportDetailDto(user, report, hasAccess, false);
         dto.setCompanyScope(toCompanyScopeList(report.getCompany()));
+        Long categoryId = report.getCategory() == null ? null : report.getCategory().getId();
+        dto.setPrevReport(
+                eduReportQueryRepository.findPrevCompanyReportInCategory(
+                        report.getId(),
+                        EduType.PSM,
+                        categoryId,
+                        user.getWorkLocation(),
+                        canReadAllCompanies));
+        dto.setNextReport(
+                eduReportQueryRepository.findNextCompanyReportInCategory(
+                        report.getId(),
+                        EduType.PSM,
+                        categoryId,
+                        user.getWorkLocation(),
+                        canReadAllCompanies));
         return dto;
     }
 
@@ -408,6 +428,21 @@ public class EduReportService {
         boolean hasAccess = user.hasAuthority(Authority.MANAGE_DEPARTMENT_EDUCATION);
         EduReportDetailDto dto = buildEduReportDetailDto(user, report, hasAccess, false);
         dto.setCompanyScope(toCompanyScopeList(report.getCompany()));
+        Long categoryId = report.getCategory() == null ? null : report.getCategory().getId();
+        dto.setPrevReport(
+                eduReportQueryRepository.findPrevCompanyReportInCategory(
+                        report.getId(),
+                        EduType.SAFETY,
+                        categoryId,
+                        user.getWorkLocation(),
+                        canReadAllCompanies));
+        dto.setNextReport(
+                eduReportQueryRepository.findNextCompanyReportInCategory(
+                        report.getId(),
+                        EduType.SAFETY,
+                        categoryId,
+                        user.getWorkLocation(),
+                        canReadAllCompanies));
         return dto;
     }
 

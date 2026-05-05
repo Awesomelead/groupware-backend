@@ -95,4 +95,28 @@ public class SafetyTrainingSessionDetailResponseDto {
 
     @Schema(description = "내가 서명 가능한지 여부", example = "true")
     private boolean canSign;
+
+    @Schema(description = "이전 교육일지 정보 (없으면 null)")
+    private SessionInfo prevSession;
+
+    @Schema(description = "다음 교육일지 정보 (없으면 null)")
+    private SessionInfo nextSession;
+
+    @Getter
+    @Builder
+    @Schema(description = "이전/다음 교육일지 요약 정보")
+    public static class SessionInfo {
+
+        @Schema(description = "교육일지 ID", example = "11")
+        private Long sessionId;
+
+        @Schema(description = "교육 제목", example = "2026년 1분기 정기 안전보건교육")
+        private String title;
+
+        @Schema(description = "작성자", example = "홍길동")
+        private String authorName;
+
+        @Schema(description = "작성일시", example = "2026-04-06T10:15:00")
+        private LocalDateTime createdAt;
+    }
 }

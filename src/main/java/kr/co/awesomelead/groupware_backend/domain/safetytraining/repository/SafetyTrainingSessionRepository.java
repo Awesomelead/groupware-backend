@@ -11,6 +11,8 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
+import java.util.Optional;
+
 public interface SafetyTrainingSessionRepository
         extends JpaRepository<SafetyTrainingSession, Long> {
 
@@ -31,4 +33,14 @@ public interface SafetyTrainingSessionRepository
             @Param("startAtFrom") java.time.LocalDateTime startAtFrom,
             @Param("startAtTo") java.time.LocalDateTime startAtTo,
             Pageable pageable);
+
+    Optional<SafetyTrainingSession> findFirstByIdGreaterThanOrderByIdAsc(Long sessionId);
+
+    Optional<SafetyTrainingSession> findFirstByIdLessThanOrderByIdDesc(Long sessionId);
+
+    Optional<SafetyTrainingSession> findFirstByCompanyScopeAndIdGreaterThanOrderByIdAsc(
+            Company companyScope, Long sessionId);
+
+    Optional<SafetyTrainingSession> findFirstByCompanyScopeAndIdLessThanOrderByIdDesc(
+            Company companyScope, Long sessionId);
 }

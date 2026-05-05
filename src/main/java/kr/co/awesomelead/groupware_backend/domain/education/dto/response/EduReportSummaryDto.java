@@ -11,6 +11,7 @@ import lombok.Getter;
 import lombok.Setter;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 
 @Getter
 @Setter
@@ -53,4 +54,10 @@ public class EduReportSummaryDto {
 
     @Schema(description = "교육 카테고리명", example = "유해위험물질")
     private String categoryName;
+
+    @Schema(description = "작성자", example = "홍길동")
+    private String authorName;
+
+    @Schema(description = "작성일", example = "2026-04-06T10:15:00")
+    private LocalDateTime createdAt;
 }

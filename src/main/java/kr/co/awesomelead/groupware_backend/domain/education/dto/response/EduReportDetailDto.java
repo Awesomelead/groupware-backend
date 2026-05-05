@@ -12,6 +12,7 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
 
 @Getter
@@ -26,6 +27,12 @@ public class EduReportDetailDto {
 
     @Schema(description = "교육 제목", example = "안전 교육")
     private String title;
+
+    @Schema(description = "작성자 이름", example = "홍길동")
+    private String authorName;
+
+    @Schema(description = "작성일시", example = "2026-04-06T10:15:00")
+    private LocalDateTime createdAt;
 
     @Schema(description = "교육 유형", example = "안전 보건")
     private EduType eduType;
@@ -83,6 +90,12 @@ public class EduReportDetailDto {
     @Schema(description = "출석자 목록 (MANAGE_DEPARTMENT_EDUCATION 권한 없으면 null)")
     private List<AttendeeInfo> attendees;
 
+    @Schema(description = "이전 교육 정보 (없으면 null)")
+    private ReportInfo prevReport;
+
+    @Schema(description = "다음 교육 정보 (없으면 null)")
+    private ReportInfo nextReport;
+
     @Getter
     @Setter
     @Builder
@@ -115,5 +128,26 @@ public class EduReportDetailDto {
                 description = "서명 이미지 URL",
                 example = "https://s3.amazonaws.com/bucket/signature.png")
         private String signatureUrl;
+    }
+
+    @Getter
+    @Setter
+    @Builder
+    @NoArgsConstructor
+    @AllArgsConstructor
+    @Schema(description = "이전/다음 교육 요약 정보")
+    public static class ReportInfo {
+
+        @Schema(description = "교육 게시물 ID", example = "100")
+        private Long id;
+
+        @Schema(description = "교육 제목", example = "안전 교육")
+        private String title;
+
+        @Schema(description = "작성자 이름", example = "홍길동")
+        private String authorName;
+
+        @Schema(description = "작성일시", example = "2026-04-06T10:15:00")
+        private LocalDateTime createdAt;
     }
 }

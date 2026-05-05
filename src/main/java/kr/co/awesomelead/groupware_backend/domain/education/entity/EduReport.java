@@ -20,6 +20,7 @@ import kr.co.awesomelead.groupware_backend.domain.department.entity.Department;
 import kr.co.awesomelead.groupware_backend.domain.department.enums.Company;
 import kr.co.awesomelead.groupware_backend.domain.education.enums.EduReportStatus;
 import kr.co.awesomelead.groupware_backend.domain.education.enums.EduType;
+import kr.co.awesomelead.groupware_backend.domain.user.entity.User;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -28,6 +29,7 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -89,6 +91,13 @@ public class EduReport {
     @Column(name = "company", length = 20)
     private Company company;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "created_by")
+    private User createdBy;
+
+    @Column(name = "created_at")
+    private LocalDateTime createdAt;
+
     @PrePersist
     protected void prePersist() {
         if (this.eduDate == null) {
@@ -96,6 +105,9 @@ public class EduReport {
         }
         if (this.status == null) {
             this.status = EduReportStatus.OPEN;
+        }
+        if (this.createdAt == null) {
+            this.createdAt = LocalDateTime.now();
         }
     }
 

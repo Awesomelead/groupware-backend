@@ -145,6 +145,7 @@ public class EduReportService {
         } else {
             report.setCompany(null);
         }
+        report.setCreatedBy(user);
 
         if (files != null && !files.isEmpty()) {
             for (MultipartFile file : files) {

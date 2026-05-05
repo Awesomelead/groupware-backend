@@ -914,6 +914,10 @@ public class SafetyTrainingSessionService {
                 .attendedCount(session.getAttendedCount())
                 .absentCount(session.getAbsentCount())
                 .mySigned(mySigned)
+                .authorName(
+                        session.getCreatedBy() == null
+                                ? null
+                                : session.getCreatedBy().getDisplayName())
                 .createdAt(session.getCreatedAt())
                 .build();
     }

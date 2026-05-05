@@ -1,16 +1,14 @@
 package kr.co.awesomelead.groupware_backend.domain.education.dto.response;
 
 import io.swagger.v3.oas.annotations.media.Schema;
-
+import java.time.LocalDate;
+import java.time.LocalDateTime;
 import kr.co.awesomelead.groupware_backend.domain.education.enums.EduReportStatus;
 import kr.co.awesomelead.groupware_backend.domain.education.enums.EduType;
-
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.Setter;
-
-import java.time.LocalDate;
 
 @Getter
 @Setter
@@ -53,4 +51,10 @@ public class EduReportSummaryDto {
 
     @Schema(description = "교육 카테고리명", example = "유해위험물질")
     private String categoryName;
+
+    @Schema(description = "작성자", example = "홍길동")
+    private String authorName;
+
+    @Schema(description = "작성일", example = "2026-04-06T10:15:00")
+    private LocalDateTime createdAt;
 }

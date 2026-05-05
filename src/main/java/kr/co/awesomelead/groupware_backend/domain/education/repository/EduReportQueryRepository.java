@@ -58,6 +58,7 @@ public class EduReportQueryRepository {
             Company psmCompany,
             boolean canReadAllPsmCompanies) {
         QUser currentUser = new QUser("currentUserForCanSign");
+        QUser creatorUser = new QUser("creatorUser");
         BooleanExpression attendanceExists =
                 JPAExpressions.selectOne()
                         .from(eduAttendance)
@@ -93,9 +94,12 @@ public class EduReportQueryRepository {
                                 eduReport.signatureRequired,
                                 eduReport.status,
                                 educationCategory.id,
-                                educationCategory.name))
+                                educationCategory.name,
+                                creatorUser.nameKor.coalesce(creatorUser.nameEng),
+                                eduReport.createdAt))
                 .from(eduReport)
                 .leftJoin(eduReport.category, educationCategory)
+                .leftJoin(eduReport.createdBy, creatorUser)
                 .where(
                         eqEduType(type),
                         eqCategoryId(categoryId),
@@ -108,6 +112,7 @@ public class EduReportQueryRepository {
 
     public List<EduReportSummaryDto> findPsmEduReports(
             Long categoryId, Long userId, Company company, boolean canReadAllCompanies) {
+        QUser creatorUser = new QUser("creatorUserForPsm");
         BooleanExpression attendanceExists =
                 JPAExpressions.selectOne()
                         .from(eduAttendance)
@@ -131,9 +136,12 @@ public class EduReportQueryRepository {
                                 eduReport.signatureRequired,
                                 eduReport.status,
                                 educationCategory.id,
-                                educationCategory.name))
+                                educationCategory.name,
+                                creatorUser.nameKor.coalesce(creatorUser.nameEng),
+                                eduReport.createdAt))
                 .from(eduReport)
                 .leftJoin(eduReport.category, educationCategory)
+                .leftJoin(eduReport.createdBy, creatorUser)
                 .where(
                         eduReport.eduType.eq(EduType.PSM),
                         eqCategoryId(categoryId),
@@ -144,6 +152,7 @@ public class EduReportQueryRepository {
 
     public List<EduReportSummaryDto> findSafetyEduReports(
             Long categoryId, Long userId, Company company, boolean canReadAllCompanies) {
+        QUser creatorUser = new QUser("creatorUserForSafety");
         BooleanExpression attendanceExists =
                 JPAExpressions.selectOne()
                         .from(eduAttendance)
@@ -167,9 +176,12 @@ public class EduReportQueryRepository {
                                 eduReport.signatureRequired,
                                 eduReport.status,
                                 educationCategory.id,
-                                educationCategory.name))
+                                educationCategory.name,
+                                creatorUser.nameKor.coalesce(creatorUser.nameEng),
+                                eduReport.createdAt))
                 .from(eduReport)
                 .leftJoin(eduReport.category, educationCategory)
+                .leftJoin(eduReport.createdBy, creatorUser)
                 .where(
                         eduReport.eduType.eq(EduType.SAFETY),
                         eqCategoryId(categoryId),

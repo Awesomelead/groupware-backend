@@ -28,6 +28,12 @@ public class EduReportDetailDto {
     @Schema(description = "교육 제목", example = "안전 교육")
     private String title;
 
+    @Schema(description = "작성자 이름", example = "홍길동")
+    private String authorName;
+
+    @Schema(description = "작성일시", example = "2026-04-06T10:15:00")
+    private LocalDateTime createdAt;
+
     @Schema(description = "교육 유형", example = "안전 보건")
     private EduType eduType;
 

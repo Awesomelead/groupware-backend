@@ -258,6 +258,11 @@ public class SafetyTrainingSessionService {
         return SafetyTrainingSessionDetailResponseDto.builder()
                 .sessionId(session.getId())
                 .title(session.getTitle())
+                .authorName(
+                        session.getCreatedBy() == null
+                                ? null
+                                : session.getCreatedBy().getDisplayName())
+                .createdAt(session.getCreatedAt())
                 .educationType(session.getEducationType())
                 .educationMethods(toMethods(session.getEducationMethodsJson()))
                 .startAt(session.getStartAt())

@@ -27,6 +27,12 @@ public class SafetyTrainingSessionDetailResponseDto {
     @Schema(description = "교육 제목", example = "2026년 1분기 정기 안전보건교육")
     private String title;
 
+    @Schema(description = "작성자", example = "홍길동")
+    private String authorName;
+
+    @Schema(description = "작성일시", example = "2026-04-06T10:15:00")
+    private LocalDateTime createdAt;
+
     @Schema(description = "교육 구분", example = "REGULAR")
     private SafetyEducationType educationType;
 

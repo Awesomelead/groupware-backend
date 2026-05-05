@@ -41,9 +41,7 @@ public class EduReportUpdateRequestDto {
     private Long categoryId;
 
     @Schema(
-            description =
-                    "회사 범위(PSM/안전보건 수정 시 선택)."
-                            + " [AWESOME, MARUI]를 함께 넣으면 공통 게시물로 저장됩니다.",
+            description = "회사 범위(PSM/안전보건 수정 시 선택)." + " [AWESOME, MARUI]를 함께 넣으면 공통 게시물로 저장됩니다.",
             example = "[\"AWESOME\"]")
     private List<Company> companyScope;
 

@@ -944,16 +944,15 @@ public class SafetyTrainingSessionService {
         return findNeighborSession(actor, current, false).orElse(null);
     }
 
-    private java.util.Optional<SafetyTrainingSessionDetailResponseDto.SessionInfo> findNeighborSession(
-            User actor, SafetyTrainingSession current, boolean previous) {
+    private java.util.Optional<SafetyTrainingSessionDetailResponseDto.SessionInfo>
+            findNeighborSession(User actor, SafetyTrainingSession current, boolean previous) {
         java.util.Optional<SafetyTrainingSession> neighbor;
         if (actor.hasAuthority(Authority.MANAGE_SAFETY)) {
             neighbor =
                     previous
                             ? sessionRepository.findFirstByIdGreaterThanOrderByIdAsc(
                                     current.getId())
-                            : sessionRepository.findFirstByIdLessThanOrderByIdDesc(
-                                    current.getId());
+                            : sessionRepository.findFirstByIdLessThanOrderByIdDesc(current.getId());
         } else {
             Company company = actor.getWorkLocation();
             if (company == null) {
@@ -961,12 +960,10 @@ public class SafetyTrainingSessionService {
             }
             neighbor =
                     previous
-                            ? sessionRepository
-                                    .findFirstByCompanyScopeAndIdGreaterThanOrderByIdAsc(
-                                            company, current.getId())
-                            : sessionRepository
-                                    .findFirstByCompanyScopeAndIdLessThanOrderByIdDesc(
-                                            company, current.getId());
+                            ? sessionRepository.findFirstByCompanyScopeAndIdGreaterThanOrderByIdAsc(
+                                    company, current.getId())
+                            : sessionRepository.findFirstByCompanyScopeAndIdLessThanOrderByIdDesc(
+                                    company, current.getId());
         }
 
         return neighbor.map(this::toSessionInfo);

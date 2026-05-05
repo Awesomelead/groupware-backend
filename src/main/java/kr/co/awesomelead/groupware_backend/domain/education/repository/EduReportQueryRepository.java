@@ -191,7 +191,8 @@ public class EduReportQueryRepository {
                 .fetch();
     }
 
-    public EduReportDetailDto.ReportInfo findPrevDepartmentReport(Long reportId, Department department) {
+    public EduReportDetailDto.ReportInfo findPrevDepartmentReport(
+            Long reportId, Department department) {
         QUser creatorUser = new QUser("creatorUserForPrevDepartment");
         return queryFactory
                 .select(
@@ -212,7 +213,8 @@ public class EduReportQueryRepository {
                 .fetchOne();
     }
 
-    public EduReportDetailDto.ReportInfo findNextDepartmentReport(Long reportId, Department department) {
+    public EduReportDetailDto.ReportInfo findNextDepartmentReport(
+            Long reportId, Department department) {
         QUser creatorUser = new QUser("creatorUserForNextDepartment");
         return queryFactory
                 .select(

@@ -344,9 +344,11 @@ public class EduReportService {
 
         EduReportDetailDto dto = buildEduReportDetailDto(user, report, hasAccess, true);
         dto.setPrevReport(
-                eduReportQueryRepository.findPrevDepartmentReport(report.getId(), report.getDepartment()));
+                eduReportQueryRepository.findPrevDepartmentReport(
+                        report.getId(), report.getDepartment()));
         dto.setNextReport(
-                eduReportQueryRepository.findNextDepartmentReport(report.getId(), report.getDepartment()));
+                eduReportQueryRepository.findNextDepartmentReport(
+                        report.getId(), report.getDepartment()));
         return dto;
     }
 
@@ -791,7 +793,8 @@ public class EduReportService {
                 }
                 report.setDepartment(null);
                 if (requestDto.getCompanyScope() != null) {
-                    Company companyOverride = resolveCompanyScopeOverride(requestDto.getCompanyScope());
+                    Company companyOverride =
+                            resolveCompanyScopeOverride(requestDto.getCompanyScope());
                     report.setCompany(companyOverride);
                 }
             }

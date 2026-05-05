@@ -14,6 +14,7 @@ import com.querydsl.jpa.impl.JPAQueryFactory;
 import kr.co.awesomelead.groupware_backend.domain.department.entity.Department;
 import kr.co.awesomelead.groupware_backend.domain.department.enums.Company;
 import kr.co.awesomelead.groupware_backend.domain.department.enums.DepartmentName;
+import kr.co.awesomelead.groupware_backend.domain.education.dto.response.EduReportDetailDto;
 import kr.co.awesomelead.groupware_backend.domain.education.dto.response.EduReportSummaryDto;
 import kr.co.awesomelead.groupware_backend.domain.education.entity.EduReport;
 import kr.co.awesomelead.groupware_backend.domain.education.entity.QEduAttendance;
@@ -58,6 +59,7 @@ public class EduReportQueryRepository {
             Company psmCompany,
             boolean canReadAllPsmCompanies) {
         QUser currentUser = new QUser("currentUserForCanSign");
+        QUser creatorUser = new QUser("creatorUser");
         BooleanExpression attendanceExists =
                 JPAExpressions.selectOne()
                         .from(eduAttendance)
@@ -93,9 +95,12 @@ public class EduReportQueryRepository {
                                 eduReport.signatureRequired,
                                 eduReport.status,
                                 educationCategory.id,
-                                educationCategory.name))
+                                educationCategory.name,
+                                creatorUser.nameKor.coalesce(creatorUser.nameEng),
+                                eduReport.createdAt))
                 .from(eduReport)
                 .leftJoin(eduReport.category, educationCategory)
+                .leftJoin(eduReport.createdBy, creatorUser)
                 .where(
                         eqEduType(type),
                         eqCategoryId(categoryId),
@@ -108,6 +113,7 @@ public class EduReportQueryRepository {
 
     public List<EduReportSummaryDto> findPsmEduReports(
             Long categoryId, Long userId, Company company, boolean canReadAllCompanies) {
+        QUser creatorUser = new QUser("creatorUserForPsm");
         BooleanExpression attendanceExists =
                 JPAExpressions.selectOne()
                         .from(eduAttendance)
@@ -131,9 +137,12 @@ public class EduReportQueryRepository {
                                 eduReport.signatureRequired,
                                 eduReport.status,
                                 educationCategory.id,
-                                educationCategory.name))
+                                educationCategory.name,
+                                creatorUser.nameKor.coalesce(creatorUser.nameEng),
+                                eduReport.createdAt))
                 .from(eduReport)
                 .leftJoin(eduReport.category, educationCategory)
+                .leftJoin(eduReport.createdBy, creatorUser)
                 .where(
                         eduReport.eduType.eq(EduType.PSM),
                         eqCategoryId(categoryId),
@@ -144,6 +153,7 @@ public class EduReportQueryRepository {
 
     public List<EduReportSummaryDto> findSafetyEduReports(
             Long categoryId, Long userId, Company company, boolean canReadAllCompanies) {
+        QUser creatorUser = new QUser("creatorUserForSafety");
         BooleanExpression attendanceExists =
                 JPAExpressions.selectOne()
                         .from(eduAttendance)
@@ -167,15 +177,116 @@ public class EduReportQueryRepository {
                                 eduReport.signatureRequired,
                                 eduReport.status,
                                 educationCategory.id,
-                                educationCategory.name))
+                                educationCategory.name,
+                                creatorUser.nameKor.coalesce(creatorUser.nameEng),
+                                eduReport.createdAt))
                 .from(eduReport)
                 .leftJoin(eduReport.category, educationCategory)
+                .leftJoin(eduReport.createdBy, creatorUser)
                 .where(
                         eduReport.eduType.eq(EduType.SAFETY),
                         eqCategoryId(categoryId),
                         psmCompanyFilter(company, canReadAllCompanies))
                 .orderBy(eduReport.pinned.desc(), eduReport.eduDate.desc(), eduReport.id.desc())
                 .fetch();
+    }
+
+    public EduReportDetailDto.ReportInfo findPrevDepartmentReport(
+            Long reportId, Department department) {
+        QUser creatorUser = new QUser("creatorUserForPrevDepartment");
+        return queryFactory
+                .select(
+                        Projections.constructor(
+                                EduReportDetailDto.ReportInfo.class,
+                                eduReport.id,
+                                eduReport.title,
+                                creatorUser.nameKor.coalesce(creatorUser.nameEng),
+                                eduReport.createdAt))
+                .from(eduReport)
+                .leftJoin(eduReport.createdBy, creatorUser)
+                .where(
+                        eduReport.eduType.eq(EduType.DEPARTMENT),
+                        eduReport.id.gt(reportId),
+                        sameDepartmentFilter(department))
+                .orderBy(eduReport.id.asc())
+                .limit(1)
+                .fetchOne();
+    }
+
+    public EduReportDetailDto.ReportInfo findNextDepartmentReport(
+            Long reportId, Department department) {
+        QUser creatorUser = new QUser("creatorUserForNextDepartment");
+        return queryFactory
+                .select(
+                        Projections.constructor(
+                                EduReportDetailDto.ReportInfo.class,
+                                eduReport.id,
+                                eduReport.title,
+                                creatorUser.nameKor.coalesce(creatorUser.nameEng),
+                                eduReport.createdAt))
+                .from(eduReport)
+                .leftJoin(eduReport.createdBy, creatorUser)
+                .where(
+                        eduReport.eduType.eq(EduType.DEPARTMENT),
+                        eduReport.id.lt(reportId),
+                        sameDepartmentFilter(department))
+                .orderBy(eduReport.id.desc())
+                .limit(1)
+                .fetchOne();
+    }
+
+    public EduReportDetailDto.ReportInfo findPrevCompanyReportInCategory(
+            Long reportId,
+            EduType type,
+            Long categoryId,
+            Company company,
+            boolean canReadAllCompanies) {
+        QUser creatorUser = new QUser("creatorUserForPrevCompany");
+        return queryFactory
+                .select(
+                        Projections.constructor(
+                                EduReportDetailDto.ReportInfo.class,
+                                eduReport.id,
+                                eduReport.title,
+                                creatorUser.nameKor.coalesce(creatorUser.nameEng),
+                                eduReport.createdAt))
+                .from(eduReport)
+                .leftJoin(eduReport.createdBy, creatorUser)
+                .where(
+                        eduReport.eduType.eq(type),
+                        sameCategoryFilter(categoryId),
+                        eduReport.id.gt(reportId),
+                        companyDetailFilter(company, canReadAllCompanies))
+                .orderBy(eduReport.id.asc())
+                .limit(1)
+                .fetchOne();
+    }
+
+    public EduReportDetailDto.ReportInfo findNextCompanyReportInCategory(
+            Long reportId,
+            EduType type,
+            Long categoryId,
+            Company company,
+            boolean canReadAllCompanies) {
+        QUser creatorUser = new QUser("creatorUserForNextCompany");
+        return queryFactory
+                .select(
+                        Projections.constructor(
+                                EduReportDetailDto.ReportInfo.class,
+                                eduReport.id,
+                                eduReport.title,
+                                creatorUser.nameKor.coalesce(creatorUser.nameEng),
+                                eduReport.createdAt))
+                .from(eduReport)
+                .leftJoin(eduReport.createdBy, creatorUser)
+                .where(
+                        eduReport.eduType.eq(type),
+                        sameCategoryFilter(categoryId),
+                        eduReport.id.lt(reportId),
+                        companyDetailFilter(company, canReadAllCompanies))
+                .orderBy(eduReport.id.desc())
+                .limit(1)
+                .fetchOne();
     }
 
     public record SignatureStatusRow(
@@ -304,5 +415,29 @@ public class EduReportQueryRepository {
                 .ne(EduType.PSM)
                 .or(eduReport.company.eq(psmCompany))
                 .or(eduReport.company.isNull());
+    }
+
+    private BooleanExpression sameDepartmentFilter(Department department) {
+        if (department == null) {
+            return eduReport.id.isNull();
+        }
+        return eduReport.department.eq(department);
+    }
+
+    private BooleanExpression sameCategoryFilter(Long categoryId) {
+        if (categoryId == null) {
+            return eduReport.id.isNull();
+        }
+        return eduReport.category.id.eq(categoryId);
+    }
+
+    private BooleanExpression companyDetailFilter(Company company, boolean canReadAllCompanies) {
+        if (canReadAllCompanies) {
+            return null;
+        }
+        if (company == null) {
+            return eduReport.id.isNull();
+        }
+        return eduReport.company.eq(company).or(eduReport.company.isNull());
     }
 }

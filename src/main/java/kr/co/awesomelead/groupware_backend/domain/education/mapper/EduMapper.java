@@ -23,6 +23,8 @@ public interface EduMapper {
     @Mapping(target = "eduDate", ignore = true)
     @Mapping(target = "status", ignore = true)
     @Mapping(target = "attachments", ignore = true)
+    @Mapping(target = "createdBy", ignore = true)
+    @Mapping(target = "createdAt", ignore = true)
     @Mapping(target = "department", source = "department")
     @Mapping(target = "category", source = "category")
     EduReport toEduReportEntity(
@@ -36,6 +38,12 @@ public interface EduMapper {
      */
     @Mapping(target = "attendance", ignore = true)
     @Mapping(target = "attachments", source = "report.attachments")
+    @Mapping(
+            target = "authorName",
+            expression =
+                    "java(report.getCreatedBy() != null ? report.getCreatedBy().getDisplayName() :"
+                        + " null)")
+    @Mapping(target = "createdAt", source = "report.createdAt")
     @Mapping(target = "eduType", source = "report.eduType")
     @Mapping(
             target = "categoryId",
@@ -60,6 +68,8 @@ public interface EduMapper {
     @Mapping(target = "signedCount", ignore = true)
     @Mapping(target = "unsignedCount", ignore = true)
     @Mapping(target = "canSign", ignore = true)
+    @Mapping(target = "prevReport", ignore = true)
+    @Mapping(target = "nextReport", ignore = true)
     @Mapping(target = "attendees", source = "attendances")
     EduReportDetailDto toDetailDto(
             EduReport report,

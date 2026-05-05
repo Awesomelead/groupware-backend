@@ -250,9 +250,19 @@ public class SafetyTrainingSessionService {
                                 session.getReportFileKey(),
                                 buildExportFileName(session.getStartAt(), session.getTitle()));
 
+        SafetyTrainingSessionDetailResponseDto.SessionInfo prevSession =
+                findPrevSessionInfo(actor, session);
+        SafetyTrainingSessionDetailResponseDto.SessionInfo nextSession =
+                findNextSessionInfo(actor, session);
+
         return SafetyTrainingSessionDetailResponseDto.builder()
                 .sessionId(session.getId())
                 .title(session.getTitle())
+                .authorName(
+                        session.getCreatedBy() == null
+                                ? null
+                                : session.getCreatedBy().getDisplayName())
+                .createdAt(session.getCreatedAt())
                 .educationType(session.getEducationType())
                 .educationMethods(toMethods(session.getEducationMethodsJson()))
                 .startAt(session.getStartAt())
@@ -293,6 +303,8 @@ public class SafetyTrainingSessionService {
                                 ? null
                                 : s3Service.getPresignedViewUrl(attendee.getSignatureKey()))
                 .canSign(canSignSession(actor, session, myStatus))
+                .prevSession(prevSession)
+                .nextSession(nextSession)
                 .build();
     }
 
@@ -914,6 +926,58 @@ public class SafetyTrainingSessionService {
                 .attendedCount(session.getAttendedCount())
                 .absentCount(session.getAbsentCount())
                 .mySigned(mySigned)
+                .authorName(
+                        session.getCreatedBy() == null
+                                ? null
+                                : session.getCreatedBy().getDisplayName())
+                .createdAt(session.getCreatedAt())
+                .build();
+    }
+
+    private SafetyTrainingSessionDetailResponseDto.SessionInfo findPrevSessionInfo(
+            User actor, SafetyTrainingSession current) {
+        return findNeighborSession(actor, current, true).orElse(null);
+    }
+
+    private SafetyTrainingSessionDetailResponseDto.SessionInfo findNextSessionInfo(
+            User actor, SafetyTrainingSession current) {
+        return findNeighborSession(actor, current, false).orElse(null);
+    }
+
+    private java.util.Optional<SafetyTrainingSessionDetailResponseDto.SessionInfo>
+            findNeighborSession(User actor, SafetyTrainingSession current, boolean previous) {
+        java.util.Optional<SafetyTrainingSession> neighbor;
+        if (actor.hasAuthority(Authority.MANAGE_SAFETY)) {
+            neighbor =
+                    previous
+                            ? sessionRepository.findFirstByIdGreaterThanOrderByIdAsc(
+                                    current.getId())
+                            : sessionRepository.findFirstByIdLessThanOrderByIdDesc(current.getId());
+        } else {
+            Company company = actor.getWorkLocation();
+            if (company == null) {
+                return java.util.Optional.empty();
+            }
+            neighbor =
+                    previous
+                            ? sessionRepository.findFirstByCompanyScopeAndIdGreaterThanOrderByIdAsc(
+                                    company, current.getId())
+                            : sessionRepository.findFirstByCompanyScopeAndIdLessThanOrderByIdDesc(
+                                    company, current.getId());
+        }
+
+        return neighbor.map(this::toSessionInfo);
+    }
+
+    private SafetyTrainingSessionDetailResponseDto.SessionInfo toSessionInfo(
+            SafetyTrainingSession session) {
+        return SafetyTrainingSessionDetailResponseDto.SessionInfo.builder()
+                .sessionId(session.getId())
+                .title(session.getTitle())
+                .authorName(
+                        session.getCreatedBy() == null
+                                ? null
+                                : session.getCreatedBy().getDisplayName())
                 .createdAt(session.getCreatedAt())
                 .build();
     }

@@ -790,6 +790,10 @@ public class EduReportService {
                     throw new CustomException(ErrorCode.EDUCATION_CATEGORY_REQUIRED);
                 }
                 report.setDepartment(null);
+                if (requestDto.getCompanyScope() != null) {
+                    Company companyOverride = resolveCompanyScopeOverride(requestDto.getCompanyScope());
+                    report.setCompany(companyOverride);
+                }
             }
 
             deleteAttachments(report, requestDto.getDeleteAttachmentIds());

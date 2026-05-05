@@ -4,6 +4,8 @@ import io.swagger.v3.oas.annotations.media.Schema;
 
 import jakarta.validation.constraints.NotBlank;
 
+import kr.co.awesomelead.groupware_backend.domain.department.enums.Company;
+
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
@@ -37,6 +39,13 @@ public class EduReportUpdateRequestDto {
 
     @Schema(description = "카테고리 ID (PSM/안전보건 수정 시 선택)", example = "2")
     private Long categoryId;
+
+    @Schema(
+            description =
+                    "회사 범위(PSM/안전보건 수정 시 선택)."
+                            + " [AWESOME, MARUI]를 함께 넣으면 공통 게시물로 저장됩니다.",
+            example = "[\"AWESOME\"]")
+    private List<Company> companyScope;
 
     @Schema(description = "삭제할 첨부파일 ID 목록(선택)", example = "[10, 11]")
     private List<Long> deleteAttachmentIds;

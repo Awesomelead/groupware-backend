@@ -43,7 +43,7 @@ import org.springframework.web.bind.annotation.RestController;
         ### 권장 엔드포인트(헷갈림 방지)
         - 임시저장 생성: POST /api/approvals/drafts
         - 임시저장 수정: PUT /api/approvals/drafts/{documentId}
-        - 상신: POST /api/approvals/drafts/{documentId}/submit
+        - 임시저장 문서 상신: POST /api/approvals/drafts/{documentId}/submit
         - 바로 상신(임시저장 없이 1회 요청): POST /api/approvals/submit-direct
 
         ### 권한 정보
@@ -128,13 +128,14 @@ public class ApprovalWorkflowController {
     }
 
     @Operation(
-            summary = "전자결재 상신",
+            summary = "전자결재 임시저장 문서 상신",
             description =
                     """
-            이미 임시저장된 문서를 상신합니다.
+            이미 임시저장된 전자결재 문서를 상신합니다.
 
             - {documentId}: POST /api/approvals/drafts 로 생성한 임시저장 문서 ID
-            - 임시저장 문서가 없으면 먼저 생성 후 상신해야 합니다.
+            - 임시저장 문서가 없으면 먼저 POST /api/approvals/drafts 로 생성해야 합니다.
+            - 임시저장 없이 바로 상신하려면 POST /api/approvals/submit-direct 를 사용하세요.
             """)
     @PostMapping("/approvals/drafts/{documentId}/submit")
     public ResponseEntity<ApiResponse<ApprovalSubmitResponseDto>> submitDraft(
@@ -147,7 +148,7 @@ public class ApprovalWorkflowController {
     }
 
     @Operation(
-            summary = "전자결재 바로 상신",
+            summary = "전자결재 바로 상신(임시저장 없이)",
             description =
                     """
             임시저장 생성과 상신을 한 번에 처리합니다.

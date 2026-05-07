@@ -143,7 +143,17 @@ public class AdminApprovalTemplateController {
         return ResponseEntity.ok(ApiResponse.onNoContent("전자결재 양식구분이 삭제되었습니다."));
     }
 
-    @Operation(summary = "전자결재 양식 생성")
+    @Operation(
+            summary = "전자결재 양식 생성",
+            description =
+                    """
+            전자결재 양식을 생성합니다.
+
+            ### 입력 규칙
+            - linePolicy=FIXED면 lines에 최소 1개 이상의 APPROVAL_LINE이 필요합니다.
+            - linePolicy=FLEXIBLE면 lines는 비워둘 수 있습니다.
+            - lines 항목에서 targetType=USER면 targetUserId, DEPARTMENT면 targetDepartmentId 필수입니다.
+            """)
     @PostMapping("/approval-templates")
     public ResponseEntity<ApiResponse<Long>> createTemplate(
             @Parameter(hidden = true) @AuthenticationPrincipal CustomUserDetails userDetails,
@@ -171,7 +181,17 @@ public class AdminApprovalTemplateController {
                         approvalTemplateAdminService.getTemplate(userDetails.getId(), templateId)));
     }
 
-    @Operation(summary = "전자결재 양식 수정")
+    @Operation(
+            summary = "전자결재 양식 수정",
+            description =
+                    """
+            전자결재 양식을 수정합니다.
+
+            ### 입력 규칙
+            - linePolicy=FIXED면 lines에 최소 1개 이상의 APPROVAL_LINE이 필요합니다.
+            - linePolicy=FLEXIBLE면 lines는 비워둘 수 있습니다.
+            - lines 항목에서 targetType=USER면 targetUserId, DEPARTMENT면 targetDepartmentId 필수입니다.
+            """)
     @PutMapping("/approval-templates/{templateId}")
     public ResponseEntity<ApiResponse<Void>> updateTemplate(
             @Parameter(hidden = true) @AuthenticationPrincipal CustomUserDetails userDetails,

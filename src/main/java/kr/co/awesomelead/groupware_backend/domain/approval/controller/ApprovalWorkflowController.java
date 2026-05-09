@@ -44,6 +44,7 @@ import org.springframework.web.bind.annotation.RestController;
         - 상신(상신 시점 결재선 스냅샷 고정)
 
         ### 권장 엔드포인트(헷갈림 방지)
+        - 전체 전체 탭: GET /api/approvals/all
         - 전체 본인기안 탭: GET /api/approvals/all/my-drafted
         - 전체 본인결재 탭: GET /api/approvals/all/my-approvals
         - 결재진행 전체 탭: GET /api/approvals/inbox/all
@@ -267,6 +268,31 @@ public class ApprovalWorkflowController {
             @Parameter(hidden = true) @AuthenticationPrincipal CustomUserDetails userDetails) {
         return ResponseEntity.ok(
                 ApiResponse.onSuccess(approvalWorkflowService.getInboxDraftBox(userDetails.getId())));
+    }
+
+    @Operation(
+            summary = "전체 전체 탭 조회",
+            description =
+                    """
+            현재 사용자 기준 `전체 > 전체` 문서를 조회합니다.
+
+            ### 조회 대상
+            - 본인기안 문서(기안자가 본인)
+            - 본인결재 문서(내 결재선/부서 결재선으로 지정된 문서, DRAFT 제외)
+            - 위 두 조건의 합집합(중복 문서는 1건으로 표시)
+
+            ### 응답 주요 필드
+            - 문서번호(documentNo)
+            - 기안자(drafterName)
+            - 제목(title)
+            - 결재선(approvalLines)
+            - 기안일(draftedAt)
+            - 완료일(completedAt)
+            """)
+    @GetMapping("/approvals/all")
+    public ResponseEntity<ApiResponse<ApprovalInboxAllResponseDto>> getAllAll(
+            @Parameter(hidden = true) @AuthenticationPrincipal CustomUserDetails userDetails) {
+        return ResponseEntity.ok(ApiResponse.onSuccess(approvalWorkflowService.getAllAll(userDetails.getId())));
     }
 
     @Operation(

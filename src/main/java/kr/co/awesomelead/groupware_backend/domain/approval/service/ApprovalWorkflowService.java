@@ -197,6 +197,20 @@ public class ApprovalWorkflowService {
         return ApprovalInboxAllResponseDto.builder().documents(documents).build();
     }
 
+    @Transactional(readOnly = true)
+    public ApprovalInboxAllResponseDto getAllAll(Long userId) {
+        User user = getUser(userId);
+        Long departmentId = user.getDepartment() != null ? user.getDepartment().getId() : null;
+
+        List<ApprovalInboxAllResponseDto.DocumentDto> documents =
+                approvalDocumentRepository.findAllWithLinesOrderByIdDesc().stream()
+                        .filter(document -> isAllTabDocument(document, userId, departmentId))
+                        .map(document -> toInboxDocumentDto(document, userId, departmentId))
+                        .toList();
+
+        return ApprovalInboxAllResponseDto.builder().documents(documents).build();
+    }
+
     @Transactional
     public ApprovalDraftResponseDto upsertDraft(
             Long userId, ApprovalDraftUpsertRequestDto request) {
@@ -422,6 +436,10 @@ public class ApprovalWorkflowService {
 
     private boolean isDraftedByMe(ApprovalDocument document, Long userId) {
         return document.getDrafterUser() != null && userId.equals(document.getDrafterUser().getId());
+    }
+
+    private boolean isAllTabDocument(ApprovalDocument document, Long userId, Long departmentId) {
+        return isDraftedByMe(document, userId) || isMyApprovalDocument(document, userId, departmentId);
     }
 
     private boolean isMyApprovalDocument(ApprovalDocument document, Long userId, Long departmentId) {

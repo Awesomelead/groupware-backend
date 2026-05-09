@@ -415,7 +415,19 @@ public class ApprovalWorkflowService {
                         .map(this::toMyLineDto)
                         .toList();
 
+        List<ApprovalInboxAllResponseDto.ApprovalLineDto> approvalLines =
+                document.getLines().stream()
+                        .filter(line -> isProcessingRole(line.getRole()))
+                        .sorted(
+                                Comparator.comparing(
+                                                ApprovalDocumentLine::getSequenceNo,
+                                                Comparator.nullsLast(Integer::compareTo))
+                                        .thenComparing(ApprovalDocumentLine::getId))
+                        .map(this::toInboxApprovalLineDto)
+                        .toList();
+
         return ApprovalInboxAllResponseDto.DocumentDto.builder()
+                .documentNo(document.getDocumentNo())
                 .documentId(document.getId())
                 .templateId(document.getTemplate() != null ? document.getTemplate().getId() : null)
                 .templateCode(document.getTemplateCodeSnapshot())
@@ -430,14 +442,34 @@ public class ApprovalWorkflowService {
                 .statusLabel(document.getStatus() != null ? document.getStatus().getDescription() : null)
                 .drafterUserId(drafterUser != null ? drafterUser.getId() : null)
                 .drafterUserName(drafterUserName)
+                .drafterName(drafterUserName)
                 .drafterDepartmentId(drafterDepartment != null ? drafterDepartment.getId() : null)
                 .drafterDepartmentName(drafterDepartmentName)
                 .mine(drafterUser != null && userId.equals(drafterUser.getId()))
+                .draftedAt(document.getSubmittedAt())
                 .submittedAt(document.getSubmittedAt())
                 .completedAt(document.getCompletedAt())
                 .createdAt(document.getCreatedAt())
                 .modifiedAt(document.getModifiedAt())
+                .approvalLines(approvalLines)
                 .myLines(myLines)
+                .build();
+    }
+
+    private ApprovalInboxAllResponseDto.ApprovalLineDto toInboxApprovalLineDto(ApprovalDocumentLine line) {
+        return ApprovalInboxAllResponseDto.ApprovalLineDto.builder()
+                .lineId(line.getId())
+                .role(line.getRole())
+                .roleLabel(line.getRole() != null ? line.getRole().getDescription() : null)
+                .targetType(line.getTargetType())
+                .targetUserId(line.getTargetUser() != null ? line.getTargetUser().getId() : null)
+                .targetDepartmentId(
+                        line.getTargetDepartment() != null ? line.getTargetDepartment().getId() : null)
+                .targetName(line.getTargetNameSnapshot())
+                .sequenceNo(line.getSequenceNo())
+                .lineStatus(line.getLineStatus())
+                .lineStatusLabel(
+                        line.getLineStatus() != null ? line.getLineStatus().getDescription() : null)
                 .build();
     }
 

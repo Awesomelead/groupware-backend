@@ -29,6 +29,8 @@ public class ApprovalInboxAllResponseDto {
     @AllArgsConstructor
     @Schema(description = "결재 문서 요약")
     public static class DocumentDto {
+        @Schema(description = "문서번호", example = "기안및지출결의 경영지원부 20260108-30")
+        private String documentNo;
         private Long documentId;
         private Long templateId;
         private String templateCode;
@@ -40,14 +42,37 @@ public class ApprovalInboxAllResponseDto {
         private String statusLabel;
         private Long drafterUserId;
         private String drafterUserName;
+        @Schema(description = "기안자명(바로 사용용 alias)")
+        private String drafterName;
         private Long drafterDepartmentId;
         private String drafterDepartmentName;
         private Boolean mine;
+        @Schema(description = "기안일(상신일시)")
+        private LocalDateTime draftedAt;
         private LocalDateTime submittedAt;
         private LocalDateTime completedAt;
         private LocalDateTime createdAt;
         private LocalDateTime modifiedAt;
+        @Schema(description = "문서 전체 결재선(참조자/열람권자 제외)")
+        private List<ApprovalLineDto> approvalLines;
         private List<MyLineDto> myLines;
+    }
+
+    @Getter
+    @Builder
+    @AllArgsConstructor
+    @Schema(description = "문서 결재선 항목")
+    public static class ApprovalLineDto {
+        private Long lineId;
+        private ApprovalRouteRole role;
+        private String roleLabel;
+        private ApprovalTargetType targetType;
+        private Long targetUserId;
+        private Long targetDepartmentId;
+        private String targetName;
+        private Integer sequenceNo;
+        private ApprovalLineStatus lineStatus;
+        private String lineStatusLabel;
     }
 
     @Getter
@@ -68,4 +93,3 @@ public class ApprovalInboxAllResponseDto {
         private String lineStatusLabel;
     }
 }
-

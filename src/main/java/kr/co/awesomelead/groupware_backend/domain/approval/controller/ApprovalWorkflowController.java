@@ -125,6 +125,14 @@ public class ApprovalWorkflowController {
             ### 제외 대상
             - `전체 > 본인기안` 전용 문서(결재진행 조건 불충족)
             - 참조자/열람권자만 걸린 문서(참조문서 메뉴 대상)
+
+            ### 응답 주요 필드
+            - 문서번호(documentNo)
+            - 기안자(drafterName)
+            - 제목(title)
+            - 결재선(approvalLines)
+            - 기안일(draftedAt)
+            - 완료일(completedAt)
             """)
     @GetMapping("/approvals/inbox/all")
     public ResponseEntity<ApiResponse<ApprovalInboxAllResponseDto>> getInboxAll(

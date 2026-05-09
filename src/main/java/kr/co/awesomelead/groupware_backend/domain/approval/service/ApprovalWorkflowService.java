@@ -102,6 +102,20 @@ public class ApprovalWorkflowService {
         return ApprovalInboxAllResponseDto.builder().documents(documents).build();
     }
 
+    @Transactional(readOnly = true)
+    public ApprovalInboxAllResponseDto getInboxToApprove(Long userId) {
+        User user = getUser(userId);
+        Long departmentId = user.getDepartment() != null ? user.getDepartment().getId() : null;
+
+        List<ApprovalInboxAllResponseDto.DocumentDto> documents =
+                approvalDocumentRepository.findAllWithLinesOrderByIdDesc().stream()
+                        .filter(document -> isToApproveDocument(document, userId, departmentId))
+                        .map(document -> toInboxDocumentDto(document, userId, departmentId))
+                        .toList();
+
+        return ApprovalInboxAllResponseDto.builder().documents(documents).build();
+    }
+
     @Transactional
     public ApprovalDraftResponseDto upsertDraft(
             Long userId, ApprovalDraftUpsertRequestDto request) {

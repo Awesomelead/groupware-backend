@@ -45,6 +45,7 @@ import org.springframework.web.bind.annotation.RestController;
 
         ### 권장 엔드포인트(헷갈림 방지)
         - 결재진행 전체 탭: GET /api/approvals/inbox/all
+        - 결재진행 결재하기 탭: GET /api/approvals/inbox/to-approve
         - 임시저장 생성: POST /api/approvals/drafts
         - 임시저장 수정: PUT /api/approvals/drafts/{documentId}
         - 임시저장 문서 상신: POST /api/approvals/drafts/{documentId}/submit
@@ -138,6 +139,30 @@ public class ApprovalWorkflowController {
     public ResponseEntity<ApiResponse<ApprovalInboxAllResponseDto>> getInboxAll(
             @Parameter(hidden = true) @AuthenticationPrincipal CustomUserDetails userDetails) {
         return ResponseEntity.ok(ApiResponse.onSuccess(approvalWorkflowService.getInboxAll(userDetails.getId())));
+    }
+
+    @Operation(
+            summary = "결재진행 결재하기 탭 조회",
+            description =
+                    """
+            현재 사용자 기준 `결재진행 > 결재하기` 문서를 조회합니다.
+
+            ### 조회 대상
+            - IN_PROGRESS 이면서 내/부서 결재선 상태가 PENDING 인 문서
+
+            ### 응답 주요 필드
+            - 문서번호(documentNo)
+            - 기안자(drafterName)
+            - 제목(title)
+            - 결재선(approvalLines)
+            - 기안일(draftedAt)
+            - 완료일(completedAt)
+            """)
+    @GetMapping("/approvals/inbox/to-approve")
+    public ResponseEntity<ApiResponse<ApprovalInboxAllResponseDto>> getInboxToApprove(
+            @Parameter(hidden = true) @AuthenticationPrincipal CustomUserDetails userDetails) {
+        return ResponseEntity.ok(
+                ApiResponse.onSuccess(approvalWorkflowService.getInboxToApprove(userDetails.getId())));
     }
 
     @Operation(

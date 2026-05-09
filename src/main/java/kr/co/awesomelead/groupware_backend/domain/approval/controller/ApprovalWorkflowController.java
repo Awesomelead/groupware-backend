@@ -10,6 +10,7 @@ import kr.co.awesomelead.groupware_backend.domain.approval.dto.request.ApprovalD
 import kr.co.awesomelead.groupware_backend.domain.approval.dto.request.ApprovalDraftUpsertRequestDto;
 import kr.co.awesomelead.groupware_backend.domain.approval.dto.request.ApprovalSubmitRequestDto;
 import kr.co.awesomelead.groupware_backend.domain.approval.dto.response.ApprovalDraftResponseDto;
+import kr.co.awesomelead.groupware_backend.domain.approval.dto.response.ApprovalInboxAllResponseDto;
 import kr.co.awesomelead.groupware_backend.domain.approval.dto.response.ApprovalSubmitResponseDto;
 import kr.co.awesomelead.groupware_backend.domain.approval.dto.response.ApprovalTemplateListResponseDto;
 import kr.co.awesomelead.groupware_backend.domain.approval.service.ApprovalWorkflowService;
@@ -41,6 +42,7 @@ import org.springframework.web.bind.annotation.RestController;
         - 상신(상신 시점 결재선 스냅샷 고정)
 
         ### 권장 엔드포인트(헷갈림 방지)
+        - 결재진행 전체 탭: GET /api/approvals/inbox/all
         - 임시저장 생성: POST /api/approvals/drafts
         - 임시저장 수정: PUT /api/approvals/drafts/{documentId}
         - 임시저장 문서 상신: POST /api/approvals/drafts/{documentId}/submit
@@ -102,6 +104,30 @@ public class ApprovalWorkflowController {
     @GetMapping("/approval/templates")
     public ResponseEntity<ApiResponse<ApprovalTemplateListResponseDto>> getTemplates() {
         return ResponseEntity.ok(ApiResponse.onSuccess(approvalWorkflowService.getTemplateList()));
+    }
+
+    @Operation(
+            summary = "결재진행 전체 탭 조회",
+            description =
+                    """
+            현재 사용자 기준 `결재진행 > 전체` 문서를 조회합니다.
+
+            ### 조회 대상
+            - 임시저장함: 내가 기안한 DRAFT 문서
+            - 결재하기: IN_PROGRESS 이면서 내 결재선 상태가 PENDING 인 문서
+            - 결재 전단계: IN_PROGRESS 이면서 내 결재선 상태가 WAITING 인 문서
+            - 기결: 내가 결재(APPROVED) 처리한 결재선이 있는 문서
+            - 반려: 문서 상태가 REJECTED 이고 내/부서 결재선이 실제 REJECTED 처리된 문서
+            - 회수: 문서 상태가 RECALLED 이고 내가 기안한 문서
+
+            ### 제외 대상
+            - `전체 > 본인기안` 전용 문서(결재진행 조건 불충족)
+            - 참조자/열람권자만 걸린 문서(참조문서 메뉴 대상)
+            """)
+    @GetMapping("/approvals/inbox/all")
+    public ResponseEntity<ApiResponse<ApprovalInboxAllResponseDto>> getInboxAll(
+            @Parameter(hidden = true) @AuthenticationPrincipal CustomUserDetails userDetails) {
+        return ResponseEntity.ok(ApiResponse.onSuccess(approvalWorkflowService.getInboxAll(userDetails.getId())));
     }
 
     @Operation(

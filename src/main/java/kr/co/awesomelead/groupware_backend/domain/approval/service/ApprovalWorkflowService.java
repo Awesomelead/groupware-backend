@@ -5,6 +5,7 @@ import kr.co.awesomelead.groupware_backend.domain.approval.dto.request.ApprovalD
 import kr.co.awesomelead.groupware_backend.domain.approval.dto.request.ApprovalLineRequestDto;
 import kr.co.awesomelead.groupware_backend.domain.approval.dto.request.ApprovalSubmitRequestDto;
 import kr.co.awesomelead.groupware_backend.domain.approval.dto.response.ApprovalDraftResponseDto;
+import kr.co.awesomelead.groupware_backend.domain.approval.dto.response.ApprovalInboxAllResponseDto;
 import kr.co.awesomelead.groupware_backend.domain.approval.dto.response.ApprovalSubmitResponseDto;
 import kr.co.awesomelead.groupware_backend.domain.approval.dto.response.ApprovalTemplateListResponseDto;
 import kr.co.awesomelead.groupware_backend.domain.approval.entity.ApprovalActionHistory;
@@ -84,6 +85,20 @@ public class ApprovalWorkflowService {
                         .toList();
 
         return ApprovalTemplateListResponseDto.builder().categories(categoryDtos).build();
+    }
+
+    @Transactional(readOnly = true)
+    public ApprovalInboxAllResponseDto getInboxAll(Long userId) {
+        User user = getUser(userId);
+        Long departmentId = user.getDepartment() != null ? user.getDepartment().getId() : null;
+
+        List<ApprovalInboxAllResponseDto.DocumentDto> documents =
+                approvalDocumentRepository.findAllWithLinesOrderByIdDesc().stream()
+                        .filter(document -> isInInProgressAll(document, userId, departmentId))
+                        .map(document -> toInboxDocumentDto(document, userId, departmentId))
+                        .toList();
+
+        return ApprovalInboxAllResponseDto.builder().documents(documents).build();
     }
 
     @Transactional
@@ -279,6 +294,154 @@ public class ApprovalWorkflowService {
                 .linePolicy(template.getLinePolicy())
                 .defaultContentDelta(template.getDefaultContentDelta())
                 .defaultLines(lineDtos)
+                .build();
+    }
+
+    private boolean isInInProgressAll(ApprovalDocument document, Long userId, Long departmentId) {
+        return isDraftBoxDocument(document, userId)
+                || isToApproveDocument(document, userId, departmentId)
+                || isBeforeMyTurnDocument(document, userId, departmentId)
+                || isProcessedByMeDocument(document, userId, departmentId)
+                || isRejectedOrRecalledDocument(document, userId, departmentId);
+    }
+
+    private boolean isDraftBoxDocument(ApprovalDocument document, Long userId) {
+        return document.getStatus() == ApprovalStatus.DRAFT
+                && document.getDrafterUser() != null
+                && userId.equals(document.getDrafterUser().getId());
+    }
+
+    private boolean isToApproveDocument(ApprovalDocument document, Long userId, Long departmentId) {
+        if (document.getStatus() != ApprovalStatus.IN_PROGRESS) {
+            return false;
+        }
+        return document.getLines().stream().anyMatch(line -> isMyPendingProcessingLine(line, userId, departmentId));
+    }
+
+    private boolean isBeforeMyTurnDocument(ApprovalDocument document, Long userId, Long departmentId) {
+        if (document.getStatus() != ApprovalStatus.IN_PROGRESS) {
+            return false;
+        }
+        return document.getLines().stream().anyMatch(line -> isMyWaitingProcessingLine(line, userId, departmentId));
+    }
+
+    private boolean isProcessedByMeDocument(ApprovalDocument document, Long userId, Long departmentId) {
+        return document.getLines().stream()
+                .anyMatch(line -> isMyApprovedProcessingLine(line, userId, departmentId));
+    }
+
+    private boolean isRejectedOrRecalledDocument(ApprovalDocument document, Long userId, Long departmentId) {
+        if (document.getStatus() == ApprovalStatus.REJECTED) {
+            return document.getLines().stream()
+                    .anyMatch(line -> isMyRejectedProcessingLine(line, userId, departmentId));
+        }
+        if (document.getStatus() == ApprovalStatus.RECALLED) {
+            return document.getDrafterUser() != null
+                    && userId.equals(document.getDrafterUser().getId());
+        }
+        return false;
+    }
+
+    private boolean isMyPendingProcessingLine(ApprovalDocumentLine line, Long userId, Long departmentId) {
+        return isMyProcessingLine(line, userId, departmentId)
+                && line.getLineStatus() == ApprovalLineStatus.PENDING;
+    }
+
+    private boolean isMyWaitingProcessingLine(ApprovalDocumentLine line, Long userId, Long departmentId) {
+        return isMyProcessingLine(line, userId, departmentId)
+                && line.getLineStatus() == ApprovalLineStatus.WAITING;
+    }
+
+    private boolean isMyApprovedProcessingLine(ApprovalDocumentLine line, Long userId, Long departmentId) {
+        return isMyProcessingLine(line, userId, departmentId)
+                && line.getLineStatus() == ApprovalLineStatus.APPROVED
+                && line.getProcessedByUser() != null
+                && userId.equals(line.getProcessedByUser().getId());
+    }
+
+    private boolean isMyRejectedProcessingLine(ApprovalDocumentLine line, Long userId, Long departmentId) {
+        return isMyProcessingLine(line, userId, departmentId)
+                && line.getLineStatus() == ApprovalLineStatus.REJECTED
+                && line.getProcessedByUser() != null;
+    }
+
+    private boolean isMyProcessingLine(ApprovalDocumentLine line, Long userId, Long departmentId) {
+        if (!isProcessingRole(line.getRole())) {
+            return false;
+        }
+        if (line.getTargetType() == ApprovalTargetType.USER) {
+            return line.getTargetUser() != null && userId.equals(line.getTargetUser().getId());
+        }
+        return departmentId != null
+                && line.getTargetDepartment() != null
+                && departmentId.equals(line.getTargetDepartment().getId());
+    }
+
+    private boolean isProcessingRole(ApprovalRouteRole role) {
+        return role != ApprovalRouteRole.REFERENCE && role != ApprovalRouteRole.VIEWER;
+    }
+
+    private ApprovalInboxAllResponseDto.DocumentDto toInboxDocumentDto(
+            ApprovalDocument document, Long userId, Long departmentId) {
+        User drafterUser = document.getDrafterUser();
+        Department drafterDepartment = document.getDrafterDepartment();
+
+        String drafterUserName = drafterUser != null ? drafterUser.getDisplayName() : null;
+        String drafterDepartmentName =
+                drafterDepartment != null ? drafterDepartment.getName().getDescription() : null;
+
+        List<ApprovalInboxAllResponseDto.MyLineDto> myLines =
+                document.getLines().stream()
+                        .filter(line -> isMyProcessingLine(line, userId, departmentId))
+                        .sorted(
+                                Comparator.comparing(
+                                                ApprovalDocumentLine::getSequenceNo,
+                                                Comparator.nullsLast(Integer::compareTo))
+                                        .thenComparing(ApprovalDocumentLine::getId))
+                        .map(this::toMyLineDto)
+                        .toList();
+
+        return ApprovalInboxAllResponseDto.DocumentDto.builder()
+                .documentId(document.getId())
+                .templateId(document.getTemplate() != null ? document.getTemplate().getId() : null)
+                .templateCode(document.getTemplateCodeSnapshot())
+                .templateName(document.getTemplateNameSnapshot())
+                .title(document.getTitle())
+                .approvalType(document.getApprovalType())
+                .approvalTypeLabel(
+                        document.getApprovalType() != null
+                                ? document.getApprovalType().getDescription()
+                                : null)
+                .status(document.getStatus())
+                .statusLabel(document.getStatus() != null ? document.getStatus().getDescription() : null)
+                .drafterUserId(drafterUser != null ? drafterUser.getId() : null)
+                .drafterUserName(drafterUserName)
+                .drafterDepartmentId(drafterDepartment != null ? drafterDepartment.getId() : null)
+                .drafterDepartmentName(drafterDepartmentName)
+                .mine(drafterUser != null && userId.equals(drafterUser.getId()))
+                .submittedAt(document.getSubmittedAt())
+                .completedAt(document.getCompletedAt())
+                .createdAt(document.getCreatedAt())
+                .modifiedAt(document.getModifiedAt())
+                .myLines(myLines)
+                .build();
+    }
+
+    private ApprovalInboxAllResponseDto.MyLineDto toMyLineDto(ApprovalDocumentLine line) {
+        return ApprovalInboxAllResponseDto.MyLineDto.builder()
+                .lineId(line.getId())
+                .role(line.getRole())
+                .roleLabel(line.getRole() != null ? line.getRole().getDescription() : null)
+                .targetType(line.getTargetType())
+                .targetUserId(line.getTargetUser() != null ? line.getTargetUser().getId() : null)
+                .targetDepartmentId(
+                        line.getTargetDepartment() != null ? line.getTargetDepartment().getId() : null)
+                .targetName(line.getTargetNameSnapshot())
+                .sequenceNo(line.getSequenceNo())
+                .required(line.getIsRequired())
+                .lineStatus(line.getLineStatus())
+                .lineStatusLabel(
+                        line.getLineStatus() != null ? line.getLineStatus().getDescription() : null)
                 .build();
     }
 

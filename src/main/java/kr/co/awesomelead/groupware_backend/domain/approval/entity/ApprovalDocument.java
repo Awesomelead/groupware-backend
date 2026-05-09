@@ -56,6 +56,9 @@ public class ApprovalDocument extends BaseTimeEntity {
     @Column(nullable = false, length = 200)
     private String title;
 
+    @Column(length = 250)
+    private String documentNo;
+
     @Lob
     @Column(nullable = false, columnDefinition = "TEXT")
     private String contentDelta;

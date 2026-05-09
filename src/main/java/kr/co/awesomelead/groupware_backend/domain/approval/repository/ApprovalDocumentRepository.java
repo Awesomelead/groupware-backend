@@ -1,6 +1,7 @@
 package kr.co.awesomelead.groupware_backend.domain.approval.repository;
 
 import kr.co.awesomelead.groupware_backend.domain.approval.entity.ApprovalDocument;
+import kr.co.awesomelead.groupware_backend.domain.approval.enums.ApprovalStatus;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
@@ -16,6 +17,8 @@ public interface ApprovalDocumentRepository extends JpaRepository<ApprovalDocume
     boolean existsByTemplateId(Long templateId);
 
     Optional<ApprovalDocument> findByIdAndDrafterUserId(Long id, Long drafterUserId);
+
+    long countByTemplateIdAndStatusNot(Long templateId, ApprovalStatus status);
 
     @Query(
             "select distinct d from ApprovalDocument d "

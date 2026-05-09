@@ -7,7 +7,9 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 
 import kr.co.awesomelead.groupware_backend.domain.approval.dto.request.ApprovalDirectSubmitRequestDto;
+import kr.co.awesomelead.groupware_backend.domain.approval.dto.request.ApprovalDraftCreateRequestDto;
 import kr.co.awesomelead.groupware_backend.domain.approval.dto.request.ApprovalDraftUpsertRequestDto;
+import kr.co.awesomelead.groupware_backend.domain.approval.dto.request.ApprovalDraftUpdateRequestDto;
 import kr.co.awesomelead.groupware_backend.domain.approval.dto.request.ApprovalSubmitRequestDto;
 import kr.co.awesomelead.groupware_backend.domain.approval.dto.response.ApprovalDraftResponseDto;
 import kr.co.awesomelead.groupware_backend.domain.approval.dto.response.ApprovalInboxAllResponseDto;
@@ -145,11 +147,12 @@ public class ApprovalWorkflowController {
             """)
     @PostMapping("/approvals/drafts")
     public ResponseEntity<ApiResponse<ApprovalDraftResponseDto>> createDraft(
-            @Valid @RequestBody ApprovalDraftUpsertRequestDto request,
+            @Valid @RequestBody ApprovalDraftCreateRequestDto request,
             @Parameter(hidden = true) @AuthenticationPrincipal CustomUserDetails userDetails) {
-        request.setDocumentId(null);
+        ApprovalDraftUpsertRequestDto upsertRequest = toUpsertRequest(request);
+        upsertRequest.setDocumentId(null);
         ApprovalDraftResponseDto result =
-                approvalWorkflowService.upsertDraft(userDetails.getId(), request);
+                approvalWorkflowService.upsertDraft(userDetails.getId(), upsertRequest);
         return ResponseEntity.ok(ApiResponse.onSuccess(result));
     }
 
@@ -168,11 +171,12 @@ public class ApprovalWorkflowController {
     @PutMapping("/approvals/drafts/{documentId}")
     public ResponseEntity<ApiResponse<ApprovalDraftResponseDto>> updateDraft(
             @PathVariable Long documentId,
-            @Valid @RequestBody ApprovalDraftUpsertRequestDto request,
+            @Valid @RequestBody ApprovalDraftUpdateRequestDto request,
             @Parameter(hidden = true) @AuthenticationPrincipal CustomUserDetails userDetails) {
-        request.setDocumentId(documentId);
+        ApprovalDraftUpsertRequestDto upsertRequest = toUpsertRequest(request);
+        upsertRequest.setDocumentId(documentId);
         ApprovalDraftResponseDto result =
-                approvalWorkflowService.upsertDraft(userDetails.getId(), request);
+                approvalWorkflowService.upsertDraft(userDetails.getId(), upsertRequest);
         return ResponseEntity.ok(ApiResponse.onSuccess(result));
     }
 
@@ -188,6 +192,10 @@ public class ApprovalWorkflowController {
             - 상신 시 title/contentDelta는 필수입니다.
             - approvalType=COOPERATIVE면 receiverDepartmentId를 반드시 지정해야 합니다.
             - lines 미입력 시 기존 임시저장 결재선을 사용하며, 없으면 양식 기본 결재선을 사용합니다.
+            - 상신 시 문서번호가 자동 부여됩니다.
+              - 기본: [양식이름] [기안부서] [yyyyMMdd]-[양식별순번]
+              - 기본양식만 예외: [기안부서] [yyyyMMdd]-[양식별순번]
+            - 상신 응답에는 문서번호/기안자/제목/결재선/기안일/완료일이 포함됩니다.
             """)
     @PostMapping("/approvals/drafts/{documentId}/submit")
     public ResponseEntity<ApiResponse<ApprovalSubmitResponseDto>> submitDraft(
@@ -210,6 +218,10 @@ public class ApprovalWorkflowController {
             - title/contentDelta는 필수입니다.
             - approvalType=COOPERATIVE면 receiverDepartmentId를 반드시 지정해야 합니다.
             - lines 미입력 시 양식 기본 결재선을 사용합니다.
+            - 상신 시 문서번호가 자동 부여됩니다.
+              - 기본: [양식이름] [기안부서] [yyyyMMdd]-[양식별순번]
+              - 기본양식만 예외: [기안부서] [yyyyMMdd]-[양식별순번]
+            - 상신 응답에는 문서번호/기안자/제목/결재선/기안일/완료일이 포함됩니다.
             """)
     @PostMapping("/approvals/submit-direct")
     public ResponseEntity<ApiResponse<ApprovalSubmitResponseDto>> submitDirect(
@@ -218,5 +230,29 @@ public class ApprovalWorkflowController {
         ApprovalSubmitResponseDto result =
                 approvalWorkflowService.submitDirect(userDetails.getId(), request);
         return ResponseEntity.ok(ApiResponse.onSuccess(result));
+    }
+
+    private ApprovalDraftUpsertRequestDto toUpsertRequest(ApprovalDraftCreateRequestDto request) {
+        ApprovalDraftUpsertRequestDto upsert = new ApprovalDraftUpsertRequestDto();
+        upsert.setTemplateId(request.getTemplateId());
+        upsert.setTitle(request.getTitle());
+        upsert.setContentDelta(request.getContentDelta());
+        upsert.setContentHtml(request.getContentHtml());
+        upsert.setApprovalType(request.getApprovalType());
+        upsert.setReceiverDepartmentId(request.getReceiverDepartmentId());
+        upsert.setLines(request.getLines());
+        return upsert;
+    }
+
+    private ApprovalDraftUpsertRequestDto toUpsertRequest(ApprovalDraftUpdateRequestDto request) {
+        ApprovalDraftUpsertRequestDto upsert = new ApprovalDraftUpsertRequestDto();
+        upsert.setTemplateId(request.getTemplateId());
+        upsert.setTitle(request.getTitle());
+        upsert.setContentDelta(request.getContentDelta());
+        upsert.setContentHtml(request.getContentHtml());
+        upsert.setApprovalType(request.getApprovalType());
+        upsert.setReceiverDepartmentId(request.getReceiverDepartmentId());
+        upsert.setLines(request.getLines());
+        return upsert;
     }
 }

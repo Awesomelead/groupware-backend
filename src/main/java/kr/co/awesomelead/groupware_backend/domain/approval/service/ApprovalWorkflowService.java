@@ -40,6 +40,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
@@ -207,6 +208,9 @@ public class ApprovalWorkflowService {
         document.setStatus(ApprovalStatus.IN_PROGRESS);
         document.setSubmittedAt(LocalDateTime.now());
         document.setCompletedAt(null);
+        if (!StringUtils.hasText(document.getDocumentNo())) {
+            document.setDocumentNo(buildSubmittedDocumentNo(document));
+        }
         approvalDocumentRepository.save(document);
 
         approvalActionHistoryRepository.save(
@@ -223,8 +227,18 @@ public class ApprovalWorkflowService {
 
         return ApprovalSubmitResponseDto.builder()
                 .documentId(document.getId())
+                .documentNo(document.getDocumentNo())
                 .status(document.getStatus())
+                .drafterUserId(document.getDrafterUser() != null ? document.getDrafterUser().getId() : null)
+                .drafterUserName(
+                        document.getDrafterUser() != null
+                                ? document.getDrafterUser().getDisplayName()
+                                : null)
+                .title(document.getTitle())
+                .approvalLines(toSubmitApprovalLines(lines))
+                .draftedAt(document.getSubmittedAt())
                 .submittedAt(document.getSubmittedAt())
+                .completedAt(document.getCompletedAt())
                 .build();
     }
 
@@ -442,6 +456,73 @@ public class ApprovalWorkflowService {
                 .lineStatus(line.getLineStatus())
                 .lineStatusLabel(
                         line.getLineStatus() != null ? line.getLineStatus().getDescription() : null)
+                .build();
+    }
+
+    private String buildSubmittedDocumentNo(ApprovalDocument document) {
+        ApprovalTemplate template = document.getTemplate();
+        if (template == null || template.getId() == null) {
+            throw new CustomException(ErrorCode.INTERNAL_SERVER_ERROR);
+        }
+        if (document.getDrafterDepartment() == null || document.getDrafterDepartment().getName() == null) {
+            throw new CustomException(ErrorCode.DEPARTMENT_NOT_FOUND);
+        }
+
+        long sequence =
+                approvalDocumentRepository.countByTemplateIdAndStatusNot(
+                                template.getId(), ApprovalStatus.DRAFT)
+                        + 1;
+        String sequencePart = String.format("%02d", sequence);
+        String datePart =
+                (document.getSubmittedAt() != null ? document.getSubmittedAt() : LocalDateTime.now())
+                        .format(DateTimeFormatter.ofPattern("yyyyMMdd"));
+        String departmentName = document.getDrafterDepartment().getName().getDescription();
+        String templateName =
+                StringUtils.hasText(document.getTemplateNameSnapshot())
+                        ? document.getTemplateNameSnapshot()
+                        : template.getName();
+        String templateCode =
+                StringUtils.hasText(document.getTemplateCodeSnapshot())
+                        ? document.getTemplateCodeSnapshot()
+                        : template.getCode();
+
+        if (isBasicTemplate(templateCode, templateName)) {
+            return departmentName + " " + datePart + "-" + sequencePart;
+        }
+        return templateName + " " + departmentName + " " + datePart + "-" + sequencePart;
+    }
+
+    private boolean isBasicTemplate(String templateCode, String templateName) {
+        if ("BASIC".equalsIgnoreCase(templateCode)) {
+            return true;
+        }
+        return "기본양식".equals(templateName);
+    }
+
+    private List<ApprovalSubmitResponseDto.ApprovalLineDto> toSubmitApprovalLines(
+            List<ApprovalDocumentLine> lines) {
+        return lines.stream()
+                .filter(line -> isProcessingRole(line.getRole()))
+                .sorted(
+                        Comparator.comparing(
+                                        ApprovalDocumentLine::getSequenceNo,
+                                        Comparator.nullsLast(Integer::compareTo))
+                                .thenComparing(ApprovalDocumentLine::getId))
+                .map(this::toSubmitApprovalLine)
+                .toList();
+    }
+
+    private ApprovalSubmitResponseDto.ApprovalLineDto toSubmitApprovalLine(ApprovalDocumentLine line) {
+        return ApprovalSubmitResponseDto.ApprovalLineDto.builder()
+                .lineId(line.getId())
+                .role(line.getRole())
+                .roleLabel(line.getRole() != null ? line.getRole().getDescription() : null)
+                .targetType(line.getTargetType())
+                .targetUserId(line.getTargetUser() != null ? line.getTargetUser().getId() : null)
+                .targetDepartmentId(
+                        line.getTargetDepartment() != null ? line.getTargetDepartment().getId() : null)
+                .targetName(line.getTargetNameSnapshot())
+                .sequenceNo(line.getSequenceNo())
                 .build();
     }
 

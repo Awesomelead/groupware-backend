@@ -48,6 +48,8 @@ import org.springframework.web.bind.annotation.RestController;
         - 결재진행 결재하기 탭: GET /api/approvals/inbox/to-approve
         - 결재진행 결재 전단계 탭: GET /api/approvals/inbox/before-my-turn
         - 결재진행 기결 탭: GET /api/approvals/inbox/processed-by-me
+        - 결재진행 반려/회수 탭: GET /api/approvals/inbox/rejected-or-recalled
+        - 결재진행 임시저장함 탭: GET /api/approvals/inbox/draft-box
         - 임시저장 생성: POST /api/approvals/drafts
         - 임시저장 수정: PUT /api/approvals/drafts/{documentId}
         - 임시저장 문서 상신: POST /api/approvals/drafts/{documentId}/submit
@@ -213,6 +215,56 @@ public class ApprovalWorkflowController {
             @Parameter(hidden = true) @AuthenticationPrincipal CustomUserDetails userDetails) {
         return ResponseEntity.ok(
                 ApiResponse.onSuccess(approvalWorkflowService.getInboxProcessedByMe(userDetails.getId())));
+    }
+
+    @Operation(
+            summary = "결재진행 반려/회수 탭 조회",
+            description =
+                    """
+            현재 사용자 기준 `결재진행 > 반려/회수` 문서를 조회합니다.
+
+            ### 조회 대상
+            - 반려: 문서 상태 REJECTED 이고 내/부서 결재선이 실제 REJECTED 처리된 문서
+            - 회수: 문서 상태 RECALLED 이고 내가 기안한 문서
+
+            ### 응답 주요 필드
+            - 문서번호(documentNo)
+            - 기안자(drafterName)
+            - 제목(title)
+            - 결재선(approvalLines)
+            - 기안일(draftedAt)
+            - 완료일(completedAt)
+            """)
+    @GetMapping("/approvals/inbox/rejected-or-recalled")
+    public ResponseEntity<ApiResponse<ApprovalInboxAllResponseDto>> getInboxRejectedOrRecalled(
+            @Parameter(hidden = true) @AuthenticationPrincipal CustomUserDetails userDetails) {
+        return ResponseEntity.ok(
+                ApiResponse.onSuccess(
+                        approvalWorkflowService.getInboxRejectedOrRecalled(userDetails.getId())));
+    }
+
+    @Operation(
+            summary = "결재진행 임시저장함 탭 조회",
+            description =
+                    """
+            현재 사용자 기준 `결재진행 > 임시저장함` 문서를 조회합니다.
+
+            ### 조회 대상
+            - 내가 기안한 DRAFT 문서
+
+            ### 응답 주요 필드
+            - 문서번호(documentNo)
+            - 기안자(drafterName)
+            - 제목(title)
+            - 결재선(approvalLines)
+            - 기안일(draftedAt)
+            - 완료일(completedAt)
+            """)
+    @GetMapping("/approvals/inbox/draft-box")
+    public ResponseEntity<ApiResponse<ApprovalInboxAllResponseDto>> getInboxDraftBox(
+            @Parameter(hidden = true) @AuthenticationPrincipal CustomUserDetails userDetails) {
+        return ResponseEntity.ok(
+                ApiResponse.onSuccess(approvalWorkflowService.getInboxDraftBox(userDetails.getId())));
     }
 
     @Operation(

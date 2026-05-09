@@ -144,6 +144,31 @@ public class ApprovalWorkflowService {
         return ApprovalInboxAllResponseDto.builder().documents(documents).build();
     }
 
+    @Transactional(readOnly = true)
+    public ApprovalInboxAllResponseDto getInboxRejectedOrRecalled(Long userId) {
+        User user = getUser(userId);
+        Long departmentId = user.getDepartment() != null ? user.getDepartment().getId() : null;
+
+        List<ApprovalInboxAllResponseDto.DocumentDto> documents =
+                approvalDocumentRepository.findAllWithLinesOrderByIdDesc().stream()
+                        .filter(document -> isRejectedOrRecalledDocument(document, userId, departmentId))
+                        .map(document -> toInboxDocumentDto(document, userId, departmentId))
+                        .toList();
+
+        return ApprovalInboxAllResponseDto.builder().documents(documents).build();
+    }
+
+    @Transactional(readOnly = true)
+    public ApprovalInboxAllResponseDto getInboxDraftBox(Long userId) {
+        List<ApprovalInboxAllResponseDto.DocumentDto> documents =
+                approvalDocumentRepository.findAllWithLinesOrderByIdDesc().stream()
+                        .filter(document -> isDraftBoxDocument(document, userId))
+                        .map(document -> toInboxDocumentDto(document, userId, null))
+                        .toList();
+
+        return ApprovalInboxAllResponseDto.builder().documents(documents).build();
+    }
+
     @Transactional
     public ApprovalDraftResponseDto upsertDraft(
             Long userId, ApprovalDraftUpsertRequestDto request) {

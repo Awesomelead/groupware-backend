@@ -151,7 +151,10 @@ public class ApprovalWorkflowService {
 
         List<ApprovalInboxAllResponseDto.DocumentDto> documents =
                 approvalDocumentRepository.findAllWithLinesOrderByIdDesc().stream()
-                        .filter(document -> isRejectedOrRecalledDocument(document, userId, departmentId))
+                        .filter(
+                                document ->
+                                        isRejectedOrRecalledDocument(
+                                                document, userId, departmentId))
                         .map(document -> toInboxDocumentDto(document, userId, departmentId))
                         .toList();
 
@@ -338,7 +341,10 @@ public class ApprovalWorkflowService {
                 .documentId(document.getId())
                 .documentNo(document.getDocumentNo())
                 .status(document.getStatus())
-                .drafterUserId(document.getDrafterUser() != null ? document.getDrafterUser().getId() : null)
+                .drafterUserId(
+                        document.getDrafterUser() != null
+                                ? document.getDrafterUser().getId()
+                                : null)
                 .drafterUserName(
                         document.getDrafterUser() != null
                                 ? document.getDrafterUser().getDisplayName()
@@ -435,40 +441,49 @@ public class ApprovalWorkflowService {
     }
 
     private boolean isDraftedByMe(ApprovalDocument document, Long userId) {
-        return document.getDrafterUser() != null && userId.equals(document.getDrafterUser().getId());
+        return document.getDrafterUser() != null
+                && userId.equals(document.getDrafterUser().getId());
     }
 
     private boolean isAllTabDocument(ApprovalDocument document, Long userId, Long departmentId) {
-        return isDraftedByMe(document, userId) || isMyApprovalDocument(document, userId, departmentId);
+        return isDraftedByMe(document, userId)
+                || isMyApprovalDocument(document, userId, departmentId);
     }
 
-    private boolean isMyApprovalDocument(ApprovalDocument document, Long userId, Long departmentId) {
+    private boolean isMyApprovalDocument(
+            ApprovalDocument document, Long userId, Long departmentId) {
         if (document.getStatus() == ApprovalStatus.DRAFT) {
             return false;
         }
-        return document.getLines().stream().anyMatch(line -> isMyProcessingLine(line, userId, departmentId));
+        return document.getLines().stream()
+                .anyMatch(line -> isMyProcessingLine(line, userId, departmentId));
     }
 
     private boolean isToApproveDocument(ApprovalDocument document, Long userId, Long departmentId) {
         if (document.getStatus() != ApprovalStatus.IN_PROGRESS) {
             return false;
         }
-        return document.getLines().stream().anyMatch(line -> isMyPendingProcessingLine(line, userId, departmentId));
+        return document.getLines().stream()
+                .anyMatch(line -> isMyPendingProcessingLine(line, userId, departmentId));
     }
 
-    private boolean isBeforeMyTurnDocument(ApprovalDocument document, Long userId, Long departmentId) {
+    private boolean isBeforeMyTurnDocument(
+            ApprovalDocument document, Long userId, Long departmentId) {
         if (document.getStatus() != ApprovalStatus.IN_PROGRESS) {
             return false;
         }
-        return document.getLines().stream().anyMatch(line -> isMyWaitingProcessingLine(line, userId, departmentId));
+        return document.getLines().stream()
+                .anyMatch(line -> isMyWaitingProcessingLine(line, userId, departmentId));
     }
 
-    private boolean isProcessedByMeDocument(ApprovalDocument document, Long userId, Long departmentId) {
+    private boolean isProcessedByMeDocument(
+            ApprovalDocument document, Long userId, Long departmentId) {
         return document.getLines().stream()
                 .anyMatch(line -> isMyApprovedProcessingLine(line, userId, departmentId));
     }
 
-    private boolean isRejectedOrRecalledDocument(ApprovalDocument document, Long userId, Long departmentId) {
+    private boolean isRejectedOrRecalledDocument(
+            ApprovalDocument document, Long userId, Long departmentId) {
         if (document.getStatus() == ApprovalStatus.REJECTED) {
             return document.getLines().stream()
                     .anyMatch(line -> isMyRejectedProcessingLine(line, userId, departmentId));
@@ -480,24 +495,28 @@ public class ApprovalWorkflowService {
         return false;
     }
 
-    private boolean isMyPendingProcessingLine(ApprovalDocumentLine line, Long userId, Long departmentId) {
+    private boolean isMyPendingProcessingLine(
+            ApprovalDocumentLine line, Long userId, Long departmentId) {
         return isMyProcessingLine(line, userId, departmentId)
                 && line.getLineStatus() == ApprovalLineStatus.PENDING;
     }
 
-    private boolean isMyWaitingProcessingLine(ApprovalDocumentLine line, Long userId, Long departmentId) {
+    private boolean isMyWaitingProcessingLine(
+            ApprovalDocumentLine line, Long userId, Long departmentId) {
         return isMyProcessingLine(line, userId, departmentId)
                 && line.getLineStatus() == ApprovalLineStatus.WAITING;
     }
 
-    private boolean isMyApprovedProcessingLine(ApprovalDocumentLine line, Long userId, Long departmentId) {
+    private boolean isMyApprovedProcessingLine(
+            ApprovalDocumentLine line, Long userId, Long departmentId) {
         return isMyProcessingLine(line, userId, departmentId)
                 && line.getLineStatus() == ApprovalLineStatus.APPROVED
                 && line.getProcessedByUser() != null
                 && userId.equals(line.getProcessedByUser().getId());
     }
 
-    private boolean isMyRejectedProcessingLine(ApprovalDocumentLine line, Long userId, Long departmentId) {
+    private boolean isMyRejectedProcessingLine(
+            ApprovalDocumentLine line, Long userId, Long departmentId) {
         return isMyProcessingLine(line, userId, departmentId)
                 && line.getLineStatus() == ApprovalLineStatus.REJECTED
                 && line.getProcessedByUser() != null;
@@ -563,7 +582,8 @@ public class ApprovalWorkflowService {
                                 ? document.getApprovalType().getDescription()
                                 : null)
                 .status(document.getStatus())
-                .statusLabel(document.getStatus() != null ? document.getStatus().getDescription() : null)
+                .statusLabel(
+                        document.getStatus() != null ? document.getStatus().getDescription() : null)
                 .drafterUserId(drafterUser != null ? drafterUser.getId() : null)
                 .drafterUserName(drafterUserName)
                 .drafterName(drafterUserName)
@@ -580,7 +600,8 @@ public class ApprovalWorkflowService {
                 .build();
     }
 
-    private ApprovalInboxAllResponseDto.ApprovalLineDto toInboxApprovalLineDto(ApprovalDocumentLine line) {
+    private ApprovalInboxAllResponseDto.ApprovalLineDto toInboxApprovalLineDto(
+            ApprovalDocumentLine line) {
         return ApprovalInboxAllResponseDto.ApprovalLineDto.builder()
                 .lineId(line.getId())
                 .role(line.getRole())
@@ -588,7 +609,9 @@ public class ApprovalWorkflowService {
                 .targetType(line.getTargetType())
                 .targetUserId(line.getTargetUser() != null ? line.getTargetUser().getId() : null)
                 .targetDepartmentId(
-                        line.getTargetDepartment() != null ? line.getTargetDepartment().getId() : null)
+                        line.getTargetDepartment() != null
+                                ? line.getTargetDepartment().getId()
+                                : null)
                 .targetName(line.getTargetNameSnapshot())
                 .sequenceNo(line.getSequenceNo())
                 .lineStatus(line.getLineStatus())
@@ -605,7 +628,9 @@ public class ApprovalWorkflowService {
                 .targetType(line.getTargetType())
                 .targetUserId(line.getTargetUser() != null ? line.getTargetUser().getId() : null)
                 .targetDepartmentId(
-                        line.getTargetDepartment() != null ? line.getTargetDepartment().getId() : null)
+                        line.getTargetDepartment() != null
+                                ? line.getTargetDepartment().getId()
+                                : null)
                 .targetName(line.getTargetNameSnapshot())
                 .sequenceNo(line.getSequenceNo())
                 .required(line.getIsRequired())
@@ -620,7 +645,8 @@ public class ApprovalWorkflowService {
         if (template == null || template.getId() == null) {
             throw new CustomException(ErrorCode.INTERNAL_SERVER_ERROR);
         }
-        if (document.getDrafterDepartment() == null || document.getDrafterDepartment().getName() == null) {
+        if (document.getDrafterDepartment() == null
+                || document.getDrafterDepartment().getName() == null) {
             throw new CustomException(ErrorCode.DEPARTMENT_NOT_FOUND);
         }
 
@@ -630,7 +656,9 @@ public class ApprovalWorkflowService {
                         + 1;
         String sequencePart = String.format("%02d", sequence);
         String datePart =
-                (document.getSubmittedAt() != null ? document.getSubmittedAt() : LocalDateTime.now())
+                (document.getSubmittedAt() != null
+                                ? document.getSubmittedAt()
+                                : LocalDateTime.now())
                         .format(DateTimeFormatter.ofPattern("yyyyMMdd"));
         String departmentName = document.getDrafterDepartment().getName().getDescription();
         String templateName =
@@ -668,7 +696,8 @@ public class ApprovalWorkflowService {
                 .toList();
     }
 
-    private ApprovalSubmitResponseDto.ApprovalLineDto toSubmitApprovalLine(ApprovalDocumentLine line) {
+    private ApprovalSubmitResponseDto.ApprovalLineDto toSubmitApprovalLine(
+            ApprovalDocumentLine line) {
         return ApprovalSubmitResponseDto.ApprovalLineDto.builder()
                 .lineId(line.getId())
                 .role(line.getRole())
@@ -676,7 +705,9 @@ public class ApprovalWorkflowService {
                 .targetType(line.getTargetType())
                 .targetUserId(line.getTargetUser() != null ? line.getTargetUser().getId() : null)
                 .targetDepartmentId(
-                        line.getTargetDepartment() != null ? line.getTargetDepartment().getId() : null)
+                        line.getTargetDepartment() != null
+                                ? line.getTargetDepartment().getId()
+                                : null)
                 .targetName(line.getTargetNameSnapshot())
                 .sequenceNo(line.getSequenceNo())
                 .build();

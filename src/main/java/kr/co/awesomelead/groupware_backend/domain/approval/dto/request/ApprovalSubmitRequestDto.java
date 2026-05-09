@@ -27,12 +27,16 @@ public class ApprovalSubmitRequestDto {
     @Schema(description = "HTML 본문(선택)")
     private String contentHtml;
 
-    @Schema(description = "결재유형", example = "INTERNAL", allowableValues = {"INTERNAL", "COOPERATIVE"})
+    @Schema(
+            description = "결재유형",
+            example = "INTERNAL",
+            allowableValues = {"INTERNAL", "COOPERATIVE"})
     private ApprovalType approvalType;
 
     @Schema(description = "수신 부서 ID (approvalType=COOPERATIVE일 때 상신 시 필수)", example = "5")
     private Long receiverDepartmentId;
 
     @Schema(description = "상신 시 결재선 재지정(선택). 미입력 시 임시저장 결재선 사용")
-    @Valid private List<ApprovalLineRequestDto> lines;
+    @Valid
+    private List<ApprovalLineRequestDto> lines;
 }

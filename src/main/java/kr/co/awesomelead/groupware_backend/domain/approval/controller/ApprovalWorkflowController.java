@@ -8,8 +8,8 @@ import jakarta.validation.Valid;
 
 import kr.co.awesomelead.groupware_backend.domain.approval.dto.request.ApprovalDirectSubmitRequestDto;
 import kr.co.awesomelead.groupware_backend.domain.approval.dto.request.ApprovalDraftCreateRequestDto;
-import kr.co.awesomelead.groupware_backend.domain.approval.dto.request.ApprovalDraftUpsertRequestDto;
 import kr.co.awesomelead.groupware_backend.domain.approval.dto.request.ApprovalDraftUpdateRequestDto;
+import kr.co.awesomelead.groupware_backend.domain.approval.dto.request.ApprovalDraftUpsertRequestDto;
 import kr.co.awesomelead.groupware_backend.domain.approval.dto.request.ApprovalSubmitRequestDto;
 import kr.co.awesomelead.groupware_backend.domain.approval.dto.response.ApprovalDraftResponseDto;
 import kr.co.awesomelead.groupware_backend.domain.approval.dto.response.ApprovalInboxAllResponseDto;
@@ -145,7 +145,8 @@ public class ApprovalWorkflowController {
     @GetMapping("/approvals/inbox/all")
     public ResponseEntity<ApiResponse<ApprovalInboxAllResponseDto>> getInboxAll(
             @Parameter(hidden = true) @AuthenticationPrincipal CustomUserDetails userDetails) {
-        return ResponseEntity.ok(ApiResponse.onSuccess(approvalWorkflowService.getInboxAll(userDetails.getId())));
+        return ResponseEntity.ok(
+                ApiResponse.onSuccess(approvalWorkflowService.getInboxAll(userDetails.getId())));
     }
 
     @Operation(
@@ -169,7 +170,8 @@ public class ApprovalWorkflowController {
     public ResponseEntity<ApiResponse<ApprovalInboxAllResponseDto>> getInboxToApprove(
             @Parameter(hidden = true) @AuthenticationPrincipal CustomUserDetails userDetails) {
         return ResponseEntity.ok(
-                ApiResponse.onSuccess(approvalWorkflowService.getInboxToApprove(userDetails.getId())));
+                ApiResponse.onSuccess(
+                        approvalWorkflowService.getInboxToApprove(userDetails.getId())));
     }
 
     @Operation(
@@ -193,7 +195,8 @@ public class ApprovalWorkflowController {
     public ResponseEntity<ApiResponse<ApprovalInboxAllResponseDto>> getInboxBeforeMyTurn(
             @Parameter(hidden = true) @AuthenticationPrincipal CustomUserDetails userDetails) {
         return ResponseEntity.ok(
-                ApiResponse.onSuccess(approvalWorkflowService.getInboxBeforeMyTurn(userDetails.getId())));
+                ApiResponse.onSuccess(
+                        approvalWorkflowService.getInboxBeforeMyTurn(userDetails.getId())));
     }
 
     @Operation(
@@ -217,7 +220,8 @@ public class ApprovalWorkflowController {
     public ResponseEntity<ApiResponse<ApprovalInboxAllResponseDto>> getInboxProcessedByMe(
             @Parameter(hidden = true) @AuthenticationPrincipal CustomUserDetails userDetails) {
         return ResponseEntity.ok(
-                ApiResponse.onSuccess(approvalWorkflowService.getInboxProcessedByMe(userDetails.getId())));
+                ApiResponse.onSuccess(
+                        approvalWorkflowService.getInboxProcessedByMe(userDetails.getId())));
     }
 
     @Operation(
@@ -267,7 +271,8 @@ public class ApprovalWorkflowController {
     public ResponseEntity<ApiResponse<ApprovalInboxAllResponseDto>> getInboxDraftBox(
             @Parameter(hidden = true) @AuthenticationPrincipal CustomUserDetails userDetails) {
         return ResponseEntity.ok(
-                ApiResponse.onSuccess(approvalWorkflowService.getInboxDraftBox(userDetails.getId())));
+                ApiResponse.onSuccess(
+                        approvalWorkflowService.getInboxDraftBox(userDetails.getId())));
     }
 
     @Operation(
@@ -292,7 +297,8 @@ public class ApprovalWorkflowController {
     @GetMapping("/approvals/all")
     public ResponseEntity<ApiResponse<ApprovalInboxAllResponseDto>> getAllAll(
             @Parameter(hidden = true) @AuthenticationPrincipal CustomUserDetails userDetails) {
-        return ResponseEntity.ok(ApiResponse.onSuccess(approvalWorkflowService.getAllAll(userDetails.getId())));
+        return ResponseEntity.ok(
+                ApiResponse.onSuccess(approvalWorkflowService.getAllAll(userDetails.getId())));
     }
 
     @Operation(
@@ -316,7 +322,8 @@ public class ApprovalWorkflowController {
     public ResponseEntity<ApiResponse<ApprovalInboxAllResponseDto>> getAllMyDrafted(
             @Parameter(hidden = true) @AuthenticationPrincipal CustomUserDetails userDetails) {
         return ResponseEntity.ok(
-                ApiResponse.onSuccess(approvalWorkflowService.getAllMyDrafted(userDetails.getId())));
+                ApiResponse.onSuccess(
+                        approvalWorkflowService.getAllMyDrafted(userDetails.getId())));
     }
 
     @Operation(
@@ -341,7 +348,8 @@ public class ApprovalWorkflowController {
     public ResponseEntity<ApiResponse<ApprovalInboxAllResponseDto>> getAllMyApprovals(
             @Parameter(hidden = true) @AuthenticationPrincipal CustomUserDetails userDetails) {
         return ResponseEntity.ok(
-                ApiResponse.onSuccess(approvalWorkflowService.getAllMyApprovals(userDetails.getId())));
+                ApiResponse.onSuccess(
+                        approvalWorkflowService.getAllMyApprovals(userDetails.getId())));
     }
 
     @Operation(

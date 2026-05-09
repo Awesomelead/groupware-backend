@@ -33,12 +33,16 @@ public class ApprovalDraftUpdateRequestDto {
     @Schema(description = "HTML 본문(선택)")
     private String contentHtml;
 
-    @Schema(description = "결재유형", example = "INTERNAL", allowableValues = {"INTERNAL", "COOPERATIVE"})
+    @Schema(
+            description = "결재유형",
+            example = "INTERNAL",
+            allowableValues = {"INTERNAL", "COOPERATIVE"})
     private ApprovalType approvalType;
 
     @Schema(description = "수신 부서 ID (approvalType=COOPERATIVE일 때 사용)", example = "5")
     private Long receiverDepartmentId;
 
     @Schema(description = "문서 결재선/참조자/열람권자 설정. 미입력 시 기존 결재선 유지")
-    @Valid private List<ApprovalLineRequestDto> lines;
+    @Valid
+    private List<ApprovalLineRequestDto> lines;
 }

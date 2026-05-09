@@ -47,6 +47,7 @@ import org.springframework.web.bind.annotation.RestController;
         - 결재진행 전체 탭: GET /api/approvals/inbox/all
         - 결재진행 결재하기 탭: GET /api/approvals/inbox/to-approve
         - 결재진행 결재 전단계 탭: GET /api/approvals/inbox/before-my-turn
+        - 결재진행 기결 탭: GET /api/approvals/inbox/processed-by-me
         - 임시저장 생성: POST /api/approvals/drafts
         - 임시저장 수정: PUT /api/approvals/drafts/{documentId}
         - 임시저장 문서 상신: POST /api/approvals/drafts/{documentId}/submit
@@ -188,6 +189,30 @@ public class ApprovalWorkflowController {
             @Parameter(hidden = true) @AuthenticationPrincipal CustomUserDetails userDetails) {
         return ResponseEntity.ok(
                 ApiResponse.onSuccess(approvalWorkflowService.getInboxBeforeMyTurn(userDetails.getId())));
+    }
+
+    @Operation(
+            summary = "결재진행 기결 탭 조회",
+            description =
+                    """
+            현재 사용자 기준 `결재진행 > 기결` 문서를 조회합니다.
+
+            ### 조회 대상
+            - 내/부서 결재선이 APPROVED 처리된 문서
+
+            ### 응답 주요 필드
+            - 문서번호(documentNo)
+            - 기안자(drafterName)
+            - 제목(title)
+            - 결재선(approvalLines)
+            - 기안일(draftedAt)
+            - 완료일(completedAt)
+            """)
+    @GetMapping("/approvals/inbox/processed-by-me")
+    public ResponseEntity<ApiResponse<ApprovalInboxAllResponseDto>> getInboxProcessedByMe(
+            @Parameter(hidden = true) @AuthenticationPrincipal CustomUserDetails userDetails) {
+        return ResponseEntity.ok(
+                ApiResponse.onSuccess(approvalWorkflowService.getInboxProcessedByMe(userDetails.getId())));
     }
 
     @Operation(

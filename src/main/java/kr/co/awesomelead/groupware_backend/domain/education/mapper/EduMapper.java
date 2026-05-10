@@ -42,7 +42,7 @@ public interface EduMapper {
             target = "authorName",
             expression =
                     "java(report.getCreatedBy() != null ? report.getCreatedBy().getDisplayName() :"
-                        + " null)")
+                            + " null)")
     @Mapping(target = "createdAt", source = "report.createdAt")
     @Mapping(target = "eduType", source = "report.eduType")
     @Mapping(

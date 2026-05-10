@@ -2,6 +2,8 @@ package kr.co.awesomelead.groupware_backend.domain.approval.entity;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
@@ -10,6 +12,8 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 
+import kr.co.awesomelead.groupware_backend.domain.approval.enums.ApprovalActionType;
+import kr.co.awesomelead.groupware_backend.domain.approval.enums.ApprovalStatus;
 import kr.co.awesomelead.groupware_backend.domain.user.entity.User;
 import kr.co.awesomelead.groupware_backend.global.common.entity.BaseTimeEntity;
 
@@ -25,8 +29,8 @@ import lombok.Setter;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-@Table(name = "approval_attachments")
-public class ApprovalAttachment extends BaseTimeEntity {
+@Table(name = "approval_action_histories")
+public class ApprovalActionHistory extends BaseTimeEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -36,15 +40,26 @@ public class ApprovalAttachment extends BaseTimeEntity {
     @JoinColumn(name = "document_id", nullable = false)
     private ApprovalDocument document;
 
-    @Column(nullable = false, length = 255)
-    private String originalFileName;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "document_line_id")
+    private ApprovalDocumentLine documentLine;
 
-    @Column(nullable = false, length = 300)
-    private String s3Key;
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false, length = 30)
+    private ApprovalActionType actionType;
 
-    private Long fileSize;
+    @Enumerated(EnumType.STRING)
+    @Column(length = 20)
+    private ApprovalStatus fromStatus;
+
+    @Enumerated(EnumType.STRING)
+    @Column(length = 20)
+    private ApprovalStatus toStatus;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "uploaded_by_user_id")
-    private User uploadedByUser;
+    @JoinColumn(name = "actor_user_id")
+    private User actorUser;
+
+    @Column(length = 1000)
+    private String actionComment;
 }

@@ -5,12 +5,12 @@ import lombok.Getter;
 
 @Getter
 @AllArgsConstructor
-public enum ApprovalStatus {
-    DRAFT("임시저장"),
-    IN_PROGRESS("결재진행"),
-    APPROVED("완결"),
+public enum ApprovalLineStatus {
+    WAITING("대기"),
+    PENDING("결재 대기"),
+    APPROVED("승인"),
     REJECTED("반려"),
-    RECALLED("회수");
+    SKIPPED("건너뜀");
 
     private final String description;
 }

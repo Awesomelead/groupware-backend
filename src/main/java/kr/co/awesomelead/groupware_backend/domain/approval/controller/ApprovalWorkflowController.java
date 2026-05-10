@@ -50,6 +50,7 @@ import org.springframework.web.bind.annotation.RestController;
         - 참조문서 참조문서 탭: GET /api/approvals/references
         - 참조문서 열람획득문서 탭: GET /api/approvals/references/viewer-acquired
         - 참조문서 열람부여문서 탭: GET /api/approvals/references/viewer-granted
+        - 부서결재함(내 부서) 탭: GET /api/approvals/department-box
         - 결재진행 전체 탭: GET /api/approvals/inbox/all
         - 결재진행 결재하기 탭: GET /api/approvals/inbox/to-approve
         - 결재진행 결재 전단계 탭: GET /api/approvals/inbox/before-my-turn
@@ -438,6 +439,43 @@ public class ApprovalWorkflowController {
         return ResponseEntity.ok(
                 ApiResponse.onSuccess(
                         approvalWorkflowService.getViewerGrantedDocuments(userDetails.getId())));
+    }
+
+    @Operation(
+            summary = "부서결재함(내 부서) 탭 조회",
+            description =
+                    """
+            현재 사용자 기준 `부서결재함` 문서를 조회합니다.
+
+            ### 조회 대상
+            - 기안부서가 내 부서인 문서
+            - 또는 내 부서가 부서 대상 결재 라인으로 지정된 문서
+              - APPROVAL_LINE(결재선)
+              - AGREEMENT_REQUIRED(합의부서 필수)
+              - AGREEMENT_OPTIONAL(합의부서 선택)
+              - RECEIVER_DEPARTMENT(수신부서)
+
+            ### 제외 대상
+            - 임시저장(DRAFT) 문서
+            - 내 부서가 참조자/열람권자로만 지정된 문서(참조문서 메뉴 대상)
+
+            ### 권한
+            - 본인 소속 부서 기준으로만 조회(관리자 전체 부서 조회 미지원)
+
+            ### 응답 주요 필드
+            - 문서번호(documentNo)
+            - 기안자(drafterName)
+            - 제목(title)
+            - 결재선(approvalLines)
+            - 기안일(draftedAt)
+            - 완료일(completedAt)
+            """)
+    @GetMapping("/approvals/department-box")
+    public ResponseEntity<ApiResponse<ApprovalInboxAllResponseDto>> getDepartmentBox(
+            @Parameter(hidden = true) @AuthenticationPrincipal CustomUserDetails userDetails) {
+        return ResponseEntity.ok(
+                ApiResponse.onSuccess(
+                        approvalWorkflowService.getDepartmentBox(userDetails.getId())));
     }
 
     @Operation(

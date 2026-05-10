@@ -21,6 +21,14 @@ import java.util.List;
 @Schema(description = "결재진행 전체 탭 응답")
 public class ApprovalInboxAllResponseDto {
 
+    @Schema(description = "현재 사용자 소속 부서 ID(부서결재함 등 부서 기준 화면에서 사용)", example = "3")
+    private Long myDepartmentId;
+
+    @Schema(
+            description = "현재 사용자 소속 부서명(부서결재함 등 부서 기준 화면에서 사용)",
+            example = "환경안전부")
+    private String myDepartmentName;
+
     @Schema(description = "전체 탭 문서 목록")
     private List<DocumentDto> documents;
 

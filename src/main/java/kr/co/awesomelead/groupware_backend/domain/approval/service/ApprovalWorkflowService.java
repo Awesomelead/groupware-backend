@@ -256,6 +256,28 @@ public class ApprovalWorkflowService {
         return ApprovalInboxAllResponseDto.builder().documents(documents).build();
     }
 
+    @Transactional(readOnly = true)
+    public ApprovalInboxAllResponseDto getDepartmentBox(Long userId) {
+        User user = getUser(userId);
+        if (user.getDepartment() == null) {
+            throw new CustomException(ErrorCode.DEPARTMENT_NOT_FOUND);
+        }
+        Department myDepartment = user.getDepartment();
+        Long departmentId = myDepartment.getId();
+
+        List<ApprovalInboxAllResponseDto.DocumentDto> documents =
+                approvalDocumentRepository.findAllWithLinesOrderByIdDesc().stream()
+                        .filter(document -> isDepartmentBoxDocument(document, departmentId))
+                        .map(document -> toInboxDocumentDto(document, userId, departmentId))
+                        .toList();
+
+        return ApprovalInboxAllResponseDto.builder()
+                .myDepartmentId(myDepartment.getId())
+                .myDepartmentName(myDepartment.getName().getDescription())
+                .documents(documents)
+                .build();
+    }
+
     @Transactional
     public ApprovalDraftResponseDto upsertDraft(
             Long userId, ApprovalDraftUpsertRequestDto request) {
@@ -521,6 +543,34 @@ public class ApprovalWorkflowService {
             return false;
         }
         return document.getLines().stream().anyMatch(line -> line.getRole() == ApprovalRouteRole.VIEWER);
+    }
+
+    private boolean isDepartmentBoxDocument(ApprovalDocument document, Long departmentId) {
+        if (document.getStatus() == ApprovalStatus.DRAFT) {
+            return false;
+        }
+
+        if (document.getDrafterDepartment() != null
+                && departmentId.equals(document.getDrafterDepartment().getId())) {
+            return true;
+        }
+
+        return document.getLines().stream()
+                .anyMatch(line -> isDepartmentBoxTargetLine(line, departmentId));
+    }
+
+    private boolean isDepartmentBoxTargetLine(ApprovalDocumentLine line, Long departmentId) {
+        if (line.getTargetType() != ApprovalTargetType.DEPARTMENT) {
+            return false;
+        }
+        if (line.getTargetDepartment() == null
+                || !departmentId.equals(line.getTargetDepartment().getId())) {
+            return false;
+        }
+        return line.getRole() == ApprovalRouteRole.APPROVAL_LINE
+                || line.getRole() == ApprovalRouteRole.AGREEMENT_REQUIRED
+                || line.getRole() == ApprovalRouteRole.AGREEMENT_OPTIONAL
+                || line.getRole() == ApprovalRouteRole.RECEIVER_DEPARTMENT;
     }
 
     private boolean isMyApprovalDocument(

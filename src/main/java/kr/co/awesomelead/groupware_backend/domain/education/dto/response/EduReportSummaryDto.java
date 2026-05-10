@@ -2,6 +2,7 @@ package kr.co.awesomelead.groupware_backend.domain.education.dto.response;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 
+import kr.co.awesomelead.groupware_backend.domain.department.enums.DepartmentName;
 import kr.co.awesomelead.groupware_backend.domain.education.enums.EduReportStatus;
 import kr.co.awesomelead.groupware_backend.domain.education.enums.EduType;
 
@@ -60,4 +61,7 @@ public class EduReportSummaryDto {
 
     @Schema(description = "작성일", example = "2026-04-06T10:15:00")
     private LocalDateTime createdAt;
+
+    @Schema(description = "교육 부서명", example = "경영지원부")
+    private DepartmentName departmentName;
 }

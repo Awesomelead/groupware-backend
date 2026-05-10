@@ -10,10 +10,13 @@ import kr.co.awesomelead.groupware_backend.domain.user.dto.response.UserDetailRe
 import kr.co.awesomelead.groupware_backend.domain.user.dto.response.UserSummaryResponseDto;
 import kr.co.awesomelead.groupware_backend.domain.user.entity.MyInfoUpdateRequest;
 import kr.co.awesomelead.groupware_backend.domain.user.entity.User;
+import kr.co.awesomelead.groupware_backend.domain.user.enums.JobType;
 import kr.co.awesomelead.groupware_backend.domain.user.enums.MyInfoUpdateRequestStatus;
-import kr.co.awesomelead.groupware_backend.domain.user.enums.Status;
+import kr.co.awesomelead.groupware_backend.domain.user.enums.Position;
+import kr.co.awesomelead.groupware_backend.domain.user.enums.Role;
 import kr.co.awesomelead.groupware_backend.domain.user.repository.MyInfoUpdateRequestRepository;
 import kr.co.awesomelead.groupware_backend.domain.user.repository.UserRepository;
+import kr.co.awesomelead.groupware_backend.domain.user.repository.querydsl.UserQueryRepository;
 import kr.co.awesomelead.groupware_backend.global.error.CustomException;
 import kr.co.awesomelead.groupware_backend.global.error.ErrorCode;
 
@@ -35,6 +38,7 @@ import java.util.Map;
 public class UserService {
 
     private final UserRepository userRepository;
+    private final UserQueryRepository userQueryRepository;
     private final MyInfoUpdateRequestRepository myInfoUpdateRequestRepository;
     private final PhoneAuthService phoneAuthService;
     private final NotificationService notificationService;
@@ -180,15 +184,17 @@ public class UserService {
 
     // 전 직원 목록 조회 (AVAILABLE 상태)
     @Transactional(readOnly = true)
-    public Page<UserSummaryResponseDto> getEmployeeList(String keyword, Pageable pageable) {
-        if (keyword != null && !keyword.isBlank()) {
-            Pageable unsorted = PageRequest.of(pageable.getPageNumber(), pageable.getPageSize());
-            return userRepository
-                    .searchByNameKorFullText(keyword, unsorted)
-                    .map(UserSummaryResponseDto::from);
-        }
-        return userRepository
-                .findAllByStatusWithDepartment(Status.AVAILABLE, pageable)
+    public Page<UserSummaryResponseDto> getEmployeeList(
+            String keyword,
+            Position position,
+            Long departmentId,
+            JobType jobType,
+            Role role,
+            Pageable pageable) {
+        Pageable unsorted = PageRequest.of(pageable.getPageNumber(), pageable.getPageSize());
+        return userQueryRepository
+                .findAllAvailableWithFilters(
+                        keyword, position, departmentId, jobType, role, unsorted)
                 .map(UserSummaryResponseDto::from);
     }
 

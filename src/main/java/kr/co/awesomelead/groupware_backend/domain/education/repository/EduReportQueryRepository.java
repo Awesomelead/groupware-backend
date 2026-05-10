@@ -12,6 +12,7 @@ import com.querydsl.jpa.JPAExpressions;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 
 import kr.co.awesomelead.groupware_backend.domain.department.entity.Department;
+import kr.co.awesomelead.groupware_backend.domain.department.entity.QDepartment;
 import kr.co.awesomelead.groupware_backend.domain.department.enums.Company;
 import kr.co.awesomelead.groupware_backend.domain.department.enums.DepartmentName;
 import kr.co.awesomelead.groupware_backend.domain.education.dto.response.EduReportDetailDto;
@@ -97,8 +98,10 @@ public class EduReportQueryRepository {
                                 educationCategory.id,
                                 educationCategory.name,
                                 creatorUser.nameKor.coalesce(creatorUser.nameEng),
-                                eduReport.createdAt))
+                                eduReport.createdAt,
+                                QDepartment.department.name))
                 .from(eduReport)
+                .leftJoin(eduReport.department, QDepartment.department)
                 .leftJoin(eduReport.category, educationCategory)
                 .leftJoin(eduReport.createdBy, creatorUser)
                 .where(
@@ -139,8 +142,10 @@ public class EduReportQueryRepository {
                                 educationCategory.id,
                                 educationCategory.name,
                                 creatorUser.nameKor.coalesce(creatorUser.nameEng),
-                                eduReport.createdAt))
+                                eduReport.createdAt,
+                                QDepartment.department.name))
                 .from(eduReport)
+                .leftJoin(eduReport.department, QDepartment.department)
                 .leftJoin(eduReport.category, educationCategory)
                 .leftJoin(eduReport.createdBy, creatorUser)
                 .where(
@@ -179,8 +184,10 @@ public class EduReportQueryRepository {
                                 educationCategory.id,
                                 educationCategory.name,
                                 creatorUser.nameKor.coalesce(creatorUser.nameEng),
-                                eduReport.createdAt))
+                                eduReport.createdAt,
+                                QDepartment.department.name))
                 .from(eduReport)
+                .leftJoin(eduReport.department, QDepartment.department)
                 .leftJoin(eduReport.category, educationCategory)
                 .leftJoin(eduReport.createdBy, creatorUser)
                 .where(

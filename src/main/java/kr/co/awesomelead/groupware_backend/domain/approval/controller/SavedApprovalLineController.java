@@ -96,7 +96,17 @@ public class SavedApprovalLineController {
 
     private final SavedApprovalLineService savedApprovalLineService;
 
-    @Operation(summary = "개인 결재선 목록 조회")
+    @Operation(
+            summary = "개인 결재선 목록 조회",
+            description =
+                    """
+            현재 로그인 사용자가 저장한 개인 결재선 목록을 조회합니다.
+
+            ### 응답
+            - 결재선 기본정보(id, lineName, approvalType, isDefault)
+            - 상세 라인(lines)
+            - 결재칸 미리보기(approvalBoxPreview)
+            """)
     @GetMapping("/personal")
     public ResponseEntity<ApiResponse<List<SavedApprovalLineResponseDto>>> getPersonalLines(
             @Parameter(hidden = true) @AuthenticationPrincipal CustomUserDetails userDetails) {
@@ -105,7 +115,15 @@ public class SavedApprovalLineController {
                         savedApprovalLineService.getPersonalLines(userDetails.getId())));
     }
 
-    @Operation(summary = "개인 결재선 상세 조회")
+    @Operation(
+            summary = "개인 결재선 상세 조회",
+            description =
+                    """
+            현재 로그인 사용자의 개인 결재선 1건 상세를 조회합니다.
+
+            ### Path
+            - lineId: 개인 결재선 ID
+            """)
     @GetMapping("/personal/{lineId}")
     public ResponseEntity<ApiResponse<SavedApprovalLineResponseDto>> getPersonalLine(
             @PathVariable Long lineId,
@@ -148,7 +166,15 @@ public class SavedApprovalLineController {
         return ResponseEntity.ok(ApiResponse.onNoContent("개인 결재선이 수정되었습니다."));
     }
 
-    @Operation(summary = "개인 결재선 삭제")
+    @Operation(
+            summary = "개인 결재선 삭제",
+            description =
+                    """
+            현재 로그인 사용자의 개인 결재선을 삭제합니다.
+
+            ### Path
+            - lineId: 삭제 대상 개인 결재선 ID
+            """)
     @DeleteMapping("/personal/{lineId}")
     public ResponseEntity<ApiResponse<Void>> deletePersonalLine(
             @PathVariable Long lineId,
@@ -157,7 +183,17 @@ public class SavedApprovalLineController {
         return ResponseEntity.ok(ApiResponse.onNoContent("개인 결재선이 삭제되었습니다."));
     }
 
-    @Operation(summary = "부서 결재선 목록 조회")
+    @Operation(
+            summary = "부서 결재선 목록 조회",
+            description =
+                    """
+            부서 결재선 목록을 조회합니다.
+
+            ### 조회 권한
+            - MANAGE_APPROVAL_LINE 권한 사용자
+            - MASTER_ADMIN, CEO는 타 부서 포함 조회 가능
+            - 일반 권한자는 본인 소속 부서 결재선만 조회
+            """)
     @GetMapping("/department")
     public ResponseEntity<ApiResponse<List<SavedApprovalLineResponseDto>>> getDepartmentLines(
             @Parameter(hidden = true) @AuthenticationPrincipal CustomUserDetails userDetails) {
@@ -166,7 +202,19 @@ public class SavedApprovalLineController {
                         savedApprovalLineService.getDepartmentLines(userDetails.getId())));
     }
 
-    @Operation(summary = "부서 결재선 상세 조회")
+    @Operation(
+            summary = "부서 결재선 상세 조회",
+            description =
+                    """
+            부서 결재선 1건 상세를 조회합니다.
+
+            ### Path
+            - lineId: 부서 결재선 ID
+
+            ### 조회 권한
+            - MANAGE_APPROVAL_LINE
+            - 일반 권한자는 본인 소속 부서 결재선만 조회 가능
+            """)
     @GetMapping("/department/{lineId}")
     public ResponseEntity<ApiResponse<SavedApprovalLineResponseDto>> getDepartmentLine(
             @PathVariable Long lineId,
@@ -225,7 +273,17 @@ public class SavedApprovalLineController {
         return ResponseEntity.ok(ApiResponse.onNoContent("부서 결재선이 수정되었습니다."));
     }
 
-    @Operation(summary = "부서 결재선 삭제")
+    @Operation(
+            summary = "부서 결재선 삭제",
+            description =
+                    """
+            부서 결재선을 삭제합니다.
+
+            ### 권한
+            - MANAGE_APPROVAL_LINE
+            - MASTER_ADMIN, CEO는 타 부서 삭제 가능
+            - 일반 권한자는 본인 소속 부서 결재선만 삭제 가능
+            """)
     @DeleteMapping("/department/{lineId}")
     public ResponseEntity<ApiResponse<Void>> deleteDepartmentLine(
             @PathVariable Long lineId,

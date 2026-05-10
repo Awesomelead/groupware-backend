@@ -25,7 +25,17 @@ public class ApprovalSubmitResponseDto {
     @Schema(description = "문서번호", example = "기안및지출결의 경영지원부 20260108-30")
     private String documentNo;
 
-    @Schema(description = "문서 상태")
+    @Schema(
+            description = "문서 상태",
+            example = "IN_PROGRESS",
+            allowableValues = {
+                "DRAFT",
+                "IN_PROGRESS",
+                "APPROVED",
+                "REJECTED",
+                "RECALLED",
+                "CANCELED"
+            })
     private ApprovalStatus status;
 
     @Schema(description = "기안자 ID", example = "14")
@@ -54,13 +64,41 @@ public class ApprovalSubmitResponseDto {
     @AllArgsConstructor
     @Schema(description = "결재선 항목")
     public static class ApprovalLineDto {
+        @Schema(description = "결재 라인 ID", example = "1001")
         private Long lineId;
+
+        @Schema(
+                description = "결재 라인 역할",
+                example = "APPROVAL_LINE",
+                allowableValues = {
+                    "APPROVAL_LINE",
+                    "AGREEMENT_REQUIRED",
+                    "AGREEMENT_OPTIONAL",
+                    "REFERENCE",
+                    "VIEWER",
+                    "RECEIVER_DEPARTMENT"
+                })
         private ApprovalRouteRole role;
+
+        @Schema(description = "결재 라인 역할 한글 라벨", example = "결재선")
         private String roleLabel;
+
+        @Schema(
+                description = "결재 라인 타겟 타입",
+                example = "USER",
+                allowableValues = {"USER", "DEPARTMENT"})
         private ApprovalTargetType targetType;
+
+        @Schema(description = "타겟 사용자 ID(targetType=USER일 때)", example = "14")
         private Long targetUserId;
+
+        @Schema(description = "타겟 부서 ID(targetType=DEPARTMENT일 때)", example = "3")
         private Long targetDepartmentId;
+
+        @Schema(description = "타겟 표시명", example = "[경영지원부] 고영민 (사원)")
         private String targetName;
+
+        @Schema(description = "결재 순서", example = "1")
         private Integer sequenceNo;
     }
 }

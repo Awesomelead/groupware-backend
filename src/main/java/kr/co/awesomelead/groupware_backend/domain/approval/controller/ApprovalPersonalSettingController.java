@@ -81,7 +81,17 @@ public class ApprovalPersonalSettingController {
 
     private final ApprovalPersonalSettingService approvalPersonalSettingService;
 
-    @Operation(summary = "전자결재 개인설정 조회")
+    @Operation(
+            summary = "전자결재 개인설정 조회",
+            description =
+                    """
+            현재 로그인 사용자의 개인설정을 조회합니다.
+
+            ### 응답 필드
+            - 대결지정: delegateEnabled, delegateUser, delegateStartDate, delegateEndDate
+            - 열람권자 기본설정: defaultViewerTargets
+            - 서명이미지: signatureImageUrl
+            """)
     @GetMapping("/me")
     public ResponseEntity<ApiResponse<ApprovalPersonalSettingResponseDto>> getMySetting(
             @Parameter(hidden = true) @AuthenticationPrincipal CustomUserDetails userDetails) {
@@ -116,7 +126,18 @@ public class ApprovalPersonalSettingController {
 
     @Operation(
             summary = "서명이미지 업로드",
-            description = "gif/jpg/jpeg/png 파일만 업로드 가능하며, 최대 100KB까지 허용합니다.")
+            description =
+                    """
+            전자결재 서명이미지를 업로드합니다.
+
+            ### 업로드 규칙
+            - multipart 필드명: signatureImage
+            - 허용 확장자: gif, jpg, jpeg, png
+            - 최대 파일 크기: 100KB
+
+            ### 응답
+            - 저장된 서명이미지 URL
+            """)
     @PostMapping(value = "/me/signature-image", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<ApiResponse<String>> uploadSignatureImage(
             @RequestPart("signatureImage") MultipartFile signatureImage,
@@ -127,7 +148,13 @@ public class ApprovalPersonalSettingController {
                                 userDetails.getId(), signatureImage)));
     }
 
-    @Operation(summary = "서명이미지 삭제")
+    @Operation(
+            summary = "서명이미지 삭제",
+            description =
+                    """
+            현재 로그인 사용자의 전자결재 서명이미지를 삭제합니다.
+            - 삭제 후 조회 시 signatureImageUrl은 null로 반환됩니다.
+            """)
     @DeleteMapping("/me/signature-image")
     public ResponseEntity<ApiResponse<Void>> deleteSignatureImage(
             @Parameter(hidden = true) @AuthenticationPrincipal CustomUserDetails userDetails) {
@@ -135,4 +162,3 @@ public class ApprovalPersonalSettingController {
         return ResponseEntity.ok(ApiResponse.onNoContent("서명이미지가 삭제되었습니다."));
     }
 }
-

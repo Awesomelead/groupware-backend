@@ -96,7 +96,20 @@ public class AdminApprovalTemplateController {
 
     private final ApprovalTemplateAdminService approvalTemplateAdminService;
 
-    @Operation(summary = "전자결재 양식구분 생성")
+    @Operation(
+            summary = "전자결재 양식구분 생성",
+            description =
+                    """
+            전자결재 양식구분을 생성합니다.
+
+            ### 필수 입력
+            - code: 고유 코드
+            - name: 구분명
+            - sortOrder: 정렬순서
+
+            ### 응답
+            - 생성된 양식구분 ID 반환
+            """)
     @PostMapping("/approval-template-categories")
     public ResponseEntity<ApiResponse<Long>> createCategory(
             @Parameter(hidden = true) @AuthenticationPrincipal CustomUserDetails userDetails,
@@ -105,7 +118,15 @@ public class AdminApprovalTemplateController {
         return ResponseEntity.ok(ApiResponse.onSuccess(id));
     }
 
-    @Operation(summary = "전자결재 양식구분 목록 조회")
+    @Operation(
+            summary = "전자결재 양식구분 목록 조회",
+            description =
+                    """
+            전자결재 양식구분 목록을 조회합니다.
+
+            ### 응답 필드
+            - id, code, name, sortOrder, isActive
+            """)
     @GetMapping("/approval-template-categories")
     public ResponseEntity<ApiResponse<List<ApprovalTemplateCategoryResponseDto>>> getCategories(
             @Parameter(hidden = true) @AuthenticationPrincipal CustomUserDetails userDetails) {
@@ -114,7 +135,15 @@ public class AdminApprovalTemplateController {
                         approvalTemplateAdminService.getCategories(userDetails.getId())));
     }
 
-    @Operation(summary = "전자결재 양식구분 상세 조회")
+    @Operation(
+            summary = "전자결재 양식구분 상세 조회",
+            description =
+                    """
+            특정 양식구분의 상세 정보를 조회합니다.
+
+            ### Path
+            - categoryId: 양식구분 ID
+            """)
     @GetMapping("/approval-template-categories/{categoryId}")
     public ResponseEntity<ApiResponse<ApprovalTemplateCategoryResponseDto>> getCategory(
             @Parameter(hidden = true) @AuthenticationPrincipal CustomUserDetails userDetails,
@@ -124,7 +153,18 @@ public class AdminApprovalTemplateController {
                         approvalTemplateAdminService.getCategory(userDetails.getId(), categoryId)));
     }
 
-    @Operation(summary = "전자결재 양식구분 수정")
+    @Operation(
+            summary = "전자결재 양식구분 수정",
+            description =
+                    """
+            특정 양식구분을 수정합니다.
+
+            ### Path
+            - categoryId: 수정 대상 양식구분 ID
+
+            ### 수정 가능 필드
+            - code, name, sortOrder, isActive
+            """)
     @PutMapping("/approval-template-categories/{categoryId}")
     public ResponseEntity<ApiResponse<Void>> updateCategory(
             @Parameter(hidden = true) @AuthenticationPrincipal CustomUserDetails userDetails,
@@ -134,7 +174,15 @@ public class AdminApprovalTemplateController {
         return ResponseEntity.ok(ApiResponse.onNoContent("전자결재 양식구분이 수정되었습니다."));
     }
 
-    @Operation(summary = "전자결재 양식구분 삭제")
+    @Operation(
+            summary = "전자결재 양식구분 삭제",
+            description =
+                    """
+            특정 양식구분을 삭제합니다.
+
+            ### 주의
+            - 해당 양식구분에 연결된 양식이 존재하면 삭제가 제한될 수 있습니다.
+            """)
     @DeleteMapping("/approval-template-categories/{categoryId}")
     public ResponseEntity<ApiResponse<Void>> deleteCategory(
             @Parameter(hidden = true) @AuthenticationPrincipal CustomUserDetails userDetails,
@@ -162,7 +210,18 @@ public class AdminApprovalTemplateController {
         return ResponseEntity.ok(ApiResponse.onSuccess(id));
     }
 
-    @Operation(summary = "전자결재 양식 목록 조회")
+    @Operation(
+            summary = "전자결재 양식 목록 조회",
+            description =
+                    """
+            전자결재 양식 목록을 조회합니다.
+
+            ### 응답 필드
+            - 기본정보: id, categoryId/categoryName, code, name, description
+            - 작성정보: editorType, approvalType, linePolicy
+            - 본문기본값: defaultContentDelta
+            - 기본 라인: lines(role/targetType/targetUserId/targetDepartmentId/sequenceNo/required)
+            """)
     @GetMapping("/approval-templates")
     public ResponseEntity<ApiResponse<List<ApprovalTemplateAdminResponseDto>>> getTemplates(
             @Parameter(hidden = true) @AuthenticationPrincipal CustomUserDetails userDetails) {
@@ -171,7 +230,18 @@ public class AdminApprovalTemplateController {
                         approvalTemplateAdminService.getTemplates(userDetails.getId())));
     }
 
-    @Operation(summary = "전자결재 양식 상세 조회")
+    @Operation(
+            summary = "전자결재 양식 상세 조회",
+            description =
+                    """
+            특정 전자결재 양식 상세를 조회합니다.
+
+            ### Path
+            - templateId: 양식 ID
+
+            ### 응답
+            - 양식 기본정보 + 기본 결재라인(lines)
+            """)
     @GetMapping("/approval-templates/{templateId}")
     public ResponseEntity<ApiResponse<ApprovalTemplateAdminResponseDto>> getTemplate(
             @Parameter(hidden = true) @AuthenticationPrincipal CustomUserDetails userDetails,
@@ -201,7 +271,15 @@ public class AdminApprovalTemplateController {
         return ResponseEntity.ok(ApiResponse.onNoContent("전자결재 양식이 수정되었습니다."));
     }
 
-    @Operation(summary = "전자결재 양식 삭제")
+    @Operation(
+            summary = "전자결재 양식 삭제",
+            description =
+                    """
+            특정 전자결재 양식을 삭제합니다.
+
+            ### 주의
+            - 이미 상신된 문서와의 참조 관계가 있으면 삭제가 제한될 수 있습니다.
+            """)
     @DeleteMapping("/approval-templates/{templateId}")
     public ResponseEntity<ApiResponse<Void>> deleteTemplate(
             @Parameter(hidden = true) @AuthenticationPrincipal CustomUserDetails userDetails,

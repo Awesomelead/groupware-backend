@@ -114,7 +114,27 @@ public class ApprovalWorkflowController {
 
     private final ApprovalWorkflowService approvalWorkflowService;
 
-    @Operation(summary = "전자결재 양식 목록 조회")
+    @Operation(
+            summary = "전자결재 양식 목록 조회",
+            description =
+                    """
+            결재작성 화면에서 사용할 양식구분/양식 목록을 조회합니다.
+
+            ### 응답 구조
+            - categories[]: 양식구분
+              - id, code, name, sortOrder
+              - templates[]: 구분 내 양식 목록
+                - id, code, name, description
+                - editorType(QUILL/HTML/EXCEL)
+                - approvalType(INTERNAL/COOPERATIVE)
+                - linePolicy(FIXED/FLEXIBLE)
+                - defaultContentDelta(기본 본문)
+                - defaultLines(기본 결재선/참조자/열람권자)
+
+            ### 프론트 사용 포인트
+            - templateId를 임시저장/상신 API로 전달합니다.
+            - defaultContentDelta는 양식 선택 시 에디터 초기값으로 사용합니다.
+            """)
     @GetMapping("/approval/templates")
     public ResponseEntity<ApiResponse<ApprovalTemplateListResponseDto>> getTemplates() {
         return ResponseEntity.ok(ApiResponse.onSuccess(approvalWorkflowService.getTemplateList()));

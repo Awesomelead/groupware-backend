@@ -49,6 +49,7 @@ import org.springframework.web.bind.annotation.RestController;
         - 전체 본인결재 탭: GET /api/approvals/all/my-approvals
         - 참조문서 참조문서 탭: GET /api/approvals/references
         - 참조문서 열람획득문서 탭: GET /api/approvals/references/viewer-acquired
+        - 참조문서 열람부여문서 탭: GET /api/approvals/references/viewer-granted
         - 결재진행 전체 탭: GET /api/approvals/inbox/all
         - 결재진행 결재하기 탭: GET /api/approvals/inbox/to-approve
         - 결재진행 결재 전단계 탭: GET /api/approvals/inbox/before-my-turn
@@ -408,6 +409,35 @@ public class ApprovalWorkflowController {
         return ResponseEntity.ok(
                 ApiResponse.onSuccess(
                         approvalWorkflowService.getViewerAcquiredDocuments(userDetails.getId())));
+    }
+
+    @Operation(
+            summary = "참조문서 열람부여문서 탭 조회",
+            description =
+                    """
+            현재 사용자 기준 `참조문서 > 열람부여문서` 문서를 조회합니다.
+
+            ### 조회 대상
+            - 기안자가 본인인 문서
+            - role=VIEWER(열람권자) 라인이 하나 이상 존재하는 문서
+
+            ### 제외 대상
+            - 임시저장(DRAFT) 문서
+
+            ### 응답 주요 필드
+            - 문서번호(documentNo)
+            - 기안자(drafterName)
+            - 제목(title)
+            - 결재선(approvalLines)
+            - 기안일(draftedAt)
+            - 완료일(completedAt)
+            """)
+    @GetMapping("/approvals/references/viewer-granted")
+    public ResponseEntity<ApiResponse<ApprovalInboxAllResponseDto>> getViewerGrantedDocuments(
+            @Parameter(hidden = true) @AuthenticationPrincipal CustomUserDetails userDetails) {
+        return ResponseEntity.ok(
+                ApiResponse.onSuccess(
+                        approvalWorkflowService.getViewerGrantedDocuments(userDetails.getId())));
     }
 
     @Operation(

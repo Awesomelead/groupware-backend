@@ -242,6 +242,20 @@ public class ApprovalWorkflowService {
         return ApprovalInboxAllResponseDto.builder().documents(documents).build();
     }
 
+    @Transactional(readOnly = true)
+    public ApprovalInboxAllResponseDto getViewerGrantedDocuments(Long userId) {
+        User user = getUser(userId);
+        Long departmentId = user.getDepartment() != null ? user.getDepartment().getId() : null;
+
+        List<ApprovalInboxAllResponseDto.DocumentDto> documents =
+                approvalDocumentRepository.findAllWithLinesOrderByIdDesc().stream()
+                        .filter(document -> isViewerGrantedDocument(document, userId))
+                        .map(document -> toInboxDocumentDto(document, userId, departmentId))
+                        .toList();
+
+        return ApprovalInboxAllResponseDto.builder().documents(documents).build();
+    }
+
     @Transactional
     public ApprovalDraftResponseDto upsertDraft(
             Long userId, ApprovalDraftUpsertRequestDto request) {
@@ -497,6 +511,16 @@ public class ApprovalWorkflowService {
         }
         return document.getLines().stream()
                 .anyMatch(line -> isMyViewerLine(line, userId, departmentId));
+    }
+
+    private boolean isViewerGrantedDocument(ApprovalDocument document, Long userId) {
+        if (document.getStatus() == ApprovalStatus.DRAFT) {
+            return false;
+        }
+        if (document.getDrafterUser() == null || !userId.equals(document.getDrafterUser().getId())) {
+            return false;
+        }
+        return document.getLines().stream().anyMatch(line -> line.getRole() == ApprovalRouteRole.VIEWER);
     }
 
     private boolean isMyApprovalDocument(

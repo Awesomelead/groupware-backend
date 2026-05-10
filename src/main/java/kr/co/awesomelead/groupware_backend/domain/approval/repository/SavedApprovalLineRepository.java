@@ -2,8 +2,10 @@ package kr.co.awesomelead.groupware_backend.domain.approval.repository;
 
 import kr.co.awesomelead.groupware_backend.domain.approval.entity.SavedApprovalLine;
 import kr.co.awesomelead.groupware_backend.domain.approval.enums.ApprovalSavedLineType;
+import kr.co.awesomelead.groupware_backend.domain.approval.enums.ApprovalType;
 
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
@@ -19,7 +21,7 @@ public interface SavedApprovalLineRepository extends JpaRepository<SavedApproval
                     + "left join fetch d.targetDepartment "
                     + "where l.ownerUser.id = :ownerUserId "
                     + "and l.lineType = :lineType and l.isActive = true "
-                    + "order by l.modifiedAt desc, l.id desc")
+                    + "order by l.isDefault desc, l.modifiedAt desc, l.id desc")
     List<SavedApprovalLine> findAllPersonalWithDetails(
             @Param("ownerUserId") Long ownerUserId,
             @Param("lineType") ApprovalSavedLineType lineType);
@@ -31,10 +33,62 @@ public interface SavedApprovalLineRepository extends JpaRepository<SavedApproval
                     + "left join fetch d.targetDepartment "
                     + "where l.department.id = :departmentId "
                     + "and l.lineType = :lineType and l.isActive = true "
-                    + "order by l.modifiedAt desc, l.id desc")
+                    + "order by l.isDefault desc, l.modifiedAt desc, l.id desc")
     List<SavedApprovalLine> findAllDepartmentWithDetails(
             @Param("departmentId") Long departmentId,
             @Param("lineType") ApprovalSavedLineType lineType);
+
+    @Modifying
+    @Query(
+            "update SavedApprovalLine l set l.isDefault = false "
+                    + "where l.ownerUser.id = :ownerUserId "
+                    + "and l.lineType = :lineType "
+                    + "and l.approvalType = :approvalType "
+                    + "and l.isActive = true")
+    int clearPersonalDefault(
+            @Param("ownerUserId") Long ownerUserId,
+            @Param("lineType") ApprovalSavedLineType lineType,
+            @Param("approvalType") ApprovalType approvalType);
+
+    @Modifying
+    @Query(
+            "update SavedApprovalLine l set l.isDefault = false "
+                    + "where l.ownerUser.id = :ownerUserId "
+                    + "and l.lineType = :lineType "
+                    + "and l.approvalType = :approvalType "
+                    + "and l.id <> :excludeLineId "
+                    + "and l.isActive = true")
+    int clearPersonalDefaultExcept(
+            @Param("ownerUserId") Long ownerUserId,
+            @Param("lineType") ApprovalSavedLineType lineType,
+            @Param("approvalType") ApprovalType approvalType,
+            @Param("excludeLineId") Long excludeLineId);
+
+    @Modifying
+    @Query(
+            "update SavedApprovalLine l set l.isDefault = false "
+                    + "where l.department.id = :departmentId "
+                    + "and l.lineType = :lineType "
+                    + "and l.approvalType = :approvalType "
+                    + "and l.isActive = true")
+    int clearDepartmentDefault(
+            @Param("departmentId") Long departmentId,
+            @Param("lineType") ApprovalSavedLineType lineType,
+            @Param("approvalType") ApprovalType approvalType);
+
+    @Modifying
+    @Query(
+            "update SavedApprovalLine l set l.isDefault = false "
+                    + "where l.department.id = :departmentId "
+                    + "and l.lineType = :lineType "
+                    + "and l.approvalType = :approvalType "
+                    + "and l.id <> :excludeLineId "
+                    + "and l.isActive = true")
+    int clearDepartmentDefaultExcept(
+            @Param("departmentId") Long departmentId,
+            @Param("lineType") ApprovalSavedLineType lineType,
+            @Param("approvalType") ApprovalType approvalType,
+            @Param("excludeLineId") Long excludeLineId);
 
     @Query(
             "select distinct l from SavedApprovalLine l "

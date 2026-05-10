@@ -14,6 +14,7 @@ import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
 
 import kr.co.awesomelead.groupware_backend.domain.approval.enums.ApprovalSavedLineType;
+import kr.co.awesomelead.groupware_backend.domain.approval.enums.ApprovalType;
 import kr.co.awesomelead.groupware_backend.domain.department.entity.Department;
 import kr.co.awesomelead.groupware_backend.domain.user.entity.User;
 import kr.co.awesomelead.groupware_backend.global.common.entity.BaseTimeEntity;
@@ -47,6 +48,10 @@ public class SavedApprovalLine extends BaseTimeEntity {
     @Column(nullable = false, length = 150)
     private String lineName;
 
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false, length = 20)
+    private ApprovalType approvalType;
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "owner_user_id")
     private User ownerUser;
@@ -62,6 +67,10 @@ public class SavedApprovalLine extends BaseTimeEntity {
     @Column(nullable = false)
     @Builder.Default
     private Boolean isActive = true;
+
+    @Column(nullable = false)
+    @Builder.Default
+    private Boolean isDefault = false;
 
     @Builder.Default
     @OneToMany(mappedBy = "savedLine")

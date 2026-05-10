@@ -6,8 +6,10 @@ import kr.co.awesomelead.groupware_backend.domain.approval.dto.request.SavedPers
 import kr.co.awesomelead.groupware_backend.domain.approval.dto.response.SavedApprovalLineResponseDto;
 import kr.co.awesomelead.groupware_backend.domain.approval.entity.SavedApprovalLine;
 import kr.co.awesomelead.groupware_backend.domain.approval.entity.SavedApprovalLineDetail;
+import kr.co.awesomelead.groupware_backend.domain.approval.enums.ApprovalRouteRole;
 import kr.co.awesomelead.groupware_backend.domain.approval.enums.ApprovalSavedLineType;
 import kr.co.awesomelead.groupware_backend.domain.approval.enums.ApprovalTargetType;
+import kr.co.awesomelead.groupware_backend.domain.approval.enums.ApprovalType;
 import kr.co.awesomelead.groupware_backend.domain.approval.repository.SavedApprovalLineDetailRepository;
 import kr.co.awesomelead.groupware_backend.domain.approval.repository.SavedApprovalLineRepository;
 import kr.co.awesomelead.groupware_backend.domain.department.entity.Department;
@@ -61,15 +63,23 @@ public class SavedApprovalLineService {
     @Transactional
     public Long createPersonalLine(Long userId, SavedPersonalApprovalLineUpsertRequestDto request) {
         User owner = getUser(userId);
+        boolean isDefaultRequested = isTrue(request.getIsDefault());
+
+        if (isDefaultRequested) {
+            savedApprovalLineRepository.clearPersonalDefault(
+                    owner.getId(), ApprovalSavedLineType.PERSONAL, request.getApprovalType());
+        }
 
         SavedApprovalLine line =
                 SavedApprovalLine.builder()
                         .lineType(ApprovalSavedLineType.PERSONAL)
                         .lineName(request.getLineName().trim())
+                        .approvalType(request.getApprovalType())
                         .ownerUser(owner)
                         .department(null)
                         .createdByUser(owner)
                         .isActive(true)
+                        .isDefault(isDefaultRequested)
                         .build();
         SavedApprovalLine saved = savedApprovalLineRepository.save(line);
         replaceDetails(saved, request.getLines());
@@ -85,7 +95,17 @@ public class SavedApprovalLineService {
                 || !line.getOwnerUser().getId().equals(userId)) {
             throw new CustomException(ErrorCode.NO_AUTHORITY_FOR_SAVED_APPROVAL_LINE_READ);
         }
+        boolean isDefaultRequested = isTrue(request.getIsDefault());
+        if (isDefaultRequested) {
+            savedApprovalLineRepository.clearPersonalDefaultExcept(
+                    userId,
+                    ApprovalSavedLineType.PERSONAL,
+                    request.getApprovalType(),
+                    line.getId());
+        }
         line.setLineName(request.getLineName().trim());
+        line.setApprovalType(request.getApprovalType());
+        line.setIsDefault(isDefaultRequested);
         replaceDetails(line, request.getLines());
     }
 
@@ -139,15 +159,25 @@ public class SavedApprovalLineService {
         validateDepartmentLineManageAuthority(actor);
 
         Department department = resolveTargetDepartment(actor, request.getDepartmentId());
+        boolean isDefaultRequested = isTrue(request.getIsDefault());
+
+        if (isDefaultRequested) {
+            savedApprovalLineRepository.clearDepartmentDefault(
+                    department.getId(),
+                    ApprovalSavedLineType.DEPARTMENT,
+                    request.getApprovalType());
+        }
 
         SavedApprovalLine line =
                 SavedApprovalLine.builder()
                         .lineType(ApprovalSavedLineType.DEPARTMENT)
                         .lineName(request.getLineName().trim())
+                        .approvalType(request.getApprovalType())
                         .ownerUser(null)
                         .department(department)
                         .createdByUser(actor)
                         .isActive(true)
+                        .isDefault(isDefaultRequested)
                         .build();
         SavedApprovalLine saved = savedApprovalLineRepository.save(line);
         replaceDetails(saved, request.getLines());
@@ -171,8 +201,19 @@ public class SavedApprovalLineService {
         }
 
         Department targetDepartment = resolveTargetDepartment(actor, request.getDepartmentId());
+        boolean isDefaultRequested = isTrue(request.getIsDefault());
+        if (isDefaultRequested) {
+            savedApprovalLineRepository.clearDepartmentDefaultExcept(
+                    targetDepartment.getId(),
+                    ApprovalSavedLineType.DEPARTMENT,
+                    request.getApprovalType(),
+                    line.getId());
+        }
+
         line.setLineName(request.getLineName().trim());
+        line.setApprovalType(request.getApprovalType());
         line.setDepartment(targetDepartment);
+        line.setIsDefault(isDefaultRequested);
         replaceDetails(line, request.getLines());
     }
 
@@ -320,6 +361,8 @@ public class SavedApprovalLineService {
                                         .thenComparing(SavedApprovalLineDetail::getId))
                         .map(this::toDetailResponse)
                         .toList();
+        SavedApprovalLineResponseDto.ApprovalBoxPreviewDto approvalBoxPreview =
+                buildApprovalBoxPreview(details);
 
         String ownerUserName =
                 line.getOwnerUser() != null
@@ -343,6 +386,12 @@ public class SavedApprovalLineService {
                 .lineType(line.getLineType())
                 .lineTypeLabel(line.getLineType().getDescription())
                 .lineName(line.getLineName())
+                .approvalType(line.getApprovalType())
+                .approvalTypeLabel(
+                        line.getApprovalType() != null
+                                ? line.getApprovalType().getDescription()
+                                : null)
+                .isDefault(isTrue(line.getIsDefault()))
                 .ownerUserId(line.getOwnerUser() != null ? line.getOwnerUser().getId() : null)
                 .ownerUserName(ownerUserName)
                 .departmentId(line.getDepartment() != null ? line.getDepartment().getId() : null)
@@ -353,6 +402,7 @@ public class SavedApprovalLineService {
                 .createdAt(line.getCreatedAt())
                 .modifiedAt(line.getModifiedAt())
                 .lines(details)
+                .approvalBoxPreview(approvalBoxPreview)
                 .build();
     }
 
@@ -421,5 +471,40 @@ public class SavedApprovalLineService {
             return "[" + departmentName + "] " + name + " (" + position + ")";
         }
         return "[" + departmentName + "] " + name;
+    }
+
+    private SavedApprovalLineResponseDto.ApprovalBoxPreviewDto buildApprovalBoxPreview(
+            List<SavedApprovalLineResponseDto.LineDetailDto> details) {
+        List<SavedApprovalLineResponseDto.ApprovalBoxSlotDto> slots =
+                details.stream()
+                        .filter(detail -> detail.getRole() == ApprovalRouteRole.APPROVAL_LINE)
+                        .sorted(
+                                Comparator.comparing(
+                                                SavedApprovalLineResponseDto.LineDetailDto::getSequenceNo,
+                                                Comparator.nullsLast(Integer::compareTo))
+                                        .thenComparing(
+                                                SavedApprovalLineResponseDto.LineDetailDto::getId,
+                                                Comparator.nullsLast(Long::compareTo)))
+                        .map(
+                                detail ->
+                                        SavedApprovalLineResponseDto.ApprovalBoxSlotDto.builder()
+                                                .sequenceNo(detail.getSequenceNo())
+                                                .targetType(detail.getTargetType())
+                                                .targetUserId(detail.getTargetUserId())
+                                                .targetUserName(detail.getTargetUserName())
+                                                .targetUserPosition(detail.getTargetUserPosition())
+                                                .targetUserDepartmentName(
+                                                        detail.getTargetUserDepartmentName())
+                                                .targetDepartmentId(detail.getTargetDepartmentId())
+                                                .targetDepartmentName(
+                                                        detail.getTargetDepartmentName())
+                                                .targetName(detail.getTargetName())
+                                                .build())
+                        .toList();
+        return SavedApprovalLineResponseDto.ApprovalBoxPreviewDto.builder().slots(slots).build();
+    }
+
+    private boolean isTrue(Boolean value) {
+        return Boolean.TRUE.equals(value);
     }
 }

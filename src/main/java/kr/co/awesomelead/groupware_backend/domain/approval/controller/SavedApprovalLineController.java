@@ -74,6 +74,9 @@ import java.util.List;
         - ApprovalSavedLineType
           - PERSONAL (개인 결재선)
           - DEPARTMENT (부서 결재선)
+        - ApprovalType
+          - INTERNAL (내부결재)
+          - COOPERATIVE (협조결재)
         - ApprovalRouteRole
           - APPROVAL_LINE (결재선)
           - AGREEMENT_REQUIRED (합의부서 필수)
@@ -117,6 +120,8 @@ public class SavedApprovalLineController {
             description =
                     """
             사용자가 자주 쓰는 결재선을 본인 계정에 저장합니다.
+            - approvalType으로 결재유형(내부결재/협조결재)을 지정합니다.
+            - isDefault=true이면 같은 결재유형의 기존 기본결재선은 자동 해제됩니다.
             - targetType=USER면 targetUserId, targetType=DEPARTMENT면 targetDepartmentId를 입력해야 합니다.
             """)
     @PostMapping("/personal")
@@ -127,7 +132,13 @@ public class SavedApprovalLineController {
         return ResponseEntity.ok(ApiResponse.onSuccess(id));
     }
 
-    @Operation(summary = "개인 결재선 수정")
+    @Operation(
+            summary = "개인 결재선 수정",
+            description =
+                    """
+            - approvalType, isDefault를 함께 수정할 수 있습니다.
+            - isDefault=true이면 같은 결재유형의 다른 기본결재선은 자동 해제됩니다.
+            """)
     @PutMapping("/personal/{lineId}")
     public ResponseEntity<ApiResponse<Void>> updatePersonalLine(
             @PathVariable Long lineId,
@@ -183,6 +194,9 @@ public class SavedApprovalLineController {
             ### 타겟 지정 규칙
             - targetType=USER -> targetUserId 필수
             - targetType=DEPARTMENT -> targetDepartmentId 필수
+
+            ### 기본결재선 규칙
+            - isDefault=true이면 같은 부서 + 같은 approvalType의 기존 기본결재선은 자동 해제됩니다.
             """)
     @PostMapping("/department")
     public ResponseEntity<ApiResponse<Long>> createDepartmentLine(
@@ -197,6 +211,8 @@ public class SavedApprovalLineController {
             description =
                     """
             부서 공용 결재선을 수정합니다.
+            - approvalType, isDefault를 함께 수정할 수 있습니다.
+            - isDefault=true이면 같은 부서 + 같은 결재유형의 다른 기본결재선은 자동 해제됩니다.
             - targetType=USER -> targetUserId 필수
             - targetType=DEPARTMENT -> targetDepartmentId 필수
             """)

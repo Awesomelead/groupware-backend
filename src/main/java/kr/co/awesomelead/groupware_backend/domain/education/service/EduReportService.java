@@ -236,7 +236,7 @@ public class EduReportService {
 
     @Transactional(readOnly = true)
     public List<EduReportSummaryDto> getEduReports(
-            EduType type, DepartmentName departmentName, Long categoryId, Long id) {
+            EduType type, DepartmentName departmentName, Long categoryId, Long id, String title) {
 
         User user =
                 userRepository
@@ -265,17 +265,17 @@ public class EduReportService {
         }
 
         return eduReportQueryRepository.findEduReports(
-                type, dept, categoryId, id, hasAccess, psmCompanyFilter, canReadAllPsmCompanies);
+                type, dept, categoryId, id, hasAccess, psmCompanyFilter, canReadAllPsmCompanies, title);
     }
 
     @Transactional(readOnly = true)
     public List<EduReportSummaryDto> getDepartmentEduReports(
-            DepartmentName departmentName, Long id) {
-        return getEduReports(EduType.DEPARTMENT, departmentName, null, id);
+            DepartmentName departmentName, Long id, String title) {
+        return getEduReports(EduType.DEPARTMENT, departmentName, null, id, title);
     }
 
     @Transactional(readOnly = true)
-    public List<EduReportSummaryDto> getPsmEduReports(Long categoryId, Long id) {
+    public List<EduReportSummaryDto> getPsmEduReports(Long categoryId, Long id, String title) {
         User user =
                 userRepository
                         .findById(id)
@@ -284,11 +284,11 @@ public class EduReportService {
         boolean canReadAllCompanies = user.hasAuthority(Authority.MANAGE_PSM);
         Company companyFilter = canReadAllCompanies ? null : user.getWorkLocation();
         return eduReportQueryRepository.findPsmEduReports(
-                categoryId, id, companyFilter, canReadAllCompanies);
+                categoryId, id, companyFilter, canReadAllCompanies, title);
     }
 
     @Transactional(readOnly = true)
-    public List<EduReportSummaryDto> getSafetyEduReports(Long categoryId, Long id) {
+    public List<EduReportSummaryDto> getSafetyEduReports(Long categoryId, Long id, String title) {
         User user =
                 userRepository
                         .findById(id)
@@ -297,7 +297,7 @@ public class EduReportService {
         boolean canReadAllCompanies = user.hasAuthority(Authority.MANAGE_SAFETY);
         Company companyFilter = canReadAllCompanies ? null : user.getWorkLocation();
         return eduReportQueryRepository.findSafetyEduReports(
-                categoryId, id, companyFilter, canReadAllCompanies);
+                categoryId, id, companyFilter, canReadAllCompanies, title);
     }
 
     @Transactional(readOnly = true)

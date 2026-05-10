@@ -503,9 +503,12 @@ public class EduReportController {
             @Parameter(description = "부서명 필터(권한 사용자 전용)", example = "SALES_DEPT")
                     @RequestParam(required = false)
                     DepartmentName departmentName,
+            @Parameter(description = "제목 검색 키워드 (FULLTEXT 검색)", example = "안전교육")
+                    @RequestParam(required = false)
+                    String title,
             @Parameter(hidden = true) @AuthenticationPrincipal CustomUserDetails userDetails) {
         List<EduReportSummaryDto> reports =
-                eduReportService.getDepartmentEduReports(departmentName, userDetails.getId());
+                eduReportService.getDepartmentEduReports(departmentName, userDetails.getId(), title);
         return ResponseEntity.ok(ApiResponse.onSuccess(reports));
     }
 
@@ -577,9 +580,12 @@ public class EduReportController {
             @Parameter(description = "카테고리 ID 필터(PSM)", example = "1")
                     @RequestParam(required = false)
                     Long categoryId,
+            @Parameter(description = "제목 검색 키워드 (FULLTEXT 검색)", example = "변경관리")
+                    @RequestParam(required = false)
+                    String title,
             @Parameter(hidden = true) @AuthenticationPrincipal CustomUserDetails userDetails) {
         List<EduReportSummaryDto> reports =
-                eduReportService.getPsmEduReports(categoryId, userDetails.getId());
+                eduReportService.getPsmEduReports(categoryId, userDetails.getId(), title);
         return ResponseEntity.ok(ApiResponse.onSuccess(reports));
     }
 
@@ -651,9 +657,12 @@ public class EduReportController {
             @Parameter(description = "카테고리 ID 필터(안전 보건)", example = "1")
                     @RequestParam(required = false)
                     Long categoryId,
+            @Parameter(description = "제목 검색 키워드 (FULLTEXT 검색)", example = "정기교육")
+                    @RequestParam(required = false)
+                    String title,
             @Parameter(hidden = true) @AuthenticationPrincipal CustomUserDetails userDetails) {
         List<EduReportSummaryDto> reports =
-                eduReportService.getSafetyEduReports(categoryId, userDetails.getId());
+                eduReportService.getSafetyEduReports(categoryId, userDetails.getId(), title);
         return ResponseEntity.ok(ApiResponse.onSuccess(reports));
     }
 

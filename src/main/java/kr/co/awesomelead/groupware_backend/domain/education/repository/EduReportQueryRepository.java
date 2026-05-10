@@ -48,7 +48,7 @@ public class EduReportQueryRepository {
      */
     public List<EduReportSummaryDto> findEduReports(
             EduType type, Department dept, Long categoryId, Long userId, boolean hasAccess) {
-        return findEduReports(type, dept, categoryId, userId, hasAccess, null, true);
+        return findEduReports(type, dept, categoryId, userId, hasAccess, null, true, null);
     }
 
     public List<EduReportSummaryDto> findEduReports(
@@ -59,6 +59,26 @@ public class EduReportQueryRepository {
             boolean hasAccess,
             Company psmCompany,
             boolean canReadAllPsmCompanies) {
+        return findEduReports(
+                type,
+                dept,
+                categoryId,
+                userId,
+                hasAccess,
+                psmCompany,
+                canReadAllPsmCompanies,
+                null);
+    }
+
+    public List<EduReportSummaryDto> findEduReports(
+            EduType type,
+            Department dept,
+            Long categoryId,
+            Long userId,
+            boolean hasAccess,
+            Company psmCompany,
+            boolean canReadAllPsmCompanies,
+            String title) {
         QUser currentUser = new QUser("currentUserForCanSign");
         QUser creatorUser = new QUser("creatorUser");
         BooleanExpression attendanceExists =
@@ -108,7 +128,8 @@ public class EduReportQueryRepository {
                         eqEduType(type),
                         eqCategoryId(categoryId),
                         deptFilter(type, hasAccess, dept),
-                        psmFilter(psmCompany, canReadAllPsmCompanies))
+                        psmFilter(psmCompany, canReadAllPsmCompanies),
+                        titleFilter(title))
                 // 같은 eduDate(일자) 내에서는 최신 생성건이 위로 오도록 id DESC를 타이브레이커로 사용
                 .orderBy(eduReport.pinned.desc(), eduReport.eduDate.desc(), eduReport.id.desc())
                 .fetch();
@@ -116,6 +137,15 @@ public class EduReportQueryRepository {
 
     public List<EduReportSummaryDto> findPsmEduReports(
             Long categoryId, Long userId, Company company, boolean canReadAllCompanies) {
+        return findPsmEduReports(categoryId, userId, company, canReadAllCompanies, null);
+    }
+
+    public List<EduReportSummaryDto> findPsmEduReports(
+            Long categoryId,
+            Long userId,
+            Company company,
+            boolean canReadAllCompanies,
+            String title) {
         QUser creatorUser = new QUser("creatorUserForPsm");
         BooleanExpression attendanceExists =
                 JPAExpressions.selectOne()
@@ -151,13 +181,23 @@ public class EduReportQueryRepository {
                 .where(
                         eduReport.eduType.eq(EduType.PSM),
                         eqCategoryId(categoryId),
-                        psmCompanyFilter(company, canReadAllCompanies))
+                        psmCompanyFilter(company, canReadAllCompanies),
+                        titleFilter(title))
                 .orderBy(eduReport.pinned.desc(), eduReport.eduDate.desc(), eduReport.id.desc())
                 .fetch();
     }
 
     public List<EduReportSummaryDto> findSafetyEduReports(
             Long categoryId, Long userId, Company company, boolean canReadAllCompanies) {
+        return findSafetyEduReports(categoryId, userId, company, canReadAllCompanies, null);
+    }
+
+    public List<EduReportSummaryDto> findSafetyEduReports(
+            Long categoryId,
+            Long userId,
+            Company company,
+            boolean canReadAllCompanies,
+            String title) {
         QUser creatorUser = new QUser("creatorUserForSafety");
         BooleanExpression attendanceExists =
                 JPAExpressions.selectOne()
@@ -193,7 +233,8 @@ public class EduReportQueryRepository {
                 .where(
                         eduReport.eduType.eq(EduType.SAFETY),
                         eqCategoryId(categoryId),
-                        psmCompanyFilter(company, canReadAllCompanies))
+                        psmCompanyFilter(company, canReadAllCompanies),
+                        titleFilter(title))
                 .orderBy(eduReport.pinned.desc(), eduReport.eduDate.desc(), eduReport.id.desc())
                 .fetch();
     }
@@ -361,6 +402,18 @@ public class EduReportQueryRepository {
     }
 
     // ── BooleanExpression 모듈 ──────────────────────────────────────
+
+    private BooleanExpression titleFilter(String title) {
+        if (!StringUtils.hasText(title)) {
+            return null;
+        }
+        return Expressions.numberTemplate(
+                        Double.class,
+                        "function('match_against', {0}, {1})",
+                        eduReport.title,
+                        Expressions.constant(title))
+                .gt(0);
+    }
 
     /** 교육 유형 필터 — null 이면 조건 없음 (전체) */
     private BooleanExpression eqEduType(EduType type) {

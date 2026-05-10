@@ -2,6 +2,8 @@ package kr.co.awesomelead.groupware_backend.domain.approval.entity;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
@@ -10,6 +12,8 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 
+import kr.co.awesomelead.groupware_backend.domain.approval.enums.ApprovalTargetType;
+import kr.co.awesomelead.groupware_backend.domain.department.entity.Department;
 import kr.co.awesomelead.groupware_backend.domain.user.entity.User;
 import kr.co.awesomelead.groupware_backend.global.common.entity.BaseTimeEntity;
 
@@ -25,26 +29,32 @@ import lombok.Setter;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-@Table(name = "approval_attachments")
-public class ApprovalAttachment extends BaseTimeEntity {
+@Table(name = "approval_personal_viewer_targets")
+public class ApprovalPersonalViewerTarget extends BaseTimeEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "document_id", nullable = false)
-    private ApprovalDocument document;
+    @JoinColumn(name = "setting_id", nullable = false)
+    private ApprovalPersonalSetting setting;
 
-    @Column(nullable = false, length = 255)
-    private String originalFileName;
-
-    @Column(nullable = false, length = 300)
-    private String s3Key;
-
-    private Long fileSize;
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false, length = 20)
+    private ApprovalTargetType targetType;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "uploaded_by_user_id")
-    private User uploadedByUser;
+    @JoinColumn(name = "target_user_id")
+    private User targetUser;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "target_department_id")
+    private Department targetDepartment;
+
+    @Column(nullable = false, length = 150)
+    private String targetNameSnapshot;
+
+    @Column(nullable = false)
+    private Integer sortOrder;
 }

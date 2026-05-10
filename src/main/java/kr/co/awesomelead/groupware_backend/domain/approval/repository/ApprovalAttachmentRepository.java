@@ -4,4 +4,9 @@ import kr.co.awesomelead.groupware_backend.domain.approval.entity.ApprovalAttach
 
 import org.springframework.data.jpa.repository.JpaRepository;
 
-public interface ApprovalAttachmentRepository extends JpaRepository<ApprovalAttachment, Long> {}
+import java.util.List;
+
+public interface ApprovalAttachmentRepository extends JpaRepository<ApprovalAttachment, Long> {
+
+    List<ApprovalAttachment> findByDocumentIdOrderByIdAsc(Long documentId);
+}

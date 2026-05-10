@@ -42,10 +42,13 @@ public class ApprovalPersonalSettingResponseDto {
     public static class DelegateUserDto {
         @Schema(description = "대결자 사용자 ID", example = "15")
         private Long id;
+
         @Schema(description = "대결자 이름", example = "더미사용자011")
         private String name;
+
         @Schema(description = "대결자 직급", example = "사원")
         private String position;
+
         @Schema(description = "대결자 부서명", example = "마루이 경비")
         private String departmentName;
     }
@@ -66,18 +69,25 @@ public class ApprovalPersonalSettingResponseDto {
 
         @Schema(description = "사용자 타겟 ID(targetType=USER일 때)", example = "14")
         private Long targetUserId;
+
         @Schema(description = "사용자 타겟 이름", example = "고영민")
         private String targetUserName;
+
         @Schema(description = "사용자 타겟 직급", example = "사원")
         private String targetUserPosition;
+
         @Schema(description = "사용자 타겟 부서명", example = "경영지원부")
         private String targetUserDepartmentName;
+
         @Schema(description = "부서 타겟 ID(targetType=DEPARTMENT일 때)", example = "3")
         private Long targetDepartmentId;
+
         @Schema(description = "부서 타겟명", example = "경영지원부")
         private String targetDepartmentName;
+
         @Schema(description = "화면 표시용 타겟명", example = "[경영지원부] 고영민 (사원)")
         private String targetName;
+
         @Schema(description = "정렬순서", example = "1")
         private Integer sortOrder;
     }

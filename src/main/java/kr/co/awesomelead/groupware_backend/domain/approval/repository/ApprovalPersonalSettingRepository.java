@@ -22,4 +22,3 @@ public interface ApprovalPersonalSettingRepository
                     + "where s.user.id = :userId")
     Optional<ApprovalPersonalSetting> findByUserIdWithTargets(@Param("userId") Long userId);
 }
-

@@ -30,12 +30,16 @@ public class ApprovalTemplateListResponseDto {
     public static class CategoryDto {
         @Schema(description = "양식구분 ID", example = "1")
         private Long id;
+
         @Schema(description = "양식구분 코드", example = "COMMON")
         private String code;
+
         @Schema(description = "양식구분명", example = "공통")
         private String name;
+
         @Schema(description = "정렬순서(오름차순)", example = "1")
         private Integer sortOrder;
+
         @Schema(description = "양식 목록")
         private List<TemplateDto> templates;
     }
@@ -47,10 +51,13 @@ public class ApprovalTemplateListResponseDto {
     public static class TemplateDto {
         @Schema(description = "양식 ID", example = "11")
         private Long id;
+
         @Schema(description = "양식 코드", example = "OVERSEAS_TRIP")
         private String code;
+
         @Schema(description = "양식명", example = "국외출장여비정산서")
         private String name;
+
         @Schema(description = "양식 설명", example = "국외출장 경비 정산용 양식")
         private String description;
 

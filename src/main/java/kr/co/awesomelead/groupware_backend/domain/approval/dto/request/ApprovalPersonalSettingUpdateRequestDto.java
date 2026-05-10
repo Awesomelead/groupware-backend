@@ -51,4 +51,3 @@ public class ApprovalPersonalSettingUpdateRequestDto {
         private Long targetDepartmentId;
     }
 }
-

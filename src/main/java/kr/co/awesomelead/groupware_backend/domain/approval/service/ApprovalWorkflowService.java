@@ -235,7 +235,9 @@ public class ApprovalWorkflowService {
 
         List<ApprovalInboxAllResponseDto.DocumentDto> documents =
                 approvalDocumentRepository.findAllWithLinesOrderByIdDesc().stream()
-                        .filter(document -> isViewerAcquiredDocument(document, userId, departmentId))
+                        .filter(
+                                document ->
+                                        isViewerAcquiredDocument(document, userId, departmentId))
                         .map(document -> toInboxDocumentDto(document, userId, departmentId))
                         .toList();
 
@@ -514,8 +516,7 @@ public class ApprovalWorkflowService {
                 || isMyApprovalDocument(document, userId, departmentId);
     }
 
-    private boolean isReferenceDocument(
-            ApprovalDocument document, Long userId, Long departmentId) {
+    private boolean isReferenceDocument(ApprovalDocument document, Long userId, Long departmentId) {
         if (document.getStatus() == ApprovalStatus.DRAFT) {
             return false;
         }
@@ -539,10 +540,12 @@ public class ApprovalWorkflowService {
         if (document.getStatus() == ApprovalStatus.DRAFT) {
             return false;
         }
-        if (document.getDrafterUser() == null || !userId.equals(document.getDrafterUser().getId())) {
+        if (document.getDrafterUser() == null
+                || !userId.equals(document.getDrafterUser().getId())) {
             return false;
         }
-        return document.getLines().stream().anyMatch(line -> line.getRole() == ApprovalRouteRole.VIEWER);
+        return document.getLines().stream()
+                .anyMatch(line -> line.getRole() == ApprovalRouteRole.VIEWER);
     }
 
     private boolean isDepartmentBoxDocument(ApprovalDocument document, Long departmentId) {
@@ -662,8 +665,7 @@ public class ApprovalWorkflowService {
             return false;
         }
         if (line.getTargetType() == ApprovalTargetType.USER) {
-            return line.getTargetUser() != null
-                    && userId.equals(line.getTargetUser().getId());
+            return line.getTargetUser() != null && userId.equals(line.getTargetUser().getId());
         }
         return departmentId != null
                 && line.getTargetDepartment() != null
@@ -675,8 +677,7 @@ public class ApprovalWorkflowService {
             return false;
         }
         if (line.getTargetType() == ApprovalTargetType.USER) {
-            return line.getTargetUser() != null
-                    && userId.equals(line.getTargetUser().getId());
+            return line.getTargetUser() != null && userId.equals(line.getTargetUser().getId());
         }
         return departmentId != null
                 && line.getTargetDepartment() != null

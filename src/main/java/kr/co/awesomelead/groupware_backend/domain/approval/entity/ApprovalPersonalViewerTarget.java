@@ -58,4 +58,3 @@ public class ApprovalPersonalViewerTarget extends BaseTimeEntity {
     @Column(nullable = false)
     private Integer sortOrder;
 }
-

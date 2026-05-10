@@ -24,9 +24,7 @@ public class ApprovalInboxAllResponseDto {
     @Schema(description = "현재 사용자 소속 부서 ID(부서결재함 등 부서 기준 화면에서 사용)", example = "3")
     private Long myDepartmentId;
 
-    @Schema(
-            description = "현재 사용자 소속 부서명(부서결재함 등 부서 기준 화면에서 사용)",
-            example = "환경안전부")
+    @Schema(description = "현재 사용자 소속 부서명(부서결재함 등 부서 기준 화면에서 사용)", example = "환경안전부")
     private String myDepartmentName;
 
     @Schema(description = "전체 탭 문서 목록")
@@ -42,12 +40,16 @@ public class ApprovalInboxAllResponseDto {
 
         @Schema(description = "문서 ID", example = "101")
         private Long documentId;
+
         @Schema(description = "양식 ID", example = "1")
         private Long templateId;
+
         @Schema(description = "양식 코드", example = "EXPENSE_DRAFT")
         private String templateCode;
+
         @Schema(description = "양식명", example = "기안및지출결의")
         private String templateName;
+
         @Schema(description = "문서 제목", example = "1분기 출장비 정산")
         private String title;
 
@@ -78,6 +80,7 @@ public class ApprovalInboxAllResponseDto {
 
         @Schema(description = "기안자 사용자 ID", example = "14")
         private Long drafterUserId;
+
         @Schema(description = "기안자 이름", example = "고영민")
         private String drafterUserName;
 
@@ -86,6 +89,7 @@ public class ApprovalInboxAllResponseDto {
 
         @Schema(description = "기안자 부서 ID", example = "3")
         private Long drafterDepartmentId;
+
         @Schema(description = "기안자 부서명", example = "경영지원부")
         private String drafterDepartmentName;
 
@@ -97,10 +101,13 @@ public class ApprovalInboxAllResponseDto {
 
         @Schema(description = "상신일시")
         private LocalDateTime submittedAt;
+
         @Schema(description = "완료일시(완결 시)")
         private LocalDateTime completedAt;
+
         @Schema(description = "최초 생성일시")
         private LocalDateTime createdAt;
+
         @Schema(description = "최종 수정일시")
         private LocalDateTime modifiedAt;
 
@@ -131,6 +138,7 @@ public class ApprovalInboxAllResponseDto {
                     "RECEIVER_DEPARTMENT"
                 })
         private ApprovalRouteRole role;
+
         @Schema(description = "결재 라인 역할 한글 라벨", example = "결재선")
         private String roleLabel;
 
@@ -139,12 +147,16 @@ public class ApprovalInboxAllResponseDto {
                 example = "USER",
                 allowableValues = {"USER", "DEPARTMENT"})
         private ApprovalTargetType targetType;
+
         @Schema(description = "타겟 사용자 ID(targetType=USER일 때)", example = "14")
         private Long targetUserId;
+
         @Schema(description = "타겟 부서 ID(targetType=DEPARTMENT일 때)", example = "3")
         private Long targetDepartmentId;
+
         @Schema(description = "타겟 표시명", example = "[경영지원부] 고영민 (사원)")
         private String targetName;
+
         @Schema(description = "결재 순서", example = "1")
         private Integer sequenceNo;
 
@@ -160,6 +172,7 @@ public class ApprovalInboxAllResponseDto {
                     "CANCELED"
                 })
         private ApprovalLineStatus lineStatus;
+
         @Schema(description = "결재 라인 상태 한글 라벨", example = "결재대기")
         private String lineStatusLabel;
     }
@@ -184,6 +197,7 @@ public class ApprovalInboxAllResponseDto {
                     "RECEIVER_DEPARTMENT"
                 })
         private ApprovalRouteRole role;
+
         @Schema(description = "결재 라인 역할 한글 라벨", example = "결재선")
         private String roleLabel;
 
@@ -192,14 +206,19 @@ public class ApprovalInboxAllResponseDto {
                 example = "USER",
                 allowableValues = {"USER", "DEPARTMENT"})
         private ApprovalTargetType targetType;
+
         @Schema(description = "타겟 사용자 ID(targetType=USER일 때)", example = "14")
         private Long targetUserId;
+
         @Schema(description = "타겟 부서 ID(targetType=DEPARTMENT일 때)", example = "3")
         private Long targetDepartmentId;
+
         @Schema(description = "타겟 표시명", example = "[경영지원부] 고영민 (사원)")
         private String targetName;
+
         @Schema(description = "결재 순서", example = "1")
         private Integer sequenceNo;
+
         @Schema(description = "필수 여부", example = "true")
         private Boolean required;
 
@@ -215,6 +234,7 @@ public class ApprovalInboxAllResponseDto {
                     "CANCELED"
                 })
         private ApprovalLineStatus lineStatus;
+
         @Schema(description = "결재 라인 상태 한글 라벨", example = "결재대기")
         private String lineStatusLabel;
     }

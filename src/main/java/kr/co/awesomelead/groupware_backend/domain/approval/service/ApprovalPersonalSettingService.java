@@ -258,8 +258,7 @@ public class ApprovalPersonalSettingService {
                 .name(user.getNameKor())
                 .position(user.getPosition() != null ? user.getPosition().getDescription() : null)
                 .departmentName(
-                        user.getDepartment() != null
-                                        && user.getDepartment().getName() != null
+                        user.getDepartment() != null && user.getDepartment().getName() != null
                                 ? user.getDepartment().getName().getDescription()
                                 : null)
                 .build();
@@ -315,8 +314,7 @@ public class ApprovalPersonalSettingService {
                         : "";
 
         boolean validContentType =
-                Set.of("image/png", "image/jpg", "image/jpeg", "image/gif")
-                        .contains(contentType);
+                Set.of("image/png", "image/jpg", "image/jpeg", "image/gif").contains(contentType);
         boolean validExtension = Set.of("png", "jpg", "jpeg", "gif").contains(extension);
 
         if (!validContentType && !validExtension) {
@@ -337,7 +335,8 @@ public class ApprovalPersonalSettingService {
                 user.getDepartment() != null && user.getDepartment().getName() != null
                         ? user.getDepartment().getName().getDescription()
                         : "-";
-        String positionName = user.getPosition() != null ? user.getPosition().getDescription() : "-";
+        String positionName =
+                user.getPosition() != null ? user.getPosition().getDescription() : "-";
         return "[" + departmentName + "] " + user.getNameKor() + " (" + positionName + ")";
     }
 

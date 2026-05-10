@@ -9,7 +9,6 @@ import kr.co.awesomelead.groupware_backend.domain.approval.entity.SavedApprovalL
 import kr.co.awesomelead.groupware_backend.domain.approval.enums.ApprovalRouteRole;
 import kr.co.awesomelead.groupware_backend.domain.approval.enums.ApprovalSavedLineType;
 import kr.co.awesomelead.groupware_backend.domain.approval.enums.ApprovalTargetType;
-import kr.co.awesomelead.groupware_backend.domain.approval.enums.ApprovalType;
 import kr.co.awesomelead.groupware_backend.domain.approval.repository.SavedApprovalLineDetailRepository;
 import kr.co.awesomelead.groupware_backend.domain.approval.repository.SavedApprovalLineRepository;
 import kr.co.awesomelead.groupware_backend.domain.department.entity.Department;
@@ -480,7 +479,8 @@ public class SavedApprovalLineService {
                         .filter(detail -> detail.getRole() == ApprovalRouteRole.APPROVAL_LINE)
                         .sorted(
                                 Comparator.comparing(
-                                                SavedApprovalLineResponseDto.LineDetailDto::getSequenceNo,
+                                                SavedApprovalLineResponseDto.LineDetailDto
+                                                        ::getSequenceNo,
                                                 Comparator.nullsLast(Integer::compareTo))
                                         .thenComparing(
                                                 SavedApprovalLineResponseDto.LineDetailDto::getId,

@@ -121,7 +121,8 @@ public class ApprovalPersonalSettingController {
             @Parameter(hidden = true) @AuthenticationPrincipal CustomUserDetails userDetails) {
         return ResponseEntity.ok(
                 ApiResponse.onSuccess(
-                        approvalPersonalSettingService.saveMySetting(userDetails.getId(), request)));
+                        approvalPersonalSettingService.saveMySetting(
+                                userDetails.getId(), request)));
     }
 
     @Operation(

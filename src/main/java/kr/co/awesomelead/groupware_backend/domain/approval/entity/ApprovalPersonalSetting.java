@@ -68,4 +68,3 @@ public class ApprovalPersonalSetting extends BaseTimeEntity {
             fetch = FetchType.LAZY)
     private List<ApprovalPersonalViewerTarget> defaultViewerTargets = new ArrayList<>();
 }
-

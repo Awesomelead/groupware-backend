@@ -59,7 +59,15 @@ public class EduReportQueryRepository {
             boolean hasAccess,
             Company psmCompany,
             boolean canReadAllPsmCompanies) {
-        return findEduReports(type, dept, categoryId, userId, hasAccess, psmCompany, canReadAllPsmCompanies, null);
+        return findEduReports(
+                type,
+                dept,
+                categoryId,
+                userId,
+                hasAccess,
+                psmCompany,
+                canReadAllPsmCompanies,
+                null);
     }
 
     public List<EduReportSummaryDto> findEduReports(
@@ -133,7 +141,11 @@ public class EduReportQueryRepository {
     }
 
     public List<EduReportSummaryDto> findPsmEduReports(
-            Long categoryId, Long userId, Company company, boolean canReadAllCompanies, String title) {
+            Long categoryId,
+            Long userId,
+            Company company,
+            boolean canReadAllCompanies,
+            String title) {
         QUser creatorUser = new QUser("creatorUserForPsm");
         BooleanExpression attendanceExists =
                 JPAExpressions.selectOne()
@@ -181,7 +193,11 @@ public class EduReportQueryRepository {
     }
 
     public List<EduReportSummaryDto> findSafetyEduReports(
-            Long categoryId, Long userId, Company company, boolean canReadAllCompanies, String title) {
+            Long categoryId,
+            Long userId,
+            Company company,
+            boolean canReadAllCompanies,
+            String title) {
         QUser creatorUser = new QUser("creatorUserForSafety");
         BooleanExpression attendanceExists =
                 JPAExpressions.selectOne()
@@ -391,8 +407,12 @@ public class EduReportQueryRepository {
         if (!StringUtils.hasText(title)) {
             return null;
         }
-        return Expressions.numberTemplate(Double.class,
-                "function('match_against', {0}, {1})", eduReport.title, Expressions.constant(title)).gt(0);
+        return Expressions.numberTemplate(
+                        Double.class,
+                        "function('match_against', {0}, {1})",
+                        eduReport.title,
+                        Expressions.constant(title))
+                .gt(0);
     }
 
     /** 교육 유형 필터 — null 이면 조건 없음 (전체) */

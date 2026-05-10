@@ -636,7 +636,8 @@ public class EduReportServiceTest {
                 .thenReturn(mockList);
 
         // when
-        List<EduReportSummaryDto> result = eduReportService.getEduReports(null, null, null, 1L, null);
+        List<EduReportSummaryDto> result =
+                eduReportService.getEduReports(null, null, null, 1L, null);
 
         // then
         assertThat(result).isNotNull();
@@ -671,7 +672,14 @@ public class EduReportServiceTest {
         when(departmentRepository.findByName(DepartmentName.SALES_DEPT))
                 .thenReturn(Optional.of(salesDept));
         when(eduReportQueryRepository.findEduReports(
-                        EduType.DEPARTMENT, salesDept, null, 1L, true, Company.AWESOME, false, null))
+                        EduType.DEPARTMENT,
+                        salesDept,
+                        null,
+                        1L,
+                        true,
+                        Company.AWESOME,
+                        false,
+                        null))
                 .thenReturn(List.of(report1));
 
         // when
@@ -687,7 +695,14 @@ public class EduReportServiceTest {
         verify(departmentRepository, times(1)).findByName(DepartmentName.SALES_DEPT);
         verify(eduReportQueryRepository, times(1))
                 .findEduReports(
-                        EduType.DEPARTMENT, salesDept, null, 1L, true, Company.AWESOME, false, null);
+                        EduType.DEPARTMENT,
+                        salesDept,
+                        null,
+                        1L,
+                        true,
+                        Company.AWESOME,
+                        false,
+                        null);
     }
 
     @Test
@@ -697,13 +712,15 @@ public class EduReportServiceTest {
         when(userRepository.findById(1L)).thenReturn(Optional.empty());
 
         // when & then
-        assertThatThrownBy(() -> eduReportService.getEduReports(EduType.SAFETY, null, null, 1L, null))
+        assertThatThrownBy(
+                        () -> eduReportService.getEduReports(EduType.SAFETY, null, null, 1L, null))
                 .isInstanceOf(CustomException.class)
                 .extracting("errorCode")
                 .isEqualTo(ErrorCode.USER_NOT_FOUND);
 
         verify(eduReportQueryRepository, never())
-                .findEduReports(any(), any(), any(), anyLong(), anyBoolean(), any(), anyBoolean(), any());
+                .findEduReports(
+                        any(), any(), any(), anyLong(), anyBoolean(), any(), anyBoolean(), any());
     }
 
     @Test

@@ -508,7 +508,8 @@ public class EduReportController {
                     String title,
             @Parameter(hidden = true) @AuthenticationPrincipal CustomUserDetails userDetails) {
         List<EduReportSummaryDto> reports =
-                eduReportService.getDepartmentEduReports(departmentName, userDetails.getId(), title);
+                eduReportService.getDepartmentEduReports(
+                        departmentName, userDetails.getId(), title);
         return ResponseEntity.ok(ApiResponse.onSuccess(reports));
     }
 

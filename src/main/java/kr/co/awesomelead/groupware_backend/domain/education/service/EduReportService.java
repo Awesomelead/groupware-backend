@@ -265,7 +265,14 @@ public class EduReportService {
         }
 
         return eduReportQueryRepository.findEduReports(
-                type, dept, categoryId, id, hasAccess, psmCompanyFilter, canReadAllPsmCompanies, title);
+                type,
+                dept,
+                categoryId,
+                id,
+                hasAccess,
+                psmCompanyFilter,
+                canReadAllPsmCompanies,
+                title);
     }
 
     @Transactional(readOnly = true)

@@ -13,6 +13,9 @@ import kr.co.awesomelead.groupware_backend.domain.user.dto.response.MyInfoRespon
 import kr.co.awesomelead.groupware_backend.domain.user.dto.response.UpdateMyInfoRequestDto;
 import kr.co.awesomelead.groupware_backend.domain.user.dto.response.UserDetailResponseDto;
 import kr.co.awesomelead.groupware_backend.domain.user.dto.response.UserSummaryResponseDto;
+import kr.co.awesomelead.groupware_backend.domain.user.enums.JobType;
+import kr.co.awesomelead.groupware_backend.domain.user.enums.Position;
+import kr.co.awesomelead.groupware_backend.domain.user.enums.Role;
 import kr.co.awesomelead.groupware_backend.domain.user.service.UserService;
 import kr.co.awesomelead.groupware_backend.global.common.response.ApiResponse;
 
@@ -116,12 +119,26 @@ public class UserController {
     public ResponseEntity<ApiResponse<Page<UserSummaryResponseDto>>> getEmployeeList(
             @RequestParam(required = false)
                     @io.swagger.v3.oas.annotations.Parameter(
-                            description = "직원 이름 검색어 (N-gram Full-Text Search, 미입력 시 전체 조회)",
+                            description = "검색어 (이름/영문이름/이메일 부분 일치)",
                             example = "김")
                     String keyword,
-            @PageableDefault(size = 20, sort = "id") Pageable pageable) {
+            @RequestParam(required = false)
+                    @io.swagger.v3.oas.annotations.Parameter(description = "직급 필터")
+                    Position position,
+            @RequestParam(required = false)
+                    @io.swagger.v3.oas.annotations.Parameter(description = "부서 ID 필터")
+                    Long departmentId,
+            @RequestParam(required = false)
+                    @io.swagger.v3.oas.annotations.Parameter(description = "근무 직종 필터")
+                    JobType jobType,
+            @RequestParam(required = false)
+                    @io.swagger.v3.oas.annotations.Parameter(description = "역할 필터")
+                    Role role,
+            @PageableDefault(size = 20) Pageable pageable) {
         return ResponseEntity.ok(
-                ApiResponse.onSuccess(userService.getEmployeeList(keyword, pageable)));
+                ApiResponse.onSuccess(
+                        userService.getEmployeeList(
+                                keyword, position, departmentId, jobType, role, pageable)));
     }
 
     @Operation(summary = "직원 상세 조회", description = "특정 직원의 상세 정보를 조회합니다. 인증 토큰이 필요합니다.")

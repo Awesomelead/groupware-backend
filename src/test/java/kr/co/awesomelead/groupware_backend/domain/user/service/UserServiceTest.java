@@ -26,6 +26,7 @@ import kr.co.awesomelead.groupware_backend.domain.user.enums.Role;
 import kr.co.awesomelead.groupware_backend.domain.user.enums.Status;
 import kr.co.awesomelead.groupware_backend.domain.user.repository.MyInfoUpdateRequestRepository;
 import kr.co.awesomelead.groupware_backend.domain.user.repository.UserRepository;
+import kr.co.awesomelead.groupware_backend.domain.user.repository.querydsl.UserQueryRepository;
 import kr.co.awesomelead.groupware_backend.global.error.CustomException;
 import kr.co.awesomelead.groupware_backend.global.error.ErrorCode;
 
@@ -53,6 +54,7 @@ import java.util.Optional;
 class UserServiceTest {
 
     @Mock private UserRepository userRepository;
+    @Mock private UserQueryRepository userQueryRepository;
     @Mock private PhoneAuthService phoneAuthService;
     @Mock private MyInfoUpdateRequestRepository myInfoUpdateRequestRepository;
     @Mock private UserDetails userDetails;
@@ -420,10 +422,11 @@ class UserServiceTest {
     class GetEmployeeListTest {
 
         @Test
-        @DisplayName("성공: keyword 없으면 AVAILABLE 상태 직원 목록을 페이징으로 반환한다")
+        @DisplayName("성공: 필터 없이 AVAILABLE 상태 직원 목록을 페이징으로 반환한다")
         void getEmployeeList_success() {
             // given
             Pageable pageable = PageRequest.of(0, 20);
+            Pageable unsorted = PageRequest.of(0, 20);
             User user1 = createTestUser();
             User user2 =
                     User.builder()
@@ -435,11 +438,13 @@ class UserServiceTest {
                             .build();
             Page<User> userPage = new PageImpl<>(List.of(user1, user2), pageable, 2);
 
-            given(userRepository.findAllByStatusWithDepartment(Status.AVAILABLE, pageable))
+            given(userQueryRepository.findAllAvailableWithFilters(
+                            null, null, null, null, null, unsorted))
                     .willReturn(userPage);
 
             // when
-            Page<UserSummaryResponseDto> result = userService.getEmployeeList(null, pageable);
+            Page<UserSummaryResponseDto> result =
+                    userService.getEmployeeList(null, null, null, null, null, pageable);
 
             // then
             assertThat(result.getTotalElements()).isEqualTo(2);
@@ -452,8 +457,8 @@ class UserServiceTest {
             assertThat(result.getContent().get(1).getUserId()).isEqualTo(2L);
             assertThat(result.getContent().get(1).getName()).isEqualTo("이영희");
 
-            verify(userRepository).findAllByStatusWithDepartment(Status.AVAILABLE, pageable);
-            verify(userRepository, never()).searchByNameKorFullText(any(), any());
+            verify(userQueryRepository)
+                    .findAllAvailableWithFilters(null, null, null, null, null, unsorted);
         }
 
         @Test
@@ -461,34 +466,38 @@ class UserServiceTest {
         void getEmployeeList_empty() {
             // given
             Pageable pageable = PageRequest.of(0, 20);
+            Pageable unsorted = PageRequest.of(0, 20);
             Page<User> emptyPage = new PageImpl<>(List.of(), pageable, 0);
 
-            given(userRepository.findAllByStatusWithDepartment(Status.AVAILABLE, pageable))
+            given(userQueryRepository.findAllAvailableWithFilters(
+                            null, null, null, null, null, unsorted))
                     .willReturn(emptyPage);
 
             // when
-            Page<UserSummaryResponseDto> result = userService.getEmployeeList(null, pageable);
+            Page<UserSummaryResponseDto> result =
+                    userService.getEmployeeList(null, null, null, null, null, pageable);
 
             // then
             assertThat(result.getTotalElements()).isEqualTo(0);
             assertThat(result.getContent()).isEmpty();
-
-            verify(userRepository).findAllByStatusWithDepartment(Status.AVAILABLE, pageable);
         }
 
         @Test
         @DisplayName("성공: 페이지네이션이 정상적으로 동작한다")
         void getEmployeeList_pagination() {
             // given
-            Pageable pageable = PageRequest.of(1, 1); // 2번째 페이지, 1개씩
+            Pageable pageable = PageRequest.of(1, 1);
+            Pageable unsorted = PageRequest.of(1, 1);
             User user = createTestUser();
-            Page<User> userPage = new PageImpl<>(List.of(user), pageable, 3); // 전체 3명 중 2번째 페이지
+            Page<User> userPage = new PageImpl<>(List.of(user), pageable, 3);
 
-            given(userRepository.findAllByStatusWithDepartment(Status.AVAILABLE, pageable))
+            given(userQueryRepository.findAllAvailableWithFilters(
+                            null, null, null, null, null, unsorted))
                     .willReturn(userPage);
 
             // when
-            Page<UserSummaryResponseDto> result = userService.getEmployeeList(null, pageable);
+            Page<UserSummaryResponseDto> result =
+                    userService.getEmployeeList(null, null, null, null, null, pageable);
 
             // then
             assertThat(result.getTotalElements()).isEqualTo(3);
@@ -498,44 +507,55 @@ class UserServiceTest {
         }
 
         @Test
-        @DisplayName("성공: keyword가 있으면 Full-Text Search를 사용한다")
-        void getEmployeeList_withKeyword_usesFullTextSearch() {
+        @DisplayName("성공: keyword가 있으면 필터 쿼리에 keyword를 전달한다")
+        void getEmployeeList_withKeyword() {
             // given
             Pageable pageable = PageRequest.of(0, 20);
+            Pageable unsorted = PageRequest.of(0, 20);
             User user = createTestUser();
             Page<User> userPage = new PageImpl<>(List.of(user), pageable, 1);
 
-            given(userRepository.searchByNameKorFullText("김철", pageable)).willReturn(userPage);
+            given(userQueryRepository.findAllAvailableWithFilters(
+                            "김철", null, null, null, null, unsorted))
+                    .willReturn(userPage);
 
             // when
-            Page<UserSummaryResponseDto> result = userService.getEmployeeList("김철", pageable);
+            Page<UserSummaryResponseDto> result =
+                    userService.getEmployeeList("김철", null, null, null, null, pageable);
 
             // then
             assertThat(result.getTotalElements()).isEqualTo(1);
             assertThat(result.getContent().get(0).getName()).isEqualTo(TEST_NAME_KOR);
 
-            verify(userRepository).searchByNameKorFullText("김철", pageable);
-            verify(userRepository, never()).findAllByStatusWithDepartment(any(), any());
+            verify(userQueryRepository)
+                    .findAllAvailableWithFilters("김철", null, null, null, null, unsorted);
         }
 
         @Test
-        @DisplayName("성공: keyword가 공백 문자열이면 전체 목록을 조회한다")
-        void getEmployeeList_withBlankKeyword_usesDefaultQuery() {
+        @DisplayName("성공: jobType 필터를 전달하면 필터 쿼리에 반영된다")
+        void getEmployeeList_withJobTypeFilter() {
             // given
             Pageable pageable = PageRequest.of(0, 20);
-            Page<User> userPage = new PageImpl<>(List.of(createTestUser()), pageable, 1);
+            Pageable unsorted = PageRequest.of(0, 20);
+            User user = createTestUser();
+            Page<User> userPage = new PageImpl<>(List.of(user), pageable, 1);
 
-            given(userRepository.findAllByStatusWithDepartment(Status.AVAILABLE, pageable))
+            given(userQueryRepository.findAllAvailableWithFilters(
+                            null, null, null, JobType.MANAGEMENT, null, unsorted))
                     .willReturn(userPage);
 
             // when
-            Page<UserSummaryResponseDto> result = userService.getEmployeeList("   ", pageable);
+            Page<UserSummaryResponseDto> result =
+                    userService.getEmployeeList(
+                            null, null, null, JobType.MANAGEMENT, null, pageable);
 
             // then
             assertThat(result.getTotalElements()).isEqualTo(1);
+            assertThat(result.getContent().get(0).getJobType()).isEqualTo(JobType.MANAGEMENT);
 
-            verify(userRepository).findAllByStatusWithDepartment(Status.AVAILABLE, pageable);
-            verify(userRepository, never()).searchByNameKorFullText(any(), any());
+            verify(userQueryRepository)
+                    .findAllAvailableWithFilters(
+                            null, null, null, JobType.MANAGEMENT, null, unsorted);
         }
     }
 

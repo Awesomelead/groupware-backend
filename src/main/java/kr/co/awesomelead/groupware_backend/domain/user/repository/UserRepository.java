@@ -118,4 +118,5 @@ public interface UserRepository extends JpaRepository<User, Long> {
             @Param("jobType") JobType jobType,
             @Param("role") Role role,
             Pageable pageable);
+
 }

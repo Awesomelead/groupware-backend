@@ -438,8 +438,9 @@ class UserServiceTest {
                             .build();
             Page<User> userPage = new PageImpl<>(List.of(user1, user2), pageable, 2);
 
-            given(userQueryRepository.findAllAvailableWithFilters(
-                            null, null, null, null, null, unsorted))
+            given(
+                            userQueryRepository.findAllAvailableWithFilters(
+                                    null, null, null, null, null, unsorted))
                     .willReturn(userPage);
 
             // when
@@ -469,8 +470,9 @@ class UserServiceTest {
             Pageable unsorted = PageRequest.of(0, 20);
             Page<User> emptyPage = new PageImpl<>(List.of(), pageable, 0);
 
-            given(userQueryRepository.findAllAvailableWithFilters(
-                            null, null, null, null, null, unsorted))
+            given(
+                            userQueryRepository.findAllAvailableWithFilters(
+                                    null, null, null, null, null, unsorted))
                     .willReturn(emptyPage);
 
             // when
@@ -491,8 +493,9 @@ class UserServiceTest {
             User user = createTestUser();
             Page<User> userPage = new PageImpl<>(List.of(user), pageable, 3);
 
-            given(userQueryRepository.findAllAvailableWithFilters(
-                            null, null, null, null, null, unsorted))
+            given(
+                            userQueryRepository.findAllAvailableWithFilters(
+                                    null, null, null, null, null, unsorted))
                     .willReturn(userPage);
 
             // when
@@ -515,8 +518,9 @@ class UserServiceTest {
             User user = createTestUser();
             Page<User> userPage = new PageImpl<>(List.of(user), pageable, 1);
 
-            given(userQueryRepository.findAllAvailableWithFilters(
-                            "김철", null, null, null, null, unsorted))
+            given(
+                            userQueryRepository.findAllAvailableWithFilters(
+                                    "김철", null, null, null, null, unsorted))
                     .willReturn(userPage);
 
             // when
@@ -540,8 +544,9 @@ class UserServiceTest {
             User user = createTestUser();
             Page<User> userPage = new PageImpl<>(List.of(user), pageable, 1);
 
-            given(userQueryRepository.findAllAvailableWithFilters(
-                            null, null, null, JobType.MANAGEMENT, null, unsorted))
+            given(
+                            userQueryRepository.findAllAvailableWithFilters(
+                                    null, null, null, JobType.MANAGEMENT, null, unsorted))
                     .willReturn(userPage);
 
             // when

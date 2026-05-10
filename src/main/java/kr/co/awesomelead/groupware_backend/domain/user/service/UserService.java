@@ -14,7 +14,6 @@ import kr.co.awesomelead.groupware_backend.domain.user.enums.JobType;
 import kr.co.awesomelead.groupware_backend.domain.user.enums.MyInfoUpdateRequestStatus;
 import kr.co.awesomelead.groupware_backend.domain.user.enums.Position;
 import kr.co.awesomelead.groupware_backend.domain.user.enums.Role;
-import kr.co.awesomelead.groupware_backend.domain.user.enums.Status;
 import kr.co.awesomelead.groupware_backend.domain.user.repository.MyInfoUpdateRequestRepository;
 import kr.co.awesomelead.groupware_backend.domain.user.repository.UserRepository;
 import kr.co.awesomelead.groupware_backend.domain.user.repository.querydsl.UserQueryRepository;
@@ -194,7 +193,8 @@ public class UserService {
             Pageable pageable) {
         Pageable unsorted = PageRequest.of(pageable.getPageNumber(), pageable.getPageSize());
         return userQueryRepository
-                .findAllAvailableWithFilters(keyword, position, departmentId, jobType, role, unsorted)
+                .findAllAvailableWithFilters(
+                        keyword, position, departmentId, jobType, role, unsorted)
                 .map(UserSummaryResponseDto::from);
     }
 

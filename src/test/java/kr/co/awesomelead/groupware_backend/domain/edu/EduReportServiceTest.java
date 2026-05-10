@@ -592,12 +592,12 @@ public class EduReportServiceTest {
 
         when(userRepository.findById(1L)).thenReturn(Optional.of(user));
         when(eduReportQueryRepository.findEduReports(
-                        EduType.SAFETY, department, null, 1L, false, Company.AWESOME, false))
+                        EduType.SAFETY, department, null, 1L, false, Company.AWESOME, false, null))
                 .thenReturn(mockList);
 
         // when
         List<EduReportSummaryDto> result =
-                eduReportService.getEduReports(EduType.SAFETY, null, null, 1L);
+                eduReportService.getEduReports(EduType.SAFETY, null, null, 1L, null);
 
         // then
         assertThat(result).isNotNull();
@@ -606,7 +606,7 @@ public class EduReportServiceTest {
 
         verify(eduReportQueryRepository, times(1))
                 .findEduReports(
-                        EduType.SAFETY, department, null, 1L, false, Company.AWESOME, false);
+                        EduType.SAFETY, department, null, 1L, false, Company.AWESOME, false, null);
     }
 
     @Test
@@ -632,11 +632,12 @@ public class EduReportServiceTest {
         when(userRepository.findById(1L)).thenReturn(Optional.of(user));
         // dept=null + PSM 조회 범위는 본인 회사 제한
         when(eduReportQueryRepository.findEduReports(
-                        null, null, null, 1L, true, Company.AWESOME, false))
+                        null, null, null, 1L, true, Company.AWESOME, false, null))
                 .thenReturn(mockList);
 
         // when
-        List<EduReportSummaryDto> result = eduReportService.getEduReports(null, null, null, 1L);
+        List<EduReportSummaryDto> result =
+                eduReportService.getEduReports(null, null, null, 1L, null);
 
         // then
         assertThat(result).isNotNull();
@@ -644,7 +645,7 @@ public class EduReportServiceTest {
 
         // hasAccess=true, dept=null + PSM 조회 범위는 본인 회사 제한
         verify(eduReportQueryRepository, times(1))
-                .findEduReports(null, null, null, 1L, true, Company.AWESOME, false);
+                .findEduReports(null, null, null, 1L, true, Company.AWESOME, false, null);
     }
 
     @Test
@@ -671,13 +672,20 @@ public class EduReportServiceTest {
         when(departmentRepository.findByName(DepartmentName.SALES_DEPT))
                 .thenReturn(Optional.of(salesDept));
         when(eduReportQueryRepository.findEduReports(
-                        EduType.DEPARTMENT, salesDept, null, 1L, true, Company.AWESOME, false))
+                        EduType.DEPARTMENT,
+                        salesDept,
+                        null,
+                        1L,
+                        true,
+                        Company.AWESOME,
+                        false,
+                        null))
                 .thenReturn(List.of(report1));
 
         // when
         List<EduReportSummaryDto> result =
                 eduReportService.getEduReports(
-                        EduType.DEPARTMENT, DepartmentName.SALES_DEPT, null, 1L);
+                        EduType.DEPARTMENT, DepartmentName.SALES_DEPT, null, 1L, null);
 
         // then
         assertThat(result).isNotNull();
@@ -687,7 +695,14 @@ public class EduReportServiceTest {
         verify(departmentRepository, times(1)).findByName(DepartmentName.SALES_DEPT);
         verify(eduReportQueryRepository, times(1))
                 .findEduReports(
-                        EduType.DEPARTMENT, salesDept, null, 1L, true, Company.AWESOME, false);
+                        EduType.DEPARTMENT,
+                        salesDept,
+                        null,
+                        1L,
+                        true,
+                        Company.AWESOME,
+                        false,
+                        null);
     }
 
     @Test
@@ -697,13 +712,15 @@ public class EduReportServiceTest {
         when(userRepository.findById(1L)).thenReturn(Optional.empty());
 
         // when & then
-        assertThatThrownBy(() -> eduReportService.getEduReports(EduType.SAFETY, null, null, 1L))
+        assertThatThrownBy(
+                        () -> eduReportService.getEduReports(EduType.SAFETY, null, null, 1L, null))
                 .isInstanceOf(CustomException.class)
                 .extracting("errorCode")
                 .isEqualTo(ErrorCode.USER_NOT_FOUND);
 
         verify(eduReportQueryRepository, never())
-                .findEduReports(any(), any(), any(), anyLong(), anyBoolean(), any(), anyBoolean());
+                .findEduReports(
+                        any(), any(), any(), anyLong(), anyBoolean(), any(), anyBoolean(), any());
     }
 
     @Test
@@ -721,17 +738,17 @@ public class EduReportServiceTest {
                         .build();
 
         when(userRepository.findById(1L)).thenReturn(Optional.of(user));
-        when(eduReportQueryRepository.findPsmEduReports(null, 1L, null, true))
+        when(eduReportQueryRepository.findPsmEduReports(null, 1L, null, true, null))
                 .thenReturn(List.of(psmReport));
 
         // when
-        List<EduReportSummaryDto> result = eduReportService.getPsmEduReports(null, 1L);
+        List<EduReportSummaryDto> result = eduReportService.getPsmEduReports(null, 1L, null);
 
         // then
         assertThat(result).isNotNull();
         assertThat(result.size()).isEqualTo(1);
         assertThat(result.get(0).getEduType()).isEqualTo(EduType.PSM);
-        verify(eduReportQueryRepository, times(1)).findPsmEduReports(null, 1L, null, true);
+        verify(eduReportQueryRepository, times(1)).findPsmEduReports(null, 1L, null, true, null);
     }
 
     @Test
@@ -741,16 +758,16 @@ public class EduReportServiceTest {
         User user = createNormalUser(); // workLocation=AWESOME
 
         when(userRepository.findById(1L)).thenReturn(Optional.of(user));
-        when(eduReportQueryRepository.findPsmEduReports(null, 1L, Company.AWESOME, false))
+        when(eduReportQueryRepository.findPsmEduReports(null, 1L, Company.AWESOME, false, null))
                 .thenReturn(List.of());
 
         // when
-        List<EduReportSummaryDto> result = eduReportService.getPsmEduReports(null, 1L);
+        List<EduReportSummaryDto> result = eduReportService.getPsmEduReports(null, 1L, null);
 
         // then
         assertThat(result).isNotNull();
         verify(eduReportQueryRepository, times(1))
-                .findPsmEduReports(null, 1L, Company.AWESOME, false);
+                .findPsmEduReports(null, 1L, Company.AWESOME, false, null);
     }
 
     @Test
@@ -768,17 +785,17 @@ public class EduReportServiceTest {
                         .build();
 
         when(userRepository.findById(1L)).thenReturn(Optional.of(user));
-        when(eduReportQueryRepository.findSafetyEduReports(null, 1L, null, true))
+        when(eduReportQueryRepository.findSafetyEduReports(null, 1L, null, true, null))
                 .thenReturn(List.of(safetyReport));
 
         // when
-        List<EduReportSummaryDto> result = eduReportService.getSafetyEduReports(null, 1L);
+        List<EduReportSummaryDto> result = eduReportService.getSafetyEduReports(null, 1L, null);
 
         // then
         assertThat(result).isNotNull();
         assertThat(result.size()).isEqualTo(1);
         assertThat(result.get(0).getEduType()).isEqualTo(EduType.SAFETY);
-        verify(eduReportQueryRepository, times(1)).findSafetyEduReports(null, 1L, null, true);
+        verify(eduReportQueryRepository, times(1)).findSafetyEduReports(null, 1L, null, true, null);
     }
 
     @Test
@@ -788,16 +805,16 @@ public class EduReportServiceTest {
         User user = createNormalUser(); // workLocation=AWESOME
 
         when(userRepository.findById(1L)).thenReturn(Optional.of(user));
-        when(eduReportQueryRepository.findSafetyEduReports(null, 1L, Company.AWESOME, false))
+        when(eduReportQueryRepository.findSafetyEduReports(null, 1L, Company.AWESOME, false, null))
                 .thenReturn(List.of());
 
         // when
-        List<EduReportSummaryDto> result = eduReportService.getSafetyEduReports(null, 1L);
+        List<EduReportSummaryDto> result = eduReportService.getSafetyEduReports(null, 1L, null);
 
         // then
         assertThat(result).isNotNull();
         verify(eduReportQueryRepository, times(1))
-                .findSafetyEduReports(null, 1L, Company.AWESOME, false);
+                .findSafetyEduReports(null, 1L, Company.AWESOME, false, null);
     }
 
     @Test

@@ -4,10 +4,13 @@ import io.swagger.v3.oas.annotations.media.Schema;
 
 import kr.co.awesomelead.groupware_backend.domain.department.enums.DepartmentName;
 import kr.co.awesomelead.groupware_backend.domain.user.entity.User;
+import kr.co.awesomelead.groupware_backend.domain.user.enums.JobType;
 import kr.co.awesomelead.groupware_backend.domain.user.enums.Position;
 
 import lombok.Builder;
 import lombok.Getter;
+
+import java.time.LocalDate;
 
 @Getter
 @Builder
@@ -26,6 +29,15 @@ public class UserSummaryResponseDto {
     @Schema(description = "부서명", example = "경영지원부")
     private DepartmentName departmentName;
 
+    @Schema(description = "근무 직종", example = "MANAGEMENT")
+    private JobType jobType;
+
+    @Schema(description = "입사일", example = "2022-03-01")
+    private LocalDate hireDate;
+
+    @Schema(description = "퇴사일", example = "2025-12-31")
+    private LocalDate resignationDate;
+
     public static UserSummaryResponseDto from(User user) {
         return UserSummaryResponseDto.builder()
                 .userId(user.getId())
@@ -33,6 +45,9 @@ public class UserSummaryResponseDto {
                 .position(user.getPosition())
                 .departmentName(
                         user.getDepartment() != null ? user.getDepartment().getName() : null)
+                .jobType(user.getJobType())
+                .hireDate(user.getHireDate())
+                .resignationDate(user.getResignationDate())
                 .build();
     }
 }

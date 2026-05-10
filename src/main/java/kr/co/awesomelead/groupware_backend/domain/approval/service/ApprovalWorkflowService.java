@@ -214,6 +214,34 @@ public class ApprovalWorkflowService {
         return ApprovalInboxAllResponseDto.builder().documents(documents).build();
     }
 
+    @Transactional(readOnly = true)
+    public ApprovalInboxAllResponseDto getReferenceDocuments(Long userId) {
+        User user = getUser(userId);
+        Long departmentId = user.getDepartment() != null ? user.getDepartment().getId() : null;
+
+        List<ApprovalInboxAllResponseDto.DocumentDto> documents =
+                approvalDocumentRepository.findAllWithLinesOrderByIdDesc().stream()
+                        .filter(document -> isReferenceDocument(document, userId, departmentId))
+                        .map(document -> toInboxDocumentDto(document, userId, departmentId))
+                        .toList();
+
+        return ApprovalInboxAllResponseDto.builder().documents(documents).build();
+    }
+
+    @Transactional(readOnly = true)
+    public ApprovalInboxAllResponseDto getViewerAcquiredDocuments(Long userId) {
+        User user = getUser(userId);
+        Long departmentId = user.getDepartment() != null ? user.getDepartment().getId() : null;
+
+        List<ApprovalInboxAllResponseDto.DocumentDto> documents =
+                approvalDocumentRepository.findAllWithLinesOrderByIdDesc().stream()
+                        .filter(document -> isViewerAcquiredDocument(document, userId, departmentId))
+                        .map(document -> toInboxDocumentDto(document, userId, departmentId))
+                        .toList();
+
+        return ApprovalInboxAllResponseDto.builder().documents(documents).build();
+    }
+
     @Transactional
     public ApprovalDraftResponseDto upsertDraft(
             Long userId, ApprovalDraftUpsertRequestDto request) {
@@ -450,6 +478,27 @@ public class ApprovalWorkflowService {
                 || isMyApprovalDocument(document, userId, departmentId);
     }
 
+    private boolean isReferenceDocument(
+            ApprovalDocument document, Long userId, Long departmentId) {
+        if (document.getStatus() == ApprovalStatus.DRAFT) {
+            return false;
+        }
+        return document.getLines().stream()
+                .anyMatch(line -> isMyReferenceLine(line, userId, departmentId));
+    }
+
+    private boolean isViewerAcquiredDocument(
+            ApprovalDocument document, Long userId, Long departmentId) {
+        if (document.getStatus() != ApprovalStatus.APPROVED) {
+            return false;
+        }
+        if (isReferenceDocument(document, userId, departmentId)) {
+            return false;
+        }
+        return document.getLines().stream()
+                .anyMatch(line -> isMyViewerLine(line, userId, departmentId));
+    }
+
     private boolean isMyApprovalDocument(
             ApprovalDocument document, Long userId, Long departmentId) {
         if (document.getStatus() == ApprovalStatus.DRAFT) {
@@ -528,6 +577,32 @@ public class ApprovalWorkflowService {
         }
         if (line.getTargetType() == ApprovalTargetType.USER) {
             return line.getTargetUser() != null && userId.equals(line.getTargetUser().getId());
+        }
+        return departmentId != null
+                && line.getTargetDepartment() != null
+                && departmentId.equals(line.getTargetDepartment().getId());
+    }
+
+    private boolean isMyReferenceLine(ApprovalDocumentLine line, Long userId, Long departmentId) {
+        if (line.getRole() != ApprovalRouteRole.REFERENCE) {
+            return false;
+        }
+        if (line.getTargetType() == ApprovalTargetType.USER) {
+            return line.getTargetUser() != null
+                    && userId.equals(line.getTargetUser().getId());
+        }
+        return departmentId != null
+                && line.getTargetDepartment() != null
+                && departmentId.equals(line.getTargetDepartment().getId());
+    }
+
+    private boolean isMyViewerLine(ApprovalDocumentLine line, Long userId, Long departmentId) {
+        if (line.getRole() != ApprovalRouteRole.VIEWER) {
+            return false;
+        }
+        if (line.getTargetType() == ApprovalTargetType.USER) {
+            return line.getTargetUser() != null
+                    && userId.equals(line.getTargetUser().getId());
         }
         return departmentId != null
                 && line.getTargetDepartment() != null

@@ -47,6 +47,8 @@ import org.springframework.web.bind.annotation.RestController;
         - 전체 전체 탭: GET /api/approvals/all
         - 전체 본인기안 탭: GET /api/approvals/all/my-drafted
         - 전체 본인결재 탭: GET /api/approvals/all/my-approvals
+        - 참조문서 참조문서 탭: GET /api/approvals/references
+        - 참조문서 열람획득문서 탭: GET /api/approvals/references/viewer-acquired
         - 결재진행 전체 탭: GET /api/approvals/inbox/all
         - 결재진행 결재하기 탭: GET /api/approvals/inbox/to-approve
         - 결재진행 결재 전단계 탭: GET /api/approvals/inbox/before-my-turn
@@ -350,6 +352,62 @@ public class ApprovalWorkflowController {
         return ResponseEntity.ok(
                 ApiResponse.onSuccess(
                         approvalWorkflowService.getAllMyApprovals(userDetails.getId())));
+    }
+
+    @Operation(
+            summary = "참조문서 참조문서 탭 조회",
+            description =
+                    """
+            현재 사용자 기준 `참조문서 > 참조문서` 문서를 조회합니다.
+
+            ### 조회 대상
+            - role=REFERENCE(참조자) 라인에 본인 사용자 또는 본인 부서가 지정된 문서
+            - 임시저장(DRAFT) 문서는 제외
+
+            ### 응답 주요 필드
+            - 문서번호(documentNo)
+            - 기안자(drafterName)
+            - 제목(title)
+            - 결재선(approvalLines)
+            - 기안일(draftedAt)
+            - 완료일(completedAt)
+            """)
+    @GetMapping("/approvals/references")
+    public ResponseEntity<ApiResponse<ApprovalInboxAllResponseDto>> getReferenceDocuments(
+            @Parameter(hidden = true) @AuthenticationPrincipal CustomUserDetails userDetails) {
+        return ResponseEntity.ok(
+                ApiResponse.onSuccess(
+                        approvalWorkflowService.getReferenceDocuments(userDetails.getId())));
+    }
+
+    @Operation(
+            summary = "참조문서 열람획득문서 탭 조회",
+            description =
+                    """
+            현재 사용자 기준 `참조문서 > 열람획득문서` 문서를 조회합니다.
+
+            ### 조회 대상
+            - 문서 상태가 APPROVED(완결)
+            - role=VIEWER(열람권자) 라인에 본인 사용자 또는 본인 부서가 지정된 문서
+
+            ### 제외 대상
+            - 임시저장(DRAFT) 문서
+            - 동일 문서에 참조자(REFERENCE)로도 지정된 경우(참조문서 탭으로 분리)
+
+            ### 응답 주요 필드
+            - 문서번호(documentNo)
+            - 기안자(drafterName)
+            - 제목(title)
+            - 결재선(approvalLines)
+            - 기안일(draftedAt)
+            - 완료일(completedAt)
+            """)
+    @GetMapping("/approvals/references/viewer-acquired")
+    public ResponseEntity<ApiResponse<ApprovalInboxAllResponseDto>> getViewerAcquiredDocuments(
+            @Parameter(hidden = true) @AuthenticationPrincipal CustomUserDetails userDetails) {
+        return ResponseEntity.ok(
+                ApiResponse.onSuccess(
+                        approvalWorkflowService.getViewerAcquiredDocuments(userDetails.getId())));
     }
 
     @Operation(

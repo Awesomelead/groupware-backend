@@ -2,6 +2,7 @@ package kr.co.awesomelead.groupware_backend.domain.education.dto.response;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 
+import kr.co.awesomelead.groupware_backend.domain.education.enums.EduCompletionStatus;
 import kr.co.awesomelead.groupware_backend.domain.education.enums.EduReportStatus;
 import kr.co.awesomelead.groupware_backend.domain.education.enums.EduType;
 
@@ -59,6 +60,18 @@ public class EduReportDetailDto {
 
     @Schema(description = "출석 여부", example = "true")
     private boolean attendance;
+
+    @Schema(
+            description = "현재 로그인 사용자의 서명 완료 여부(부서교육 + 본인 소속 부서 게시물일 때만 값 반환)",
+            example = "true",
+            nullable = true)
+    private Boolean mySigned;
+
+    @Schema(
+            description = "현재 로그인 사용자의 수료 상태(부서교육 + 본인 소속 부서 게시물일 때만 값 반환, 서명필수=false면 COMPLETED)",
+            example = "INCOMPLETE",
+            nullable = true)
+    private EduCompletionStatus myCompletionStatus;
 
     @Schema(description = "서명 필수 여부", example = "false")
     private boolean signatureRequired;

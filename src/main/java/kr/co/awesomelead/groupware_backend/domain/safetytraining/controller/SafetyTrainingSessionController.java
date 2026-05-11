@@ -81,7 +81,8 @@ public class SafetyTrainingSessionController {
             summary = "안전보건 교육일지 목록 조회",
             description =
                     "일반 사용자는 본인 회사 데이터를 조회할 수 있으며, MANAGE_SAFETY 권한 사용자는 전체 회사/상태 조회가 가능합니다. 각 교육일지"
-                            + " 항목에 현재 로그인 사용자의 서명 완료 여부(mySigned)를 포함합니다.")
+                            + " 항목에 현재 로그인 사용자의 서명 완료 여부(mySigned)를 포함합니다."
+                            + " titleKeyword 파라미터로 제목 검색이 가능하며, MySQL FULLTEXT ngram 인덱스를 사용합니다.")
     @ApiResponses(
             value = {
                 @io.swagger.v3.oas.annotations.responses.ApiResponse(

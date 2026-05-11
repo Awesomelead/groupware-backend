@@ -191,6 +191,7 @@ public class SafetyTrainingSessionService {
                         status,
                         filter.getStartAtFrom(),
                         filter.getStartAtTo(),
+                        filter.getNormalizedTitleKeyword(),
                         pageable);
 
         List<Long> sessionIds =

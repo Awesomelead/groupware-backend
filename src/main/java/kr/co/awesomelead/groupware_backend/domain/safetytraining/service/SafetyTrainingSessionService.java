@@ -296,6 +296,9 @@ public class SafetyTrainingSessionService {
                 .absentReasonSummary(session.getAbsentReasonSummary())
                 .reportFileUrl(reportFileUrl)
                 .myAttendanceStatus(myStatus)
+                .mySigned(
+                        resolveMySigned(
+                                actor, session, myStatus == SafetyTrainingAttendeeStatus.SIGNED))
                 .myCompletionStatus(completionStatus)
                 .mySignedAt(attendee.getSignedAt())
                 .mySignatureUrl(

@@ -68,6 +68,8 @@ public interface EduMapper {
     @Mapping(target = "signedCount", ignore = true)
     @Mapping(target = "unsignedCount", ignore = true)
     @Mapping(target = "canSign", ignore = true)
+    @Mapping(target = "mySigned", ignore = true)
+    @Mapping(target = "myCompletionStatus", ignore = true)
     @Mapping(target = "prevReport", ignore = true)
     @Mapping(target = "nextReport", ignore = true)
     @Mapping(target = "attendees", source = "attendances")

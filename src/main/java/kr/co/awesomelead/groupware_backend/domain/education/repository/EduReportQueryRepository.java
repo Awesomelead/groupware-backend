@@ -19,6 +19,7 @@ import kr.co.awesomelead.groupware_backend.domain.education.dto.response.EduRepo
 import kr.co.awesomelead.groupware_backend.domain.education.dto.response.EduReportSummaryDto;
 import kr.co.awesomelead.groupware_backend.domain.education.entity.EduReport;
 import kr.co.awesomelead.groupware_backend.domain.education.entity.QEduAttendance;
+import kr.co.awesomelead.groupware_backend.domain.education.enums.EduCompletionStatus;
 import kr.co.awesomelead.groupware_backend.domain.education.enums.EduReportStatus;
 import kr.co.awesomelead.groupware_backend.domain.education.enums.EduType;
 import kr.co.awesomelead.groupware_backend.domain.user.entity.QUser;
@@ -111,6 +112,8 @@ public class EduReportQueryRepository {
                                 eduReport.eduDate,
                                 eduReport.content,
                                 attendanceExists,
+                                Expressions.nullExpression(Boolean.class),
+                                Expressions.nullExpression(EduCompletionStatus.class),
                                 canSignDepartment,
                                 eduReport.pinned,
                                 eduReport.signatureRequired,
@@ -165,6 +168,8 @@ public class EduReportQueryRepository {
                                 eduReport.eduDate,
                                 eduReport.content,
                                 attendanceExists,
+                                Expressions.nullExpression(Boolean.class),
+                                Expressions.nullExpression(EduCompletionStatus.class),
                                 Expressions.constant(false),
                                 eduReport.pinned,
                                 eduReport.signatureRequired,
@@ -217,6 +222,8 @@ public class EduReportQueryRepository {
                                 eduReport.eduDate,
                                 eduReport.content,
                                 attendanceExists,
+                                Expressions.nullExpression(Boolean.class),
+                                Expressions.nullExpression(EduCompletionStatus.class),
                                 Expressions.constant(false),
                                 eduReport.pinned,
                                 eduReport.signatureRequired,

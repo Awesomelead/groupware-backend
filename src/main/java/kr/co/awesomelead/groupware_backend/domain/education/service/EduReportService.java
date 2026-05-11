@@ -17,6 +17,7 @@ import kr.co.awesomelead.groupware_backend.domain.education.entity.EduAttachment
 import kr.co.awesomelead.groupware_backend.domain.education.entity.EduAttendance;
 import kr.co.awesomelead.groupware_backend.domain.education.entity.EduReport;
 import kr.co.awesomelead.groupware_backend.domain.education.entity.EducationCategory;
+import kr.co.awesomelead.groupware_backend.domain.education.enums.EduCompletionStatus;
 import kr.co.awesomelead.groupware_backend.domain.education.enums.EduReportStatus;
 import kr.co.awesomelead.groupware_backend.domain.education.enums.EduType;
 import kr.co.awesomelead.groupware_backend.domain.education.enums.EducationCategoryType;
@@ -264,15 +265,19 @@ public class EduReportService {
             dept = user.getDepartment();
         }
 
-        return eduReportQueryRepository.findEduReports(
-                type,
-                dept,
-                categoryId,
-                id,
-                hasAccess,
-                psmCompanyFilter,
-                canReadAllPsmCompanies,
-                title);
+        List<EduReportSummaryDto> summaries =
+                eduReportQueryRepository.findEduReports(
+                        type,
+                        dept,
+                        categoryId,
+                        id,
+                        hasAccess,
+                        psmCompanyFilter,
+                        canReadAllPsmCompanies,
+                        title);
+
+        summaries.forEach(summary -> applyDepartmentMyStatusToSummary(user, summary));
+        return summaries;
     }
 
     @Transactional(readOnly = true)
@@ -481,8 +486,63 @@ public class EduReportService {
 
         boolean isAttended = eduAttendanceRepository.existsByEduReportAndUser(report, user);
         dto.setAttendance(isAttended);
+        Boolean mySigned = resolveDepartmentMySigned(user, report, isAttended);
+        dto.setMySigned(mySigned);
+        dto.setMyCompletionStatus(resolveDepartmentMyCompletionStatus(report, mySigned));
         dto.setCanSign(canSignDepartmentEduReport(report, user, isAttended));
         return dto;
+    }
+
+    private void applyDepartmentMyStatusToSummary(User user, EduReportSummaryDto summary) {
+        if (summary.getEduType() != EduType.DEPARTMENT) {
+            summary.setMySigned(null);
+            summary.setMyCompletionStatus(null);
+            return;
+        }
+
+        Boolean mySigned =
+                resolveDepartmentMySigned(
+                        user, summary.getDepartmentName(), summary.isAttendance());
+        summary.setMySigned(mySigned);
+        summary.setMyCompletionStatus(
+                resolveDepartmentMyCompletionStatus(summary.isSignatureRequired(), mySigned));
+    }
+
+    private Boolean resolveDepartmentMySigned(
+            User user, DepartmentName reportDepartmentName, boolean attended) {
+        if (user.getDepartment() == null
+                || user.getDepartment().getName() == null
+                || reportDepartmentName == null
+                || user.getDepartment().getName() != reportDepartmentName) {
+            return null;
+        }
+        return attended;
+    }
+
+    private Boolean resolveDepartmentMySigned(User user, EduReport report, boolean attended) {
+        if (report.getEduType() != EduType.DEPARTMENT
+                || user.getDepartment() == null
+                || report.getDepartment() == null
+                || !report.getDepartment().getId().equals(user.getDepartment().getId())) {
+            return null;
+        }
+        return attended;
+    }
+
+    private EduCompletionStatus resolveDepartmentMyCompletionStatus(
+            EduReport report, Boolean mySigned) {
+        return resolveDepartmentMyCompletionStatus(report.isSignatureRequired(), mySigned);
+    }
+
+    private EduCompletionStatus resolveDepartmentMyCompletionStatus(
+            boolean signatureRequired, Boolean mySigned) {
+        if (mySigned == null) {
+            return null;
+        }
+        if (!signatureRequired) {
+            return EduCompletionStatus.COMPLETED;
+        }
+        return mySigned ? EduCompletionStatus.COMPLETED : EduCompletionStatus.INCOMPLETE;
     }
 
     private boolean canSignDepartmentEduReport(EduReport report, User user, boolean isAttended) {

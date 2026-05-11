@@ -39,7 +39,10 @@ public class EduReportSummaryDto {
     @Schema(description = "출석 여부", example = "true")
     private boolean attendance;
 
-    @Schema(description = "현재 로그인 사용자의 서명 완료 여부(부서교육 + 본인 소속 부서 게시물일 때만 값 반환)", example = "true", nullable = true)
+    @Schema(
+            description = "현재 로그인 사용자의 서명 완료 여부(부서교육 + 본인 소속 부서 게시물일 때만 값 반환)",
+            example = "true",
+            nullable = true)
     private Boolean mySigned;
 
     @Schema(

@@ -21,9 +21,7 @@ import java.time.LocalDateTime;
 @Schema(description = "안전보건 교육일지 목록 조회 필터")
 public class SafetyTrainingSessionSearchConditionDto {
 
-    @Schema(
-            description = "제목 검색어 (MySQL FULLTEXT ngram 기반 검색)",
-            example = "정기 안전보건")
+    @Schema(description = "제목 검색어 (MySQL FULLTEXT ngram 기반 검색)", example = "정기 안전보건")
     private String titleKeyword;
 
     @Schema(

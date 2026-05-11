@@ -11,4 +11,3 @@ public enum EduCompletionStatus {
 
     private final String description;
 }
-

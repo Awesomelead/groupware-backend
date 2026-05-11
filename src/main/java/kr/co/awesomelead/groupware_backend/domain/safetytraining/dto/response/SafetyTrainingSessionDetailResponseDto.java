@@ -87,6 +87,9 @@ public class SafetyTrainingSessionDetailResponseDto {
     @Schema(description = "내 참석 상태", example = "SIGNED")
     private SafetyTrainingAttendeeStatus myAttendanceStatus;
 
+    @Schema(description = "현재 로그인 사용자의 서명 완료 여부 (대표이사/마스터 관리자/타회사 교육일지는 null)", example = "true")
+    private Boolean mySigned;
+
     @Schema(
             description = "내 수료 상태(대표이사/MASTER_ADMIN 또는 세션 회사와 내 회사가 다르면 null)",
             example = "COMPLETED",

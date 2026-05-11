@@ -25,6 +25,7 @@ public interface SafetyTrainingSessionRepository
               AND (:status IS NULL OR s.status = :status)
               AND (:startAtFrom IS NULL OR s.startAt >= :startAtFrom)
               AND (:startAtTo IS NULL OR s.startAt <= :startAtTo)
+              AND (:titleKeyword IS NULL OR function('match_against', s.title, :titleKeyword) > 0)
             """)
     Page<SafetyTrainingSession> findAllByFilters(
             @Param("companyScope") Company companyScope,
@@ -32,6 +33,7 @@ public interface SafetyTrainingSessionRepository
             @Param("status") SafetyTrainingSessionStatus status,
             @Param("startAtFrom") java.time.LocalDateTime startAtFrom,
             @Param("startAtTo") java.time.LocalDateTime startAtTo,
+            @Param("titleKeyword") String titleKeyword,
             Pageable pageable);
 
     Optional<SafetyTrainingSession> findFirstByIdGreaterThanOrderByIdAsc(Long sessionId);

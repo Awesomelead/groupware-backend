@@ -11,6 +11,7 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 import org.springframework.format.annotation.DateTimeFormat;
+import org.springframework.util.StringUtils;
 
 import java.time.LocalDateTime;
 
@@ -19,6 +20,9 @@ import java.time.LocalDateTime;
 @NoArgsConstructor
 @Schema(description = "안전보건 교육일지 목록 조회 필터")
 public class SafetyTrainingSessionSearchConditionDto {
+
+    @Schema(description = "제목 검색어 (MySQL FULLTEXT ngram 기반 검색)", example = "정기 안전보건")
+    private String titleKeyword;
 
     @Schema(
             description = "회사 필터 (AWESOME: 어썸리드, MARUI: 마루이)",
@@ -47,4 +51,8 @@ public class SafetyTrainingSessionSearchConditionDto {
     @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME)
     @Schema(description = "교육 시작시각 상한(이 값 이하)", example = "2026-03-31T23:59:59")
     private LocalDateTime startAtTo;
+
+    public String getNormalizedTitleKeyword() {
+        return StringUtils.hasText(titleKeyword) ? titleKeyword.trim() : null;
+    }
 }

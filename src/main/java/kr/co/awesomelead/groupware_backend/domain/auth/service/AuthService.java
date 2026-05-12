@@ -17,9 +17,9 @@ import kr.co.awesomelead.groupware_backend.domain.auth.dto.response.SignupRespon
 import kr.co.awesomelead.groupware_backend.domain.auth.entity.RefreshToken;
 import kr.co.awesomelead.groupware_backend.domain.auth.util.JWTUtil;
 import kr.co.awesomelead.groupware_backend.domain.notification.enums.NotificationDomainType;
-import kr.co.awesomelead.groupware_backend.domain.safetytraining.repository.SafetyTrainingSessionRepository;
 import kr.co.awesomelead.groupware_backend.domain.notification.enums.NotificationMessage;
 import kr.co.awesomelead.groupware_backend.domain.notification.service.NotificationService;
+import kr.co.awesomelead.groupware_backend.domain.safetytraining.repository.SafetyTrainingSessionRepository;
 import kr.co.awesomelead.groupware_backend.domain.user.dto.response.MyInfoAuthorityItemDto;
 import kr.co.awesomelead.groupware_backend.domain.user.entity.User;
 import kr.co.awesomelead.groupware_backend.domain.user.enums.Authority;

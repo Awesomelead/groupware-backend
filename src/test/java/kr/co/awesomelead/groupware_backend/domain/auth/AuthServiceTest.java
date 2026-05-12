@@ -13,12 +13,8 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-import org.mockito.InOrder;
-
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.Query;
-
-import kr.co.awesomelead.groupware_backend.domain.safetytraining.repository.SafetyTrainingSessionRepository;
 
 import kr.co.awesomelead.groupware_backend.domain.aligo.service.PhoneAuthService;
 import kr.co.awesomelead.groupware_backend.domain.auth.dto.request.LoginRequestDto;
@@ -34,6 +30,7 @@ import kr.co.awesomelead.groupware_backend.domain.auth.service.RefreshTokenServi
 import kr.co.awesomelead.groupware_backend.domain.auth.util.JWTUtil;
 import kr.co.awesomelead.groupware_backend.domain.department.enums.Company;
 import kr.co.awesomelead.groupware_backend.domain.notification.service.NotificationService;
+import kr.co.awesomelead.groupware_backend.domain.safetytraining.repository.SafetyTrainingSessionRepository;
 import kr.co.awesomelead.groupware_backend.domain.user.dto.response.MyInfoAuthorityItemDto;
 import kr.co.awesomelead.groupware_backend.domain.user.entity.User;
 import kr.co.awesomelead.groupware_backend.domain.user.enums.Authority;
@@ -50,6 +47,7 @@ import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
+import org.mockito.InOrder;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -931,7 +929,9 @@ class AuthServiceTest {
         }
 
         @Test
-        @DisplayName("성공: deleteUser 실행 시 userRepository.delete() 전에 safetyTrainingSessionRepository.updateCreatedByToNull()이 호출된다")
+        @DisplayName(
+                "성공: deleteUser 실행 시 userRepository.delete() 전에"
+                    + " safetyTrainingSessionRepository.updateCreatedByToNull()이 호출된다")
         void deleteUser_callsUpdateCreatedByToNullBeforeDelete() {
             // given
             Long userId = 1L;
@@ -943,7 +943,9 @@ class AuthServiceTest {
         }
 
         @Test
-        @DisplayName("성공: deleteUser 실행 시 safetyTrainingSessionRepository.updateCreatedByToNull()이 userRepository.delete() 보다 먼저 호출된다 - 호출 순서 검증")
+        @DisplayName(
+                "성공: deleteUser 실행 시 safetyTrainingSessionRepository.updateCreatedByToNull()이"
+                    + " userRepository.delete() 보다 먼저 호출된다 - 호출 순서 검증")
         void deleteUser_updateCreatedByToNullCalledBeforeDeleteInOrder() {
             // given
             Long userId = 1L;

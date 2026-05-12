@@ -179,7 +179,9 @@ public class VisitController {
         return ResponseEntity.ok(ApiResponse.onSuccess(response));
     }
 
-    @Operation(summary = "내 방문 목록 조회", description = "성함, 전화번호, 비밀번호를 입력하여 신청한 방문 내역 목록을 확인합니다.")
+    @Operation(
+            summary = "내 방문 목록 조회",
+            description = "성함, 전화번호, 비밀번호를 입력하여 신청한 방문 내역 목록을 최신순(visitId 내림차순)으로 확인합니다.")
     @PostMapping("/my")
     public ResponseEntity<ApiResponse<List<MyVisitListResponseDto>>> getMyVisitList(
             @Parameter(description = "목록 조회를 위한 인증 정보") @Valid @RequestBody

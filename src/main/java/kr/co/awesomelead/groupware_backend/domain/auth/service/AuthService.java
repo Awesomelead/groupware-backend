@@ -423,7 +423,6 @@ public class AuthService {
         deleteByQuery("delete from EduAttendance ea where ea.user.id = :userId", "userId", userId);
         deleteByQuery("delete from CheckSheet cs where cs.user.id = :userId", "userId", userId);
         deleteByQuery("delete from Payslip p where p.user.id = :userId", "userId", userId);
-        deleteByQuery("delete from AnnualLeave al where al.user.id = :userId", "userId", userId);
         deleteByQuery(
                 "delete from VisitRecord vr where vr.visit.user.id = :userId", "userId", userId);
         deleteByQuery("delete from Visit v where v.user.id = :userId", "userId", userId);

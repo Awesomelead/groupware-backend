@@ -87,7 +87,14 @@ public class NotificationService {
             boolean requiresApproval) {
         Notification notification =
                 Notification.of(
-                        userId, title, content, domainType, domainId, metadata, requiresApproval, messageType);
+                        userId,
+                        title,
+                        content,
+                        domainType,
+                        domainId,
+                        metadata,
+                        requiresApproval,
+                        messageType);
         notificationRepository.save(notification);
         log.info("알림 생성 - userId: {}, domainType: {}", userId, domainType);
     }
@@ -234,7 +241,8 @@ public class NotificationService {
         String content = template.formatContent(args);
 
         // 1. 알림함 저장
-        doCreateNotification(userId, title, content, template, domainType, domainId, metadata, false);
+        doCreateNotification(
+                userId, title, content, template, domainType, domainId, metadata, false);
 
         // 2. FCM 이벤트 발행 (트랜잭션 커밋 후 비동기 발송)
         eventPublisher.publishEvent(
@@ -264,7 +272,15 @@ public class NotificationService {
 
         for (Long userId : targetUserIds) {
             // 1. 알림함 저장
-            doCreateNotification(userId, title, content, NotificationMessage.NOTICE_CREATED, NotificationDomainType.NOTICE, noticeId, null, false);
+            doCreateNotification(
+                    userId,
+                    title,
+                    content,
+                    NotificationMessage.NOTICE_CREATED,
+                    NotificationDomainType.NOTICE,
+                    noticeId,
+                    null,
+                    false);
 
             // 2. FCM 이벤트 발행 (트랜잭션 커밋 후 비동기 발송)
             eventPublisher.publishEvent(
@@ -310,7 +326,15 @@ public class NotificationService {
 
         for (Long userId : targetUserIds) {
             // 1. 알림함 저장
-            doCreateNotification(userId, title, content, NotificationMessage.EDU_REPORT_CREATED, NotificationDomainType.EDUCATION, reportId, metadata, false);
+            doCreateNotification(
+                    userId,
+                    title,
+                    content,
+                    NotificationMessage.EDU_REPORT_CREATED,
+                    NotificationDomainType.EDUCATION,
+                    reportId,
+                    metadata,
+                    false);
 
             // 2. FCM 이벤트 발행 (트랜잭션 커밋 후 비동기 발송)
             eventPublisher.publishEvent(
@@ -401,7 +425,15 @@ public class NotificationService {
         String content = template.formatContent(baseDateFormatted);
 
         // 1. 알림함 DB 저장 (domainId는 단일 엔티티 연차 특성상 null 처리)
-        doCreateNotification(userId, title, content, template, NotificationDomainType.ANNUAL_LEAVE, null, null, false);
+        doCreateNotification(
+                userId,
+                title,
+                content,
+                template,
+                NotificationDomainType.ANNUAL_LEAVE,
+                null,
+                null,
+                false);
 
         // 2. FCM 이벤트 발행 (트랜잭션 커밋 후 비동기 발송)
         eventPublisher.publishEvent(
@@ -427,7 +459,15 @@ public class NotificationService {
         String content = template.formatContent();
 
         // 1. 알림함 DB 저장
-        doCreateNotification(userId, title, content, template, NotificationDomainType.PAYSLIP, payslipId, null, false);
+        doCreateNotification(
+                userId,
+                title,
+                content,
+                template,
+                NotificationDomainType.PAYSLIP,
+                payslipId,
+                null,
+                false);
 
         // 2. FCM 이벤트 발행 (트랜잭션 커밋 후 비동기 발송)
         eventPublisher.publishEvent(
@@ -546,7 +586,15 @@ public class NotificationService {
         String title = NotificationMessage.APPROVAL_REJECTED.getTitle();
         String content = NotificationMessage.APPROVAL_REJECTED.formatContent(docTitle, comment);
 
-        doCreateNotification(drafterId, title, content, NotificationMessage.APPROVAL_REJECTED, NotificationDomainType.APPROVAL, approvalId, null, false);
+        doCreateNotification(
+                drafterId,
+                title,
+                content,
+                NotificationMessage.APPROVAL_REJECTED,
+                NotificationDomainType.APPROVAL,
+                approvalId,
+                null,
+                false);
         eventPublisher.publishEvent(
                 new FcmSendEvent(
                         drafterId,
@@ -572,7 +620,15 @@ public class NotificationService {
         String content = NotificationMessage.APPROVAL_FINALLY_APPROVED.formatContent(docTitle);
 
         // 1. 기안자에게 알림
-        doCreateNotification(drafterId, title, content, NotificationMessage.APPROVAL_FINALLY_APPROVED, NotificationDomainType.APPROVAL, approvalId, null, false);
+        doCreateNotification(
+                drafterId,
+                title,
+                content,
+                NotificationMessage.APPROVAL_FINALLY_APPROVED,
+                NotificationDomainType.APPROVAL,
+                approvalId,
+                null,
+                false);
         eventPublisher.publishEvent(
                 new FcmSendEvent(
                         drafterId,
@@ -583,7 +639,14 @@ public class NotificationService {
         // 2. 열람권자들에게 알림
         for (Long viewerId : viewerIds) {
             doCreateNotification(
-                    viewerId, title, content, NotificationMessage.APPROVAL_FINALLY_APPROVED, NotificationDomainType.APPROVAL, approvalId, null, false);
+                    viewerId,
+                    title,
+                    content,
+                    NotificationMessage.APPROVAL_FINALLY_APPROVED,
+                    NotificationDomainType.APPROVAL,
+                    approvalId,
+                    null,
+                    false);
             eventPublisher.publishEvent(
                     new FcmSendEvent(
                             viewerId,

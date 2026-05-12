@@ -149,7 +149,8 @@ public class Notification {
             Long domainId,
             NotificationMessage messageType) {
         validate(userId, title, content, domainType);
-        return new Notification(userId, title, content, domainType, domainId, null, false, messageType);
+        return new Notification(
+                userId, title, content, domainType, domainId, null, false, messageType);
     }
 
     public static Notification of(
@@ -176,7 +177,14 @@ public class Notification {
             NotificationMessage messageType) {
         validate(userId, title, content, domainType);
         return new Notification(
-                userId, title, content, domainType, domainId, metadata, requiresApproval, messageType);
+                userId,
+                title,
+                content,
+                domainType,
+                domainId,
+                metadata,
+                requiresApproval,
+                messageType);
     }
 
     private static void validate(

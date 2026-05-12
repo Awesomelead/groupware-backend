@@ -123,7 +123,8 @@ class NotificationServiceTest {
 
         ArgumentCaptor<Notification> captor = forClass(Notification.class);
         verify(notificationRepository).save(captor.capture());
-        assertThat(captor.getValue().getMessageType()).isEqualTo(NotificationMessage.VISIT_CHECK_IN);
+        assertThat(captor.getValue().getMessageType())
+                .isEqualTo(NotificationMessage.VISIT_CHECK_IN);
     }
 
     @Test
@@ -154,7 +155,8 @@ class NotificationServiceTest {
     }
 
     @Test
-    @DisplayName("sendEduReportAlertToTargets - 저장된 Notification의 messageType이 EDU_REPORT_CREATED이다")
+    @DisplayName(
+            "sendEduReportAlertToTargets - 저장된 Notification의 messageType이 EDU_REPORT_CREATED이다")
     void sendEduReportAlertToTargets_messageType_isEduReportCreated() {
         notificationService.sendEduReportAlertToTargets("SAFETY", "교육 제목", 10L, List.of(1L));
 
@@ -174,11 +176,13 @@ class NotificationServiceTest {
 
         ArgumentCaptor<Notification> captor = forClass(Notification.class);
         verify(notificationRepository).save(captor.capture());
-        assertThat(captor.getValue().getMessageType()).isEqualTo(NotificationMessage.VISIT_CHECK_IN);
+        assertThat(captor.getValue().getMessageType())
+                .isEqualTo(NotificationMessage.VISIT_CHECK_IN);
     }
 
     @Test
-    @DisplayName("sendAnnualLeaveAlertToUser - 저장된 Notification의 messageType이 ANNUAL_LEAVE_UPDATED이다")
+    @DisplayName(
+            "sendAnnualLeaveAlertToUser - 저장된 Notification의 messageType이 ANNUAL_LEAVE_UPDATED이다")
     void sendAnnualLeaveAlertToUser_messageType_isAnnualLeaveUpdated() {
         notificationService.sendAnnualLeaveAlertToUser(1L, "2026년 01월 01일");
 
@@ -199,7 +203,9 @@ class NotificationServiceTest {
     }
 
     @Test
-    @DisplayName("sendApprovalCreatedAlert - 결재자에게 저장된 Notification의 messageType이 APPROVAL_CREATED_APPROVER이다")
+    @DisplayName(
+            "sendApprovalCreatedAlert - 결재자에게 저장된 Notification의 messageType이"
+                + " APPROVAL_CREATED_APPROVER이다")
     void sendApprovalCreatedAlert_approver_messageType() {
         notificationService.sendApprovalCreatedAlert(100L, "결재문서", 11L, List.of());
 
@@ -210,7 +216,9 @@ class NotificationServiceTest {
     }
 
     @Test
-    @DisplayName("sendApprovalCreatedAlert - 참조자에게 저장된 Notification의 messageType이 APPROVAL_CREATED_REFERRER이다")
+    @DisplayName(
+            "sendApprovalCreatedAlert - 참조자에게 저장된 Notification의 messageType이"
+                + " APPROVAL_CREATED_REFERRER이다")
     void sendApprovalCreatedAlert_referrer_messageType() {
         notificationService.sendApprovalCreatedAlert(100L, "결재문서", 11L, List.of(22L));
 
@@ -225,7 +233,9 @@ class NotificationServiceTest {
     }
 
     @Test
-    @DisplayName("sendApprovalNextStepAlert - 저장된 Notification의 messageType이 APPROVAL_CREATED_APPROVER이다")
+    @DisplayName(
+            "sendApprovalNextStepAlert - 저장된 Notification의 messageType이"
+                + " APPROVAL_CREATED_APPROVER이다")
     void sendApprovalNextStepAlert_messageType() {
         notificationService.sendApprovalNextStepAlert(33L, 100L, "결재문서");
 
@@ -242,14 +252,16 @@ class NotificationServiceTest {
 
         ArgumentCaptor<Notification> captor = forClass(Notification.class);
         verify(notificationRepository).save(captor.capture());
-        assertThat(captor.getValue().getMessageType()).isEqualTo(NotificationMessage.APPROVAL_REJECTED);
+        assertThat(captor.getValue().getMessageType())
+                .isEqualTo(NotificationMessage.APPROVAL_REJECTED);
     }
 
     @Test
-    @DisplayName("sendApprovalFinallyApprovedAlert - 기안자와 열람권자 모두 messageType이 APPROVAL_FINALLY_APPROVED이다")
+    @DisplayName(
+            "sendApprovalFinallyApprovedAlert - 기안자와 열람권자 모두 messageType이"
+                + " APPROVAL_FINALLY_APPROVED이다")
     void sendApprovalFinallyApprovedAlert_messageType() {
-        notificationService.sendApprovalFinallyApprovedAlert(
-                100L, "결재문서", 55L, List.of(66L, 77L));
+        notificationService.sendApprovalFinallyApprovedAlert(100L, "결재문서", 55L, List.of(66L, 77L));
 
         // 기안자(1) + 열람권자(2) = 3회 save
         ArgumentCaptor<Notification> captor = forClass(Notification.class);
@@ -263,7 +275,9 @@ class NotificationServiceTest {
     }
 
     @Test
-    @DisplayName("sendSafetyTrainingSessionAlertToAttendees - 저장된 Notification의 messageType이 SAFETY_TRAINING_SESSION_CREATED이다")
+    @DisplayName(
+            "sendSafetyTrainingSessionAlertToAttendees - 저장된 Notification의 messageType이"
+                + " SAFETY_TRAINING_SESSION_CREATED이다")
     void sendSafetyTrainingSessionAlertToAttendees_messageType() {
         notificationService.sendSafetyTrainingSessionAlertToAttendees(
                 200L, "안전보건교육 세션", List.of(1L));
@@ -292,7 +306,8 @@ class NotificationServiceTest {
                     Notification.of(
                             userId,
                             NotificationMessage.VISIT_CHECK_IN.getTitle(),
-                            NotificationMessage.VISIT_CHECK_IN.formatContent("홍길동", "2026-05-13 09:00"),
+                            NotificationMessage.VISIT_CHECK_IN.formatContent(
+                                    "홍길동", "2026-05-13 09:00"),
                             NotificationDomainType.VISIT,
                             99L,
                             NotificationMessage.VISIT_CHECK_IN);

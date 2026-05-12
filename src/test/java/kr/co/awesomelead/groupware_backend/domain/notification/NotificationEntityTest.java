@@ -30,7 +30,8 @@ class NotificationEntityTest {
             Long domainId = 10L;
 
             // when
-            Notification notification = Notification.of(userId, title, content, domainType, domainId);
+            Notification notification =
+                    Notification.of(userId, title, content, domainType, domainId);
 
             // then
             assertThat(notification.getMessageType()).isNull();
@@ -43,8 +44,8 @@ class NotificationEntityTest {
             Map<String, Object> metadata = Map.of("key", "value");
 
             // when
-            Notification notification = Notification.of(
-                    1L, "제목", "내용", NotificationDomainType.GENERAL, 10L, metadata);
+            Notification notification =
+                    Notification.of(1L, "제목", "내용", NotificationDomainType.GENERAL, 10L, metadata);
 
             // then
             assertThat(notification.getMessageType()).isNull();
@@ -57,8 +58,9 @@ class NotificationEntityTest {
             Map<String, Object> metadata = Map.of("key", "value");
 
             // when
-            Notification notification = Notification.of(
-                    1L, "제목", "내용", NotificationDomainType.GENERAL, 10L, metadata, true);
+            Notification notification =
+                    Notification.of(
+                            1L, "제목", "내용", NotificationDomainType.GENERAL, 10L, metadata, true);
 
             // then
             assertThat(notification.getMessageType()).isNull();
@@ -70,49 +72,80 @@ class NotificationEntityTest {
     class MessageTypeFactory {
 
         @Test
-        @DisplayName("of_withMessageType_5param_storesMessageType: messageType 포함 5-param of() 호출 시 값이 저장된다")
+        @DisplayName(
+                "of_withMessageType_5param_storesMessageType: messageType 포함 5-param of() 호출 시 값이"
+                    + " 저장된다")
         void of_withMessageType_5param_storesMessageType() {
             // given
             NotificationMessage messageType = NotificationMessage.NOTICE_CREATED;
 
             // when
-            Notification notification = Notification.of(
-                    1L, "제목", "내용", NotificationDomainType.NOTICE, 10L, messageType);
+            Notification notification =
+                    Notification.of(
+                            1L, "제목", "내용", NotificationDomainType.NOTICE, 10L, messageType);
             assertThat(notification.getMessageType()).isEqualTo(NotificationMessage.NOTICE_CREATED);
         }
 
         @Test
-        @DisplayName("of_withMessageType_6param_storesMessageType: messageType 포함 6-param of() 호출 시 값이 저장된다")
+        @DisplayName(
+                "of_withMessageType_6param_storesMessageType: messageType 포함 6-param of() 호출 시 값이"
+                    + " 저장된다")
         void of_withMessageType_6param_storesMessageType() {
             // given
             NotificationMessage messageType = NotificationMessage.APPROVAL_CREATED_APPROVER;
             Map<String, Object> metadata = Map.of("approvalId", 42);
 
             // when
-            Notification notification = Notification.of(
-                    1L, "제목", "내용", NotificationDomainType.APPROVAL, 10L, metadata, messageType);
-            assertThat(notification.getMessageType()).isEqualTo(NotificationMessage.APPROVAL_CREATED_APPROVER);
+            Notification notification =
+                    Notification.of(
+                            1L,
+                            "제목",
+                            "내용",
+                            NotificationDomainType.APPROVAL,
+                            10L,
+                            metadata,
+                            messageType);
+            assertThat(notification.getMessageType())
+                    .isEqualTo(NotificationMessage.APPROVAL_CREATED_APPROVER);
         }
 
         @Test
-        @DisplayName("of_withMessageType_7param_storesMessageType: messageType 포함 7-param of() 호출 시 값이 저장된다")
+        @DisplayName(
+                "of_withMessageType_7param_storesMessageType: messageType 포함 7-param of() 호출 시 값이"
+                    + " 저장된다")
         void of_withMessageType_7param_storesMessageType() {
             // given
             NotificationMessage messageType = NotificationMessage.VISIT_LONG_TERM_PRE;
             Map<String, Object> metadata = Map.of("visitId", 99);
 
             // when
-            Notification notification = Notification.of(
-                    1L, "제목", "내용", NotificationDomainType.VISIT, 10L, metadata, true, messageType);
-            assertThat(notification.getMessageType()).isEqualTo(NotificationMessage.VISIT_LONG_TERM_PRE);
+            Notification notification =
+                    Notification.of(
+                            1L,
+                            "제목",
+                            "내용",
+                            NotificationDomainType.VISIT,
+                            10L,
+                            metadata,
+                            true,
+                            messageType);
+            assertThat(notification.getMessageType())
+                    .isEqualTo(NotificationMessage.VISIT_LONG_TERM_PRE);
         }
 
         @Test
         @DisplayName("of_withMessageType_null_storesNull: messageType에 null 전달 시 null로 저장된다")
         void of_withMessageType_null_storesNull() {
             // given / when
-            Notification notification = Notification.of(
-                    1L, "제목", "내용", NotificationDomainType.GENERAL, 10L, null, (NotificationMessage) null);
+            Notification notification =
+                    Notification.of(
+                            1L,
+                            "제목",
+                            "내용",
+                            NotificationDomainType.GENERAL,
+                            10L,
+                            null,
+                            (NotificationMessage) null);
             assertThat(notification.getMessageType()).isNull();
         }
     }

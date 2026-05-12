@@ -317,7 +317,8 @@ public class VisitService {
         String inputPhoneHash = hashValue(dto.getPhoneNumber());
 
         List<Visit> visits =
-                visitRepository.findByVisitorNameAndPhoneNumberHash(dto.getName(), inputPhoneHash);
+                visitRepository.findByVisitorNameAndPhoneNumberHashOrderByIdDesc(
+                        dto.getName(), inputPhoneHash);
 
         return visits.stream()
                 .filter(

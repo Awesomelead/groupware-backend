@@ -11,7 +11,7 @@ import java.util.List;
 
 public interface VisitRepository extends JpaRepository<Visit, Long> {
 
-    List<Visit> findByVisitorNameAndPhoneNumberHash(String name, String inputPhoneHash);
+    List<Visit> findByVisitorNameAndPhoneNumberHashOrderByIdDesc(String name, String inputPhoneHash);
 
     List<Visit> findAllByVisitCategoryAndEndDateBeforeAndStatusNot(
             VisitCategory visitCategory, LocalDate date, VisitStatus status);

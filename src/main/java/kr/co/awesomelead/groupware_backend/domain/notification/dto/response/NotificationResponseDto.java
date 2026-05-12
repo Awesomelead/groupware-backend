@@ -4,6 +4,7 @@ import io.swagger.v3.oas.annotations.media.Schema;
 
 import kr.co.awesomelead.groupware_backend.domain.notification.entity.Notification;
 import kr.co.awesomelead.groupware_backend.domain.notification.enums.NotificationDomainType;
+import kr.co.awesomelead.groupware_backend.domain.notification.enums.NotificationMessage;
 
 import lombok.Getter;
 
@@ -43,6 +44,9 @@ public class NotificationResponseDto {
     @Schema(description = "승인 대기 여부 (true인 알림만 필터링 가능)", example = "false")
     private final boolean requiresApproval;
 
+    @Schema(description = "알림 메시지 유형", example = "VISIT_CHECK_IN")
+    private final NotificationMessage messageType;
+
     private NotificationResponseDto(Notification notification) {
         this.id = notification.getId();
         this.title = notification.getTitle();
@@ -53,6 +57,7 @@ public class NotificationResponseDto {
         this.createdAt = notification.getCreatedAt();
         this.metadata = notification.getMetadata();
         this.requiresApproval = notification.isRequiresApproval();
+        this.messageType = notification.getMessageType();
     }
 
     public static NotificationResponseDto from(Notification notification) {

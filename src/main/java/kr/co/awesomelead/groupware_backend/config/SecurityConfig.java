@@ -2,6 +2,7 @@ package kr.co.awesomelead.groupware_backend.config;
 
 import jakarta.servlet.http.HttpServletResponse;
 
+import kr.co.awesomelead.groupware_backend.domain.auth.filter.JwtExceptionFilter;
 import kr.co.awesomelead.groupware_backend.domain.auth.filter.JwtFilter;
 import kr.co.awesomelead.groupware_backend.domain.auth.util.JWTUtil;
 import kr.co.awesomelead.groupware_backend.domain.user.repository.UserRepository;
@@ -124,6 +125,7 @@ public class SecurityConfig {
 
         http.addFilterBefore(
                 new JwtFilter(jwtUtil, userRepository), UsernamePasswordAuthenticationFilter.class);
+        http.addFilterBefore(new JwtExceptionFilter(), JwtFilter.class);
 
         http.sessionManagement(
                 (session) -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS));

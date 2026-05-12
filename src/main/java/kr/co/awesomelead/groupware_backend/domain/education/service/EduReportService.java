@@ -620,6 +620,7 @@ public class EduReportService {
                         attachment -> {
                             s3Service.deleteFile(attachment.getS3Key());
                         });
+        eduAttendanceRepository.deleteByEduReportId(report.getId());
         eduReportRepository.delete(report);
     }
 

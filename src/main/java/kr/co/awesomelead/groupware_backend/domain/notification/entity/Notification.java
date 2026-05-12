@@ -12,6 +12,7 @@ import jakarta.persistence.PrePersist;
 import jakarta.persistence.Table;
 
 import kr.co.awesomelead.groupware_backend.domain.notification.enums.NotificationDomainType;
+import kr.co.awesomelead.groupware_backend.domain.notification.enums.NotificationMessage;
 import kr.co.awesomelead.groupware_backend.global.util.NotificationMetadataConverter;
 
 import lombok.Getter;
@@ -55,6 +56,10 @@ public class Notification {
     @Column(nullable = false)
     private boolean requiresApproval;
 
+    @Enumerated(EnumType.STRING)
+    @Column(name = "message_type", length = 50, nullable = true)
+    private NotificationMessage messageType;
+
     @Column(nullable = false, updatable = false)
     private LocalDateTime createdAt;
 
@@ -79,6 +84,27 @@ public class Notification {
         this.metadata = metadata;
         this.isRead = false;
         this.requiresApproval = requiresApproval;
+        this.messageType = null;
+    }
+
+    private Notification(
+            Long userId,
+            String title,
+            String content,
+            NotificationDomainType domainType,
+            Long domainId,
+            Map<String, Object> metadata,
+            boolean requiresApproval,
+            NotificationMessage messageType) {
+        this.userId = userId;
+        this.title = title;
+        this.content = content;
+        this.domainType = domainType;
+        this.domainId = domainId;
+        this.metadata = metadata;
+        this.isRead = false;
+        this.requiresApproval = requiresApproval;
+        this.messageType = messageType;
     }
 
     public static Notification of(
@@ -113,6 +139,44 @@ public class Notification {
         validate(userId, title, content, domainType);
         return new Notification(
                 userId, title, content, domainType, domainId, metadata, requiresApproval);
+    }
+
+    public static Notification of(
+            Long userId,
+            String title,
+            String content,
+            NotificationDomainType domainType,
+            Long domainId,
+            NotificationMessage messageType) {
+        validate(userId, title, content, domainType);
+        return new Notification(userId, title, content, domainType, domainId, null, false, messageType);
+    }
+
+    public static Notification of(
+            Long userId,
+            String title,
+            String content,
+            NotificationDomainType domainType,
+            Long domainId,
+            Map<String, Object> metadata,
+            NotificationMessage messageType) {
+        validate(userId, title, content, domainType);
+        return new Notification(
+                userId, title, content, domainType, domainId, metadata, false, messageType);
+    }
+
+    public static Notification of(
+            Long userId,
+            String title,
+            String content,
+            NotificationDomainType domainType,
+            Long domainId,
+            Map<String, Object> metadata,
+            boolean requiresApproval,
+            NotificationMessage messageType) {
+        validate(userId, title, content, domainType);
+        return new Notification(
+                userId, title, content, domainType, domainId, metadata, requiresApproval, messageType);
     }
 
     private static void validate(

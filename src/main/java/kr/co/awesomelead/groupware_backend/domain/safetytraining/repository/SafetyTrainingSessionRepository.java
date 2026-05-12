@@ -8,6 +8,7 @@ import kr.co.awesomelead.groupware_backend.domain.safetytraining.enums.SafetyTra
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
@@ -45,4 +46,8 @@ public interface SafetyTrainingSessionRepository
 
     Optional<SafetyTrainingSession> findFirstByCompanyScopeAndIdLessThanOrderByIdDesc(
             Company companyScope, Long sessionId);
+
+    @Modifying
+    @Query("UPDATE SafetyTrainingSession s SET s.createdBy = NULL WHERE s.createdBy.id = :userId")
+    void updateCreatedByToNull(@Param("userId") Long userId);
 }

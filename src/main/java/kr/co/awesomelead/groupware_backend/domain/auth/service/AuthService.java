@@ -19,6 +19,7 @@ import kr.co.awesomelead.groupware_backend.domain.auth.util.JWTUtil;
 import kr.co.awesomelead.groupware_backend.domain.notification.enums.NotificationDomainType;
 import kr.co.awesomelead.groupware_backend.domain.notification.enums.NotificationMessage;
 import kr.co.awesomelead.groupware_backend.domain.notification.service.NotificationService;
+import kr.co.awesomelead.groupware_backend.domain.safetytraining.repository.SafetyTrainingSessionRepository;
 import kr.co.awesomelead.groupware_backend.domain.user.dto.response.MyInfoAuthorityItemDto;
 import kr.co.awesomelead.groupware_backend.domain.user.entity.User;
 import kr.co.awesomelead.groupware_backend.domain.user.enums.Authority;
@@ -63,6 +64,7 @@ public class AuthService {
     private final JWTUtil jwtUtil;
     private final RefreshTokenService refreshTokenService;
     private final NotificationService notificationService;
+    private final SafetyTrainingSessionRepository safetyTrainingSessionRepository;
 
     @PersistenceContext private EntityManager entityManager;
 
@@ -448,6 +450,7 @@ public class AuthService {
 
         // 2) 권한 테이블 정리 후 사용자 삭제
         user.getAuthorities().clear();
+        safetyTrainingSessionRepository.updateCreatedByToNull(userId);
         userRepository.delete(user);
 
         log.info("계정 삭제 완료 - userId: {}, email: {}", userId, user.getEmail());

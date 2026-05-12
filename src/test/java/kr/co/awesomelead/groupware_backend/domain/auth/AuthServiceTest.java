@@ -896,14 +896,16 @@ class AuthServiceTest {
 
             // then
             ArgumentCaptor<String> jpqlCaptor = ArgumentCaptor.forClass(String.class);
-            verify(entityManager, org.mockito.Mockito.atLeastOnce()).createQuery(jpqlCaptor.capture());
+            verify(entityManager, org.mockito.Mockito.atLeastOnce())
+                    .createQuery(jpqlCaptor.capture());
 
             List<String> executedJpqls = jpqlCaptor.getAllValues();
-            boolean annualLeaveQueryFound = executedJpqls.stream()
-                    .anyMatch(jpql -> jpql.contains("AnnualLeave"));
+            boolean annualLeaveQueryFound =
+                    executedJpqls.stream().anyMatch(jpql -> jpql.contains("AnnualLeave"));
             assertThat(annualLeaveQueryFound)
-                    .as("AnnualLeave는 CascadeType.ALL + orphanRemoval=true로 매핑되어 있으므로"
-                            + " JPQL로 수동 삭제하면 안 된다")
+                    .as(
+                            "AnnualLeave는 CascadeType.ALL + orphanRemoval=true로 매핑되어 있으므로"
+                                    + " JPQL로 수동 삭제하면 안 된다")
                     .isFalse();
         }
 

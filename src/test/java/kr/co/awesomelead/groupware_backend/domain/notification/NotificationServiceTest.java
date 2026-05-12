@@ -205,7 +205,7 @@ class NotificationServiceTest {
     @Test
     @DisplayName(
             "sendApprovalCreatedAlert - 결재자에게 저장된 Notification의 messageType이"
-                + " APPROVAL_CREATED_APPROVER이다")
+                    + " APPROVAL_CREATED_APPROVER이다")
     void sendApprovalCreatedAlert_approver_messageType() {
         notificationService.sendApprovalCreatedAlert(100L, "결재문서", 11L, List.of());
 
@@ -218,7 +218,7 @@ class NotificationServiceTest {
     @Test
     @DisplayName(
             "sendApprovalCreatedAlert - 참조자에게 저장된 Notification의 messageType이"
-                + " APPROVAL_CREATED_REFERRER이다")
+                    + " APPROVAL_CREATED_REFERRER이다")
     void sendApprovalCreatedAlert_referrer_messageType() {
         notificationService.sendApprovalCreatedAlert(100L, "결재문서", 11L, List.of(22L));
 
@@ -235,7 +235,7 @@ class NotificationServiceTest {
     @Test
     @DisplayName(
             "sendApprovalNextStepAlert - 저장된 Notification의 messageType이"
-                + " APPROVAL_CREATED_APPROVER이다")
+                    + " APPROVAL_CREATED_APPROVER이다")
     void sendApprovalNextStepAlert_messageType() {
         notificationService.sendApprovalNextStepAlert(33L, 100L, "결재문서");
 
@@ -259,7 +259,7 @@ class NotificationServiceTest {
     @Test
     @DisplayName(
             "sendApprovalFinallyApprovedAlert - 기안자와 열람권자 모두 messageType이"
-                + " APPROVAL_FINALLY_APPROVED이다")
+                    + " APPROVAL_FINALLY_APPROVED이다")
     void sendApprovalFinallyApprovedAlert_messageType() {
         notificationService.sendApprovalFinallyApprovedAlert(100L, "결재문서", 55L, List.of(66L, 77L));
 
@@ -277,7 +277,7 @@ class NotificationServiceTest {
     @Test
     @DisplayName(
             "sendSafetyTrainingSessionAlertToAttendees - 저장된 Notification의 messageType이"
-                + " SAFETY_TRAINING_SESSION_CREATED이다")
+                    + " SAFETY_TRAINING_SESSION_CREATED이다")
     void sendSafetyTrainingSessionAlertToAttendees_messageType() {
         notificationService.sendSafetyTrainingSessionAlertToAttendees(
                 200L, "안전보건교육 세션", List.of(1L));

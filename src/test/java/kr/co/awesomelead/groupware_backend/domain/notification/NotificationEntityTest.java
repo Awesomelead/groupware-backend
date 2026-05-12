@@ -74,7 +74,7 @@ class NotificationEntityTest {
         @Test
         @DisplayName(
                 "of_withMessageType_5param_storesMessageType: messageType 포함 5-param of() 호출 시 값이"
-                    + " 저장된다")
+                        + " 저장된다")
         void of_withMessageType_5param_storesMessageType() {
             // given
             NotificationMessage messageType = NotificationMessage.NOTICE_CREATED;
@@ -89,7 +89,7 @@ class NotificationEntityTest {
         @Test
         @DisplayName(
                 "of_withMessageType_6param_storesMessageType: messageType 포함 6-param of() 호출 시 값이"
-                    + " 저장된다")
+                        + " 저장된다")
         void of_withMessageType_6param_storesMessageType() {
             // given
             NotificationMessage messageType = NotificationMessage.APPROVAL_CREATED_APPROVER;
@@ -112,7 +112,7 @@ class NotificationEntityTest {
         @Test
         @DisplayName(
                 "of_withMessageType_7param_storesMessageType: messageType 포함 7-param of() 호출 시 값이"
-                    + " 저장된다")
+                        + " 저장된다")
         void of_withMessageType_7param_storesMessageType() {
             // given
             NotificationMessage messageType = NotificationMessage.VISIT_LONG_TERM_PRE;

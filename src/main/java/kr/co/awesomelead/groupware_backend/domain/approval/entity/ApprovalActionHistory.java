@@ -9,6 +9,7 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
+import jakarta.persistence.Lob;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 
@@ -60,6 +61,15 @@ public class ApprovalActionHistory extends BaseTimeEntity {
     @JoinColumn(name = "actor_user_id")
     private User actorUser;
 
-    @Column(length = 1000)
+    @Lob
+    @Column(columnDefinition = "TEXT")
     private String actionComment;
+
+    @Lob
+    @Column(columnDefinition = "TEXT")
+    private String actionCommentDelta;
+
+    @Lob
+    @Column(columnDefinition = "TEXT")
+    private String actionCommentHtml;
 }

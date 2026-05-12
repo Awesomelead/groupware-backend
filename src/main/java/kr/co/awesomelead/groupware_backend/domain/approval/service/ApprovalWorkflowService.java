@@ -1,9 +1,11 @@
 package kr.co.awesomelead.groupware_backend.domain.approval.service;
 
 import kr.co.awesomelead.groupware_backend.domain.approval.dto.request.ApprovalDirectSubmitRequestDto;
+import kr.co.awesomelead.groupware_backend.domain.approval.dto.request.ApprovalDecisionRequestDto;
 import kr.co.awesomelead.groupware_backend.domain.approval.dto.request.ApprovalDraftUpsertRequestDto;
 import kr.co.awesomelead.groupware_backend.domain.approval.dto.request.ApprovalLineRequestDto;
 import kr.co.awesomelead.groupware_backend.domain.approval.dto.request.ApprovalSubmitRequestDto;
+import kr.co.awesomelead.groupware_backend.domain.approval.dto.response.ApprovalDecisionResponseDto;
 import kr.co.awesomelead.groupware_backend.domain.approval.dto.response.ApprovalDraftResponseDto;
 import kr.co.awesomelead.groupware_backend.domain.approval.dto.response.ApprovalInboxAllResponseDto;
 import kr.co.awesomelead.groupware_backend.domain.approval.dto.response.ApprovalSubmitResponseDto;
@@ -11,10 +13,12 @@ import kr.co.awesomelead.groupware_backend.domain.approval.dto.response.Approval
 import kr.co.awesomelead.groupware_backend.domain.approval.entity.ApprovalActionHistory;
 import kr.co.awesomelead.groupware_backend.domain.approval.entity.ApprovalDocument;
 import kr.co.awesomelead.groupware_backend.domain.approval.entity.ApprovalDocumentLine;
+import kr.co.awesomelead.groupware_backend.domain.approval.entity.ApprovalPersonalSetting;
 import kr.co.awesomelead.groupware_backend.domain.approval.entity.ApprovalTemplate;
 import kr.co.awesomelead.groupware_backend.domain.approval.entity.ApprovalTemplateCategory;
 import kr.co.awesomelead.groupware_backend.domain.approval.entity.ApprovalTemplateLine;
 import kr.co.awesomelead.groupware_backend.domain.approval.enums.ApprovalActionType;
+import kr.co.awesomelead.groupware_backend.domain.approval.enums.ApprovalDecisionAction;
 import kr.co.awesomelead.groupware_backend.domain.approval.enums.ApprovalLineStatus;
 import kr.co.awesomelead.groupware_backend.domain.approval.enums.ApprovalRouteRole;
 import kr.co.awesomelead.groupware_backend.domain.approval.enums.ApprovalStatus;
@@ -23,6 +27,7 @@ import kr.co.awesomelead.groupware_backend.domain.approval.enums.ApprovalType;
 import kr.co.awesomelead.groupware_backend.domain.approval.repository.ApprovalActionHistoryRepository;
 import kr.co.awesomelead.groupware_backend.domain.approval.repository.ApprovalDocumentLineRepository;
 import kr.co.awesomelead.groupware_backend.domain.approval.repository.ApprovalDocumentRepository;
+import kr.co.awesomelead.groupware_backend.domain.approval.repository.ApprovalPersonalSettingRepository;
 import kr.co.awesomelead.groupware_backend.domain.approval.repository.ApprovalTemplateCategoryRepository;
 import kr.co.awesomelead.groupware_backend.domain.approval.repository.ApprovalTemplateLineRepository;
 import kr.co.awesomelead.groupware_backend.domain.approval.repository.ApprovalTemplateRepository;
@@ -32,6 +37,7 @@ import kr.co.awesomelead.groupware_backend.domain.user.entity.User;
 import kr.co.awesomelead.groupware_backend.domain.user.repository.UserRepository;
 import kr.co.awesomelead.groupware_backend.global.error.CustomException;
 import kr.co.awesomelead.groupware_backend.global.error.ErrorCode;
+import kr.co.awesomelead.groupware_backend.global.infra.s3.service.S3Service;
 
 import lombok.RequiredArgsConstructor;
 
@@ -55,8 +61,10 @@ public class ApprovalWorkflowService {
     private final ApprovalDocumentRepository approvalDocumentRepository;
     private final ApprovalDocumentLineRepository approvalDocumentLineRepository;
     private final ApprovalActionHistoryRepository approvalActionHistoryRepository;
+    private final ApprovalPersonalSettingRepository approvalPersonalSettingRepository;
     private final UserRepository userRepository;
     private final DepartmentRepository departmentRepository;
+    private final S3Service s3Service;
 
     @Transactional(readOnly = true)
     public ApprovalTemplateListResponseDto getTemplateList() {
@@ -449,6 +457,157 @@ public class ApprovalWorkflowService {
         return submit(userId, draftResult.getDocumentId(), submitRequest);
     }
 
+    @Transactional
+    public ApprovalDecisionResponseDto processDecision(
+            Long userId, Long documentId, ApprovalDecisionRequestDto request) {
+        User actor = getUser(userId);
+        ApprovalDocument document =
+                approvalDocumentRepository
+                        .findByIdWithLines(documentId)
+                        .orElseThrow(() -> new CustomException(ErrorCode.APPROVAL_NOT_FOUND));
+
+        if (document.getStatus() != ApprovalStatus.IN_PROGRESS) {
+            throw new CustomException(ErrorCode.INVALID_ARGUMENT);
+        }
+
+        Long departmentId = actor.getDepartment() != null ? actor.getDepartment().getId() : null;
+
+        List<ApprovalDocumentLine> myProcessingLines =
+                document.getLines().stream()
+                        .filter(line -> isMyProcessingLine(line, userId, departmentId))
+                        .sorted(
+                                Comparator.comparing(
+                                                ApprovalDocumentLine::getSequenceNo,
+                                                Comparator.nullsLast(Integer::compareTo))
+                                        .thenComparing(ApprovalDocumentLine::getId))
+                        .toList();
+
+        if (myProcessingLines.isEmpty()) {
+            throw new CustomException(ErrorCode.NOT_APPROVER);
+        }
+
+        ApprovalDocumentLine currentLine =
+                myProcessingLines.stream()
+                        .filter(line -> line.getLineStatus() == ApprovalLineStatus.PENDING)
+                        .findFirst()
+                        .orElse(null);
+
+        if (currentLine == null) {
+            boolean waitingExists =
+                    myProcessingLines.stream()
+                            .anyMatch(line -> line.getLineStatus() == ApprovalLineStatus.WAITING);
+            if (waitingExists) {
+                throw new CustomException(ErrorCode.NOT_YOUR_TURN);
+            }
+            throw new CustomException(ErrorCode.ALREADY_PROCESSED_STEP);
+        }
+
+        ApprovalDecisionAction action = request.getAction();
+        if (action == null) {
+            throw new CustomException(ErrorCode.INVALID_ARGUMENT);
+        }
+        if (action == ApprovalDecisionAction.REJECT
+                && !StringUtils.hasText(resolveCommentText(request))) {
+            throw new CustomException(ErrorCode.REJECTION_REASON_REQUIRED);
+        }
+
+        LocalDateTime now = LocalDateTime.now();
+        ApprovalStatus fromStatus = document.getStatus();
+        String signatureImageKey = resolveSignatureImageKey(actor.getId(), action);
+        String stampLabel = buildStampLabel(action, now);
+
+        ApprovalStatus toStatus = fromStatus;
+        ApprovalLineStatus lineStatusAfter = currentLine.getLineStatus();
+
+        if (action == ApprovalDecisionAction.APPROVE) {
+            currentLine.setLineStatus(ApprovalLineStatus.APPROVED);
+            lineStatusAfter = ApprovalLineStatus.APPROVED;
+            currentLine.setProcessedByUser(actor);
+            currentLine.setProcessedAt(now);
+            currentLine.setProcessedComment(resolveCommentText(request));
+            currentLine.setProcessedSignatureImageKey(signatureImageKey);
+
+            ApprovalDocumentLine nextLine = findNextPendingApprovalLine(document.getLines());
+            if (nextLine != null) {
+                nextLine.setLineStatus(ApprovalLineStatus.PENDING);
+                toStatus = ApprovalStatus.IN_PROGRESS;
+            } else {
+                toStatus = ApprovalStatus.APPROVED;
+                document.setCompletedAt(now);
+            }
+        } else if (action == ApprovalDecisionAction.REJECT) {
+            currentLine.setLineStatus(ApprovalLineStatus.REJECTED);
+            lineStatusAfter = ApprovalLineStatus.REJECTED;
+            currentLine.setProcessedByUser(actor);
+            currentLine.setProcessedAt(now);
+            currentLine.setProcessedComment(resolveCommentText(request));
+            currentLine.setProcessedSignatureImageKey(signatureImageKey);
+            toStatus = ApprovalStatus.REJECTED;
+            document.setCompletedAt(null);
+        } else {
+            // HOLD(보류)는 문서/라인 상태를 유지하고 의견 이력만 남깁니다.
+            currentLine.setProcessedByUser(actor);
+            currentLine.setProcessedAt(now);
+            currentLine.setProcessedComment(resolveCommentText(request));
+            currentLine.setProcessedSignatureImageKey(signatureImageKey);
+            toStatus = ApprovalStatus.IN_PROGRESS;
+            lineStatusAfter = ApprovalLineStatus.PENDING;
+            document.setCompletedAt(null);
+        }
+
+        document.setStatus(toStatus);
+        approvalDocumentRepository.save(document);
+
+        ApprovalActionType historyActionType = toHistoryActionType(action);
+        approvalActionHistoryRepository.save(
+                ApprovalActionHistory.builder()
+                        .document(document)
+                        .documentLine(currentLine)
+                        .actionType(historyActionType)
+                        .fromStatus(fromStatus)
+                        .toStatus(toStatus)
+                        .actorUser(actor)
+                        .actionComment(resolveCommentText(request))
+                        .actionCommentDelta(request.getCommentDelta())
+                        .actionCommentHtml(request.getCommentHtml())
+                        .build());
+
+        List<ApprovalDecisionResponseDto.OpinionDto> opinions =
+                approvalActionHistoryRepository.findByDocumentIdOrderByCreatedAtAscIdAsc(documentId)
+                        .stream()
+                        .filter(this::isDecisionHistory)
+                        .filter(history -> hasAnyComment(history))
+                        .map(this::toOpinionDto)
+                        .toList();
+
+        return ApprovalDecisionResponseDto.builder()
+                .documentId(document.getId())
+                .documentNo(document.getDocumentNo())
+                .status(document.getStatus())
+                .statusLabel(
+                        document.getStatus() != null
+                                ? document.getStatus().getDescription()
+                                : null)
+                .processedLine(
+                        ApprovalDecisionResponseDto.ProcessedLineDto.builder()
+                                .lineId(currentLine.getId())
+                                .action(action)
+                                .lineStatus(lineStatusAfter)
+                                .lineStatusLabel(
+                                        lineStatusAfter != null
+                                                ? lineStatusAfter.getDescription()
+                                                : null)
+                                .processedByUserId(actor.getId())
+                                .processedByUserName(actor.getDisplayName())
+                                .processedAt(now)
+                                .stampLabel(stampLabel)
+                                .signatureImageUrl(resolveSignatureImageUrl(signatureImageKey))
+                                .build())
+                .opinions(opinions)
+                .completedAt(document.getCompletedAt())
+                .build();
+    }
+
     private ApprovalTemplateListResponseDto.TemplateDto toTemplateDto(ApprovalTemplate template) {
         List<ApprovalTemplateLine> lines =
                 approvalTemplateLineRepository.findByTemplateIdOrderBySequenceNoAscIdAsc(
@@ -752,6 +911,7 @@ public class ApprovalWorkflowService {
 
     private ApprovalInboxAllResponseDto.ApprovalLineDto toInboxApprovalLineDto(
             ApprovalDocumentLine line) {
+        User processedByUser = line.getProcessedByUser();
         return ApprovalInboxAllResponseDto.ApprovalLineDto.builder()
                 .lineId(line.getId())
                 .role(line.getRole())
@@ -767,10 +927,17 @@ public class ApprovalWorkflowService {
                 .lineStatus(line.getLineStatus())
                 .lineStatusLabel(
                         line.getLineStatus() != null ? line.getLineStatus().getDescription() : null)
+                .processedByUserId(processedByUser != null ? processedByUser.getId() : null)
+                .processedByUserName(processedByUser != null ? processedByUser.getDisplayName() : null)
+                .processedAt(line.getProcessedAt())
+                .processedSignatureImageUrl(
+                        resolveSignatureImageUrl(line.getProcessedSignatureImageKey()))
+                .stampLabel(buildStampLabel(line.getLineStatus(), line.getProcessedAt()))
                 .build();
     }
 
     private ApprovalInboxAllResponseDto.MyLineDto toMyLineDto(ApprovalDocumentLine line) {
+        User processedByUser = line.getProcessedByUser();
         return ApprovalInboxAllResponseDto.MyLineDto.builder()
                 .lineId(line.getId())
                 .role(line.getRole())
@@ -787,6 +954,12 @@ public class ApprovalWorkflowService {
                 .lineStatus(line.getLineStatus())
                 .lineStatusLabel(
                         line.getLineStatus() != null ? line.getLineStatus().getDescription() : null)
+                .processedByUserId(processedByUser != null ? processedByUser.getId() : null)
+                .processedByUserName(processedByUser != null ? processedByUser.getDisplayName() : null)
+                .processedAt(line.getProcessedAt())
+                .processedSignatureImageUrl(
+                        resolveSignatureImageUrl(line.getProcessedSignatureImageKey()))
+                .stampLabel(buildStampLabel(line.getLineStatus(), line.getProcessedAt()))
                 .build();
     }
 
@@ -980,6 +1153,7 @@ public class ApprovalWorkflowService {
             line.setProcessedAt(null);
             line.setProcessedByUser(null);
             line.setProcessedComment(null);
+            line.setProcessedSignatureImageKey(null);
 
             if (lineRequest.getTargetType() == ApprovalTargetType.USER) {
                 if (lineRequest.getTargetUserId() == null) {
@@ -1031,6 +1205,7 @@ public class ApprovalWorkflowService {
             line.setProcessedAt(null);
             line.setProcessedByUser(null);
             line.setProcessedComment(null);
+            line.setProcessedSignatureImageKey(null);
         }
 
         lines.stream()
@@ -1041,6 +1216,7 @@ public class ApprovalWorkflowService {
                             line.setProcessedAt(null);
                             line.setProcessedByUser(null);
                             line.setProcessedComment(null);
+                            line.setProcessedSignatureImageKey(null);
                         });
 
         if (forSubmit && approvalLines.isEmpty()) {
@@ -1048,6 +1224,123 @@ public class ApprovalWorkflowService {
         }
 
         return approvalDocumentLineRepository.saveAll(lines);
+    }
+
+    private ApprovalDocumentLine findNextPendingApprovalLine(List<ApprovalDocumentLine> lines) {
+        return lines.stream()
+                .filter(line -> line.getRole() == ApprovalRouteRole.APPROVAL_LINE)
+                .filter(line -> line.getLineStatus() == ApprovalLineStatus.WAITING)
+                .sorted(
+                        Comparator.comparing(
+                                        ApprovalDocumentLine::getSequenceNo,
+                                        Comparator.nullsLast(Integer::compareTo))
+                                .thenComparing(ApprovalDocumentLine::getId))
+                .findFirst()
+                .orElse(null);
+    }
+
+    private String resolveCommentText(ApprovalDecisionRequestDto request) {
+        if (StringUtils.hasText(request.getCommentText())) {
+            return request.getCommentText().trim();
+        }
+        if (StringUtils.hasText(request.getCommentHtml())) {
+            String plain = request.getCommentHtml().replaceAll("<[^>]+>", " ");
+            plain = plain.replace("&nbsp;", " ").replaceAll("\\s+", " ").trim();
+            if (StringUtils.hasText(plain)) {
+                return plain;
+            }
+        }
+        if (StringUtils.hasText(request.getCommentDelta())) {
+            return request.getCommentDelta().trim();
+        }
+        return null;
+    }
+
+    private String resolveSignatureImageKey(Long userId, ApprovalDecisionAction action) {
+        if (action != ApprovalDecisionAction.APPROVE) {
+            return null;
+        }
+        ApprovalPersonalSetting setting =
+                approvalPersonalSettingRepository.findByUserId(userId).orElse(null);
+        if (setting == null || !StringUtils.hasText(setting.getSignatureImageKey())) {
+            return null;
+        }
+        return setting.getSignatureImageKey();
+    }
+
+    private String resolveSignatureImageUrl(String signatureImageKey) {
+        if (!StringUtils.hasText(signatureImageKey)) {
+            return null;
+        }
+        return s3Service.getPresignedViewUrl(signatureImageKey);
+    }
+
+    private String buildStampLabel(ApprovalDecisionAction action, LocalDateTime processedAt) {
+        if (action == null || processedAt == null) {
+            return null;
+        }
+        return action.getDescription()
+                + " "
+                + processedAt.format(DateTimeFormatter.ofPattern("MM/dd"));
+    }
+
+    private String buildStampLabel(ApprovalLineStatus lineStatus, LocalDateTime processedAt) {
+        if (lineStatus == null || processedAt == null) {
+            return null;
+        }
+        if (lineStatus == ApprovalLineStatus.APPROVED) {
+            return "승인 " + processedAt.format(DateTimeFormatter.ofPattern("MM/dd"));
+        }
+        if (lineStatus == ApprovalLineStatus.REJECTED) {
+            return "반려 " + processedAt.format(DateTimeFormatter.ofPattern("MM/dd"));
+        }
+        return null;
+    }
+
+    private ApprovalActionType toHistoryActionType(ApprovalDecisionAction action) {
+        return switch (action) {
+            case APPROVE -> ApprovalActionType.APPROVE;
+            case REJECT -> ApprovalActionType.REJECT;
+            case HOLD -> ApprovalActionType.HOLD;
+        };
+    }
+
+    private ApprovalDecisionAction toDecisionAction(ApprovalActionType actionType) {
+        if (actionType == ApprovalActionType.APPROVE) {
+            return ApprovalDecisionAction.APPROVE;
+        }
+        if (actionType == ApprovalActionType.REJECT) {
+            return ApprovalDecisionAction.REJECT;
+        }
+        if (actionType == ApprovalActionType.HOLD) {
+            return ApprovalDecisionAction.HOLD;
+        }
+        return null;
+    }
+
+    private boolean isDecisionHistory(ApprovalActionHistory history) {
+        return history.getActionType() == ApprovalActionType.APPROVE
+                || history.getActionType() == ApprovalActionType.REJECT
+                || history.getActionType() == ApprovalActionType.HOLD;
+    }
+
+    private boolean hasAnyComment(ApprovalActionHistory history) {
+        return StringUtils.hasText(history.getActionComment())
+                || StringUtils.hasText(history.getActionCommentDelta())
+                || StringUtils.hasText(history.getActionCommentHtml());
+    }
+
+    private ApprovalDecisionResponseDto.OpinionDto toOpinionDto(ApprovalActionHistory history) {
+        User actor = history.getActorUser();
+        return ApprovalDecisionResponseDto.OpinionDto.builder()
+                .action(toDecisionAction(history.getActionType()))
+                .actorUserId(actor != null ? actor.getId() : null)
+                .actorUserName(actor != null ? actor.getDisplayName() : null)
+                .actionAt(history.getCreatedAt())
+                .commentDelta(history.getActionCommentDelta())
+                .commentHtml(history.getActionCommentHtml())
+                .commentText(history.getActionComment())
+                .build();
     }
 
     private String toTargetName(

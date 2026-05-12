@@ -7,10 +7,12 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 
 import kr.co.awesomelead.groupware_backend.domain.approval.dto.request.ApprovalDirectSubmitRequestDto;
+import kr.co.awesomelead.groupware_backend.domain.approval.dto.request.ApprovalDecisionRequestDto;
 import kr.co.awesomelead.groupware_backend.domain.approval.dto.request.ApprovalDraftCreateRequestDto;
 import kr.co.awesomelead.groupware_backend.domain.approval.dto.request.ApprovalDraftUpdateRequestDto;
 import kr.co.awesomelead.groupware_backend.domain.approval.dto.request.ApprovalDraftUpsertRequestDto;
 import kr.co.awesomelead.groupware_backend.domain.approval.dto.request.ApprovalSubmitRequestDto;
+import kr.co.awesomelead.groupware_backend.domain.approval.dto.response.ApprovalDecisionResponseDto;
 import kr.co.awesomelead.groupware_backend.domain.approval.dto.response.ApprovalDraftResponseDto;
 import kr.co.awesomelead.groupware_backend.domain.approval.dto.response.ApprovalInboxAllResponseDto;
 import kr.co.awesomelead.groupware_backend.domain.approval.dto.response.ApprovalSubmitResponseDto;
@@ -61,6 +63,7 @@ import org.springframework.web.bind.annotation.RestController;
         - 임시저장 수정: PUT /api/approvals/drafts/{documentId}
         - 임시저장 문서 상신: POST /api/approvals/drafts/{documentId}/submit
         - 바로 상신(임시저장 없이 1회 요청): POST /api/approvals/submit-direct
+        - 결재처리(승인/반려/보류): POST /api/approvals/{documentId}/decision
 
         ### 권한 정보
         - 로그인 필요
@@ -109,6 +112,10 @@ import org.springframework.web.bind.annotation.RestController;
         - ApprovalTargetType
           - USER (사용자)
           - DEPARTMENT (부서)
+        - ApprovalDecisionAction
+          - APPROVE (승인)
+          - REJECT (반려)
+          - HOLD (보류)
         """)
 public class ApprovalWorkflowController {
 
@@ -595,6 +602,32 @@ public class ApprovalWorkflowController {
             @Parameter(hidden = true) @AuthenticationPrincipal CustomUserDetails userDetails) {
         ApprovalSubmitResponseDto result =
                 approvalWorkflowService.submitDirect(userDetails.getId(), request);
+        return ResponseEntity.ok(ApiResponse.onSuccess(result));
+    }
+
+    @Operation(
+            summary = "전자결재 결재처리(승인/반려/보류)",
+            description =
+                    """
+            결재진행 문서에 대해 현재 결재대기(PENDING)인 결재자가 처리합니다.
+
+            ### 처리 규칙
+            - 결재자는 본인 계정 기준으로 처리합니다.
+            - action=APPROVE: 현재 결재선을 승인 처리하고 다음 결재선으로 진행합니다.
+              - 마지막 결재선 승인 시 문서는 APPROVED(완결) 상태가 되고 completedAt이 세팅됩니다.
+            - action=REJECT: 현재 결재선을 반려 처리하고 문서를 REJECTED 상태로 전환합니다.
+            - action=HOLD: 문서 상태는 IN_PROGRESS 유지, 현재 결재선은 PENDING 유지(보류 기록만 저장).
+            - 결재의견(commentDelta/commentHtml/commentText)은 의견 이력으로 저장됩니다.
+            - 승인 처리 시 처리자명 + 승인 MM/dd 스탬프 정보가 생성되며,
+              개인설정 서명이미지가 있으면 서명이미지 URL도 함께 스냅샷으로 저장됩니다.
+            """)
+    @PostMapping("/approvals/{documentId}/decision")
+    public ResponseEntity<ApiResponse<ApprovalDecisionResponseDto>> processDecision(
+            @PathVariable Long documentId,
+            @Valid @RequestBody ApprovalDecisionRequestDto request,
+            @Parameter(hidden = true) @AuthenticationPrincipal CustomUserDetails userDetails) {
+        ApprovalDecisionResponseDto result =
+                approvalWorkflowService.processDecision(userDetails.getId(), documentId, request);
         return ResponseEntity.ok(ApiResponse.onSuccess(result));
     }
 

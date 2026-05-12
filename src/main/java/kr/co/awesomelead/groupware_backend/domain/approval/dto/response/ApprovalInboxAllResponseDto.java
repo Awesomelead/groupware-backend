@@ -175,6 +175,21 @@ public class ApprovalInboxAllResponseDto {
 
         @Schema(description = "결재 라인 상태 한글 라벨", example = "결재대기")
         private String lineStatusLabel;
+
+        @Schema(description = "처리자 사용자 ID(처리된 라인일 때)", example = "14")
+        private Long processedByUserId;
+
+        @Schema(description = "처리자 이름(처리된 라인일 때)", example = "고영민")
+        private String processedByUserName;
+
+        @Schema(description = "처리 일시(처리된 라인일 때)")
+        private LocalDateTime processedAt;
+
+        @Schema(description = "처리 시점 서명이미지 URL(없으면 null)")
+        private String processedSignatureImageUrl;
+
+        @Schema(description = "스탬프 표시 텍스트(예: 승인 05/12)", example = "승인 05/12")
+        private String stampLabel;
     }
 
     @Getter
@@ -237,5 +252,20 @@ public class ApprovalInboxAllResponseDto {
 
         @Schema(description = "결재 라인 상태 한글 라벨", example = "결재대기")
         private String lineStatusLabel;
+
+        @Schema(description = "처리자 사용자 ID(처리된 라인일 때)", example = "14")
+        private Long processedByUserId;
+
+        @Schema(description = "처리자 이름(처리된 라인일 때)", example = "고영민")
+        private String processedByUserName;
+
+        @Schema(description = "처리 일시(처리된 라인일 때)")
+        private LocalDateTime processedAt;
+
+        @Schema(description = "처리 시점 서명이미지 URL(없으면 null)")
+        private String processedSignatureImageUrl;
+
+        @Schema(description = "스탬프 표시 텍스트(예: 승인 05/12)", example = "승인 05/12")
+        private String stampLabel;
     }
 }

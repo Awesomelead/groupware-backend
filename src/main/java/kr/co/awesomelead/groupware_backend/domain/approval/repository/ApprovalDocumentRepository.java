@@ -22,6 +22,18 @@ public interface ApprovalDocumentRepository extends JpaRepository<ApprovalDocume
 
     @Query(
             "select distinct d from ApprovalDocument d "
+                    + "left join fetch d.template "
+                    + "left join fetch d.drafterUser "
+                    + "left join fetch d.drafterDepartment "
+                    + "left join fetch d.lines l "
+                    + "left join fetch l.targetUser "
+                    + "left join fetch l.targetDepartment "
+                    + "left join fetch l.processedByUser "
+                    + "where d.id = :id")
+    Optional<ApprovalDocument> findByIdWithLines(@Param("id") Long id);
+
+    @Query(
+            "select distinct d from ApprovalDocument d "
                     + "left join fetch d.lines "
                     + "where d.id = :id and d.drafterUser.id = :drafterUserId")
     Optional<ApprovalDocument> findByIdAndDrafterUserIdWithLines(
@@ -35,6 +47,7 @@ public interface ApprovalDocumentRepository extends JpaRepository<ApprovalDocume
                     + "left join fetch d.lines l "
                     + "left join fetch l.targetUser "
                     + "left join fetch l.targetDepartment "
+                    + "left join fetch l.processedByUser "
                     + "order by d.id desc")
     List<ApprovalDocument> findAllWithLinesOrderByIdDesc();
 }

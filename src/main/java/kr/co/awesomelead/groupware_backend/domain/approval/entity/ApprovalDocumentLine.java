@@ -81,5 +81,8 @@ public class ApprovalDocumentLine extends BaseTimeEntity {
     @Column(length = 1000)
     private String processedComment;
 
+    @Column(length = 500)
+    private String processedSignatureImageKey;
+
     private LocalDateTime processedAt;
 }

@@ -1,7 +1,7 @@
 package kr.co.awesomelead.groupware_backend.domain.auth;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
@@ -11,6 +11,9 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.Query;
 
 import kr.co.awesomelead.groupware_backend.domain.aligo.service.PhoneAuthService;
 import kr.co.awesomelead.groupware_backend.domain.auth.dto.request.LoginRequestDto;
@@ -41,6 +44,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -48,8 +52,10 @@ import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.test.context.ActiveProfiles;
+import org.springframework.test.util.ReflectionTestUtils;
 
 import java.time.LocalDate;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
@@ -71,6 +77,7 @@ class AuthServiceTest {
     @Mock private AuthenticationManager authenticationManager;
     @Mock private JWTUtil jwtUtil;
     @Mock private RefreshTokenService refreshTokenService;
+    @Mock private EntityManager entityManager;
 
     @InjectMocks private AuthService authService;
 
@@ -853,6 +860,68 @@ class AuthServiceTest {
 
             verify(bCryptPasswordEncoder).matches(OLD_PASSWORD, ENCODED_OLD_PASSWORD);
             verify(userRepository, never()).save(any());
+        }
+    }
+
+    @Nested
+    @DisplayName("회원 탈퇴(deleteUser)")
+    class DeleteUserTest {
+
+        private Query mockQuery;
+
+        @BeforeEach
+        void setUp() {
+            // EntityManager는 @PersistenceContext로 주입되어 @InjectMocks가 처리하지 못하므로
+            // ReflectionTestUtils로 직접 주입한다.
+            ReflectionTestUtils.setField(authService, "entityManager", entityManager);
+
+            mockQuery = org.mockito.Mockito.mock(Query.class);
+            org.mockito.BDDMockito.lenient()
+                    .when(entityManager.createQuery(anyString()))
+                    .thenReturn(mockQuery);
+            org.mockito.BDDMockito.lenient()
+                    .when(mockQuery.setParameter(anyString(), any()))
+                    .thenReturn(mockQuery);
+        }
+
+        @Test
+        @DisplayName("성공: deleteUser 실행 시 AnnualLeave JPQL 삭제 쿼리가 실행되지 않는다")
+        void deleteUser_doesNotExecuteAnnualLeaveJpqlQuery() {
+            // given
+            Long userId = 1L;
+            given(userRepository.findById(userId)).willReturn(Optional.of(testUser));
+
+            // when
+            authService.deleteUser(userId);
+
+            // then
+            ArgumentCaptor<String> jpqlCaptor = ArgumentCaptor.forClass(String.class);
+            verify(entityManager, org.mockito.Mockito.atLeastOnce())
+                    .createQuery(jpqlCaptor.capture());
+
+            List<String> executedJpqls = jpqlCaptor.getAllValues();
+            boolean annualLeaveQueryFound =
+                    executedJpqls.stream().anyMatch(jpql -> jpql.contains("AnnualLeave"));
+            assertThat(annualLeaveQueryFound)
+                    .as(
+                            "AnnualLeave는 CascadeType.ALL + orphanRemoval=true로 매핑되어 있으므로"
+                                    + " JPQL로 수동 삭제하면 안 된다")
+                    .isFalse();
+        }
+
+        @Test
+        @DisplayName("실패: 존재하지 않는 userId로 deleteUser 호출 시 USER_NOT_FOUND 예외가 발생한다")
+        void deleteUser_throwsWhenUserNotFound() {
+            // given
+            Long nonExistentUserId = 999L;
+            given(userRepository.findById(nonExistentUserId)).willReturn(Optional.empty());
+
+            // when & then
+            assertThatThrownBy(() -> authService.deleteUser(nonExistentUserId))
+                    .isInstanceOf(CustomException.class)
+                    .hasFieldOrPropertyWithValue("errorCode", ErrorCode.USER_NOT_FOUND);
+
+            verify(entityManager, never()).createQuery(anyString());
         }
     }
 }

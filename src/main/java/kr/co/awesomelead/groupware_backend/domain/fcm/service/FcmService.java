@@ -30,6 +30,7 @@ import java.util.Map;
 public class FcmService {
 
     private final FcmTokenRepository fcmTokenRepository;
+    private final FcmTokenService fcmTokenService;
 
     /** 특정 유저의 모든 디바이스로 메시지 발송 */
     @Async("fcmTaskExecutor")
@@ -78,7 +79,7 @@ public class FcmService {
                             userId,
                             invalidToken.substring(0, 10),
                             invalidToken.substring(invalidToken.length() - 6));
-                    fcmTokenRepository.deleteByToken(invalidToken);
+                    fcmTokenService.removeInvalidToken(invalidToken);
                 }
             }
         }
@@ -86,15 +87,14 @@ public class FcmService {
 
     @Recover
     public void recoverSendToUser(
-            FirebaseMessagingException e,
+            Exception e,
             Long userId,
             String title,
             String body,
             Map<String, String> data) {
         log.error(
-                "FCM 전송 최종 실패 (Retry 종료) - userId: {}, errorCode: {}, error: {}",
+                "FCM 전송 최종 실패 (Retry 종료) - userId: {}, error: {}",
                 userId,
-                e.getMessagingErrorCode(),
                 e.getMessage());
 
         // API 레벨 실패(네트워크/인증 오류)이므로 토큰 삭제 없이 로그만 기록
@@ -120,7 +120,7 @@ public class FcmService {
 
     @Recover
     public void recoverSendToTopic(
-            FirebaseMessagingException e, String topicName, String title, String body) {
+            Exception e, String topicName, String title, String body) {
         log.error("FCM 전송 최종 실패 (Retry 종료) - topic: {}, error: {}", topicName, e.getMessage());
     }
 }

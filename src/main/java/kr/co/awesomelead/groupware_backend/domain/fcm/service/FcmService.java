@@ -87,15 +87,8 @@ public class FcmService {
 
     @Recover
     public void recoverSendToUser(
-            Exception e,
-            Long userId,
-            String title,
-            String body,
-            Map<String, String> data) {
-        log.error(
-                "FCM 전송 최종 실패 (Retry 종료) - userId: {}, error: {}",
-                userId,
-                e.getMessage());
+            Exception e, Long userId, String title, String body, Map<String, String> data) {
+        log.error("FCM 전송 최종 실패 (Retry 종료) - userId: {}, error: {}", userId, e.getMessage());
 
         // API 레벨 실패(네트워크/인증 오류)이므로 토큰 삭제 없이 로그만 기록
     }
@@ -119,8 +112,7 @@ public class FcmService {
     }
 
     @Recover
-    public void recoverSendToTopic(
-            Exception e, String topicName, String title, String body) {
+    public void recoverSendToTopic(Exception e, String topicName, String title, String body) {
         log.error("FCM 전송 최종 실패 (Retry 종료) - topic: {}, error: {}", topicName, e.getMessage());
     }
 }

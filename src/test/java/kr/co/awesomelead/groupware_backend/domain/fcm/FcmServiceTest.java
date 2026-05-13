@@ -51,7 +51,8 @@ class FcmServiceTest {
         }
 
         @Bean
-        public FcmService fcmService(FcmTokenRepository fcmTokenRepository, FcmTokenService fcmTokenService) {
+        public FcmService fcmService(
+                FcmTokenRepository fcmTokenRepository, FcmTokenService fcmTokenService) {
             return new FcmService(fcmTokenRepository, fcmTokenService);
         }
     }

@@ -174,6 +174,9 @@ public interface VisitMapper {
     @Mapping(target = "id", ignore = true)
     @Mapping(target = "password", ignore = true)
     @Mapping(target = "status", ignore = true) // 상태는 서비스 로직에서 직접 변경하므로 무시
+    @Mapping(target = "user", ignore = true) // user는 서비스 로직에서 직접 변경하므로 무시
+    @Mapping(target = "visitorPhoneNumber", ignore = true) // 전화번호는 서비스 로직에서 hash와 함께 처리
+    @Mapping(target = "phoneNumberHash", ignore = true)
     @Mapping(target = "startDate", source = "startDate")
     @Mapping(target = "endDate", source = "endDate")
     void updateVisitFromDto(MyVisitUpdateRequestDto dto, @MappingTarget Visit visit);

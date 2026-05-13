@@ -388,6 +388,18 @@ public class VisitService {
 
         visitMapper.updateVisitFromDto(dto, visit);
 
+        if (dto.getHostId() != null) {
+            User host =
+                    userRepository
+                            .findById(dto.getHostId())
+                            .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
+            visit.setUser(host);
+        }
+        if (dto.getVisitorPhoneNumber() != null) {
+            visit.setVisitorPhoneNumber(dto.getVisitorPhoneNumber());
+            visit.setPhoneNumberHash(hashValue(dto.getVisitorPhoneNumber()));
+        }
+
         if (visit.getVisitCategory() != VisitCategory.PRE_LONG_TERM) {
             visit.setEndDate(visit.getStartDate());
         }

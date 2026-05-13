@@ -469,6 +469,68 @@ public class VisitServiceTest {
                         .hasMessage("승인 가능한 상태가 아닙니다."); // ErrorCode.INVALID_VISIT_STATUS
             }
         }
+
+        @Nested
+        @DisplayName("hostId가 주어지면")
+        class Context_with_host_id {
+
+            @Test
+            @DisplayName("담당자가 새 User로 변경된다.")
+            void it_updates_host() {
+                // given
+                Long newHostId = 2L;
+                MyVisitUpdateRequestDto dto =
+                        MyVisitUpdateRequestDto.builder()
+                                .password(PLAIN_PASSWORD)
+                                .hostId(newHostId)
+                                .build();
+
+                Visit visit = createBaseVisit(VisitStatus.NOT_VISITED, VisitCategory.PRE_ONE_DAY);
+                User newHost = User.builder().id(newHostId).build();
+
+                given(visitRepository.findById(VISIT_ID)).willReturn(Optional.of(visit));
+                given(passwordEncoder.matches(PLAIN_PASSWORD, ENCODED_PASSWORD)).willReturn(true);
+                given(userRepository.findById(newHostId)).willReturn(Optional.of(newHost));
+
+                // when
+                visitService.updateMyVisit(VISIT_ID, dto);
+
+                // then
+                assertThat(visit.getUser()).isNotNull();
+                assertThat(visit.getUser().getId()).isEqualTo(newHostId);
+            }
+        }
+
+        @Nested
+        @DisplayName("visitorPhoneNumber가 주어지면")
+        class Context_with_visitor_phone_number {
+
+            @Test
+            @DisplayName("전화번호와 phoneNumberHash가 함께 업데이트된다.")
+            void it_updates_phone_and_hash() {
+                // given
+                String newPhone = "01099998888";
+                MyVisitUpdateRequestDto dto =
+                        MyVisitUpdateRequestDto.builder()
+                                .password(PLAIN_PASSWORD)
+                                .visitorPhoneNumber(newPhone)
+                                .build();
+
+                Visit visit = createBaseVisit(VisitStatus.NOT_VISITED, VisitCategory.PRE_ONE_DAY);
+                visit.setPhoneNumberHash("old-hash");
+
+                given(visitRepository.findById(VISIT_ID)).willReturn(Optional.of(visit));
+                given(passwordEncoder.matches(PLAIN_PASSWORD, ENCODED_PASSWORD)).willReturn(true);
+
+                // when
+                visitService.updateMyVisit(VISIT_ID, dto);
+
+                // then
+                assertThat(visit.getVisitorPhoneNumber()).isEqualTo(newPhone);
+                assertThat(visit.getPhoneNumberHash()).isNotNull();
+                assertThat(visit.getPhoneNumberHash()).isEqualTo(Visit.hashValue(newPhone));
+            }
+        }
     }
 
     @Nested

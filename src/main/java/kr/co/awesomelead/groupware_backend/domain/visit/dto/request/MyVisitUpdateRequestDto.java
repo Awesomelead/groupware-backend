@@ -3,6 +3,8 @@ package kr.co.awesomelead.groupware_backend.domain.visit.dto.request;
 import io.swagger.v3.oas.annotations.media.Schema;
 
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Pattern;
+import jakarta.validation.constraints.Size;
 
 import kr.co.awesomelead.groupware_backend.domain.visit.enums.AdditionalPermissionType;
 import kr.co.awesomelead.groupware_backend.domain.visit.enums.VisitPurpose;
@@ -22,13 +24,18 @@ import java.time.LocalTime;
 public class MyVisitUpdateRequestDto implements VisitRequest {
 
     @NotBlank(message = "비밀번호는 필수입니다.")
+    @Size(min = 4, max = 4, message = "비밀번호는 4자리여야 합니다.")
     @Schema(description = "방문 비밀번호", example = "1234")
     private String password;
 
     @Schema(description = "내방객 이름", example = "홍길동")
     private String visitorName;
 
-    @Schema(description = "내방객 전화번호 (하이픈 제외)", example = "01012345678")
+    @Pattern(regexp = "^\\d{10,11}$", message = "전화번호는 숫자 10~11자리여야 합니다.")
+    @Schema(description = "내방객 전화번호", example = "01012345678")
+    private String visitorPhoneNumber;
+
+    @Schema(description = "내방객 소속 회사", example = "ABC 주식회사")
     private String visitorCompany;
 
     @Schema(description = "방문 목적", example = "고객 검수")
@@ -53,21 +60,9 @@ public class MyVisitUpdateRequestDto implements VisitRequest {
     @Schema(description = "퇴실 예정 시간", example = "18:00")
     private LocalTime plannedExitTime;
 
-    @Override
-    @Schema(hidden = true)
-    public String getVisitorPhoneNumber() {
-        return null;
-    }
+    @Schema(description = "차량 번호", example = "12가3456")
+    private String carNumber;
 
-    @Override
-    @Schema(hidden = true)
-    public String getCarNumber() {
-        return null;
-    }
-
-    @Override
-    @Schema(hidden = true)
-    public Long getHostId() {
-        return null;
-    }
+    @Schema(description = "담당자 직원 ID", example = "1")
+    private Long hostId;
 }

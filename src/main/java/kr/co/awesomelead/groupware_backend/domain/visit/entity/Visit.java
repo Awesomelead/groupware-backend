@@ -137,7 +137,7 @@ public class Visit {
     @PreUpdate
     public void onPrePersist() {
         // 전화번호 해시 생성
-        if (this.visitorPhoneNumber != null && this.phoneNumberHash == null) {
+        if (this.visitorPhoneNumber != null) {
             this.phoneNumberHash = hashValue(this.visitorPhoneNumber);
         }
     }

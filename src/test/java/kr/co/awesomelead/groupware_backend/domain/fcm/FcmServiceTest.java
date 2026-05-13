@@ -18,6 +18,7 @@ import com.google.firebase.messaging.SendResponse;
 import kr.co.awesomelead.groupware_backend.domain.fcm.entity.FcmToken;
 import kr.co.awesomelead.groupware_backend.domain.fcm.repository.FcmTokenRepository;
 import kr.co.awesomelead.groupware_backend.domain.fcm.service.FcmService;
+import kr.co.awesomelead.groupware_backend.domain.fcm.service.FcmTokenService;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -45,8 +46,13 @@ class FcmServiceTest {
         }
 
         @Bean
-        public FcmService fcmService(FcmTokenRepository fcmTokenRepository) {
-            return new FcmService(fcmTokenRepository);
+        public FcmTokenService fcmTokenService() {
+            return mock(FcmTokenService.class);
+        }
+
+        @Bean
+        public FcmService fcmService(FcmTokenRepository fcmTokenRepository, FcmTokenService fcmTokenService) {
+            return new FcmService(fcmTokenRepository, fcmTokenService);
         }
     }
 
@@ -54,9 +60,11 @@ class FcmServiceTest {
 
     @Autowired private FcmTokenRepository fcmTokenRepository;
 
+    @Autowired private FcmTokenService fcmTokenService;
+
     @BeforeEach
     void setUp() {
-        reset(fcmTokenRepository);
+        reset(fcmTokenRepository, fcmTokenService);
     }
 
     // ─── sendToTopic ─────────────────────────────────────────────────────────
@@ -171,7 +179,7 @@ class FcmServiceTest {
 
             fcmService.sendToUser(1L, "제목", "내용", Map.of());
 
-            verify(fcmTokenRepository, times(1)).deleteByToken(tokenValue);
+            verify(fcmTokenService, times(1)).removeInvalidToken(tokenValue);
         }
     }
 

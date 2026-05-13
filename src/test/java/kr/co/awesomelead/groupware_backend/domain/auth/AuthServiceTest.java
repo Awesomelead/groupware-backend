@@ -931,7 +931,7 @@ class AuthServiceTest {
         @Test
         @DisplayName(
                 "성공: deleteUser 실행 시 userRepository.delete() 전에"
-                    + " safetyTrainingSessionRepository.updateCreatedByToNull()이 호출된다")
+                        + " safetyTrainingSessionRepository.updateCreatedByToNull()이 호출된다")
         void deleteUser_callsUpdateCreatedByToNullBeforeDelete() {
             // given
             Long userId = 1L;
@@ -945,7 +945,7 @@ class AuthServiceTest {
         @Test
         @DisplayName(
                 "성공: deleteUser 실행 시 safetyTrainingSessionRepository.updateCreatedByToNull()이"
-                    + " userRepository.delete() 보다 먼저 호출된다 - 호출 순서 검증")
+                        + " userRepository.delete() 보다 먼저 호출된다 - 호출 순서 검증")
         void deleteUser_updateCreatedByToNullCalledBeforeDeleteInOrder() {
             // given
             Long userId = 1L;

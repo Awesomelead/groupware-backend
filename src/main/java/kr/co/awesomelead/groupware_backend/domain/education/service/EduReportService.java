@@ -983,7 +983,8 @@ public class EduReportService {
             return false;
         }
 
-        // Swagger UI generated curl can send placeholder part: files=string -> filename "blob"
+        // Swagger UI generated curl can send placeholder part: files=string -> filename
+        // "blob"
         if ("blob".equalsIgnoreCase(originalFileName) && file.getSize() <= 32) {
             try {
                 String payload = new String(file.getBytes(), StandardCharsets.UTF_8).trim();
@@ -1158,6 +1159,49 @@ public class EduReportService {
             return List.of(Company.AWESOME.name(), Company.MARUI.name());
         }
         return List.of(storedCompany.name());
+    }
+
+    @Transactional
+    public void remindEduReport(Long eduReportId, Long userId) {
+        userRepository
+                .findById(userId)
+                .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
+
+        EduReport report =
+                eduReportRepository
+                        .findById(eduReportId)
+                        .orElseThrow(() -> new CustomException(ErrorCode.EDU_REPORT_NOT_FOUND));
+
+        if (report.getCreatedBy() == null || !report.getCreatedBy().getId().equals(userId)) {
+            throw new CustomException(ErrorCode.NO_AUTHORITY_FOR_EDU_REPORT);
+        }
+
+        List<Long> targetUserIds;
+        if (report.getEduType() == EduType.PSM || report.getEduType() == EduType.SAFETY) {
+            if (report.getCompany() == null) {
+                targetUserIds = userRepository.findAllActiveUserIds();
+            } else {
+                targetUserIds = userRepository.findAllIdsByCompany(report.getCompany());
+            }
+        } else {
+            targetUserIds =
+                    report.getDepartment() != null
+                            ? userRepository.findAllIdsByDepartmentId(
+                                    report.getDepartment().getId())
+                            : List.of();
+        }
+
+        Map<String, Object> metadata =
+                report.getEduType() == EduType.SAFETY
+                        ? Map.of("educationType", "SAFETY", "detailType", "GENERAL")
+                        : Map.of("educationType", report.getEduType().name());
+
+        notificationService.sendEduReportRemindAlertToTargets(
+                report.getEduType().getDescription(),
+                report.getTitle(),
+                eduReportId,
+                targetUserIds,
+                metadata);
     }
 
     private Integer safeToInteger(long value) {

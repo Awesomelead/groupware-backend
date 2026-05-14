@@ -704,6 +704,89 @@ public class NotificationService {
         log.info("안전보건교육 세션 알림 전송 완료 - sessionId: {}, 대상 수: {}", sessionId, targetUserIds.size());
     }
 
+    /** 교육(EduReport) 리마인드 알림 - 대상 유저 전체에게 FCM 알림 전송 + Notification 저장 */
+    @Transactional
+    public void sendEduReportRemindAlertToTargets(
+            String eduTypeLabel, String eduTitle, Long reportId, List<Long> targetUserIds) {
+        sendEduReportRemindAlertToTargets(eduTypeLabel, eduTitle, reportId, targetUserIds, null);
+    }
+
+    @Transactional
+    public void sendEduReportRemindAlertToTargets(
+            String eduTypeLabel,
+            String eduTitle,
+            Long reportId,
+            List<Long> targetUserIds,
+            Map<String, Object> metadata) {
+        if (targetUserIds == null || targetUserIds.isEmpty()) {
+            log.info("교육 리마인드 알림 전송 건너뜀 - 대상 없음, reportId: {}", reportId);
+            return;
+        }
+
+        String title = "[리마인드] " + NotificationMessage.EDU_REPORT_CREATED.getTitle();
+        String content =
+                NotificationMessage.EDU_REPORT_CREATED.formatContent(eduTypeLabel, eduTitle);
+
+        for (Long userId : targetUserIds) {
+            doCreateNotification(
+                    userId,
+                    title,
+                    content,
+                    NotificationMessage.EDU_REPORT_CREATED,
+                    NotificationDomainType.EDUCATION,
+                    reportId,
+                    metadata,
+                    false);
+            eventPublisher.publishEvent(
+                    new FcmSendEvent(
+                            userId,
+                            title,
+                            content,
+                            buildFcmData(NotificationDomainType.EDUCATION, reportId, metadata)));
+        }
+
+        log.info("교육 리마인드 알림 전송 완료 - reportId: {}, 대상 수: {}", reportId, targetUserIds.size());
+    }
+
+    /** 안전보건교육 세션 리마인드 알림 - 대상 유저 전체에게 FCM 알림 전송 + Notification 저장 */
+    @Transactional
+    public void sendSafetyTrainingSessionRemindAlertToAttendees(
+            Long sessionId, String sessionTitle, List<Long> targetUserIds) {
+        if (targetUserIds == null || targetUserIds.isEmpty()) {
+            log.info("안전보건교육 리마인드 알림 전송 건너뜀 - 대상 없음, sessionId: {}", sessionId);
+            return;
+        }
+
+        String title = "[리마인드] " + NotificationMessage.SAFETY_TRAINING_SESSION_CREATED.getTitle();
+        String content =
+                NotificationMessage.SAFETY_TRAINING_SESSION_CREATED.formatContent(sessionTitle);
+        Map<String, Object> metadata = Map.of("educationType", "SAFETY", "detailType", "SESSION");
+
+        for (Long userId : targetUserIds) {
+            doCreateNotification(
+                    userId,
+                    title,
+                    content,
+                    NotificationMessage.SAFETY_TRAINING_SESSION_CREATED,
+                    NotificationDomainType.SAFETY_TRAINING,
+                    sessionId,
+                    metadata,
+                    false);
+            eventPublisher.publishEvent(
+                    new FcmSendEvent(
+                            userId,
+                            title,
+                            content,
+                            buildFcmData(
+                                    NotificationDomainType.SAFETY_TRAINING, sessionId, metadata)));
+        }
+
+        log.info(
+                "안전보건교육 세션 리마인드 알림 전송 완료 - sessionId: {}, 대상 수: {}",
+                sessionId,
+                targetUserIds.size());
+    }
+
     private Map<String, String> buildFcmData(NotificationDomainType domainType, Long domainId) {
         return buildFcmData(domainType, domainId, null);
     }

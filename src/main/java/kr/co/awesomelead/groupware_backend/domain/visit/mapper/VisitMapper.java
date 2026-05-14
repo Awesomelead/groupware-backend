@@ -32,7 +32,7 @@ public interface VisitMapper {
     @Mapping(target = "visitorName", source = "dto.visitorName")
     @Mapping(target = "visitorPhoneNumber", source = "dto.visitorPhoneNumber")
     @Mapping(target = "visitorCompany", source = "dto.visitorCompany")
-    @Mapping(target = "hostCompany", source = "dto.hostCompany")
+    @Mapping(target = "hostCompany", source = "host.workLocation")
     @Mapping(target = "carNumber", source = "dto.carNumber")
     @Mapping(target = "user", source = "host") // 파라미터로 받은 User 객체를 매핑
     @Mapping(target = "password", source = "encodedPassword") // 암호화된 비밀번호 매핑
@@ -59,7 +59,7 @@ public interface VisitMapper {
     @Mapping(target = "id", ignore = true)
     @Mapping(target = "user", source = "host")
     @Mapping(target = "password", source = "encodedPassword")
-    @Mapping(target = "hostCompany", source = "dto.hostCompany")
+    @Mapping(target = "hostCompany", source = "host.workLocation")
     // 장기 방문은 예정 시간이 없으므로 매핑에서 제외 (null로 들어감)
     @Mapping(target = "plannedEntryTime", ignore = true)
     @Mapping(target = "plannedExitTime", ignore = true)
@@ -93,7 +93,7 @@ public interface VisitMapper {
     @Mapping(target = "endDate", expression = "java(java.time.LocalDate.now())")
     @Mapping(target = "plannedEntryTime", expression = "java(java.time.LocalTime.now())")
     @Mapping(target = "plannedExitTime", ignore = true) // 추가
-    @Mapping(target = "hostCompany", source = "dto.hostCompany")
+    @Mapping(target = "hostCompany", source = "host.workLocation")
     @Mapping(target = "records", ignore = true)
     @Mapping(target = "phoneNumberHash", ignore = true)
     @Mapping(target = "purpose", ignore = true)

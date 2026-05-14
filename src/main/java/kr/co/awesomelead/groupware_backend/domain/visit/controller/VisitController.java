@@ -62,7 +62,6 @@ import java.util.List;
             내방객의 사전 예약 및 현장 방문 접수, 방문 정보 조회, 입/퇴실 처리 등을 수행합니다.
 
             ### 사용되는 Enum 타입
-            - **Company**: 방문 회사 (`AWESOME`: 어썸리드, `MARUI`: 마루이)
             - **VisitCategory**: 방문 유형 (`PRE_ONE_DAY`: 사전 하루, `PRE_LONG_TERM`: 사전 장기, `ON_SITE`: 현장 입실)
             - **VisitPurpose**: 방문 목적 (`CUSTOMER_INSPECTION`: 고객 검수, `LOGISTICS_AND_DELIVERY`: 입출고 및 물품 납품, `FACILITY_CONSTRUCTION`: 시설공사, `HAZARDOUS_SUBSTANCE`: 유해화학물질취급, `MEETING`: 미팅, `OTHER`: 기타)
             - **VisitStatus**: 방문 상태 (`PENDING`: 승인 대기, `APPROVED`: 승인 완료, `NOT_VISITED`: 방문 전, `IN_PROGRESS`: 방문 중, `COMPLETED`: 방문 완료, `REJECTED`: 반려)
@@ -115,14 +114,7 @@ public class VisitController {
 
     @Operation(
             summary = "현장 방문 신청 및 즉시 입실",
-            description = "안내 데스크에서 현장 방문객 정보를 입력하고 서명을 받아 즉시 입실 처리합니다.",
-            requestBody =
-                    @io.swagger.v3.oas.annotations.parameters.RequestBody(
-                            required = true,
-                            content =
-                                    @Content(
-                                            mediaType = MediaType.MULTIPART_FORM_DATA_VALUE,
-                                            schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = OnSiteVisitRequestDto.class))))
+            description = "안내 데스크에서 현장 방문객 정보를 입력하고 서명을 받아 즉시 입실 처리합니다.")
     @ApiResponses({
         @io.swagger.v3.oas.annotations.responses.ApiResponse(
                 responseCode = "201",
@@ -146,12 +138,6 @@ public class VisitController {
     }
 
     @Operation(summary = "사전 예약자 입실 처리", description = "사전 신청한 내방객이 도착했을 때 서명을 받고 입실을 완료합니다.")
-    @io.swagger.v3.oas.annotations.parameters.RequestBody(
-            required = true,
-            content =
-                    @Content(
-                            mediaType = MediaType.MULTIPART_FORM_DATA_VALUE,
-                            schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = CheckInRequestDto.class)))
     @ApiResponses({
         @io.swagger.v3.oas.annotations.responses.ApiResponse(
                 responseCode = "200",
@@ -251,7 +237,6 @@ public class VisitController {
                             "visitorCompany": "어썸테크",
                             "visitorName": "홍길동",
                             "hostDepartmentName": "경영지원부",
-                            "hostCompany": "AWESOME",
                             "startDate": "2026-07-01",
                             "endDate": "2026-07-01",
                             "status": "방문 중"

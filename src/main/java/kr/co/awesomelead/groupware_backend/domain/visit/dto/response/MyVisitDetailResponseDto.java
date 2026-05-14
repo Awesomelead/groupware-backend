@@ -2,7 +2,6 @@ package kr.co.awesomelead.groupware_backend.domain.visit.dto.response;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 
-import kr.co.awesomelead.groupware_backend.domain.department.enums.Company;
 import kr.co.awesomelead.groupware_backend.domain.department.enums.DepartmentName;
 import kr.co.awesomelead.groupware_backend.domain.user.enums.Position;
 import kr.co.awesomelead.groupware_backend.domain.visit.enums.AdditionalPermissionType;
@@ -29,9 +28,6 @@ public class MyVisitDetailResponseDto {
 
     @Schema(description = "내방객 회사명", example = "어썸테크")
     private String visitorCompany;
-
-    @Schema(description = "방문 회사", example = "AWESOME")
-    private Company hostCompany;
 
     @Schema(description = "내방객 이름", example = "홍길동")
     private String visitorName;

@@ -2,7 +2,6 @@ package kr.co.awesomelead.groupware_backend.domain.visit.service;
 
 import static kr.co.awesomelead.groupware_backend.domain.visit.entity.Visit.hashValue;
 
-import kr.co.awesomelead.groupware_backend.domain.department.enums.Company;
 import kr.co.awesomelead.groupware_backend.domain.department.repository.DepartmentRepository;
 import kr.co.awesomelead.groupware_backend.domain.notification.enums.NotificationDomainType;
 import kr.co.awesomelead.groupware_backend.domain.notification.enums.NotificationMessage;
@@ -81,7 +80,6 @@ public class VisitService {
         Long hostDeptId = host.getDepartment() != null ? host.getDepartment().getId() : null;
         String hostName = host.getDisplayName();
         String encodedPassword = passwordEncoder.encode(dto.getPassword());
-        validateHostCompanyConsistency(host, dto.getHostCompany());
 
         Visit visit = visitMapper.toOneDayVisit(dto, host, encodedPassword);
         syncAndValidatePermissions(visit, dto);
@@ -116,7 +114,6 @@ public class VisitService {
 
         Long hostDeptId = host.getDepartment() != null ? host.getDepartment().getId() : null;
         String encodedPassword = passwordEncoder.encode(dto.getPassword());
-        validateHostCompanyConsistency(host, dto.getHostCompany());
 
         Visit visit = visitMapper.toLongTermVisit(dto, host, encodedPassword);
         syncAndValidatePermissions(visit, dto);
@@ -148,7 +145,6 @@ public class VisitService {
 
         String encodedPassword = passwordEncoder.encode(dto.getPassword());
         String signatureKey = s3Service.uploadFile(dto.getSignatureFile());
-        validateHostCompanyConsistency(host, dto.getHostCompany());
 
         Visit visit = visitMapper.toOnSiteVisit(dto, host, encodedPassword);
         syncAndValidatePermissions(visit, dto);
@@ -212,17 +208,6 @@ public class VisitService {
             if (!StringUtils.hasText(visit.getPermissionDetail())) {
                 throw new CustomException(ErrorCode.PERMISSION_DETAIL_REQUIRED);
             }
-        }
-    }
-
-    private void validateHostCompanyConsistency(User host, Company requestedCompany) {
-        if (requestedCompany == null) {
-            throw new CustomException(ErrorCode.INVALID_ARGUMENT);
-        }
-
-        Company hostCompany = host.getWorkLocation();
-        if (hostCompany != null && hostCompany != requestedCompany) {
-            throw new CustomException(ErrorCode.INVALID_ARGUMENT);
         }
     }
 

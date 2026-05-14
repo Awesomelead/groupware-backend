@@ -276,7 +276,11 @@ public class EduReportService {
                         canReadAllPsmCompanies,
                         title);
 
-        summaries.forEach(summary -> applyDepartmentMyStatusToSummary(user, summary));
+        summaries.forEach(
+                summary -> {
+                    applyDepartmentMyStatusToSummary(user, summary);
+                    applyCompanyScopeToSummary(summary);
+                });
         return summaries;
     }
 
@@ -295,8 +299,11 @@ public class EduReportService {
 
         boolean canReadAllCompanies = user.hasAuthority(Authority.MANAGE_PSM);
         Company companyFilter = canReadAllCompanies ? null : user.getWorkLocation();
-        return eduReportQueryRepository.findPsmEduReports(
-                categoryId, id, companyFilter, canReadAllCompanies, title);
+        List<EduReportSummaryDto> summaries =
+                eduReportQueryRepository.findPsmEduReports(
+                        categoryId, id, companyFilter, canReadAllCompanies, title);
+        summaries.forEach(this::applyCompanyScopeToSummary);
+        return summaries;
     }
 
     @Transactional(readOnly = true)
@@ -308,8 +315,11 @@ public class EduReportService {
 
         boolean canReadAllCompanies = user.hasAuthority(Authority.MANAGE_SAFETY);
         Company companyFilter = canReadAllCompanies ? null : user.getWorkLocation();
-        return eduReportQueryRepository.findSafetyEduReports(
-                categoryId, id, companyFilter, canReadAllCompanies, title);
+        List<EduReportSummaryDto> summaries =
+                eduReportQueryRepository.findSafetyEduReports(
+                        categoryId, id, companyFilter, canReadAllCompanies, title);
+        summaries.forEach(this::applyCompanyScopeToSummary);
+        return summaries;
     }
 
     @Transactional(readOnly = true)
@@ -506,6 +516,14 @@ public class EduReportService {
         summary.setMySigned(mySigned);
         summary.setMyCompletionStatus(
                 resolveDepartmentMyCompletionStatus(summary.isSignatureRequired(), mySigned));
+    }
+
+    private void applyCompanyScopeToSummary(EduReportSummaryDto summary) {
+        if (summary.getEduType() != EduType.PSM && summary.getEduType() != EduType.SAFETY) {
+            summary.setCompanyScope(null);
+            return;
+        }
+        summary.setCompanyScope(toCompanyScopeList(summary.getCompany()));
     }
 
     private Boolean resolveDepartmentMySigned(
@@ -1075,6 +1093,11 @@ public class EduReportService {
                 eduReportRepository
                         .findById(educationId)
                         .orElseThrow(() -> new CustomException(ErrorCode.EDU_REPORT_NOT_FOUND));
+
+        // 부서 교육 서명 현황 조회 API는 부서 교육 게시물에 대해서만 허용한다.
+        if (report.getEduType() != EduType.DEPARTMENT) {
+            throw new CustomException(ErrorCode.EDU_REPORT_NOT_FOUND);
+        }
 
         validateCreateAuthority(user, report.getEduType());
 

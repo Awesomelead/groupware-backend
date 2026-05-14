@@ -21,13 +21,13 @@ public class NotificationResponseDto {
     @Schema(description = "알림 제목", example = "방문 신청이 승인되었습니다.")
     private final String title;
 
-    @Schema(description = "알림 내용", example = "홍길동님의 방문 신청이 승인되었습니다.")
+    @Schema(description = "알림 내용", example = "[이승민] 고객이 03:43:05에 입실했습니다.")
     private final String content;
 
     @Schema(description = "도메인 유형", example = "VISIT")
     private final NotificationDomainType domainType;
 
-    @Schema(description = "도메인 PK", example = "42")
+    @Schema(description = "도메인 PK (내 정보 수정 승인 요청 알림은 요청 사용자 userId)", example = "42")
     private final Long domainId;
 
     @Schema(description = "읽음 여부", example = "false")
@@ -47,6 +47,9 @@ public class NotificationResponseDto {
     @Schema(description = "알림 메시지 유형", example = "VISIT_CHECK_IN")
     private final NotificationMessage messageType;
 
+    @Schema(description = "승인/반려 완료 알림 여부 (예: 내정보수정 승인·반려 완료, 장기방문 승인요청 처리 완료)", example = "false")
+    private final boolean approvalOrRejectionCompleted;
+
     private NotificationResponseDto(Notification notification) {
         this.id = notification.getId();
         this.title = notification.getTitle();
@@ -58,9 +61,29 @@ public class NotificationResponseDto {
         this.metadata = notification.getMetadata();
         this.requiresApproval = notification.isRequiresApproval();
         this.messageType = notification.getMessageType();
+        this.approvalOrRejectionCompleted = isApprovalOrRejectionCompleted(notification);
     }
 
     public static NotificationResponseDto from(Notification notification) {
         return new NotificationResponseDto(notification);
+    }
+
+    private static boolean isApprovalOrRejectionCompleted(Notification notification) {
+        NotificationMessage messageType = notification.getMessageType();
+        if (messageType == null) {
+            return false;
+        }
+
+        if (messageType == NotificationMessage.MY_INFO_UPDATE_APPROVED
+                || messageType == NotificationMessage.MY_INFO_UPDATE_REJECTED) {
+            return true;
+        }
+
+        // 장기 방문 승인요청 알림은 requiresApproval 해제 시점(승인/반려 처리 완료)을 완료로 간주
+        if (messageType == NotificationMessage.VISIT_LONG_TERM_PRE) {
+            return !notification.isRequiresApproval();
+        }
+
+        return false;
     }
 }

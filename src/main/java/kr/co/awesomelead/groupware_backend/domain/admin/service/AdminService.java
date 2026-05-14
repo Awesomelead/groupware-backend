@@ -453,7 +453,7 @@ public class AdminService {
 
         // 관리자들의 승인 대기 알림 해제
         notificationService.resolveRequiresApproval(
-                NotificationDomainType.MY_INFO_UPDATE, request.getId());
+                NotificationDomainType.MY_INFO_UPDATE, request.getUser().getId());
 
         // 요청 승인 알림 전송 (FCM + Notification DB)
         notificationService.sendAlertToUser(
@@ -493,7 +493,7 @@ public class AdminService {
 
         // 관리자들의 승인 대기 알림 해제
         notificationService.resolveRequiresApproval(
-                NotificationDomainType.MY_INFO_UPDATE, request.getId());
+                NotificationDomainType.MY_INFO_UPDATE, request.getUser().getId());
 
         // 요청 반려 알림 전송 (FCM + Notification DB)
         notificationService.sendAlertToUser(

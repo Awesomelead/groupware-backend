@@ -1183,7 +1183,7 @@ class AuthServiceTest {
         @Test
         @DisplayName(
                 "성공: deleteUser 실행 시 ApprovalPersonalSetting 삭제가 ApprovalPersonalViewerTarget 삭제"
-                    + " 직후에 실행된다 - 호출 순서 검증")
+                        + " 직후에 실행된다 - 호출 순서 검증")
         void deleteUser_deletesApprovalPersonalSettingAfterViewerTarget_orderCheck() {
             // given
             Long userId = 1L;
@@ -1253,7 +1253,7 @@ class AuthServiceTest {
         @Test
         @DisplayName(
                 "성공: deleteUser 실행 시 SavedApprovalLineDetail 삭제가 ApprovalPersonalSetting 삭제 직후에"
-                    + " 실행된다 - 호출 순서 검증")
+                        + " 실행된다 - 호출 순서 검증")
         void deleteUser_deletesSavedApprovalLineDetailAfterApprovalPersonalSetting_orderCheck() {
             // given
             Long userId = 1L;
@@ -1324,7 +1324,7 @@ class AuthServiceTest {
         @Test
         @DisplayName(
                 "성공: deleteUser 실행 시 SavedApprovalLine 삭제가 SavedApprovalLineDetail 삭제 직후에 실행된다 - 호출"
-                    + " 순서 검증")
+                        + " 순서 검증")
         void deleteUser_deletesSavedApprovalLineAfterSavedApprovalLineDetail_orderCheck() {
             // given
             Long userId = 1L;
@@ -1480,7 +1480,7 @@ class AuthServiceTest {
         @Test
         @DisplayName(
                 "성공: deleteUser 실행 시 ApprovalDocument 자식 4개 삭제가 SavedApprovalLine 삭제 직후에 실행된다 - 호출"
-                    + " 순서 검증")
+                        + " 순서 검증")
         void deleteUser_deletesApprovalDocumentChildrenAfterSavedApprovalLine_orderCheck() {
             // given
             Long userId = 1L;
@@ -1718,7 +1718,7 @@ class AuthServiceTest {
             assertThat(found)
                     .as(
                             "deleteUser() 실행 시 ApprovalDocumentLine.processedByUser NULLIFY UPDATE"
-                                + " JPQL이 포함되어야 한다")
+                                    + " JPQL이 포함되어야 한다")
                     .isTrue();
         }
 
@@ -1812,14 +1812,14 @@ class AuthServiceTest {
             assertThat(found)
                     .as(
                             "deleteUser() 실행 시 ApprovalAttachment.uploadedByUser NULLIFY UPDATE"
-                                + " JPQL이 포함되어야 한다")
+                                    + " JPQL이 포함되어야 한다")
                     .isTrue();
         }
 
         @Test
         @DisplayName(
                 "성공: deleteUser 실행 시 5개의 NULLIFY UPDATE 쿼리가 모두 ApprovalDocument 삭제 이후에 실행된다 - 호출 순서"
-                    + " 검증")
+                        + " 검증")
         void deleteUser_nullifyQueriesExecutedAfterApprovalDocumentDelete_orderCheck() {
             // given
             Long userId = 1L;
@@ -2015,7 +2015,7 @@ class AuthServiceTest {
         @Test
         @DisplayName(
                 "성공: deleteUser 실행 시 ApprovalPersonalViewerTarget 삭제가 Notice 삭제 이후에 실행된다 - 호출 순서"
-                    + " 검증")
+                        + " 검증")
         void deleteUser_deletesApprovalPersonalViewerTargetAfterNotice_orderCheck() {
             // given
             Long userId = 1L;
@@ -2083,7 +2083,7 @@ class AuthServiceTest {
         @Test
         @DisplayName(
                 "성공: deleteUser 실행 시 EduReport.createdBy NULLIFY가 EduAttendance 삭제 이후에 실행된다 - 호출 순서"
-                    + " 검증")
+                        + " 검증")
         void deleteUser_nullifiesEduReportCreatedByAfterEduAttendanceDelete_orderCheck() {
             // given
             Long userId = 1L;

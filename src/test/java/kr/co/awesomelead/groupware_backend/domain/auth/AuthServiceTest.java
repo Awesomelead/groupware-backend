@@ -221,7 +221,7 @@ class AuthServiceTest {
         verify(emailAuthService, times(1)).clearVerification(signupDto.getEmail());
         verify(phoneAuthService, times(1)).clearVerification(signupDto.getPhoneNumber());
         verify(notificationService, times(1))
-                .sendAlertToAdmins(any(), any(), any(), any(Map.class), any());
+                .sendAlertToAdminsRequiringApproval(any(), any(), any(), any(Map.class), any());
     }
 
     @Test
@@ -239,7 +239,8 @@ class AuthServiceTest {
 
         assertThat(exception.getErrorCode()).isEqualTo(ErrorCode.PASSWORD_MISMATCH);
         verify(userRepository, never()).save(any(User.class));
-        verify(notificationService, never()).sendAlertToAdmins(any(), any(), any(), any());
+        verify(notificationService, never())
+                .sendAlertToAdminsRequiringApproval(any(), any(), any(), any(Map.class), any());
     }
 
     @Test
@@ -263,7 +264,8 @@ class AuthServiceTest {
         verify(userRepository, never()).save(any(User.class));
         // 전화번호 인증 실패 시 이메일 확인은 실행 안 됨
         verify(emailAuthService, never()).isEmailVerified(any());
-        verify(notificationService, never()).sendAlertToAdmins(any(), any(), any(), any());
+        verify(notificationService, never())
+                .sendAlertToAdminsRequiringApproval(any(), any(), any(), any(Map.class), any());
     }
 
     @Test
@@ -287,7 +289,8 @@ class AuthServiceTest {
 
         assertThat(exception.getErrorCode()).isEqualTo(ErrorCode.EMAIL_NOT_VERIFIED);
         verify(userRepository, never()).save(any(User.class));
-        verify(notificationService, never()).sendAlertToAdmins(any(), any(), any(), any());
+        verify(notificationService, never())
+                .sendAlertToAdminsRequiringApproval(any(), any(), any(), any(Map.class), any());
     }
 
     @Test
@@ -312,7 +315,8 @@ class AuthServiceTest {
 
         assertThat(exception.getErrorCode()).isEqualTo(ErrorCode.DUPLICATE_LOGIN_ID);
         verify(userRepository, never()).save(any(User.class));
-        verify(notificationService, never()).sendAlertToAdmins(any(), any(), any(), any());
+        verify(notificationService, never())
+                .sendAlertToAdminsRequiringApproval(any(), any(), any(), any(Map.class), any());
     }
 
     @Test
@@ -340,7 +344,8 @@ class AuthServiceTest {
 
         assertThat(exception.getErrorCode()).isEqualTo(ErrorCode.DUPLICATE_REGISTRATION_NUMBER);
         verify(userRepository, never()).save(any(User.class));
-        verify(notificationService, never()).sendAlertToAdmins(any(), any(), any(), any());
+        verify(notificationService, never())
+                .sendAlertToAdminsRequiringApproval(any(), any(), any(), any(Map.class), any());
     }
 
     @Nested

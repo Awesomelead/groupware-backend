@@ -47,7 +47,9 @@ public class NotificationResponseDto {
     @Schema(description = "알림 메시지 유형", example = "VISIT_CHECK_IN")
     private final NotificationMessage messageType;
 
-    @Schema(description = "승인/반려 완료 알림 여부 (예: 내정보수정 승인·반려 완료, 장기방문 승인요청 처리 완료)", example = "false")
+    @Schema(
+            description = "승인 요청형 알림의 처리 완료 여부 (예: 회원가입 승인 요청, 내정보수정 승인 요청, 장기방문 승인 요청)",
+            example = "false")
     private final boolean approvalOrRejectionCompleted;
 
     private NotificationResponseDto(Notification notification) {
@@ -74,13 +76,10 @@ public class NotificationResponseDto {
             return false;
         }
 
-        if (messageType == NotificationMessage.MY_INFO_UPDATE_APPROVED
-                || messageType == NotificationMessage.MY_INFO_UPDATE_REJECTED) {
-            return true;
-        }
-
-        // 장기 방문 승인요청 알림은 requiresApproval 해제 시점(승인/반려 처리 완료)을 완료로 간주
-        if (messageType == NotificationMessage.VISIT_LONG_TERM_PRE) {
+        // 승인 요청형 알림은 requiresApproval 해제 시점(승인/반려 처리 완료)을 완료로 간주
+        if (messageType == NotificationMessage.VISIT_LONG_TERM_PRE
+                || messageType == NotificationMessage.SIGNUP_ADMIN_ALERT
+                || messageType == NotificationMessage.MY_INFO_UPDATE_REQUEST_ADMIN) {
             return !notification.isRequiresApproval();
         }
 

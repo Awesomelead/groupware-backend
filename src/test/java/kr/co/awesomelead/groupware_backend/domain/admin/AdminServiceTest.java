@@ -116,12 +116,13 @@ class AdminServiceTest {
         class Context_with_field_job_and_admin_role {
 
             @Test
-            @DisplayName("INVALID_JOB_TYPE_FOR_ADMIN_ROLE 에러를 던진다")
-            void it_throws_invalid_job_type_for_admin_role_exception() {
+            @DisplayName("정상적으로 승인 처리된다")
+            void it_approves_successfully() {
                 // given
                 Department department =
                         Department.builder().id(1L).name(DepartmentName.SALES_DEPT).build();
                 User pendingUser = new User();
+                pendingUser.setId(userId);
                 pendingUser.setStatus(Status.PENDING);
 
                 when(userRepository.findById(userId)).thenReturn(Optional.of(pendingUser));
@@ -131,14 +132,13 @@ class AdminServiceTest {
                 invalidRequestDto.setJobType(JobType.FIELD);
                 invalidRequestDto.setRole(Role.ADMIN);
 
-                // when & then
-                assertThatThrownBy(
-                                () ->
-                                        adminService.approveUserRegistration(
-                                                userId, invalidRequestDto, adminId))
-                        .isInstanceOf(CustomException.class)
-                        .extracting("errorCode")
-                        .isEqualTo(ErrorCode.INVALID_JOB_TYPE_FOR_ADMIN_ROLE);
+                // when
+                adminService.approveUserRegistration(userId, invalidRequestDto, adminId);
+
+                // then
+                assertThat(pendingUser.getStatus()).isEqualTo(Status.AVAILABLE);
+                assertThat(pendingUser.getJobType()).isEqualTo(JobType.FIELD);
+                assertThat(pendingUser.getRole()).isEqualTo(Role.ADMIN);
             }
         }
 

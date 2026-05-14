@@ -21,6 +21,7 @@ import lombok.RequiredArgsConstructor;
 
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -157,5 +158,57 @@ public class RequestHistoryController {
                     Long requestId) {
         requestHistoryService.cancelMyRequest(userDetails.getId(), requestId);
         return ResponseEntity.ok(ApiResponse.onSuccess("신청이 취소되었습니다."));
+    }
+
+    @Operation(
+            summary = "내 제증명 발급 신청 삭제",
+            description = "PENDING 상태인 본인의 신청만 삭제할 수 있습니다.")
+    @ApiResponses(
+            value = {
+                @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                        responseCode = "200",
+                        description = "신청이 삭제되었습니다."),
+                @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                        responseCode = "400",
+                        description = "삭제 불가 상태",
+                        content =
+                                @Content(
+                                        mediaType = "application/json",
+                                        examples =
+                                                @ExampleObject(
+                                                        value =
+                                                                """
+                                {
+                                  "isSuccess": false,
+                                  "code": "REQUEST_HISTORY_NOT_DELETABLE",
+                                  "message": "해당 제증명 발급 신청은 삭제할 수 없습니다.",
+                                  "result": null
+                                }
+                                """))),
+                @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                        responseCode = "404",
+                        description = "신청 없음",
+                        content =
+                                @Content(
+                                        mediaType = "application/json",
+                                        examples =
+                                                @ExampleObject(
+                                                        value =
+                                                                """
+                                {
+                                  "isSuccess": false,
+                                  "code": "REQUEST_HISTORY_NOT_FOUND",
+                                  "message": "해당 제증명 발급 신청 내역을 찾을 수 없습니다.",
+                                  "result": null
+                                }
+                                """)))
+            })
+    @DeleteMapping("/{requestId}")
+    public ResponseEntity<ApiResponse<String>> deleteMyRequest(
+            @Parameter(hidden = true) @AuthenticationPrincipal CustomUserDetails userDetails,
+            @Parameter(description = "삭제할 신청 ID", example = "1", required = true) @PathVariable
+                    Long requestId) {
+        requestHistoryService.deleteMyRequest(userDetails.getId(), requestId);
+        return ResponseEntity.ok(ApiResponse.onSuccess("신청이 삭제되었습니다."));
     }
 }

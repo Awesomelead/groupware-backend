@@ -63,10 +63,11 @@ public class RequestHistoryService {
 
         Long requestId = requestHistoryRepository.save(requestHistory).getId();
 
-        notificationService.sendAlertToAdmins(
+        notificationService.sendAlertToAdminsRequiringApproval(
                 NotificationMessage.REQUEST_HISTORY_CREATED,
                 NotificationDomainType.REQUEST_HISTORY,
                 requestId,
+                null,
                 user.getNameKor());
 
         return requestId;
@@ -118,6 +119,27 @@ public class RequestHistoryService {
 
         notificationRepository.deleteByDomainTypeAndDomainId(
                 NotificationDomainType.REQUEST_HISTORY, requestId);
+    }
+
+    @Transactional
+    public void deleteMyRequest(Long userId, Long requestId) {
+        userRepository
+                .findById(userId)
+                .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
+
+        RequestHistory requestHistory =
+                requestHistoryRepository
+                        .findByIdAndUserId(requestId, userId)
+                        .orElseThrow(
+                                () -> new CustomException(ErrorCode.REQUEST_HISTORY_NOT_FOUND));
+
+        if (requestHistory.getApprovalStatus() != RequestHistoryStatus.PENDING) {
+            throw new CustomException(ErrorCode.REQUEST_HISTORY_NOT_DELETABLE);
+        }
+
+        notificationRepository.deleteByDomainTypeAndDomainId(
+                NotificationDomainType.REQUEST_HISTORY, requestId);
+        requestHistoryRepository.delete(requestHistory);
     }
 
     @Transactional(readOnly = true)
@@ -181,6 +203,8 @@ public class RequestHistoryService {
                 NotificationDomainType.REQUEST_HISTORY,
                 requestId,
                 requestHistory.getRequestType().getDescription());
+
+        notificationService.resolveRequiresApproval(NotificationDomainType.REQUEST_HISTORY, requestId);
     }
 
     @Transactional
@@ -217,6 +241,8 @@ public class RequestHistoryService {
                 requestId,
                 requestHistory.getRequestType().getDescription(),
                 reason.trim());
+
+        notificationService.resolveRequiresApproval(NotificationDomainType.REQUEST_HISTORY, requestId);
     }
 
     private void validateAdminAuthority(User admin) {

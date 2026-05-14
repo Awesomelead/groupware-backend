@@ -957,5 +957,39 @@ class AuthServiceTest {
             inOrder.verify(safetyTrainingSessionRepository).updateCreatedByToNull(userId);
             inOrder.verify(userRepository).delete(testUser);
         }
+
+        @Test
+        @DisplayName(
+                "성공: deleteUser 실행 시"
+                        + " safetyTrainingSessionRepository.updateInstructorUserToNull()이 호출된다")
+        void deleteUser_callsUpdateInstructorUserToNull_success() {
+            // given
+            Long userId = 1L;
+            given(userRepository.findById(userId)).willReturn(Optional.of(testUser));
+
+            // when
+            authService.deleteUser(userId);
+
+            // then
+            verify(safetyTrainingSessionRepository).updateInstructorUserToNull(userId);
+        }
+
+        @Test
+        @DisplayName(
+                "성공: deleteUser 실행 시 safetyTrainingSessionRepository.updateInstructorUserToNull()이"
+                        + " userRepository.delete() 보다 먼저 호출된다 - 호출 순서 검증")
+        void deleteUser_updateInstructorUserToNullCalledBeforeDeleteInOrder() {
+            // given
+            Long userId = 1L;
+            given(userRepository.findById(userId)).willReturn(Optional.of(testUser));
+
+            // when
+            authService.deleteUser(userId);
+
+            // then
+            InOrder inOrder = inOrder(safetyTrainingSessionRepository, userRepository);
+            inOrder.verify(safetyTrainingSessionRepository).updateInstructorUserToNull(userId);
+            inOrder.verify(userRepository).delete(testUser);
+        }
     }
 }

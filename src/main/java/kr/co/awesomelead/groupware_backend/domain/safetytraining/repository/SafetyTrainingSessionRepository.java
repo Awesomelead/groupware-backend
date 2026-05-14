@@ -50,4 +50,9 @@ public interface SafetyTrainingSessionRepository
     @Modifying
     @Query("UPDATE SafetyTrainingSession s SET s.createdBy = NULL WHERE s.createdBy.id = :userId")
     void updateCreatedByToNull(@Param("userId") Long userId);
+
+    @Modifying
+    @Query(
+            "UPDATE SafetyTrainingSession s SET s.instructorUser = NULL WHERE s.instructorUser.id = :userId")
+    void updateInstructorUserToNull(@Param("userId") Long userId);
 }

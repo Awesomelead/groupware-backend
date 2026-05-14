@@ -47,7 +47,9 @@ public class NotificationResponseDto {
     @Schema(description = "알림 메시지 유형", example = "VISIT_CHECK_IN")
     private final NotificationMessage messageType;
 
-    @Schema(description = "승인/반려 완료 알림 여부", example = "false")
+    @Schema(
+            description = "승인/반려 완료 알림 여부 (예: 내정보수정 승인·반려 완료, 장기방문 승인요청 처리 완료)",
+            example = "false")
     private final boolean approvalOrRejectionCompleted;
 
     private NotificationResponseDto(Notification notification) {
@@ -61,19 +63,29 @@ public class NotificationResponseDto {
         this.metadata = notification.getMetadata();
         this.requiresApproval = notification.isRequiresApproval();
         this.messageType = notification.getMessageType();
-        this.approvalOrRejectionCompleted = isApprovalOrRejectionCompleted(notification.getMessageType());
+        this.approvalOrRejectionCompleted = isApprovalOrRejectionCompleted(notification);
     }
 
     public static NotificationResponseDto from(Notification notification) {
         return new NotificationResponseDto(notification);
     }
 
-    private static boolean isApprovalOrRejectionCompleted(NotificationMessage messageType) {
+    private static boolean isApprovalOrRejectionCompleted(Notification notification) {
+        NotificationMessage messageType = notification.getMessageType();
         if (messageType == null) {
             return false;
         }
 
-        return messageType == NotificationMessage.MY_INFO_UPDATE_APPROVED
-                || messageType == NotificationMessage.MY_INFO_UPDATE_REJECTED;
+        if (messageType == NotificationMessage.MY_INFO_UPDATE_APPROVED
+                || messageType == NotificationMessage.MY_INFO_UPDATE_REJECTED) {
+            return true;
+        }
+
+        // 장기 방문 승인요청 알림은 requiresApproval 해제 시점(승인/반려 처리 완료)을 완료로 간주
+        if (messageType == NotificationMessage.VISIT_LONG_TERM_PRE) {
+            return !notification.isRequiresApproval();
+        }
+
+        return false;
     }
 }

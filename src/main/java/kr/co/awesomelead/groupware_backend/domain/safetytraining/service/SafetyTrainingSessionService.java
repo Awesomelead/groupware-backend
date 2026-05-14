@@ -679,6 +679,31 @@ public class SafetyTrainingSessionService {
     }
 
     @Transactional
+    public void remindSession(Long sessionId, Long userId) {
+        userRepository
+                .findById(userId)
+                .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
+
+        SafetyTrainingSession session =
+                sessionRepository
+                        .findById(sessionId)
+                        .orElseThrow(
+                                () ->
+                                        new CustomException(
+                                                ErrorCode.SAFETY_TRAINING_SESSION_NOT_FOUND));
+
+        if (session.getCreatedBy() == null || !session.getCreatedBy().getId().equals(userId)) {
+            throw new CustomException(ErrorCode.NO_AUTHORITY_FOR_SAFETY_WRITE);
+        }
+
+        List<Long> targetUserIds =
+                findTargetAttendees(session.getCompanyScope()).stream().map(User::getId).toList();
+
+        notificationService.sendSafetyTrainingSessionRemindAlertToAttendees(
+                sessionId, session.getTitle(), targetUserIds);
+    }
+
+    @Transactional
     public void delete(Long sessionId, Long userId) {
         User actor =
                 userRepository

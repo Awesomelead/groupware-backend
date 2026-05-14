@@ -325,6 +325,227 @@ class NotificationServiceTest {
         }
     }
 
+    // -------------------------------------------------------------------------
+    // sendEduReportRemindAlertToTargets 테스트
+    // -------------------------------------------------------------------------
+
+    @Nested
+    @DisplayName("sendEduReportRemindAlertToTargets")
+    class SendEduReportRemindAlertToTargets {
+
+        @Test
+        @DisplayName("정상 케이스 - title에 [리마인드] 접두사가 붙어 저장된다")
+        void sendEduReportRemindAlertToTargets_success_titleHasRemindPrefix() {
+            // given
+            String expectedTitle = "[리마인드] " + NotificationMessage.EDU_REPORT_CREATED.getTitle();
+
+            // when
+            notificationService.sendEduReportRemindAlertToTargets(
+                    "SAFETY", "안전교육 제목", 10L, List.of(1L, 2L));
+
+            // then
+            ArgumentCaptor<Notification> captor = forClass(Notification.class);
+            verify(notificationRepository, times(2)).save(captor.capture());
+            captor.getAllValues().forEach(n -> assertThat(n.getTitle()).isEqualTo(expectedTitle));
+        }
+
+        @Test
+        @DisplayName("정상 케이스 - content에 prefix 없이 formatContent 결과가 그대로 저장된다")
+        void sendEduReportRemindAlertToTargets_success_contentHasNoPrefix() {
+            // given
+            String expectedContent =
+                    NotificationMessage.EDU_REPORT_CREATED.formatContent("SAFETY", "안전교육 제목");
+
+            // when
+            notificationService.sendEduReportRemindAlertToTargets(
+                    "SAFETY", "안전교육 제목", 10L, List.of(1L));
+
+            // then
+            ArgumentCaptor<Notification> captor = forClass(Notification.class);
+            verify(notificationRepository).save(captor.capture());
+            assertThat(captor.getValue().getContent()).isEqualTo(expectedContent);
+        }
+
+        @Test
+        @DisplayName("정상 케이스 - domainType이 EDUCATION으로 저장된다")
+        void sendEduReportRemindAlertToTargets_success_domainTypeIsEducation() {
+            // when
+            notificationService.sendEduReportRemindAlertToTargets(
+                    "SAFETY", "안전교육 제목", 10L, List.of(1L));
+
+            // then
+            ArgumentCaptor<Notification> captor = forClass(Notification.class);
+            verify(notificationRepository).save(captor.capture());
+            assertThat(captor.getValue().getDomainType())
+                    .isEqualTo(NotificationDomainType.EDUCATION);
+        }
+
+        @Test
+        @DisplayName("정상 케이스 - messageType이 EDU_REPORT_CREATED로 저장된다")
+        void sendEduReportRemindAlertToTargets_success_messageTypeIsEduReportCreated() {
+            // when
+            notificationService.sendEduReportRemindAlertToTargets(
+                    "SAFETY", "안전교육 제목", 10L, List.of(1L));
+
+            // then
+            ArgumentCaptor<Notification> captor = forClass(Notification.class);
+            verify(notificationRepository).save(captor.capture());
+            assertThat(captor.getValue().getMessageType())
+                    .isEqualTo(NotificationMessage.EDU_REPORT_CREATED);
+        }
+
+        @Test
+        @DisplayName("예외 케이스 - 대상 목록이 비어 있으면 저장과 FCM 이벤트 발행이 수행되지 않는다")
+        void sendEduReportRemindAlertToTargets_emptyTargets_nothingHappens() {
+            // when
+            notificationService.sendEduReportRemindAlertToTargets(
+                    "SAFETY", "안전교육 제목", 10L, List.of());
+
+            // then
+            verify(notificationRepository, times(0)).save(any());
+            verify(eventPublisher, times(0)).publishEvent(any());
+        }
+
+        @Test
+        @DisplayName("정상 케이스 - FCM 이벤트가 대상 수만큼 발행된다")
+        void sendEduReportRemindAlertToTargets_success_fcmEventPublished() {
+            // when
+            notificationService.sendEduReportRemindAlertToTargets(
+                    "SAFETY", "안전교육 제목", 10L, List.of(1L, 2L));
+
+            // then
+            verify(eventPublisher, times(2)).publishEvent(any(FcmSendEvent.class));
+        }
+
+        @Test
+        @DisplayName("정상 케이스 - metadata 포함 5인자 호출 시 title에 [리마인드] 접두사가 붙어 저장된다")
+        void sendEduReportRemindAlertToTargets_withMetadata_titleHasRemindPrefix() {
+            // given
+            String expectedTitle = "[리마인드] " + NotificationMessage.EDU_REPORT_CREATED.getTitle();
+            Map<String, Object> metadata = Map.of("reportId", 10);
+
+            // when
+            notificationService.sendEduReportRemindAlertToTargets(
+                    "SAFETY", "안전교육 제목", 10L, List.of(1L), metadata);
+
+            // then
+            ArgumentCaptor<Notification> captor = forClass(Notification.class);
+            verify(notificationRepository).save(captor.capture());
+            assertThat(captor.getValue().getTitle()).isEqualTo(expectedTitle);
+        }
+    }
+
+    // -------------------------------------------------------------------------
+    // sendSafetyTrainingSessionRemindAlertToAttendees 테스트
+    // -------------------------------------------------------------------------
+
+    @Nested
+    @DisplayName("sendSafetyTrainingSessionRemindAlertToAttendees")
+    class SendSafetyTrainingSessionRemindAlertToAttendees {
+
+        @Test
+        @DisplayName("정상 케이스 - title에 [리마인드] 접두사가 붙어 저장된다")
+        void sendSafetyTrainingSessionRemindAlertToAttendees_success_titleHasRemindPrefix() {
+            // given
+            String expectedTitle =
+                    "[리마인드] " + NotificationMessage.SAFETY_TRAINING_SESSION_CREATED.getTitle();
+
+            // when
+            notificationService.sendSafetyTrainingSessionRemindAlertToAttendees(
+                    200L, "안전보건교육 세션", List.of(1L, 2L));
+
+            // then
+            ArgumentCaptor<Notification> captor = forClass(Notification.class);
+            verify(notificationRepository, times(2)).save(captor.capture());
+            captor.getAllValues().forEach(n -> assertThat(n.getTitle()).isEqualTo(expectedTitle));
+        }
+
+        @Test
+        @DisplayName("정상 케이스 - content에 prefix 없이 formatContent 결과가 그대로 저장된다")
+        void sendSafetyTrainingSessionRemindAlertToAttendees_success_contentHasNoPrefix() {
+            // given
+            String expectedContent =
+                    NotificationMessage.SAFETY_TRAINING_SESSION_CREATED.formatContent("안전보건교육 세션");
+
+            // when
+            notificationService.sendSafetyTrainingSessionRemindAlertToAttendees(
+                    200L, "안전보건교육 세션", List.of(1L));
+
+            // then
+            ArgumentCaptor<Notification> captor = forClass(Notification.class);
+            verify(notificationRepository).save(captor.capture());
+            assertThat(captor.getValue().getContent()).isEqualTo(expectedContent);
+        }
+
+        @Test
+        @DisplayName("정상 케이스 - domainType이 SAFETY_TRAINING으로 저장된다")
+        void sendSafetyTrainingSessionRemindAlertToAttendees_success_domainTypeIsSafetyTraining() {
+            // when
+            notificationService.sendSafetyTrainingSessionRemindAlertToAttendees(
+                    200L, "안전보건교육 세션", List.of(1L));
+
+            // then
+            ArgumentCaptor<Notification> captor = forClass(Notification.class);
+            verify(notificationRepository).save(captor.capture());
+            assertThat(captor.getValue().getDomainType())
+                    .isEqualTo(NotificationDomainType.SAFETY_TRAINING);
+        }
+
+        @Test
+        @DisplayName("정상 케이스 - metadata에 educationType=SAFETY, detailType=SESSION이 저장된다")
+        void
+                sendSafetyTrainingSessionRemindAlertToAttendees_success_metadataContainsExpectedKeys() {
+            // when
+            notificationService.sendSafetyTrainingSessionRemindAlertToAttendees(
+                    200L, "안전보건교육 세션", List.of(1L));
+
+            // then
+            ArgumentCaptor<Notification> captor = forClass(Notification.class);
+            verify(notificationRepository).save(captor.capture());
+            Map<String, Object> metadata = captor.getValue().getMetadata();
+            assertThat(metadata).containsEntry("educationType", "SAFETY");
+            assertThat(metadata).containsEntry("detailType", "SESSION");
+        }
+
+        @Test
+        @DisplayName("예외 케이스 - 대상 목록이 비어 있으면 저장과 FCM 이벤트 발행이 수행되지 않는다")
+        void sendSafetyTrainingSessionRemindAlertToAttendees_emptyTargets_nothingHappens() {
+            // when
+            notificationService.sendSafetyTrainingSessionRemindAlertToAttendees(
+                    200L, "안전보건교육 세션", List.of());
+
+            // then
+            verify(notificationRepository, times(0)).save(any());
+            verify(eventPublisher, times(0)).publishEvent(any());
+        }
+
+        @Test
+        @DisplayName("정상 케이스 - FCM 이벤트가 대상 수만큼 발행된다")
+        void sendSafetyTrainingSessionRemindAlertToAttendees_success_fcmEventPublished() {
+            // when
+            notificationService.sendSafetyTrainingSessionRemindAlertToAttendees(
+                    200L, "안전보건교육 세션", List.of(1L, 2L));
+
+            // then
+            verify(eventPublisher, times(2)).publishEvent(any(FcmSendEvent.class));
+        }
+
+        @Test
+        @DisplayName("정상 케이스 - messageType이 SAFETY_TRAINING_SESSION_CREATED로 저장된다")
+        void
+                sendSafetyTrainingSessionRemindAlertToAttendees_success_messageTypeIsSafetyTrainingSessionCreated() {
+            // when
+            notificationService.sendSafetyTrainingSessionRemindAlertToAttendees(
+                    200L, "안전보건교육 세션", List.of(1L));
+
+            // then
+            ArgumentCaptor<Notification> captor = forClass(Notification.class);
+            verify(notificationRepository).save(captor.capture());
+            assertThat(captor.getValue().getMessageType())
+                    .isEqualTo(NotificationMessage.SAFETY_TRAINING_SESSION_CREATED);
+        }
+    }
+
     @Test
     @DisplayName("sendAlertToAdmins - metadata 포함 시 모든 관리자에게 metadata가 저장된다")
     void sendAlertToAdmins_withMetadata_savesMetadataForEachAdmin() {

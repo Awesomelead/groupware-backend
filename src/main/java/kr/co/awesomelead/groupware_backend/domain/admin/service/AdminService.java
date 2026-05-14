@@ -159,6 +159,9 @@ public class AdminService {
             }
         }
         userRepository.save(user);
+
+        // 회원가입 승인 처리 완료 시 관리자 승인대기 알림 해제
+        notificationService.resolveRequiresApproval(NotificationDomainType.AUTH, user.getId());
     }
 
     @Transactional(readOnly = true)

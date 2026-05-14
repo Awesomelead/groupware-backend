@@ -127,10 +127,6 @@ public class AdminService {
         user.setWorkLocation(requestDto.getWorkLocation());
         user.setDepartment(department);
         user.setJobType(requestDto.getJobType());
-
-        if (requestDto.getJobType() == JobType.FIELD && requestDto.getRole() == Role.ADMIN) {
-            throw new CustomException(ErrorCode.INVALID_JOB_TYPE_FOR_ADMIN_ROLE);
-        }
         if (requestDto.getRole() != null) {
             user.setRole(requestDto.getRole());
         }
@@ -307,12 +303,6 @@ public class AdminService {
         }
         if (requestDto.getRole() != null) {
             user.setRole(requestDto.getRole());
-        }
-
-        JobType finalJobType = user.getJobType();
-        Role finalRole = user.getRole();
-        if (finalJobType == JobType.FIELD && finalRole == Role.ADMIN) {
-            throw new CustomException(ErrorCode.INVALID_JOB_TYPE_FOR_ADMIN_ROLE);
         }
 
         if (requestDto.getAuthorities() != null) {

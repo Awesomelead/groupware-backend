@@ -79,7 +79,8 @@ public class NotificationResponseDto {
         // 승인 요청형 알림은 requiresApproval 해제 시점(승인/반려 처리 완료)을 완료로 간주
         if (messageType == NotificationMessage.VISIT_LONG_TERM_PRE
                 || messageType == NotificationMessage.SIGNUP_ADMIN_ALERT
-                || messageType == NotificationMessage.MY_INFO_UPDATE_REQUEST_ADMIN) {
+                || messageType == NotificationMessage.MY_INFO_UPDATE_REQUEST_ADMIN
+                || messageType == NotificationMessage.REQUEST_HISTORY_CREATED) {
             return !notification.isRequiresApproval();
         }
 

@@ -6,6 +6,8 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.verify;
 
+import kr.co.awesomelead.groupware_backend.domain.notification.dto.response.NotificationResponseDto;
+import kr.co.awesomelead.groupware_backend.domain.notification.entity.Notification;
 import kr.co.awesomelead.groupware_backend.domain.notification.enums.NotificationDomainType;
 import kr.co.awesomelead.groupware_backend.domain.notification.enums.NotificationMessage;
 import kr.co.awesomelead.groupware_backend.domain.notification.repository.NotificationRepository;
@@ -85,10 +87,11 @@ class RequestHistoryServiceTest {
             // then
             assertThat(result).isEqualTo(100L);
             verify(notificationService)
-                    .sendAlertToAdmins(
+                    .sendAlertToAdminsRequiringApproval(
                             NotificationMessage.REQUEST_HISTORY_CREATED,
                             NotificationDomainType.REQUEST_HISTORY,
                             100L,
+                            null,
                             "홍길동");
         }
     }
@@ -366,6 +369,36 @@ class RequestHistoryServiceTest {
         }
 
         @Test
+        @DisplayName("발급 처리 후 resolveRequiresApproval을 호출한다")
+        void issueRequest_resolvesRequiresApproval() {
+            // given
+            User admin = new User();
+            ReflectionTestUtils.setField(admin, "id", 100L);
+            admin.addAuthority(Authority.MANAGE_CERTIFICATE_REQUEST);
+
+            User requester = new User();
+            ReflectionTestUtils.setField(requester, "id", 200L);
+
+            RequestHistory requestHistory = new RequestHistory();
+            ReflectionTestUtils.setField(requestHistory, "user", requester);
+            ReflectionTestUtils.setField(
+                    requestHistory, "requestType", RequestType.EMPLOYMENT_CERTIFICATE);
+            ReflectionTestUtils.setField(
+                    requestHistory, "approvalStatus", RequestHistoryStatus.PENDING);
+
+            given(userRepository.findById(100L)).willReturn(Optional.of(admin));
+            given(requestHistoryRepository.findByIdWithUserAndDepartment(101L))
+                    .willReturn(Optional.of(requestHistory));
+
+            // when
+            requestHistoryService.issueRequest(100L, 101L);
+
+            // then
+            verify(notificationService)
+                    .resolveRequiresApproval(NotificationDomainType.REQUEST_HISTORY, 101L);
+        }
+
+        @Test
         @DisplayName("발급 대기 상태가 아니면 REQUEST_HISTORY_NOT_ISSUABLE 예외를 던진다")
         void it_throws_when_request_not_pending() {
             // given
@@ -386,6 +419,121 @@ class RequestHistoryServiceTest {
                     .isInstanceOf(CustomException.class)
                     .extracting("errorCode")
                     .isEqualTo(ErrorCode.REQUEST_HISTORY_NOT_ISSUABLE);
+        }
+    }
+
+    @Nested
+    @DisplayName("deleteMyRequest 메서드는")
+    class Describe_deleteMyRequest {
+
+        @Test
+        @DisplayName("PENDING 상태인 본인 요청을 삭제한다")
+        void deleteMyRequest_success() {
+            // given
+            User user = new User();
+            ReflectionTestUtils.setField(user, "id", 1L);
+            RequestHistory requestHistory = new RequestHistory();
+            ReflectionTestUtils.setField(requestHistory, "id", 10L);
+            ReflectionTestUtils.setField(
+                    requestHistory, "approvalStatus", RequestHistoryStatus.PENDING);
+
+            given(userRepository.findById(1L)).willReturn(Optional.of(user));
+            given(requestHistoryRepository.findByIdAndUserId(10L, 1L))
+                    .willReturn(Optional.of(requestHistory));
+
+            // when
+            requestHistoryService.deleteMyRequest(1L, 10L);
+
+            // then
+            verify(requestHistoryRepository).delete(requestHistory);
+        }
+
+        @Test
+        @DisplayName("PENDING 상태가 아니면 REQUEST_HISTORY_NOT_DELETABLE 예외를 던진다")
+        void deleteMyRequest_throwsWhenNotPending() {
+            // given
+            User user = new User();
+            ReflectionTestUtils.setField(user, "id", 1L);
+            RequestHistory requestHistory = new RequestHistory();
+            ReflectionTestUtils.setField(
+                    requestHistory, "approvalStatus", RequestHistoryStatus.ISSUED);
+
+            given(userRepository.findById(1L)).willReturn(Optional.of(user));
+            given(requestHistoryRepository.findByIdAndUserId(10L, 1L))
+                    .willReturn(Optional.of(requestHistory));
+
+            // when & then
+            assertThatThrownBy(() -> requestHistoryService.deleteMyRequest(1L, 10L))
+                    .isInstanceOf(CustomException.class)
+                    .extracting("errorCode")
+                    .isEqualTo(ErrorCode.REQUEST_HISTORY_NOT_DELETABLE);
+        }
+
+        @Test
+        @DisplayName("요청이 존재하지 않으면 REQUEST_HISTORY_NOT_FOUND 예외를 던진다")
+        void deleteMyRequest_throwsWhenNotFound() {
+            // given
+            User user = new User();
+            ReflectionTestUtils.setField(user, "id", 1L);
+
+            given(userRepository.findById(1L)).willReturn(Optional.of(user));
+            given(requestHistoryRepository.findByIdAndUserId(10L, 1L)).willReturn(Optional.empty());
+
+            // when & then
+            assertThatThrownBy(() -> requestHistoryService.deleteMyRequest(1L, 10L))
+                    .isInstanceOf(CustomException.class)
+                    .extracting("errorCode")
+                    .isEqualTo(ErrorCode.REQUEST_HISTORY_NOT_FOUND);
+        }
+    }
+
+    @Nested
+    @DisplayName(
+            "NotificationResponseDto.isApprovalOrRejectionCompleted — REQUEST_HISTORY_CREATED 분기")
+    class Describe_isApprovalOrRejectionCompleted_requestHistoryCreated {
+
+        @Test
+        @DisplayName("REQUEST_HISTORY_CREATED 타입이고 requiresApproval=false 이면 true를 반환한다")
+        void isApprovalOrRejectionCompleted_returnsTrueWhenRequiresApprovalFalse() {
+            // given
+            Notification notification =
+                    Notification.of(
+                            1L,
+                            "제목",
+                            "내용",
+                            NotificationDomainType.REQUEST_HISTORY,
+                            10L,
+                            null,
+                            false,
+                            NotificationMessage.REQUEST_HISTORY_CREATED);
+
+            // when
+            NotificationResponseDto dto = NotificationResponseDto.from(notification);
+
+            // then
+            assertThat(dto.isApprovalOrRejectionCompleted()).isTrue();
+        }
+
+        @Test
+        @DisplayName("REQUEST_HISTORY_CREATED 타입이고 requiresApproval=true 이면 false를 반환한다")
+        void isApprovalOrRejectionCompleted_returnsFalseWhenRequiresApprovalTrue() {
+            // given
+            Notification notification =
+                    Notification.of(
+                            1L,
+                            "제목",
+                            "내용",
+                            NotificationDomainType.REQUEST_HISTORY,
+                            10L,
+                            null,
+                            true,
+                            NotificationMessage.REQUEST_HISTORY_CREATED);
+
+            // when
+            NotificationResponseDto dto = NotificationResponseDto.from(notification);
+
+            // then
+            assertThat(dto.isApprovalOrRejectionCompleted()).isFalse();
         }
     }
 
@@ -431,6 +579,36 @@ class RequestHistoryServiceTest {
                             101L,
                             RequestType.EMPLOYMENT_CERTIFICATE.getDescription(),
                             "정보가 불충분합니다.");
+        }
+
+        @Test
+        @DisplayName("반려 처리 후 resolveRequiresApproval을 호출한다")
+        void rejectRequest_resolvesRequiresApproval() {
+            // given
+            User admin = new User();
+            ReflectionTestUtils.setField(admin, "id", 100L);
+            admin.addAuthority(Authority.MANAGE_CERTIFICATE_REQUEST);
+
+            User requester = new User();
+            ReflectionTestUtils.setField(requester, "id", 200L);
+
+            RequestHistory requestHistory = new RequestHistory();
+            ReflectionTestUtils.setField(requestHistory, "user", requester);
+            ReflectionTestUtils.setField(
+                    requestHistory, "requestType", RequestType.EMPLOYMENT_CERTIFICATE);
+            ReflectionTestUtils.setField(
+                    requestHistory, "approvalStatus", RequestHistoryStatus.PENDING);
+
+            given(userRepository.findById(100L)).willReturn(Optional.of(admin));
+            given(requestHistoryRepository.findByIdWithUserAndDepartment(101L))
+                    .willReturn(Optional.of(requestHistory));
+
+            // when
+            requestHistoryService.rejectRequest(100L, 101L, "정보가 불충분합니다.");
+
+            // then
+            verify(notificationService)
+                    .resolveRequiresApproval(NotificationDomainType.REQUEST_HISTORY, 101L);
         }
 
         @Test

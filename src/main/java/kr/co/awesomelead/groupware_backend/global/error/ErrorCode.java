@@ -16,6 +16,7 @@ public enum ErrorCode {
     EMAIL_NOT_VERIFIED(HttpStatus.BAD_REQUEST, "이메일 인증이 필요합니다."),
     PASSWORD_MISMATCH(HttpStatus.BAD_REQUEST, "비밀번호가 일치하지 않습니다."),
     VISIT_ALREADY_CHECKED_OUT(HttpStatus.BAD_REQUEST, "이미 체크아웃된 방문정보입니다."),
+    ALREADY_CHECKED_IN(HttpStatus.BAD_REQUEST, "이미 입실 처리된 방문정보입니다."),
     VISITOR_PASSWORD_REQUIRED_FOR_PRE_REGISTRATION(
             HttpStatus.BAD_REQUEST, "사전 방문 예약 시 내방객 비밀번호가 필요합니다."),
     DEPARTMENT_ID_REQUIRED(HttpStatus.BAD_REQUEST, "부서교육인 경우 부서 ID가 필요합니다."),

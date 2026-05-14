@@ -991,5 +991,1216 @@ class AuthServiceTest {
             inOrder.verify(safetyTrainingSessionRepository).updateInstructorUserToNull(userId);
             inOrder.verify(userRepository).delete(testUser);
         }
+
+        @Test
+        @DisplayName("성공: deleteUser 실행 시 FcmToken JPQL 삭제 쿼리가 실행된다")
+        void deleteUser_executesDeleteFcmTokenJpql() {
+            // given
+            Long userId = 1L;
+            given(userRepository.findById(userId)).willReturn(Optional.of(testUser));
+
+            // when
+            authService.deleteUser(userId);
+
+            // then
+            ArgumentCaptor<String> jpqlCaptor = ArgumentCaptor.forClass(String.class);
+            verify(entityManager, org.mockito.Mockito.atLeastOnce())
+                    .createQuery(jpqlCaptor.capture());
+
+            List<String> executedJpqls = jpqlCaptor.getAllValues();
+            boolean fcmTokenQueryFound =
+                    executedJpqls.stream()
+                            .anyMatch(
+                                    jpql ->
+                                            jpql.contains("FcmToken")
+                                                    && jpql.contains("ft.user.id")
+                                                    && jpql.contains(":userId"));
+            assertThat(fcmTokenQueryFound)
+                    .as("deleteUser() 실행 시 FcmToken 삭제 JPQL이 포함되어야 한다")
+                    .isTrue();
+        }
+
+        @Test
+        @DisplayName("성공: deleteUser 실행 시 FcmToken 삭제가 RefreshToken 삭제 직후에 실행된다 - 호출 순서 검증")
+        void deleteUser_deletesFcmTokenAfterRefreshToken_orderCheck() {
+            // given
+            Long userId = 1L;
+            given(userRepository.findById(userId)).willReturn(Optional.of(testUser));
+
+            // when
+            authService.deleteUser(userId);
+
+            // then
+            ArgumentCaptor<String> jpqlCaptor = ArgumentCaptor.forClass(String.class);
+            verify(entityManager, org.mockito.Mockito.atLeastOnce())
+                    .createQuery(jpqlCaptor.capture());
+
+            List<String> executedJpqls = jpqlCaptor.getAllValues();
+
+            int refreshTokenIdx = -1;
+            int fcmTokenIdx = -1;
+            for (int i = 0; i < executedJpqls.size(); i++) {
+                String jpql = executedJpqls.get(i);
+                if (jpql.contains("RefreshToken") && refreshTokenIdx == -1) {
+                    refreshTokenIdx = i;
+                }
+                if (jpql.contains("FcmToken") && fcmTokenIdx == -1) {
+                    fcmTokenIdx = i;
+                }
+            }
+
+            assertThat(fcmTokenIdx).as("FcmToken 삭제 JPQL이 실행되어야 한다").isGreaterThanOrEqualTo(0);
+            assertThat(refreshTokenIdx)
+                    .as("RefreshToken 삭제 JPQL이 실행되어야 한다")
+                    .isGreaterThanOrEqualTo(0);
+            assertThat(fcmTokenIdx)
+                    .as("FcmToken 삭제는 RefreshToken 삭제 직후(= 그 이후)에 실행되어야 한다")
+                    .isEqualTo(refreshTokenIdx + 1);
+        }
+
+        @Test
+        @DisplayName("성공: deleteUser 실행 시 TopicMember JPQL 삭제 쿼리가 실행된다")
+        void deleteUser_executesDeleteTopicMemberJpql() {
+            // given
+            Long userId = 1L;
+            given(userRepository.findById(userId)).willReturn(Optional.of(testUser));
+
+            // when
+            authService.deleteUser(userId);
+
+            // then
+            ArgumentCaptor<String> jpqlCaptor = ArgumentCaptor.forClass(String.class);
+            verify(entityManager, org.mockito.Mockito.atLeastOnce())
+                    .createQuery(jpqlCaptor.capture());
+
+            List<String> executedJpqls = jpqlCaptor.getAllValues();
+            boolean topicMemberQueryFound =
+                    executedJpqls.stream()
+                            .anyMatch(
+                                    jpql ->
+                                            jpql.contains("TopicMember")
+                                                    && jpql.contains("tm.user.id")
+                                                    && jpql.contains(":userId"));
+            assertThat(topicMemberQueryFound)
+                    .as("deleteUser() 실행 시 TopicMember 삭제 JPQL이 포함되어야 한다")
+                    .isTrue();
+        }
+
+        @Test
+        @DisplayName("성공: deleteUser 실행 시 TopicMember 삭제가 FcmToken 삭제 직후에 실행된다 - 호출 순서 검증")
+        void deleteUser_deletesTopicMemberAfterFcmToken_orderCheck() {
+            // given
+            Long userId = 1L;
+            given(userRepository.findById(userId)).willReturn(Optional.of(testUser));
+
+            // when
+            authService.deleteUser(userId);
+
+            // then
+            ArgumentCaptor<String> jpqlCaptor = ArgumentCaptor.forClass(String.class);
+            verify(entityManager, org.mockito.Mockito.atLeastOnce())
+                    .createQuery(jpqlCaptor.capture());
+
+            List<String> executedJpqls = jpqlCaptor.getAllValues();
+
+            int fcmTokenIdx = -1;
+            int topicMemberIdx = -1;
+            for (int i = 0; i < executedJpqls.size(); i++) {
+                String jpql = executedJpqls.get(i);
+                if (jpql.contains("FcmToken") && fcmTokenIdx == -1) {
+                    fcmTokenIdx = i;
+                }
+                if (jpql.contains("TopicMember") && topicMemberIdx == -1) {
+                    topicMemberIdx = i;
+                }
+            }
+
+            assertThat(fcmTokenIdx).as("FcmToken 삭제 JPQL이 실행되어야 한다").isGreaterThanOrEqualTo(0);
+            assertThat(topicMemberIdx)
+                    .as("TopicMember 삭제 JPQL이 실행되어야 한다")
+                    .isGreaterThanOrEqualTo(0);
+            assertThat(topicMemberIdx)
+                    .as("TopicMember 삭제는 FcmToken 삭제 직후(= 그 이후)에 실행되어야 한다")
+                    .isEqualTo(fcmTokenIdx + 1);
+        }
+
+        @Test
+        @DisplayName("성공: deleteUser 실행 시 ApprovalPersonalViewerTarget JPQL 삭제 쿼리가 실행된다")
+        void deleteUser_executesDeleteApprovalPersonalViewerTargetJpql() {
+            // given
+            Long userId = 1L;
+            given(userRepository.findById(userId)).willReturn(Optional.of(testUser));
+
+            // when
+            authService.deleteUser(userId);
+
+            // then
+            ArgumentCaptor<String> jpqlCaptor = ArgumentCaptor.forClass(String.class);
+            verify(entityManager, org.mockito.Mockito.atLeastOnce())
+                    .createQuery(jpqlCaptor.capture());
+
+            List<String> executedJpqls = jpqlCaptor.getAllValues();
+            boolean viewerTargetQueryFound =
+                    executedJpqls.stream()
+                            .anyMatch(
+                                    jpql ->
+                                            jpql.contains("ApprovalPersonalViewerTarget")
+                                                    && jpql.contains("vt.setting.user.id")
+                                                    && jpql.contains(":userId"));
+            assertThat(viewerTargetQueryFound)
+                    .as("deleteUser() 실행 시 ApprovalPersonalViewerTarget 삭제 JPQL이 포함되어야 한다")
+                    .isTrue();
+        }
+
+        @Test
+        @DisplayName("성공: deleteUser 실행 시 ApprovalPersonalSetting JPQL 삭제 쿼리가 실행된다")
+        void deleteUser_executesDeleteApprovalPersonalSettingJpql() {
+            // given
+            Long userId = 1L;
+            given(userRepository.findById(userId)).willReturn(Optional.of(testUser));
+
+            // when
+            authService.deleteUser(userId);
+
+            // then
+            ArgumentCaptor<String> jpqlCaptor = ArgumentCaptor.forClass(String.class);
+            verify(entityManager, org.mockito.Mockito.atLeastOnce())
+                    .createQuery(jpqlCaptor.capture());
+
+            List<String> executedJpqls = jpqlCaptor.getAllValues();
+            boolean settingQueryFound =
+                    executedJpqls.stream()
+                            .anyMatch(
+                                    jpql ->
+                                            jpql.contains("ApprovalPersonalSetting")
+                                                    && jpql.contains("aps.user.id")
+                                                    && jpql.contains(":userId"));
+            assertThat(settingQueryFound)
+                    .as("deleteUser() 실행 시 ApprovalPersonalSetting 삭제 JPQL이 포함되어야 한다")
+                    .isTrue();
+        }
+
+        @Test
+        @DisplayName(
+                "성공: deleteUser 실행 시 ApprovalPersonalSetting 삭제가 ApprovalPersonalViewerTarget 삭제"
+                    + " 직후에 실행된다 - 호출 순서 검증")
+        void deleteUser_deletesApprovalPersonalSettingAfterViewerTarget_orderCheck() {
+            // given
+            Long userId = 1L;
+            given(userRepository.findById(userId)).willReturn(Optional.of(testUser));
+
+            // when
+            authService.deleteUser(userId);
+
+            // then
+            ArgumentCaptor<String> jpqlCaptor = ArgumentCaptor.forClass(String.class);
+            verify(entityManager, org.mockito.Mockito.atLeastOnce())
+                    .createQuery(jpqlCaptor.capture());
+
+            List<String> executedJpqls = jpqlCaptor.getAllValues();
+
+            int viewerTargetIdx = -1;
+            int settingIdx = -1;
+            for (int i = 0; i < executedJpqls.size(); i++) {
+                String jpql = executedJpqls.get(i);
+                if (jpql.contains("ApprovalPersonalViewerTarget") && viewerTargetIdx == -1) {
+                    viewerTargetIdx = i;
+                }
+                if (jpql.contains("ApprovalPersonalSetting") && settingIdx == -1) {
+                    settingIdx = i;
+                }
+            }
+
+            assertThat(viewerTargetIdx)
+                    .as("ApprovalPersonalViewerTarget 삭제 JPQL이 실행되어야 한다")
+                    .isGreaterThanOrEqualTo(0);
+            assertThat(settingIdx)
+                    .as("ApprovalPersonalSetting 삭제 JPQL이 실행되어야 한다")
+                    .isGreaterThanOrEqualTo(0);
+            assertThat(settingIdx)
+                    .as("ApprovalPersonalSetting 삭제는 ApprovalPersonalViewerTarget 삭제 직후에 실행되어야 한다")
+                    .isEqualTo(viewerTargetIdx + 1);
+        }
+
+        @Test
+        @DisplayName("성공: deleteUser 실행 시 SavedApprovalLineDetail JPQL 삭제 쿼리가 실행된다")
+        void deleteUser_executesDeleteSavedApprovalLineDetailJpql() {
+            // given
+            Long userId = 1L;
+            given(userRepository.findById(userId)).willReturn(Optional.of(testUser));
+
+            // when
+            authService.deleteUser(userId);
+
+            // then
+            ArgumentCaptor<String> jpqlCaptor = ArgumentCaptor.forClass(String.class);
+            verify(entityManager, org.mockito.Mockito.atLeastOnce())
+                    .createQuery(jpqlCaptor.capture());
+
+            List<String> executedJpqls = jpqlCaptor.getAllValues();
+            boolean savedLineDetailQueryFound =
+                    executedJpqls.stream()
+                            .anyMatch(
+                                    jpql ->
+                                            jpql.contains("SavedApprovalLineDetail")
+                                                    && jpql.contains("d.savedLine.ownerUser.id")
+                                                    && jpql.contains(":userId"));
+            assertThat(savedLineDetailQueryFound)
+                    .as("deleteUser() 실행 시 SavedApprovalLineDetail 삭제 JPQL이 포함되어야 한다")
+                    .isTrue();
+        }
+
+        @Test
+        @DisplayName(
+                "성공: deleteUser 실행 시 SavedApprovalLineDetail 삭제가 ApprovalPersonalSetting 삭제 직후에"
+                    + " 실행된다 - 호출 순서 검증")
+        void deleteUser_deletesSavedApprovalLineDetailAfterApprovalPersonalSetting_orderCheck() {
+            // given
+            Long userId = 1L;
+            given(userRepository.findById(userId)).willReturn(Optional.of(testUser));
+
+            // when
+            authService.deleteUser(userId);
+
+            // then
+            ArgumentCaptor<String> jpqlCaptor = ArgumentCaptor.forClass(String.class);
+            verify(entityManager, org.mockito.Mockito.atLeastOnce())
+                    .createQuery(jpqlCaptor.capture());
+
+            List<String> executedJpqls = jpqlCaptor.getAllValues();
+
+            int settingIdx = -1;
+            int savedLineDetailIdx = -1;
+            for (int i = 0; i < executedJpqls.size(); i++) {
+                String jpql = executedJpqls.get(i);
+                if (jpql.contains("ApprovalPersonalSetting") && settingIdx == -1) {
+                    settingIdx = i;
+                }
+                if (jpql.contains("SavedApprovalLineDetail") && savedLineDetailIdx == -1) {
+                    savedLineDetailIdx = i;
+                }
+            }
+
+            assertThat(settingIdx)
+                    .as("ApprovalPersonalSetting 삭제 JPQL이 실행되어야 한다")
+                    .isGreaterThanOrEqualTo(0);
+            assertThat(savedLineDetailIdx)
+                    .as("SavedApprovalLineDetail 삭제 JPQL이 실행되어야 한다")
+                    .isGreaterThanOrEqualTo(0);
+            assertThat(savedLineDetailIdx)
+                    .as("SavedApprovalLineDetail 삭제는 ApprovalPersonalSetting 삭제 직후에 실행되어야 한다")
+                    .isEqualTo(settingIdx + 1);
+        }
+
+        @Test
+        @DisplayName("성공: deleteUser 실행 시 SavedApprovalLine JPQL 삭제 쿼리가 실행된다")
+        void deleteUser_executesDeleteSavedApprovalLineJpql() {
+            // given
+            Long userId = 1L;
+            given(userRepository.findById(userId)).willReturn(Optional.of(testUser));
+
+            // when
+            authService.deleteUser(userId);
+
+            // then
+            ArgumentCaptor<String> jpqlCaptor = ArgumentCaptor.forClass(String.class);
+            verify(entityManager, org.mockito.Mockito.atLeastOnce())
+                    .createQuery(jpqlCaptor.capture());
+
+            List<String> executedJpqls = jpqlCaptor.getAllValues();
+            boolean savedApprovalLineQueryFound =
+                    executedJpqls.stream()
+                            .anyMatch(
+                                    jpql ->
+                                            jpql.contains("SavedApprovalLine")
+                                                    && !jpql.contains("SavedApprovalLineDetail")
+                                                    && jpql.contains("sal.ownerUser.id")
+                                                    && jpql.contains(":userId"));
+            assertThat(savedApprovalLineQueryFound)
+                    .as("deleteUser() 실행 시 SavedApprovalLine 삭제 JPQL이 포함되어야 한다")
+                    .isTrue();
+        }
+
+        @Test
+        @DisplayName(
+                "성공: deleteUser 실행 시 SavedApprovalLine 삭제가 SavedApprovalLineDetail 삭제 직후에 실행된다 - 호출"
+                    + " 순서 검증")
+        void deleteUser_deletesSavedApprovalLineAfterSavedApprovalLineDetail_orderCheck() {
+            // given
+            Long userId = 1L;
+            given(userRepository.findById(userId)).willReturn(Optional.of(testUser));
+
+            // when
+            authService.deleteUser(userId);
+
+            // then
+            ArgumentCaptor<String> jpqlCaptor = ArgumentCaptor.forClass(String.class);
+            verify(entityManager, org.mockito.Mockito.atLeastOnce())
+                    .createQuery(jpqlCaptor.capture());
+
+            List<String> executedJpqls = jpqlCaptor.getAllValues();
+
+            int savedLineDetailIdx = -1;
+            int savedLineIdx = -1;
+            for (int i = 0; i < executedJpqls.size(); i++) {
+                String jpql = executedJpqls.get(i);
+                if (jpql.contains("SavedApprovalLineDetail") && savedLineDetailIdx == -1) {
+                    savedLineDetailIdx = i;
+                }
+                if (jpql.contains("SavedApprovalLine")
+                        && !jpql.contains("SavedApprovalLineDetail")
+                        && savedLineIdx == -1) {
+                    savedLineIdx = i;
+                }
+            }
+
+            assertThat(savedLineDetailIdx)
+                    .as("SavedApprovalLineDetail 삭제 JPQL이 실행되어야 한다")
+                    .isGreaterThanOrEqualTo(0);
+            assertThat(savedLineIdx)
+                    .as("SavedApprovalLine 삭제 JPQL이 실행되어야 한다")
+                    .isGreaterThanOrEqualTo(0);
+            assertThat(savedLineIdx)
+                    .as("SavedApprovalLine 삭제는 SavedApprovalLineDetail 삭제 직후(= 그 이후)에 실행되어야 한다")
+                    .isEqualTo(savedLineDetailIdx + 1);
+        }
+
+        @Test
+        @DisplayName("성공: deleteUser 실행 시 ApprovalActionHistory JPQL 삭제 쿼리가 실행된다")
+        void deleteUser_executesDeleteApprovalActionHistoryJpql() {
+            // given
+            Long userId = 1L;
+            given(userRepository.findById(userId)).willReturn(Optional.of(testUser));
+
+            // when
+            authService.deleteUser(userId);
+
+            // then
+            ArgumentCaptor<String> jpqlCaptor = ArgumentCaptor.forClass(String.class);
+            verify(entityManager, org.mockito.Mockito.atLeastOnce())
+                    .createQuery(jpqlCaptor.capture());
+
+            List<String> executedJpqls = jpqlCaptor.getAllValues();
+            boolean actionHistoryQueryFound =
+                    executedJpqls.stream()
+                            .anyMatch(
+                                    jpql ->
+                                            jpql.contains("ApprovalActionHistory")
+                                                    && jpql.contains("ah.document.drafterUser.id")
+                                                    && jpql.contains(":userId"));
+            assertThat(actionHistoryQueryFound)
+                    .as("deleteUser() 실행 시 ApprovalActionHistory 삭제 JPQL이 포함되어야 한다")
+                    .isTrue();
+        }
+
+        @Test
+        @DisplayName("성공: deleteUser 실행 시 ApprovalDocumentLine JPQL 삭제 쿼리가 실행된다")
+        void deleteUser_executesDeleteApprovalDocumentLineJpql() {
+            // given
+            Long userId = 1L;
+            given(userRepository.findById(userId)).willReturn(Optional.of(testUser));
+
+            // when
+            authService.deleteUser(userId);
+
+            // then
+            ArgumentCaptor<String> jpqlCaptor = ArgumentCaptor.forClass(String.class);
+            verify(entityManager, org.mockito.Mockito.atLeastOnce())
+                    .createQuery(jpqlCaptor.capture());
+
+            List<String> executedJpqls = jpqlCaptor.getAllValues();
+            boolean documentLineQueryFound =
+                    executedJpqls.stream()
+                            .anyMatch(
+                                    jpql ->
+                                            jpql.contains("ApprovalDocumentLine")
+                                                    && jpql.contains("dl.document.drafterUser.id")
+                                                    && jpql.contains(":userId"));
+            assertThat(documentLineQueryFound)
+                    .as("deleteUser() 실행 시 ApprovalDocumentLine 삭제 JPQL이 포함되어야 한다")
+                    .isTrue();
+        }
+
+        @Test
+        @DisplayName("성공: deleteUser 실행 시 ApprovalDocumentRead JPQL 삭제 쿼리가 실행된다")
+        void deleteUser_executesDeleteApprovalDocumentReadJpql() {
+            // given
+            Long userId = 1L;
+            given(userRepository.findById(userId)).willReturn(Optional.of(testUser));
+
+            // when
+            authService.deleteUser(userId);
+
+            // then
+            ArgumentCaptor<String> jpqlCaptor = ArgumentCaptor.forClass(String.class);
+            verify(entityManager, org.mockito.Mockito.atLeastOnce())
+                    .createQuery(jpqlCaptor.capture());
+
+            List<String> executedJpqls = jpqlCaptor.getAllValues();
+            boolean documentReadQueryFound =
+                    executedJpqls.stream()
+                            .anyMatch(
+                                    jpql ->
+                                            jpql.contains("ApprovalDocumentRead")
+                                                    && jpql.contains("dr.document.drafterUser.id")
+                                                    && jpql.contains(":userId"));
+            assertThat(documentReadQueryFound)
+                    .as("deleteUser() 실행 시 ApprovalDocumentRead 삭제 JPQL이 포함되어야 한다")
+                    .isTrue();
+        }
+
+        @Test
+        @DisplayName("성공: deleteUser 실행 시 ApprovalAttachment JPQL 삭제 쿼리가 실행된다")
+        void deleteUser_executesDeleteApprovalAttachmentJpql() {
+            // given
+            Long userId = 1L;
+            given(userRepository.findById(userId)).willReturn(Optional.of(testUser));
+
+            // when
+            authService.deleteUser(userId);
+
+            // then
+            ArgumentCaptor<String> jpqlCaptor = ArgumentCaptor.forClass(String.class);
+            verify(entityManager, org.mockito.Mockito.atLeastOnce())
+                    .createQuery(jpqlCaptor.capture());
+
+            List<String> executedJpqls = jpqlCaptor.getAllValues();
+            boolean attachmentQueryFound =
+                    executedJpqls.stream()
+                            .anyMatch(
+                                    jpql ->
+                                            jpql.contains("ApprovalAttachment")
+                                                    && jpql.contains("aa.document.drafterUser.id")
+                                                    && jpql.contains(":userId"));
+            assertThat(attachmentQueryFound)
+                    .as("deleteUser() 실행 시 ApprovalAttachment 삭제 JPQL이 포함되어야 한다")
+                    .isTrue();
+        }
+
+        @Test
+        @DisplayName(
+                "성공: deleteUser 실행 시 ApprovalDocument 자식 4개 삭제가 SavedApprovalLine 삭제 직후에 실행된다 - 호출"
+                    + " 순서 검증")
+        void deleteUser_deletesApprovalDocumentChildrenAfterSavedApprovalLine_orderCheck() {
+            // given
+            Long userId = 1L;
+            given(userRepository.findById(userId)).willReturn(Optional.of(testUser));
+
+            // when
+            authService.deleteUser(userId);
+
+            // then
+            ArgumentCaptor<String> jpqlCaptor = ArgumentCaptor.forClass(String.class);
+            verify(entityManager, org.mockito.Mockito.atLeastOnce())
+                    .createQuery(jpqlCaptor.capture());
+
+            List<String> executedJpqls = jpqlCaptor.getAllValues();
+
+            int savedApprovalLineIdx = -1;
+            int actionHistoryIdx = -1;
+            int documentLineIdx = -1;
+            int documentReadIdx = -1;
+            int attachmentIdx = -1;
+            for (int i = 0; i < executedJpqls.size(); i++) {
+                String jpql = executedJpqls.get(i);
+                if (jpql.contains("SavedApprovalLine")
+                        && !jpql.contains("SavedApprovalLineDetail")
+                        && savedApprovalLineIdx == -1) {
+                    savedApprovalLineIdx = i;
+                }
+                if (jpql.contains("ApprovalActionHistory") && actionHistoryIdx == -1) {
+                    actionHistoryIdx = i;
+                }
+                if (jpql.contains("ApprovalDocumentLine") && documentLineIdx == -1) {
+                    documentLineIdx = i;
+                }
+                if (jpql.contains("ApprovalDocumentRead") && documentReadIdx == -1) {
+                    documentReadIdx = i;
+                }
+                if (jpql.contains("ApprovalAttachment") && attachmentIdx == -1) {
+                    attachmentIdx = i;
+                }
+            }
+
+            assertThat(savedApprovalLineIdx)
+                    .as("SavedApprovalLine 삭제 JPQL이 실행되어야 한다")
+                    .isGreaterThanOrEqualTo(0);
+            assertThat(actionHistoryIdx)
+                    .as("ApprovalActionHistory 삭제 JPQL이 실행되어야 한다")
+                    .isGreaterThanOrEqualTo(0);
+            assertThat(documentLineIdx)
+                    .as("ApprovalDocumentLine 삭제 JPQL이 실행되어야 한다")
+                    .isGreaterThanOrEqualTo(0);
+            assertThat(documentReadIdx)
+                    .as("ApprovalDocumentRead 삭제 JPQL이 실행되어야 한다")
+                    .isGreaterThanOrEqualTo(0);
+            assertThat(attachmentIdx)
+                    .as("ApprovalAttachment 삭제 JPQL이 실행되어야 한다")
+                    .isGreaterThanOrEqualTo(0);
+
+            assertThat(actionHistoryIdx)
+                    .as("ApprovalActionHistory 삭제는 SavedApprovalLine 삭제 이후에 실행되어야 한다")
+                    .isGreaterThan(savedApprovalLineIdx);
+            assertThat(documentLineIdx)
+                    .as("ApprovalDocumentLine 삭제는 SavedApprovalLine 삭제 이후에 실행되어야 한다")
+                    .isGreaterThan(savedApprovalLineIdx);
+            assertThat(documentReadIdx)
+                    .as("ApprovalDocumentRead 삭제는 SavedApprovalLine 삭제 이후에 실행되어야 한다")
+                    .isGreaterThan(savedApprovalLineIdx);
+            assertThat(attachmentIdx)
+                    .as("ApprovalAttachment 삭제는 SavedApprovalLine 삭제 이후에 실행되어야 한다")
+                    .isGreaterThan(savedApprovalLineIdx);
+        }
+
+        @Test
+        @DisplayName("성공: deleteUser 실행 시 ApprovalDocument JPQL 삭제 쿼리가 실행된다")
+        void deleteUser_executesDeleteApprovalDocumentJpql() {
+            // given
+            Long userId = 1L;
+            given(userRepository.findById(userId)).willReturn(Optional.of(testUser));
+
+            // when
+            authService.deleteUser(userId);
+
+            // then
+            ArgumentCaptor<String> jpqlCaptor = ArgumentCaptor.forClass(String.class);
+            verify(entityManager, org.mockito.Mockito.atLeastOnce())
+                    .createQuery(jpqlCaptor.capture());
+
+            List<String> executedJpqls = jpqlCaptor.getAllValues();
+            boolean approvalDocumentQueryFound =
+                    executedJpqls.stream()
+                            .anyMatch(
+                                    jpql ->
+                                            jpql.contains("ApprovalDocument")
+                                                    && !jpql.contains("ApprovalDocumentLine")
+                                                    && !jpql.contains("ApprovalDocumentRead")
+                                                    && jpql.contains("ad.drafterUser.id")
+                                                    && jpql.contains(":userId"));
+            assertThat(approvalDocumentQueryFound)
+                    .as("deleteUser() 실행 시 ApprovalDocument 삭제 JPQL이 포함되어야 한다")
+                    .isTrue();
+        }
+
+        @Test
+        @DisplayName(
+                "성공: deleteUser 실행 시 ApprovalDocument 삭제가 자식 4종(ApprovalActionHistory,"
+                        + " ApprovalDocumentLine, ApprovalDocumentRead, ApprovalAttachment) 삭제 직후에"
+                        + " 실행된다 - 호출 순서 검증")
+        void deleteUser_deletesApprovalDocumentAfterChildren_orderCheck() {
+            // given
+            Long userId = 1L;
+            given(userRepository.findById(userId)).willReturn(Optional.of(testUser));
+
+            // when
+            authService.deleteUser(userId);
+
+            // then
+            ArgumentCaptor<String> jpqlCaptor = ArgumentCaptor.forClass(String.class);
+            verify(entityManager, org.mockito.Mockito.atLeastOnce())
+                    .createQuery(jpqlCaptor.capture());
+
+            List<String> executedJpqls = jpqlCaptor.getAllValues();
+
+            int actionHistoryIdx = -1;
+            int documentLineIdx = -1;
+            int documentReadIdx = -1;
+            int attachmentIdx = -1;
+            int approvalDocumentIdx = -1;
+            for (int i = 0; i < executedJpqls.size(); i++) {
+                String jpql = executedJpqls.get(i);
+                if (jpql.contains("ApprovalActionHistory") && actionHistoryIdx == -1) {
+                    actionHistoryIdx = i;
+                }
+                if (jpql.contains("ApprovalDocumentLine") && documentLineIdx == -1) {
+                    documentLineIdx = i;
+                }
+                if (jpql.contains("ApprovalDocumentRead") && documentReadIdx == -1) {
+                    documentReadIdx = i;
+                }
+                if (jpql.contains("ApprovalAttachment") && attachmentIdx == -1) {
+                    attachmentIdx = i;
+                }
+                if (jpql.contains("ApprovalDocument")
+                        && !jpql.contains("ApprovalDocumentLine")
+                        && !jpql.contains("ApprovalDocumentRead")
+                        && approvalDocumentIdx == -1) {
+                    approvalDocumentIdx = i;
+                }
+            }
+
+            assertThat(approvalDocumentIdx)
+                    .as("ApprovalDocument 삭제 JPQL이 실행되어야 한다")
+                    .isGreaterThanOrEqualTo(0);
+            assertThat(actionHistoryIdx)
+                    .as("ApprovalActionHistory 삭제 JPQL이 실행되어야 한다")
+                    .isGreaterThanOrEqualTo(0);
+            assertThat(documentLineIdx)
+                    .as("ApprovalDocumentLine 삭제 JPQL이 실행되어야 한다")
+                    .isGreaterThanOrEqualTo(0);
+            assertThat(documentReadIdx)
+                    .as("ApprovalDocumentRead 삭제 JPQL이 실행되어야 한다")
+                    .isGreaterThanOrEqualTo(0);
+            assertThat(attachmentIdx)
+                    .as("ApprovalAttachment 삭제 JPQL이 실행되어야 한다")
+                    .isGreaterThanOrEqualTo(0);
+
+            assertThat(approvalDocumentIdx)
+                    .as("ApprovalDocument 삭제는 ApprovalActionHistory 삭제 이후에 실행되어야 한다")
+                    .isGreaterThan(actionHistoryIdx);
+            assertThat(approvalDocumentIdx)
+                    .as("ApprovalDocument 삭제는 ApprovalDocumentLine 삭제 이후에 실행되어야 한다")
+                    .isGreaterThan(documentLineIdx);
+            assertThat(approvalDocumentIdx)
+                    .as("ApprovalDocument 삭제는 ApprovalDocumentRead 삭제 이후에 실행되어야 한다")
+                    .isGreaterThan(documentReadIdx);
+            assertThat(approvalDocumentIdx)
+                    .as("ApprovalDocument 삭제는 ApprovalAttachment 삭제 이후에 실행되어야 한다")
+                    .isGreaterThan(attachmentIdx);
+        }
+
+        @Test
+        @DisplayName("성공: deleteUser 실행 시 ApprovalDocumentLine.targetUser NULLIFY UPDATE 쿼리가 실행된다")
+        void deleteUser_executesNullifyApprovalDocumentLineTargetUserJpql() {
+            // given
+            Long userId = 1L;
+            given(userRepository.findById(userId)).willReturn(Optional.of(testUser));
+
+            // when
+            authService.deleteUser(userId);
+
+            // then
+            ArgumentCaptor<String> jpqlCaptor = ArgumentCaptor.forClass(String.class);
+            verify(entityManager, org.mockito.Mockito.atLeastOnce())
+                    .createQuery(jpqlCaptor.capture());
+
+            List<String> executedJpqls = jpqlCaptor.getAllValues();
+            boolean found =
+                    executedJpqls.stream()
+                            .anyMatch(
+                                    jpql ->
+                                            jpql.contains("ApprovalDocumentLine")
+                                                    && jpql.contains("dl.targetUser")
+                                                    && jpql.contains("dl.targetUser.id")
+                                                    && jpql.contains(":userId"));
+            assertThat(found)
+                    .as(
+                            "deleteUser() 실행 시 ApprovalDocumentLine.targetUser NULLIFY UPDATE JPQL이"
+                                    + " 포함되어야 한다")
+                    .isTrue();
+        }
+
+        @Test
+        @DisplayName(
+                "성공: deleteUser 실행 시 ApprovalDocumentLine.processedByUser NULLIFY UPDATE 쿼리가 실행된다")
+        void deleteUser_executesNullifyApprovalDocumentLineProcessedByUserJpql() {
+            // given
+            Long userId = 1L;
+            given(userRepository.findById(userId)).willReturn(Optional.of(testUser));
+
+            // when
+            authService.deleteUser(userId);
+
+            // then
+            ArgumentCaptor<String> jpqlCaptor = ArgumentCaptor.forClass(String.class);
+            verify(entityManager, org.mockito.Mockito.atLeastOnce())
+                    .createQuery(jpqlCaptor.capture());
+
+            List<String> executedJpqls = jpqlCaptor.getAllValues();
+            boolean found =
+                    executedJpqls.stream()
+                            .anyMatch(
+                                    jpql ->
+                                            jpql.contains("ApprovalDocumentLine")
+                                                    && jpql.contains("dl.processedByUser")
+                                                    && jpql.contains("dl.processedByUser.id")
+                                                    && jpql.contains(":userId"));
+            assertThat(found)
+                    .as(
+                            "deleteUser() 실행 시 ApprovalDocumentLine.processedByUser NULLIFY UPDATE"
+                                + " JPQL이 포함되어야 한다")
+                    .isTrue();
+        }
+
+        @Test
+        @DisplayName("성공: deleteUser 실행 시 ApprovalDocumentRead.targetUser NULLIFY UPDATE 쿼리가 실행된다")
+        void deleteUser_executesNullifyApprovalDocumentReadTargetUserJpql() {
+            // given
+            Long userId = 1L;
+            given(userRepository.findById(userId)).willReturn(Optional.of(testUser));
+
+            // when
+            authService.deleteUser(userId);
+
+            // then
+            ArgumentCaptor<String> jpqlCaptor = ArgumentCaptor.forClass(String.class);
+            verify(entityManager, org.mockito.Mockito.atLeastOnce())
+                    .createQuery(jpqlCaptor.capture());
+
+            List<String> executedJpqls = jpqlCaptor.getAllValues();
+            boolean found =
+                    executedJpqls.stream()
+                            .anyMatch(
+                                    jpql ->
+                                            jpql.contains("ApprovalDocumentRead")
+                                                    && jpql.contains("dr.targetUser")
+                                                    && jpql.contains("dr.targetUser.id")
+                                                    && jpql.contains(":userId"));
+            assertThat(found)
+                    .as(
+                            "deleteUser() 실행 시 ApprovalDocumentRead.targetUser NULLIFY UPDATE JPQL이"
+                                    + " 포함되어야 한다")
+                    .isTrue();
+        }
+
+        @Test
+        @DisplayName("성공: deleteUser 실행 시 ApprovalActionHistory.actorUser NULLIFY UPDATE 쿼리가 실행된다")
+        void deleteUser_executesNullifyApprovalActionHistoryActorUserJpql() {
+            // given
+            Long userId = 1L;
+            given(userRepository.findById(userId)).willReturn(Optional.of(testUser));
+
+            // when
+            authService.deleteUser(userId);
+
+            // then
+            ArgumentCaptor<String> jpqlCaptor = ArgumentCaptor.forClass(String.class);
+            verify(entityManager, org.mockito.Mockito.atLeastOnce())
+                    .createQuery(jpqlCaptor.capture());
+
+            List<String> executedJpqls = jpqlCaptor.getAllValues();
+            boolean found =
+                    executedJpqls.stream()
+                            .anyMatch(
+                                    jpql ->
+                                            jpql.contains("ApprovalActionHistory")
+                                                    && jpql.contains("ah.actorUser")
+                                                    && jpql.contains("ah.actorUser.id")
+                                                    && jpql.contains(":userId"));
+            assertThat(found)
+                    .as(
+                            "deleteUser() 실행 시 ApprovalActionHistory.actorUser NULLIFY UPDATE JPQL이"
+                                    + " 포함되어야 한다")
+                    .isTrue();
+        }
+
+        @Test
+        @DisplayName(
+                "성공: deleteUser 실행 시 ApprovalAttachment.uploadedByUser NULLIFY UPDATE 쿼리가 실행된다")
+        void deleteUser_executesNullifyApprovalAttachmentUploadedByUserJpql() {
+            // given
+            Long userId = 1L;
+            given(userRepository.findById(userId)).willReturn(Optional.of(testUser));
+
+            // when
+            authService.deleteUser(userId);
+
+            // then
+            ArgumentCaptor<String> jpqlCaptor = ArgumentCaptor.forClass(String.class);
+            verify(entityManager, org.mockito.Mockito.atLeastOnce())
+                    .createQuery(jpqlCaptor.capture());
+
+            List<String> executedJpqls = jpqlCaptor.getAllValues();
+            boolean found =
+                    executedJpqls.stream()
+                            .anyMatch(
+                                    jpql ->
+                                            jpql.contains("ApprovalAttachment")
+                                                    && jpql.contains("aa.uploadedByUser")
+                                                    && jpql.contains("aa.uploadedByUser.id")
+                                                    && jpql.contains(":userId"));
+            assertThat(found)
+                    .as(
+                            "deleteUser() 실행 시 ApprovalAttachment.uploadedByUser NULLIFY UPDATE"
+                                + " JPQL이 포함되어야 한다")
+                    .isTrue();
+        }
+
+        @Test
+        @DisplayName(
+                "성공: deleteUser 실행 시 5개의 NULLIFY UPDATE 쿼리가 모두 ApprovalDocument 삭제 이후에 실행된다 - 호출 순서"
+                    + " 검증")
+        void deleteUser_nullifyQueriesExecutedAfterApprovalDocumentDelete_orderCheck() {
+            // given
+            Long userId = 1L;
+            given(userRepository.findById(userId)).willReturn(Optional.of(testUser));
+
+            // when
+            authService.deleteUser(userId);
+
+            // then
+            ArgumentCaptor<String> jpqlCaptor = ArgumentCaptor.forClass(String.class);
+            verify(entityManager, org.mockito.Mockito.atLeastOnce())
+                    .createQuery(jpqlCaptor.capture());
+
+            List<String> executedJpqls = jpqlCaptor.getAllValues();
+
+            int approvalDocumentDeleteIdx = -1;
+            int nullifyDocumentLineTargetUserIdx = -1;
+            int nullifyDocumentLineProcessedByUserIdx = -1;
+            int nullifyDocumentReadTargetUserIdx = -1;
+            int nullifyActionHistoryActorUserIdx = -1;
+            int nullifyAttachmentUploadedByUserIdx = -1;
+
+            for (int i = 0; i < executedJpqls.size(); i++) {
+                String jpql = executedJpqls.get(i);
+                if (jpql.contains("ApprovalDocument")
+                        && !jpql.contains("ApprovalDocumentLine")
+                        && !jpql.contains("ApprovalDocumentRead")
+                        && jpql.contains("ad.drafterUser.id")
+                        && approvalDocumentDeleteIdx == -1) {
+                    approvalDocumentDeleteIdx = i;
+                }
+                if (jpql.contains("ApprovalDocumentLine")
+                        && jpql.contains("dl.targetUser")
+                        && nullifyDocumentLineTargetUserIdx == -1) {
+                    nullifyDocumentLineTargetUserIdx = i;
+                }
+                if (jpql.contains("ApprovalDocumentLine")
+                        && jpql.contains("dl.processedByUser")
+                        && nullifyDocumentLineProcessedByUserIdx == -1) {
+                    nullifyDocumentLineProcessedByUserIdx = i;
+                }
+                if (jpql.contains("ApprovalDocumentRead")
+                        && jpql.contains("dr.targetUser")
+                        && nullifyDocumentReadTargetUserIdx == -1) {
+                    nullifyDocumentReadTargetUserIdx = i;
+                }
+                if (jpql.contains("ApprovalActionHistory")
+                        && jpql.contains("ah.actorUser")
+                        && nullifyActionHistoryActorUserIdx == -1) {
+                    nullifyActionHistoryActorUserIdx = i;
+                }
+                if (jpql.contains("ApprovalAttachment")
+                        && jpql.contains("aa.uploadedByUser")
+                        && nullifyAttachmentUploadedByUserIdx == -1) {
+                    nullifyAttachmentUploadedByUserIdx = i;
+                }
+            }
+
+            assertThat(approvalDocumentDeleteIdx)
+                    .as("ApprovalDocument 삭제 JPQL이 실행되어야 한다")
+                    .isGreaterThanOrEqualTo(0);
+            assertThat(nullifyDocumentLineTargetUserIdx)
+                    .as("ApprovalDocumentLine.targetUser NULLIFY JPQL이 실행되어야 한다")
+                    .isGreaterThan(approvalDocumentDeleteIdx);
+            assertThat(nullifyDocumentLineProcessedByUserIdx)
+                    .as("ApprovalDocumentLine.processedByUser NULLIFY JPQL이 실행되어야 한다")
+                    .isGreaterThan(approvalDocumentDeleteIdx);
+            assertThat(nullifyDocumentReadTargetUserIdx)
+                    .as("ApprovalDocumentRead.targetUser NULLIFY JPQL이 실행되어야 한다")
+                    .isGreaterThan(approvalDocumentDeleteIdx);
+            assertThat(nullifyActionHistoryActorUserIdx)
+                    .as("ApprovalActionHistory.actorUser NULLIFY JPQL이 실행되어야 한다")
+                    .isGreaterThan(approvalDocumentDeleteIdx);
+            assertThat(nullifyAttachmentUploadedByUserIdx)
+                    .as("ApprovalAttachment.uploadedByUser NULLIFY JPQL이 실행되어야 한다")
+                    .isGreaterThan(approvalDocumentDeleteIdx);
+        }
+
+        @Test
+        @DisplayName("성공: deleteUser 실행 시 ApprovalTemplate.createdBy NULLIFY UPDATE 쿼리가 실행된다")
+        void deleteUser_executesNullifyApprovalTemplateCreatedByJpql() {
+            // given
+            Long userId = 1L;
+            given(userRepository.findById(userId)).willReturn(Optional.of(testUser));
+
+            // when
+            authService.deleteUser(userId);
+
+            // then
+            ArgumentCaptor<String> jpqlCaptor = ArgumentCaptor.forClass(String.class);
+            verify(entityManager, org.mockito.Mockito.atLeastOnce())
+                    .createQuery(jpqlCaptor.capture());
+
+            List<String> executedJpqls = jpqlCaptor.getAllValues();
+            boolean found =
+                    executedJpqls.stream()
+                            .anyMatch(
+                                    jpql ->
+                                            jpql.contains("ApprovalTemplate")
+                                                    && !jpql.contains("ApprovalTemplateLine")
+                                                    && jpql.contains("at.createdBy")
+                                                    && jpql.contains("at.createdBy.id")
+                                                    && jpql.contains(":userId"));
+            assertThat(found)
+                    .as(
+                            "deleteUser() 실행 시 ApprovalTemplate.createdBy NULLIFY UPDATE JPQL이"
+                                    + " 포함되어야 한다")
+                    .isTrue();
+        }
+
+        @Test
+        @DisplayName("성공: deleteUser 실행 시 ApprovalTemplateLine.targetUser NULLIFY UPDATE 쿼리가 실행된다")
+        void deleteUser_executesNullifyApprovalTemplateLineTargetUserJpql() {
+            // given
+            Long userId = 1L;
+            given(userRepository.findById(userId)).willReturn(Optional.of(testUser));
+
+            // when
+            authService.deleteUser(userId);
+
+            // then
+            ArgumentCaptor<String> jpqlCaptor = ArgumentCaptor.forClass(String.class);
+            verify(entityManager, org.mockito.Mockito.atLeastOnce())
+                    .createQuery(jpqlCaptor.capture());
+
+            List<String> executedJpqls = jpqlCaptor.getAllValues();
+            boolean found =
+                    executedJpqls.stream()
+                            .anyMatch(
+                                    jpql ->
+                                            jpql.contains("ApprovalTemplateLine")
+                                                    && jpql.contains("atl.targetUser")
+                                                    && jpql.contains("atl.targetUser.id")
+                                                    && jpql.contains(":userId"));
+            assertThat(found)
+                    .as(
+                            "deleteUser() 실행 시 ApprovalTemplateLine.targetUser NULLIFY UPDATE JPQL이"
+                                    + " 포함되어야 한다")
+                    .isTrue();
+        }
+
+        @Test
+        @DisplayName(
+                "성공: deleteUser 실행 시 ApprovalTemplate/ApprovalTemplateLine NULLIFY 쿼리 2개가"
+                        + " SafetyTrainingSessionAttendee 삭제 이후에 실행된다 - 호출 순서 검증")
+        void deleteUser_nullifyApprovalTemplateQueriesAfterAttendeeDelete_orderCheck() {
+            // given
+            Long userId = 1L;
+            given(userRepository.findById(userId)).willReturn(Optional.of(testUser));
+
+            // when
+            authService.deleteUser(userId);
+
+            // then
+            ArgumentCaptor<String> jpqlCaptor = ArgumentCaptor.forClass(String.class);
+            verify(entityManager, org.mockito.Mockito.atLeastOnce())
+                    .createQuery(jpqlCaptor.capture());
+
+            List<String> executedJpqls = jpqlCaptor.getAllValues();
+
+            int attendeeDeleteIdx = -1;
+            int nullifyTemplateCreatedByIdx = -1;
+            int nullifyTemplateLineTargetUserIdx = -1;
+            for (int i = 0; i < executedJpqls.size(); i++) {
+                String jpql = executedJpqls.get(i);
+                if (jpql.contains("SafetyTrainingSessionAttendee") && attendeeDeleteIdx == -1) {
+                    attendeeDeleteIdx = i;
+                }
+                if (jpql.contains("ApprovalTemplate")
+                        && !jpql.contains("ApprovalTemplateLine")
+                        && jpql.contains("at.createdBy")
+                        && nullifyTemplateCreatedByIdx == -1) {
+                    nullifyTemplateCreatedByIdx = i;
+                }
+                if (jpql.contains("ApprovalTemplateLine")
+                        && jpql.contains("atl.targetUser")
+                        && nullifyTemplateLineTargetUserIdx == -1) {
+                    nullifyTemplateLineTargetUserIdx = i;
+                }
+            }
+
+            assertThat(attendeeDeleteIdx)
+                    .as("SafetyTrainingSessionAttendee 삭제 JPQL이 실행되어야 한다")
+                    .isGreaterThanOrEqualTo(0);
+            assertThat(nullifyTemplateCreatedByIdx)
+                    .as("ApprovalTemplate.createdBy NULLIFY JPQL이 실행되어야 한다")
+                    .isGreaterThan(attendeeDeleteIdx);
+            assertThat(nullifyTemplateLineTargetUserIdx)
+                    .as("ApprovalTemplateLine.targetUser NULLIFY JPQL이 실행되어야 한다")
+                    .isGreaterThan(attendeeDeleteIdx);
+        }
+
+        @Test
+        @DisplayName(
+                "성공: deleteUser 실행 시 ApprovalPersonalViewerTarget 삭제가 Notice 삭제 이후에 실행된다 - 호출 순서"
+                    + " 검증")
+        void deleteUser_deletesApprovalPersonalViewerTargetAfterNotice_orderCheck() {
+            // given
+            Long userId = 1L;
+            given(userRepository.findById(userId)).willReturn(Optional.of(testUser));
+
+            // when
+            authService.deleteUser(userId);
+
+            // then
+            ArgumentCaptor<String> jpqlCaptor = ArgumentCaptor.forClass(String.class);
+            verify(entityManager, org.mockito.Mockito.atLeastOnce())
+                    .createQuery(jpqlCaptor.capture());
+
+            List<String> executedJpqls = jpqlCaptor.getAllValues();
+
+            int lastNoticeIdx = -1;
+            int viewerTargetIdx = -1;
+            for (int i = 0; i < executedJpqls.size(); i++) {
+                String jpql = executedJpqls.get(i);
+                if (jpql.contains("Notice")) {
+                    lastNoticeIdx = i;
+                }
+                if (jpql.contains("ApprovalPersonalViewerTarget") && viewerTargetIdx == -1) {
+                    viewerTargetIdx = i;
+                }
+            }
+
+            assertThat(lastNoticeIdx).as("Notice 관련 삭제 JPQL이 실행되어야 한다").isGreaterThanOrEqualTo(0);
+            assertThat(viewerTargetIdx)
+                    .as("ApprovalPersonalViewerTarget 삭제 JPQL이 실행되어야 한다")
+                    .isGreaterThanOrEqualTo(0);
+            assertThat(viewerTargetIdx)
+                    .as("ApprovalPersonalViewerTarget 삭제는 Notice 관련 삭제 이후에 실행되어야 한다")
+                    .isGreaterThan(lastNoticeIdx);
+        }
+
+        @Test
+        @DisplayName("성공: deleteUser 실행 시 EduReport.createdBy NULLIFY JPQL 쿼리가 실행된다")
+        void deleteUser_executesNullifyEduReportCreatedByJpql() {
+            // given
+            Long userId = 1L;
+            given(userRepository.findById(userId)).willReturn(Optional.of(testUser));
+
+            // when
+            authService.deleteUser(userId);
+
+            // then
+            ArgumentCaptor<String> jpqlCaptor = ArgumentCaptor.forClass(String.class);
+            verify(entityManager, org.mockito.Mockito.atLeastOnce())
+                    .createQuery(jpqlCaptor.capture());
+
+            List<String> executedJpqls = jpqlCaptor.getAllValues();
+            boolean eduReportNullifyFound =
+                    executedJpqls.stream()
+                            .anyMatch(
+                                    jpql ->
+                                            jpql.contains("EduReport")
+                                                    && jpql.contains("er.createdBy")
+                                                    && jpql.contains(":userId"));
+            assertThat(eduReportNullifyFound)
+                    .as("deleteUser() 실행 시 EduReport.createdBy NULLIFY JPQL이 포함되어야 한다")
+                    .isTrue();
+        }
+
+        @Test
+        @DisplayName(
+                "성공: deleteUser 실행 시 EduReport.createdBy NULLIFY가 EduAttendance 삭제 이후에 실행된다 - 호출 순서"
+                    + " 검증")
+        void deleteUser_nullifiesEduReportCreatedByAfterEduAttendanceDelete_orderCheck() {
+            // given
+            Long userId = 1L;
+            given(userRepository.findById(userId)).willReturn(Optional.of(testUser));
+
+            // when
+            authService.deleteUser(userId);
+
+            // then
+            ArgumentCaptor<String> jpqlCaptor = ArgumentCaptor.forClass(String.class);
+            verify(entityManager, org.mockito.Mockito.atLeastOnce())
+                    .createQuery(jpqlCaptor.capture());
+
+            List<String> executedJpqls = jpqlCaptor.getAllValues();
+
+            int eduAttendanceIdx = -1;
+            int eduReportNullifyIdx = -1;
+            for (int i = 0; i < executedJpqls.size(); i++) {
+                String jpql = executedJpqls.get(i);
+                if (jpql.contains("EduAttendance") && eduAttendanceIdx == -1) {
+                    eduAttendanceIdx = i;
+                }
+                if (jpql.contains("EduReport")
+                        && jpql.contains("er.createdBy")
+                        && eduReportNullifyIdx == -1) {
+                    eduReportNullifyIdx = i;
+                }
+            }
+
+            assertThat(eduAttendanceIdx)
+                    .as("EduAttendance 삭제 JPQL이 실행되어야 한다")
+                    .isGreaterThanOrEqualTo(0);
+            assertThat(eduReportNullifyIdx)
+                    .as("EduReport.createdBy NULLIFY JPQL이 실행되어야 한다")
+                    .isGreaterThanOrEqualTo(0);
+            assertThat(eduReportNullifyIdx)
+                    .as("EduReport.createdBy NULLIFY는 EduAttendance 삭제 이후에 실행되어야 한다")
+                    .isGreaterThan(eduAttendanceIdx);
+        }
+
+        @Test
+        @DisplayName("성공: deleteUser 실행 시 RequestHistory.processedBy NULLIFY UPDATE 쿼리가 실행된다")
+        void deleteUser_executesNullifyRequestHistoryProcessedByJpql() {
+            // given
+            Long userId = 1L;
+            given(userRepository.findById(userId)).willReturn(Optional.of(testUser));
+
+            // when
+            authService.deleteUser(userId);
+
+            // then
+            ArgumentCaptor<String> jpqlCaptor = ArgumentCaptor.forClass(String.class);
+            verify(entityManager, org.mockito.Mockito.atLeastOnce())
+                    .createQuery(jpqlCaptor.capture());
+
+            List<String> executedJpqls = jpqlCaptor.getAllValues();
+            boolean found =
+                    executedJpqls.stream()
+                            .anyMatch(
+                                    jpql ->
+                                            jpql.contains("RequestHistory")
+                                                    && jpql.contains("rh.processedBy")
+                                                    && jpql.contains("rh.processedBy.id")
+                                                    && jpql.contains(":userId"));
+            assertThat(found)
+                    .as(
+                            "deleteUser() 실행 시 RequestHistory.processedBy NULLIFY UPDATE JPQL이"
+                                    + " 포함되어야 한다")
+                    .isTrue();
+        }
+
+        @Test
+        @DisplayName(
+                "성공: deleteUser 실행 시 RequestHistory.processedBy NULLIFY가"
+                        + " RequestHistory 삭제(rh.user.id) 직전에 실행된다 - 호출 순서 검증")
+        void deleteUser_nullifyRequestHistoryProcessedByBeforeRequestHistoryDelete_orderCheck() {
+            // given
+            Long userId = 1L;
+            given(userRepository.findById(userId)).willReturn(Optional.of(testUser));
+
+            // when
+            authService.deleteUser(userId);
+
+            // then
+            ArgumentCaptor<String> jpqlCaptor = ArgumentCaptor.forClass(String.class);
+            verify(entityManager, org.mockito.Mockito.atLeastOnce())
+                    .createQuery(jpqlCaptor.capture());
+
+            List<String> executedJpqls = jpqlCaptor.getAllValues();
+
+            int nullifyProcessedByIdx = -1;
+            int deleteRequestHistoryIdx = -1;
+            for (int i = 0; i < executedJpqls.size(); i++) {
+                String jpql = executedJpqls.get(i);
+                if (jpql.contains("RequestHistory")
+                        && jpql.contains("rh.processedBy")
+                        && nullifyProcessedByIdx == -1) {
+                    nullifyProcessedByIdx = i;
+                }
+                if (jpql.contains("RequestHistory")
+                        && jpql.contains("rh.user.id")
+                        && deleteRequestHistoryIdx == -1) {
+                    deleteRequestHistoryIdx = i;
+                }
+            }
+
+            assertThat(nullifyProcessedByIdx)
+                    .as("RequestHistory.processedBy NULLIFY JPQL이 실행되어야 한다")
+                    .isGreaterThanOrEqualTo(0);
+            assertThat(deleteRequestHistoryIdx)
+                    .as("RequestHistory 삭제(rh.user.id) JPQL이 실행되어야 한다")
+                    .isGreaterThanOrEqualTo(0);
+            assertThat(nullifyProcessedByIdx)
+                    .as(
+                            "RequestHistory.processedBy NULLIFY는 RequestHistory 삭제(rh.user.id) 직전에"
+                                    + " 실행되어야 한다")
+                    .isEqualTo(deleteRequestHistoryIdx - 1);
+        }
     }
 }

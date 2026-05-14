@@ -1994,6 +1994,27 @@ public class EduReportServiceTest {
     }
 
     @Test
+    @DisplayName("서명 현황 조회 실패 - 부서 교육이 아닌 게시물")
+    void getSignatureStatuses_Fail_NotDepartmentReport() {
+        // Given
+        User user = createNormalUser();
+        user.addAuthority(Authority.MANAGE_DEPARTMENT_EDUCATION);
+
+        EduReport report = EduReport.builder().id(100L).eduType(EduType.PSM).build();
+
+        when(userRepository.findById(1L)).thenReturn(Optional.of(user));
+        when(eduReportRepository.findById(100L)).thenReturn(Optional.of(report));
+
+        // When & Then
+        assertThatThrownBy(() -> eduReportService.getSignatureStatuses(100L, null, 1L))
+                .isInstanceOf(CustomException.class)
+                .extracting("errorCode")
+                .isEqualTo(ErrorCode.EDU_REPORT_NOT_FOUND);
+
+        verify(eduReportQueryRepository, never()).findSignatureStatuses(any(), any());
+    }
+
+    @Test
     @DisplayName("서명 현황 조회 실패 - 부서 교육 권한 없음")
     void getSignatureStatuses_Fail_NoAuthority() {
         // Given

@@ -1094,6 +1094,11 @@ public class EduReportService {
                         .findById(educationId)
                         .orElseThrow(() -> new CustomException(ErrorCode.EDU_REPORT_NOT_FOUND));
 
+        // 부서 교육 서명 현황 조회 API는 부서 교육 게시물에 대해서만 허용한다.
+        if (report.getEduType() != EduType.DEPARTMENT) {
+            throw new CustomException(ErrorCode.EDU_REPORT_NOT_FOUND);
+        }
+
         validateCreateAuthority(user, report.getEduType());
 
         return eduReportQueryRepository.findSignatureStatuses(report, name).stream()

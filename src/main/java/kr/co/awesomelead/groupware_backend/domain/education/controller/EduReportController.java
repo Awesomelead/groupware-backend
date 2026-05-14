@@ -1343,16 +1343,13 @@ public class EduReportController {
     }
 
     @Operation(
-            tags = {"부서교육", "PSM", "안전보건"},
-            summary = "서명 현황 목록 조회",
+            tags = {"부서교육"},
+            summary = "부서 교육 서명 현황 목록 조회",
             description =
                     """
-                교육 보고서의 대상 직원별 서명 현황을 조회합니다.
+                부서 교육 게시물의 대상 직원별 서명 현황을 조회합니다.
 
-                - 교육 유형에 따라 권한 검증이 이루어집니다.
-                  - 부서교육: `MANAGE_DEPARTMENT_EDUCATION`
-                  - PSM: `MANAGE_PSM`
-                  - 안전보건: `MANAGE_SAFETY`
+                - `MANAGE_DEPARTMENT_EDUCATION` 권한이 필요합니다.
                 - `name` 파라미터로 한글명(nameKor) 또는 영문명(nameEng)에 대한 부분 일치 검색이 가능합니다.
                 """)
     @ApiResponses({

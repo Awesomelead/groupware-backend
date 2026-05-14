@@ -416,13 +416,26 @@ public class AuthService {
         deleteByQuery(
                 "delete from RefreshToken rt where rt.email = :email", "email", user.getEmail());
         deleteByQuery(
+                "delete from FcmToken ft where ft.user.id = :userId", "userId", userId);
+        deleteByQuery(
+                "delete from TopicMember tm where tm.user.id = :userId", "userId", userId);
+        deleteByQuery(
                 "delete from MyInfoUpdateRequest r where r.reviewedBy.id = :userId",
                 "userId",
                 userId);
         deleteByQuery(
                 "delete from MyInfoUpdateRequest r where r.user.id = :userId", "userId", userId);
+        deleteByQuery(
+                "update RequestHistory rh set rh.processedBy = null where rh.processedBy.id ="
+                        + " :userId",
+                "userId",
+                userId);
         deleteByQuery("delete from RequestHistory rh where rh.user.id = :userId", "userId", userId);
         deleteByQuery("delete from EduAttendance ea where ea.user.id = :userId", "userId", userId);
+        deleteByQuery(
+                "update EduReport er set er.createdBy = null where er.createdBy.id = :userId",
+                "userId",
+                userId);
         deleteByQuery("delete from CheckSheet cs where cs.user.id = :userId", "userId", userId);
         deleteByQuery("delete from Payslip p where p.user.id = :userId", "userId", userId);
         deleteByQuery(
@@ -447,6 +460,72 @@ public class AuthService {
                 "userId",
                 userId);
         deleteByQuery("delete from Notice n where n.author.id = :userId", "userId", userId);
+        deleteByQuery(
+                "delete from ApprovalPersonalViewerTarget vt where vt.setting.user.id = :userId",
+                "userId",
+                userId);
+        deleteByQuery(
+                "delete from ApprovalPersonalSetting aps where aps.user.id = :userId",
+                "userId",
+                userId);
+        deleteByQuery(
+                "delete from SavedApprovalLineDetail d where d.savedLine.ownerUser.id = :userId",
+                "userId",
+                userId);
+        deleteByQuery(
+                "delete from SavedApprovalLine sal where sal.ownerUser.id = :userId",
+                "userId",
+                userId);
+        deleteByQuery(
+                "update SavedApprovalLine sal set sal.createdByUser = null where"
+                        + " sal.createdByUser.id = :userId",
+                "userId",
+                userId);
+        deleteByQuery(
+                "delete from ApprovalActionHistory ah where ah.document.drafterUser.id = :userId",
+                "userId",
+                userId);
+        deleteByQuery(
+                "delete from ApprovalDocumentLine dl where dl.document.drafterUser.id = :userId",
+                "userId",
+                userId);
+        deleteByQuery(
+                "delete from ApprovalDocumentRead dr where dr.document.drafterUser.id = :userId",
+                "userId",
+                userId);
+        deleteByQuery(
+                "delete from ApprovalAttachment aa where aa.document.drafterUser.id = :userId",
+                "userId",
+                userId);
+        deleteByQuery(
+                "delete from ApprovalDocument ad where ad.drafterUser.id = :userId",
+                "userId",
+                userId);
+        deleteByQuery(
+                "update ApprovalDocumentLine dl set dl.targetUser = null where dl.targetUser.id ="
+                        + " :userId",
+                "userId",
+                userId);
+        deleteByQuery(
+                "update ApprovalDocumentLine dl set dl.processedByUser = null where"
+                        + " dl.processedByUser.id = :userId",
+                "userId",
+                userId);
+        deleteByQuery(
+                "update ApprovalDocumentRead dr set dr.targetUser = null where dr.targetUser.id ="
+                        + " :userId",
+                "userId",
+                userId);
+        deleteByQuery(
+                "update ApprovalActionHistory ah set ah.actorUser = null where ah.actorUser.id ="
+                        + " :userId",
+                "userId",
+                userId);
+        deleteByQuery(
+                "update ApprovalAttachment aa set aa.uploadedByUser = null where"
+                        + " aa.uploadedByUser.id = :userId",
+                "userId",
+                userId);
 
         // 2) 권한 테이블 정리 후 사용자 삭제
         user.getAuthorities().clear();
@@ -456,6 +535,14 @@ public class AuthService {
                 userId);
         safetyTrainingSessionRepository.updateCreatedByToNull(userId);
         safetyTrainingSessionRepository.updateInstructorUserToNull(userId);
+        deleteByQuery(
+                "update ApprovalTemplate at set at.createdBy = null where at.createdBy.id = :userId",
+                "userId",
+                userId);
+        deleteByQuery(
+                "update ApprovalTemplateLine atl set atl.targetUser = null where atl.targetUser.id = :userId",
+                "userId",
+                userId);
         userRepository.delete(user);
 
         log.info("계정 삭제 완료 - userId: {}, email: {}", userId, user.getEmail());

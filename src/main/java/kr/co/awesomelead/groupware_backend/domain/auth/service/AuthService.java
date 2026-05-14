@@ -450,6 +450,10 @@ public class AuthService {
 
         // 2) 권한 테이블 정리 후 사용자 삭제
         user.getAuthorities().clear();
+        deleteByQuery(
+                "delete from SafetyTrainingSessionAttendee a where a.user.id = :userId",
+                "userId",
+                userId);
         safetyTrainingSessionRepository.updateCreatedByToNull(userId);
         safetyTrainingSessionRepository.updateInstructorUserToNull(userId);
         userRepository.delete(user);

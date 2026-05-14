@@ -160,9 +160,7 @@ public class RequestHistoryController {
         return ResponseEntity.ok(ApiResponse.onSuccess("신청이 취소되었습니다."));
     }
 
-    @Operation(
-            summary = "내 제증명 발급 신청 삭제",
-            description = "PENDING 상태인 본인의 신청만 삭제할 수 있습니다.")
+    @Operation(summary = "내 제증명 발급 신청 삭제", description = "PENDING 상태인 본인의 신청만 삭제할 수 있습니다.")
     @ApiResponses(
             value = {
                 @io.swagger.v3.oas.annotations.responses.ApiResponse(

@@ -204,7 +204,8 @@ public class RequestHistoryService {
                 requestId,
                 requestHistory.getRequestType().getDescription());
 
-        notificationService.resolveRequiresApproval(NotificationDomainType.REQUEST_HISTORY, requestId);
+        notificationService.resolveRequiresApproval(
+                NotificationDomainType.REQUEST_HISTORY, requestId);
     }
 
     @Transactional
@@ -242,7 +243,8 @@ public class RequestHistoryService {
                 requestHistory.getRequestType().getDescription(),
                 reason.trim());
 
-        notificationService.resolveRequiresApproval(NotificationDomainType.REQUEST_HISTORY, requestId);
+        notificationService.resolveRequiresApproval(
+                NotificationDomainType.REQUEST_HISTORY, requestId);
     }
 
     private void validateAdminAuthority(User admin) {

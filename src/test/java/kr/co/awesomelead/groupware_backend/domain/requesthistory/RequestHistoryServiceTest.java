@@ -8,7 +8,6 @@ import static org.mockito.Mockito.verify;
 
 import kr.co.awesomelead.groupware_backend.domain.notification.dto.response.NotificationResponseDto;
 import kr.co.awesomelead.groupware_backend.domain.notification.entity.Notification;
-
 import kr.co.awesomelead.groupware_backend.domain.notification.enums.NotificationDomainType;
 import kr.co.awesomelead.groupware_backend.domain.notification.enums.NotificationMessage;
 import kr.co.awesomelead.groupware_backend.domain.notification.repository.NotificationRepository;
@@ -478,8 +477,7 @@ class RequestHistoryServiceTest {
             ReflectionTestUtils.setField(user, "id", 1L);
 
             given(userRepository.findById(1L)).willReturn(Optional.of(user));
-            given(requestHistoryRepository.findByIdAndUserId(10L, 1L))
-                    .willReturn(Optional.empty());
+            given(requestHistoryRepository.findByIdAndUserId(10L, 1L)).willReturn(Optional.empty());
 
             // when & then
             assertThatThrownBy(() -> requestHistoryService.deleteMyRequest(1L, 10L))
@@ -490,7 +488,8 @@ class RequestHistoryServiceTest {
     }
 
     @Nested
-    @DisplayName("NotificationResponseDto.isApprovalOrRejectionCompleted — REQUEST_HISTORY_CREATED 분기")
+    @DisplayName(
+            "NotificationResponseDto.isApprovalOrRejectionCompleted — REQUEST_HISTORY_CREATED 분기")
     class Describe_isApprovalOrRejectionCompleted_requestHistoryCreated {
 
         @Test

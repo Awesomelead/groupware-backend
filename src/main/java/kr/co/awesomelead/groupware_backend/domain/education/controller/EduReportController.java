@@ -526,6 +526,8 @@ public class EduReportController {
 
                 - `MANAGE_PSM` 권한 사용자는 모든 회사의 PSM 게시물을 조회할 수 있습니다.
                 - `MANAGE_PSM` 권한이 없는 사용자는 본인 소속 회사의 PSM 게시물만 조회됩니다.
+                - 응답의 `companyScope`는 대상 회사 목록 배열로 반환됩니다.
+                - 공통 게시물은 `companyScope: ["AWESOME", "MARUI"]`로 응답됩니다.
                 """)
     @ApiResponses({
         @io.swagger.v3.oas.annotations.responses.ApiResponse(
@@ -555,7 +557,8 @@ public class EduReportController {
                                   "signatureRequired": false,
                                   "status": "OPEN",
                                   "categoryId": 2,
-                                  "categoryName": "변경관리"
+                                  "categoryName": "변경관리",
+                                  "companyScope": ["AWESOME", "MARUI"]
                                 }
                               ]
                             }
@@ -603,6 +606,8 @@ public class EduReportController {
 
                 - `MANAGE_SAFETY` 권한 사용자는 모든 회사의 안전 보건 게시물을 조회할 수 있습니다.
                 - `MANAGE_SAFETY` 권한이 없는 사용자는 본인 소속 회사의 안전 보건 게시물만 조회됩니다.
+                - 응답의 `companyScope`는 대상 회사 목록 배열로 반환됩니다.
+                - 공통 게시물은 `companyScope: ["AWESOME", "MARUI"]`로 응답됩니다.
                 """)
     @ApiResponses({
         @io.swagger.v3.oas.annotations.responses.ApiResponse(
@@ -632,7 +637,8 @@ public class EduReportController {
                                   "signatureRequired": true,
                                   "status": "OPEN",
                                   "categoryId": 3,
-                                  "categoryName": "정기교육"
+                                  "categoryName": "정기교육",
+                                  "companyScope": ["AWESOME"]
                                 }
                               ]
                             }

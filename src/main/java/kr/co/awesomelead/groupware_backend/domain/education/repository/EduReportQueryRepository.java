@@ -122,7 +122,9 @@ public class EduReportQueryRepository {
                                 educationCategory.name,
                                 creatorUser.nameKor.coalesce(creatorUser.nameEng),
                                 eduReport.createdAt,
-                                QDepartment.department.name))
+                                QDepartment.department.name,
+                                eduReport.company,
+                                Expressions.nullExpression(List.class)))
                 .from(eduReport)
                 .leftJoin(eduReport.department, QDepartment.department)
                 .leftJoin(eduReport.category, educationCategory)
@@ -178,7 +180,9 @@ public class EduReportQueryRepository {
                                 educationCategory.name,
                                 creatorUser.nameKor.coalesce(creatorUser.nameEng),
                                 eduReport.createdAt,
-                                QDepartment.department.name))
+                                QDepartment.department.name,
+                                eduReport.company,
+                                Expressions.nullExpression(List.class)))
                 .from(eduReport)
                 .leftJoin(eduReport.department, QDepartment.department)
                 .leftJoin(eduReport.category, educationCategory)
@@ -232,7 +236,9 @@ public class EduReportQueryRepository {
                                 educationCategory.name,
                                 creatorUser.nameKor.coalesce(creatorUser.nameEng),
                                 eduReport.createdAt,
-                                QDepartment.department.name))
+                                QDepartment.department.name,
+                                eduReport.company,
+                                Expressions.nullExpression(List.class)))
                 .from(eduReport)
                 .leftJoin(eduReport.department, QDepartment.department)
                 .leftJoin(eduReport.category, educationCategory)

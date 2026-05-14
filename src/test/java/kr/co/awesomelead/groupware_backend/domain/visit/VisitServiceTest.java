@@ -624,18 +624,21 @@ public class VisitServiceTest {
                 // given
                 Long visitId = 200L;
                 Long adminId = 2L;
-                MockMultipartFile sig = new MockMultipartFile("signature", "sig.png", "image/png", "test".getBytes());
+                MockMultipartFile sig =
+                        new MockMultipartFile(
+                                "signature", "sig.png", "image/png", "test".getBytes());
                 CheckInRequestDto checkInDto = new CheckInRequestDto(visitId, sig);
 
-                Visit visit = Visit.builder()
-                        .id(visitId)
-                        .status(VisitStatus.APPROVED)
-                        .visitCategory(VisitCategory.PRE_LONG_TERM)
-                        .startDate(LocalDate.now().minusDays(5))
-                        .endDate(LocalDate.now().plusDays(5))
-                        .records(new ArrayList<>())
-                        .visited(false)
-                        .build();
+                Visit visit =
+                        Visit.builder()
+                                .id(visitId)
+                                .status(VisitStatus.APPROVED)
+                                .visitCategory(VisitCategory.PRE_LONG_TERM)
+                                .startDate(LocalDate.now().minusDays(5))
+                                .endDate(LocalDate.now().plusDays(5))
+                                .records(new ArrayList<>())
+                                .visited(false)
+                                .build();
 
                 User admin = User.builder().id(adminId).jobType(JobType.MANAGEMENT).build();
                 admin.addAuthority(Authority.MANAGE_VISITOR);
@@ -652,7 +655,8 @@ public class VisitServiceTest {
 
                 // 2. 퇴실 처리
                 given(userRepository.findById(adminId)).willReturn(Optional.of(admin));
-                CheckOutRequestDto checkOutDto = new CheckOutRequestDto(visitId, recordId, LocalDateTime.now());
+                CheckOutRequestDto checkOutDto =
+                        new CheckOutRequestDto(visitId, recordId, LocalDateTime.now());
                 visitService.checkOut(adminId, checkOutDto);
                 assertThat(visit.getStatus()).isEqualTo(VisitStatus.APPROVED);
 
@@ -672,18 +676,21 @@ public class VisitServiceTest {
             void it_throws_already_checked_in() throws IOException {
                 // given
                 Long visitId = 201L;
-                MockMultipartFile sig = new MockMultipartFile("signature", "sig.png", "image/png", "test".getBytes());
+                MockMultipartFile sig =
+                        new MockMultipartFile(
+                                "signature", "sig.png", "image/png", "test".getBytes());
                 CheckInRequestDto dto = new CheckInRequestDto(visitId, sig);
 
-                Visit visit = Visit.builder()
-                        .id(visitId)
-                        .status(VisitStatus.IN_PROGRESS)
-                        .visitCategory(VisitCategory.PRE_LONG_TERM)
-                        .startDate(LocalDate.now().minusDays(5))
-                        .endDate(LocalDate.now().plusDays(5))
-                        .records(new ArrayList<>())
-                        .visited(true)
-                        .build();
+                Visit visit =
+                        Visit.builder()
+                                .id(visitId)
+                                .status(VisitStatus.IN_PROGRESS)
+                                .visitCategory(VisitCategory.PRE_LONG_TERM)
+                                .startDate(LocalDate.now().minusDays(5))
+                                .endDate(LocalDate.now().plusDays(5))
+                                .records(new ArrayList<>())
+                                .visited(true)
+                                .build();
 
                 given(visitRepository.findById(visitId)).willReturn(Optional.of(visit));
 
@@ -703,18 +710,21 @@ public class VisitServiceTest {
             void it_throws_not_visit_date_for_long_term() throws IOException {
                 // given
                 Long visitId = 202L;
-                MockMultipartFile sig = new MockMultipartFile("signature", "sig.png", "image/png", "test".getBytes());
+                MockMultipartFile sig =
+                        new MockMultipartFile(
+                                "signature", "sig.png", "image/png", "test".getBytes());
                 CheckInRequestDto dto = new CheckInRequestDto(visitId, sig);
 
-                Visit visit = Visit.builder()
-                        .id(visitId)
-                        .status(VisitStatus.APPROVED)
-                        .visitCategory(VisitCategory.PRE_LONG_TERM)
-                        .startDate(LocalDate.now().plusDays(10))
-                        .endDate(LocalDate.now().plusDays(20))
-                        .records(new ArrayList<>())
-                        .visited(false)
-                        .build();
+                Visit visit =
+                        Visit.builder()
+                                .id(visitId)
+                                .status(VisitStatus.APPROVED)
+                                .visitCategory(VisitCategory.PRE_LONG_TERM)
+                                .startDate(LocalDate.now().plusDays(10))
+                                .endDate(LocalDate.now().plusDays(20))
+                                .records(new ArrayList<>())
+                                .visited(false)
+                                .build();
 
                 given(visitRepository.findById(visitId)).willReturn(Optional.of(visit));
 

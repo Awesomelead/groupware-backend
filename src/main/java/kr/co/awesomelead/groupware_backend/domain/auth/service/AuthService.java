@@ -451,6 +451,7 @@ public class AuthService {
         // 2) 권한 테이블 정리 후 사용자 삭제
         user.getAuthorities().clear();
         safetyTrainingSessionRepository.updateCreatedByToNull(userId);
+        safetyTrainingSessionRepository.updateInstructorUserToNull(userId);
         userRepository.delete(user);
 
         log.info("계정 삭제 완료 - userId: {}, email: {}", userId, user.getEmail());

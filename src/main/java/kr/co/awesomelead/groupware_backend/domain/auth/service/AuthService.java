@@ -535,12 +535,12 @@ public class AuthService {
         safetyTrainingSessionRepository.updateInstructorUserToNull(userId);
         deleteByQuery(
                 "update ApprovalTemplate at set at.createdBy = null where at.createdBy.id ="
-                    + " :userId",
+                        + " :userId",
                 "userId",
                 userId);
         deleteByQuery(
                 "update ApprovalTemplateLine atl set atl.targetUser = null where atl.targetUser.id"
-                    + " = :userId",
+                        + " = :userId",
                 "userId",
                 userId);
         userRepository.delete(user);

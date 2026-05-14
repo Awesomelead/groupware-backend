@@ -27,7 +27,7 @@ public class NotificationResponseDto {
     @Schema(description = "도메인 유형", example = "VISIT")
     private final NotificationDomainType domainType;
 
-    @Schema(description = "도메인 PK", example = "42")
+    @Schema(description = "도메인 PK (내 정보 수정 승인 요청 알림은 요청 사용자 userId)", example = "42")
     private final Long domainId;
 
     @Schema(description = "읽음 여부", example = "false")
@@ -47,6 +47,9 @@ public class NotificationResponseDto {
     @Schema(description = "알림 메시지 유형", example = "VISIT_CHECK_IN")
     private final NotificationMessage messageType;
 
+    @Schema(description = "승인/반려 완료 알림 여부", example = "false")
+    private final boolean approvalOrRejectionCompleted;
+
     private NotificationResponseDto(Notification notification) {
         this.id = notification.getId();
         this.title = notification.getTitle();
@@ -58,9 +61,19 @@ public class NotificationResponseDto {
         this.metadata = notification.getMetadata();
         this.requiresApproval = notification.isRequiresApproval();
         this.messageType = notification.getMessageType();
+        this.approvalOrRejectionCompleted = isApprovalOrRejectionCompleted(notification.getMessageType());
     }
 
     public static NotificationResponseDto from(Notification notification) {
         return new NotificationResponseDto(notification);
+    }
+
+    private static boolean isApprovalOrRejectionCompleted(NotificationMessage messageType) {
+        if (messageType == null) {
+            return false;
+        }
+
+        return messageType == NotificationMessage.MY_INFO_UPDATE_APPROVED
+                || messageType == NotificationMessage.MY_INFO_UPDATE_REJECTED;
     }
 }

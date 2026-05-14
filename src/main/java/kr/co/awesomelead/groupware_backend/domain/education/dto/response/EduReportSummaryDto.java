@@ -1,6 +1,7 @@
 package kr.co.awesomelead.groupware_backend.domain.education.dto.response;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+
 import io.swagger.v3.oas.annotations.media.Schema;
 
 import kr.co.awesomelead.groupware_backend.domain.department.enums.Company;

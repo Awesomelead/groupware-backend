@@ -112,10 +112,10 @@ public class AuthService {
         phoneAuthService.clearVerification(joinDto.getPhoneNumber());
 
         // 10. Admin 유저에게 신규 가입 알림 전송 (FCM + Notification DB)
-        notificationService.sendAlertToAdmins(
+        notificationService.sendAlertToAdminsRequiringApproval(
                 NotificationMessage.SIGNUP_ADMIN_ALERT,
                 NotificationDomainType.AUTH,
-                null,
+                savedUser.getId(),
                 Map.of("targetId", savedUser.getId()),
                 savedUser.getDisplayName());
 

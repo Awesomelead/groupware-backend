@@ -275,17 +275,6 @@ public class AdminController {
                                                           "message": "전화번호 인증이 필요합니다.",
                                                           "result": null
                                                         }
-                                                        """),
-                                            @ExampleObject(
-                                                    name = "잘못된 직무/역할 조합",
-                                                    value =
-                                                            """
-                                                        {
-                                                          "isSuccess": false,
-                                                          "code": "INVALID_JOB_TYPE_FOR_ADMIN_ROLE",
-                                                          "message": "현장직은 관리자 권한을 가질 수 없습니다.",
-                                                          "result": null
-                                                        }
                                                         """)
                                         })),
                 @io.swagger.v3.oas.annotations.responses.ApiResponse(

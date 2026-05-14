@@ -127,10 +127,6 @@ public class AdminService {
         user.setWorkLocation(requestDto.getWorkLocation());
         user.setDepartment(department);
         user.setJobType(requestDto.getJobType());
-
-        if (requestDto.getJobType() == JobType.FIELD && requestDto.getRole() == Role.ADMIN) {
-            throw new CustomException(ErrorCode.INVALID_JOB_TYPE_FOR_ADMIN_ROLE);
-        }
         if (requestDto.getRole() != null) {
             user.setRole(requestDto.getRole());
         }
@@ -159,6 +155,9 @@ public class AdminService {
             }
         }
         userRepository.save(user);
+
+        // 회원가입 승인 처리 완료 시 관리자 승인대기 알림 해제
+        notificationService.resolveRequiresApproval(NotificationDomainType.AUTH, user.getId());
     }
 
     @Transactional(readOnly = true)
@@ -304,12 +303,6 @@ public class AdminService {
         }
         if (requestDto.getRole() != null) {
             user.setRole(requestDto.getRole());
-        }
-
-        JobType finalJobType = user.getJobType();
-        Role finalRole = user.getRole();
-        if (finalJobType == JobType.FIELD && finalRole == Role.ADMIN) {
-            throw new CustomException(ErrorCode.INVALID_JOB_TYPE_FOR_ADMIN_ROLE);
         }
 
         if (requestDto.getAuthorities() != null) {

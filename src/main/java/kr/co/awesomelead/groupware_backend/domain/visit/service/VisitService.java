@@ -8,7 +8,6 @@ import kr.co.awesomelead.groupware_backend.domain.notification.enums.Notificatio
 import kr.co.awesomelead.groupware_backend.domain.notification.service.NotificationService;
 import kr.co.awesomelead.groupware_backend.domain.user.entity.User;
 import kr.co.awesomelead.groupware_backend.domain.user.enums.Authority;
-import kr.co.awesomelead.groupware_backend.domain.user.enums.JobType;
 import kr.co.awesomelead.groupware_backend.domain.user.repository.UserRepository;
 import kr.co.awesomelead.groupware_backend.domain.visit.dto.request.CheckInRequestDto;
 import kr.co.awesomelead.groupware_backend.domain.visit.dto.request.CheckOutRequestDto;
@@ -274,12 +273,12 @@ public class VisitService {
 
     @Transactional
     public Long checkOut(Long userId, CheckOutRequestDto dto) {
-        validateAdminAuthority(userId);
-
         Visit visit =
                 visitRepository
                         .findById(dto.getVisitId())
                         .orElseThrow(() -> new CustomException(ErrorCode.VISIT_NOT_FOUND));
+        User manager = validateVisitorManageAuthority(userId);
+        validateManagedDepartmentAccess(manager, visit);
 
         VisitRecord record =
                 visit.getRecords().stream()
@@ -439,7 +438,7 @@ public class VisitService {
             LocalDate startDate,
             LocalDate endDate,
             Pageable pageable) {
-        validateAdminAuthority(userId);
+        validateEmployeeAccess(userId);
 
         return visitQueryRepository
                 .findVisitsForAdmin(departmentId, status, startDate, endDate, pageable)
@@ -449,8 +448,7 @@ public class VisitService {
     // 직원용 방문 상세 조회
     @Transactional(readOnly = true)
     public MyVisitDetailResponseDto getVisitDetailForAdmin(Long userId, Long visitId) {
-
-        validateAdminAuthority(userId);
+        validateEmployeeAccess(userId);
 
         Visit visit =
                 visitRepository
@@ -474,15 +472,35 @@ public class VisitService {
         return responseDto;
     }
 
-    private void validateAdminAuthority(Long userId) {
+    private void validateEmployeeAccess(Long userId) {
+        userRepository
+                .findById(userId)
+                .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
+    }
+
+    private User validateVisitorManageAuthority(Long userId) {
         User user =
                 userRepository
                         .findById(userId)
                         .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
 
-        // MANAGEMENT 직군이고 방문 관리 권한이 있는지 확인
-        if (user.getJobType() != JobType.MANAGEMENT
-                || !user.hasAuthority(Authority.MANAGE_VISITOR)) {
+        if (!user.hasAuthority(Authority.MANAGE_VISITOR)) {
+            throw new CustomException(ErrorCode.VISIT_ACCESS_DENIED);
+        }
+        return user;
+    }
+
+    private void validateManagedDepartmentAccess(User manager, Visit visit) {
+        Long managerDepartmentId =
+                manager.getDepartment() != null ? manager.getDepartment().getId() : null;
+        Long hostDepartmentId =
+                visit.getUser() != null && visit.getUser().getDepartment() != null
+                        ? visit.getUser().getDepartment().getId()
+                        : null;
+
+        if (managerDepartmentId == null
+                || hostDepartmentId == null
+                || !managerDepartmentId.equals(hostDepartmentId)) {
             throw new CustomException(ErrorCode.VISIT_ACCESS_DENIED);
         }
     }
@@ -490,14 +508,13 @@ public class VisitService {
     // 직원용 사전 장기방문 승인 및 반려
     @Transactional
     public void processVisit(Long userId, Long visitId, VisitProcessRequestDto dto) {
-        // 1. 관리 권한 확인 (MANAGEMENT 직군 & MANAGE_VISITOR 권한)
-        validateAdminAuthority(userId);
-
         // 2. 방문 신청 건 조회
         Visit visit =
                 visitRepository
                         .findById(visitId)
                         .orElseThrow(() -> new CustomException(ErrorCode.VISIT_NOT_FOUND));
+        User manager = validateVisitorManageAuthority(userId);
+        validateManagedDepartmentAccess(manager, visit);
 
         // 3. 승인 가능한 상태인지 검증
         // - 장기 방문이어야 함

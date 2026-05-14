@@ -170,7 +170,9 @@ public class VisitController {
         return ResponseEntity.ok(ApiResponse.onSuccess(visitId));
     }
 
-    @Operation(summary = "방문자 퇴실 처리", description = "입실 중인 내방객의 퇴실 시간을 기록하고 방문 상태를 업데이트합니다.")
+    @Operation(
+            summary = "방문자 퇴실 처리",
+            description = "MANAGE_VISITOR 권한을 가진 담당 부서 직원이 내방객의 퇴실 시간을 기록하고 방문 상태를 업데이트합니다.")
     @PatchMapping("/check-out")
     public ResponseEntity<ApiResponse<Long>> checkOut(
             @Parameter(hidden = true) @AuthenticationPrincipal CustomUserDetails userDetails,
@@ -214,7 +216,7 @@ public class VisitController {
 
     @Operation(
             summary = "직원용 내방객 목록 조회",
-            description = "관리 직군이 전체 내방객 목록을 조회합니다. 부서 및 상태별 필터링과 페이징이 가능합니다.")
+            description = "직원 계정으로 전체 내방객 목록을 조회합니다. 부서 및 상태별 필터링과 페이징이 가능합니다.")
     @ApiResponses({
         @io.swagger.v3.oas.annotations.responses.ApiResponse(
                 responseCode = "200",
@@ -277,7 +279,7 @@ public class VisitController {
 
     @Operation(
             summary = "직원용 내방객 상세 조회",
-            description = "관리 직군이 특정 내방객의 상세 정보, 서명 이미지 및 모든 입퇴실 기록을 조회합니다.")
+            description = "직원 계정으로 특정 내방객의 상세 정보, 서명 이미지 및 모든 입퇴실 기록을 조회합니다.")
     @GetMapping("/admin/{visitId}")
     public ResponseEntity<ApiResponse<MyVisitDetailResponseDto>> getAdminVisitDetail(
             @Parameter(hidden = true) @AuthenticationPrincipal CustomUserDetails userDetails,
@@ -288,7 +290,9 @@ public class VisitController {
         return ResponseEntity.ok(ApiResponse.onSuccess(response));
     }
 
-    @Operation(summary = "장기 방문 신청 처리", description = "관리 직군이 PENDING 상태인 장기 방문 신청을 승인 혹은 반려합니다.")
+    @Operation(
+            summary = "장기 방문 신청 처리",
+            description = "MANAGE_VISITOR 권한을 가진 담당 부서 직원이 PENDING 상태인 장기 방문 신청을 승인 혹은 반려합니다.")
     @ApiResponses({
         @io.swagger.v3.oas.annotations.responses.ApiResponse(
                 responseCode = "200",

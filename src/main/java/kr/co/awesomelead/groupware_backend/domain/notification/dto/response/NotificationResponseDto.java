@@ -21,7 +21,7 @@ public class NotificationResponseDto {
     @Schema(description = "알림 제목", example = "방문 신청이 승인되었습니다.")
     private final String title;
 
-    @Schema(description = "알림 내용", example = "홍길동님의 방문 신청이 승인되었습니다.")
+    @Schema(description = "알림 내용", example = "[이승민] 고객이 03:43:05에 입실했습니다.")
     private final String content;
 
     @Schema(description = "도메인 유형", example = "VISIT")

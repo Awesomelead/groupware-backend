@@ -49,6 +49,8 @@ import org.springframework.util.StringUtils;
 import java.io.IOException;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.LocalTime;
+import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.Map;
 
@@ -56,6 +58,8 @@ import java.util.Map;
 @Service
 @RequiredArgsConstructor
 public class VisitService {
+    private static final DateTimeFormatter NOTIFICATION_TIME_FORMATTER =
+            DateTimeFormatter.ofPattern("HH:mm:ss");
 
     private final VisitRepository visitRepository;
     private final VisitQueryRepository visitQueryRepository;
@@ -172,7 +176,7 @@ public class VisitService {
                     hostDeptId,
                     Map.of("isApprovalTarget", false, "status", VisitStatus.IN_PROGRESS.name()),
                     visit.getVisitorName(),
-                    record.getEntryTime().toLocalTime());
+                    formatNotificationTime(record.getEntryTime().toLocalTime()));
         }
 
         return visitId;
@@ -233,6 +237,10 @@ public class VisitService {
         }
     }
 
+    private String formatNotificationTime(LocalTime time) {
+        return time.format(NOTIFICATION_TIME_FORMATTER);
+    }
+
     // 방문처리
     @Transactional
     public Long checkIn(CheckInRequestDto dto) throws IOException {
@@ -273,7 +281,7 @@ public class VisitService {
                     host.getDepartment().getId(),
                     Map.of("isApprovalTarget", false, "status", VisitStatus.IN_PROGRESS.name()),
                     visit.getVisitorName(),
-                    entryTime.toLocalTime());
+                    formatNotificationTime(entryTime.toLocalTime()));
         }
 
         return visit.getId();

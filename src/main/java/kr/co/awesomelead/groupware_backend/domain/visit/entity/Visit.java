@@ -28,6 +28,8 @@ import kr.co.awesomelead.groupware_backend.domain.visit.enums.VisitCategory;
 import kr.co.awesomelead.groupware_backend.domain.visit.enums.VisitPurpose;
 import kr.co.awesomelead.groupware_backend.domain.visit.enums.VisitStatus;
 import kr.co.awesomelead.groupware_backend.global.encryption.Encryptor;
+import kr.co.awesomelead.groupware_backend.global.error.CustomException;
+import kr.co.awesomelead.groupware_backend.global.error.ErrorCode;
 
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
@@ -152,6 +154,26 @@ public class Visit {
             return Base64.getEncoder().encodeToString(hash);
         } catch (NoSuchAlgorithmException e) {
             throw new RuntimeException("SHA-256 알고리즘 부재", e);
+        }
+    }
+
+    public void validateCheckInEligible() {
+        if (this.status == VisitStatus.IN_PROGRESS) {
+            throw new CustomException(ErrorCode.ALREADY_CHECKED_IN);
+        }
+
+        if (this.visitCategory == VisitCategory.PRE_LONG_TERM) {
+            LocalDate today = LocalDate.now();
+            if (today.isBefore(this.startDate) || today.isAfter(this.endDate)) {
+                throw new CustomException(ErrorCode.NOT_VISIT_DATE);
+            }
+        } else {
+            if (!this.startDate.equals(LocalDate.now())) {
+                throw new CustomException(ErrorCode.NOT_VISIT_DATE);
+            }
+            if (this.visited) {
+                throw new CustomException(ErrorCode.VISIT_ALREADY_CHECKED_OUT);
+            }
         }
     }
 

@@ -34,6 +34,7 @@ import kr.co.awesomelead.groupware_backend.domain.visit.repository.VisitReposito
 import kr.co.awesomelead.groupware_backend.domain.visit.repository.querydsl.VisitQueryRepository;
 import kr.co.awesomelead.groupware_backend.domain.visit.service.VisitService;
 import kr.co.awesomelead.groupware_backend.global.error.CustomException;
+import kr.co.awesomelead.groupware_backend.global.error.ErrorCode;
 import kr.co.awesomelead.groupware_backend.global.infra.s3.service.S3Service;
 
 import org.junit.jupiter.api.BeforeEach;
@@ -610,6 +611,127 @@ public class VisitServiceTest {
                         .isEqualTo("s3-signature-key");
 
                 verify(s3Service, times(1)).uploadFile(any());
+            }
+        }
+
+        @Nested
+        @DisplayName("장기 방문자가 한 번 입퇴실한 후 다시 입실을 시도하면")
+        class Context_long_term_reentry {
+
+            @Test
+            @DisplayName("정상적으로 재입실할 수 있어야 한다")
+            void it_allows_reentry_for_long_term_visit() throws IOException {
+                // given
+                Long visitId = 200L;
+                Long adminId = 2L;
+                MockMultipartFile sig =
+                        new MockMultipartFile(
+                                "signature", "sig.png", "image/png", "test".getBytes());
+                CheckInRequestDto checkInDto = new CheckInRequestDto(visitId, sig);
+
+                Visit visit =
+                        Visit.builder()
+                                .id(visitId)
+                                .status(VisitStatus.APPROVED)
+                                .visitCategory(VisitCategory.PRE_LONG_TERM)
+                                .startDate(LocalDate.now().minusDays(5))
+                                .endDate(LocalDate.now().plusDays(5))
+                                .records(new ArrayList<>())
+                                .visited(false)
+                                .build();
+
+                User admin = User.builder().id(adminId).jobType(JobType.MANAGEMENT).build();
+                admin.addAuthority(Authority.MANAGE_VISITOR);
+
+                given(visitRepository.findById(visitId)).willReturn(Optional.of(visit));
+                given(s3Service.uploadFile(any())).willReturn("s3-key");
+
+                // 1. 첫 번째 입실
+                visitService.checkIn(checkInDto);
+                assertThat(visit.getStatus()).isEqualTo(VisitStatus.IN_PROGRESS);
+                assertThat(visit.getRecords()).hasSize(1);
+                Long recordId = 10L;
+                visit.getRecords().get(0).setId(recordId);
+
+                // 2. 퇴실 처리
+                given(userRepository.findById(adminId)).willReturn(Optional.of(admin));
+                CheckOutRequestDto checkOutDto =
+                        new CheckOutRequestDto(visitId, recordId, LocalDateTime.now());
+                visitService.checkOut(adminId, checkOutDto);
+                assertThat(visit.getStatus()).isEqualTo(VisitStatus.APPROVED);
+
+                // 3. 두 번째 입실 — 버그 수정 후 성공해야 한다
+                assertDoesNotThrow(() -> visitService.checkIn(checkInDto));
+                assertThat(visit.getStatus()).isEqualTo(VisitStatus.IN_PROGRESS);
+                assertThat(visit.getRecords()).hasSize(2);
+            }
+        }
+
+        @Nested
+        @DisplayName("장기 방문자가 이미 입실 중(IN_PROGRESS)일 때 재입실 시도하면")
+        class Context_long_term_already_in_progress {
+
+            @Test
+            @DisplayName("ALREADY_CHECKED_IN 예외를 던진다")
+            void it_throws_already_checked_in() throws IOException {
+                // given
+                Long visitId = 201L;
+                MockMultipartFile sig =
+                        new MockMultipartFile(
+                                "signature", "sig.png", "image/png", "test".getBytes());
+                CheckInRequestDto dto = new CheckInRequestDto(visitId, sig);
+
+                Visit visit =
+                        Visit.builder()
+                                .id(visitId)
+                                .status(VisitStatus.IN_PROGRESS)
+                                .visitCategory(VisitCategory.PRE_LONG_TERM)
+                                .startDate(LocalDate.now().minusDays(5))
+                                .endDate(LocalDate.now().plusDays(5))
+                                .records(new ArrayList<>())
+                                .visited(true)
+                                .build();
+
+                given(visitRepository.findById(visitId)).willReturn(Optional.of(visit));
+
+                // when / then — ALREADY_CHECKED_IN은 아직 ErrorCode에 없으므로 컴파일 에러 (Red)
+                assertThatThrownBy(() -> visitService.checkIn(dto))
+                        .isInstanceOf(CustomException.class)
+                        .hasMessageContaining(ErrorCode.ALREADY_CHECKED_IN.getMessage());
+            }
+        }
+
+        @Nested
+        @DisplayName("장기 방문 기간 외 날짜에 입실을 시도하면")
+        class Context_long_term_outside_date_range {
+
+            @Test
+            @DisplayName("NOT_VISIT_DATE 예외를 던진다")
+            void it_throws_not_visit_date_for_long_term() throws IOException {
+                // given
+                Long visitId = 202L;
+                MockMultipartFile sig =
+                        new MockMultipartFile(
+                                "signature", "sig.png", "image/png", "test".getBytes());
+                CheckInRequestDto dto = new CheckInRequestDto(visitId, sig);
+
+                Visit visit =
+                        Visit.builder()
+                                .id(visitId)
+                                .status(VisitStatus.APPROVED)
+                                .visitCategory(VisitCategory.PRE_LONG_TERM)
+                                .startDate(LocalDate.now().plusDays(10))
+                                .endDate(LocalDate.now().plusDays(20))
+                                .records(new ArrayList<>())
+                                .visited(false)
+                                .build();
+
+                given(visitRepository.findById(visitId)).willReturn(Optional.of(visit));
+
+                // when / then
+                assertThatThrownBy(() -> visitService.checkIn(dto))
+                        .isInstanceOf(CustomException.class)
+                        .hasMessageContaining(ErrorCode.NOT_VISIT_DATE.getMessage());
             }
         }
     }

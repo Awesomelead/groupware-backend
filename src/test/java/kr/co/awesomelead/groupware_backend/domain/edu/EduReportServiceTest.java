@@ -2099,12 +2099,13 @@ public class EduReportServiceTest {
         void remindEduReport_throwsWhenCreatedByIsNull() {
             // given
             User user = createNormalUser();
-            EduReport report = EduReport.builder()
-                    .id(10L)
-                    .eduType(EduType.SAFETY)
-                    .title("안전 교육")
-                    .createdBy(null)
-                    .build();
+            EduReport report =
+                    EduReport.builder()
+                            .id(10L)
+                            .eduType(EduType.SAFETY)
+                            .title("안전 교육")
+                            .createdBy(null)
+                            .build();
 
             when(userRepository.findById(1L)).thenReturn(Optional.of(user));
             when(eduReportRepository.findById(10L)).thenReturn(Optional.of(report));
@@ -2121,14 +2122,15 @@ public class EduReportServiceTest {
         void remindEduReport_throwsWhenNotCreator() {
             // given
             User requestUser = createNormalUser(); // id = 1L
-            User anotherUser = createAdminUser();  // id = 99L
+            User anotherUser = createAdminUser(); // id = 99L
 
-            EduReport report = EduReport.builder()
-                    .id(10L)
-                    .eduType(EduType.SAFETY)
-                    .title("안전 교육")
-                    .createdBy(anotherUser)
-                    .build();
+            EduReport report =
+                    EduReport.builder()
+                            .id(10L)
+                            .eduType(EduType.SAFETY)
+                            .title("안전 교육")
+                            .createdBy(anotherUser)
+                            .build();
 
             when(userRepository.findById(1L)).thenReturn(Optional.of(requestUser));
             when(eduReportRepository.findById(10L)).thenReturn(Optional.of(report));
@@ -2145,13 +2147,14 @@ public class EduReportServiceTest {
         void remindEduReport_psmType_companyNull_callsFindAllActiveUserIds() {
             // given
             User user = createNormalUser();
-            EduReport report = EduReport.builder()
-                    .id(10L)
-                    .eduType(EduType.PSM)
-                    .title("PSM 교육")
-                    .company(null)
-                    .createdBy(user)
-                    .build();
+            EduReport report =
+                    EduReport.builder()
+                            .id(10L)
+                            .eduType(EduType.PSM)
+                            .title("PSM 교육")
+                            .company(null)
+                            .createdBy(user)
+                            .build();
 
             List<Long> targetIds = List.of(1L, 2L, 3L);
             when(userRepository.findById(1L)).thenReturn(Optional.of(user));
@@ -2174,13 +2177,14 @@ public class EduReportServiceTest {
         void remindEduReport_psmType_withCompany_callsFindAllIdsByCompany() {
             // given
             User user = createNormalUser();
-            EduReport report = EduReport.builder()
-                    .id(10L)
-                    .eduType(EduType.PSM)
-                    .title("PSM 교육")
-                    .company(Company.AWESOME)
-                    .createdBy(user)
-                    .build();
+            EduReport report =
+                    EduReport.builder()
+                            .id(10L)
+                            .eduType(EduType.PSM)
+                            .title("PSM 교육")
+                            .company(Company.AWESOME)
+                            .createdBy(user)
+                            .build();
 
             List<Long> targetIds = List.of(1L, 2L);
             when(userRepository.findById(1L)).thenReturn(Optional.of(user));
@@ -2203,13 +2207,14 @@ public class EduReportServiceTest {
         void remindEduReport_safetyType_metadataContainsDetailTypeGeneral() {
             // given
             User user = createNormalUser();
-            EduReport report = EduReport.builder()
-                    .id(10L)
-                    .eduType(EduType.SAFETY)
-                    .title("안전 보건 교육")
-                    .company(null)
-                    .createdBy(user)
-                    .build();
+            EduReport report =
+                    EduReport.builder()
+                            .id(10L)
+                            .eduType(EduType.SAFETY)
+                            .title("안전 보건 교육")
+                            .company(null)
+                            .createdBy(user)
+                            .build();
 
             when(userRepository.findById(1L)).thenReturn(Optional.of(user));
             when(eduReportRepository.findById(10L)).thenReturn(Optional.of(report));
@@ -2233,18 +2238,20 @@ public class EduReportServiceTest {
         void remindEduReport_departmentType_withDepartment_callsFindAllIdsByDepartmentId() {
             // given
             User user = createNormalUser();
-            EduReport report = EduReport.builder()
-                    .id(10L)
-                    .eduType(EduType.DEPARTMENT)
-                    .title("부서 교육")
-                    .department(defaultDept)
-                    .createdBy(user)
-                    .build();
+            EduReport report =
+                    EduReport.builder()
+                            .id(10L)
+                            .eduType(EduType.DEPARTMENT)
+                            .title("부서 교육")
+                            .department(defaultDept)
+                            .createdBy(user)
+                            .build();
 
             List<Long> targetIds = List.of(1L, 2L);
             when(userRepository.findById(1L)).thenReturn(Optional.of(user));
             when(eduReportRepository.findById(10L)).thenReturn(Optional.of(report));
-            when(userRepository.findAllIdsByDepartmentId(defaultDept.getId())).thenReturn(targetIds);
+            when(userRepository.findAllIdsByDepartmentId(defaultDept.getId()))
+                    .thenReturn(targetIds);
 
             // when
             eduReportService.remindEduReport(10L, 1L);
@@ -2261,13 +2268,14 @@ public class EduReportServiceTest {
         void remindEduReport_callsNotificationServiceWithCorrectArgs() {
             // given
             User user = createNormalUser();
-            EduReport report = EduReport.builder()
-                    .id(10L)
-                    .eduType(EduType.PSM)
-                    .title("PSM 교육 제목")
-                    .company(null)
-                    .createdBy(user)
-                    .build();
+            EduReport report =
+                    EduReport.builder()
+                            .id(10L)
+                            .eduType(EduType.PSM)
+                            .title("PSM 교육 제목")
+                            .company(null)
+                            .createdBy(user)
+                            .build();
 
             List<Long> targetIds = List.of(1L, 2L, 3L);
             when(userRepository.findById(1L)).thenReturn(Optional.of(user));

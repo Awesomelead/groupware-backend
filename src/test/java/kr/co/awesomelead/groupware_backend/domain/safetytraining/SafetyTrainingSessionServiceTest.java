@@ -1,7 +1,6 @@
 package kr.co.awesomelead.groupware_backend.domain.safetytraining;
 
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.anyString;
@@ -45,7 +44,12 @@ class SafetyTrainingSessionServiceTest {
     @Mock private UserRepository userRepository;
     @Mock private NotificationService notificationService;
     @Mock private com.fasterxml.jackson.databind.ObjectMapper objectMapper;
-    @Mock private kr.co.awesomelead.groupware_backend.domain.safetytraining.service.SafetyTrainingExcelService safetyTrainingExcelService;
+
+    @Mock
+    private kr.co.awesomelead.groupware_backend.domain.safetytraining.service
+                    .SafetyTrainingExcelService
+            safetyTrainingExcelService;
+
     @Mock private kr.co.awesomelead.groupware_backend.global.infra.s3.service.S3Service s3Service;
 
     @InjectMocks private SafetyTrainingSessionService safetyTrainingSessionService;
@@ -59,17 +63,15 @@ class SafetyTrainingSessionServiceTest {
 
     @BeforeEach
     void setUp() {
-        actor = User.builder()
-                .id(USER_ID)
-                .nameKor("작성자")
-                .build();
+        actor = User.builder().id(USER_ID).nameKor("작성자").build();
 
-        session = SafetyTrainingSession.builder()
-                .id(SESSION_ID)
-                .title("2024년 안전보건교육")
-                .companyScope(Company.AWESOME)
-                .createdBy(actor)
-                .build();
+        session =
+                SafetyTrainingSession.builder()
+                        .id(SESSION_ID)
+                        .title("2024년 안전보건교육")
+                        .companyScope(Company.AWESOME)
+                        .createdBy(actor)
+                        .build();
     }
 
     @Nested
@@ -83,13 +85,15 @@ class SafetyTrainingSessionServiceTest {
             when(userRepository.findById(USER_ID)).thenReturn(Optional.empty());
 
             // when & then
-            assertThatThrownBy(() -> safetyTrainingSessionService.remindSession(SESSION_ID, USER_ID))
+            assertThatThrownBy(
+                            () -> safetyTrainingSessionService.remindSession(SESSION_ID, USER_ID))
                     .isInstanceOf(CustomException.class)
                     .hasFieldOrPropertyWithValue("errorCode", ErrorCode.USER_NOT_FOUND);
 
             verify(sessionRepository, never()).findById(anyLong());
             verify(notificationService, never())
-                    .sendSafetyTrainingSessionRemindAlertToAttendees(anyLong(), anyString(), anyList());
+                    .sendSafetyTrainingSessionRemindAlertToAttendees(
+                            anyLong(), anyString(), anyList());
         }
 
         @Test
@@ -100,35 +104,43 @@ class SafetyTrainingSessionServiceTest {
             when(sessionRepository.findById(SESSION_ID)).thenReturn(Optional.empty());
 
             // when & then
-            assertThatThrownBy(() -> safetyTrainingSessionService.remindSession(SESSION_ID, USER_ID))
+            assertThatThrownBy(
+                            () -> safetyTrainingSessionService.remindSession(SESSION_ID, USER_ID))
                     .isInstanceOf(CustomException.class)
-                    .hasFieldOrPropertyWithValue("errorCode", ErrorCode.SAFETY_TRAINING_SESSION_NOT_FOUND);
+                    .hasFieldOrPropertyWithValue(
+                            "errorCode", ErrorCode.SAFETY_TRAINING_SESSION_NOT_FOUND);
 
             verify(notificationService, never())
-                    .sendSafetyTrainingSessionRemindAlertToAttendees(anyLong(), anyString(), anyList());
+                    .sendSafetyTrainingSessionRemindAlertToAttendees(
+                            anyLong(), anyString(), anyList());
         }
 
         @Test
         @DisplayName("세션의 createdBy가 null이면 NO_AUTHORITY_FOR_SAFETY_WRITE 예외가 발생한다")
         void remindSession_throwsWhenCreatedByIsNull() {
             // given
-            SafetyTrainingSession sessionWithNullCreator = SafetyTrainingSession.builder()
-                    .id(SESSION_ID)
-                    .title("2024년 안전보건교육")
-                    .companyScope(Company.AWESOME)
-                    .createdBy(null)
-                    .build();
+            SafetyTrainingSession sessionWithNullCreator =
+                    SafetyTrainingSession.builder()
+                            .id(SESSION_ID)
+                            .title("2024년 안전보건교육")
+                            .companyScope(Company.AWESOME)
+                            .createdBy(null)
+                            .build();
 
             when(userRepository.findById(USER_ID)).thenReturn(Optional.of(actor));
-            when(sessionRepository.findById(SESSION_ID)).thenReturn(Optional.of(sessionWithNullCreator));
+            when(sessionRepository.findById(SESSION_ID))
+                    .thenReturn(Optional.of(sessionWithNullCreator));
 
             // when & then
-            assertThatThrownBy(() -> safetyTrainingSessionService.remindSession(SESSION_ID, USER_ID))
+            assertThatThrownBy(
+                            () -> safetyTrainingSessionService.remindSession(SESSION_ID, USER_ID))
                     .isInstanceOf(CustomException.class)
-                    .hasFieldOrPropertyWithValue("errorCode", ErrorCode.NO_AUTHORITY_FOR_SAFETY_WRITE);
+                    .hasFieldOrPropertyWithValue(
+                            "errorCode", ErrorCode.NO_AUTHORITY_FOR_SAFETY_WRITE);
 
             verify(notificationService, never())
-                    .sendSafetyTrainingSessionRemindAlertToAttendees(anyLong(), anyString(), anyList());
+                    .sendSafetyTrainingSessionRemindAlertToAttendees(
+                            anyLong(), anyString(), anyList());
         }
 
         @Test
@@ -136,23 +148,28 @@ class SafetyTrainingSessionServiceTest {
         void remindSession_throwsWhenCreatedByMismatch() {
             // given
             User anotherUser = User.builder().id(OTHER_USER_ID).nameKor("다른사람").build();
-            SafetyTrainingSession sessionOwnedByOther = SafetyTrainingSession.builder()
-                    .id(SESSION_ID)
-                    .title("2024년 안전보건교육")
-                    .companyScope(Company.AWESOME)
-                    .createdBy(anotherUser)
-                    .build();
+            SafetyTrainingSession sessionOwnedByOther =
+                    SafetyTrainingSession.builder()
+                            .id(SESSION_ID)
+                            .title("2024년 안전보건교육")
+                            .companyScope(Company.AWESOME)
+                            .createdBy(anotherUser)
+                            .build();
 
             when(userRepository.findById(USER_ID)).thenReturn(Optional.of(actor));
-            when(sessionRepository.findById(SESSION_ID)).thenReturn(Optional.of(sessionOwnedByOther));
+            when(sessionRepository.findById(SESSION_ID))
+                    .thenReturn(Optional.of(sessionOwnedByOther));
 
             // when & then
-            assertThatThrownBy(() -> safetyTrainingSessionService.remindSession(SESSION_ID, USER_ID))
+            assertThatThrownBy(
+                            () -> safetyTrainingSessionService.remindSession(SESSION_ID, USER_ID))
                     .isInstanceOf(CustomException.class)
-                    .hasFieldOrPropertyWithValue("errorCode", ErrorCode.NO_AUTHORITY_FOR_SAFETY_WRITE);
+                    .hasFieldOrPropertyWithValue(
+                            "errorCode", ErrorCode.NO_AUTHORITY_FOR_SAFETY_WRITE);
 
             verify(notificationService, never())
-                    .sendSafetyTrainingSessionRemindAlertToAttendees(anyLong(), anyString(), anyList());
+                    .sendSafetyTrainingSessionRemindAlertToAttendees(
+                            anyLong(), anyString(), anyList());
         }
 
         @Test
@@ -166,19 +183,19 @@ class SafetyTrainingSessionServiceTest {
             when(userRepository.findById(USER_ID)).thenReturn(Optional.of(actor));
             when(sessionRepository.findById(SESSION_ID)).thenReturn(Optional.of(session));
             when(userRepository.findAllByCompanyAndStatusExcludingPosition(
-                    Company.AWESOME, Status.AVAILABLE, Position.CEO))
+                            Company.AWESOME, Status.AVAILABLE, Position.CEO))
                     .thenReturn(targetUsers);
 
             // when
             safetyTrainingSessionService.remindSession(SESSION_ID, USER_ID);
 
             // then
-            verify(userRepository).findAllByCompanyAndStatusExcludingPosition(
-                    Company.AWESOME, Status.AVAILABLE, Position.CEO);
-            verify(notificationService).sendSafetyTrainingSessionRemindAlertToAttendees(
-                    eq(SESSION_ID),
-                    eq("2024년 안전보건교육"),
-                    eq(List.of(101L, 102L)));
+            verify(userRepository)
+                    .findAllByCompanyAndStatusExcludingPosition(
+                            Company.AWESOME, Status.AVAILABLE, Position.CEO);
+            verify(notificationService)
+                    .sendSafetyTrainingSessionRemindAlertToAttendees(
+                            eq(SESSION_ID), eq("2024년 안전보건교육"), eq(List.of(101L, 102L)));
         }
     }
 }

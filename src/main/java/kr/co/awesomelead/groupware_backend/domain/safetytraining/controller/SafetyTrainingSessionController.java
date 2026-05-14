@@ -795,19 +795,26 @@ public class SafetyTrainingSessionController {
 
     @Operation(
             summary = "안전보건 교육일지 리마인드 알림 전송",
-            description = """
+            description =
+                    """
                     교육 생성자(createdBy)만 요청 가능합니다.
 
                     - companyScope 기준 현재 활성 사용자에게 `[리마인드]` prefix를 붙여 알림을 재전송합니다.
                     """)
     @ApiResponses({
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "전송 성공"),
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(
-                    responseCode = "403",
-                    description = "권한 없음 (교육일지 생성자가 아님)",
-                    content = @Content(
-                            mediaType = "application/json",
-                            examples = @ExampleObject(value = """
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                responseCode = "200",
+                description = "전송 성공"),
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                responseCode = "403",
+                description = "권한 없음 (교육일지 생성자가 아님)",
+                content =
+                        @Content(
+                                mediaType = "application/json",
+                                examples =
+                                        @ExampleObject(
+                                                value =
+                                                        """
                                     {
                                       "isSuccess": false,
                                       "code": "NO_AUTHORITY_FOR_SAFETY_WRITE",
@@ -815,12 +822,16 @@ public class SafetyTrainingSessionController {
                                       "result": null
                                     }
                                     """))),
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(
-                    responseCode = "404",
-                    description = "교육일지 없음",
-                    content = @Content(
-                            mediaType = "application/json",
-                            examples = @ExampleObject(value = """
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                responseCode = "404",
+                description = "교육일지 없음",
+                content =
+                        @Content(
+                                mediaType = "application/json",
+                                examples =
+                                        @ExampleObject(
+                                                value =
+                                                        """
                                     {
                                       "isSuccess": false,
                                       "code": "SAFETY_TRAINING_SESSION_NOT_FOUND",
@@ -831,7 +842,8 @@ public class SafetyTrainingSessionController {
     })
     @PostMapping("/{sessionId}/remind")
     public ResponseEntity<ApiResponse<Void>> remindSession(
-            @Parameter(description = "리마인드 알림을 전송할 교육일지 ID", example = "1") @PathVariable Long sessionId,
+            @Parameter(description = "리마인드 알림을 전송할 교육일지 ID", example = "1") @PathVariable
+                    Long sessionId,
             @Parameter(hidden = true) @AuthenticationPrincipal CustomUserDetails userDetails) {
         safetyTrainingSessionService.remindSession(sessionId, userDetails.getId());
         return ResponseEntity.ok(ApiResponse.onNoContent());

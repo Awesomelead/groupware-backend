@@ -337,8 +337,7 @@ class NotificationServiceTest {
         @DisplayName("정상 케이스 - title에 [리마인드] 접두사가 붙어 저장된다")
         void sendEduReportRemindAlertToTargets_success_titleHasRemindPrefix() {
             // given
-            String expectedTitle =
-                    "[리마인드] " + NotificationMessage.EDU_REPORT_CREATED.getTitle();
+            String expectedTitle = "[리마인드] " + NotificationMessage.EDU_REPORT_CREATED.getTitle();
 
             // when
             notificationService.sendEduReportRemindAlertToTargets(
@@ -347,8 +346,7 @@ class NotificationServiceTest {
             // then
             ArgumentCaptor<Notification> captor = forClass(Notification.class);
             verify(notificationRepository, times(2)).save(captor.capture());
-            captor.getAllValues()
-                    .forEach(n -> assertThat(n.getTitle()).isEqualTo(expectedTitle));
+            captor.getAllValues().forEach(n -> assertThat(n.getTitle()).isEqualTo(expectedTitle));
         }
 
         @Test
@@ -423,8 +421,7 @@ class NotificationServiceTest {
         @DisplayName("정상 케이스 - metadata 포함 5인자 호출 시 title에 [리마인드] 접두사가 붙어 저장된다")
         void sendEduReportRemindAlertToTargets_withMetadata_titleHasRemindPrefix() {
             // given
-            String expectedTitle =
-                    "[리마인드] " + NotificationMessage.EDU_REPORT_CREATED.getTitle();
+            String expectedTitle = "[리마인드] " + NotificationMessage.EDU_REPORT_CREATED.getTitle();
             Map<String, Object> metadata = Map.of("reportId", 10);
 
             // when
@@ -451,8 +448,7 @@ class NotificationServiceTest {
         void sendSafetyTrainingSessionRemindAlertToAttendees_success_titleHasRemindPrefix() {
             // given
             String expectedTitle =
-                    "[리마인드] "
-                            + NotificationMessage.SAFETY_TRAINING_SESSION_CREATED.getTitle();
+                    "[리마인드] " + NotificationMessage.SAFETY_TRAINING_SESSION_CREATED.getTitle();
 
             // when
             notificationService.sendSafetyTrainingSessionRemindAlertToAttendees(
@@ -461,8 +457,7 @@ class NotificationServiceTest {
             // then
             ArgumentCaptor<Notification> captor = forClass(Notification.class);
             verify(notificationRepository, times(2)).save(captor.capture());
-            captor.getAllValues()
-                    .forEach(n -> assertThat(n.getTitle()).isEqualTo(expectedTitle));
+            captor.getAllValues().forEach(n -> assertThat(n.getTitle()).isEqualTo(expectedTitle));
         }
 
         @Test
@@ -470,8 +465,7 @@ class NotificationServiceTest {
         void sendSafetyTrainingSessionRemindAlertToAttendees_success_contentHasNoPrefix() {
             // given
             String expectedContent =
-                    NotificationMessage.SAFETY_TRAINING_SESSION_CREATED.formatContent(
-                            "안전보건교육 세션");
+                    NotificationMessage.SAFETY_TRAINING_SESSION_CREATED.formatContent("안전보건교육 세션");
 
             // when
             notificationService.sendSafetyTrainingSessionRemindAlertToAttendees(
@@ -499,7 +493,8 @@ class NotificationServiceTest {
 
         @Test
         @DisplayName("정상 케이스 - metadata에 educationType=SAFETY, detailType=SESSION이 저장된다")
-        void sendSafetyTrainingSessionRemindAlertToAttendees_success_metadataContainsExpectedKeys() {
+        void
+                sendSafetyTrainingSessionRemindAlertToAttendees_success_metadataContainsExpectedKeys() {
             // when
             notificationService.sendSafetyTrainingSessionRemindAlertToAttendees(
                     200L, "안전보건교육 세션", List.of(1L));
@@ -537,7 +532,8 @@ class NotificationServiceTest {
 
         @Test
         @DisplayName("정상 케이스 - messageType이 SAFETY_TRAINING_SESSION_CREATED로 저장된다")
-        void sendSafetyTrainingSessionRemindAlertToAttendees_success_messageTypeIsSafetyTrainingSessionCreated() {
+        void
+                sendSafetyTrainingSessionRemindAlertToAttendees_success_messageTypeIsSafetyTrainingSessionCreated() {
             // when
             notificationService.sendSafetyTrainingSessionRemindAlertToAttendees(
                     200L, "안전보건교육 세션", List.of(1L));

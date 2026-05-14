@@ -52,21 +52,49 @@ import java.util.List;
 @RequestMapping("/api/educations")
 public class EduReportController {
 
-        private final EduReportService eduReportService;
+    private final EduReportService eduReportService;
 
-        @Operation(tags = {
-                        "부서교육" }, summary = "부서 교육 게시물 생성", description = """
+    @Operation(
+            tags = {"부서교육"},
+            summary = "부서 교육 게시물 생성",
+            description =
+                    """
                                         `multipart/form-data`로 부서 교육 게시물을 생성합니다.
 
                                         - `requestDto`(JSON 파트)는 필수입니다.
                                         - `files`(파일 파트)는 선택입니다.
                                         - 부서 교육 관리 권한(`MANAGE_DEPARTMENT_EDUCATION`)이 있어야 생성할 수 있습니다.
-                                        """, requestBody = @io.swagger.v3.oas.annotations.parameters.RequestBody(required = true, content = @Content(mediaType = MediaType.MULTIPART_FORM_DATA_VALUE, schema = @Schema(implementation = DepartmentEduReportCreateMultipartRequestDoc.class), encoding = {
-                                        @Encoding(name = "requestDto", contentType = MediaType.APPLICATION_JSON_VALUE),
-                                        @Encoding(name = "files", contentType = "*/*")
-                        })))
-        @ApiResponses({
-                        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "201", description = "생성 성공", content = @Content(mediaType = "application/json", schema = @Schema(implementation = ApiResponse.class), examples = @ExampleObject(value = """
+                                        """,
+            requestBody =
+                    @io.swagger.v3.oas.annotations.parameters.RequestBody(
+                            required = true,
+                            content =
+                                    @Content(
+                                            mediaType = MediaType.MULTIPART_FORM_DATA_VALUE,
+                                            schema =
+                                                    @Schema(
+                                                            implementation =
+                                                                    DepartmentEduReportCreateMultipartRequestDoc
+                                                                            .class),
+                                            encoding = {
+                                                @Encoding(
+                                                        name = "requestDto",
+                                                        contentType =
+                                                                MediaType.APPLICATION_JSON_VALUE),
+                                                @Encoding(name = "files", contentType = "*/*")
+                                            })))
+    @ApiResponses({
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                responseCode = "201",
+                description = "생성 성공",
+                content =
+                        @Content(
+                                mediaType = "application/json",
+                                schema = @Schema(implementation = ApiResponse.class),
+                                examples =
+                                        @ExampleObject(
+                                                value =
+                                                        """
                                         {
                                           "isSuccess": true,
                                           "code": "COMMON201",
@@ -74,7 +102,16 @@ public class EduReportController {
                                           "result": 1
                                         }
                                         """))),
-                        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "403", description = "권한 없음", content = @Content(mediaType = "application/json", examples = @ExampleObject(value = """
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                responseCode = "403",
+                description = "권한 없음",
+                content =
+                        @Content(
+                                mediaType = "application/json",
+                                examples =
+                                        @ExampleObject(
+                                                value =
+                                                        """
                                         {
                                           "isSuccess": false,
                                           "code": "NO_AUTHORITY_FOR_EDU_REPORT",
@@ -82,7 +119,16 @@ public class EduReportController {
                                           "result": null
                                         }
                                         """))),
-                        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "리소스 없음", content = @Content(mediaType = "application/json", examples = @ExampleObject(value = """
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                responseCode = "404",
+                description = "리소스 없음",
+                content =
+                        @Content(
+                                mediaType = "application/json",
+                                examples =
+                                        @ExampleObject(
+                                                value =
+                                                        """
                                         {
                                           "isSuccess": false,
                                           "code": "DEPARTMENT_NOT_FOUND",
@@ -90,26 +136,35 @@ public class EduReportController {
                                           "result": null
                                         }
                                         """)))
-        })
-        @PostMapping(value = "/department", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-        public ResponseEntity<ApiResponse<Long>> createDepartmentEduReport(
-                        @Parameter(description = "부서 교육 게시물 생성 정보(JSON)", required = true) @RequestPart("requestDto") @Valid DepartmentEduReportCreateRequestDto requestDto,
-                        @Parameter(description = "첨부 파일 목록(선택)") @RequestPart(value = "files", required = false) List<MultipartFile> files,
-                        @Parameter(hidden = true) @AuthenticationPrincipal CustomUserDetails userDetails)
-                        throws IOException {
+    })
+    @PostMapping(value = "/department", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ResponseEntity<ApiResponse<Long>> createDepartmentEduReport(
+            @Parameter(description = "부서 교육 게시물 생성 정보(JSON)", required = true)
+                    @RequestPart("requestDto")
+                    @Valid
+                    DepartmentEduReportCreateRequestDto requestDto,
+            @Parameter(description = "첨부 파일 목록(선택)") @RequestPart(value = "files", required = false)
+                    List<MultipartFile> files,
+            @Parameter(hidden = true) @AuthenticationPrincipal CustomUserDetails userDetails)
+            throws IOException {
 
-                Long reportId = eduReportService.createDepartmentEduReport(requestDto, files, userDetails.getId());
+        Long reportId =
+                eduReportService.createDepartmentEduReport(requestDto, files, userDetails.getId());
 
-                URI location = ServletUriComponentsBuilder.fromCurrentContextPath()
-                                .path("/api/educations/department/{id}")
-                                .buildAndExpand(reportId)
-                                .toUri();
+        URI location =
+                ServletUriComponentsBuilder.fromCurrentContextPath()
+                        .path("/api/educations/department/{id}")
+                        .buildAndExpand(reportId)
+                        .toUri();
 
-                return ResponseEntity.created(location).body(ApiResponse.onCreated(reportId));
-        }
+        return ResponseEntity.created(location).body(ApiResponse.onCreated(reportId));
+    }
 
-        @Operation(tags = {
-                        "PSM" }, summary = "PSM 게시물 생성", description = """
+    @Operation(
+            tags = {"PSM"},
+            summary = "PSM 게시물 생성",
+            description =
+                    """
                                         `multipart/form-data`로 PSM 게시물을 생성합니다.
 
                                         - `requestDto`(JSON 파트)는 필수입니다.
@@ -118,12 +173,36 @@ public class EduReportController {
                                         - `companyScope`는 회사 목록 배열입니다.
                                         - `[AWESOME]`처럼 1개를 보내면 해당 회사 게시물로 생성됩니다.
                                         - `[AWESOME, MARUI]`, `null`, `[]`는 모든 회사 공통 게시물로 생성됩니다.
-                                        """, requestBody = @io.swagger.v3.oas.annotations.parameters.RequestBody(required = true, content = @Content(mediaType = MediaType.MULTIPART_FORM_DATA_VALUE, schema = @Schema(implementation = PsmEduReportCreateMultipartRequestDoc.class), encoding = {
-                                        @Encoding(name = "requestDto", contentType = MediaType.APPLICATION_JSON_VALUE),
-                                        @Encoding(name = "files", contentType = "*/*")
-                        })))
-        @ApiResponses({
-                        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "201", description = "생성 성공", content = @Content(mediaType = "application/json", examples = @ExampleObject(value = """
+                                        """,
+            requestBody =
+                    @io.swagger.v3.oas.annotations.parameters.RequestBody(
+                            required = true,
+                            content =
+                                    @Content(
+                                            mediaType = MediaType.MULTIPART_FORM_DATA_VALUE,
+                                            schema =
+                                                    @Schema(
+                                                            implementation =
+                                                                    PsmEduReportCreateMultipartRequestDoc
+                                                                            .class),
+                                            encoding = {
+                                                @Encoding(
+                                                        name = "requestDto",
+                                                        contentType =
+                                                                MediaType.APPLICATION_JSON_VALUE),
+                                                @Encoding(name = "files", contentType = "*/*")
+                                            })))
+    @ApiResponses({
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                responseCode = "201",
+                description = "생성 성공",
+                content =
+                        @Content(
+                                mediaType = "application/json",
+                                examples =
+                                        @ExampleObject(
+                                                value =
+                                                        """
                                         {
                                           "isSuccess": true,
                                           "code": "COMMON201",
@@ -131,7 +210,16 @@ public class EduReportController {
                                           "result": 2
                                         }
                                         """))),
-                        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "403", description = "권한 없음", content = @Content(mediaType = "application/json", examples = @ExampleObject(value = """
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                responseCode = "403",
+                description = "권한 없음",
+                content =
+                        @Content(
+                                mediaType = "application/json",
+                                examples =
+                                        @ExampleObject(
+                                                value =
+                                                        """
                                         {
                                           "isSuccess": false,
                                           "code": "NO_AUTHORITY_FOR_PSM_MANAGE",
@@ -139,7 +227,16 @@ public class EduReportController {
                                           "result": null
                                         }
                                         """))),
-                        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "리소스 없음", content = @Content(mediaType = "application/json", examples = @ExampleObject(value = """
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                responseCode = "404",
+                description = "리소스 없음",
+                content =
+                        @Content(
+                                mediaType = "application/json",
+                                examples =
+                                        @ExampleObject(
+                                                value =
+                                                        """
                                         {
                                           "isSuccess": false,
                                           "code": "EDUCATION_CATEGORY_NOT_FOUND",
@@ -147,26 +244,34 @@ public class EduReportController {
                                           "result": null
                                         }
                                         """)))
-        })
-        @PostMapping(value = "/psm", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-        public ResponseEntity<ApiResponse<Long>> createPsmEduReport(
-                        @Parameter(description = "PSM 게시물 생성 정보(JSON)", required = true) @RequestPart("requestDto") @Valid PsmEduReportCreateRequestDto requestDto,
-                        @Parameter(description = "첨부 파일 목록(선택)") @RequestPart(value = "files", required = false) List<MultipartFile> files,
-                        @Parameter(hidden = true) @AuthenticationPrincipal CustomUserDetails userDetails)
-                        throws IOException {
+    })
+    @PostMapping(value = "/psm", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ResponseEntity<ApiResponse<Long>> createPsmEduReport(
+            @Parameter(description = "PSM 게시물 생성 정보(JSON)", required = true)
+                    @RequestPart("requestDto")
+                    @Valid
+                    PsmEduReportCreateRequestDto requestDto,
+            @Parameter(description = "첨부 파일 목록(선택)") @RequestPart(value = "files", required = false)
+                    List<MultipartFile> files,
+            @Parameter(hidden = true) @AuthenticationPrincipal CustomUserDetails userDetails)
+            throws IOException {
 
-                Long reportId = eduReportService.createPsmEduReport(requestDto, files, userDetails.getId());
+        Long reportId = eduReportService.createPsmEduReport(requestDto, files, userDetails.getId());
 
-                URI location = ServletUriComponentsBuilder.fromCurrentContextPath()
-                                .path("/api/educations/psm/{id}")
-                                .buildAndExpand(reportId)
-                                .toUri();
+        URI location =
+                ServletUriComponentsBuilder.fromCurrentContextPath()
+                        .path("/api/educations/psm/{id}")
+                        .buildAndExpand(reportId)
+                        .toUri();
 
-                return ResponseEntity.created(location).body(ApiResponse.onCreated(reportId));
-        }
+        return ResponseEntity.created(location).body(ApiResponse.onCreated(reportId));
+    }
 
-        @Operation(tags = {
-                        "안전보건" }, summary = "안전 보건 게시물 생성", description = """
+    @Operation(
+            tags = {"안전보건"},
+            summary = "안전 보건 게시물 생성",
+            description =
+                    """
                                         `multipart/form-data`로 안전 보건 게시물을 생성합니다.
 
                                         - `requestDto`(JSON 파트)는 필수입니다.
@@ -175,12 +280,36 @@ public class EduReportController {
                                         - `companyScope`는 회사 목록 배열입니다.
                                         - `[AWESOME]`처럼 1개를 보내면 해당 회사 게시물로 생성됩니다.
                                         - `[AWESOME, MARUI]`, `null`, `[]`는 모든 회사 공통 게시물로 생성됩니다.
-                                        """, requestBody = @io.swagger.v3.oas.annotations.parameters.RequestBody(required = true, content = @Content(mediaType = MediaType.MULTIPART_FORM_DATA_VALUE, schema = @Schema(implementation = SafetyEduReportCreateMultipartRequestDoc.class), encoding = {
-                                        @Encoding(name = "requestDto", contentType = MediaType.APPLICATION_JSON_VALUE),
-                                        @Encoding(name = "files", contentType = "*/*")
-                        })))
-        @ApiResponses({
-                        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "201", description = "생성 성공", content = @Content(mediaType = "application/json", examples = @ExampleObject(value = """
+                                        """,
+            requestBody =
+                    @io.swagger.v3.oas.annotations.parameters.RequestBody(
+                            required = true,
+                            content =
+                                    @Content(
+                                            mediaType = MediaType.MULTIPART_FORM_DATA_VALUE,
+                                            schema =
+                                                    @Schema(
+                                                            implementation =
+                                                                    SafetyEduReportCreateMultipartRequestDoc
+                                                                            .class),
+                                            encoding = {
+                                                @Encoding(
+                                                        name = "requestDto",
+                                                        contentType =
+                                                                MediaType.APPLICATION_JSON_VALUE),
+                                                @Encoding(name = "files", contentType = "*/*")
+                                            })))
+    @ApiResponses({
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                responseCode = "201",
+                description = "생성 성공",
+                content =
+                        @Content(
+                                mediaType = "application/json",
+                                examples =
+                                        @ExampleObject(
+                                                value =
+                                                        """
                                         {
                                           "isSuccess": true,
                                           "code": "COMMON201",
@@ -188,7 +317,16 @@ public class EduReportController {
                                           "result": 3
                                         }
                                         """))),
-                        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "403", description = "권한 없음", content = @Content(mediaType = "application/json", examples = @ExampleObject(value = """
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                responseCode = "403",
+                description = "권한 없음",
+                content =
+                        @Content(
+                                mediaType = "application/json",
+                                examples =
+                                        @ExampleObject(
+                                                value =
+                                                        """
                                         {
                                           "isSuccess": false,
                                           "code": "NO_AUTHORITY_FOR_SAFETY_WRITE",
@@ -196,7 +334,16 @@ public class EduReportController {
                                           "result": null
                                         }
                                         """))),
-                        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "리소스 없음", content = @Content(mediaType = "application/json", examples = @ExampleObject(value = """
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                responseCode = "404",
+                description = "리소스 없음",
+                content =
+                        @Content(
+                                mediaType = "application/json",
+                                examples =
+                                        @ExampleObject(
+                                                value =
+                                                        """
                                         {
                                           "isSuccess": false,
                                           "code": "EDUCATION_CATEGORY_NOT_FOUND",
@@ -204,66 +351,83 @@ public class EduReportController {
                                           "result": null
                                         }
                                         """)))
-        })
-        @PostMapping(value = "/safety", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-        public ResponseEntity<ApiResponse<Long>> createSafetyEduReport(
-                        @Parameter(description = "안전 보건 게시물 생성 정보(JSON)", required = true) @RequestPart("requestDto") @Valid SafetyEduReportCreateRequestDto requestDto,
-                        @Parameter(description = "첨부 파일 목록(선택)") @RequestPart(value = "files", required = false) List<MultipartFile> files,
-                        @Parameter(hidden = true) @AuthenticationPrincipal CustomUserDetails userDetails)
-                        throws IOException {
+    })
+    @PostMapping(value = "/safety", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ResponseEntity<ApiResponse<Long>> createSafetyEduReport(
+            @Parameter(description = "안전 보건 게시물 생성 정보(JSON)", required = true)
+                    @RequestPart("requestDto")
+                    @Valid
+                    SafetyEduReportCreateRequestDto requestDto,
+            @Parameter(description = "첨부 파일 목록(선택)") @RequestPart(value = "files", required = false)
+                    List<MultipartFile> files,
+            @Parameter(hidden = true) @AuthenticationPrincipal CustomUserDetails userDetails)
+            throws IOException {
 
-                Long reportId = eduReportService.createSafetyEduReport(requestDto, files, userDetails.getId());
+        Long reportId =
+                eduReportService.createSafetyEduReport(requestDto, files, userDetails.getId());
 
-                URI location = ServletUriComponentsBuilder.fromCurrentContextPath()
-                                .path("/api/educations/safety/{id}")
-                                .buildAndExpand(reportId)
-                                .toUri();
+        URI location =
+                ServletUriComponentsBuilder.fromCurrentContextPath()
+                        .path("/api/educations/safety/{id}")
+                        .buildAndExpand(reportId)
+                        .toUri();
 
-                return ResponseEntity.created(location).body(ApiResponse.onCreated(reportId));
-        }
+        return ResponseEntity.created(location).body(ApiResponse.onCreated(reportId));
+    }
 
-        @Schema(name = "DepartmentEduReportCreateMultipartRequestDoc", description = "부서 교육 게시물 생성 multipart 요청")
-        static class DepartmentEduReportCreateMultipartRequestDoc {
+    @Schema(
+            name = "DepartmentEduReportCreateMultipartRequestDoc",
+            description = "부서 교육 게시물 생성 multipart 요청")
+    static class DepartmentEduReportCreateMultipartRequestDoc {
 
-                @Schema(description = "부서 교육 게시물 생성 정보(JSON 파트)", requiredMode = Schema.RequiredMode.REQUIRED)
-                public DepartmentEduReportCreateRequestDto requestDto;
+        @Schema(
+                description = "부서 교육 게시물 생성 정보(JSON 파트)",
+                requiredMode = Schema.RequiredMode.REQUIRED)
+        public DepartmentEduReportCreateRequestDto requestDto;
 
-                @ArraySchema(schema = @Schema(type = "string", format = "binary"))
-                public List<String> files;
-        }
+        @ArraySchema(schema = @Schema(type = "string", format = "binary"))
+        public List<String> files;
+    }
 
-        @Schema(name = "PsmEduReportCreateMultipartRequestDoc", description = "PSM 게시물 생성 multipart 요청")
-        static class PsmEduReportCreateMultipartRequestDoc {
+    @Schema(name = "PsmEduReportCreateMultipartRequestDoc", description = "PSM 게시물 생성 multipart 요청")
+    static class PsmEduReportCreateMultipartRequestDoc {
 
-                @Schema(description = "PSM 게시물 생성 정보(JSON 파트)", requiredMode = Schema.RequiredMode.REQUIRED)
-                public PsmEduReportCreateRequestDto requestDto;
+        @Schema(description = "PSM 게시물 생성 정보(JSON 파트)", requiredMode = Schema.RequiredMode.REQUIRED)
+        public PsmEduReportCreateRequestDto requestDto;
 
-                @ArraySchema(schema = @Schema(type = "string", format = "binary"))
-                public List<String> files;
-        }
+        @ArraySchema(schema = @Schema(type = "string", format = "binary"))
+        public List<String> files;
+    }
 
-        @Schema(name = "SafetyEduReportCreateMultipartRequestDoc", description = "안전 보건 게시물 생성 multipart 요청")
-        static class SafetyEduReportCreateMultipartRequestDoc {
+    @Schema(
+            name = "SafetyEduReportCreateMultipartRequestDoc",
+            description = "안전 보건 게시물 생성 multipart 요청")
+    static class SafetyEduReportCreateMultipartRequestDoc {
 
-                @Schema(description = "안전 보건 게시물 생성 정보(JSON 파트)", requiredMode = Schema.RequiredMode.REQUIRED)
-                public SafetyEduReportCreateRequestDto requestDto;
+        @Schema(
+                description = "안전 보건 게시물 생성 정보(JSON 파트)",
+                requiredMode = Schema.RequiredMode.REQUIRED)
+        public SafetyEduReportCreateRequestDto requestDto;
 
-                @ArraySchema(schema = @Schema(type = "string", format = "binary"))
-                public List<String> files;
-        }
+        @ArraySchema(schema = @Schema(type = "string", format = "binary"))
+        public List<String> files;
+    }
 
-        @Schema(name = "EduReportUpdateMultipartRequestDoc", description = "교육 수정 multipart 요청")
-        static class EduReportUpdateMultipartRequestDoc {
+    @Schema(name = "EduReportUpdateMultipartRequestDoc", description = "교육 수정 multipart 요청")
+    static class EduReportUpdateMultipartRequestDoc {
 
-                @Schema(description = "교육 수정 정보(JSON 파트)", requiredMode = Schema.RequiredMode.REQUIRED)
-                public EduReportUpdateRequestDto requestDto;
+        @Schema(description = "교육 수정 정보(JSON 파트)", requiredMode = Schema.RequiredMode.REQUIRED)
+        public EduReportUpdateRequestDto requestDto;
 
-                @ArraySchema(schema = @Schema(type = "string", format = "binary"))
-                public List<String> files;
-        }
+        @ArraySchema(schema = @Schema(type = "string", format = "binary"))
+        public List<String> files;
+    }
 
-        @Operation(tags = {
-                        "부서교육" }, summary = "부서 교육 게시물 목록 조회", description = """
+    @Operation(
+            tags = {"부서교육"},
+            summary = "부서 교육 게시물 목록 조회",
+            description =
+                    """
                                         부서 교육 게시물 목록을 조회합니다.
 
                                         - `MANAGE_DEPARTMENT_EDUCATION` 권한 사용자는 `departmentName`으로 전체 부서 대상 필터 조회가 가능합니다.
@@ -272,8 +436,17 @@ public class EduReportController {
                                         - `mySigned`, `myCompletionStatus`는 부서교육 + 본인 소속 부서 게시물일 때만 값이 채워집니다.
                                         - `myCompletionStatus`는 `signatureRequired=false`이면 항상 `COMPLETED`이며, `signatureRequired=true`이면 내 서명 여부에 따라 `COMPLETED/INCOMPLETE`로 계산됩니다.
                                         """)
-        @ApiResponses({
-                        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "조회 성공", content = @Content(mediaType = "application/json", examples = @ExampleObject(value = """
+    @ApiResponses({
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                responseCode = "200",
+                description = "조회 성공",
+                content =
+                        @Content(
+                                mediaType = "application/json",
+                                examples =
+                                        @ExampleObject(
+                                                value =
+                                                        """
                                         {
                                           "isSuccess": true,
                                           "code": "COMMON200",
@@ -298,8 +471,17 @@ public class EduReportController {
                                           ]
                                         }
                                         """))),
-                        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "리소스 없음", content = @Content(mediaType = "application/json", examples = {
-                                        @ExampleObject(name = "사용자 없음", value = """
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                responseCode = "404",
+                description = "리소스 없음",
+                content =
+                        @Content(
+                                mediaType = "application/json",
+                                examples = {
+                                    @ExampleObject(
+                                            name = "사용자 없음",
+                                            value =
+                                                    """
                                                         {
                                                           "isSuccess": false,
                                                           "code": "USER_NOT_FOUND",
@@ -307,7 +489,10 @@ public class EduReportController {
                                                           "result": null
                                                         }
                                                         """),
-                                        @ExampleObject(name = "부서 없음", value = """
+                                    @ExampleObject(
+                                            name = "부서 없음",
+                                            value =
+                                                    """
                                                         {
                                                           "isSuccess": false,
                                                           "code": "DEPARTMENT_NOT_FOUND",
@@ -315,19 +500,28 @@ public class EduReportController {
                                                           "result": null
                                                         }
                                                         """)
-                        }))
-        })
-        @GetMapping("/department")
-        public ResponseEntity<ApiResponse<List<EduReportSummaryDto>>> getDepartmentEduReports(
-                        @Parameter(description = "부서명 필터(권한 사용자 전용)", example = "SALES_DEPT") @RequestParam(required = false) DepartmentName departmentName,
-                        @Parameter(description = "제목 검색 키워드 (FULLTEXT 검색)", example = "안전교육") @RequestParam(required = false) String title,
-                        @Parameter(hidden = true) @AuthenticationPrincipal CustomUserDetails userDetails) {
-                List<EduReportSummaryDto> reports = eduReportService.getDepartmentEduReports(
-                                departmentName, userDetails.getId(), title);
-                return ResponseEntity.ok(ApiResponse.onSuccess(reports));
-        }
+                                }))
+    })
+    @GetMapping("/department")
+    public ResponseEntity<ApiResponse<List<EduReportSummaryDto>>> getDepartmentEduReports(
+            @Parameter(description = "부서명 필터(권한 사용자 전용)", example = "SALES_DEPT")
+                    @RequestParam(required = false)
+                    DepartmentName departmentName,
+            @Parameter(description = "제목 검색 키워드 (FULLTEXT 검색)", example = "안전교육")
+                    @RequestParam(required = false)
+                    String title,
+            @Parameter(hidden = true) @AuthenticationPrincipal CustomUserDetails userDetails) {
+        List<EduReportSummaryDto> reports =
+                eduReportService.getDepartmentEduReports(
+                        departmentName, userDetails.getId(), title);
+        return ResponseEntity.ok(ApiResponse.onSuccess(reports));
+    }
 
-        @Operation(tags = { "PSM" }, summary = "PSM 게시물 목록 조회", description = """
+    @Operation(
+            tags = {"PSM"},
+            summary = "PSM 게시물 목록 조회",
+            description =
+                    """
                         PSM 게시물 목록을 조회합니다.
 
                         - `MANAGE_PSM` 권한 사용자는 모든 회사의 PSM 게시물을 조회할 수 있습니다.
@@ -335,8 +529,17 @@ public class EduReportController {
                         - 응답의 `companyScope`는 대상 회사 목록 배열로 반환됩니다.
                         - 공통 게시물은 `companyScope: ["AWESOME", "MARUI"]`로 응답됩니다.
                         """)
-        @ApiResponses({
-                        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "조회 성공", content = @Content(mediaType = "application/json", examples = @ExampleObject(value = """
+    @ApiResponses({
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                responseCode = "200",
+                description = "조회 성공",
+                content =
+                        @Content(
+                                mediaType = "application/json",
+                                examples =
+                                        @ExampleObject(
+                                                value =
+                                                        """
                                         {
                                           "isSuccess": true,
                                           "code": "COMMON200",
@@ -360,8 +563,17 @@ public class EduReportController {
                                           ]
                                         }
                                         """))),
-                        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "리소스 없음", content = @Content(mediaType = "application/json", examples = {
-                                        @ExampleObject(name = "사용자 없음", value = """
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                responseCode = "404",
+                description = "리소스 없음",
+                content =
+                        @Content(
+                                mediaType = "application/json",
+                                examples = {
+                                    @ExampleObject(
+                                            name = "사용자 없음",
+                                            value =
+                                                    """
                                                         {
                                                           "isSuccess": false,
                                                           "code": "USER_NOT_FOUND",
@@ -369,19 +581,27 @@ public class EduReportController {
                                                           "result": null
                                                         }
                                                         """)
-                        }))
-        })
-        @GetMapping("/psm")
-        public ResponseEntity<ApiResponse<List<EduReportSummaryDto>>> getPsmEduReports(
-                        @Parameter(description = "카테고리 ID 필터(PSM)", example = "1") @RequestParam(required = false) Long categoryId,
-                        @Parameter(description = "제목 검색 키워드 (FULLTEXT 검색)", example = "변경관리") @RequestParam(required = false) String title,
-                        @Parameter(hidden = true) @AuthenticationPrincipal CustomUserDetails userDetails) {
-                List<EduReportSummaryDto> reports = eduReportService.getPsmEduReports(categoryId, userDetails.getId(),
-                                title);
-                return ResponseEntity.ok(ApiResponse.onSuccess(reports));
-        }
+                                }))
+    })
+    @GetMapping("/psm")
+    public ResponseEntity<ApiResponse<List<EduReportSummaryDto>>> getPsmEduReports(
+            @Parameter(description = "카테고리 ID 필터(PSM)", example = "1")
+                    @RequestParam(required = false)
+                    Long categoryId,
+            @Parameter(description = "제목 검색 키워드 (FULLTEXT 검색)", example = "변경관리")
+                    @RequestParam(required = false)
+                    String title,
+            @Parameter(hidden = true) @AuthenticationPrincipal CustomUserDetails userDetails) {
+        List<EduReportSummaryDto> reports =
+                eduReportService.getPsmEduReports(categoryId, userDetails.getId(), title);
+        return ResponseEntity.ok(ApiResponse.onSuccess(reports));
+    }
 
-        @Operation(tags = { "안전보건" }, summary = "안전 보건 게시물 목록 조회", description = """
+    @Operation(
+            tags = {"안전보건"},
+            summary = "안전 보건 게시물 목록 조회",
+            description =
+                    """
                         안전 보건 게시물 목록을 조회합니다.
 
                         - `MANAGE_SAFETY` 권한 사용자는 모든 회사의 안전 보건 게시물을 조회할 수 있습니다.
@@ -389,8 +609,17 @@ public class EduReportController {
                         - 응답의 `companyScope`는 대상 회사 목록 배열로 반환됩니다.
                         - 공통 게시물은 `companyScope: ["AWESOME", "MARUI"]`로 응답됩니다.
                         """)
-        @ApiResponses({
-                        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "조회 성공", content = @Content(mediaType = "application/json", examples = @ExampleObject(value = """
+    @ApiResponses({
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                responseCode = "200",
+                description = "조회 성공",
+                content =
+                        @Content(
+                                mediaType = "application/json",
+                                examples =
+                                        @ExampleObject(
+                                                value =
+                                                        """
                                         {
                                           "isSuccess": true,
                                           "code": "COMMON200",
@@ -414,8 +643,17 @@ public class EduReportController {
                                           ]
                                         }
                                         """))),
-                        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "리소스 없음", content = @Content(mediaType = "application/json", examples = {
-                                        @ExampleObject(name = "사용자 없음", value = """
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                responseCode = "404",
+                description = "리소스 없음",
+                content =
+                        @Content(
+                                mediaType = "application/json",
+                                examples = {
+                                    @ExampleObject(
+                                            name = "사용자 없음",
+                                            value =
+                                                    """
                                                         {
                                                           "isSuccess": false,
                                                           "code": "USER_NOT_FOUND",
@@ -423,20 +661,27 @@ public class EduReportController {
                                                           "result": null
                                                         }
                                                         """)
-                        }))
-        })
-        @GetMapping("/safety")
-        public ResponseEntity<ApiResponse<List<EduReportSummaryDto>>> getSafetyEduReports(
-                        @Parameter(description = "카테고리 ID 필터(안전 보건)", example = "1") @RequestParam(required = false) Long categoryId,
-                        @Parameter(description = "제목 검색 키워드 (FULLTEXT 검색)", example = "정기교육") @RequestParam(required = false) String title,
-                        @Parameter(hidden = true) @AuthenticationPrincipal CustomUserDetails userDetails) {
-                List<EduReportSummaryDto> reports = eduReportService.getSafetyEduReports(categoryId,
-                                userDetails.getId(), title);
-                return ResponseEntity.ok(ApiResponse.onSuccess(reports));
-        }
+                                }))
+    })
+    @GetMapping("/safety")
+    public ResponseEntity<ApiResponse<List<EduReportSummaryDto>>> getSafetyEduReports(
+            @Parameter(description = "카테고리 ID 필터(안전 보건)", example = "1")
+                    @RequestParam(required = false)
+                    Long categoryId,
+            @Parameter(description = "제목 검색 키워드 (FULLTEXT 검색)", example = "정기교육")
+                    @RequestParam(required = false)
+                    String title,
+            @Parameter(hidden = true) @AuthenticationPrincipal CustomUserDetails userDetails) {
+        List<EduReportSummaryDto> reports =
+                eduReportService.getSafetyEduReports(categoryId, userDetails.getId(), title);
+        return ResponseEntity.ok(ApiResponse.onSuccess(reports));
+    }
 
-        @Operation(tags = {
-                        "부서교육" }, summary = "부서 교육 게시물 상세 조회", description = """
+    @Operation(
+            tags = {"부서교육"},
+            summary = "부서 교육 게시물 상세 조회",
+            description =
+                    """
                                         부서 교육 게시물 상세 정보를 조회합니다.
 
                                         - `MANAGE_DEPARTMENT_EDUCATION` 권한 사용자는 전체 부서의 부서 교육 게시물을 조회할 수 있습니다.
@@ -448,10 +693,21 @@ public class EduReportController {
                                         - `mySigned`, `myCompletionStatus`는 부서교육 + 본인 소속 부서 게시물일 때만 값이 채워집니다.
                                         - `myCompletionStatus`는 `signatureRequired=false`이면 항상 `COMPLETED`이며, `signatureRequired=true`이면 내 서명 여부에 따라 `COMPLETED/INCOMPLETE`로 계산됩니다.
                                         """)
-        @ApiResponses({
-                        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "조회 성공"),
-                        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "리소스 없음", content = @Content(mediaType = "application/json", examples = {
-                                        @ExampleObject(name = "게시물 없음", value = """
+    @ApiResponses({
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                responseCode = "200",
+                description = "조회 성공"),
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                responseCode = "404",
+                description = "리소스 없음",
+                content =
+                        @Content(
+                                mediaType = "application/json",
+                                examples = {
+                                    @ExampleObject(
+                                            name = "게시물 없음",
+                                            value =
+                                                    """
                                                         {
                                                           "isSuccess": false,
                                                           "code": "EDU_REPORT_NOT_FOUND",
@@ -459,7 +715,10 @@ public class EduReportController {
                                                           "result": null
                                                         }
                                                         """),
-                                        @ExampleObject(name = "타 부서 접근", value = """
+                                    @ExampleObject(
+                                            name = "타 부서 접근",
+                                            value =
+                                                    """
                                                         {
                                                           "isSuccess": false,
                                                           "code": "EDU_REPORT_NOT_FOUND",
@@ -467,7 +726,10 @@ public class EduReportController {
                                                           "result": null
                                                         }
                                                         """),
-                                        @ExampleObject(name = "사용자 없음", value = """
+                                    @ExampleObject(
+                                            name = "사용자 없음",
+                                            value =
+                                                    """
                                                         {
                                                           "isSuccess": false,
                                                           "code": "USER_NOT_FOUND",
@@ -475,17 +737,23 @@ public class EduReportController {
                                                           "result": null
                                                         }
                                                         """)
-                        }))
-        })
-        @GetMapping("/department/{educationId}")
-        public ResponseEntity<ApiResponse<EduReportDetailDto>> getDepartmentEduReport(
-                        @Parameter(description = "조회할 부서 교육 게시물 ID", example = "1") @PathVariable Long educationId,
-                        @Parameter(hidden = true) @AuthenticationPrincipal CustomUserDetails userDetails) {
-                EduReportDetailDto report = eduReportService.getDepartmentEduReport(educationId, userDetails.getId());
-                return ResponseEntity.ok(ApiResponse.onSuccess(report));
-        }
+                                }))
+    })
+    @GetMapping("/department/{educationId}")
+    public ResponseEntity<ApiResponse<EduReportDetailDto>> getDepartmentEduReport(
+            @Parameter(description = "조회할 부서 교육 게시물 ID", example = "1") @PathVariable
+                    Long educationId,
+            @Parameter(hidden = true) @AuthenticationPrincipal CustomUserDetails userDetails) {
+        EduReportDetailDto report =
+                eduReportService.getDepartmentEduReport(educationId, userDetails.getId());
+        return ResponseEntity.ok(ApiResponse.onSuccess(report));
+    }
 
-        @Operation(tags = { "PSM" }, summary = "PSM 게시물 상세 조회", description = """
+    @Operation(
+            tags = {"PSM"},
+            summary = "PSM 게시물 상세 조회",
+            description =
+                    """
                         PSM 게시물 상세 정보를 조회합니다.
 
                         - `MANAGE_PSM` 권한 사용자는 모든 회사의 PSM 게시물을 조회할 수 있습니다.
@@ -494,10 +762,21 @@ public class EduReportController {
                         - 응답의 `companyScope`는 회사 목록 배열로 반환됩니다.
                         - 공통 게시물은 `companyScope: ["AWESOME", "MARUI"]`로 응답됩니다.
                         """)
-        @ApiResponses({
-                        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "조회 성공"),
-                        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "리소스 없음", content = @Content(mediaType = "application/json", examples = {
-                                        @ExampleObject(name = "게시물 없음", value = """
+    @ApiResponses({
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                responseCode = "200",
+                description = "조회 성공"),
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                responseCode = "404",
+                description = "리소스 없음",
+                content =
+                        @Content(
+                                mediaType = "application/json",
+                                examples = {
+                                    @ExampleObject(
+                                            name = "게시물 없음",
+                                            value =
+                                                    """
                                                         {
                                                           "isSuccess": false,
                                                           "code": "EDU_REPORT_NOT_FOUND",
@@ -505,7 +784,10 @@ public class EduReportController {
                                                           "result": null
                                                         }
                                                         """),
-                                        @ExampleObject(name = "타 회사 접근", value = """
+                                    @ExampleObject(
+                                            name = "타 회사 접근",
+                                            value =
+                                                    """
                                                         {
                                                           "isSuccess": false,
                                                           "code": "EDU_REPORT_NOT_FOUND",
@@ -513,7 +795,10 @@ public class EduReportController {
                                                           "result": null
                                                         }
                                                         """),
-                                        @ExampleObject(name = "사용자 없음", value = """
+                                    @ExampleObject(
+                                            name = "사용자 없음",
+                                            value =
+                                                    """
                                                         {
                                                           "isSuccess": false,
                                                           "code": "USER_NOT_FOUND",
@@ -521,17 +806,23 @@ public class EduReportController {
                                                           "result": null
                                                         }
                                                         """)
-                        }))
-        })
-        @GetMapping("/psm/{educationId}")
-        public ResponseEntity<ApiResponse<EduReportDetailDto>> getPsmEduReport(
-                        @Parameter(description = "조회할 PSM 게시물 ID", example = "1") @PathVariable Long educationId,
-                        @Parameter(hidden = true) @AuthenticationPrincipal CustomUserDetails userDetails) {
-                EduReportDetailDto report = eduReportService.getPsmEduReport(educationId, userDetails.getId());
-                return ResponseEntity.ok(ApiResponse.onSuccess(report));
-        }
+                                }))
+    })
+    @GetMapping("/psm/{educationId}")
+    public ResponseEntity<ApiResponse<EduReportDetailDto>> getPsmEduReport(
+            @Parameter(description = "조회할 PSM 게시물 ID", example = "1") @PathVariable
+                    Long educationId,
+            @Parameter(hidden = true) @AuthenticationPrincipal CustomUserDetails userDetails) {
+        EduReportDetailDto report =
+                eduReportService.getPsmEduReport(educationId, userDetails.getId());
+        return ResponseEntity.ok(ApiResponse.onSuccess(report));
+    }
 
-        @Operation(tags = { "안전보건" }, summary = "안전 보건 게시물 상세 조회", description = """
+    @Operation(
+            tags = {"안전보건"},
+            summary = "안전 보건 게시물 상세 조회",
+            description =
+                    """
                         안전 보건 게시물 상세 정보를 조회합니다.
 
                         - `MANAGE_SAFETY` 권한 사용자는 모든 회사의 안전 보건 게시물을 조회할 수 있습니다.
@@ -540,10 +831,21 @@ public class EduReportController {
                         - 응답의 `companyScope`는 회사 목록 배열로 반환됩니다.
                         - 공통 게시물은 `companyScope: ["AWESOME", "MARUI"]`로 응답됩니다.
                         """)
-        @ApiResponses({
-                        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "조회 성공"),
-                        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "리소스 없음", content = @Content(mediaType = "application/json", examples = {
-                                        @ExampleObject(name = "게시물 없음", value = """
+    @ApiResponses({
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                responseCode = "200",
+                description = "조회 성공"),
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                responseCode = "404",
+                description = "리소스 없음",
+                content =
+                        @Content(
+                                mediaType = "application/json",
+                                examples = {
+                                    @ExampleObject(
+                                            name = "게시물 없음",
+                                            value =
+                                                    """
                                                         {
                                                           "isSuccess": false,
                                                           "code": "EDU_REPORT_NOT_FOUND",
@@ -551,7 +853,10 @@ public class EduReportController {
                                                           "result": null
                                                         }
                                                         """),
-                                        @ExampleObject(name = "타 회사 접근", value = """
+                                    @ExampleObject(
+                                            name = "타 회사 접근",
+                                            value =
+                                                    """
                                                         {
                                                           "isSuccess": false,
                                                           "code": "EDU_REPORT_NOT_FOUND",
@@ -559,7 +864,10 @@ public class EduReportController {
                                                           "result": null
                                                         }
                                                         """),
-                                        @ExampleObject(name = "사용자 없음", value = """
+                                    @ExampleObject(
+                                            name = "사용자 없음",
+                                            value =
+                                                    """
                                                         {
                                                           "isSuccess": false,
                                                           "code": "USER_NOT_FOUND",
@@ -567,18 +875,23 @@ public class EduReportController {
                                                           "result": null
                                                         }
                                                         """)
-                        }))
-        })
-        @GetMapping("/safety/{educationId}")
-        public ResponseEntity<ApiResponse<EduReportDetailDto>> getSafetyEduReport(
-                        @Parameter(description = "조회할 안전 보건 게시물 ID", example = "1") @PathVariable Long educationId,
-                        @Parameter(hidden = true) @AuthenticationPrincipal CustomUserDetails userDetails) {
-                EduReportDetailDto report = eduReportService.getSafetyEduReport(educationId, userDetails.getId());
-                return ResponseEntity.ok(ApiResponse.onSuccess(report));
-        }
+                                }))
+    })
+    @GetMapping("/safety/{educationId}")
+    public ResponseEntity<ApiResponse<EduReportDetailDto>> getSafetyEduReport(
+            @Parameter(description = "조회할 안전 보건 게시물 ID", example = "1") @PathVariable
+                    Long educationId,
+            @Parameter(hidden = true) @AuthenticationPrincipal CustomUserDetails userDetails) {
+        EduReportDetailDto report =
+                eduReportService.getSafetyEduReport(educationId, userDetails.getId());
+        return ResponseEntity.ok(ApiResponse.onSuccess(report));
+    }
 
-        @Operation(tags = {
-                        "부서교육" }, summary = "부서 교육 게시물 수정", description = """
+    @Operation(
+            tags = {"부서교육"},
+            summary = "부서 교육 게시물 수정",
+            description =
+                    """
                                         `multipart/form-data`로 부서 교육 게시물을 수정합니다.
 
                                         - 부서 교육 관리 권한(`MANAGE_DEPARTMENT_EDUCATION`)이 필요합니다.
@@ -586,40 +899,76 @@ public class EduReportController {
                                         - 출석 완료자가 1명이라도 있으면 수정할 수 없습니다.
                                         - `requestDto`(JSON 파트)는 필수이며, `files`(파일 파트)는 선택입니다.
                                         - `requestDto.deleteAttachmentIds`로 기존 첨부파일 삭제가 가능합니다.
-                                        """, requestBody = @io.swagger.v3.oas.annotations.parameters.RequestBody(required = true, content = @Content(mediaType = MediaType.MULTIPART_FORM_DATA_VALUE, schema = @Schema(implementation = EduReportUpdateMultipartRequestDoc.class), encoding = {
-                                        @Encoding(name = "requestDto", contentType = MediaType.APPLICATION_JSON_VALUE),
-                                        @Encoding(name = "files", contentType = "*/*")
-                        })))
-        @ApiResponses({
-                        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "수정 성공"),
-                        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "잘못된 요청"),
-                        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "403", description = "권한 없음"),
-                        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "리소스 없음")
-        })
-        @PatchMapping(value = "/department/{educationId}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-        public ResponseEntity<ApiResponse<Long>> updateDepartmentEducation(
-                        @Parameter(description = "수정할 부서 교육 게시물 ID", example = "1") @PathVariable Long educationId,
-                        @Parameter(description = "부서 교육 수정 정보(JSON)", required = true) @RequestPart("requestDto") @Valid EduReportUpdateRequestDto requestDto,
-                        @Parameter(description = "추가할 첨부 파일 목록(선택)") @RequestPart(value = "files", required = false) List<MultipartFile> files,
-                        @Parameter(hidden = true) @AuthenticationPrincipal CustomUserDetails userDetails) {
-                Long updatedId = eduReportService.updateDepartmentEduReport(
-                                educationId, requestDto, files, userDetails.getId());
-                return ResponseEntity.ok(ApiResponse.onSuccess(updatedId));
-        }
+                                        """,
+            requestBody =
+                    @io.swagger.v3.oas.annotations.parameters.RequestBody(
+                            required = true,
+                            content =
+                                    @Content(
+                                            mediaType = MediaType.MULTIPART_FORM_DATA_VALUE,
+                                            schema =
+                                                    @Schema(
+                                                            implementation =
+                                                                    EduReportUpdateMultipartRequestDoc
+                                                                            .class),
+                                            encoding = {
+                                                @Encoding(
+                                                        name = "requestDto",
+                                                        contentType =
+                                                                MediaType.APPLICATION_JSON_VALUE),
+                                                @Encoding(name = "files", contentType = "*/*")
+                                            })))
+    @ApiResponses({
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                responseCode = "200",
+                description = "수정 성공"),
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                responseCode = "400",
+                description = "잘못된 요청"),
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                responseCode = "403",
+                description = "권한 없음"),
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                responseCode = "404",
+                description = "리소스 없음")
+    })
+    @PatchMapping(
+            value = "/department/{educationId}",
+            consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ResponseEntity<ApiResponse<Long>> updateDepartmentEducation(
+            @Parameter(description = "수정할 부서 교육 게시물 ID", example = "1") @PathVariable
+                    Long educationId,
+            @Parameter(description = "부서 교육 수정 정보(JSON)", required = true)
+                    @RequestPart("requestDto")
+                    @Valid
+                    EduReportUpdateRequestDto requestDto,
+            @Parameter(description = "추가할 첨부 파일 목록(선택)")
+                    @RequestPart(value = "files", required = false)
+                    List<MultipartFile> files,
+            @Parameter(hidden = true) @AuthenticationPrincipal CustomUserDetails userDetails) {
+        Long updatedId =
+                eduReportService.updateDepartmentEduReport(
+                        educationId, requestDto, files, userDetails.getId());
+        return ResponseEntity.ok(ApiResponse.onSuccess(updatedId));
+    }
 
-        @Hidden
-        @PatchMapping(value = "/department/{educationId}", consumes = MediaType.APPLICATION_JSON_VALUE)
-        public ResponseEntity<ApiResponse<Long>> updateDepartmentEducationJsonFallback(
-                        @PathVariable Long educationId,
-                        @Valid @RequestBody EduReportUpdateRequestDto requestDto,
-                        @Parameter(hidden = true) @AuthenticationPrincipal CustomUserDetails userDetails) {
-                Long updatedId = eduReportService.updateDepartmentEduReport(
-                                educationId, requestDto, userDetails.getId());
-                return ResponseEntity.ok(ApiResponse.onSuccess(updatedId));
-        }
+    @Hidden
+    @PatchMapping(value = "/department/{educationId}", consumes = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<ApiResponse<Long>> updateDepartmentEducationJsonFallback(
+            @PathVariable Long educationId,
+            @Valid @RequestBody EduReportUpdateRequestDto requestDto,
+            @Parameter(hidden = true) @AuthenticationPrincipal CustomUserDetails userDetails) {
+        Long updatedId =
+                eduReportService.updateDepartmentEduReport(
+                        educationId, requestDto, userDetails.getId());
+        return ResponseEntity.ok(ApiResponse.onSuccess(updatedId));
+    }
 
-        @Operation(tags = {
-                        "PSM" }, summary = "PSM 게시물 수정", description = """
+    @Operation(
+            tags = {"PSM"},
+            summary = "PSM 게시물 수정",
+            description =
+                    """
                                         `multipart/form-data`로 PSM 게시물을 수정합니다.
 
                                         - PSM 관리 권한(`MANAGE_PSM`)이 필요합니다.
@@ -627,39 +976,73 @@ public class EduReportController {
                                         - 출석 완료자가 1명이라도 있으면 수정할 수 없습니다.
                                         - `requestDto`(JSON 파트)는 필수이며, `files`(파일 파트)는 선택입니다.
                                         - `requestDto.deleteAttachmentIds`로 기존 첨부파일 삭제가 가능합니다.
-                                        """, requestBody = @io.swagger.v3.oas.annotations.parameters.RequestBody(required = true, content = @Content(mediaType = MediaType.MULTIPART_FORM_DATA_VALUE, schema = @Schema(implementation = EduReportUpdateMultipartRequestDoc.class), encoding = {
-                                        @Encoding(name = "requestDto", contentType = MediaType.APPLICATION_JSON_VALUE),
-                                        @Encoding(name = "files", contentType = "*/*")
-                        })))
-        @ApiResponses({
-                        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "수정 성공"),
-                        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "잘못된 요청"),
-                        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "403", description = "권한 없음"),
-                        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "리소스 없음")
-        })
-        @PatchMapping(value = "/psm/{educationId}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-        public ResponseEntity<ApiResponse<Long>> updatePsmEducation(
-                        @Parameter(description = "수정할 PSM 게시물 ID", example = "1") @PathVariable Long educationId,
-                        @Parameter(description = "PSM 수정 정보(JSON)", required = true) @RequestPart("requestDto") @Valid EduReportUpdateRequestDto requestDto,
-                        @Parameter(description = "추가할 첨부 파일 목록(선택)") @RequestPart(value = "files", required = false) List<MultipartFile> files,
-                        @Parameter(hidden = true) @AuthenticationPrincipal CustomUserDetails userDetails) {
-                Long updatedId = eduReportService.updatePsmEduReport(
-                                educationId, requestDto, files, userDetails.getId());
-                return ResponseEntity.ok(ApiResponse.onSuccess(updatedId));
-        }
+                                        """,
+            requestBody =
+                    @io.swagger.v3.oas.annotations.parameters.RequestBody(
+                            required = true,
+                            content =
+                                    @Content(
+                                            mediaType = MediaType.MULTIPART_FORM_DATA_VALUE,
+                                            schema =
+                                                    @Schema(
+                                                            implementation =
+                                                                    EduReportUpdateMultipartRequestDoc
+                                                                            .class),
+                                            encoding = {
+                                                @Encoding(
+                                                        name = "requestDto",
+                                                        contentType =
+                                                                MediaType.APPLICATION_JSON_VALUE),
+                                                @Encoding(name = "files", contentType = "*/*")
+                                            })))
+    @ApiResponses({
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                responseCode = "200",
+                description = "수정 성공"),
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                responseCode = "400",
+                description = "잘못된 요청"),
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                responseCode = "403",
+                description = "권한 없음"),
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                responseCode = "404",
+                description = "리소스 없음")
+    })
+    @PatchMapping(value = "/psm/{educationId}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ResponseEntity<ApiResponse<Long>> updatePsmEducation(
+            @Parameter(description = "수정할 PSM 게시물 ID", example = "1") @PathVariable
+                    Long educationId,
+            @Parameter(description = "PSM 수정 정보(JSON)", required = true)
+                    @RequestPart("requestDto")
+                    @Valid
+                    EduReportUpdateRequestDto requestDto,
+            @Parameter(description = "추가할 첨부 파일 목록(선택)")
+                    @RequestPart(value = "files", required = false)
+                    List<MultipartFile> files,
+            @Parameter(hidden = true) @AuthenticationPrincipal CustomUserDetails userDetails) {
+        Long updatedId =
+                eduReportService.updatePsmEduReport(
+                        educationId, requestDto, files, userDetails.getId());
+        return ResponseEntity.ok(ApiResponse.onSuccess(updatedId));
+    }
 
-        @Hidden
-        @PatchMapping(value = "/psm/{educationId}", consumes = MediaType.APPLICATION_JSON_VALUE)
-        public ResponseEntity<ApiResponse<Long>> updatePsmEducationJsonFallback(
-                        @PathVariable Long educationId,
-                        @Valid @RequestBody EduReportUpdateRequestDto requestDto,
-                        @Parameter(hidden = true) @AuthenticationPrincipal CustomUserDetails userDetails) {
-                Long updatedId = eduReportService.updatePsmEduReport(educationId, requestDto, userDetails.getId());
-                return ResponseEntity.ok(ApiResponse.onSuccess(updatedId));
-        }
+    @Hidden
+    @PatchMapping(value = "/psm/{educationId}", consumes = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<ApiResponse<Long>> updatePsmEducationJsonFallback(
+            @PathVariable Long educationId,
+            @Valid @RequestBody EduReportUpdateRequestDto requestDto,
+            @Parameter(hidden = true) @AuthenticationPrincipal CustomUserDetails userDetails) {
+        Long updatedId =
+                eduReportService.updatePsmEduReport(educationId, requestDto, userDetails.getId());
+        return ResponseEntity.ok(ApiResponse.onSuccess(updatedId));
+    }
 
-        @Operation(tags = {
-                        "안전보건" }, summary = "안전 보건 게시물 수정", description = """
+    @Operation(
+            tags = {"안전보건"},
+            summary = "안전 보건 게시물 수정",
+            description =
+                    """
                                         `multipart/form-data`로 안전 보건 게시물을 수정합니다.
 
                                         - 안전 보건 관리 권한(`MANAGE_SAFETY`)이 필요합니다.
@@ -667,199 +1050,355 @@ public class EduReportController {
                                         - 출석 완료자가 1명이라도 있으면 수정할 수 없습니다.
                                         - `requestDto`(JSON 파트)는 필수이며, `files`(파일 파트)는 선택입니다.
                                         - `requestDto.deleteAttachmentIds`로 기존 첨부파일 삭제가 가능합니다.
-                                        """, requestBody = @io.swagger.v3.oas.annotations.parameters.RequestBody(required = true, content = @Content(mediaType = MediaType.MULTIPART_FORM_DATA_VALUE, schema = @Schema(implementation = EduReportUpdateMultipartRequestDoc.class), encoding = {
-                                        @Encoding(name = "requestDto", contentType = MediaType.APPLICATION_JSON_VALUE),
-                                        @Encoding(name = "files", contentType = "*/*")
-                        })))
-        @ApiResponses({
-                        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "수정 성공"),
-                        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "잘못된 요청"),
-                        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "403", description = "권한 없음"),
-                        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "리소스 없음")
-        })
-        @PatchMapping(value = "/safety/{educationId}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-        public ResponseEntity<ApiResponse<Long>> updateSafetyEducation(
-                        @Parameter(description = "수정할 안전 보건 게시물 ID", example = "1") @PathVariable Long educationId,
-                        @Parameter(description = "안전 보건 수정 정보(JSON)", required = true) @RequestPart("requestDto") @Valid EduReportUpdateRequestDto requestDto,
-                        @Parameter(description = "추가할 첨부 파일 목록(선택)") @RequestPart(value = "files", required = false) List<MultipartFile> files,
-                        @Parameter(hidden = true) @AuthenticationPrincipal CustomUserDetails userDetails) {
-                Long updatedId = eduReportService.updateSafetyEduReport(
-                                educationId, requestDto, files, userDetails.getId());
-                return ResponseEntity.ok(ApiResponse.onSuccess(updatedId));
-        }
+                                        """,
+            requestBody =
+                    @io.swagger.v3.oas.annotations.parameters.RequestBody(
+                            required = true,
+                            content =
+                                    @Content(
+                                            mediaType = MediaType.MULTIPART_FORM_DATA_VALUE,
+                                            schema =
+                                                    @Schema(
+                                                            implementation =
+                                                                    EduReportUpdateMultipartRequestDoc
+                                                                            .class),
+                                            encoding = {
+                                                @Encoding(
+                                                        name = "requestDto",
+                                                        contentType =
+                                                                MediaType.APPLICATION_JSON_VALUE),
+                                                @Encoding(name = "files", contentType = "*/*")
+                                            })))
+    @ApiResponses({
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                responseCode = "200",
+                description = "수정 성공"),
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                responseCode = "400",
+                description = "잘못된 요청"),
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                responseCode = "403",
+                description = "권한 없음"),
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                responseCode = "404",
+                description = "리소스 없음")
+    })
+    @PatchMapping(value = "/safety/{educationId}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ResponseEntity<ApiResponse<Long>> updateSafetyEducation(
+            @Parameter(description = "수정할 안전 보건 게시물 ID", example = "1") @PathVariable
+                    Long educationId,
+            @Parameter(description = "안전 보건 수정 정보(JSON)", required = true)
+                    @RequestPart("requestDto")
+                    @Valid
+                    EduReportUpdateRequestDto requestDto,
+            @Parameter(description = "추가할 첨부 파일 목록(선택)")
+                    @RequestPart(value = "files", required = false)
+                    List<MultipartFile> files,
+            @Parameter(hidden = true) @AuthenticationPrincipal CustomUserDetails userDetails) {
+        Long updatedId =
+                eduReportService.updateSafetyEduReport(
+                        educationId, requestDto, files, userDetails.getId());
+        return ResponseEntity.ok(ApiResponse.onSuccess(updatedId));
+    }
 
-        @Hidden
-        @PatchMapping(value = "/safety/{educationId}", consumes = MediaType.APPLICATION_JSON_VALUE)
-        public ResponseEntity<ApiResponse<Long>> updateSafetyEducationJsonFallback(
-                        @PathVariable Long educationId,
-                        @Valid @RequestBody EduReportUpdateRequestDto requestDto,
-                        @Parameter(hidden = true) @AuthenticationPrincipal CustomUserDetails userDetails) {
-                Long updatedId = eduReportService.updateSafetyEduReport(
-                                educationId, requestDto, userDetails.getId());
-                return ResponseEntity.ok(ApiResponse.onSuccess(updatedId));
-        }
+    @Hidden
+    @PatchMapping(value = "/safety/{educationId}", consumes = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<ApiResponse<Long>> updateSafetyEducationJsonFallback(
+            @PathVariable Long educationId,
+            @Valid @RequestBody EduReportUpdateRequestDto requestDto,
+            @Parameter(hidden = true) @AuthenticationPrincipal CustomUserDetails userDetails) {
+        Long updatedId =
+                eduReportService.updateSafetyEduReport(
+                        educationId, requestDto, userDetails.getId());
+        return ResponseEntity.ok(ApiResponse.onSuccess(updatedId));
+    }
 
-        @Operation(tags = { "부서교육" }, summary = "부서 교육 게시물 상태 변경", description = """
+    @Operation(
+            tags = {"부서교육"},
+            summary = "부서 교육 게시물 상태 변경",
+            description =
+                    """
                         부서 교육 게시물 상태를 `OPEN`/`CLOSED`로 변경합니다.
 
                         - 부서 교육 관리 권한(`MANAGE_DEPARTMENT_EDUCATION`)이 필요합니다.
                         """)
-        @ApiResponses({
-                        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "상태 변경 성공"),
-                        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "잘못된 요청"),
-                        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "403", description = "권한 없음"),
-                        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "리소스 없음")
-        })
-        @PatchMapping("/department/{educationId}/status")
-        public ResponseEntity<ApiResponse<Long>> updateDepartmentEducationStatus(
-                        @Parameter(description = "상태 변경할 부서 교육 게시물 ID", example = "1") @PathVariable Long educationId,
-                        @Valid @RequestBody EduReportStatusUpdateRequestDto requestDto,
-                        @Parameter(hidden = true) @AuthenticationPrincipal CustomUserDetails userDetails) {
-                Long updatedId = eduReportService.updateDepartmentEduReportStatus(
-                                educationId, requestDto, userDetails.getId());
-                return ResponseEntity.ok(ApiResponse.onSuccess(updatedId));
-        }
+    @ApiResponses({
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                responseCode = "200",
+                description = "상태 변경 성공"),
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                responseCode = "400",
+                description = "잘못된 요청"),
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                responseCode = "403",
+                description = "권한 없음"),
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                responseCode = "404",
+                description = "리소스 없음")
+    })
+    @PatchMapping("/department/{educationId}/status")
+    public ResponseEntity<ApiResponse<Long>> updateDepartmentEducationStatus(
+            @Parameter(description = "상태 변경할 부서 교육 게시물 ID", example = "1") @PathVariable
+                    Long educationId,
+            @Valid @RequestBody EduReportStatusUpdateRequestDto requestDto,
+            @Parameter(hidden = true) @AuthenticationPrincipal CustomUserDetails userDetails) {
+        Long updatedId =
+                eduReportService.updateDepartmentEduReportStatus(
+                        educationId, requestDto, userDetails.getId());
+        return ResponseEntity.ok(ApiResponse.onSuccess(updatedId));
+    }
 
-        @Operation(tags = { "PSM" }, summary = "PSM 게시물 상태 변경", description = """
+    @Operation(
+            tags = {"PSM"},
+            summary = "PSM 게시물 상태 변경",
+            description =
+                    """
                         PSM 게시물 상태를 `OPEN`/`CLOSED`로 변경합니다.
 
                         - PSM 관리 권한(`MANAGE_PSM`)이 필요합니다.
                         """)
-        @ApiResponses({
-                        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "상태 변경 성공"),
-                        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "잘못된 요청"),
-                        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "403", description = "권한 없음"),
-                        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "리소스 없음")
-        })
-        @PatchMapping("/psm/{educationId}/status")
-        public ResponseEntity<ApiResponse<Long>> updatePsmEducationStatus(
-                        @Parameter(description = "상태 변경할 PSM 게시물 ID", example = "1") @PathVariable Long educationId,
-                        @Valid @RequestBody EduReportStatusUpdateRequestDto requestDto,
-                        @Parameter(hidden = true) @AuthenticationPrincipal CustomUserDetails userDetails) {
-                Long updatedId = eduReportService.updatePsmEduReportStatus(
-                                educationId, requestDto, userDetails.getId());
-                return ResponseEntity.ok(ApiResponse.onSuccess(updatedId));
-        }
+    @ApiResponses({
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                responseCode = "200",
+                description = "상태 변경 성공"),
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                responseCode = "400",
+                description = "잘못된 요청"),
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                responseCode = "403",
+                description = "권한 없음"),
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                responseCode = "404",
+                description = "리소스 없음")
+    })
+    @PatchMapping("/psm/{educationId}/status")
+    public ResponseEntity<ApiResponse<Long>> updatePsmEducationStatus(
+            @Parameter(description = "상태 변경할 PSM 게시물 ID", example = "1") @PathVariable
+                    Long educationId,
+            @Valid @RequestBody EduReportStatusUpdateRequestDto requestDto,
+            @Parameter(hidden = true) @AuthenticationPrincipal CustomUserDetails userDetails) {
+        Long updatedId =
+                eduReportService.updatePsmEduReportStatus(
+                        educationId, requestDto, userDetails.getId());
+        return ResponseEntity.ok(ApiResponse.onSuccess(updatedId));
+    }
 
-        @Operation(tags = { "안전보건" }, summary = "안전 보건 게시물 상태 변경", description = """
+    @Operation(
+            tags = {"안전보건"},
+            summary = "안전 보건 게시물 상태 변경",
+            description =
+                    """
                         안전 보건 게시물 상태를 `OPEN`/`CLOSED`로 변경합니다.
 
                         - 안전 보건 관리 권한(`MANAGE_SAFETY`)이 필요합니다.
                         """)
-        @ApiResponses({
-                        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "상태 변경 성공"),
-                        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "잘못된 요청"),
-                        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "403", description = "권한 없음"),
-                        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "리소스 없음")
-        })
-        @PatchMapping("/safety/{educationId}/status")
-        public ResponseEntity<ApiResponse<Long>> updateSafetyEducationStatus(
-                        @Parameter(description = "상태 변경할 안전 보건 게시물 ID", example = "1") @PathVariable Long educationId,
-                        @Valid @RequestBody EduReportStatusUpdateRequestDto requestDto,
-                        @Parameter(hidden = true) @AuthenticationPrincipal CustomUserDetails userDetails) {
-                Long updatedId = eduReportService.updateSafetyEduReportStatus(
-                                educationId, requestDto, userDetails.getId());
-                return ResponseEntity.ok(ApiResponse.onSuccess(updatedId));
-        }
+    @ApiResponses({
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                responseCode = "200",
+                description = "상태 변경 성공"),
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                responseCode = "400",
+                description = "잘못된 요청"),
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                responseCode = "403",
+                description = "권한 없음"),
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                responseCode = "404",
+                description = "리소스 없음")
+    })
+    @PatchMapping("/safety/{educationId}/status")
+    public ResponseEntity<ApiResponse<Long>> updateSafetyEducationStatus(
+            @Parameter(description = "상태 변경할 안전 보건 게시물 ID", example = "1") @PathVariable
+                    Long educationId,
+            @Valid @RequestBody EduReportStatusUpdateRequestDto requestDto,
+            @Parameter(hidden = true) @AuthenticationPrincipal CustomUserDetails userDetails) {
+        Long updatedId =
+                eduReportService.updateSafetyEduReportStatus(
+                        educationId, requestDto, userDetails.getId());
+        return ResponseEntity.ok(ApiResponse.onSuccess(updatedId));
+    }
 
-        @Operation(tags = {
-                        "부서교육" }, summary = "부서 교육 게시물 삭제", description = "부서 교육 게시물을 삭제합니다. 부서 교육 관리 권한(`MANAGE_DEPARTMENT_EDUCATION`)이 필요합니다.")
-        @ApiResponses({
-                        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "삭제 성공"),
-                        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "403", description = "권한 없음"),
-                        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "리소스 없음")
-        })
-        @DeleteMapping("/department/{educationId}")
-        public ResponseEntity<ApiResponse<Void>> deleteDepartmentEduReport(
-                        @Parameter(description = "삭제할 부서 교육 게시물 ID", example = "1") @PathVariable Long educationId,
-                        @Parameter(hidden = true) @AuthenticationPrincipal CustomUserDetails userDetails) {
-                eduReportService.deleteDepartmentEduReport(educationId, userDetails.getId());
-                return ResponseEntity.ok().body(ApiResponse.onNoContent());
-        }
+    @Operation(
+            tags = {"부서교육"},
+            summary = "부서 교육 게시물 삭제",
+            description = "부서 교육 게시물을 삭제합니다. 부서 교육 관리 권한(`MANAGE_DEPARTMENT_EDUCATION`)이 필요합니다.")
+    @ApiResponses({
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                responseCode = "200",
+                description = "삭제 성공"),
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                responseCode = "403",
+                description = "권한 없음"),
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                responseCode = "404",
+                description = "리소스 없음")
+    })
+    @DeleteMapping("/department/{educationId}")
+    public ResponseEntity<ApiResponse<Void>> deleteDepartmentEduReport(
+            @Parameter(description = "삭제할 부서 교육 게시물 ID", example = "1") @PathVariable
+                    Long educationId,
+            @Parameter(hidden = true) @AuthenticationPrincipal CustomUserDetails userDetails) {
+        eduReportService.deleteDepartmentEduReport(educationId, userDetails.getId());
+        return ResponseEntity.ok().body(ApiResponse.onNoContent());
+    }
 
-        @Operation(tags = {
-                        "PSM" }, summary = "PSM 게시물 삭제", description = "PSM 게시물을 삭제합니다. PSM 관리 권한(`MANAGE_PSM`)이 필요합니다.")
-        @ApiResponses({
-                        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "삭제 성공"),
-                        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "403", description = "권한 없음"),
-                        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "리소스 없음")
-        })
-        @DeleteMapping("/psm/{educationId}")
-        public ResponseEntity<ApiResponse<Void>> deletePsmEduReport(
-                        @Parameter(description = "삭제할 PSM 게시물 ID", example = "1") @PathVariable Long educationId,
-                        @Parameter(hidden = true) @AuthenticationPrincipal CustomUserDetails userDetails) {
-                eduReportService.deletePsmEduReport(educationId, userDetails.getId());
-                return ResponseEntity.ok().body(ApiResponse.onNoContent());
-        }
+    @Operation(
+            tags = {"PSM"},
+            summary = "PSM 게시물 삭제",
+            description = "PSM 게시물을 삭제합니다. PSM 관리 권한(`MANAGE_PSM`)이 필요합니다.")
+    @ApiResponses({
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                responseCode = "200",
+                description = "삭제 성공"),
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                responseCode = "403",
+                description = "권한 없음"),
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                responseCode = "404",
+                description = "리소스 없음")
+    })
+    @DeleteMapping("/psm/{educationId}")
+    public ResponseEntity<ApiResponse<Void>> deletePsmEduReport(
+            @Parameter(description = "삭제할 PSM 게시물 ID", example = "1") @PathVariable
+                    Long educationId,
+            @Parameter(hidden = true) @AuthenticationPrincipal CustomUserDetails userDetails) {
+        eduReportService.deletePsmEduReport(educationId, userDetails.getId());
+        return ResponseEntity.ok().body(ApiResponse.onNoContent());
+    }
 
-        @Operation(tags = {
-                        "안전보건" }, summary = "안전 보건 게시물 삭제", description = "안전 보건 게시물을 삭제합니다. 안전 보건 관리 권한(`MANAGE_SAFETY`)이 필요합니다.")
-        @ApiResponses({
-                        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "삭제 성공"),
-                        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "403", description = "권한 없음"),
-                        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "리소스 없음")
-        })
-        @DeleteMapping("/safety/{educationId}")
-        public ResponseEntity<ApiResponse<Void>> deleteSafetyEduReport(
-                        @Parameter(description = "삭제할 안전 보건 게시물 ID", example = "1") @PathVariable Long educationId,
-                        @Parameter(hidden = true) @AuthenticationPrincipal CustomUserDetails userDetails) {
-                eduReportService.deleteSafetyEduReport(educationId, userDetails.getId());
-                return ResponseEntity.ok().body(ApiResponse.onNoContent());
-        }
+    @Operation(
+            tags = {"안전보건"},
+            summary = "안전 보건 게시물 삭제",
+            description = "안전 보건 게시물을 삭제합니다. 안전 보건 관리 권한(`MANAGE_SAFETY`)이 필요합니다.")
+    @ApiResponses({
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                responseCode = "200",
+                description = "삭제 성공"),
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                responseCode = "403",
+                description = "권한 없음"),
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                responseCode = "404",
+                description = "리소스 없음")
+    })
+    @DeleteMapping("/safety/{educationId}")
+    public ResponseEntity<ApiResponse<Void>> deleteSafetyEduReport(
+            @Parameter(description = "삭제할 안전 보건 게시물 ID", example = "1") @PathVariable
+                    Long educationId,
+            @Parameter(hidden = true) @AuthenticationPrincipal CustomUserDetails userDetails) {
+        eduReportService.deleteSafetyEduReport(educationId, userDetails.getId());
+        return ResponseEntity.ok().body(ApiResponse.onNoContent());
+    }
 
-        @Operation(tags = {
-                        "부서교육" }, summary = "부서 교육 게시물 출석(서명) 처리", description = """
+    @Operation(
+            tags = {"부서교육"},
+            summary = "부서 교육 게시물 출석(서명) 처리",
+            description =
+                    """
                                         부서 교육 게시물 출석을 처리합니다.
 
                                         - `signatureRequired=true` 게시물은 PNG 서명 파일(`signature`)이 필수입니다.
                                         - `signatureRequired=false` 게시물은 파일 없이도 출석 처리됩니다.
                                         - 동일 사용자 중복 출석은 허용되지 않습니다.
-                                        """, requestBody = @io.swagger.v3.oas.annotations.parameters.RequestBody(required = false, content = @Content(mediaType = MediaType.MULTIPART_FORM_DATA_VALUE, schema = @Schema(implementation = EduReportAttendanceMultipartRequestDoc.class), encoding = @Encoding(name = "signature", contentType = "image/png"))))
-        @ApiResponses(value = {
-                        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "출석 처리 성공"),
-                        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "잘못된 요청"),
-                        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "리소스 없음")
-        })
-        @PostMapping(value = "/department/{educationId}/attendance", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-        public ResponseEntity<ApiResponse<Void>> markDepartmentAttendance(
-                        @Parameter(description = "부서 교육 게시물 ID", example = "1") @PathVariable Long educationId,
-                        @Parameter(description = "서명 PNG 파일(signatureRequired=true인 경우 필수)") @RequestPart(value = "signature", required = false) MultipartFile signature,
-                        @Parameter(hidden = true) @AuthenticationPrincipal CustomUserDetails userDetails)
-                        throws IOException {
-                eduReportService.markDepartmentAttendance(educationId, signature, userDetails.getId());
-                return ResponseEntity.ok(ApiResponse.onNoContent());
-        }
+                                        """,
+            requestBody =
+                    @io.swagger.v3.oas.annotations.parameters.RequestBody(
+                            required = false,
+                            content =
+                                    @Content(
+                                            mediaType = MediaType.MULTIPART_FORM_DATA_VALUE,
+                                            schema =
+                                                    @Schema(
+                                                            implementation =
+                                                                    EduReportAttendanceMultipartRequestDoc
+                                                                            .class),
+                                            encoding =
+                                                    @Encoding(
+                                                            name = "signature",
+                                                            contentType = "image/png"))))
+    @ApiResponses(
+            value = {
+                @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                        responseCode = "200",
+                        description = "출석 처리 성공"),
+                @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                        responseCode = "400",
+                        description = "잘못된 요청"),
+                @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                        responseCode = "404",
+                        description = "리소스 없음")
+            })
+    @PostMapping(
+            value = "/department/{educationId}/attendance",
+            consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ResponseEntity<ApiResponse<Void>> markDepartmentAttendance(
+            @Parameter(description = "부서 교육 게시물 ID", example = "1") @PathVariable Long educationId,
+            @Parameter(description = "서명 PNG 파일(signatureRequired=true인 경우 필수)")
+                    @RequestPart(value = "signature", required = false)
+                    MultipartFile signature,
+            @Parameter(hidden = true) @AuthenticationPrincipal CustomUserDetails userDetails)
+            throws IOException {
+        eduReportService.markDepartmentAttendance(educationId, signature, userDetails.getId());
+        return ResponseEntity.ok(ApiResponse.onNoContent());
+    }
 
-        @Operation(tags = { "부서교육" }, summary = "부서 교육 서명 현황 목록 조회", description = """
+    @Operation(
+            tags = {"부서교육"},
+            summary = "부서 교육 서명 현황 목록 조회",
+            description =
+                    """
                         부서 교육 게시물의 대상 직원별 서명 현황을 조회합니다.
 
                         - `MANAGE_DEPARTMENT_EDUCATION` 권한이 필요합니다.
                         - `name` 파라미터로 한글명(nameKor) 또는 영문명(nameEng)에 대한 부분 일치 검색이 가능합니다.
                         """)
-        @ApiResponses({
-                        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "조회 성공"),
-                        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "403", description = "권한 없음"),
-                        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "리소스 없음")
-        })
-        @GetMapping("/{educationId}/signatures")
-        public ResponseEntity<ApiResponse<List<EduReportSignatureStatusDto>>> getSignatureStatuses(
-                        @Parameter(description = "교육 보고서 ID", example = "1") @PathVariable Long educationId,
-                        @Parameter(description = "직원명 검색 필터 (한글명/영문명 부분 일치)", example = "홍") @RequestParam(required = false) String name,
-                        @Parameter(hidden = true) @AuthenticationPrincipal CustomUserDetails userDetails) {
-                List<EduReportSignatureStatusDto> result = eduReportService.getSignatureStatuses(educationId, name,
-                                userDetails.getId());
-                return ResponseEntity.ok(ApiResponse.onSuccess(result));
-        }
+    @ApiResponses({
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                responseCode = "200",
+                description = "조회 성공"),
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                responseCode = "403",
+                description = "권한 없음"),
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                responseCode = "404",
+                description = "리소스 없음")
+    })
+    @GetMapping("/{educationId}/signatures")
+    public ResponseEntity<ApiResponse<List<EduReportSignatureStatusDto>>> getSignatureStatuses(
+            @Parameter(description = "교육 보고서 ID", example = "1") @PathVariable Long educationId,
+            @Parameter(description = "직원명 검색 필터 (한글명/영문명 부분 일치)", example = "홍")
+                    @RequestParam(required = false)
+                    String name,
+            @Parameter(hidden = true) @AuthenticationPrincipal CustomUserDetails userDetails) {
+        List<EduReportSignatureStatusDto> result =
+                eduReportService.getSignatureStatuses(educationId, name, userDetails.getId());
+        return ResponseEntity.ok(ApiResponse.onSuccess(result));
+    }
 
-        @Operation(tags = { "교육 (공통)" }, summary = "교육 리마인드 알림 전송", description = """
+    @Operation(
+            tags = {"교육 (공통)"},
+            summary = "교육 리마인드 알림 전송",
+            description =
+                    """
                         교육 생성자(createdBy)만 요청 가능합니다.
 
                         - 생성 시와 동일한 대상자에게 title에 `[리마인드]` prefix를 붙여 알림을 재전송합니다.
                         - 부서교육 / PSM / 안전보건 모든 타입에 사용 가능합니다.
                         """)
-        @ApiResponses({
-                        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "전송 성공"),
-                        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "403", description = "권한 없음 (교육 생성자가 아님)", content = @Content(mediaType = "application/json", examples = @ExampleObject(value = """
+    @ApiResponses({
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                responseCode = "200",
+                description = "전송 성공"),
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                responseCode = "403",
+                description = "권한 없음 (교육 생성자가 아님)",
+                content =
+                        @Content(
+                                mediaType = "application/json",
+                                examples =
+                                        @ExampleObject(
+                                                value =
+                                                        """
                                         {
                                           "isSuccess": false,
                                           "code": "NO_AUTHORITY_FOR_EDU_REPORT",
@@ -867,7 +1406,16 @@ public class EduReportController {
                                           "result": null
                                         }
                                         """))),
-                        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "교육 게시물 없음", content = @Content(mediaType = "application/json", examples = @ExampleObject(value = """
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                responseCode = "404",
+                description = "교육 게시물 없음",
+                content =
+                        @Content(
+                                mediaType = "application/json",
+                                examples =
+                                        @ExampleObject(
+                                                value =
+                                                        """
                                         {
                                           "isSuccess": false,
                                           "code": "EDU_REPORT_NOT_FOUND",
@@ -875,19 +1423,23 @@ public class EduReportController {
                                           "result": null
                                         }
                                         """)))
-        })
-        @PostMapping("/{educationId}/remind")
-        public ResponseEntity<ApiResponse<Void>> remindEduReport(
-                        @Parameter(description = "리마인드 알림을 전송할 교육 게시물 ID", example = "1") @PathVariable Long educationId,
-                        @Parameter(hidden = true) @AuthenticationPrincipal CustomUserDetails userDetails) {
-                eduReportService.remindEduReport(educationId, userDetails.getId());
-                return ResponseEntity.ok(ApiResponse.onNoContent());
-        }
+    })
+    @PostMapping("/{educationId}/remind")
+    public ResponseEntity<ApiResponse<Void>> remindEduReport(
+            @Parameter(description = "리마인드 알림을 전송할 교육 게시물 ID", example = "1") @PathVariable
+                    Long educationId,
+            @Parameter(hidden = true) @AuthenticationPrincipal CustomUserDetails userDetails) {
+        eduReportService.remindEduReport(educationId, userDetails.getId());
+        return ResponseEntity.ok(ApiResponse.onNoContent());
+    }
 
-        @Schema(name = "EduReportAttendanceMultipartRequestDoc", description = "출석(서명) multipart 요청")
-        static class EduReportAttendanceMultipartRequestDoc {
+    @Schema(name = "EduReportAttendanceMultipartRequestDoc", description = "출석(서명) multipart 요청")
+    static class EduReportAttendanceMultipartRequestDoc {
 
-                @Schema(description = "서명 PNG 파일(signatureRequired=true인 경우 필수)", type = "string", format = "binary")
-                public String signature;
-        }
+        @Schema(
+                description = "서명 PNG 파일(signatureRequired=true인 경우 필수)",
+                type = "string",
+                format = "binary")
+        public String signature;
+    }
 }

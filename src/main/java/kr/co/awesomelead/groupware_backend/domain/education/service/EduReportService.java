@@ -76,14 +76,15 @@ public class EduReportService {
     public Long createPsmEduReport(
             PsmEduReportCreateRequestDto requestDto, List<MultipartFile> files, Long id)
             throws IOException {
-        EduReportRequestDto baseRequest = EduReportRequestDto.builder()
-                .eduType(EduType.PSM)
-                .title(requestDto.getTitle())
-                .content(requestDto.getContent())
-                .pinned(requestDto.isPinned())
-                .signatureRequired(false)
-                .categoryId(requestDto.getCategoryId())
-                .build();
+        EduReportRequestDto baseRequest =
+                EduReportRequestDto.builder()
+                        .eduType(EduType.PSM)
+                        .title(requestDto.getTitle())
+                        .content(requestDto.getContent())
+                        .pinned(requestDto.isPinned())
+                        .signatureRequired(false)
+                        .categoryId(requestDto.getCategoryId())
+                        .build();
         Company companyOverride = resolveCompanyScopeOverride(requestDto.getCompanyScope());
         return createEduReportInternal(baseRequest, files, id, true, companyOverride);
     }
@@ -92,14 +93,15 @@ public class EduReportService {
     public Long createSafetyEduReport(
             SafetyEduReportCreateRequestDto requestDto, List<MultipartFile> files, Long id)
             throws IOException {
-        EduReportRequestDto baseRequest = EduReportRequestDto.builder()
-                .eduType(EduType.SAFETY)
-                .title(requestDto.getTitle())
-                .content(requestDto.getContent())
-                .pinned(requestDto.isPinned())
-                .signatureRequired(false)
-                .categoryId(requestDto.getCategoryId())
-                .build();
+        EduReportRequestDto baseRequest =
+                EduReportRequestDto.builder()
+                        .eduType(EduType.SAFETY)
+                        .title(requestDto.getTitle())
+                        .content(requestDto.getContent())
+                        .pinned(requestDto.isPinned())
+                        .signatureRequired(false)
+                        .categoryId(requestDto.getCategoryId())
+                        .build();
         Company companyOverride = resolveCompanyScopeOverride(requestDto.getCompanyScope());
         return createEduReportInternal(baseRequest, files, id, true, companyOverride);
     }
@@ -112,9 +114,10 @@ public class EduReportService {
             Company companyOverride)
             throws IOException {
 
-        User user = userRepository
-                .findById(id)
-                .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
+        User user =
+                userRepository
+                        .findById(id)
+                        .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
 
         validateCreateAuthority(user, requestDto.getEduType());
 
@@ -123,9 +126,10 @@ public class EduReportService {
             if (requestDto.getDepartmentId() == null) {
                 throw new CustomException(ErrorCode.DEPARTMENT_ID_REQUIRED);
             }
-            department = departmentRepository
-                    .findById(requestDto.getDepartmentId())
-                    .orElseThrow(() -> new CustomException(ErrorCode.DEPARTMENT_NOT_FOUND));
+            department =
+                    departmentRepository
+                            .findById(requestDto.getDepartmentId())
+                            .orElseThrow(() -> new CustomException(ErrorCode.DEPARTMENT_NOT_FOUND));
         }
 
         EducationCategory category = null;
@@ -177,13 +181,14 @@ public class EduReportService {
         } else {
             targetUserIds = userRepository.findAllIdsByDepartmentId(requestDto.getDepartmentId());
         }
-        Map<String, Object> metadata = requestDto.getEduType() == EduType.SAFETY
-                ? Map.of(
-                        "educationType",
-                        requestDto.getEduType().name(),
-                        "detailType",
-                        "GENERAL")
-                : Map.of("educationType", requestDto.getEduType().name());
+        Map<String, Object> metadata =
+                requestDto.getEduType() == EduType.SAFETY
+                        ? Map.of(
+                                "educationType",
+                                requestDto.getEduType().name(),
+                                "detailType",
+                                "GENERAL")
+                        : Map.of("educationType", requestDto.getEduType().name());
         notificationService.sendEduReportAlertToTargets(
                 requestDto.getEduType().getDescription(),
                 requestDto.getTitle(),
@@ -198,14 +203,15 @@ public class EduReportService {
     public Long createDepartmentEduReport(
             DepartmentEduReportCreateRequestDto requestDto, List<MultipartFile> files, Long id)
             throws IOException {
-        EduReportRequestDto baseRequest = EduReportRequestDto.builder()
-                .eduType(EduType.DEPARTMENT)
-                .title(requestDto.getTitle())
-                .content(requestDto.getContent())
-                .pinned(requestDto.isPinned())
-                .signatureRequired(requestDto.isSignatureRequired())
-                .departmentId(requestDto.getDepartmentId())
-                .build();
+        EduReportRequestDto baseRequest =
+                EduReportRequestDto.builder()
+                        .eduType(EduType.DEPARTMENT)
+                        .title(requestDto.getTitle())
+                        .content(requestDto.getContent())
+                        .pinned(requestDto.isPinned())
+                        .signatureRequired(requestDto.isSignatureRequired())
+                        .departmentId(requestDto.getDepartmentId())
+                        .build();
         return createEduReport(baseRequest, files, id);
     }
 
@@ -233,9 +239,10 @@ public class EduReportService {
     public List<EduReportSummaryDto> getEduReports(
             EduType type, DepartmentName departmentName, Long categoryId, Long id, String title) {
 
-        User user = userRepository
-                .findById(id)
-                .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
+        User user =
+                userRepository
+                        .findById(id)
+                        .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
 
         boolean hasAccess = user.hasAuthority(Authority.MANAGE_DEPARTMENT_EDUCATION);
         boolean canReadAllPsmCompanies = user.hasAuthority(Authority.MANAGE_PSM);
@@ -244,27 +251,30 @@ public class EduReportService {
         Department dept;
         if (hasAccess) {
             // 권한 있음: departmentName이 지정되면 해당 부서, 없으면 null(전체 조회)
-            dept = (departmentName != null)
-                    ? departmentRepository
-                            .findByName(departmentName)
-                            .orElseThrow(
-                                    () -> new CustomException(
-                                            ErrorCode.DEPARTMENT_NOT_FOUND))
-                    : null;
+            dept =
+                    (departmentName != null)
+                            ? departmentRepository
+                                    .findByName(departmentName)
+                                    .orElseThrow(
+                                            () ->
+                                                    new CustomException(
+                                                            ErrorCode.DEPARTMENT_NOT_FOUND))
+                            : null;
         } else {
             // 권한 없음: 자신의 부서로 제한
             dept = user.getDepartment();
         }
 
-        List<EduReportSummaryDto> summaries = eduReportQueryRepository.findEduReports(
-                type,
-                dept,
-                categoryId,
-                id,
-                hasAccess,
-                psmCompanyFilter,
-                canReadAllPsmCompanies,
-                title);
+        List<EduReportSummaryDto> summaries =
+                eduReportQueryRepository.findEduReports(
+                        type,
+                        dept,
+                        categoryId,
+                        id,
+                        hasAccess,
+                        psmCompanyFilter,
+                        canReadAllPsmCompanies,
+                        title);
 
         summaries.forEach(
                 summary -> {
@@ -282,28 +292,32 @@ public class EduReportService {
 
     @Transactional(readOnly = true)
     public List<EduReportSummaryDto> getPsmEduReports(Long categoryId, Long id, String title) {
-        User user = userRepository
-                .findById(id)
-                .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
+        User user =
+                userRepository
+                        .findById(id)
+                        .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
 
         boolean canReadAllCompanies = user.hasAuthority(Authority.MANAGE_PSM);
         Company companyFilter = canReadAllCompanies ? null : user.getWorkLocation();
-        List<EduReportSummaryDto> summaries = eduReportQueryRepository.findPsmEduReports(
-                categoryId, id, companyFilter, canReadAllCompanies, title);
+        List<EduReportSummaryDto> summaries =
+                eduReportQueryRepository.findPsmEduReports(
+                        categoryId, id, companyFilter, canReadAllCompanies, title);
         summaries.forEach(this::applyCompanyScopeToSummary);
         return summaries;
     }
 
     @Transactional(readOnly = true)
     public List<EduReportSummaryDto> getSafetyEduReports(Long categoryId, Long id, String title) {
-        User user = userRepository
-                .findById(id)
-                .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
+        User user =
+                userRepository
+                        .findById(id)
+                        .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
 
         boolean canReadAllCompanies = user.hasAuthority(Authority.MANAGE_SAFETY);
         Company companyFilter = canReadAllCompanies ? null : user.getWorkLocation();
-        List<EduReportSummaryDto> summaries = eduReportQueryRepository.findSafetyEduReports(
-                categoryId, id, companyFilter, canReadAllCompanies, title);
+        List<EduReportSummaryDto> summaries =
+                eduReportQueryRepository.findSafetyEduReports(
+                        categoryId, id, companyFilter, canReadAllCompanies, title);
         summaries.forEach(this::applyCompanyScopeToSummary);
         return summaries;
     }
@@ -311,13 +325,15 @@ public class EduReportService {
     @Transactional(readOnly = true)
     public EduReportDetailDto getEduReport(Long eduReportId, Long id) {
 
-        User user = userRepository
-                .findById(id)
-                .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
+        User user =
+                userRepository
+                        .findById(id)
+                        .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
 
-        EduReport report = eduReportRepository
-                .findById(eduReportId)
-                .orElseThrow(() -> new CustomException(ErrorCode.EDU_REPORT_NOT_FOUND));
+        EduReport report =
+                eduReportRepository
+                        .findById(eduReportId)
+                        .orElseThrow(() -> new CustomException(ErrorCode.EDU_REPORT_NOT_FOUND));
 
         boolean hasAccess = user.hasAuthority(Authority.MANAGE_DEPARTMENT_EDUCATION);
         return buildEduReportDetailDto(user, report, hasAccess, false);
@@ -325,13 +341,15 @@ public class EduReportService {
 
     @Transactional(readOnly = true)
     public EduReportDetailDto getDepartmentEduReport(Long eduReportId, Long id) {
-        User user = userRepository
-                .findById(id)
-                .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
+        User user =
+                userRepository
+                        .findById(id)
+                        .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
 
-        EduReport report = eduReportRepository
-                .findById(eduReportId)
-                .orElseThrow(() -> new CustomException(ErrorCode.EDU_REPORT_NOT_FOUND));
+        EduReport report =
+                eduReportRepository
+                        .findById(eduReportId)
+                        .orElseThrow(() -> new CustomException(ErrorCode.EDU_REPORT_NOT_FOUND));
 
         if (report.getEduType() != EduType.DEPARTMENT) {
             throw new CustomException(ErrorCode.EDU_REPORT_NOT_FOUND);
@@ -358,13 +376,15 @@ public class EduReportService {
 
     @Transactional(readOnly = true)
     public EduReportDetailDto getPsmEduReport(Long eduReportId, Long id) {
-        User user = userRepository
-                .findById(id)
-                .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
+        User user =
+                userRepository
+                        .findById(id)
+                        .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
 
-        EduReport report = eduReportRepository
-                .findById(eduReportId)
-                .orElseThrow(() -> new CustomException(ErrorCode.EDU_REPORT_NOT_FOUND));
+        EduReport report =
+                eduReportRepository
+                        .findById(eduReportId)
+                        .orElseThrow(() -> new CustomException(ErrorCode.EDU_REPORT_NOT_FOUND));
 
         if (report.getEduType() != EduType.PSM) {
             throw new CustomException(ErrorCode.EDU_REPORT_NOT_FOUND);
@@ -404,13 +424,15 @@ public class EduReportService {
 
     @Transactional(readOnly = true)
     public EduReportDetailDto getSafetyEduReport(Long eduReportId, Long id) {
-        User user = userRepository
-                .findById(id)
-                .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
+        User user =
+                userRepository
+                        .findById(id)
+                        .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
 
-        EduReport report = eduReportRepository
-                .findById(eduReportId)
-                .orElseThrow(() -> new CustomException(ErrorCode.EDU_REPORT_NOT_FOUND));
+        EduReport report =
+                eduReportRepository
+                        .findById(eduReportId)
+                        .orElseThrow(() -> new CustomException(ErrorCode.EDU_REPORT_NOT_FOUND));
 
         if (report.getEduType() != EduType.SAFETY) {
             throw new CustomException(ErrorCode.EDU_REPORT_NOT_FOUND);
@@ -459,7 +481,8 @@ public class EduReportService {
             numberOfPeople = calculateTargetPeopleCount(report);
         }
 
-        EduReportDetailDto dto = eduMapper.toDetailDto(report, attendances, numberOfPeople, s3Service);
+        EduReportDetailDto dto =
+                eduMapper.toDetailDto(report, attendances, numberOfPeople, s3Service);
 
         if (includeSignatureCounts) {
             long targetCount = calculateTargetPeopleCount(report);
@@ -487,8 +510,9 @@ public class EduReportService {
             return;
         }
 
-        Boolean mySigned = resolveDepartmentMySigned(
-                user, summary.getDepartmentName(), summary.isAttendance());
+        Boolean mySigned =
+                resolveDepartmentMySigned(
+                        user, summary.getDepartmentName(), summary.isAttendance());
         summary.setMySigned(mySigned);
         summary.setMyCompletionStatus(
                 resolveDepartmentMyCompletionStatus(summary.isSignatureRequired(), mySigned));
@@ -575,30 +599,34 @@ public class EduReportService {
     @Transactional
     public void deleteEduReport(Long eduReportId, Long id) {
 
-        User user = userRepository
-                .findById(id)
-                .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
+        User user =
+                userRepository
+                        .findById(id)
+                        .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
 
         if (!user.hasAuthority(Authority.MANAGE_DEPARTMENT_EDUCATION)) {
             throw new CustomException(ErrorCode.NO_AUTHORITY_FOR_EDU_REPORT);
         }
 
-        EduReport report = eduReportRepository
-                .findById(eduReportId)
-                .orElseThrow(() -> new CustomException(ErrorCode.EDU_REPORT_NOT_FOUND));
+        EduReport report =
+                eduReportRepository
+                        .findById(eduReportId)
+                        .orElseThrow(() -> new CustomException(ErrorCode.EDU_REPORT_NOT_FOUND));
 
         performDeleteEduReport(report);
     }
 
     private void deleteEduReportByType(Long eduReportId, Long userId, EduType expectedType) {
-        User user = userRepository
-                .findById(userId)
-                .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
+        User user =
+                userRepository
+                        .findById(userId)
+                        .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
         validateCreateAuthority(user, expectedType);
 
-        EduReport report = eduReportRepository
-                .findById(eduReportId)
-                .orElseThrow(() -> new CustomException(ErrorCode.EDU_REPORT_NOT_FOUND));
+        EduReport report =
+                eduReportRepository
+                        .findById(eduReportId)
+                        .orElseThrow(() -> new CustomException(ErrorCode.EDU_REPORT_NOT_FOUND));
         validateExpectedType(report, expectedType);
 
         performDeleteEduReport(report);
@@ -614,15 +642,15 @@ public class EduReportService {
         eduReportRepository.delete(report);
     }
 
-    public record FileDownloadDto(byte[] fileData, String originalFileName, long fileSize) {
-    }
+    public record FileDownloadDto(byte[] fileData, String originalFileName, long fileSize) {}
 
     @Transactional(readOnly = true)
     public FileDownloadDto getFileForDownload(Long attachmentId) {
         // DB 조회
-        EduAttachment attachment = eduAttachmentRepository
-                .findById(attachmentId)
-                .orElseThrow(() -> new CustomException(ErrorCode.EDU_ATTACHMENT_NOT_FOUND));
+        EduAttachment attachment =
+                eduAttachmentRepository
+                        .findById(attachmentId)
+                        .orElseThrow(() -> new CustomException(ErrorCode.EDU_ATTACHMENT_NOT_FOUND));
 
         // S3 데이터 다운로드
         byte[] fileData = s3Service.downloadFile(attachment.getS3Key());
@@ -644,13 +672,15 @@ public class EduReportService {
     public void markAttendance(Long reportId, MultipartFile signatureFile, Long userId)
             throws IOException {
 
-        User user = userRepository
-                .findById(userId)
-                .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
+        User user =
+                userRepository
+                        .findById(userId)
+                        .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
 
-        EduReport report = eduReportRepository
-                .findById(reportId)
-                .orElseThrow(() -> new CustomException(ErrorCode.EDU_REPORT_NOT_FOUND));
+        EduReport report =
+                eduReportRepository
+                        .findById(reportId)
+                        .orElseThrow(() -> new CustomException(ErrorCode.EDU_REPORT_NOT_FOUND));
 
         markAttendanceInternal(user, report, signatureFile, report.isSignatureRequired());
     }
@@ -664,16 +694,19 @@ public class EduReportService {
     private void markAttendanceByType(
             Long reportId, MultipartFile signatureFile, Long userId, EduType expectedType)
             throws IOException {
-        User user = userRepository
-                .findById(userId)
-                .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
+        User user =
+                userRepository
+                        .findById(userId)
+                        .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
 
-        EduReport report = eduReportRepository
-                .findById(reportId)
-                .orElseThrow(() -> new CustomException(ErrorCode.EDU_REPORT_NOT_FOUND));
+        EduReport report =
+                eduReportRepository
+                        .findById(reportId)
+                        .orElseThrow(() -> new CustomException(ErrorCode.EDU_REPORT_NOT_FOUND));
         validateExpectedType(report, expectedType);
 
-        boolean requireSignature = expectedType == EduType.DEPARTMENT && report.isSignatureRequired();
+        boolean requireSignature =
+                expectedType == EduType.DEPARTMENT && report.isSignatureRequired();
         markAttendanceInternal(user, report, signatureFile, requireSignature);
     }
 
@@ -771,13 +804,15 @@ public class EduReportService {
             EduReportUpdateRequestDto requestDto,
             List<MultipartFile> files,
             Long userId) {
-        User user = userRepository
-                .findById(userId)
-                .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
+        User user =
+                userRepository
+                        .findById(userId)
+                        .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
 
-        EduReport report = eduReportRepository
-                .findById(eduReportId)
-                .orElseThrow(() -> new CustomException(ErrorCode.EDU_REPORT_NOT_FOUND));
+        EduReport report =
+                eduReportRepository
+                        .findById(eduReportId)
+                        .orElseThrow(() -> new CustomException(ErrorCode.EDU_REPORT_NOT_FOUND));
         validateCreateAuthority(user, report.getEduType());
         return updateEduReportInternal(eduReportId, report, requestDto, files);
     }
@@ -788,14 +823,16 @@ public class EduReportService {
             List<MultipartFile> files,
             Long userId,
             EduType expectedType) {
-        User user = userRepository
-                .findById(userId)
-                .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
+        User user =
+                userRepository
+                        .findById(userId)
+                        .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
         validateCreateAuthority(user, expectedType);
 
-        EduReport report = eduReportRepository
-                .findById(eduReportId)
-                .orElseThrow(() -> new CustomException(ErrorCode.EDU_REPORT_NOT_FOUND));
+        EduReport report =
+                eduReportRepository
+                        .findById(eduReportId)
+                        .orElseThrow(() -> new CustomException(ErrorCode.EDU_REPORT_NOT_FOUND));
         validateExpectedType(report, expectedType);
 
         return updateEduReportInternal(eduReportId, report, requestDto, files);
@@ -824,23 +861,26 @@ public class EduReportService {
                 if (requestDto.getDepartmentId() == null) {
                     throw new CustomException(ErrorCode.DEPARTMENT_ID_REQUIRED);
                 }
-                Department department = departmentRepository
-                        .findById(requestDto.getDepartmentId())
-                        .orElseThrow(
-                                () -> new CustomException(ErrorCode.DEPARTMENT_NOT_FOUND));
+                Department department =
+                        departmentRepository
+                                .findById(requestDto.getDepartmentId())
+                                .orElseThrow(
+                                        () -> new CustomException(ErrorCode.DEPARTMENT_NOT_FOUND));
                 report.setDepartment(department);
                 report.setCategory(null);
                 report.setCompany(null);
             } else {
                 if (requestDto.getCategoryId() != null) {
-                    EducationCategory category = getValidatedCategory(report.getEduType(), requestDto.getCategoryId());
+                    EducationCategory category =
+                            getValidatedCategory(report.getEduType(), requestDto.getCategoryId());
                     report.setCategory(category);
                 } else if (report.getCategory() == null) {
                     throw new CustomException(ErrorCode.EDUCATION_CATEGORY_REQUIRED);
                 }
                 report.setDepartment(null);
                 if (requestDto.getCompanyScope() != null) {
-                    Company companyOverride = resolveCompanyScopeOverride(requestDto.getCompanyScope());
+                    Company companyOverride =
+                            resolveCompanyScopeOverride(requestDto.getCompanyScope());
                     report.setCompany(companyOverride);
                 }
             }
@@ -858,13 +898,15 @@ public class EduReportService {
     @Transactional
     public Long updateEduReportStatus(
             Long eduReportId, EduReportStatusUpdateRequestDto requestDto, Long userId) {
-        User user = userRepository
-                .findById(userId)
-                .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
+        User user =
+                userRepository
+                        .findById(userId)
+                        .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
 
-        EduReport report = eduReportRepository
-                .findById(eduReportId)
-                .orElseThrow(() -> new CustomException(ErrorCode.EDU_REPORT_NOT_FOUND));
+        EduReport report =
+                eduReportRepository
+                        .findById(eduReportId)
+                        .orElseThrow(() -> new CustomException(ErrorCode.EDU_REPORT_NOT_FOUND));
         validateCreateAuthority(user, report.getEduType());
         return updateEduReportStatusInternal(report, requestDto);
     }
@@ -892,14 +934,16 @@ public class EduReportService {
             EduReportStatusUpdateRequestDto requestDto,
             Long userId,
             EduType expectedType) {
-        User user = userRepository
-                .findById(userId)
-                .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
+        User user =
+                userRepository
+                        .findById(userId)
+                        .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
         validateCreateAuthority(user, expectedType);
 
-        EduReport report = eduReportRepository
-                .findById(eduReportId)
-                .orElseThrow(() -> new CustomException(ErrorCode.EDU_REPORT_NOT_FOUND));
+        EduReport report =
+                eduReportRepository
+                        .findById(eduReportId)
+                        .orElseThrow(() -> new CustomException(ErrorCode.EDU_REPORT_NOT_FOUND));
         validateExpectedType(report, expectedType);
 
         return updateEduReportStatusInternal(report, requestDto);
@@ -973,10 +1017,11 @@ public class EduReportService {
         }
 
         for (Long attachmentId : new LinkedHashSet<>(deleteAttachmentIds)) {
-            EduAttachment attachment = eduAttachmentRepository
-                    .findById(attachmentId)
-                    .orElseThrow(
-                            () -> new CustomException(ErrorCode.EDU_ATTACHMENT_NOT_FOUND));
+            EduAttachment attachment =
+                    eduAttachmentRepository
+                            .findById(attachmentId)
+                            .orElseThrow(
+                                    () -> new CustomException(ErrorCode.EDU_ATTACHMENT_NOT_FOUND));
 
             if (attachment.getEduReport() == null
                     || !attachment.getEduReport().getId().equals(report.getId())) {
@@ -1022,13 +1067,14 @@ public class EduReportService {
             return null;
         }
 
-        EducationCategory category = educationCategoryRepository
-                .findById(categoryId)
-                .orElseThrow(
-                        () -> new CustomException(ErrorCode.EDUCATION_CATEGORY_NOT_FOUND));
+        EducationCategory category =
+                educationCategoryRepository
+                        .findById(categoryId)
+                        .orElseThrow(
+                                () -> new CustomException(ErrorCode.EDUCATION_CATEGORY_NOT_FOUND));
 
-        EducationCategoryType expectedType = eduType == EduType.PSM ? EducationCategoryType.PSM
-                : EducationCategoryType.SAFETY;
+        EducationCategoryType expectedType =
+                eduType == EduType.PSM ? EducationCategoryType.PSM : EducationCategoryType.SAFETY;
         if (category.getCategoryType() != expectedType) {
             throw new CustomException(ErrorCode.INVALID_ARGUMENT);
         }
@@ -1039,13 +1085,15 @@ public class EduReportService {
     public List<EduReportSignatureStatusDto> getSignatureStatuses(
             Long educationId, String name, Long userId) {
 
-        User user = userRepository
-                .findById(userId)
-                .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
+        User user =
+                userRepository
+                        .findById(userId)
+                        .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
 
-        EduReport report = eduReportRepository
-                .findById(educationId)
-                .orElseThrow(() -> new CustomException(ErrorCode.EDU_REPORT_NOT_FOUND));
+        EduReport report =
+                eduReportRepository
+                        .findById(educationId)
+                        .orElseThrow(() -> new CustomException(ErrorCode.EDU_REPORT_NOT_FOUND));
 
         // 부서 교육 서명 현황 조회 API는 부서 교육 게시물에 대해서만 허용한다.
         if (report.getEduType() != EduType.DEPARTMENT) {
@@ -1061,8 +1109,10 @@ public class EduReportService {
 
     private EduReportSignatureStatusDto toSignatureStatusDto(
             EduReportQueryRepository.SignatureStatusRow row) {
-        String displayName = (row.nameKor() != null && !row.nameKor().isBlank()) ? row.nameKor() : row.nameEng();
-        String deptName = row.departmentName() != null ? row.departmentName().getDescription() : null;
+        String displayName =
+                (row.nameKor() != null && !row.nameKor().isBlank()) ? row.nameKor() : row.nameEng();
+        String deptName =
+                row.departmentName() != null ? row.departmentName().getDescription() : null;
         String positionStr = row.position() != null ? row.position().getDescription() : null;
         boolean isSigned = row.signatureKey() != null;
         String signatureUrl = isSigned ? s3Service.getPresignedViewUrl(row.signatureKey()) : null;
@@ -1117,9 +1167,10 @@ public class EduReportService {
                 .findById(userId)
                 .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
 
-        EduReport report = eduReportRepository
-                .findById(eduReportId)
-                .orElseThrow(() -> new CustomException(ErrorCode.EDU_REPORT_NOT_FOUND));
+        EduReport report =
+                eduReportRepository
+                        .findById(eduReportId)
+                        .orElseThrow(() -> new CustomException(ErrorCode.EDU_REPORT_NOT_FOUND));
 
         if (report.getCreatedBy() == null || !report.getCreatedBy().getId().equals(userId)) {
             throw new CustomException(ErrorCode.NO_AUTHORITY_FOR_EDU_REPORT);
@@ -1133,14 +1184,17 @@ public class EduReportService {
                 targetUserIds = userRepository.findAllIdsByCompany(report.getCompany());
             }
         } else {
-            targetUserIds = report.getDepartment() != null
-                    ? userRepository.findAllIdsByDepartmentId(report.getDepartment().getId())
-                    : List.of();
+            targetUserIds =
+                    report.getDepartment() != null
+                            ? userRepository.findAllIdsByDepartmentId(
+                                    report.getDepartment().getId())
+                            : List.of();
         }
 
-        Map<String, Object> metadata = report.getEduType() == EduType.SAFETY
-                ? Map.of("educationType", "SAFETY", "detailType", "GENERAL")
-                : Map.of("educationType", report.getEduType().name());
+        Map<String, Object> metadata =
+                report.getEduType() == EduType.SAFETY
+                        ? Map.of("educationType", "SAFETY", "detailType", "GENERAL")
+                        : Map.of("educationType", report.getEduType().name());
 
         notificationService.sendEduReportRemindAlertToTargets(
                 report.getEduType().getDescription(),

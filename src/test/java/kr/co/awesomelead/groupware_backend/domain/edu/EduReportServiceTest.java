@@ -735,6 +735,7 @@ public class EduReportServiceTest {
                         .id(11L)
                         .title("PSM 전사 교육")
                         .eduType(EduType.PSM)
+                        .company(null)
                         .build();
 
         when(userRepository.findById(1L)).thenReturn(Optional.of(user));
@@ -748,6 +749,7 @@ public class EduReportServiceTest {
         assertThat(result).isNotNull();
         assertThat(result.size()).isEqualTo(1);
         assertThat(result.get(0).getEduType()).isEqualTo(EduType.PSM);
+        assertThat(result.get(0).getCompanyScope()).isEqualTo(List.of("AWESOME", "MARUI"));
         verify(eduReportQueryRepository, times(1)).findPsmEduReports(null, 1L, null, true, null);
     }
 
@@ -758,14 +760,24 @@ public class EduReportServiceTest {
         User user = createNormalUser(); // workLocation=AWESOME
 
         when(userRepository.findById(1L)).thenReturn(Optional.of(user));
+        EduReportSummaryDto psmReport =
+                EduReportSummaryDto.builder()
+                        .id(12L)
+                        .title("PSM 어썸리드 교육")
+                        .eduType(EduType.PSM)
+                        .company(Company.AWESOME)
+                        .build();
+
         when(eduReportQueryRepository.findPsmEduReports(null, 1L, Company.AWESOME, false, null))
-                .thenReturn(List.of());
+                .thenReturn(List.of(psmReport));
 
         // when
         List<EduReportSummaryDto> result = eduReportService.getPsmEduReports(null, 1L, null);
 
         // then
         assertThat(result).isNotNull();
+        assertThat(result.size()).isEqualTo(1);
+        assertThat(result.get(0).getCompanyScope()).isEqualTo(List.of("AWESOME"));
         verify(eduReportQueryRepository, times(1))
                 .findPsmEduReports(null, 1L, Company.AWESOME, false, null);
     }
@@ -782,6 +794,7 @@ public class EduReportServiceTest {
                         .id(21L)
                         .title("안전 보건 전사 교육")
                         .eduType(EduType.SAFETY)
+                        .company(null)
                         .build();
 
         when(userRepository.findById(1L)).thenReturn(Optional.of(user));
@@ -795,6 +808,7 @@ public class EduReportServiceTest {
         assertThat(result).isNotNull();
         assertThat(result.size()).isEqualTo(1);
         assertThat(result.get(0).getEduType()).isEqualTo(EduType.SAFETY);
+        assertThat(result.get(0).getCompanyScope()).isEqualTo(List.of("AWESOME", "MARUI"));
         verify(eduReportQueryRepository, times(1)).findSafetyEduReports(null, 1L, null, true, null);
     }
 
@@ -805,14 +819,24 @@ public class EduReportServiceTest {
         User user = createNormalUser(); // workLocation=AWESOME
 
         when(userRepository.findById(1L)).thenReturn(Optional.of(user));
+        EduReportSummaryDto safetyReport =
+                EduReportSummaryDto.builder()
+                        .id(22L)
+                        .title("안전 보건 어썸리드 교육")
+                        .eduType(EduType.SAFETY)
+                        .company(Company.AWESOME)
+                        .build();
+
         when(eduReportQueryRepository.findSafetyEduReports(null, 1L, Company.AWESOME, false, null))
-                .thenReturn(List.of());
+                .thenReturn(List.of(safetyReport));
 
         // when
         List<EduReportSummaryDto> result = eduReportService.getSafetyEduReports(null, 1L, null);
 
         // then
         assertThat(result).isNotNull();
+        assertThat(result.size()).isEqualTo(1);
+        assertThat(result.get(0).getCompanyScope()).isEqualTo(List.of("AWESOME"));
         verify(eduReportQueryRepository, times(1))
                 .findSafetyEduReports(null, 1L, Company.AWESOME, false, null);
     }
@@ -1967,6 +1991,27 @@ public class EduReportServiceTest {
                 .isInstanceOf(CustomException.class)
                 .extracting("errorCode")
                 .isEqualTo(ErrorCode.EDU_REPORT_NOT_FOUND);
+    }
+
+    @Test
+    @DisplayName("서명 현황 조회 실패 - 부서 교육이 아닌 게시물")
+    void getSignatureStatuses_Fail_NotDepartmentReport() {
+        // Given
+        User user = createNormalUser();
+        user.addAuthority(Authority.MANAGE_DEPARTMENT_EDUCATION);
+
+        EduReport report = EduReport.builder().id(100L).eduType(EduType.PSM).build();
+
+        when(userRepository.findById(1L)).thenReturn(Optional.of(user));
+        when(eduReportRepository.findById(100L)).thenReturn(Optional.of(report));
+
+        // When & Then
+        assertThatThrownBy(() -> eduReportService.getSignatureStatuses(100L, null, 1L))
+                .isInstanceOf(CustomException.class)
+                .extracting("errorCode")
+                .isEqualTo(ErrorCode.EDU_REPORT_NOT_FOUND);
+
+        verify(eduReportQueryRepository, never()).findSignatureStatuses(any(), any());
     }
 
     @Test

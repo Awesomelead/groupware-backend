@@ -526,6 +526,8 @@ public class EduReportController {
 
                 - `MANAGE_PSM` 권한 사용자는 모든 회사의 PSM 게시물을 조회할 수 있습니다.
                 - `MANAGE_PSM` 권한이 없는 사용자는 본인 소속 회사의 PSM 게시물만 조회됩니다.
+                - 응답의 `companyScope`는 대상 회사 목록 배열로 반환됩니다.
+                - 공통 게시물은 `companyScope: ["AWESOME", "MARUI"]`로 응답됩니다.
                 """)
     @ApiResponses({
         @io.swagger.v3.oas.annotations.responses.ApiResponse(
@@ -555,7 +557,8 @@ public class EduReportController {
                                   "signatureRequired": false,
                                   "status": "OPEN",
                                   "categoryId": 2,
-                                  "categoryName": "변경관리"
+                                  "categoryName": "변경관리",
+                                  "companyScope": ["AWESOME", "MARUI"]
                                 }
                               ]
                             }
@@ -603,6 +606,8 @@ public class EduReportController {
 
                 - `MANAGE_SAFETY` 권한 사용자는 모든 회사의 안전 보건 게시물을 조회할 수 있습니다.
                 - `MANAGE_SAFETY` 권한이 없는 사용자는 본인 소속 회사의 안전 보건 게시물만 조회됩니다.
+                - 응답의 `companyScope`는 대상 회사 목록 배열로 반환됩니다.
+                - 공통 게시물은 `companyScope: ["AWESOME", "MARUI"]`로 응답됩니다.
                 """)
     @ApiResponses({
         @io.swagger.v3.oas.annotations.responses.ApiResponse(
@@ -632,7 +637,8 @@ public class EduReportController {
                                   "signatureRequired": true,
                                   "status": "OPEN",
                                   "categoryId": 3,
-                                  "categoryName": "정기교육"
+                                  "categoryName": "정기교육",
+                                  "companyScope": ["AWESOME"]
                                 }
                               ]
                             }
@@ -1337,16 +1343,13 @@ public class EduReportController {
     }
 
     @Operation(
-            tags = {"부서교육", "PSM", "안전보건"},
-            summary = "서명 현황 목록 조회",
+            tags = {"부서교육"},
+            summary = "부서 교육 서명 현황 목록 조회",
             description =
                     """
-                교육 보고서의 대상 직원별 서명 현황을 조회합니다.
+                부서 교육 게시물의 대상 직원별 서명 현황을 조회합니다.
 
-                - 교육 유형에 따라 권한 검증이 이루어집니다.
-                  - 부서교육: `MANAGE_DEPARTMENT_EDUCATION`
-                  - PSM: `MANAGE_PSM`
-                  - 안전보건: `MANAGE_SAFETY`
+                - `MANAGE_DEPARTMENT_EDUCATION` 권한이 필요합니다.
                 - `name` 파라미터로 한글명(nameKor) 또는 영문명(nameEng)에 대한 부분 일치 검색이 가능합니다.
                 """)
     @ApiResponses({

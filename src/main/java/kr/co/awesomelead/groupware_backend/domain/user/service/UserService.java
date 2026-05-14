@@ -145,7 +145,7 @@ public class UserService {
         notificationService.sendAlertToAdminsRequiringApproval(
                 NotificationMessage.MY_INFO_UPDATE_REQUEST_ADMIN,
                 NotificationDomainType.MY_INFO_UPDATE,
-                saved.getId(),
+                user.getId(),
                 Map.of("requestId", saved.getId()),
                 user.getDisplayName());
 

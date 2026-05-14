@@ -9,6 +9,8 @@ import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 
+import kr.co.awesomelead.groupware_backend.domain.department.entity.Department;
+import kr.co.awesomelead.groupware_backend.domain.department.enums.DepartmentName;
 import kr.co.awesomelead.groupware_backend.domain.department.enums.Company;
 import kr.co.awesomelead.groupware_backend.domain.notification.service.NotificationService;
 import kr.co.awesomelead.groupware_backend.domain.user.entity.User;
@@ -83,6 +85,10 @@ public class VisitServiceTest {
     private static final String PLAIN_PASSWORD = "1234";
     private static final String ENCODED_PASSWORD = "encoded_password";
 
+    private Department createDepartment(Long id) {
+        return Department.builder().id(id).name(DepartmentName.SALES_DEPT).build();
+    }
+
     private User createHost() {
         User host =
                 User.builder()
@@ -90,6 +96,7 @@ public class VisitServiceTest {
                         .nameKor("담당자")
                         .workLocation(Company.AWESOME)
                         .jobType(JobType.MANAGEMENT)
+                        .department(createDepartment(1L))
                         .build();
         host.addAuthority(Authority.MANAGE_VISITOR);
         return host;
@@ -101,6 +108,7 @@ public class VisitServiceTest {
                 .password(ENCODED_PASSWORD)
                 .status(status)
                 .visitCategory(visitCategory)
+                .user(createHost())
                 .records(new ArrayList<>())
                 .build();
     }
@@ -636,11 +644,17 @@ public class VisitServiceTest {
                                 .visitCategory(VisitCategory.PRE_LONG_TERM)
                                 .startDate(LocalDate.now().minusDays(5))
                                 .endDate(LocalDate.now().plusDays(5))
+                                .user(createHost())
                                 .records(new ArrayList<>())
                                 .visited(false)
                                 .build();
 
-                User admin = User.builder().id(adminId).jobType(JobType.MANAGEMENT).build();
+                User admin =
+                        User.builder()
+                                .id(adminId)
+                                .jobType(JobType.MANAGEMENT)
+                                .department(createDepartment(1L))
+                                .build();
                 admin.addAuthority(Authority.MANAGE_VISITOR);
 
                 given(visitRepository.findById(visitId)).willReturn(Optional.of(visit));
@@ -749,6 +763,7 @@ public class VisitServiceTest {
         @BeforeEach
         void setUpAdmin() {
             User admin = User.builder().id(ADMIN_ID).jobType(JobType.MANAGEMENT).build();
+            admin.setDepartment(createDepartment(1L));
             admin.addAuthority(Authority.MANAGE_VISITOR);
             given(userRepository.findById(ADMIN_ID)).willReturn(Optional.of(admin));
         }

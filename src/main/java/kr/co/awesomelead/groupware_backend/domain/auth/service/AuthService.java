@@ -415,10 +415,8 @@ public class AuthService {
         // 1) 토큰 및 사용자 직접 참조 데이터 정리
         deleteByQuery(
                 "delete from RefreshToken rt where rt.email = :email", "email", user.getEmail());
-        deleteByQuery(
-                "delete from FcmToken ft where ft.user.id = :userId", "userId", userId);
-        deleteByQuery(
-                "delete from TopicMember tm where tm.user.id = :userId", "userId", userId);
+        deleteByQuery("delete from FcmToken ft where ft.user.id = :userId", "userId", userId);
+        deleteByQuery("delete from TopicMember tm where tm.user.id = :userId", "userId", userId);
         deleteByQuery(
                 "delete from MyInfoUpdateRequest r where r.reviewedBy.id = :userId",
                 "userId",
@@ -536,11 +534,13 @@ public class AuthService {
         safetyTrainingSessionRepository.updateCreatedByToNull(userId);
         safetyTrainingSessionRepository.updateInstructorUserToNull(userId);
         deleteByQuery(
-                "update ApprovalTemplate at set at.createdBy = null where at.createdBy.id = :userId",
+                "update ApprovalTemplate at set at.createdBy = null where at.createdBy.id ="
+                    + " :userId",
                 "userId",
                 userId);
         deleteByQuery(
-                "update ApprovalTemplateLine atl set atl.targetUser = null where atl.targetUser.id = :userId",
+                "update ApprovalTemplateLine atl set atl.targetUser = null where atl.targetUser.id"
+                    + " = :userId",
                 "userId",
                 userId);
         userRepository.delete(user);

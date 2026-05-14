@@ -1049,9 +1049,7 @@ class AuthServiceTest {
                 }
             }
 
-            assertThat(fcmTokenIdx)
-                    .as("FcmToken 삭제 JPQL이 실행되어야 한다")
-                    .isGreaterThanOrEqualTo(0);
+            assertThat(fcmTokenIdx).as("FcmToken 삭제 JPQL이 실행되어야 한다").isGreaterThanOrEqualTo(0);
             assertThat(refreshTokenIdx)
                     .as("RefreshToken 삭제 JPQL이 실행되어야 한다")
                     .isGreaterThanOrEqualTo(0);
@@ -1117,9 +1115,7 @@ class AuthServiceTest {
                 }
             }
 
-            assertThat(fcmTokenIdx)
-                    .as("FcmToken 삭제 JPQL이 실행되어야 한다")
-                    .isGreaterThanOrEqualTo(0);
+            assertThat(fcmTokenIdx).as("FcmToken 삭제 JPQL이 실행되어야 한다").isGreaterThanOrEqualTo(0);
             assertThat(topicMemberIdx)
                     .as("TopicMember 삭제 JPQL이 실행되어야 한다")
                     .isGreaterThanOrEqualTo(0);
@@ -1186,7 +1182,8 @@ class AuthServiceTest {
 
         @Test
         @DisplayName(
-                "성공: deleteUser 실행 시 ApprovalPersonalSetting 삭제가 ApprovalPersonalViewerTarget 삭제 직후에 실행된다 - 호출 순서 검증")
+                "성공: deleteUser 실행 시 ApprovalPersonalSetting 삭제가 ApprovalPersonalViewerTarget 삭제"
+                    + " 직후에 실행된다 - 호출 순서 검증")
         void deleteUser_deletesApprovalPersonalSettingAfterViewerTarget_orderCheck() {
             // given
             Long userId = 1L;
@@ -1255,7 +1252,8 @@ class AuthServiceTest {
 
         @Test
         @DisplayName(
-                "성공: deleteUser 실행 시 SavedApprovalLineDetail 삭제가 ApprovalPersonalSetting 삭제 직후에 실행된다 - 호출 순서 검증")
+                "성공: deleteUser 실행 시 SavedApprovalLineDetail 삭제가 ApprovalPersonalSetting 삭제 직후에"
+                    + " 실행된다 - 호출 순서 검증")
         void deleteUser_deletesSavedApprovalLineDetailAfterApprovalPersonalSetting_orderCheck() {
             // given
             Long userId = 1L;
@@ -1325,7 +1323,8 @@ class AuthServiceTest {
 
         @Test
         @DisplayName(
-                "성공: deleteUser 실행 시 SavedApprovalLine 삭제가 SavedApprovalLineDetail 삭제 직후에 실행된다 - 호출 순서 검증")
+                "성공: deleteUser 실행 시 SavedApprovalLine 삭제가 SavedApprovalLineDetail 삭제 직후에 실행된다 - 호출"
+                    + " 순서 검증")
         void deleteUser_deletesSavedApprovalLineAfterSavedApprovalLineDetail_orderCheck() {
             // given
             Long userId = 1L;
@@ -1480,7 +1479,8 @@ class AuthServiceTest {
 
         @Test
         @DisplayName(
-                "성공: deleteUser 실행 시 ApprovalDocument 자식 4개 삭제가 SavedApprovalLine 삭제 직후에 실행된다 - 호출 순서 검증")
+                "성공: deleteUser 실행 시 ApprovalDocument 자식 4개 삭제가 SavedApprovalLine 삭제 직후에 실행된다 - 호출"
+                    + " 순서 검증")
         void deleteUser_deletesApprovalDocumentChildrenAfterSavedApprovalLine_orderCheck() {
             // given
             Long userId = 1L;
@@ -1660,8 +1660,7 @@ class AuthServiceTest {
         }
 
         @Test
-        @DisplayName(
-                "성공: deleteUser 실행 시 ApprovalDocumentLine.targetUser NULLIFY UPDATE 쿼리가 실행된다")
+        @DisplayName("성공: deleteUser 실행 시 ApprovalDocumentLine.targetUser NULLIFY UPDATE 쿼리가 실행된다")
         void deleteUser_executesNullifyApprovalDocumentLineTargetUserJpql() {
             // given
             Long userId = 1L;
@@ -1718,14 +1717,13 @@ class AuthServiceTest {
                                                     && jpql.contains(":userId"));
             assertThat(found)
                     .as(
-                            "deleteUser() 실행 시 ApprovalDocumentLine.processedByUser NULLIFY UPDATE JPQL이"
-                                    + " 포함되어야 한다")
+                            "deleteUser() 실행 시 ApprovalDocumentLine.processedByUser NULLIFY UPDATE"
+                                + " JPQL이 포함되어야 한다")
                     .isTrue();
         }
 
         @Test
-        @DisplayName(
-                "성공: deleteUser 실행 시 ApprovalDocumentRead.targetUser NULLIFY UPDATE 쿼리가 실행된다")
+        @DisplayName("성공: deleteUser 실행 시 ApprovalDocumentRead.targetUser NULLIFY UPDATE 쿼리가 실행된다")
         void deleteUser_executesNullifyApprovalDocumentReadTargetUserJpql() {
             // given
             Long userId = 1L;
@@ -1756,8 +1754,7 @@ class AuthServiceTest {
         }
 
         @Test
-        @DisplayName(
-                "성공: deleteUser 실행 시 ApprovalActionHistory.actorUser NULLIFY UPDATE 쿼리가 실행된다")
+        @DisplayName("성공: deleteUser 실행 시 ApprovalActionHistory.actorUser NULLIFY UPDATE 쿼리가 실행된다")
         void deleteUser_executesNullifyApprovalActionHistoryActorUserJpql() {
             // given
             Long userId = 1L;
@@ -1814,14 +1811,15 @@ class AuthServiceTest {
                                                     && jpql.contains(":userId"));
             assertThat(found)
                     .as(
-                            "deleteUser() 실행 시 ApprovalAttachment.uploadedByUser NULLIFY UPDATE JPQL이"
-                                    + " 포함되어야 한다")
+                            "deleteUser() 실행 시 ApprovalAttachment.uploadedByUser NULLIFY UPDATE"
+                                + " JPQL이 포함되어야 한다")
                     .isTrue();
         }
 
         @Test
         @DisplayName(
-                "성공: deleteUser 실행 시 5개의 NULLIFY UPDATE 쿼리가 모두 ApprovalDocument 삭제 이후에 실행된다 - 호출 순서 검증")
+                "성공: deleteUser 실행 시 5개의 NULLIFY UPDATE 쿼리가 모두 ApprovalDocument 삭제 이후에 실행된다 - 호출 순서"
+                    + " 검증")
         void deleteUser_nullifyQueriesExecutedAfterApprovalDocumentDelete_orderCheck() {
             // given
             Long userId = 1L;
@@ -1901,8 +1899,7 @@ class AuthServiceTest {
         }
 
         @Test
-        @DisplayName(
-                "성공: deleteUser 실행 시 ApprovalTemplate.createdBy NULLIFY UPDATE 쿼리가 실행된다")
+        @DisplayName("성공: deleteUser 실행 시 ApprovalTemplate.createdBy NULLIFY UPDATE 쿼리가 실행된다")
         void deleteUser_executesNullifyApprovalTemplateCreatedByJpql() {
             // given
             Long userId = 1L;
@@ -1934,8 +1931,7 @@ class AuthServiceTest {
         }
 
         @Test
-        @DisplayName(
-                "성공: deleteUser 실행 시 ApprovalTemplateLine.targetUser NULLIFY UPDATE 쿼리가 실행된다")
+        @DisplayName("성공: deleteUser 실행 시 ApprovalTemplateLine.targetUser NULLIFY UPDATE 쿼리가 실행된다")
         void deleteUser_executesNullifyApprovalTemplateLineTargetUserJpql() {
             // given
             Long userId = 1L;
@@ -2018,7 +2014,8 @@ class AuthServiceTest {
 
         @Test
         @DisplayName(
-                "성공: deleteUser 실행 시 ApprovalPersonalViewerTarget 삭제가 Notice 삭제 이후에 실행된다 - 호출 순서 검증")
+                "성공: deleteUser 실행 시 ApprovalPersonalViewerTarget 삭제가 Notice 삭제 이후에 실행된다 - 호출 순서"
+                    + " 검증")
         void deleteUser_deletesApprovalPersonalViewerTargetAfterNotice_orderCheck() {
             // given
             Long userId = 1L;
@@ -2046,9 +2043,7 @@ class AuthServiceTest {
                 }
             }
 
-            assertThat(lastNoticeIdx)
-                    .as("Notice 관련 삭제 JPQL이 실행되어야 한다")
-                    .isGreaterThanOrEqualTo(0);
+            assertThat(lastNoticeIdx).as("Notice 관련 삭제 JPQL이 실행되어야 한다").isGreaterThanOrEqualTo(0);
             assertThat(viewerTargetIdx)
                     .as("ApprovalPersonalViewerTarget 삭제 JPQL이 실행되어야 한다")
                     .isGreaterThanOrEqualTo(0);
@@ -2087,7 +2082,8 @@ class AuthServiceTest {
 
         @Test
         @DisplayName(
-                "성공: deleteUser 실행 시 EduReport.createdBy NULLIFY가 EduAttendance 삭제 이후에 실행된다 - 호출 순서 검증")
+                "성공: deleteUser 실행 시 EduReport.createdBy NULLIFY가 EduAttendance 삭제 이후에 실행된다 - 호출 순서"
+                    + " 검증")
         void deleteUser_nullifiesEduReportCreatedByAfterEduAttendanceDelete_orderCheck() {
             // given
             Long userId = 1L;
@@ -2110,7 +2106,9 @@ class AuthServiceTest {
                 if (jpql.contains("EduAttendance") && eduAttendanceIdx == -1) {
                     eduAttendanceIdx = i;
                 }
-                if (jpql.contains("EduReport") && jpql.contains("er.createdBy") && eduReportNullifyIdx == -1) {
+                if (jpql.contains("EduReport")
+                        && jpql.contains("er.createdBy")
+                        && eduReportNullifyIdx == -1) {
                     eduReportNullifyIdx = i;
                 }
             }
@@ -2127,8 +2125,7 @@ class AuthServiceTest {
         }
 
         @Test
-        @DisplayName(
-                "성공: deleteUser 실행 시 RequestHistory.processedBy NULLIFY UPDATE 쿼리가 실행된다")
+        @DisplayName("성공: deleteUser 실행 시 RequestHistory.processedBy NULLIFY UPDATE 쿼리가 실행된다")
         void deleteUser_executesNullifyRequestHistoryProcessedByJpql() {
             // given
             Long userId = 1L;

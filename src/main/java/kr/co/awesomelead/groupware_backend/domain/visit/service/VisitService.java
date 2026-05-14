@@ -227,15 +227,8 @@ public class VisitService {
                         .findById(dto.getVisitId())
                         .orElseThrow(() -> new CustomException(ErrorCode.VISIT_NOT_FOUND));
 
-        // 2. 날짜 검증 (하루 방문의 경우 오늘 날짜인지 확인)
-        if (visit.getVisitCategory() != VisitCategory.PRE_LONG_TERM
-                && !visit.getStartDate().equals(LocalDate.now())) {
-            throw new CustomException(ErrorCode.NOT_VISIT_DATE); // "방문 예정일이 아닙니다" 에러
-        }
-
-        if (visit.isVisited()) {
-            throw new CustomException(ErrorCode.VISIT_ALREADY_CHECKED_OUT);
-        }
+        // 2. 입실 가능 상태 검증
+        visit.validateCheckInEligible();
 
         // 5. 서명 이미지 S3 업로드
         String signatureKey = s3Service.uploadFile(dto.getSignatureFile());

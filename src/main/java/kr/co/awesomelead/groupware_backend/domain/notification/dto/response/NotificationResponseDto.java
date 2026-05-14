@@ -47,7 +47,9 @@ public class NotificationResponseDto {
     @Schema(description = "알림 메시지 유형", example = "VISIT_CHECK_IN")
     private final NotificationMessage messageType;
 
-    @Schema(description = "승인 요청형 알림의 처리 완료 여부 (예: 회원가입 승인 요청, 내정보수정 승인 요청, 장기방문 승인 요청)", example = "false")
+    @Schema(
+            description = "승인 요청형 알림의 처리 완료 여부 (예: 회원가입 승인 요청, 내정보수정 승인 요청, 장기방문 승인 요청)",
+            example = "false")
     private final boolean approvalOrRejectionCompleted;
 
     private NotificationResponseDto(Notification notification) {

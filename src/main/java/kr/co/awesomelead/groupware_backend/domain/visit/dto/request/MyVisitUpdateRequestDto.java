@@ -6,6 +6,7 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
 
+import kr.co.awesomelead.groupware_backend.domain.department.enums.Company;
 import kr.co.awesomelead.groupware_backend.domain.visit.enums.AdditionalPermissionType;
 import kr.co.awesomelead.groupware_backend.domain.visit.enums.VisitPurpose;
 
@@ -37,6 +38,9 @@ public class MyVisitUpdateRequestDto implements VisitRequest {
 
     @Schema(description = "내방객 소속 회사", example = "ABC 주식회사")
     private String visitorCompany;
+
+    @Schema(description = "방문 회사(어썸/마루이)", allowableValues = {"AWESOME", "MARUI"}, example = "AWESOME")
+    private Company hostCompany;
 
     @Schema(description = "방문 목적", example = "고객 검수")
     private VisitPurpose purpose;

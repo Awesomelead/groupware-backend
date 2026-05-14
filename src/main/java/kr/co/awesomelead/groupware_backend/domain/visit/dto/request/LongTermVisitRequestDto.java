@@ -7,6 +7,7 @@ import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
 
+import kr.co.awesomelead.groupware_backend.domain.department.enums.Company;
 import kr.co.awesomelead.groupware_backend.domain.visit.enums.AdditionalPermissionType;
 import kr.co.awesomelead.groupware_backend.domain.visit.enums.VisitPurpose;
 
@@ -37,6 +38,10 @@ public class LongTermVisitRequestDto implements VisitRequest {
     @NotBlank(message = "내방객 소속 회사명은 필수입니다.")
     @Schema(description = "내방객 소속 회사명", example = "어썸테크")
     private String visitorCompany;
+
+    @NotNull(message = "방문 회사는 필수입니다.")
+    @Schema(description = "방문 회사(어썸/마루이)", allowableValues = {"AWESOME", "MARUI"}, example = "AWESOME")
+    private Company hostCompany;
 
     @Schema(description = "차량 번호", example = "12가 3456")
     private String carNumber;

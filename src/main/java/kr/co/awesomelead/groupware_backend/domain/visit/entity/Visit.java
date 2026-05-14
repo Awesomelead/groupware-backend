@@ -80,7 +80,7 @@ public class Visit {
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 50)
-    private Company hostCompany; // 내방객 방문 회사 (내방객 직접입력 X)
+    private Company hostCompany; // 내방객 방문 회사 (AWESOME/MARUI)
 
     @Column(length = 20)
     private String carNumber; // 차량 번호

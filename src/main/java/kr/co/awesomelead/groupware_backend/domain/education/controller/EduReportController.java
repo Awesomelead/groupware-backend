@@ -1380,7 +1380,11 @@ public class EduReportController {
             summary = "교육 리마인드 알림 전송",
             description =
                     """
-                        교육 생성자(createdBy)만 요청 가능합니다.
+                        교육 유형별 관리 권한이 있는 사용자가 요청 가능합니다.
+
+                        - 부서 교육: `MANAGE_DEPARTMENT_EDUCATION`
+                        - PSM: `MANAGE_PSM`
+                        - 안전보건: `MANAGE_SAFETY`
 
                         - 생성 시와 동일한 대상자에게 title에 `[리마인드]` prefix를 붙여 알림을 재전송합니다.
                         - 부서교육 / PSM / 안전보건 모든 타입에 사용 가능합니다.
@@ -1391,21 +1395,49 @@ public class EduReportController {
                 description = "전송 성공"),
         @io.swagger.v3.oas.annotations.responses.ApiResponse(
                 responseCode = "403",
-                description = "권한 없음 (교육 생성자가 아님)",
+                description = "권한 없음 (교육 유형별 관리 권한 필요)",
                 content =
                         @Content(
                                 mediaType = "application/json",
                                 examples =
-                                        @ExampleObject(
-                                                value =
-                                                        """
+                                        {
+                                            @ExampleObject(
+                                                    name = "DEPARTMENT_NO_AUTHORITY",
+                                                    summary = "부서 교육 권한 없음",
+                                                    value =
+                                                            """
                                         {
                                           "isSuccess": false,
                                           "code": "NO_AUTHORITY_FOR_EDU_REPORT",
                                           "message": "교육 게시물 관리 권한이 없습니다.",
                                           "result": null
                                         }
-                                        """))),
+                                        """),
+                                            @ExampleObject(
+                                                    name = "PSM_NO_AUTHORITY",
+                                                    summary = "PSM 권한 없음",
+                                                    value =
+                                                            """
+                                        {
+                                          "isSuccess": false,
+                                          "code": "NO_AUTHORITY_FOR_PSM_MANAGE",
+                                          "message": "PSM 관리 권한이 없습니다.",
+                                          "result": null
+                                        }
+                                        """),
+                                            @ExampleObject(
+                                                    name = "SAFETY_NO_AUTHORITY",
+                                                    summary = "안전보건 권한 없음",
+                                                    value =
+                                                            """
+                                        {
+                                          "isSuccess": false,
+                                          "code": "NO_AUTHORITY_FOR_SAFETY_WRITE",
+                                          "message": "안전 보건 관리 권한이 없습니다.",
+                                          "result": null
+                                        }
+                                        """)
+                                        })),
         @io.swagger.v3.oas.annotations.responses.ApiResponse(
                 responseCode = "404",
                 description = "교육 게시물 없음",

@@ -1163,7 +1163,8 @@ public class EduReportService {
 
     @Transactional
     public void remindEduReport(Long eduReportId, Long userId) {
-        userRepository
+        User user =
+                userRepository
                 .findById(userId)
                 .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
 
@@ -1172,9 +1173,7 @@ public class EduReportService {
                         .findById(eduReportId)
                         .orElseThrow(() -> new CustomException(ErrorCode.EDU_REPORT_NOT_FOUND));
 
-        if (report.getCreatedBy() == null || !report.getCreatedBy().getId().equals(userId)) {
-            throw new CustomException(ErrorCode.NO_AUTHORITY_FOR_EDU_REPORT);
-        }
+        validateCreateAuthority(user, report.getEduType());
 
         List<Long> targetUserIds;
         if (report.getEduType() == EduType.PSM || report.getEduType() == EduType.SAFETY) {

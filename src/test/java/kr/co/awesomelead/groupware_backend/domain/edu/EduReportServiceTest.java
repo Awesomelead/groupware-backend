@@ -2095,8 +2095,8 @@ public class EduReportServiceTest {
         }
 
         @Test
-        @DisplayName("리마인드 실패 - 권한 없음 (createdBy가 null)")
-        void remindEduReport_throwsWhenCreatedByIsNull() {
+        @DisplayName("리마인드 실패 - SAFETY 타입 권한 없음")
+        void remindEduReport_throwsWhenNoSafetyAuthority() {
             // given
             User user = createNormalUser();
             EduReport report =
@@ -2104,7 +2104,6 @@ public class EduReportServiceTest {
                             .id(10L)
                             .eduType(EduType.SAFETY)
                             .title("안전 교육")
-                            .createdBy(null)
                             .build();
 
             when(userRepository.findById(1L)).thenReturn(Optional.of(user));
@@ -2114,22 +2113,20 @@ public class EduReportServiceTest {
             assertThatThrownBy(() -> eduReportService.remindEduReport(10L, 1L))
                     .isInstanceOf(CustomException.class)
                     .extracting("errorCode")
-                    .isEqualTo(ErrorCode.NO_AUTHORITY_FOR_EDU_REPORT);
+                    .isEqualTo(ErrorCode.NO_AUTHORITY_FOR_SAFETY_WRITE);
         }
 
         @Test
-        @DisplayName("리마인드 실패 - 권한 없음 (다른 사용자가 작성한 보고서)")
-        void remindEduReport_throwsWhenNotCreator() {
+        @DisplayName("리마인드 실패 - PSM 타입 권한 없음")
+        void remindEduReport_throwsWhenNoPsmAuthority() {
             // given
             User requestUser = createNormalUser(); // id = 1L
-            User anotherUser = createAdminUser(); // id = 99L
 
             EduReport report =
                     EduReport.builder()
                             .id(10L)
-                            .eduType(EduType.SAFETY)
-                            .title("안전 교육")
-                            .createdBy(anotherUser)
+                            .eduType(EduType.PSM)
+                            .title("PSM 교육")
                             .build();
 
             when(userRepository.findById(1L)).thenReturn(Optional.of(requestUser));
@@ -2139,7 +2136,7 @@ public class EduReportServiceTest {
             assertThatThrownBy(() -> eduReportService.remindEduReport(10L, 1L))
                     .isInstanceOf(CustomException.class)
                     .extracting("errorCode")
-                    .isEqualTo(ErrorCode.NO_AUTHORITY_FOR_EDU_REPORT);
+                    .isEqualTo(ErrorCode.NO_AUTHORITY_FOR_PSM_MANAGE);
         }
 
         @Test
@@ -2147,6 +2144,7 @@ public class EduReportServiceTest {
         void remindEduReport_psmType_companyNull_callsFindAllActiveUserIds() {
             // given
             User user = createNormalUser();
+            user.addAuthority(Authority.MANAGE_PSM);
             EduReport report =
                     EduReport.builder()
                             .id(10L)
@@ -2177,6 +2175,7 @@ public class EduReportServiceTest {
         void remindEduReport_psmType_withCompany_callsFindAllIdsByCompany() {
             // given
             User user = createNormalUser();
+            user.addAuthority(Authority.MANAGE_PSM);
             EduReport report =
                     EduReport.builder()
                             .id(10L)
@@ -2207,6 +2206,7 @@ public class EduReportServiceTest {
         void remindEduReport_safetyType_metadataContainsDetailTypeGeneral() {
             // given
             User user = createNormalUser();
+            user.addAuthority(Authority.MANAGE_SAFETY);
             EduReport report =
                     EduReport.builder()
                             .id(10L)
@@ -2238,6 +2238,7 @@ public class EduReportServiceTest {
         void remindEduReport_departmentType_withDepartment_callsFindAllIdsByDepartmentId() {
             // given
             User user = createNormalUser();
+            user.addAuthority(Authority.MANAGE_DEPARTMENT_EDUCATION);
             EduReport report =
                     EduReport.builder()
                             .id(10L)
@@ -2268,6 +2269,7 @@ public class EduReportServiceTest {
         void remindEduReport_callsNotificationServiceWithCorrectArgs() {
             // given
             User user = createNormalUser();
+            user.addAuthority(Authority.MANAGE_PSM);
             EduReport report =
                     EduReport.builder()
                             .id(10L)

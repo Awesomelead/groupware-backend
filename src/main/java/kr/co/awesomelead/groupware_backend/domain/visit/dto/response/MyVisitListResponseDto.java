@@ -9,6 +9,7 @@ import lombok.Builder;
 import lombok.Getter;
 
 import java.time.LocalDate;
+import java.util.List;
 
 @Getter
 @Builder
@@ -33,4 +34,7 @@ public class MyVisitListResponseDto {
 
     @Schema(description = "방문 종료일", example = "2024-07-01")
     private LocalDate endDate;
+
+    @Schema(description = "담당자 목록")
+    private List<VisitHostResponseDto> hosts;
 }

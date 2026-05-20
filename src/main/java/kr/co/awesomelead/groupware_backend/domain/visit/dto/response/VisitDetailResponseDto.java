@@ -2,7 +2,6 @@ package kr.co.awesomelead.groupware_backend.domain.visit.dto.response;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 
-import kr.co.awesomelead.groupware_backend.domain.department.enums.DepartmentName;
 import kr.co.awesomelead.groupware_backend.domain.visit.enums.AdditionalPermissionType;
 import kr.co.awesomelead.groupware_backend.domain.visit.enums.VisitCategory;
 import kr.co.awesomelead.groupware_backend.domain.visit.enums.VisitPurpose;
@@ -39,11 +38,8 @@ public class VisitDetailResponseDto {
     @Schema(description = "기타 허가 요구사항", example = "특수 장비 반입 필요")
     private String permissionDetail;
 
-    @Schema(description = "담당 부서", example = "경영지원부")
-    private DepartmentName hostDepartmentName;
-
-    @Schema(description = "담당자 이름", example = "이순신")
-    private String hostName;
+    @Schema(description = "담당자 목록")
+    private List<VisitHostResponseDto> hosts;
 
     @Schema(description = "내방객 전화번호", example = "01012345678")
     private String visitorPhoneNumber;

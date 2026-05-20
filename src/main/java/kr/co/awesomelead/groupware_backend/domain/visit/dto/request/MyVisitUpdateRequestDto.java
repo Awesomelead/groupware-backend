@@ -16,6 +16,7 @@ import lombok.NoArgsConstructor;
 
 import java.time.LocalDate;
 import java.time.LocalTime;
+import java.util.List;
 
 @Getter
 @Builder
@@ -63,6 +64,6 @@ public class MyVisitUpdateRequestDto implements VisitRequest {
     @Schema(description = "차량 번호", example = "12가3456")
     private String carNumber;
 
-    @Schema(description = "담당자 직원 ID", example = "1")
-    private Long hostId;
+    @Schema(description = "담당 직원 ID 목록", example = "[1, 2]")
+    private List<Long> hostIds;
 }

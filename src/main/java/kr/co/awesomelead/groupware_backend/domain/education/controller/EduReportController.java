@@ -1399,13 +1399,12 @@ public class EduReportController {
                 content =
                         @Content(
                                 mediaType = "application/json",
-                                examples =
-                                        {
-                                            @ExampleObject(
-                                                    name = "DEPARTMENT_NO_AUTHORITY",
-                                                    summary = "부서 교육 권한 없음",
-                                                    value =
-                                                            """
+                                examples = {
+                                    @ExampleObject(
+                                            name = "DEPARTMENT_NO_AUTHORITY",
+                                            summary = "부서 교육 권한 없음",
+                                            value =
+                                                    """
                                         {
                                           "isSuccess": false,
                                           "code": "NO_AUTHORITY_FOR_EDU_REPORT",
@@ -1413,11 +1412,11 @@ public class EduReportController {
                                           "result": null
                                         }
                                         """),
-                                            @ExampleObject(
-                                                    name = "PSM_NO_AUTHORITY",
-                                                    summary = "PSM 권한 없음",
-                                                    value =
-                                                            """
+                                    @ExampleObject(
+                                            name = "PSM_NO_AUTHORITY",
+                                            summary = "PSM 권한 없음",
+                                            value =
+                                                    """
                                         {
                                           "isSuccess": false,
                                           "code": "NO_AUTHORITY_FOR_PSM_MANAGE",
@@ -1425,11 +1424,11 @@ public class EduReportController {
                                           "result": null
                                         }
                                         """),
-                                            @ExampleObject(
-                                                    name = "SAFETY_NO_AUTHORITY",
-                                                    summary = "안전보건 권한 없음",
-                                                    value =
-                                                            """
+                                    @ExampleObject(
+                                            name = "SAFETY_NO_AUTHORITY",
+                                            summary = "안전보건 권한 없음",
+                                            value =
+                                                    """
                                         {
                                           "isSuccess": false,
                                           "code": "NO_AUTHORITY_FOR_SAFETY_WRITE",
@@ -1437,7 +1436,7 @@ public class EduReportController {
                                           "result": null
                                         }
                                         """)
-                                        })),
+                                })),
         @io.swagger.v3.oas.annotations.responses.ApiResponse(
                 responseCode = "404",
                 description = "교육 게시물 없음",

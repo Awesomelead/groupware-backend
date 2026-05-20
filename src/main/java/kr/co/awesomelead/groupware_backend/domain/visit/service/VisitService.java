@@ -2,7 +2,6 @@ package kr.co.awesomelead.groupware_backend.domain.visit.service;
 
 import static kr.co.awesomelead.groupware_backend.domain.visit.entity.Visit.hashValue;
 
-import kr.co.awesomelead.groupware_backend.domain.department.entity.Department;
 import kr.co.awesomelead.groupware_backend.domain.department.enums.DepartmentName;
 import kr.co.awesomelead.groupware_backend.domain.department.repository.DepartmentRepository;
 import kr.co.awesomelead.groupware_backend.domain.notification.enums.NotificationDomainType;
@@ -85,7 +84,8 @@ public class VisitService {
         List<User> hosts = findUsersByIds(dto.getHostIds());
         String encodedPassword = passwordEncoder.encode(dto.getPassword());
 
-        Visit visit = visitMapper.toOneDayVisit(dto, hosts.get(0).getWorkLocation(), encodedPassword);
+        Visit visit =
+                visitMapper.toOneDayVisit(dto, hosts.get(0).getWorkLocation(), encodedPassword);
         syncAndValidatePermissions(visit, dto);
         addHostsToVisit(visit, hosts);
 
@@ -121,7 +121,8 @@ public class VisitService {
         List<User> hosts = findUsersByIds(dto.getHostIds());
         String encodedPassword = passwordEncoder.encode(dto.getPassword());
 
-        Visit visit = visitMapper.toLongTermVisit(dto, hosts.get(0).getWorkLocation(), encodedPassword);
+        Visit visit =
+                visitMapper.toLongTermVisit(dto, hosts.get(0).getWorkLocation(), encodedPassword);
         syncAndValidatePermissions(visit, dto);
         addHostsToVisit(visit, hosts);
 
@@ -154,7 +155,8 @@ public class VisitService {
         String encodedPassword = passwordEncoder.encode(dto.getPassword());
         String signatureKey = s3Service.uploadFile(dto.getSignatureFile());
 
-        Visit visit = visitMapper.toOnSiteVisit(dto, hosts.get(0).getWorkLocation(), encodedPassword);
+        Visit visit =
+                visitMapper.toOnSiteVisit(dto, hosts.get(0).getWorkLocation(), encodedPassword);
         syncAndValidatePermissions(visit, dto);
         addHostsToVisit(visit, hosts);
 
@@ -322,9 +324,7 @@ public class VisitService {
 
         return visits.stream()
                 .filter(visit -> StringUtils.hasText(visit.getPassword()))
-                .filter(
-                        visit ->
-                                passwordEncoder.matches(dto.getPassword(), visit.getPassword()))
+                .filter(visit -> passwordEncoder.matches(dto.getPassword(), visit.getPassword()))
                 .map(visitMapper::toMyVisitListResponseDto)
                 .toList();
     }
@@ -534,15 +534,15 @@ public class VisitService {
                                 userRepository
                                         .findById(id)
                                         .orElseThrow(
-                                                () -> new CustomException(ErrorCode.USER_NOT_FOUND)))
+                                                () ->
+                                                        new CustomException(
+                                                                ErrorCode.USER_NOT_FOUND)))
                 .toList();
     }
 
     private void addHostsToVisit(Visit visit, List<User> hostUsers) {
         hostUsers.forEach(
-                user ->
-                        visit.getHosts()
-                                .add(VisitHost.builder().visit(visit).user(user).build()));
+                user -> visit.getHosts().add(VisitHost.builder().visit(visit).user(user).build()));
     }
 
     private void sendVisitAlertToHostDepartments(

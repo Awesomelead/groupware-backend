@@ -80,9 +80,12 @@ public class VisitQueryRepository {
         List<Visit> content =
                 queryFactory
                         .selectFrom(visit)
-                        .leftJoin(visit.hosts, qVisitHost).fetchJoin()
-                        .leftJoin(qVisitHost.user, qUser).fetchJoin()
-                        .leftJoin(qUser.department).fetchJoin()
+                        .leftJoin(visit.hosts, qVisitHost)
+                        .fetchJoin()
+                        .leftJoin(qVisitHost.user, qUser)
+                        .fetchJoin()
+                        .leftJoin(qUser.department)
+                        .fetchJoin()
                         .where(visit.id.in(visitIds))
                         .orderBy(visit.id.desc())
                         .fetch();

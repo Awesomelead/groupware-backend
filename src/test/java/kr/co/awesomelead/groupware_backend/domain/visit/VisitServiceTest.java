@@ -3,7 +3,6 @@ package kr.co.awesomelead.groupware_backend.domain.visit;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
-import static org.junit.jupiter.api.Assertions.fail;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.BDDMockito.given;
@@ -1076,10 +1075,7 @@ public class VisitServiceTest {
                 User user = createHost();
 
                 // when
-                VisitHost visitHost = VisitHost.builder()
-                        .visit(visit)
-                        .user(user)
-                        .build();
+                VisitHost visitHost = VisitHost.builder().visit(visit).user(user).build();
 
                 // then
                 assertThat(visitHost.getVisit()).isEqualTo(visit);
@@ -1099,9 +1095,7 @@ public class VisitServiceTest {
                 User user = createHost();
 
                 // when
-                VisitHost visitHost = VisitHost.builder()
-                        .user(user)
-                        .build();
+                VisitHost visitHost = VisitHost.builder().user(user).build();
 
                 // then
                 assertThat(visitHost.getVisit()).isNull();
@@ -1120,9 +1114,7 @@ public class VisitServiceTest {
                 Visit visit = createBaseVisit(VisitStatus.PENDING, VisitCategory.PRE_LONG_TERM);
 
                 // when
-                VisitHost visitHost = VisitHost.builder()
-                        .visit(visit)
-                        .build();
+                VisitHost visitHost = VisitHost.builder().visit(visit).build();
 
                 // then
                 assertThat(visitHost.getUser()).isNull();
@@ -1300,8 +1292,7 @@ public class VisitServiceTest {
                 visitService.registerOneDayPreVisit(dto);
 
                 // then
-                verify(visitRepository).save(
-                        argThat(visit -> visit.getHosts().size() == 2));
+                verify(visitRepository).save(argThat(visit -> visit.getHosts().size() == 2));
             }
         }
     }
@@ -1326,7 +1317,8 @@ public class VisitServiceTest {
                 Long hostId2 = 2L;
 
                 Department dept1 = createDepartment(10L);
-                Department dept2 = Department.builder().id(20L).name(DepartmentName.SALES_DEPT).build();
+                Department dept2 =
+                        Department.builder().id(20L).name(DepartmentName.SALES_DEPT).build();
 
                 User host1 =
                         User.builder()

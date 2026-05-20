@@ -91,20 +91,11 @@ public class VisitService {
 
         Long visitId = visitRepository.save(visit).getId();
 
-        sendVisitAlertToHostDepartments(
-                NotificationMessage.VISIT_ONE_DAY_PRE,
-                visitId,
-                hosts,
-                Map.of("isApprovalTarget", false, "status", VisitStatus.PENDING.name()),
-                visit.getVisitorName(),
-                visit.getStartDate(),
-                dto.getPlannedEntryTime(),
-                hosts.get(0).getDisplayName());
-
-        sendEnvironmentSafetyAlertIfRequired(
+        sendVisitAlerts(
                 visit.getPurpose(),
                 NotificationMessage.VISIT_ONE_DAY_PRE,
                 visitId,
+                hosts,
                 Map.of("isApprovalTarget", false, "status", VisitStatus.PENDING.name()),
                 visit.getVisitorName(),
                 visit.getStartDate(),
@@ -128,19 +119,11 @@ public class VisitService {
 
         Long visitId = visitRepository.save(visit).getId();
 
-        sendVisitAlertToHostDepartments(
-                NotificationMessage.VISIT_LONG_TERM_PRE,
-                visitId,
-                hosts,
-                Map.of("status", VisitStatus.PENDING.name(), "isApprovalTarget", true),
-                visit.getVisitorName(),
-                dto.getStartDate(),
-                dto.getEndDate());
-
-        sendEnvironmentSafetyAlertIfRequired(
+        sendVisitAlerts(
                 visit.getPurpose(),
                 NotificationMessage.VISIT_LONG_TERM_PRE,
                 visitId,
+                hosts,
                 Map.of("status", VisitStatus.PENDING.name(), "isApprovalTarget", true),
                 visit.getVisitorName(),
                 dto.getStartDate(),
@@ -173,18 +156,11 @@ public class VisitService {
 
         Long visitId = visitRepository.save(visit).getId();
 
-        sendVisitAlertToHostDepartments(
-                NotificationMessage.VISIT_CHECK_IN,
-                visitId,
-                hosts,
-                Map.of("isApprovalTarget", false, "status", VisitStatus.IN_PROGRESS.name()),
-                visit.getVisitorName(),
-                formatNotificationTime(record.getEntryTime().toLocalTime()));
-
-        sendEnvironmentSafetyAlertIfRequired(
+        sendVisitAlerts(
                 visit.getPurpose(),
                 NotificationMessage.VISIT_CHECK_IN,
                 visitId,
+                hosts,
                 Map.of("isApprovalTarget", false, "status", VisitStatus.IN_PROGRESS.name()),
                 visit.getVisitorName(),
                 formatNotificationTime(record.getEntryTime().toLocalTime()));
@@ -258,18 +234,11 @@ public class VisitService {
         visit.setVisited(true);
 
         List<User> hosts = visit.getHosts().stream().map(VisitHost::getUser).toList();
-        sendVisitAlertToHostDepartments(
-                NotificationMessage.VISIT_CHECK_IN,
-                visit.getId(),
-                hosts,
-                Map.of("isApprovalTarget", false, "status", VisitStatus.IN_PROGRESS.name()),
-                visit.getVisitorName(),
-                formatNotificationTime(record.getEntryTime().toLocalTime()));
-
-        sendEnvironmentSafetyAlertIfRequired(
+        sendVisitAlerts(
                 visit.getPurpose(),
                 NotificationMessage.VISIT_CHECK_IN,
                 visit.getId(),
+                hosts,
                 Map.of("isApprovalTarget", false, "status", VisitStatus.IN_PROGRESS.name()),
                 visit.getVisitorName(),
                 formatNotificationTime(record.getEntryTime().toLocalTime()));
@@ -545,36 +514,28 @@ public class VisitService {
                 user -> visit.getHosts().add(VisitHost.builder().visit(visit).user(user).build()));
     }
 
-    private void sendVisitAlertToHostDepartments(
+    private void sendVisitAlerts(
+            VisitPurpose purpose,
             NotificationMessage template,
             Long visitId,
             List<User> hosts,
             Map<String, Object> metadata,
             Object... contentArgs) {
-        hosts.stream()
-                .filter(h -> h.getDepartment() != null)
-                .map(h -> h.getDepartment().getId())
-                .collect(Collectors.toSet())
-                .forEach(
-                        deptId ->
-                                notificationService.sendVisitAlertToDepartment(
-                                        template, visitId, deptId, metadata, contentArgs));
-    }
+        Set<Long> targetDeptIds =
+                hosts.stream()
+                        .filter(h -> h.getDepartment() != null)
+                        .map(h -> h.getDepartment().getId())
+                        .collect(Collectors.toCollection(java.util.HashSet::new));
 
-    private void sendEnvironmentSafetyAlertIfRequired(
-            VisitPurpose purpose,
-            NotificationMessage template,
-            Long visitId,
-            Map<String, Object> metadata,
-            Object... contentArgs) {
-        if (!ENVIRONMENT_SAFETY_REQUIRED_PURPOSES.contains(purpose)) {
-            return;
+        if (ENVIRONMENT_SAFETY_REQUIRED_PURPOSES.contains(purpose)) {
+            departmentRepository
+                    .findByName(DepartmentName.ENVIRONMENT_SAFETY)
+                    .ifPresent(dept -> targetDeptIds.add(dept.getId()));
         }
-        departmentRepository
-                .findByName(DepartmentName.ENVIRONMENT_SAFETY)
-                .ifPresent(
-                        dept ->
-                                notificationService.sendVisitAlertToDepartment(
-                                        template, visitId, dept.getId(), metadata, contentArgs));
+
+        targetDeptIds.forEach(
+                deptId ->
+                        notificationService.sendVisitAlertToDepartment(
+                                template, visitId, deptId, metadata, contentArgs));
     }
 }

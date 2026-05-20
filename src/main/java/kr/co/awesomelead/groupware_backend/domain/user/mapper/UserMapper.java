@@ -29,7 +29,6 @@ public interface UserMapper {
 
     // 연관관계 필드들
     @Mapping(target = "annualLeave", ignore = true)
-    @Mapping(target = "visits", ignore = true)
     @Mapping(target = "checkSheets", ignore = true)
     @Mapping(target = "payslips", ignore = true)
     @Mapping(target = "sentMessages", ignore = true)

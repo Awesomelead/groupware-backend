@@ -238,7 +238,14 @@ public class VisitController {
                             "id": 1,
                             "visitorCompany": "어썸테크",
                             "visitorName": "홍길동",
-                            "hostDepartmentName": "경영지원부",
+                            "hosts": [
+                              {
+                                "userId": 1,
+                                "name": "김철수",
+                                "position": "과장",
+                                "departmentName": "경영지원부"
+                              }
+                            ],
                             "startDate": "2026-07-01",
                             "endDate": "2026-07-01",
                             "status": "방문 중"

@@ -1165,8 +1165,8 @@ public class EduReportService {
     public void remindEduReport(Long eduReportId, Long userId) {
         User user =
                 userRepository
-                .findById(userId)
-                .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
+                        .findById(userId)
+                        .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
 
         EduReport report =
                 eduReportRepository

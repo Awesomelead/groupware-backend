@@ -2100,11 +2100,7 @@ public class EduReportServiceTest {
             // given
             User user = createNormalUser();
             EduReport report =
-                    EduReport.builder()
-                            .id(10L)
-                            .eduType(EduType.SAFETY)
-                            .title("안전 교육")
-                            .build();
+                    EduReport.builder().id(10L).eduType(EduType.SAFETY).title("안전 교육").build();
 
             when(userRepository.findById(1L)).thenReturn(Optional.of(user));
             when(eduReportRepository.findById(10L)).thenReturn(Optional.of(report));
@@ -2123,11 +2119,7 @@ public class EduReportServiceTest {
             User requestUser = createNormalUser(); // id = 1L
 
             EduReport report =
-                    EduReport.builder()
-                            .id(10L)
-                            .eduType(EduType.PSM)
-                            .title("PSM 교육")
-                            .build();
+                    EduReport.builder().id(10L).eduType(EduType.PSM).title("PSM 교육").build();
 
             when(userRepository.findById(1L)).thenReturn(Optional.of(requestUser));
             when(eduReportRepository.findById(10L)).thenReturn(Optional.of(report));

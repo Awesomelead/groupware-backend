@@ -1597,7 +1597,14 @@ public class VisitServiceTest {
                 //       중복 제거 후 99L로 정확히 1회만 호출되어야 한다.
                 verify(notificationService, times(1))
                         .sendVisitAlertToDepartment(
-                                any(), any(), eq(envSafetyDeptId), any(), any(), any(), any(), any());
+                                any(),
+                                any(),
+                                eq(envSafetyDeptId),
+                                any(),
+                                any(),
+                                any(),
+                                any(),
+                                any());
             }
         }
     }

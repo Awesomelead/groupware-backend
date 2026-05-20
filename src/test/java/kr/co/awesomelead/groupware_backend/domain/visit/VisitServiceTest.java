@@ -3,6 +3,7 @@ package kr.co.awesomelead.groupware_backend.domain.visit;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
+import static org.junit.jupiter.api.Assertions.fail;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.BDDMockito.given;
@@ -12,6 +13,7 @@ import static org.mockito.Mockito.verify;
 import kr.co.awesomelead.groupware_backend.domain.department.entity.Department;
 import kr.co.awesomelead.groupware_backend.domain.department.enums.Company;
 import kr.co.awesomelead.groupware_backend.domain.department.enums.DepartmentName;
+import kr.co.awesomelead.groupware_backend.domain.department.repository.DepartmentRepository;
 import kr.co.awesomelead.groupware_backend.domain.notification.service.NotificationService;
 import kr.co.awesomelead.groupware_backend.domain.user.entity.User;
 import kr.co.awesomelead.groupware_backend.domain.user.enums.Authority;
@@ -26,6 +28,7 @@ import kr.co.awesomelead.groupware_backend.domain.visit.dto.request.OneDayVisitR
 import kr.co.awesomelead.groupware_backend.domain.visit.dto.request.VisitProcessRequestDto;
 import kr.co.awesomelead.groupware_backend.domain.visit.dto.response.VisitListResponseDto;
 import kr.co.awesomelead.groupware_backend.domain.visit.entity.Visit;
+import kr.co.awesomelead.groupware_backend.domain.visit.entity.VisitHost;
 import kr.co.awesomelead.groupware_backend.domain.visit.entity.VisitRecord;
 import kr.co.awesomelead.groupware_backend.domain.visit.enums.AdditionalPermissionType;
 import kr.co.awesomelead.groupware_backend.domain.visit.enums.VisitCategory;
@@ -76,6 +79,7 @@ public class VisitServiceTest {
     @Mock private VisitRepository visitRepository;
     @Mock private VisitQueryRepository visitQueryRepository;
     @Mock private UserRepository userRepository;
+    @Mock private DepartmentRepository departmentRepository;
     @Mock private S3Service s3Service;
     @Mock private PasswordEncoder passwordEncoder;
     @Mock private NotificationService notificationService;
@@ -103,14 +107,16 @@ public class VisitServiceTest {
     }
 
     private Visit createBaseVisit(VisitStatus status, VisitCategory visitCategory) {
-        return Visit.builder()
-                .id(VISIT_ID)
-                .password(ENCODED_PASSWORD)
-                .status(status)
-                .visitCategory(visitCategory)
-                .user(createHost())
-                .records(new ArrayList<>())
-                .build();
+        Visit visit =
+                Visit.builder()
+                        .id(VISIT_ID)
+                        .password(ENCODED_PASSWORD)
+                        .status(status)
+                        .visitCategory(visitCategory)
+                        .records(new ArrayList<>())
+                        .build();
+        visit.getHosts().add(VisitHost.builder().user(createHost()).build());
+        return visit;
     }
 
     @Nested
@@ -169,14 +175,12 @@ public class VisitServiceTest {
                 OneDayVisitRequestDto dto =
                         createOneDayDto(VisitPurpose.MEETING, AdditionalPermissionType.NONE, null);
 
-                User mockHost = User.builder().id(dto.getHostId()).build();
                 String encodedPassword = "encoded_password_1234";
 
                 Visit mockVisit =
                         createBaseVisit(VisitStatus.NOT_VISITED, VisitCategory.PRE_ONE_DAY);
                 mockVisit.setPurpose(dto.getPurpose());
 
-                given(userRepository.findById(dto.getHostId())).willReturn(Optional.of(mockHost));
                 given(passwordEncoder.encode(dto.getPassword())).willReturn(encodedPassword);
                 given(visitMapper.toOneDayVisit(any(), any(), any())).willReturn(mockVisit);
                 given(visitRepository.save(any(Visit.class))).willReturn(mockVisit);
@@ -186,7 +190,7 @@ public class VisitServiceTest {
 
                 // then
                 assertThat(resultId).isEqualTo(VISIT_ID);
-                verify(userRepository, times(1)).findById(dto.getHostId());
+                verify(userRepository, times(1)).findById(1L);
                 verify(passwordEncoder, times(1)).encode(dto.getPassword());
                 verify(visitRepository, times(1)).save(any(Visit.class));
             }
@@ -204,7 +208,7 @@ public class VisitServiceTest {
                     .visitDate(LocalDate.now().plusDays(1))
                     .plannedEntryTime(LocalTime.of(10, 0))
                     .plannedExitTime(LocalTime.of(18, 0))
-                    .hostId(1L)
+                    .hostIds(List.of(1L))
                     .password("1234")
                     .build();
         }
@@ -263,7 +267,7 @@ public class VisitServiceTest {
                 LocalDate startDate = LocalDate.of(2026, 1, 22);
                 LongTermVisitRequestDto dto =
                         LongTermVisitRequestDto.builder()
-                                .hostId(1L)
+                                .hostIds(List.of(1L))
                                 .password("1234")
                                 .startDate(startDate)
                                 .endDate(startDate.plusMonths(3))
@@ -295,7 +299,7 @@ public class VisitServiceTest {
             OnSiteVisitRequestDto dto =
                     OnSiteVisitRequestDto.builder()
                             .visitorName("현장방문객")
-                            .hostId(1L)
+                            .hostIds(List.of(1L))
                             .password("1234")
                             .signatureFile(
                                     new MockMultipartFile(
@@ -491,7 +495,7 @@ public class VisitServiceTest {
                 MyVisitUpdateRequestDto dto =
                         MyVisitUpdateRequestDto.builder()
                                 .password(PLAIN_PASSWORD)
-                                .hostId(newHostId)
+                                .hostIds(List.of(newHostId))
                                 .build();
 
                 Visit visit = createBaseVisit(VisitStatus.NOT_VISITED, VisitCategory.PRE_ONE_DAY);
@@ -505,8 +509,8 @@ public class VisitServiceTest {
                 visitService.updateMyVisit(VISIT_ID, dto);
 
                 // then
-                assertThat(visit.getUser()).isNotNull();
-                assertThat(visit.getUser().getId()).isEqualTo(newHostId);
+                assertThat(visit.getHosts()).hasSize(1);
+                assertThat(visit.getHosts().get(0).getUser().getId()).isEqualTo(newHostId);
             }
         }
 
@@ -644,10 +648,10 @@ public class VisitServiceTest {
                                 .visitCategory(VisitCategory.PRE_LONG_TERM)
                                 .startDate(LocalDate.now().minusDays(5))
                                 .endDate(LocalDate.now().plusDays(5))
-                                .user(createHost())
                                 .records(new ArrayList<>())
                                 .visited(false)
                                 .build();
+                visit.getHosts().add(VisitHost.builder().user(createHost()).build());
 
                 User admin =
                         User.builder()
@@ -1056,6 +1060,134 @@ public class VisitServiceTest {
     }
 
     @Nested
+    @DisplayName("VisitHost 엔티티는")
+    class Describe_VisitHost {
+
+        @Nested
+        @DisplayName("visit과 user를 인자로 생성하면")
+        class Context_with_visit_and_user {
+
+            @Test
+            @DisplayName("visit 필드와 user 필드가 올바르게 초기화된다.")
+            void visitHost_create_success() {
+                // given
+                // TODO: 구현 필요 — VisitHost 클래스가 아직 없으므로 컴파일 에러 발생
+                Visit visit = createBaseVisit(VisitStatus.PENDING, VisitCategory.PRE_LONG_TERM);
+                User user = createHost();
+
+                // when
+                VisitHost visitHost = VisitHost.builder()
+                        .visit(visit)
+                        .user(user)
+                        .build();
+
+                // then
+                assertThat(visitHost.getVisit()).isEqualTo(visit);
+                assertThat(visitHost.getUser()).isEqualTo(user);
+            }
+        }
+
+        @Nested
+        @DisplayName("visit 없이 생성하면")
+        class Context_without_visit {
+
+            @Test
+            @DisplayName("visit 필드가 null이다.")
+            void visitHost_visit_is_null_when_not_set() {
+                // given
+                // TODO: 구현 필요 — VisitHost 클래스가 아직 없으므로 컴파일 에러 발생
+                User user = createHost();
+
+                // when
+                VisitHost visitHost = VisitHost.builder()
+                        .user(user)
+                        .build();
+
+                // then
+                assertThat(visitHost.getVisit()).isNull();
+            }
+        }
+
+        @Nested
+        @DisplayName("user 없이 생성하면")
+        class Context_without_user {
+
+            @Test
+            @DisplayName("user 필드가 null이다.")
+            void visitHost_user_is_null_when_not_set() {
+                // given
+                // TODO: 구현 필요 — VisitHost 클래스가 아직 없으므로 컴파일 에러 발생
+                Visit visit = createBaseVisit(VisitStatus.PENDING, VisitCategory.PRE_LONG_TERM);
+
+                // when
+                VisitHost visitHost = VisitHost.builder()
+                        .visit(visit)
+                        .build();
+
+                // then
+                assertThat(visitHost.getUser()).isNull();
+            }
+        }
+    }
+
+    @Nested
+    @DisplayName("Visit 엔티티의 hosts 필드는")
+    class Describe_VisitHosts_Field {
+
+        @Nested
+        @DisplayName("빌더로 hosts 리스트를 포함하여 생성하면")
+        class Context_with_hosts {
+
+            @Test
+            @DisplayName("getHosts()가 해당 VisitHost 목록을 반환한다.")
+            void getHosts_returnsProvidedHosts() {
+                // given
+                Visit visit = createBaseVisit(VisitStatus.PENDING, VisitCategory.PRE_LONG_TERM);
+                User user = createHost();
+                VisitHost visitHost = VisitHost.builder().visit(visit).user(user).build();
+                List<VisitHost> hosts = List.of(visitHost);
+
+                // when
+                // TODO: 구현 필요 — Visit.hosts 필드가 없으므로 컴파일 에러 발생
+                Visit visitWithHosts =
+                        Visit.builder()
+                                .id(VISIT_ID)
+                                .password(ENCODED_PASSWORD)
+                                .status(VisitStatus.PENDING)
+                                .visitCategory(VisitCategory.PRE_LONG_TERM)
+                                .hosts(hosts)
+                                .build();
+
+                // then
+                assertThat(visitWithHosts.getHosts()).containsExactlyElementsOf(hosts);
+            }
+        }
+
+        @Nested
+        @DisplayName("기본 빌더로 생성하면")
+        class Context_with_default_builder {
+
+            @Test
+            @DisplayName("getHosts()가 빈 리스트를 반환한다.")
+            void getHosts_returnsEmptyListByDefault() {
+                // given & when
+                // TODO: 구현 필요 — Visit.hosts 필드가 없으므로 컴파일 에러 발생
+                Visit visit =
+                        Visit.builder()
+                                .id(VISIT_ID)
+                                .password(ENCODED_PASSWORD)
+                                .status(VisitStatus.PENDING)
+                                .visitCategory(VisitCategory.PRE_LONG_TERM)
+                                .build();
+
+                // then
+                assertThat(visit.getHosts()).isNotNull();
+                assertThat(visit.getHosts()).isEmpty();
+            }
+        }
+    }
+
+    @Nested
     @DisplayName("getVisitDetailForAdmin 메서드는")
     class Describe_getVisitDetailForAdmin {
 
@@ -1079,7 +1211,6 @@ public class VisitServiceTest {
                             .password(ENCODED_PASSWORD)
                             .status(VisitStatus.IN_PROGRESS)
                             .visitCategory(VisitCategory.PRE_ONE_DAY)
-                            .user(host)
                             .records(new ArrayList<>())
                             .build();
             given(visitRepository.findById(VISIT_ID)).willReturn(Optional.of(visit));
@@ -1092,6 +1223,377 @@ public class VisitServiceTest {
                     .isInstanceOf(
                             kr.co.awesomelead.groupware_backend.domain.visit.dto.response
                                     .MyVisitDetailResponseDto.class);
+        }
+    }
+
+    // =========================================================
+    // A. 다중 VisitHost 생성 테스트
+    // =========================================================
+
+    @Nested
+    @DisplayName("registerOneDayPreVisit - 다중 VisitHost 생성")
+    class Describe_registerOneDayPreVisit_multipleHosts {
+
+        @Nested
+        @DisplayName("hostIds에 2개의 ID를 전달하면")
+        class Context_with_two_host_ids {
+
+            @Test
+            @DisplayName("Visit에 VisitHost가 2개 생성되어 저장된다.")
+            void registerOneDayPreVisit_twoHostIdsCreatingTwoVisitHosts() {
+                // given
+                Long hostId1 = 1L;
+                Long hostId2 = 2L;
+
+                Department dept = createDepartment(10L);
+
+                User host1 =
+                        User.builder()
+                                .id(hostId1)
+                                .nameKor("담당자1")
+                                .workLocation(Company.AWESOME)
+                                .jobType(JobType.MANAGEMENT)
+                                .department(dept)
+                                .build();
+                host1.addAuthority(Authority.MANAGE_VISITOR);
+
+                User host2 =
+                        User.builder()
+                                .id(hostId2)
+                                .nameKor("담당자2")
+                                .workLocation(Company.AWESOME)
+                                .jobType(JobType.MANAGEMENT)
+                                .department(dept)
+                                .build();
+                host2.addAuthority(Authority.MANAGE_VISITOR);
+
+                OneDayVisitRequestDto dto =
+                        OneDayVisitRequestDto.builder()
+                                .visitorName("홍길동")
+                                .visitorPhoneNumber("01012345678")
+                                .visitorCompany("테스트컴퍼니")
+                                .purpose(VisitPurpose.MEETING)
+                                .permissionType(AdditionalPermissionType.NONE)
+                                .visitDate(LocalDate.now().plusDays(1))
+                                .plannedEntryTime(LocalTime.of(10, 0))
+                                .plannedExitTime(LocalTime.of(18, 0))
+                                .hostIds(List.of(hostId1, hostId2))
+                                .password("1234")
+                                .build();
+
+                given(userRepository.findById(hostId1)).willReturn(Optional.of(host1));
+                given(userRepository.findById(hostId2)).willReturn(Optional.of(host2));
+                given(passwordEncoder.encode(dto.getPassword())).willReturn(ENCODED_PASSWORD);
+
+                Visit savedVisit =
+                        Visit.builder()
+                                .id(VISIT_ID)
+                                .password(ENCODED_PASSWORD)
+                                .status(VisitStatus.NOT_VISITED)
+                                .visitCategory(VisitCategory.PRE_ONE_DAY)
+                                .records(new ArrayList<>())
+                                .build();
+                given(visitMapper.toOneDayVisit(any(), any(), any())).willReturn(savedVisit);
+                given(visitRepository.save(any(Visit.class))).willReturn(savedVisit);
+
+                // when
+                visitService.registerOneDayPreVisit(dto);
+
+                // then
+                verify(visitRepository).save(
+                        argThat(visit -> visit.getHosts().size() == 2));
+            }
+        }
+    }
+
+    // =========================================================
+    // B. 복수 담당자 부서에 알림 발송 테스트
+    // =========================================================
+
+    @Nested
+    @DisplayName("registerOneDayPreVisit - 복수 담당자 부서 알림 발송")
+    class Describe_registerOneDayPreVisit_departmentNotification {
+
+        @Nested
+        @DisplayName("두 담당자가 서로 다른 부서에 속할 때")
+        class Context_with_two_hosts_in_different_departments {
+
+            @Test
+            @DisplayName("sendVisitAlertToDepartment가 2번 호출된다.")
+            void registerOneDayPreVisit_differentDepartments_sendAlertTwice() {
+                // given
+                Long hostId1 = 1L;
+                Long hostId2 = 2L;
+
+                Department dept1 = createDepartment(10L);
+                Department dept2 = Department.builder().id(20L).name(DepartmentName.SALES_DEPT).build();
+
+                User host1 =
+                        User.builder()
+                                .id(hostId1)
+                                .nameKor("담당자1")
+                                .workLocation(Company.AWESOME)
+                                .jobType(JobType.MANAGEMENT)
+                                .department(dept1)
+                                .build();
+                host1.addAuthority(Authority.MANAGE_VISITOR);
+
+                User host2 =
+                        User.builder()
+                                .id(hostId2)
+                                .nameKor("담당자2")
+                                .workLocation(Company.AWESOME)
+                                .jobType(JobType.MANAGEMENT)
+                                .department(dept2)
+                                .build();
+                host2.addAuthority(Authority.MANAGE_VISITOR);
+
+                OneDayVisitRequestDto dto =
+                        OneDayVisitRequestDto.builder()
+                                .visitorName("홍길동")
+                                .visitorPhoneNumber("01012345678")
+                                .visitorCompany("테스트컴퍼니")
+                                .purpose(VisitPurpose.MEETING)
+                                .permissionType(AdditionalPermissionType.NONE)
+                                .visitDate(LocalDate.now().plusDays(1))
+                                .plannedEntryTime(LocalTime.of(10, 0))
+                                .plannedExitTime(LocalTime.of(18, 0))
+                                .hostIds(List.of(hostId1, hostId2))
+                                .password("1234")
+                                .build();
+
+                given(userRepository.findById(hostId1)).willReturn(Optional.of(host1));
+                given(userRepository.findById(hostId2)).willReturn(Optional.of(host2));
+                given(passwordEncoder.encode(any())).willReturn(ENCODED_PASSWORD);
+
+                Visit savedVisit =
+                        Visit.builder()
+                                .id(VISIT_ID)
+                                .password(ENCODED_PASSWORD)
+                                .status(VisitStatus.NOT_VISITED)
+                                .visitCategory(VisitCategory.PRE_ONE_DAY)
+                                .records(new ArrayList<>())
+                                .build();
+                given(visitMapper.toOneDayVisit(any(), any(), any())).willReturn(savedVisit);
+                given(visitRepository.save(any(Visit.class))).willReturn(savedVisit);
+
+                // when
+                visitService.registerOneDayPreVisit(dto);
+
+                // then: 서로 다른 부서 ID(10L, 20L)로 각각 1회씩 총 2회 호출
+                verify(notificationService, times(2))
+                        .sendVisitAlertToDepartment(
+                                any(), any(), any(), any(), any(), any(), any(), any());
+            }
+        }
+
+        @Nested
+        @DisplayName("두 담당자가 같은 부서에 속할 때")
+        class Context_with_two_hosts_in_same_department {
+
+            @Test
+            @DisplayName("sendVisitAlertToDepartment가 1번만 호출된다 (중복 제거).")
+            void registerOneDayPreVisit_sameDepartment_sendAlertOnce() {
+                // given
+                Long hostId1 = 1L;
+                Long hostId2 = 2L;
+
+                Department sharedDept = createDepartment(10L);
+
+                User host1 =
+                        User.builder()
+                                .id(hostId1)
+                                .nameKor("담당자1")
+                                .workLocation(Company.AWESOME)
+                                .jobType(JobType.MANAGEMENT)
+                                .department(sharedDept)
+                                .build();
+                host1.addAuthority(Authority.MANAGE_VISITOR);
+
+                User host2 =
+                        User.builder()
+                                .id(hostId2)
+                                .nameKor("담당자2")
+                                .workLocation(Company.AWESOME)
+                                .jobType(JobType.MANAGEMENT)
+                                .department(sharedDept)
+                                .build();
+                host2.addAuthority(Authority.MANAGE_VISITOR);
+
+                OneDayVisitRequestDto dto =
+                        OneDayVisitRequestDto.builder()
+                                .visitorName("홍길동")
+                                .visitorPhoneNumber("01012345678")
+                                .visitorCompany("테스트컴퍼니")
+                                .purpose(VisitPurpose.MEETING)
+                                .permissionType(AdditionalPermissionType.NONE)
+                                .visitDate(LocalDate.now().plusDays(1))
+                                .plannedEntryTime(LocalTime.of(10, 0))
+                                .plannedExitTime(LocalTime.of(18, 0))
+                                .hostIds(List.of(hostId1, hostId2))
+                                .password("1234")
+                                .build();
+
+                given(userRepository.findById(hostId1)).willReturn(Optional.of(host1));
+                given(userRepository.findById(hostId2)).willReturn(Optional.of(host2));
+                given(passwordEncoder.encode(any())).willReturn(ENCODED_PASSWORD);
+
+                Visit savedVisit =
+                        Visit.builder()
+                                .id(VISIT_ID)
+                                .password(ENCODED_PASSWORD)
+                                .status(VisitStatus.NOT_VISITED)
+                                .visitCategory(VisitCategory.PRE_ONE_DAY)
+                                .records(new ArrayList<>())
+                                .build();
+                given(visitMapper.toOneDayVisit(any(), any(), any())).willReturn(savedVisit);
+                given(visitRepository.save(any(Visit.class))).willReturn(savedVisit);
+
+                // when
+                visitService.registerOneDayPreVisit(dto);
+
+                // then: 같은 부서이므로 중복 제거 후 1회만 호출
+                verify(notificationService, times(1))
+                        .sendVisitAlertToDepartment(
+                                any(), any(), any(), any(), any(), any(), any(), any());
+            }
+        }
+    }
+
+    // =========================================================
+    // C. 환경안전부 조건부 알림 테스트
+    // =========================================================
+
+    @Nested
+    @DisplayName("registerOneDayPreVisit - 환경안전부 조건부 알림")
+    class Describe_registerOneDayPreVisit_environmentSafetyAlert {
+
+        @Nested
+        @DisplayName("방문 목적이 CUSTOMER_INSPECTION일 때")
+        class Context_with_customer_inspection_purpose {
+
+            @Test
+            @DisplayName("환경안전부가 존재하면 해당 부서 ID로 sendVisitAlertToDepartment가 추가 호출된다.")
+            void registerOneDayPreVisit_customerInspection_sendsEnvironmentSafetyAlert() {
+                // given
+                Long hostId = 1L;
+                Long envSafetyDeptId = 99L;
+
+                Department hostDept = createDepartment(10L);
+                Department envSafetyDept =
+                        Department.builder()
+                                .id(envSafetyDeptId)
+                                .name(DepartmentName.ENVIRONMENT_SAFETY)
+                                .build();
+
+                User host =
+                        User.builder()
+                                .id(hostId)
+                                .nameKor("담당자")
+                                .workLocation(Company.AWESOME)
+                                .jobType(JobType.MANAGEMENT)
+                                .department(hostDept)
+                                .build();
+                host.addAuthority(Authority.MANAGE_VISITOR);
+
+                OneDayVisitRequestDto dto =
+                        OneDayVisitRequestDto.builder()
+                                .visitorName("홍길동")
+                                .visitorPhoneNumber("01012345678")
+                                .visitorCompany("테스트컴퍼니")
+                                .purpose(VisitPurpose.CUSTOMER_INSPECTION)
+                                .permissionType(AdditionalPermissionType.NONE)
+                                .visitDate(LocalDate.now().plusDays(1))
+                                .plannedEntryTime(LocalTime.of(10, 0))
+                                .plannedExitTime(LocalTime.of(18, 0))
+                                .hostIds(List.of(hostId))
+                                .password("1234")
+                                .build();
+
+                given(userRepository.findById(hostId)).willReturn(Optional.of(host));
+                given(passwordEncoder.encode(any())).willReturn(ENCODED_PASSWORD);
+                given(departmentRepository.findByName(DepartmentName.ENVIRONMENT_SAFETY))
+                        .willReturn(Optional.of(envSafetyDept));
+
+                Visit savedVisit =
+                        Visit.builder()
+                                .id(VISIT_ID)
+                                .password(ENCODED_PASSWORD)
+                                .status(VisitStatus.NOT_VISITED)
+                                .visitCategory(VisitCategory.PRE_ONE_DAY)
+                                .records(new ArrayList<>())
+                                .build();
+                given(visitMapper.toOneDayVisit(any(), any(), any())).willReturn(savedVisit);
+                given(visitRepository.save(any(Visit.class))).willReturn(savedVisit);
+
+                // when
+                visitService.registerOneDayPreVisit(dto);
+
+                // then
+                // 담당부서(10L) 1회 + 환경안전부(99L) 1회 = 총 2회
+                verify(departmentRepository).findByName(DepartmentName.ENVIRONMENT_SAFETY);
+                verify(notificationService, times(2))
+                        .sendVisitAlertToDepartment(
+                                any(), any(), any(), any(), any(), any(), any(), any());
+            }
+        }
+
+        @Nested
+        @DisplayName("방문 목적이 MEETING(환경안전 미해당)일 때")
+        class Context_with_meeting_purpose {
+
+            @Test
+            @DisplayName("departmentRepository.findByName이 호출되지 않는다.")
+            void registerOneDayPreVisit_meeting_doesNotQueryEnvironmentSafetyDept() {
+                // given
+                Long hostId = 1L;
+                Department hostDept = createDepartment(10L);
+
+                User host =
+                        User.builder()
+                                .id(hostId)
+                                .nameKor("담당자")
+                                .workLocation(Company.AWESOME)
+                                .jobType(JobType.MANAGEMENT)
+                                .department(hostDept)
+                                .build();
+                host.addAuthority(Authority.MANAGE_VISITOR);
+
+                OneDayVisitRequestDto dto =
+                        OneDayVisitRequestDto.builder()
+                                .visitorName("홍길동")
+                                .visitorPhoneNumber("01012345678")
+                                .visitorCompany("테스트컴퍼니")
+                                .purpose(VisitPurpose.MEETING)
+                                .permissionType(AdditionalPermissionType.NONE)
+                                .visitDate(LocalDate.now().plusDays(1))
+                                .plannedEntryTime(LocalTime.of(10, 0))
+                                .plannedExitTime(LocalTime.of(18, 0))
+                                .hostIds(List.of(hostId))
+                                .password("1234")
+                                .build();
+
+                given(userRepository.findById(hostId)).willReturn(Optional.of(host));
+                given(passwordEncoder.encode(any())).willReturn(ENCODED_PASSWORD);
+
+                Visit savedVisit =
+                        Visit.builder()
+                                .id(VISIT_ID)
+                                .password(ENCODED_PASSWORD)
+                                .status(VisitStatus.NOT_VISITED)
+                                .visitCategory(VisitCategory.PRE_ONE_DAY)
+                                .records(new ArrayList<>())
+                                .build();
+                given(visitMapper.toOneDayVisit(any(), any(), any())).willReturn(savedVisit);
+                given(visitRepository.save(any(Visit.class))).willReturn(savedVisit);
+
+                // when
+                visitService.registerOneDayPreVisit(dto);
+
+                // then
+                verify(departmentRepository, times(0))
+                        .findByName(DepartmentName.ENVIRONMENT_SAFETY);
+            }
         }
     }
 }

@@ -2,7 +2,6 @@ package kr.co.awesomelead.groupware_backend.domain.visit.dto.response;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 
-import kr.co.awesomelead.groupware_backend.domain.department.enums.DepartmentName;
 import kr.co.awesomelead.groupware_backend.domain.visit.enums.VisitStatus;
 
 import lombok.AllArgsConstructor;
@@ -10,6 +9,7 @@ import lombok.Builder;
 import lombok.Getter;
 
 import java.time.LocalDate;
+import java.util.List;
 
 @Getter
 @Builder
@@ -26,8 +26,8 @@ public class VisitListResponseDto {
     @Schema(description = "내방객 이름", example = "홍길동")
     private String visitorName;
 
-    @Schema(description = "담당 부서", example = "경영지원부")
-    private DepartmentName hostDepartmentName;
+    @Schema(description = "담당자 목록")
+    private List<VisitHostResponseDto> hosts;
 
     @Schema(description = "방문 시작일", example = "2026-02-01")
     private LocalDate startDate;

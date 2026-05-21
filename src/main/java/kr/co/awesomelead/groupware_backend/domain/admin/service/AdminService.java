@@ -181,6 +181,7 @@ public class AdminService {
             Long departmentId,
             JobType jobType,
             Role role,
+            Boolean excludeSuspended,
             Pageable pageable) {
         User admin =
                 userRepository
@@ -195,10 +196,17 @@ public class AdminService {
                         .collect(Collectors.toSet());
 
         String normalizedKeyword = hasText(keyword) ? keyword.trim() : null;
+        boolean effectiveExcludeSuspended = excludeSuspended != null && excludeSuspended;
 
         return userRepository
                 .findAllWithDepartmentAndKeyword(
-                        normalizedKeyword, position, departmentId, jobType, role, pageable)
+                        normalizedKeyword,
+                        position,
+                        departmentId,
+                        jobType,
+                        role,
+                        effectiveExcludeSuspended,
+                        pageable)
                 .map(
                         u ->
                                 AdminUserSummaryResponseDto.from(

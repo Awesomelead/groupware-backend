@@ -100,6 +100,7 @@ public interface UserRepository extends JpaRepository<User, Long> {
                             + "AND (:departmentId IS NULL OR u.department.id = :departmentId) "
                             + "AND (:jobType IS NULL OR u.jobType = :jobType) "
                             + "AND (:role IS NULL OR u.role = :role) "
+                            + "AND (:excludeSuspended = false OR u.status <> 'SUSPENDED') "
                             + "ORDER BY u.id DESC",
             countQuery =
                     "SELECT count(u) FROM User u "
@@ -110,12 +111,14 @@ public interface UserRepository extends JpaRepository<User, Long> {
                             + "AND (:position IS NULL OR u.position = :position) "
                             + "AND (:departmentId IS NULL OR u.department.id = :departmentId) "
                             + "AND (:jobType IS NULL OR u.jobType = :jobType) "
-                            + "AND (:role IS NULL OR u.role = :role)")
+                            + "AND (:role IS NULL OR u.role = :role) "
+                            + "AND (:excludeSuspended = false OR u.status <> 'SUSPENDED')")
     Page<User> findAllWithDepartmentAndKeyword(
             @Param("keyword") String keyword,
             @Param("position") Position position,
             @Param("departmentId") Long departmentId,
             @Param("jobType") JobType jobType,
             @Param("role") Role role,
+            @Param("excludeSuspended") Boolean excludeSuspended,
             Pageable pageable);
 }

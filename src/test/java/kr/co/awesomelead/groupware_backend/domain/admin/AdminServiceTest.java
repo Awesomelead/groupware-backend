@@ -282,7 +282,13 @@ class AdminServiceTest {
             Pageable pageable = PageRequest.of(0, 20);
             Page<User> userPage = new PageImpl<>(List.of(user), pageable, 1);
             when(userRepository.findAllWithDepartmentAndKeyword(
-                            "홍길동", Position.STAFF, 11L, JobType.MANAGEMENT, Role.USER, pageable))
+                            "홍길동",
+                            Position.STAFF,
+                            11L,
+                            JobType.MANAGEMENT,
+                            Role.USER,
+                            false,
+                            pageable))
                     .thenReturn(userPage);
             when(myInfoUpdateRequestRepository.findDistinctUserIdsByStatus(
                             MyInfoUpdateRequestStatus.PENDING))
@@ -297,6 +303,7 @@ class AdminServiceTest {
                             11L,
                             JobType.MANAGEMENT,
                             Role.USER,
+                            false,
                             pageable);
 
             // then
@@ -328,10 +335,49 @@ class AdminServiceTest {
                                             null,
                                             null,
                                             null,
+                                            false,
                                             PageRequest.of(0, 20)))
                     .isInstanceOf(CustomException.class)
                     .extracting("errorCode")
                     .isEqualTo(ErrorCode.NO_AUTHORITY_FOR_REGISTRATION);
+        }
+
+        @Test
+        @DisplayName("excludeSuspended가 false이면 false로 repository를 호출한다")
+        void getUsers_excludeSuspended가_false이면_excludeSuspended_false로_repository_호출() {
+            // given
+            Pageable pageable = PageRequest.of(0, 20);
+            when(myInfoUpdateRequestRepository.findDistinctUserIdsByStatus(any()))
+                    .thenReturn(List.of());
+            when(userRepository.findAllWithDepartmentAndKeyword(
+                            null, null, null, null, null, false, pageable))
+                    .thenReturn(Page.empty());
+
+            // when
+            adminService.getUsers(adminId, null, null, null, null, null, false, pageable);
+
+            // then
+            verify(userRepository)
+                    .findAllWithDepartmentAndKeyword(null, null, null, null, null, false, pageable);
+        }
+
+        @Test
+        @DisplayName("excludeSuspended가 true이면 true로 repository를 호출한다")
+        void getUsers_excludeSuspended가_true이면_excludeSuspended_true로_repository_호출() {
+            // given
+            Pageable pageable = PageRequest.of(0, 20);
+            when(myInfoUpdateRequestRepository.findDistinctUserIdsByStatus(any()))
+                    .thenReturn(List.of());
+            when(userRepository.findAllWithDepartmentAndKeyword(
+                            null, null, null, null, null, true, pageable))
+                    .thenReturn(Page.empty());
+
+            // when
+            adminService.getUsers(adminId, null, null, null, null, null, true, pageable);
+
+            // then
+            verify(userRepository)
+                    .findAllWithDepartmentAndKeyword(null, null, null, null, null, true, pageable);
         }
     }
 

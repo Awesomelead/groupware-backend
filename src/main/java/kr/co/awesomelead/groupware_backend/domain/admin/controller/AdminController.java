@@ -133,6 +133,9 @@ public class AdminController {
             @Parameter(description = "역할 필터", required = false, example = "일반 사용자")
                     @RequestParam(required = false)
                     Role role,
+            @Parameter(description = "퇴사자(SUSPENDED) 제외 여부", required = false, example = "false")
+                    @RequestParam(required = false, defaultValue = "false")
+                    Boolean excludeSuspended,
             @ParameterObject @PageableDefault(page = 0, size = 20) Pageable pageable) {
 
         Page<AdminUserSummaryResponseDto> result =
@@ -143,6 +146,7 @@ public class AdminController {
                         departmentId,
                         jobType,
                         role,
+                        excludeSuspended,
                         pageable);
 
         return ResponseEntity.ok(ApiResponse.onSuccess(result));

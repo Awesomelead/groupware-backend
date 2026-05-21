@@ -35,6 +35,9 @@ public class UserDetailResponseDto {
     @Schema(description = "입사일", example = "2024-03-01")
     private LocalDate hireDate;
 
+    @Schema(description = "퇴사일", example = "2026-03-31")
+    private LocalDate resignationDate;
+
     public static UserDetailResponseDto from(User user) {
         return UserDetailResponseDto.builder()
                 .name(user.getDisplayName())
@@ -44,6 +47,7 @@ public class UserDetailResponseDto {
                 .jobType(user.getJobType())
                 .position(user.getPosition())
                 .hireDate(user.getHireDate())
+                .resignationDate(user.getResignationDate())
                 .build();
     }
 }

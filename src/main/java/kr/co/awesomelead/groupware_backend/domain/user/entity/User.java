@@ -216,6 +216,18 @@ public class User {
         }
     }
 
+    public void updateResignationInfo(LocalDate resignationDate) {
+        if (resignationDate != null) {
+            this.resignationDate = resignationDate;
+            this.status = Status.SUSPENDED;
+        } else {
+            this.resignationDate = null;
+            if (this.status != Status.PENDING) {
+                this.status = Status.AVAILABLE;
+            }
+        }
+    }
+
     // 관리자가 전화번호 수정 시 호출
     public void updatePhoneNumber(String newPhoneNumber) {
         if (newPhoneNumber != null && !newPhoneNumber.equals(this.phoneNumber)) {

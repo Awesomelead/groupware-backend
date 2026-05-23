@@ -506,6 +506,71 @@ class AdminServiceTest {
                     .extracting("errorCode")
                     .isEqualTo(ErrorCode.PHONE_NOT_VERIFIED);
         }
+
+        @Nested
+        @DisplayName("퇴사일 설정 및 상태 연동 시나리오")
+        class Context_resignation_update {
+
+            @Test
+            @DisplayName("AVAILABLE 유저의 resignationDate를 입력하면 상태가 SUSPENDED로 변경된다")
+            void updateUserInfo_resignationDateSet_statusChangesToSuspended() {
+                // given
+                User targetUser = User.builder().id(17L).phoneNumber("01011112222").build();
+                targetUser.setPhoneNumberHash(User.hashValue("01011112222"));
+                targetUser.setStatus(Status.AVAILABLE);
+                when(userRepository.findById(17L)).thenReturn(Optional.of(targetUser));
+
+                AdminUserUpdateRequestDto dto = new AdminUserUpdateRequestDto();
+                dto.setResignationDate(LocalDate.of(2026, 6, 30));
+
+                // when
+                adminService.updateUserInfo(17L, dto, adminId);
+
+                // then
+                assertThat(targetUser.getStatus()).isEqualTo(Status.SUSPENDED);
+                assertThat(targetUser.getResignationDate()).isEqualTo(LocalDate.of(2026, 6, 30));
+            }
+
+            @Test
+            @DisplayName("SUSPENDED 유저의 resignationDate를 null로 입력하면 상태가 AVAILABLE로 복구된다")
+            void updateUserInfo_resignationDateCleared_statusChangesToAvailable() {
+                // given
+                User targetUser = User.builder().id(17L).phoneNumber("01011112222").build();
+                targetUser.setPhoneNumberHash(User.hashValue("01011112222"));
+                targetUser.setStatus(Status.SUSPENDED);
+                targetUser.setResignationDate(LocalDate.of(2026, 3, 31));
+                when(userRepository.findById(17L)).thenReturn(Optional.of(targetUser));
+
+                AdminUserUpdateRequestDto dto = new AdminUserUpdateRequestDto();
+                dto.setResignationDate(null);
+
+                // when
+                adminService.updateUserInfo(17L, dto, adminId);
+
+                // then
+                assertThat(targetUser.getStatus()).isEqualTo(Status.AVAILABLE);
+                assertThat(targetUser.getResignationDate()).isNull();
+            }
+
+            @Test
+            @DisplayName("PENDING 유저의 resignationDate를 null로 입력해도 상태가 PENDING으로 유지된다")
+            void updateUserInfo_resignationDateNull_pendingStatusUnchanged() {
+                // given
+                User targetUser = User.builder().id(17L).phoneNumber("01011112222").build();
+                targetUser.setPhoneNumberHash(User.hashValue("01011112222"));
+                targetUser.setStatus(Status.PENDING);
+                when(userRepository.findById(17L)).thenReturn(Optional.of(targetUser));
+
+                AdminUserUpdateRequestDto dto = new AdminUserUpdateRequestDto();
+                dto.setResignationDate(null);
+
+                // when
+                adminService.updateUserInfo(17L, dto, adminId);
+
+                // then
+                assertThat(targetUser.getStatus()).isEqualTo(Status.PENDING);
+            }
+        }
     }
 
     private UserApprovalRequestDto createRequestDto() {

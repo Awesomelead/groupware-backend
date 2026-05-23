@@ -322,9 +322,7 @@ public class AdminService {
         if (requestDto.getHireDate() != null) {
             user.setHireDate(requestDto.getHireDate());
         }
-        if (requestDto.getResignationDate() != null) {
-            user.setResignationDate(requestDto.getResignationDate());
-        }
+        user.updateResignationInfo(requestDto.getResignationDate());
 
         userRepository.save(user);
     }

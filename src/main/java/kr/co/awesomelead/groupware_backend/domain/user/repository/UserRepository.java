@@ -87,5 +87,4 @@ public interface UserRepository extends JpaRepository<User, Long> {
                             + "AND MATCH(u.name_kor) AGAINST(:keyword IN BOOLEAN MODE)",
             nativeQuery = true)
     Page<User> searchByNameKorFullText(@Param("keyword") String keyword, Pageable pageable);
-
 }

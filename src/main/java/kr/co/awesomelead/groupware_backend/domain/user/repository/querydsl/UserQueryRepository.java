@@ -70,6 +70,52 @@ public class UserQueryRepository {
                                 .fetchOne());
     }
 
+    public Page<User> findAllForAdminWithFilters(
+            String keyword,
+            Position position,
+            Long departmentId,
+            JobType jobType,
+            Role role,
+            Boolean excludeSuspended,
+            Pageable pageable) {
+        List<User> content =
+                queryFactory
+                        .selectFrom(user)
+                        .leftJoin(user.department, QDepartment.department)
+                        .fetchJoin()
+                        .where(
+                                keywordFilter(keyword),
+                                positionFilter(position),
+                                departmentFilter(departmentId),
+                                jobTypeFilter(jobType),
+                                roleFilter(role),
+                                excludeSuspendedFilter(excludeSuspended))
+                        .orderBy(user.id.desc())
+                        .offset(pageable.getOffset())
+                        .limit(pageable.getPageSize())
+                        .fetch();
+
+        return PageableExecutionUtils.getPage(
+                content,
+                pageable,
+                () ->
+                        queryFactory
+                                .select(user.count())
+                                .from(user)
+                                .where(
+                                        keywordFilter(keyword),
+                                        positionFilter(position),
+                                        departmentFilter(departmentId),
+                                        jobTypeFilter(jobType),
+                                        roleFilter(role),
+                                        excludeSuspendedFilter(excludeSuspended))
+                                .fetchOne());
+    }
+
+    private BooleanExpression excludeSuspendedFilter(Boolean excludeSuspended) {
+        return Boolean.TRUE.equals(excludeSuspended) ? user.status.ne(Status.SUSPENDED) : null;
+    }
+
     private BooleanExpression keywordFilter(String keyword) {
         if (!StringUtils.hasText(keyword)) {
             return null;

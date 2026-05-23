@@ -25,6 +25,7 @@ import kr.co.awesomelead.groupware_backend.domain.user.enums.Role;
 import kr.co.awesomelead.groupware_backend.domain.user.enums.Status;
 import kr.co.awesomelead.groupware_backend.domain.user.repository.MyInfoUpdateRequestRepository;
 import kr.co.awesomelead.groupware_backend.domain.user.repository.UserRepository;
+import kr.co.awesomelead.groupware_backend.domain.user.repository.querydsl.UserQueryRepository;
 import kr.co.awesomelead.groupware_backend.global.error.CustomException;
 import kr.co.awesomelead.groupware_backend.global.error.ErrorCode;
 
@@ -45,6 +46,7 @@ import java.util.stream.Collectors;
 public class AdminService {
 
     private final UserRepository userRepository;
+    private final UserQueryRepository userQueryRepository;
     private final DepartmentRepository departmentRepository;
     private final MyInfoUpdateRequestRepository myInfoUpdateRequestRepository;
     private final PhoneAuthService phoneAuthService;
@@ -196,16 +198,15 @@ public class AdminService {
                         .collect(Collectors.toSet());
 
         String normalizedKeyword = hasText(keyword) ? keyword.trim() : null;
-        boolean effectiveExcludeSuspended = excludeSuspended != null && excludeSuspended;
 
-        return userRepository
-                .findAllWithDepartmentAndKeyword(
+        return userQueryRepository
+                .findAllForAdminWithFilters(
                         normalizedKeyword,
                         position,
                         departmentId,
                         jobType,
                         role,
-                        effectiveExcludeSuspended,
+                        excludeSuspended,
                         pageable)
                 .map(
                         u ->

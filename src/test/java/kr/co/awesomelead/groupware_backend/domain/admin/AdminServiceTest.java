@@ -32,6 +32,7 @@ import kr.co.awesomelead.groupware_backend.domain.user.enums.Role;
 import kr.co.awesomelead.groupware_backend.domain.user.enums.Status;
 import kr.co.awesomelead.groupware_backend.domain.user.repository.MyInfoUpdateRequestRepository;
 import kr.co.awesomelead.groupware_backend.domain.user.repository.UserRepository;
+import kr.co.awesomelead.groupware_backend.domain.user.repository.querydsl.UserQueryRepository;
 import kr.co.awesomelead.groupware_backend.global.error.CustomException;
 import kr.co.awesomelead.groupware_backend.global.error.ErrorCode;
 
@@ -59,6 +60,7 @@ import java.util.Optional;
 class AdminServiceTest {
 
     @Mock private UserRepository userRepository;
+    @Mock private UserQueryRepository userQueryRepository;
     @Mock private DepartmentRepository departmentRepository;
     @Mock private MyInfoUpdateRequestRepository myInfoUpdateRequestRepository;
     @Mock private PhoneAuthService phoneAuthService;
@@ -281,7 +283,7 @@ class AdminServiceTest {
 
             Pageable pageable = PageRequest.of(0, 20);
             Page<User> userPage = new PageImpl<>(List.of(user), pageable, 1);
-            when(userRepository.findAllWithDepartmentAndKeyword(
+            when(userQueryRepository.findAllForAdminWithFilters(
                             "홍길동",
                             Position.STAFF,
                             11L,
@@ -349,7 +351,7 @@ class AdminServiceTest {
             Pageable pageable = PageRequest.of(0, 20);
             when(myInfoUpdateRequestRepository.findDistinctUserIdsByStatus(any()))
                     .thenReturn(List.of());
-            when(userRepository.findAllWithDepartmentAndKeyword(
+            when(userQueryRepository.findAllForAdminWithFilters(
                             null, null, null, null, null, false, pageable))
                     .thenReturn(Page.empty());
 
@@ -357,8 +359,8 @@ class AdminServiceTest {
             adminService.getUsers(adminId, null, null, null, null, null, false, pageable);
 
             // then
-            verify(userRepository)
-                    .findAllWithDepartmentAndKeyword(null, null, null, null, null, false, pageable);
+            verify(userQueryRepository)
+                    .findAllForAdminWithFilters(null, null, null, null, null, false, pageable);
         }
 
         @Test
@@ -368,7 +370,7 @@ class AdminServiceTest {
             Pageable pageable = PageRequest.of(0, 20);
             when(myInfoUpdateRequestRepository.findDistinctUserIdsByStatus(any()))
                     .thenReturn(List.of());
-            when(userRepository.findAllWithDepartmentAndKeyword(
+            when(userQueryRepository.findAllForAdminWithFilters(
                             null, null, null, null, null, true, pageable))
                     .thenReturn(Page.empty());
 
@@ -376,8 +378,8 @@ class AdminServiceTest {
             adminService.getUsers(adminId, null, null, null, null, null, true, pageable);
 
             // then
-            verify(userRepository)
-                    .findAllWithDepartmentAndKeyword(null, null, null, null, null, true, pageable);
+            verify(userQueryRepository)
+                    .findAllForAdminWithFilters(null, null, null, null, null, true, pageable);
         }
     }
 

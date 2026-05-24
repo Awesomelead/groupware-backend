@@ -440,12 +440,12 @@ class UserServiceTest {
 
             given(
                             userQueryRepository.findAllAvailableWithFilters(
-                                    null, null, null, null, null, unsorted))
+                                    null, null, null, null, null, false, unsorted))
                     .willReturn(userPage);
 
             // when
             Page<UserSummaryResponseDto> result =
-                    userService.getEmployeeList(null, null, null, null, null, pageable);
+                    userService.getEmployeeList(null, null, null, null, null, false, pageable);
 
             // then
             assertThat(result.getTotalElements()).isEqualTo(2);
@@ -459,7 +459,7 @@ class UserServiceTest {
             assertThat(result.getContent().get(1).getName()).isEqualTo("이영희");
 
             verify(userQueryRepository)
-                    .findAllAvailableWithFilters(null, null, null, null, null, unsorted);
+                    .findAllAvailableWithFilters(null, null, null, null, null, false, unsorted);
         }
 
         @Test
@@ -472,12 +472,12 @@ class UserServiceTest {
 
             given(
                             userQueryRepository.findAllAvailableWithFilters(
-                                    null, null, null, null, null, unsorted))
+                                    null, null, null, null, null, false, unsorted))
                     .willReturn(emptyPage);
 
             // when
             Page<UserSummaryResponseDto> result =
-                    userService.getEmployeeList(null, null, null, null, null, pageable);
+                    userService.getEmployeeList(null, null, null, null, null, false, pageable);
 
             // then
             assertThat(result.getTotalElements()).isEqualTo(0);
@@ -495,12 +495,12 @@ class UserServiceTest {
 
             given(
                             userQueryRepository.findAllAvailableWithFilters(
-                                    null, null, null, null, null, unsorted))
+                                    null, null, null, null, null, false, unsorted))
                     .willReturn(userPage);
 
             // when
             Page<UserSummaryResponseDto> result =
-                    userService.getEmployeeList(null, null, null, null, null, pageable);
+                    userService.getEmployeeList(null, null, null, null, null, false, pageable);
 
             // then
             assertThat(result.getTotalElements()).isEqualTo(3);
@@ -520,19 +520,19 @@ class UserServiceTest {
 
             given(
                             userQueryRepository.findAllAvailableWithFilters(
-                                    "김철", null, null, null, null, unsorted))
+                                    "김철", null, null, null, null, false, unsorted))
                     .willReturn(userPage);
 
             // when
             Page<UserSummaryResponseDto> result =
-                    userService.getEmployeeList("김철", null, null, null, null, pageable);
+                    userService.getEmployeeList("김철", null, null, null, null, false, pageable);
 
             // then
             assertThat(result.getTotalElements()).isEqualTo(1);
             assertThat(result.getContent().get(0).getName()).isEqualTo(TEST_NAME_KOR);
 
             verify(userQueryRepository)
-                    .findAllAvailableWithFilters("김철", null, null, null, null, unsorted);
+                    .findAllAvailableWithFilters("김철", null, null, null, null, false, unsorted);
         }
 
         @Test
@@ -546,13 +546,13 @@ class UserServiceTest {
 
             given(
                             userQueryRepository.findAllAvailableWithFilters(
-                                    null, null, null, JobType.MANAGEMENT, null, unsorted))
+                                    null, null, null, JobType.MANAGEMENT, null, false, unsorted))
                     .willReturn(userPage);
 
             // when
             Page<UserSummaryResponseDto> result =
                     userService.getEmployeeList(
-                            null, null, null, JobType.MANAGEMENT, null, pageable);
+                            null, null, null, JobType.MANAGEMENT, null, false, pageable);
 
             // then
             assertThat(result.getTotalElements()).isEqualTo(1);
@@ -560,7 +560,82 @@ class UserServiceTest {
 
             verify(userQueryRepository)
                     .findAllAvailableWithFilters(
-                            null, null, null, JobType.MANAGEMENT, null, unsorted);
+                            null, null, null, JobType.MANAGEMENT, null, false, unsorted);
+        }
+
+        @Test
+        @DisplayName("성공: excludeSuspended=true이면 Repository에 true를 전달한다")
+        void getEmployeeList_excludeSuspendedTrue() {
+            // given
+            Pageable pageable = PageRequest.of(0, 20);
+            Pageable unsorted = PageRequest.of(0, 20);
+            User user = createTestUser();
+            Page<User> userPage = new PageImpl<>(List.of(user), pageable, 1);
+
+            given(
+                            userQueryRepository.findAllAvailableWithFilters(
+                                    null, null, null, null, null, true, unsorted))
+                    .willReturn(userPage);
+
+            // when
+            Page<UserSummaryResponseDto> result =
+                    userService.getEmployeeList(null, null, null, null, null, true, pageable);
+
+            // then
+            assertThat(result.getTotalElements()).isEqualTo(1);
+
+            verify(userQueryRepository)
+                    .findAllAvailableWithFilters(null, null, null, null, null, true, unsorted);
+        }
+
+        @Test
+        @DisplayName("성공: excludeSuspended=false이면 Repository에 false를 전달한다")
+        void getEmployeeList_excludeSuspendedFalse() {
+            // given
+            Pageable pageable = PageRequest.of(0, 20);
+            Pageable unsorted = PageRequest.of(0, 20);
+            User user = createTestUser();
+            Page<User> userPage = new PageImpl<>(List.of(user), pageable, 1);
+
+            given(
+                            userQueryRepository.findAllAvailableWithFilters(
+                                    null, null, null, null, null, false, unsorted))
+                    .willReturn(userPage);
+
+            // when
+            Page<UserSummaryResponseDto> result =
+                    userService.getEmployeeList(null, null, null, null, null, false, pageable);
+
+            // then
+            assertThat(result.getTotalElements()).isEqualTo(1);
+
+            verify(userQueryRepository)
+                    .findAllAvailableWithFilters(null, null, null, null, null, false, unsorted);
+        }
+
+        @Test
+        @DisplayName("성공: excludeSuspended=null이면 Repository에 null을 전달한다")
+        void getEmployeeList_excludeSuspendedNull() {
+            // given
+            Pageable pageable = PageRequest.of(0, 20);
+            Pageable unsorted = PageRequest.of(0, 20);
+            User user = createTestUser();
+            Page<User> userPage = new PageImpl<>(List.of(user), pageable, 1);
+
+            given(
+                            userQueryRepository.findAllAvailableWithFilters(
+                                    null, null, null, null, null, null, unsorted))
+                    .willReturn(userPage);
+
+            // when
+            Page<UserSummaryResponseDto> result =
+                    userService.getEmployeeList(null, null, null, null, null, null, pageable);
+
+            // then
+            assertThat(result.getTotalElements()).isEqualTo(1);
+
+            verify(userQueryRepository)
+                    .findAllAvailableWithFilters(null, null, null, null, null, null, unsorted);
         }
     }
 

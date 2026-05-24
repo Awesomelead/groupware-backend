@@ -146,7 +146,13 @@ public class UserController {
         return ResponseEntity.ok(
                 ApiResponse.onSuccess(
                         userService.getEmployeeList(
-                                keyword, position, departmentId, jobType, role, excludeSuspended, pageable)));
+                                keyword,
+                                position,
+                                departmentId,
+                                jobType,
+                                role,
+                                excludeSuspended,
+                                pageable)));
     }
 
     @Operation(summary = "직원 상세 조회", description = "특정 직원의 상세 정보를 조회합니다. 인증 토큰이 필요합니다.")

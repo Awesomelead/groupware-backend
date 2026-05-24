@@ -34,6 +34,7 @@ public class UserQueryRepository {
             Long departmentId,
             JobType jobType,
             Role role,
+            Boolean excludeSuspended,
             Pageable pageable) {
 
         List<User> content =
@@ -42,7 +43,7 @@ public class UserQueryRepository {
                         .leftJoin(user.department, QDepartment.department)
                         .fetchJoin()
                         .where(
-                                user.status.eq(Status.AVAILABLE),
+                                statusFilter(excludeSuspended),
                                 keywordFilter(keyword),
                                 positionFilter(position),
                                 departmentFilter(departmentId),
@@ -61,13 +62,20 @@ public class UserQueryRepository {
                                 .select(user.count())
                                 .from(user)
                                 .where(
-                                        user.status.eq(Status.AVAILABLE),
+                                        statusFilter(excludeSuspended),
                                         keywordFilter(keyword),
                                         positionFilter(position),
                                         departmentFilter(departmentId),
                                         jobTypeFilter(jobType),
                                         roleFilter(role))
                                 .fetchOne());
+    }
+
+    private BooleanExpression statusFilter(Boolean excludeSuspended) {
+        if (Boolean.TRUE.equals(excludeSuspended)) {
+            return user.status.eq(Status.AVAILABLE);
+        }
+        return user.status.in(Status.AVAILABLE, Status.SUSPENDED);
     }
 
     public Page<User> findAllForAdminWithFilters(

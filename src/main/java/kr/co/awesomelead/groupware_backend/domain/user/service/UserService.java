@@ -190,11 +190,12 @@ public class UserService {
             Long departmentId,
             JobType jobType,
             Role role,
+            Boolean excludeSuspended,
             Pageable pageable) {
         Pageable unsorted = PageRequest.of(pageable.getPageNumber(), pageable.getPageSize());
         return userQueryRepository
                 .findAllAvailableWithFilters(
-                        keyword, position, departmentId, jobType, role, unsorted)
+                        keyword, position, departmentId, jobType, role, excludeSuspended, unsorted)
                 .map(UserSummaryResponseDto::from);
     }
 

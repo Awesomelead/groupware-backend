@@ -10,6 +10,7 @@ import kr.co.awesomelead.groupware_backend.domain.admin.dto.response.PendingUser
 import kr.co.awesomelead.groupware_backend.domain.admin.enums.AuthorityAction;
 import kr.co.awesomelead.groupware_backend.domain.admin.mapper.AdminMapper;
 import kr.co.awesomelead.groupware_backend.domain.aligo.service.PhoneAuthService;
+import kr.co.awesomelead.groupware_backend.domain.auth.service.RefreshTokenService;
 import kr.co.awesomelead.groupware_backend.domain.department.entity.Department;
 import kr.co.awesomelead.groupware_backend.domain.department.repository.DepartmentRepository;
 import kr.co.awesomelead.groupware_backend.domain.notification.enums.NotificationDomainType;
@@ -50,6 +51,7 @@ public class AdminService {
     private final DepartmentRepository departmentRepository;
     private final MyInfoUpdateRequestRepository myInfoUpdateRequestRepository;
     private final PhoneAuthService phoneAuthService;
+    private final RefreshTokenService refreshTokenService;
     private final NotificationService notificationService;
     private final AdminMapper adminMapper;
 
@@ -323,6 +325,9 @@ public class AdminService {
             user.setHireDate(requestDto.getHireDate());
         }
         user.updateResignationInfo(requestDto.getResignationDate());
+        if (user.getStatus() == Status.SUSPENDED) {
+            refreshTokenService.deleteRefreshTokenByEmail(user.getEmail());
+        }
 
         userRepository.save(user);
     }

@@ -37,6 +37,7 @@ import lombok.extern.slf4j.Slf4j;
 
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.DisabledException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.AuthenticationException;
@@ -161,6 +162,12 @@ public class AuthService {
         Authentication authentication;
         try {
             authentication = authenticationManager.authenticate(authToken);
+        } catch (DisabledException e) {
+            User user = userRepository.findByEmail(requestDto.getEmail()).orElse(null);
+            if (user != null && user.getStatus() == Status.SUSPENDED) {
+                throw new CustomException(ErrorCode.SUSPENDED_ACCOUNT);
+            }
+            throw new CustomException(ErrorCode.INVALID_LOGIN_CREDENTIALS);
         } catch (AuthenticationException e) {
             throw new CustomException(ErrorCode.INVALID_LOGIN_CREDENTIALS);
         }
@@ -228,6 +235,12 @@ public class AuthService {
         // 2. 토큰에서 사용자 정보 추출
         String username = jwtUtil.getUsername(storedToken.getTokenValue());
         String role = jwtUtil.getRole(storedToken.getTokenValue());
+
+        User user = userRepository.findByEmail(username).orElse(null);
+        if (user != null && user.getStatus() == Status.SUSPENDED) {
+            refreshTokenService.deleteRefreshTokenByEmail(username);
+            throw new CustomException(ErrorCode.SUSPENDED_ACCOUNT);
+        }
 
         // 3. 새로운 Access Token 생성
         String newAccessToken = jwtUtil.createJwt(username, role, accessTokenValidation);

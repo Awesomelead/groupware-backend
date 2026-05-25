@@ -521,9 +521,7 @@ public class VisitService {
         Set<Long> targetDeptIds =
                 hosts.stream()
                         .filter(h -> h.getDepartment() != null)
-                        .flatMap(
-                                h ->
-                                        collectAlertTargetDepartmentIds(h.getDepartment()).stream())
+                        .flatMap(h -> collectAlertTargetDepartmentIds(h.getDepartment()).stream())
                         .collect(Collectors.toCollection(java.util.HashSet::new));
 
         if (ENVIRONMENT_SAFETY_REQUIRED_PURPOSES.contains(purpose)) {
@@ -538,7 +536,8 @@ public class VisitService {
                                 template, visitId, deptId, metadata, contentArgs));
     }
 
-    private boolean isSameOrAncestorDepartment(Department ancestorCandidate, Department department) {
+    private boolean isSameOrAncestorDepartment(
+            Department ancestorCandidate, Department department) {
         if (ancestorCandidate == null || department == null) {
             return false;
         }

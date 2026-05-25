@@ -1135,7 +1135,8 @@ public class EduReportService {
                 .build();
     }
 
-    private boolean isSameOrAncestorDepartment(Department ancestorCandidate, Department department) {
+    private boolean isSameOrAncestorDepartment(
+            Department ancestorCandidate, Department department) {
         if (ancestorCandidate == null || department == null) {
             return false;
         }

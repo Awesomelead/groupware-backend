@@ -82,6 +82,7 @@ public enum ErrorCode {
     AUTH_CODE_EXPIRED(HttpStatus.UNAUTHORIZED, "인증번호가 만료되었습니다."),
     VISITOR_AUTHENTICATION_FAILED(HttpStatus.UNAUTHORIZED, "내방객 인증에 실패했습니다."),
     INVALID_LOGIN_CREDENTIALS(HttpStatus.UNAUTHORIZED, "아이디 또는 비밀번호가 올바르지 않습니다."),
+    SUSPENDED_ACCOUNT(HttpStatus.UNAUTHORIZED, "퇴사 처리된 계정입니다."),
     HANBIRO_REAUTH_REQUIRED(HttpStatus.UNAUTHORIZED, "한비로 재인증이 필요합니다."),
     HANBIRO_INVALID_CREDENTIALS(HttpStatus.UNAUTHORIZED, "한비로 아이디 또는 비밀번호가 올바르지 않습니다."),
 

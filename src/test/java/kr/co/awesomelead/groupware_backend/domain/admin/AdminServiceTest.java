@@ -17,6 +17,7 @@ import kr.co.awesomelead.groupware_backend.domain.admin.enums.AuthorityAction;
 import kr.co.awesomelead.groupware_backend.domain.admin.mapper.AdminMapper;
 import kr.co.awesomelead.groupware_backend.domain.admin.service.AdminService;
 import kr.co.awesomelead.groupware_backend.domain.aligo.service.PhoneAuthService;
+import kr.co.awesomelead.groupware_backend.domain.auth.service.RefreshTokenService;
 import kr.co.awesomelead.groupware_backend.domain.department.entity.Department;
 import kr.co.awesomelead.groupware_backend.domain.department.enums.Company;
 import kr.co.awesomelead.groupware_backend.domain.department.enums.DepartmentName;
@@ -64,6 +65,7 @@ class AdminServiceTest {
     @Mock private DepartmentRepository departmentRepository;
     @Mock private MyInfoUpdateRequestRepository myInfoUpdateRequestRepository;
     @Mock private PhoneAuthService phoneAuthService;
+    @Mock private RefreshTokenService refreshTokenService;
     @Mock private NotificationService notificationService;
     @Mock private AdminMapper adminMapper;
     @InjectMocks private AdminService adminService;

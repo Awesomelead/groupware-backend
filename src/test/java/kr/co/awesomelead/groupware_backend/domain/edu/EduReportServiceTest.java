@@ -592,12 +592,21 @@ public class EduReportServiceTest {
 
         when(userRepository.findById(1L)).thenReturn(Optional.of(user));
         when(eduReportQueryRepository.findEduReports(
-                        EduType.SAFETY, department, null, 1L, false, Company.AWESOME, false, null))
+                        EduType.SAFETY,
+                        department,
+                        List.of(1L),
+                        null,
+                        null,
+                        1L,
+                        false,
+                        Company.AWESOME,
+                        false,
+                        null))
                 .thenReturn(mockList);
 
         // when
         List<EduReportSummaryDto> result =
-                eduReportService.getEduReports(EduType.SAFETY, null, null, 1L, null);
+                eduReportService.getEduReports(EduType.SAFETY, null, null, null, 1L, null);
 
         // then
         assertThat(result).isNotNull();
@@ -606,7 +615,16 @@ public class EduReportServiceTest {
 
         verify(eduReportQueryRepository, times(1))
                 .findEduReports(
-                        EduType.SAFETY, department, null, 1L, false, Company.AWESOME, false, null);
+                        EduType.SAFETY,
+                        department,
+                        List.of(1L),
+                        null,
+                        null,
+                        1L,
+                        false,
+                        Company.AWESOME,
+                        false,
+                        null);
     }
 
     @Test
@@ -632,12 +650,12 @@ public class EduReportServiceTest {
         when(userRepository.findById(1L)).thenReturn(Optional.of(user));
         // dept=null + PSM 조회 범위는 본인 회사 제한
         when(eduReportQueryRepository.findEduReports(
-                        null, null, null, 1L, true, Company.AWESOME, false, null))
+                        null, null, null, null, null, 1L, true, Company.AWESOME, false, null))
                 .thenReturn(mockList);
 
         // when
         List<EduReportSummaryDto> result =
-                eduReportService.getEduReports(null, null, null, 1L, null);
+                eduReportService.getEduReports(null, null, null, null, 1L, null);
 
         // then
         assertThat(result).isNotNull();
@@ -645,7 +663,8 @@ public class EduReportServiceTest {
 
         // hasAccess=true, dept=null + PSM 조회 범위는 본인 회사 제한
         verify(eduReportQueryRepository, times(1))
-                .findEduReports(null, null, null, 1L, true, Company.AWESOME, false, null);
+                .findEduReports(
+                        null, null, null, null, null, 1L, true, Company.AWESOME, false, null);
     }
 
     @Test
@@ -675,6 +694,8 @@ public class EduReportServiceTest {
                         EduType.DEPARTMENT,
                         salesDept,
                         null,
+                        null,
+                        null,
                         1L,
                         true,
                         Company.AWESOME,
@@ -685,7 +706,7 @@ public class EduReportServiceTest {
         // when
         List<EduReportSummaryDto> result =
                 eduReportService.getEduReports(
-                        EduType.DEPARTMENT, DepartmentName.SALES_DEPT, null, 1L, null);
+                        EduType.DEPARTMENT, DepartmentName.SALES_DEPT, null, null, 1L, null);
 
         // then
         assertThat(result).isNotNull();
@@ -697,6 +718,8 @@ public class EduReportServiceTest {
                 .findEduReports(
                         EduType.DEPARTMENT,
                         salesDept,
+                        null,
+                        null,
                         null,
                         1L,
                         true,
@@ -713,14 +736,25 @@ public class EduReportServiceTest {
 
         // when & then
         assertThatThrownBy(
-                        () -> eduReportService.getEduReports(EduType.SAFETY, null, null, 1L, null))
+                        () ->
+                                eduReportService.getEduReports(
+                                        EduType.SAFETY, null, null, null, 1L, null))
                 .isInstanceOf(CustomException.class)
                 .extracting("errorCode")
                 .isEqualTo(ErrorCode.USER_NOT_FOUND);
 
         verify(eduReportQueryRepository, never())
                 .findEduReports(
-                        any(), any(), any(), anyLong(), anyBoolean(), any(), anyBoolean(), any());
+                        any(),
+                        any(),
+                        any(),
+                        any(),
+                        any(),
+                        anyLong(),
+                        anyBoolean(),
+                        any(),
+                        anyBoolean(),
+                        any());
     }
 
     @Test
@@ -2226,8 +2260,8 @@ public class EduReportServiceTest {
         }
 
         @Test
-        @DisplayName("DEPARTMENT 타입 - department가 있으면 findAllIdsByDepartmentId 호출")
-        void remindEduReport_departmentType_withDepartment_callsFindAllIdsByDepartmentId() {
+        @DisplayName("DEPARTMENT 타입 - department가 있으면 findAllByDepartmentIdIn 호출")
+        void remindEduReport_departmentType_withDepartment_callsFindAllByDepartmentIdIn() {
             // given
             User user = createNormalUser();
             user.addAuthority(Authority.MANAGE_DEPARTMENT_EDUCATION);
@@ -2243,14 +2277,17 @@ public class EduReportServiceTest {
             List<Long> targetIds = List.of(1L, 2L);
             when(userRepository.findById(1L)).thenReturn(Optional.of(user));
             when(eduReportRepository.findById(10L)).thenReturn(Optional.of(report));
-            when(userRepository.findAllIdsByDepartmentId(defaultDept.getId()))
-                    .thenReturn(targetIds);
+            when(userRepository.findAllByDepartmentIdIn(List.of(defaultDept.getId())))
+                    .thenReturn(
+                            targetIds.stream()
+                                    .map(targetId -> User.builder().id(targetId).build())
+                                    .toList());
 
             // when
             eduReportService.remindEduReport(10L, 1L);
 
             // then
-            verify(userRepository, times(1)).findAllIdsByDepartmentId(defaultDept.getId());
+            verify(userRepository, times(1)).findAllByDepartmentIdIn(List.of(defaultDept.getId()));
             verify(notificationService, times(1))
                     .sendEduReportRemindAlertToTargets(
                             anyString(), anyString(), anyLong(), any(), any(Map.class));

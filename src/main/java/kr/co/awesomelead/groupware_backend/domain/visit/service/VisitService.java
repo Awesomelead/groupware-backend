@@ -2,6 +2,7 @@ package kr.co.awesomelead.groupware_backend.domain.visit.service;
 
 import static kr.co.awesomelead.groupware_backend.domain.visit.entity.Visit.hashValue;
 
+import kr.co.awesomelead.groupware_backend.domain.department.entity.Department;
 import kr.co.awesomelead.groupware_backend.domain.department.enums.DepartmentName;
 import kr.co.awesomelead.groupware_backend.domain.department.repository.DepartmentRepository;
 import kr.co.awesomelead.groupware_backend.domain.notification.enums.NotificationDomainType;
@@ -445,10 +446,8 @@ public class VisitService {
     }
 
     private void validateManagedDepartmentAccess(User manager, Visit visit) {
-        Long managerDepartmentId =
-                manager.getDepartment() != null ? manager.getDepartment().getId() : null;
-
-        if (managerDepartmentId == null) {
+        Department managerDepartment = manager.getDepartment();
+        if (managerDepartment == null) {
             throw new CustomException(ErrorCode.VISIT_ACCESS_DENIED);
         }
 
@@ -457,10 +456,8 @@ public class VisitService {
                         .filter(h -> h.getUser() != null && h.getUser().getDepartment() != null)
                         .anyMatch(
                                 h ->
-                                        h.getUser()
-                                                .getDepartment()
-                                                .getId()
-                                                .equals(managerDepartmentId));
+                                        isSameOrAncestorDepartment(
+                                                managerDepartment, h.getUser().getDepartment()));
 
         if (!hasAccess) {
             throw new CustomException(ErrorCode.VISIT_ACCESS_DENIED);
@@ -524,7 +521,7 @@ public class VisitService {
         Set<Long> targetDeptIds =
                 hosts.stream()
                         .filter(h -> h.getDepartment() != null)
-                        .map(h -> h.getDepartment().getId())
+                        .flatMap(h -> collectAlertTargetDepartmentIds(h.getDepartment()).stream())
                         .collect(Collectors.toCollection(java.util.HashSet::new));
 
         if (ENVIRONMENT_SAFETY_REQUIRED_PURPOSES.contains(purpose)) {
@@ -537,5 +534,35 @@ public class VisitService {
                 deptId ->
                         notificationService.sendVisitAlertToDepartment(
                                 template, visitId, deptId, metadata, contentArgs));
+    }
+
+    private boolean isSameOrAncestorDepartment(
+            Department ancestorCandidate, Department department) {
+        if (ancestorCandidate == null || department == null) {
+            return false;
+        }
+
+        Department cursor = department;
+        while (cursor != null) {
+            if (ancestorCandidate.getId().equals(cursor.getId())) {
+                return true;
+            }
+            cursor = cursor.getParent();
+        }
+        return false;
+    }
+
+    private Set<Long> collectAlertTargetDepartmentIds(Department hostDepartment) {
+        Set<Long> departmentIds = new java.util.HashSet<>();
+        Department cursor = hostDepartment;
+        while (cursor != null) {
+            boolean isRootDepartment = cursor.getParent() == null;
+            // Root 부서는 직접 담당자로 선택된 경우에만 알림 대상으로 포함한다.
+            if (!isRootDepartment || cursor.getId().equals(hostDepartment.getId())) {
+                departmentIds.add(cursor.getId());
+            }
+            cursor = cursor.getParent();
+        }
+        return departmentIds;
     }
 }

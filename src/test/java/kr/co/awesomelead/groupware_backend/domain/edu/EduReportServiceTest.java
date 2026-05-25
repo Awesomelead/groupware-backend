@@ -663,7 +663,8 @@ public class EduReportServiceTest {
 
         // hasAccess=true, dept=null + PSM 조회 범위는 본인 회사 제한
         verify(eduReportQueryRepository, times(1))
-                .findEduReports(null, null, null, null, null, 1L, true, Company.AWESOME, false, null);
+                .findEduReports(
+                        null, null, null, null, null, 1L, true, Company.AWESOME, false, null);
     }
 
     @Test

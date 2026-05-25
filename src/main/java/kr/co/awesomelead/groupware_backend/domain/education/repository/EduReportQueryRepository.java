@@ -49,7 +49,8 @@ public class EduReportQueryRepository {
      */
     public List<EduReportSummaryDto> findEduReports(
             EduType type, Department dept, Long categoryId, Long userId, boolean hasAccess) {
-        return findEduReports(type, dept, categoryId, userId, hasAccess, null, true, null);
+        return findEduReports(
+                type, dept, null, null, categoryId, userId, hasAccess, null, true, null);
     }
 
     public List<EduReportSummaryDto> findEduReports(
@@ -63,6 +64,8 @@ public class EduReportQueryRepository {
         return findEduReports(
                 type,
                 dept,
+                null,
+                null,
                 categoryId,
                 userId,
                 hasAccess,
@@ -74,6 +77,8 @@ public class EduReportQueryRepository {
     public List<EduReportSummaryDto> findEduReports(
             EduType type,
             Department dept,
+            List<Long> accessibleDepartmentIds,
+            EduReportStatus status,
             Long categoryId,
             Long userId,
             boolean hasAccess,
@@ -131,8 +136,9 @@ public class EduReportQueryRepository {
                 .leftJoin(eduReport.createdBy, creatorUser)
                 .where(
                         eqEduType(type),
+                        statusFilter(status),
                         eqCategoryId(categoryId),
-                        deptFilter(type, hasAccess, dept),
+                        deptFilter(type, hasAccess, dept, accessibleDepartmentIds),
                         psmFilter(psmCompany, canReadAllPsmCompanies),
                         titleFilter(title))
                 // 같은 eduDate(일자) 내에서는 최신 생성건이 위로 오도록 id DESC를 타이브레이커로 사용
@@ -437,6 +443,10 @@ public class EduReportQueryRepository {
         return categoryId != null ? educationCategory.id.eq(categoryId) : null;
     }
 
+    private BooleanExpression statusFilter(EduReportStatus status) {
+        return status != null ? eduReport.status.eq(status) : null;
+    }
+
     /**
      * 부서 접근 필터
      *
@@ -446,7 +456,8 @@ public class EduReportQueryRepository {
      *   <li>hasAccess=false → 기존 로직: DEPARTMENT 타입이 아니거나, 타입이 DEPARTMENT이면 자신의 부서만
      * </ul>
      */
-    private BooleanExpression deptFilter(EduType type, boolean hasAccess, Department dept) {
+    private BooleanExpression deptFilter(
+            EduType type, boolean hasAccess, Department dept, List<Long> accessibleDepartmentIds) {
         if (hasAccess) {
             // MANAGE_DEPARTMENT_EDUCATION 권한 있음:
             // - DEPARTMENT 조회일 때만 departmentName 필터 적용
@@ -458,8 +469,17 @@ public class EduReportQueryRepository {
         }
         // MANAGE_DEPARTMENT_EDUCATION 권한 없음: 기존 로직 유지
         // - DEPARTMENT 타입이 아닌 교육(PSM, SAFETY)은 모두 보임
-        // - DEPARTMENT 타입이면 자신의 부서 교육만 보임
-        return eduReport.eduType.ne(EduType.DEPARTMENT).or(eduReport.department.eq(dept));
+        // - DEPARTMENT 타입이면 자신의 부서 + 하위 부서 교육을 보임
+        if (accessibleDepartmentIds == null) {
+            return eduReport.eduType.ne(EduType.DEPARTMENT).or(eduReport.department.eq(dept));
+        }
+        if (accessibleDepartmentIds.isEmpty()) {
+            return eduReport.eduType.ne(EduType.DEPARTMENT);
+        }
+        return eduReport
+                .eduType
+                .ne(EduType.DEPARTMENT)
+                .or(eduReport.department.id.in(accessibleDepartmentIds));
     }
 
     private BooleanExpression psmCompanyFilter(Company company, boolean canReadAllCompanies) {

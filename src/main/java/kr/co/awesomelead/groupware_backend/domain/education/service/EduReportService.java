@@ -179,7 +179,7 @@ public class EduReportService {
                 targetUserIds = userRepository.findAllIdsByCompany(report.getCompany());
             }
         } else {
-            targetUserIds = userRepository.findAllIdsByDepartmentId(requestDto.getDepartmentId());
+            targetUserIds = findDepartmentNotificationTargetUserIds(department);
         }
         Map<String, Object> metadata =
                 requestDto.getEduType() == EduType.SAFETY
@@ -237,7 +237,12 @@ public class EduReportService {
 
     @Transactional(readOnly = true)
     public List<EduReportSummaryDto> getEduReports(
-            EduType type, DepartmentName departmentName, Long categoryId, Long id, String title) {
+            EduType type,
+            DepartmentName departmentName,
+            EduReportStatus status,
+            Long categoryId,
+            Long id,
+            String title) {
 
         User user =
                 userRepository
@@ -249,6 +254,7 @@ public class EduReportService {
         Company psmCompanyFilter = canReadAllPsmCompanies ? null : user.getWorkLocation();
 
         Department dept;
+        List<Long> accessibleDepartmentIds = null;
         if (hasAccess) {
             // 권한 있음: departmentName이 지정되면 해당 부서, 없으면 null(전체 조회)
             dept =
@@ -263,12 +269,15 @@ public class EduReportService {
         } else {
             // 권한 없음: 자신의 부서로 제한
             dept = user.getDepartment();
+            accessibleDepartmentIds = collectDepartmentAndChildrenIds(dept);
         }
 
         List<EduReportSummaryDto> summaries =
                 eduReportQueryRepository.findEduReports(
                         type,
                         dept,
+                        accessibleDepartmentIds,
+                        status,
                         categoryId,
                         id,
                         hasAccess,
@@ -286,8 +295,8 @@ public class EduReportService {
 
     @Transactional(readOnly = true)
     public List<EduReportSummaryDto> getDepartmentEduReports(
-            DepartmentName departmentName, Long id, String title) {
-        return getEduReports(EduType.DEPARTMENT, departmentName, null, id, title);
+            DepartmentName departmentName, EduReportStatus status, Long id) {
+        return getEduReports(EduType.DEPARTMENT, departmentName, status, null, id, null);
     }
 
     @Transactional(readOnly = true)
@@ -359,7 +368,7 @@ public class EduReportService {
         if (!hasAccess) {
             if (user.getDepartment() == null
                     || report.getDepartment() == null
-                    || !report.getDepartment().getId().equals(user.getDepartment().getId())) {
+                    || !isSameOrAncestorDepartment(user.getDepartment(), report.getDepartment())) {
                 throw new CustomException(ErrorCode.EDU_REPORT_NOT_FOUND);
             }
         }
@@ -1126,6 +1135,62 @@ public class EduReportService {
                 .build();
     }
 
+    private boolean isSameOrAncestorDepartment(
+            Department ancestorCandidate, Department department) {
+        if (ancestorCandidate == null || department == null) {
+            return false;
+        }
+
+        Department cursor = department;
+        while (cursor != null) {
+            if (ancestorCandidate.getId().equals(cursor.getId())) {
+                return true;
+            }
+            cursor = cursor.getParent();
+        }
+        return false;
+    }
+
+    private List<Long> collectDepartmentAndChildrenIds(Department department) {
+        if (department == null) {
+            return List.of();
+        }
+
+        LinkedHashSet<Long> departmentIds = new LinkedHashSet<>();
+        collectDepartmentAndChildrenIdsRecursive(department, departmentIds);
+        return new ArrayList<>(departmentIds);
+    }
+
+    private void collectDepartmentAndChildrenIdsRecursive(
+            Department department, LinkedHashSet<Long> departmentIds) {
+        departmentIds.add(department.getId());
+        if (department.getChildren() == null) {
+            return;
+        }
+        for (Department child : department.getChildren()) {
+            collectDepartmentAndChildrenIdsRecursive(child, departmentIds);
+        }
+    }
+
+    private List<Long> findDepartmentNotificationTargetUserIds(Department department) {
+        if (department == null) {
+            return List.of();
+        }
+
+        LinkedHashSet<Long> departmentIds = new LinkedHashSet<>();
+        collectDepartmentAndChildrenIdsRecursive(department, departmentIds);
+
+        Department cursor = department.getParent();
+        while (cursor != null) {
+            departmentIds.add(cursor.getId());
+            cursor = cursor.getParent();
+        }
+
+        return userRepository.findAllByDepartmentIdIn(new ArrayList<>(departmentIds)).stream()
+                .map(User::getId)
+                .toList();
+    }
+
     private long calculateTargetPeopleCount(EduReport report) {
         if (report.getEduType() == EduType.DEPARTMENT && report.getDepartment() != null) {
             return userRepository.countByDepartment(report.getDepartment());
@@ -1185,8 +1250,7 @@ public class EduReportService {
         } else {
             targetUserIds =
                     report.getDepartment() != null
-                            ? userRepository.findAllIdsByDepartmentId(
-                                    report.getDepartment().getId())
+                            ? findDepartmentNotificationTargetUserIds(report.getDepartment())
                             : List.of();
         }
 

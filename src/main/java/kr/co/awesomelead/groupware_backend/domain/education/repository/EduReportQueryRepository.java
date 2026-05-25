@@ -49,7 +49,8 @@ public class EduReportQueryRepository {
      */
     public List<EduReportSummaryDto> findEduReports(
             EduType type, Department dept, Long categoryId, Long userId, boolean hasAccess) {
-        return findEduReports(type, dept, null, categoryId, userId, hasAccess, null, true, null);
+        return findEduReports(
+                type, dept, null, null, categoryId, userId, hasAccess, null, true, null);
     }
 
     public List<EduReportSummaryDto> findEduReports(
@@ -64,6 +65,7 @@ public class EduReportQueryRepository {
                 type,
                 dept,
                 null,
+                null,
                 categoryId,
                 userId,
                 hasAccess,
@@ -76,6 +78,7 @@ public class EduReportQueryRepository {
             EduType type,
             Department dept,
             List<Long> accessibleDepartmentIds,
+            EduReportStatus status,
             Long categoryId,
             Long userId,
             boolean hasAccess,
@@ -133,6 +136,7 @@ public class EduReportQueryRepository {
                 .leftJoin(eduReport.createdBy, creatorUser)
                 .where(
                         eqEduType(type),
+                        statusFilter(status),
                         eqCategoryId(categoryId),
                         deptFilter(type, hasAccess, dept, accessibleDepartmentIds),
                         psmFilter(psmCompany, canReadAllPsmCompanies),
@@ -437,6 +441,10 @@ public class EduReportQueryRepository {
 
     private BooleanExpression eqCategoryId(Long categoryId) {
         return categoryId != null ? educationCategory.id.eq(categoryId) : null;
+    }
+
+    private BooleanExpression statusFilter(EduReportStatus status) {
+        return status != null ? eduReport.status.eq(status) : null;
     }
 
     /**

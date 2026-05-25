@@ -21,6 +21,7 @@ import kr.co.awesomelead.groupware_backend.domain.education.dto.request.SafetyEd
 import kr.co.awesomelead.groupware_backend.domain.education.dto.response.EduReportDetailDto;
 import kr.co.awesomelead.groupware_backend.domain.education.dto.response.EduReportSignatureStatusDto;
 import kr.co.awesomelead.groupware_backend.domain.education.dto.response.EduReportSummaryDto;
+import kr.co.awesomelead.groupware_backend.domain.education.enums.EduReportStatus;
 import kr.co.awesomelead.groupware_backend.domain.education.service.EduReportService;
 import kr.co.awesomelead.groupware_backend.domain.user.dto.CustomUserDetails;
 import kr.co.awesomelead.groupware_backend.global.common.response.ApiResponse;
@@ -507,13 +508,13 @@ public class EduReportController {
             @Parameter(description = "부서명 필터(권한 사용자 전용)", example = "SALES_DEPT")
                     @RequestParam(required = false)
                     DepartmentName departmentName,
-            @Parameter(description = "제목 검색 키워드 (FULLTEXT 검색)", example = "안전교육")
+            @Parameter(description = "진행상태 필터(OPEN: 진행중, CLOSED: 종료)", example = "OPEN")
                     @RequestParam(required = false)
-                    String title,
+                    EduReportStatus status,
             @Parameter(hidden = true) @AuthenticationPrincipal CustomUserDetails userDetails) {
         List<EduReportSummaryDto> reports =
                 eduReportService.getDepartmentEduReports(
-                        departmentName, userDetails.getId(), title);
+                        departmentName, status, userDetails.getId());
         return ResponseEntity.ok(ApiResponse.onSuccess(reports));
     }
 

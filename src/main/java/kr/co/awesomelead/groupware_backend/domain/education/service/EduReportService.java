@@ -237,7 +237,12 @@ public class EduReportService {
 
     @Transactional(readOnly = true)
     public List<EduReportSummaryDto> getEduReports(
-            EduType type, DepartmentName departmentName, Long categoryId, Long id, String title) {
+            EduType type,
+            DepartmentName departmentName,
+            EduReportStatus status,
+            Long categoryId,
+            Long id,
+            String title) {
 
         User user =
                 userRepository
@@ -272,6 +277,7 @@ public class EduReportService {
                         type,
                         dept,
                         accessibleDepartmentIds,
+                        status,
                         categoryId,
                         id,
                         hasAccess,
@@ -289,8 +295,8 @@ public class EduReportService {
 
     @Transactional(readOnly = true)
     public List<EduReportSummaryDto> getDepartmentEduReports(
-            DepartmentName departmentName, Long id, String title) {
-        return getEduReports(EduType.DEPARTMENT, departmentName, null, id, title);
+            DepartmentName departmentName, EduReportStatus status, Long id) {
+        return getEduReports(EduType.DEPARTMENT, departmentName, status, null, id, null);
     }
 
     @Transactional(readOnly = true)

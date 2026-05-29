@@ -53,8 +53,7 @@ public class PayslipController {
 
     @Operation(
             summary = "급여명세서 일괄 발송 (관리자)",
-            description =
-                    "관리자가 다수의 PDF 파일을 업로드하여 발송합니다. 파일명 형식: '성명_생년월일_급여명세서.pdf'")
+            description = "관리자가 다수의 PDF 파일을 업로드하여 발송합니다. 파일명 형식: '성명_생년월일_급여명세서.pdf'")
     @ApiResponses(
             value = {
                 @io.swagger.v3.oas.annotations.responses.ApiResponse(

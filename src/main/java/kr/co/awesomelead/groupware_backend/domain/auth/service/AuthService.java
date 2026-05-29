@@ -82,7 +82,8 @@ public class AuthService {
         return signupInternal(joinDto, false);
     }
 
-    private SignupResponseDto signupInternal(SignupRequestDto joinDto, boolean requireContactVerification) {
+    private SignupResponseDto signupInternal(
+            SignupRequestDto joinDto, boolean requireContactVerification) {
         // 1. 비밀번호 확인 검증
         if (!joinDto.getPassword().equals(joinDto.getPasswordConfirm())) {
             throw new CustomException(ErrorCode.PASSWORD_MISMATCH);

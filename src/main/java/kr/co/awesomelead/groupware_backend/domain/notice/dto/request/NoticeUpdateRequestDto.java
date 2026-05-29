@@ -62,9 +62,7 @@ public class NoticeUpdateRequestDto {
             example = "{\"ops\":[{\"insert\":\"회의 시간이 오후 3시로 변경되었습니다.\\n\"}]}")
     private String contentDelta;
 
-    @Schema(
-            description = "HTML 본문(수정하지 않으려면 null)",
-            example = "<p>회의 시간이 오후 3시로 변경되었습니다.</p>")
+    @Schema(description = "HTML 본문(수정하지 않으려면 null)", example = "<p>회의 시간이 오후 3시로 변경되었습니다.</p>")
     private String contentHtml;
 
     @Schema(description = "공지 유형 (수정하지 않으려면 null)", example = "상시공지")

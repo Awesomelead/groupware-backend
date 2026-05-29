@@ -340,11 +340,15 @@ public class NoticeService {
 
         String contentText =
                 resolveSearchableText(requestContentDelta, requestContentHtml, content, null);
-        return new NoticeContentFields(content, requestContentDelta, requestContentHtml, contentText);
+        return new NoticeContentFields(
+                content, requestContentDelta, requestContentHtml, contentText);
     }
 
     private NoticeContentFields resolveUpdateContentFields(
-            Notice notice, String requestContent, String requestContentDelta, String requestContentHtml) {
+            Notice notice,
+            String requestContent,
+            String requestContentDelta,
+            String requestContentHtml) {
         String resolvedContentDelta =
                 requestContentDelta != null ? requestContentDelta : notice.getContentDelta();
         String resolvedContentHtml =

@@ -40,6 +40,12 @@ public interface UserRepository extends JpaRepository<User, Long> {
     Optional<User> findByNameAndJoinDate(
             @Param("name") String name, @Param("joinDate") LocalDate joinDate);
 
+    @Query(
+            "SELECT u FROM User u WHERE (u.nameKor = :name OR u.nameEng = :name) AND u.birthDate ="
+                    + " :birthDate")
+    Optional<User> findByNameAndBirthDate(
+            @Param("name") String name, @Param("birthDate") LocalDate birthDate);
+
     boolean existsByPhoneNumberHash(String phoneNumberHash);
 
     List<User> findAllByRole(Role role);

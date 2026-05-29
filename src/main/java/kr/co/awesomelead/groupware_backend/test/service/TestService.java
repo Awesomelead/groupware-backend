@@ -1,5 +1,8 @@
 package kr.co.awesomelead.groupware_backend.test.service;
 
+import kr.co.awesomelead.groupware_backend.domain.auth.dto.request.SignupRequestDto;
+import kr.co.awesomelead.groupware_backend.domain.auth.dto.response.SignupResponseDto;
+import kr.co.awesomelead.groupware_backend.domain.auth.service.AuthService;
 import kr.co.awesomelead.groupware_backend.domain.auth.dto.response.FindEmailResponseDto;
 import kr.co.awesomelead.groupware_backend.domain.department.entity.Department;
 import kr.co.awesomelead.groupware_backend.domain.department.enums.Company;
@@ -30,6 +33,7 @@ public class TestService {
     private final UserRepository userRepository;
     private final DepartmentRepository departmentRepository;
     private final BCryptPasswordEncoder passwordEncoder;
+    private final AuthService authService;
 
     // 테스트용 (인증 없음)
 
@@ -149,5 +153,9 @@ public class TestService {
         }
 
         return new DummyUsersCreateResponseDto(requested, created, skipped);
+    }
+
+    public SignupResponseDto signupWithoutVerification(SignupRequestDto requestDto) {
+        return authService.signupWithoutVerification(requestDto);
     }
 }

@@ -205,9 +205,12 @@ public class NoticeQueryRepository {
 
         return switch (type) {
             case TITLE -> n.title.contains(keyword);
-            case CONTENT -> n.content.contains(keyword);
+            case CONTENT -> n.contentText.contains(keyword).or(n.content.contains(keyword));
             case AUTHOR -> author.nameKor.contains(keyword);
-            default -> n.title.contains(keyword).or(n.content.contains(keyword));
+            default ->
+                    n.title.contains(keyword)
+                            .or(n.contentText.contains(keyword))
+                            .or(n.content.contains(keyword));
         };
     }
 }

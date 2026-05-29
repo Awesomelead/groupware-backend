@@ -73,6 +73,9 @@ public class NoticeController {
                     """
                 새로운 공지를 생성합니다. 첨부파일을 포함할 수 있습니다.
 
+                본문은 `contentDelta`(Quill Delta JSON 문자열) 또는 `contentHtml`을 사용할 수 있습니다.
+                하위 호환을 위해 기존 `content`도 함께 지원합니다.
+
                 **공지 대상 설정 로직**:
                 1. **회사(targetCompanies)**: 선택된 회사 소속 전체 인원을 대상으로 합니다.
                 2. **부서(targetDepartmentIds)**: 선택된 부서 및 그 하위 부서의 모든 인원을 대상으로 합니다.
@@ -86,6 +89,11 @@ public class NoticeController {
                             content =
                                     @Content(
                                             mediaType = MediaType.MULTIPART_FORM_DATA_VALUE,
+                                            schema =
+                                                    @Schema(
+                                                            implementation =
+                                                                    NoticeCreateMultipartRequestDoc
+                                                                            .class),
                                             encoding = {
                                                 @Encoding(
                                                         name = "requestDto",
@@ -205,7 +213,8 @@ public class NoticeController {
     @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<ApiResponse<Long>> createNotice(
             @Parameter(
-                            description = "공지사항 생성 정보 (JSON)",
+                            description =
+                                    "공지사항 생성 정보(JSON). 권장: contentDelta(에디터 원본) + contentHtml(렌더링용) 함께 전달",
                             required = true,
                             schema = @Schema(implementation = NoticeCreateRequestDto.class))
                     @RequestPart("requestDto")
@@ -345,6 +354,8 @@ public class NoticeController {
                                 "type": "REGULAR",
                                 "title": "2025년 1월 전체 회의 안내",
                                 "content": "오는 1월 15일 오후 2시에 전체 회의가 있습니다.",
+                                "contentDelta": "{\"ops\":[{\"insert\":\"오는 1월 15일 오후 2시에 전체 회의가 있습니다.\\n\"}]}",
+                                "contentHtml": "<p>오는 1월 15일 오후 2시에 전체 회의가 있습니다.</p>",
                                 "authorName": "홍길동",
                                 "createdDate": "2025-01-10T14:30:00",
                                 "viewCount": 43,
@@ -467,7 +478,7 @@ public class NoticeController {
 
     @Operation(
             summary = "공지 수정",
-            description = "특정 공지를 수정합니다. multipart/form-data 기반으로 제목/내용/유형/대상자/첨부파일을 수정할 수 있습니다.",
+            description = "특정 공지를 수정합니다. multipart/form-data 기반으로 제목/본문(content/contentDelta/contentHtml)/유형/대상자/첨부파일을 수정할 수 있습니다.",
             requestBody =
                     @io.swagger.v3.oas.annotations.parameters.RequestBody(
                             required = true,
@@ -495,8 +506,11 @@ public class NoticeController {
                                     {
                                       "notice": {
                                         "title": "2025년 2월 전체 회의 안내 (수정)",
-                                        "content": "회의 시간이 오후 3시로 변경되었습니다.",
+                                        "type": "상시공지",
                                         "pinned": true,
+                                        "contentDelta": "{\"ops\":[{\"insert\":\"회의 시간이 오후 3시로 변경되었습니다.\\n\"}]}",
+                                        "contentHtml": "<p>회의 시간이 오후 3시로 변경되었습니다.</p>",
+                                        "content": "회의 시간이 오후 3시로 변경되었습니다.",
                                         "attachmentsIdsToRemove": [1]
                                       }
                                     }
@@ -521,8 +535,11 @@ public class NoticeController {
                                     {
                                       "notice": {
                                         "title": "2025년 2월 전체 회의 안내 (수정)",
-                                        "content": "회의 시간이 오후 3시로 변경되었습니다.",
+                                        "type": "상시공지",
                                         "pinned": true,
+                                        "contentDelta": "{\"ops\":[{\"insert\":\"회의 시간이 오후 3시로 변경되었습니다.\\n\"}]}",
+                                        "contentHtml": "<p>회의 시간이 오후 3시로 변경되었습니다.</p>",
+                                        "content": "회의 시간이 오후 3시로 변경되었습니다.",
                                         "attachmentsIdsToRemove": [1]
                                       },
                                       "files": ["(binary)"]
@@ -588,7 +605,14 @@ public class NoticeController {
             @Parameter(hidden = true) @AuthenticationPrincipal CustomUserDetails userDetails,
             @Parameter(description = "수정할 공지사항 ID", example = "1", required = true) @PathVariable
                     Long noticeId,
-            @Valid @RequestPart("notice") NoticeUpdateRequestDto dto,
+            @Parameter(
+                            description =
+                                    "공지 수정 정보(JSON). content/contentDelta/contentHtml 중 필요한 필드만 부분 수정 가능",
+                            required = true,
+                            schema = @Schema(implementation = NoticeUpdateRequestDto.class))
+                    @Valid
+                    @RequestPart("notice")
+                    NoticeUpdateRequestDto dto,
             @RequestPart(value = "files", required = false) List<MultipartFile> files)
             throws IOException {
 
@@ -655,8 +679,49 @@ public class NoticeController {
 @Schema(name = "NoticeUpdateMultipartRequest")
 class NoticeUpdateMultipartRequestDoc {
 
-    @Schema(description = "공지 수정 정보(JSON 파트)")
+    @Schema(
+            description = "공지 수정 정보(JSON 파트)",
+            example =
+                    """
+                    {
+                      "title": "2025년 1월 전체 회의 안내 (수정)",
+                      "type": "상시공지",
+                      "pinned": true,
+                      "contentDelta": "{\\"ops\\":[{\\"insert\\":\\"회의 시간이 오후 3시로 변경되었습니다.\\\\n\\"}]}",
+                      "contentHtml": "<p>회의 시간이 오후 3시로 변경되었습니다.</p>",
+                      "content": "회의 시간이 오후 3시로 변경되었습니다.",
+                      "targetCompanies": ["어썸리드"],
+                      "targetDepartmentIds": [11, 12],
+                      "targetUserIds": [17, 22],
+                      "attachmentsIdsToRemove": [1, 2]
+                    }
+                    """)
     public NoticeUpdateRequestDto notice;
+
+    @ArraySchema(schema = @Schema(type = "string", format = "binary"))
+    public List<String> files;
+}
+
+@Schema(name = "NoticeCreateMultipartRequest")
+class NoticeCreateMultipartRequestDoc {
+
+    @Schema(
+            description = "공지사항 생성 정보(JSON 파트)",
+            example =
+                    """
+                    {
+                      "title": "2025년 1월 전체 회의 안내",
+                      "type": "상시공지",
+                      "pinned": false,
+                      "contentDelta": "{\\"ops\\":[{\\"insert\\":\\"공지 본문입니다.\\\\n\\"}]}",
+                      "contentHtml": "<p>오는 1월 15일 오후 2시에 전체 회의가 있습니다.</p>",
+                      "content": "오는 1월 15일 오후 2시에 전체 회의가 있습니다.",
+                      "targetCompanies": ["어썸리드"],
+                      "targetDepartmentIds": [1, 5, 12],
+                      "targetUserIds": [101, 205]
+                    }
+                    """)
+    public NoticeCreateRequestDto requestDto;
 
     @ArraySchema(schema = @Schema(type = "string", format = "binary"))
     public List<String> files;

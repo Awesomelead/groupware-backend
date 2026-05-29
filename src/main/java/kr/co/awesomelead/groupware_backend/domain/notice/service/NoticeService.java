@@ -1,5 +1,8 @@
 package kr.co.awesomelead.groupware_backend.domain.notice.service;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+
 import kr.co.awesomelead.groupware_backend.domain.department.dto.response.UserSummaryResponseDto;
 import kr.co.awesomelead.groupware_backend.domain.department.enums.Company;
 import kr.co.awesomelead.groupware_backend.domain.department.service.DepartmentService;
@@ -30,6 +33,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.StringUtils;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
@@ -40,6 +44,8 @@ import java.util.Set;
 @Service
 @RequiredArgsConstructor
 public class NoticeService {
+
+    private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
 
     private final NoticeRepository noticeRepository;
     private final NoticeQueryRepository noticeQueryRepository;
@@ -70,6 +76,16 @@ public class NoticeService {
         User author = validateAndGetAuthor(userId);
 
         Notice notice = noticeMapper.toNoticeEntity(requestDto, author);
+        NoticeContentFields contentFields =
+                resolveCreateContentFields(
+                        requestDto.getContent(),
+                        requestDto.getContentDelta(),
+                        requestDto.getContentHtml());
+        notice.updateEditorContent(
+                contentFields.content(),
+                contentFields.contentDelta(),
+                contentFields.contentHtml(),
+                contentFields.contentText());
         noticeRepository.save(notice);
 
         Set<Long> finalTargetUserIds = new HashSet<>();
@@ -196,10 +212,17 @@ public class NoticeService {
                         .findByIdWithDetails(noticeId)
                         .orElseThrow(() -> new CustomException(ErrorCode.NOTICE_NOT_FOUND));
 
+        NoticeContentFields contentFields =
+                resolveUpdateContentFields(
+                        notice, dto.getContent(), dto.getContentDelta(), dto.getContentHtml());
+
         notice.update(
                 dto.getType(),
                 dto.getTitle(),
-                dto.getContent(),
+                contentFields.content(),
+                contentFields.contentDelta(),
+                contentFields.contentHtml(),
+                contentFields.contentText(),
                 dto.getPinned(),
                 dto.getTargetCompanies(),
                 dto.getTargetDepartmentIds(),
@@ -303,6 +326,140 @@ public class NoticeService {
             throw new CustomException(ErrorCode.NOTICE_TARGET_REQUIRED);
         }
     }
+
+    private NoticeContentFields resolveCreateContentFields(
+            String requestContent, String requestContentDelta, String requestContentHtml) {
+        String content = requestContent;
+        if (content == null) {
+            if (StringUtils.hasText(requestContentHtml)) {
+                content = requestContentHtml;
+            } else if (StringUtils.hasText(requestContentDelta)) {
+                content = extractPlainTextFromDelta(requestContentDelta);
+            }
+        }
+
+        String contentText =
+                resolveSearchableText(requestContentDelta, requestContentHtml, content, null);
+        return new NoticeContentFields(content, requestContentDelta, requestContentHtml, contentText);
+    }
+
+    private NoticeContentFields resolveUpdateContentFields(
+            Notice notice, String requestContent, String requestContentDelta, String requestContentHtml) {
+        String resolvedContentDelta =
+                requestContentDelta != null ? requestContentDelta : notice.getContentDelta();
+        String resolvedContentHtml =
+                requestContentHtml != null ? requestContentHtml : notice.getContentHtml();
+
+        String resolvedContent;
+        if (requestContent != null) {
+            resolvedContent = requestContent;
+        } else if (requestContentHtml != null) {
+            resolvedContent = requestContentHtml;
+        } else if (requestContentDelta != null) {
+            resolvedContent = extractPlainTextFromDelta(requestContentDelta);
+        } else {
+            resolvedContent = notice.getContent();
+        }
+
+        String resolvedContentText =
+                resolveSearchableText(
+                        resolvedContentDelta,
+                        resolvedContentHtml,
+                        resolvedContent,
+                        notice.getContentText());
+
+        return new NoticeContentFields(
+                resolvedContent, resolvedContentDelta, resolvedContentHtml, resolvedContentText);
+    }
+
+    private String resolveSearchableText(
+            String contentDelta, String contentHtml, String content, String fallbackContentText) {
+        String deltaText = extractPlainTextFromDelta(contentDelta);
+        if (StringUtils.hasText(deltaText)) {
+            return deltaText;
+        }
+
+        String htmlText = extractPlainTextFromHtml(contentHtml);
+        if (StringUtils.hasText(htmlText)) {
+            return htmlText;
+        }
+
+        String contentText = extractPlainTextFromHtml(content);
+        if (StringUtils.hasText(contentText)) {
+            return contentText;
+        }
+
+        if (StringUtils.hasText(content)) {
+            return content.trim();
+        }
+
+        if (StringUtils.hasText(fallbackContentText)) {
+            return fallbackContentText;
+        }
+        return "";
+    }
+
+    private String extractPlainTextFromDelta(String contentDelta) {
+        if (!StringUtils.hasText(contentDelta)) {
+            return "";
+        }
+
+        try {
+            JsonNode root = OBJECT_MAPPER.readTree(contentDelta);
+            JsonNode ops = root.path("ops");
+            if (!ops.isArray()) {
+                return "";
+            }
+
+            StringBuilder plain = new StringBuilder();
+            for (JsonNode op : ops) {
+                JsonNode insert = op.get("insert");
+                if (insert == null) {
+                    continue;
+                }
+                if (insert.isTextual()) {
+                    plain.append(insert.asText());
+                } else if (insert.isObject() && insert.has("image")) {
+                    plain.append(' ');
+                }
+            }
+            return normalizeWhitespace(plain.toString());
+        } catch (Exception e) {
+            return "";
+        }
+    }
+
+    private String extractPlainTextFromHtml(String html) {
+        if (!StringUtils.hasText(html)) {
+            return "";
+        }
+        String text =
+                html.replaceAll("(?is)<script[^>]*>.*?</script>", " ")
+                        .replaceAll("(?is)<style[^>]*>.*?</style>", " ")
+                        .replaceAll("(?is)<br\\s*/?>", "\n")
+                        .replaceAll("(?is)</p>", "\n")
+                        .replaceAll("(?is)</tr>", "\n")
+                        .replaceAll("(?is)<[^>]+>", " ")
+                        .replace("&nbsp;", " ")
+                        .replace("&amp;", "&")
+                        .replace("&lt;", "<")
+                        .replace("&gt;", ">");
+        return normalizeWhitespace(text);
+    }
+
+    private String normalizeWhitespace(String text) {
+        if (!StringUtils.hasText(text)) {
+            return "";
+        }
+        return text.replace('\u00A0', ' ')
+                .replaceAll("[\\t\\x0B\\f\\r ]+", " ")
+                .replaceAll(" *\\n *", "\n")
+                .replaceAll("\\n{3,}", "\n\n")
+                .trim();
+    }
+
+    private record NoticeContentFields(
+            String content, String contentDelta, String contentHtml, String contentText) {}
 
     private void uploadFiles(List<MultipartFile> files, Notice notice) throws IOException {
         if (files != null && !files.isEmpty()) {

@@ -148,7 +148,7 @@ public class EduReportQueryRepository {
 
     public List<EduReportSummaryDto> findPsmEduReports(
             Long categoryId, Long userId, Company company, boolean canReadAllCompanies) {
-        return findPsmEduReports(categoryId, userId, company, canReadAllCompanies, null);
+        return findPsmEduReports(categoryId, userId, company, canReadAllCompanies, null, null, null);
     }
 
     public List<EduReportSummaryDto> findPsmEduReports(
@@ -156,6 +156,18 @@ public class EduReportQueryRepository {
             Long userId,
             Company company,
             boolean canReadAllCompanies,
+            String title) {
+        return findPsmEduReports(
+                categoryId, userId, company, canReadAllCompanies, null, null, title);
+    }
+
+    public List<EduReportSummaryDto> findPsmEduReports(
+            Long categoryId,
+            Long userId,
+            Company company,
+            boolean canReadAllCompanies,
+            Company targetCompany,
+            EduReportStatus status,
             String title) {
         QUser creatorUser = new QUser("creatorUserForPsm");
         BooleanExpression attendanceExists =
@@ -197,6 +209,8 @@ public class EduReportQueryRepository {
                         eduReport.eduType.eq(EduType.PSM),
                         eqCategoryId(categoryId),
                         psmCompanyFilter(company, canReadAllCompanies),
+                        psmTargetCompanyFilter(targetCompany),
+                        statusFilter(status),
                         titleFilter(title))
                 .orderBy(eduReport.pinned.desc(), eduReport.eduDate.desc(), eduReport.id.desc())
                 .fetch();
@@ -501,6 +515,13 @@ public class EduReportQueryRepository {
             return eduReport.company.isNull();
         }
 
+        return eduReport.company.eq(company).or(eduReport.company.isNull());
+    }
+
+    private BooleanExpression psmTargetCompanyFilter(Company company) {
+        if (company == null) {
+            return null;
+        }
         return eduReport.company.eq(company).or(eduReport.company.isNull());
     }
 

@@ -773,18 +773,21 @@ public class EduReportServiceTest {
                         .build();
 
         when(userRepository.findById(1L)).thenReturn(Optional.of(user));
-        when(eduReportQueryRepository.findPsmEduReports(null, 1L, null, true, null))
+        when(eduReportQueryRepository.findPsmEduReports(
+                        null, 1L, null, true, null, null, null))
                 .thenReturn(List.of(psmReport));
 
         // when
-        List<EduReportSummaryDto> result = eduReportService.getPsmEduReports(null, 1L, null);
+        List<EduReportSummaryDto> result =
+                eduReportService.getPsmEduReports(null, null, null, 1L, null);
 
         // then
         assertThat(result).isNotNull();
         assertThat(result.size()).isEqualTo(1);
         assertThat(result.get(0).getEduType()).isEqualTo(EduType.PSM);
         assertThat(result.get(0).getCompanyScope()).isEqualTo(List.of("AWESOME", "MARUI"));
-        verify(eduReportQueryRepository, times(1)).findPsmEduReports(null, 1L, null, true, null);
+        verify(eduReportQueryRepository, times(1))
+                .findPsmEduReports(null, 1L, null, true, null, null, null);
     }
 
     @Test
@@ -802,18 +805,38 @@ public class EduReportServiceTest {
                         .company(Company.AWESOME)
                         .build();
 
-        when(eduReportQueryRepository.findPsmEduReports(null, 1L, Company.AWESOME, false, null))
+        when(eduReportQueryRepository.findPsmEduReports(
+                        null, 1L, Company.AWESOME, false, null, null, null))
                 .thenReturn(List.of(psmReport));
 
         // when
-        List<EduReportSummaryDto> result = eduReportService.getPsmEduReports(null, 1L, null);
+        List<EduReportSummaryDto> result =
+                eduReportService.getPsmEduReports(null, null, null, 1L, null);
 
         // then
         assertThat(result).isNotNull();
         assertThat(result.size()).isEqualTo(1);
         assertThat(result.get(0).getCompanyScope()).isEqualTo(List.of("AWESOME"));
         verify(eduReportQueryRepository, times(1))
-                .findPsmEduReports(null, 1L, Company.AWESOME, false, null);
+                .findPsmEduReports(null, 1L, Company.AWESOME, false, null, null, null);
+    }
+
+    @Test
+    @DisplayName("PSM 게시물 목록 조회 - MANAGE_PSM 권한 없고 타 회사 필터면 빈 목록")
+    void getPsmEduReports_WithoutManagePsm_FilterOtherCompany_ReturnsEmpty() {
+        // given
+        User user = createNormalUser(); // workLocation=AWESOME
+        when(userRepository.findById(1L)).thenReturn(Optional.of(user));
+
+        // when
+        List<EduReportSummaryDto> result =
+                eduReportService.getPsmEduReports(null, Company.MARUI, null, 1L, "변경");
+
+        // then
+        assertThat(result).isNotNull();
+        assertThat(result.size()).isEqualTo(0);
+        verify(eduReportQueryRepository, never())
+                .findPsmEduReports(any(), anyLong(), any(), anyBoolean(), any(), any(), any());
     }
 
     @Test

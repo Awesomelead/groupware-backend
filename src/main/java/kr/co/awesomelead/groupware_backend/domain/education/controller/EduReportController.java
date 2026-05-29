@@ -593,12 +593,19 @@ public class EduReportController {
             @Parameter(description = "카테고리 ID 필터(PSM)", example = "1")
                     @RequestParam(required = false)
                     Long categoryId,
+            @Parameter(description = "대상 회사 필터", example = "AWESOME")
+                    @RequestParam(required = false)
+                    Company company,
+            @Parameter(description = "진행상태 필터(OPEN: 진행중, CLOSED: 종료)", example = "OPEN")
+                    @RequestParam(required = false)
+                    EduReportStatus status,
             @Parameter(description = "제목 검색 키워드 (부분 일치 검색)", example = "변경관리")
                     @RequestParam(required = false)
                     String title,
             @Parameter(hidden = true) @AuthenticationPrincipal CustomUserDetails userDetails) {
         List<EduReportSummaryDto> reports =
-                eduReportService.getPsmEduReports(categoryId, userDetails.getId(), title);
+                eduReportService.getPsmEduReports(
+                        categoryId, company, status, userDetails.getId(), title);
         return ResponseEntity.ok(ApiResponse.onSuccess(reports));
     }
 

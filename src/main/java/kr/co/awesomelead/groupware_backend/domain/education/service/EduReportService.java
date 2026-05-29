@@ -300,7 +300,8 @@ public class EduReportService {
     }
 
     @Transactional(readOnly = true)
-    public List<EduReportSummaryDto> getPsmEduReports(Long categoryId, Long id, String title) {
+    public List<EduReportSummaryDto> getPsmEduReports(
+            Long categoryId, Company company, EduReportStatus status, Long id, String title) {
         User user =
                 userRepository
                         .findById(id)
@@ -308,9 +309,14 @@ public class EduReportService {
 
         boolean canReadAllCompanies = user.hasAuthority(Authority.MANAGE_PSM);
         Company companyFilter = canReadAllCompanies ? null : user.getWorkLocation();
+        if (!canReadAllCompanies
+                && company != null
+                && (companyFilter == null || company != companyFilter)) {
+            return List.of();
+        }
         List<EduReportSummaryDto> summaries =
                 eduReportQueryRepository.findPsmEduReports(
-                        categoryId, id, companyFilter, canReadAllCompanies, title);
+                        categoryId, id, companyFilter, canReadAllCompanies, company, status, title);
         summaries.forEach(this::applyCompanyScopeToSummary);
         return summaries;
     }

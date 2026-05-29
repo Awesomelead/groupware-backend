@@ -61,18 +61,18 @@ public class PayslipService {
             }
 
             String fileName =
-                    file.getOriginalFilename(); // 파일명은 "name_yyyyMMdd_급여명세서.ext" 형식으로 고정된 것으로 가정
+                    file.getOriginalFilename(); // 파일명은 "name_yyyyMMdd_급여명세서.ext" (생년월일) 형식으로 고정
             String[] split = fileName.split("_");
 
             String name = split[0].trim();
             String normalizedName = Normalizer.normalize(name, Normalizer.Form.NFC);
-            String hireDateStr = split[1];
-            LocalDate hireDate =
-                    LocalDate.parse(hireDateStr, DateTimeFormatter.ofPattern("yyyyMMdd"));
+            String birthDateStr = split[1];
+            LocalDate birthDate =
+                    LocalDate.parse(birthDateStr, DateTimeFormatter.ofPattern("yyyyMMdd"));
 
             User target =
                     userRepository
-                            .findByNameAndJoinDate(normalizedName, hireDate)
+                            .findByNameAndBirthDate(normalizedName, birthDate)
                             .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
 
             String s3Key = s3Service.uploadFile(file);

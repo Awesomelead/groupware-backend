@@ -6,7 +6,9 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 
 import kr.co.awesomelead.groupware_backend.domain.auth.dto.request.FindEmailRequestDto;
+import kr.co.awesomelead.groupware_backend.domain.auth.dto.request.SignupRequestDto;
 import kr.co.awesomelead.groupware_backend.domain.auth.dto.response.FindEmailResponseDto;
+import kr.co.awesomelead.groupware_backend.domain.auth.dto.response.SignupResponseDto;
 import kr.co.awesomelead.groupware_backend.global.common.response.ApiResponse;
 import kr.co.awesomelead.groupware_backend.test.dto.request.DummyUsersCreateRequestDto;
 import kr.co.awesomelead.groupware_backend.test.dto.response.DummyUsersCreateResponseDto;
@@ -70,6 +72,14 @@ public class TestController {
     public ResponseEntity<ApiResponse<DummyUsersCreateResponseDto>> createDummyUsers(
             @Valid @RequestBody DummyUsersCreateRequestDto request) {
         DummyUsersCreateResponseDto result = testService.createDummyUsers(request);
+        return ResponseEntity.ok(ApiResponse.onSuccess(result));
+    }
+
+    @Operation(summary = "[테스트] 인증 우회 회원가입", description = "전화번호/이메일 인증 없이 테스트용 계정을 생성합니다.")
+    @PostMapping("/signup")
+    public ResponseEntity<ApiResponse<SignupResponseDto>> signupWithoutVerification(
+            @Valid @RequestBody SignupRequestDto requestDto) {
+        SignupResponseDto result = testService.signupWithoutVerification(requestDto);
         return ResponseEntity.ok(ApiResponse.onSuccess(result));
     }
 }

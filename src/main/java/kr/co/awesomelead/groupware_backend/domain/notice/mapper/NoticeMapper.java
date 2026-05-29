@@ -20,10 +20,16 @@ public interface NoticeMapper {
     @Mapping(target = "id", ignore = true)
     @Mapping(target = "author", source = "author")
     @Mapping(target = "attachments", ignore = true)
+    @Mapping(target = "contentText", ignore = true)
+    @Mapping(target = "createdDate", ignore = true)
+    @Mapping(target = "updatedDate", ignore = true)
+    @Mapping(target = "viewCount", ignore = true)
     @Mapping(target = "targetDepartments", source = "dto.targetDepartmentIds")
     @Mapping(target = "targetUsers", source = "dto.targetUserIds")
     Notice toNoticeEntity(NoticeCreateRequestDto dto, User author);
 
+    @Mapping(target = "isPinned", source = "pinned")
+    @Mapping(target = "authorName", expression = "java(notice.getAuthor().getDisplayName())")
     NoticeSummaryDto toNoticeSummaryDto(Notice notice);
 
     List<NoticeSummaryDto> toNoticeSummaryDtoList(List<Notice> notices);

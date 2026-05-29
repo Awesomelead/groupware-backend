@@ -917,6 +917,75 @@ class AdminServiceTest {
     }
 
     @Nested
+    @DisplayName("getUsersExcel 메서드는")
+    class Describe_getUsersExcel {
+
+        @Nested
+        @DisplayName("관리자 권한으로 요청하면")
+        class Context_with_admin_user {
+
+            @Test
+            @DisplayName("엑셀 바이너리를 반환한다")
+            void it_returns_excel_bytes() {
+                // given
+                Department department =
+                        Department.builder()
+                                .id(1L)
+                                .name(DepartmentName.MANAGEMENT_SUPPORT)
+                                .build();
+                User user =
+                        User.builder()
+                                .id(17L)
+                                .nameKor("홍길동")
+                                .nameEng("HONG GILDONG")
+                                .email("hong@test.com")
+                                .status(Status.AVAILABLE)
+                                .role(Role.USER)
+                                .position(Position.STAFF)
+                                .jobType(JobType.MANAGEMENT)
+                                .department(department)
+                                .hireDate(LocalDate.of(2025, 1, 1))
+                                .build();
+                when(userQueryRepository.findAllForAdminWithFiltersNoPaging(
+                                null, null, null, null, null, null))
+                        .thenReturn(List.of(user));
+
+                // when
+                byte[] result =
+                        adminService.getUsersExcel(
+                                adminId, null, null, null, null, null, null);
+
+                // then
+                assertThat(result).isNotNull();
+                assertThat(result.length).isGreaterThan(0);
+            }
+        }
+
+        @Nested
+        @DisplayName("권한 없는 사용자가 요청하면")
+        class Context_with_no_authority_user {
+
+            @Test
+            @DisplayName("NO_AUTHORITY_FOR_REGISTRATION 예외를 던진다")
+            void it_throws_no_authority_when_not_admin() {
+                // given
+                User normalUser = new User();
+                normalUser.setRole(Role.USER);
+                when(userRepository.findById(adminId)).thenReturn(Optional.of(normalUser));
+
+                // when & then
+                assertThatThrownBy(
+                                () ->
+                                        adminService.getUsersExcel(
+                                                adminId, null, null, null, null, null, null))
+                        .isInstanceOf(CustomException.class)
+                        .extracting("errorCode")
+                        .isEqualTo(ErrorCode.NO_AUTHORITY_FOR_REGISTRATION);
+            }
+        }
+    }
+
+    @Nested
     @DisplayName("getPendingMyInfoUpdateRequestDetail 메서드는")
     class Describe_getPendingMyInfoUpdateRequestDetail {
 

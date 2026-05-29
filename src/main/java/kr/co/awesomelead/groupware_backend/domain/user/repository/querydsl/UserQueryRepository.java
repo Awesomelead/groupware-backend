@@ -124,6 +124,28 @@ public class UserQueryRepository {
                                 .fetchOne());
     }
 
+    public List<User> findAllForAdminWithFiltersNoPaging(
+            String keyword,
+            Position position,
+            Long departmentId,
+            JobType jobType,
+            Role role,
+            List<Status> statuses) {
+        return queryFactory
+                .selectFrom(user)
+                .leftJoin(user.department, QDepartment.department)
+                .fetchJoin()
+                .where(
+                        keywordFilter(keyword),
+                        positionFilter(position),
+                        departmentFilter(departmentId),
+                        jobTypeFilter(jobType),
+                        roleFilter(role),
+                        adminStatusFilter(statuses))
+                .orderBy(user.id.desc())
+                .fetch();
+    }
+
     private BooleanExpression adminStatusFilter(List<Status> statuses) {
         if (statuses == null || statuses.isEmpty()) {
             return null;

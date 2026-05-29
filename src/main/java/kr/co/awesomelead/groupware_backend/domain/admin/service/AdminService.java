@@ -37,6 +37,11 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import org.apache.poi.ss.usermodel.*;
+import org.apache.poi.xssf.usermodel.XSSFWorkbook;
+
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -549,6 +554,133 @@ public class AdminService {
                                                 ErrorCode.MY_INFO_UPDATE_REQUEST_NOT_FOUND));
 
         return adminMapper.toDetailDto(request);
+    }
+
+    @Transactional(readOnly = true)
+    public byte[] getUsersExcel(
+            Long adminId,
+            String keyword,
+            Position position,
+            Long departmentId,
+            JobType jobType,
+            Role role,
+            List<Status> statuses) {
+        User admin =
+                userRepository
+                        .findById(adminId)
+                        .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
+        validateRegistrationAuthority(admin);
+
+        List<User> users =
+                userQueryRepository.findAllForAdminWithFiltersNoPaging(
+                        keyword, position, departmentId, jobType, role, statuses);
+
+        String[] headers = {
+            "No.", "한글 이름", "영문 이름", "생년월일", "국적", "우편번호", "주소1", "주소2",
+            "주민등록번호", "전화번호", "이메일", "근무사업장", "부서명", "직급", "근무직종",
+            "입사일", "퇴사일", "역할", "회원가입 상태"
+        };
+
+        try (XSSFWorkbook workbook = new XSSFWorkbook()) {
+            Sheet sheet = workbook.createSheet("직원명단");
+
+            CellStyle headerStyle = workbook.createCellStyle();
+            headerStyle.setFillForegroundColor(IndexedColors.GREY_25_PERCENT.getIndex());
+            headerStyle.setFillPattern(FillPatternType.SOLID_FOREGROUND);
+            Font headerFont = workbook.createFont();
+            headerFont.setBold(true);
+            headerStyle.setFont(headerFont);
+            headerStyle.setAlignment(HorizontalAlignment.CENTER);
+            setBorderThin(headerStyle);
+
+            CellStyle dataStyle = workbook.createCellStyle();
+            setBorderThin(dataStyle);
+
+            Row headerRow = sheet.createRow(0);
+            for (int i = 0; i < headers.length; i++) {
+                Cell cell = headerRow.createCell(i);
+                cell.setCellValue(headers[i]);
+                cell.setCellStyle(headerStyle);
+            }
+
+            for (int i = 0; i < users.size(); i++) {
+                User u = users.get(i);
+                Row row = sheet.createRow(i + 1);
+                int col = 0;
+                createDataCell(row, col++, String.valueOf(i + 1), dataStyle);
+                createDataCell(row, col++, u.getNameKor(), dataStyle);
+                createDataCell(row, col++, u.getNameEng(), dataStyle);
+                createDataCell(
+                        row,
+                        col++,
+                        u.getBirthDate() != null ? u.getBirthDate().toString() : "",
+                        dataStyle);
+                createDataCell(row, col++, u.getNationality(), dataStyle);
+                createDataCell(row, col++, u.getZipcode(), dataStyle);
+                createDataCell(row, col++, u.getAddress1(), dataStyle);
+                createDataCell(row, col++, u.getAddress2(), dataStyle);
+                createDataCell(row, col++, u.getRegistrationNumber(), dataStyle);
+                createDataCell(row, col++, u.getPhoneNumber(), dataStyle);
+                createDataCell(row, col++, u.getEmail(), dataStyle);
+                createDataCell(
+                        row,
+                        col++,
+                        u.getWorkLocation() != null ? u.getWorkLocation().name() : "",
+                        dataStyle);
+                createDataCell(
+                        row,
+                        col++,
+                        u.getDepartment() != null ? u.getDepartment().getName().getDescription() : "",
+                        dataStyle);
+                createDataCell(
+                        row,
+                        col++,
+                        u.getPosition() != null ? u.getPosition().getDescription() : "",
+                        dataStyle);
+                createDataCell(
+                        row,
+                        col++,
+                        u.getJobType() != null ? u.getJobType().getDescription() : "",
+                        dataStyle);
+                createDataCell(
+                        row,
+                        col++,
+                        u.getHireDate() != null ? u.getHireDate().toString() : "",
+                        dataStyle);
+                createDataCell(
+                        row,
+                        col++,
+                        u.getResignationDate() != null ? u.getResignationDate().toString() : "",
+                        dataStyle);
+                createDataCell(
+                        row, col++, u.getRole() != null ? u.getRole().name() : "", dataStyle);
+                createDataCell(
+                        row, col++, u.getStatus() != null ? u.getStatus().name() : "", dataStyle);
+            }
+
+            for (int i = 0; i < headers.length; i++) {
+                sheet.autoSizeColumn(i);
+            }
+
+            ByteArrayOutputStream out = new ByteArrayOutputStream();
+            workbook.write(out);
+            return out.toByteArray();
+        } catch (IOException e) {
+            throw new RuntimeException("엑셀 파일 생성 중 오류가 발생했습니다.", e);
+        }
+    }
+
+    private void setBorderThin(CellStyle style) {
+        style.setBorderTop(BorderStyle.THIN);
+        style.setBorderBottom(BorderStyle.THIN);
+        style.setBorderLeft(BorderStyle.THIN);
+        style.setBorderRight(BorderStyle.THIN);
+    }
+
+    private void createDataCell(Row row, int col, String value, CellStyle style) {
+        Cell cell = row.createCell(col);
+        cell.setCellValue(value != null ? value : "");
+        cell.setCellStyle(style);
     }
 
     private boolean hasText(String value) {

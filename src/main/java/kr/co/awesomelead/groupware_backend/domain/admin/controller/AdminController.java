@@ -1011,6 +1011,48 @@ public class AdminController {
         return ResponseEntity.ok(ApiResponse.onSuccess(result));
     }
 
+    @Operation(summary = "관리자 직원 목록 엑셀 다운로드")
+    @ApiResponses({
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                responseCode = "200",
+                content =
+                        @Content(
+                                mediaType =
+                                        "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"))
+    })
+    @GetMapping("/users/excel")
+    @PreAuthorize("hasAnyRole('ADMIN', 'MASTER_ADMIN')")
+    public ResponseEntity<byte[]> getUsersExcel(
+            @Parameter(hidden = true) @AuthenticationPrincipal CustomUserDetails userDetails,
+            @RequestParam(required = false) String keyword,
+            @RequestParam(required = false) Position position,
+            @RequestParam(required = false) Long departmentId,
+            @RequestParam(required = false) JobType jobType,
+            @RequestParam(required = false) Role role,
+            @RequestParam(required = false) List<Status> statuses) {
+        byte[] excelBytes =
+                adminService.getUsersExcel(
+                        userDetails.getId(), keyword, position, departmentId, jobType, role,
+                        statuses);
+        String filename =
+                "직원명단_"
+                        + java.time.LocalDate.now()
+                                .format(java.time.format.DateTimeFormatter.ofPattern("yyyyMMdd"))
+                        + ".xlsx";
+        String encodedFilename;
+        try {
+            encodedFilename = java.net.URLEncoder.encode(filename, "UTF-8");
+        } catch (java.io.UnsupportedEncodingException e) {
+            encodedFilename = filename;
+        }
+        return ResponseEntity.ok()
+                .header("Content-Disposition", "attachment; filename*=UTF-8''" + encodedFilename)
+                .header(
+                        "Content-Type",
+                        "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
+                .body(excelBytes);
+    }
+
     @Operation(
             summary = "개인정보 수정 요청 상세 조회",
             description = "특정 직원의 PENDING 상태 개인정보 수정 요청을 현재 정보와 비교하여 상세 조회합니다.")

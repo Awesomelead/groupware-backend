@@ -1032,7 +1032,12 @@ public class AdminController {
             @RequestParam(required = false) List<Status> statuses) {
         byte[] excelBytes =
                 adminService.getUsersExcel(
-                        userDetails.getId(), keyword, position, departmentId, jobType, role,
+                        userDetails.getId(),
+                        keyword,
+                        position,
+                        departmentId,
+                        jobType,
+                        role,
                         statuses);
         String filename =
                 "직원명단_"

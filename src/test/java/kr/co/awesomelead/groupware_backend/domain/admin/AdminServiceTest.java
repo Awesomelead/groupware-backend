@@ -929,10 +929,7 @@ class AdminServiceTest {
             void it_returns_excel_bytes() {
                 // given
                 Department department =
-                        Department.builder()
-                                .id(1L)
-                                .name(DepartmentName.MANAGEMENT_SUPPORT)
-                                .build();
+                        Department.builder().id(1L).name(DepartmentName.MANAGEMENT_SUPPORT).build();
                 User user =
                         User.builder()
                                 .id(17L)
@@ -952,8 +949,7 @@ class AdminServiceTest {
 
                 // when
                 byte[] result =
-                        adminService.getUsersExcel(
-                                adminId, null, null, null, null, null, null);
+                        adminService.getUsersExcel(adminId, null, null, null, null, null, null);
 
                 // then
                 assertThat(result).isNotNull();

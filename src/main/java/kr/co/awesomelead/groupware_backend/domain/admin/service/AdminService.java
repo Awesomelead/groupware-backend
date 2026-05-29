@@ -32,13 +32,12 @@ import kr.co.awesomelead.groupware_backend.global.error.ErrorCode;
 
 import lombok.RequiredArgsConstructor;
 
+import org.apache.poi.ss.usermodel.*;
+import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
-import org.apache.poi.ss.usermodel.*;
-import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -576,9 +575,8 @@ public class AdminService {
                         keyword, position, departmentId, jobType, role, statuses);
 
         String[] headers = {
-            "No.", "한글 이름", "영문 이름", "생년월일", "국적", "우편번호", "주소1", "주소2",
-            "주민등록번호", "전화번호", "이메일", "근무사업장", "부서명", "직급", "근무직종",
-            "입사일", "퇴사일", "역할", "회원가입 상태"
+            "No.", "한글 이름", "영문 이름", "생년월일", "국적", "우편번호", "주소1", "주소2", "주민등록번호", "전화번호", "이메일",
+            "근무사업장", "부서명", "직급", "근무직종", "입사일", "퇴사일", "역할", "회원가입 상태"
         };
 
         try (XSSFWorkbook workbook = new XSSFWorkbook()) {
@@ -630,7 +628,9 @@ public class AdminService {
                 createDataCell(
                         row,
                         col++,
-                        u.getDepartment() != null ? u.getDepartment().getName().getDescription() : "",
+                        u.getDepartment() != null
+                                ? u.getDepartment().getName().getDescription()
+                                : "",
                         dataStyle);
                 createDataCell(
                         row,

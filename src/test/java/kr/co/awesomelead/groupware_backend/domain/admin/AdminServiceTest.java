@@ -291,7 +291,7 @@ class AdminServiceTest {
                             11L,
                             JobType.MANAGEMENT,
                             Role.USER,
-                            false,
+                            null,
                             pageable))
                     .thenReturn(userPage);
             when(myInfoUpdateRequestRepository.findDistinctUserIdsByStatus(
@@ -307,7 +307,7 @@ class AdminServiceTest {
                             11L,
                             JobType.MANAGEMENT,
                             Role.USER,
-                            false,
+                            null,
                             pageable);
 
             // then
@@ -339,7 +339,7 @@ class AdminServiceTest {
                                             null,
                                             null,
                                             null,
-                                            false,
+                                            null,
                                             PageRequest.of(0, 20)))
                     .isInstanceOf(CustomException.class)
                     .extracting("errorCode")
@@ -347,41 +347,83 @@ class AdminServiceTest {
         }
 
         @Test
-        @DisplayName("excludeSuspended가 false이면 false로 repository를 호출한다")
-        void getUsers_excludeSuspended가_false이면_excludeSuspended_false로_repository_호출() {
+        @DisplayName("statuses가 null이면 repository에 null을 전달한다")
+        void getUsers_statuses가_null이면_repository에_null을_전달한다() {
             // given
             Pageable pageable = PageRequest.of(0, 20);
             when(myInfoUpdateRequestRepository.findDistinctUserIdsByStatus(any()))
                     .thenReturn(List.of());
             when(userQueryRepository.findAllForAdminWithFilters(
-                            null, null, null, null, null, false, pageable))
+                            null, null, null, null, null, (List<Status>) null, pageable))
                     .thenReturn(Page.empty());
 
             // when
-            adminService.getUsers(adminId, null, null, null, null, null, false, pageable);
+            adminService.getUsers(
+                    adminId, null, null, null, null, null, (List<Status>) null, pageable);
 
             // then
             verify(userQueryRepository)
-                    .findAllForAdminWithFilters(null, null, null, null, null, false, pageable);
+                    .findAllForAdminWithFilters(
+                            null, null, null, null, null, (List<Status>) null, pageable);
         }
 
         @Test
-        @DisplayName("excludeSuspended가 true이면 true로 repository를 호출한다")
-        void getUsers_excludeSuspended가_true이면_excludeSuspended_true로_repository_호출() {
+        @DisplayName("statuses가 비어있으면 repository에 빈 리스트를 전달한다")
+        void getUsers_statuses가_비어있으면_repository에_빈_리스트를_전달한다() {
             // given
             Pageable pageable = PageRequest.of(0, 20);
             when(myInfoUpdateRequestRepository.findDistinctUserIdsByStatus(any()))
                     .thenReturn(List.of());
             when(userQueryRepository.findAllForAdminWithFilters(
-                            null, null, null, null, null, true, pageable))
+                            null, null, null, null, null, List.of(), pageable))
                     .thenReturn(Page.empty());
 
             // when
-            adminService.getUsers(adminId, null, null, null, null, null, true, pageable);
+            adminService.getUsers(adminId, null, null, null, null, null, List.of(), pageable);
 
             // then
             verify(userQueryRepository)
-                    .findAllForAdminWithFilters(null, null, null, null, null, true, pageable);
+                    .findAllForAdminWithFilters(null, null, null, null, null, List.of(), pageable);
+        }
+
+        @Test
+        @DisplayName("statuses에 AVAILABLE이 포함되면 repository에 그대로 전달한다")
+        void getUsers_statuses에_AVAILABLE이_포함되면_repository에_그대로_전달한다() {
+            // given
+            Pageable pageable = PageRequest.of(0, 20);
+            List<Status> statuses = List.of(Status.AVAILABLE);
+            when(myInfoUpdateRequestRepository.findDistinctUserIdsByStatus(any()))
+                    .thenReturn(List.of());
+            when(userQueryRepository.findAllForAdminWithFilters(
+                            null, null, null, null, null, statuses, pageable))
+                    .thenReturn(Page.empty());
+
+            // when
+            adminService.getUsers(adminId, null, null, null, null, null, statuses, pageable);
+
+            // then
+            verify(userQueryRepository)
+                    .findAllForAdminWithFilters(null, null, null, null, null, statuses, pageable);
+        }
+
+        @Test
+        @DisplayName("statuses에 PENDING이 포함되면 repository에 그대로 전달한다")
+        void getUsers_statuses에_PENDING이_포함되면_repository에_그대로_전달한다() {
+            // given
+            Pageable pageable = PageRequest.of(0, 20);
+            List<Status> statuses = List.of(Status.PENDING);
+            when(myInfoUpdateRequestRepository.findDistinctUserIdsByStatus(any()))
+                    .thenReturn(List.of());
+            when(userQueryRepository.findAllForAdminWithFilters(
+                            null, null, null, null, null, statuses, pageable))
+                    .thenReturn(Page.empty());
+
+            // when
+            adminService.getUsers(adminId, null, null, null, null, null, statuses, pageable);
+
+            // then
+            verify(userQueryRepository)
+                    .findAllForAdminWithFilters(null, null, null, null, null, statuses, pageable);
         }
     }
 

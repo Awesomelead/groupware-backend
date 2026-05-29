@@ -185,7 +185,7 @@ public class AdminService {
             Long departmentId,
             JobType jobType,
             Role role,
-            Boolean excludeSuspended,
+            List<Status> statuses,
             Pageable pageable) {
         User admin =
                 userRepository
@@ -208,7 +208,7 @@ public class AdminService {
                         departmentId,
                         jobType,
                         role,
-                        excludeSuspended,
+                        statuses,
                         pageable)
                 .map(
                         u ->

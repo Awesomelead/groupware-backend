@@ -27,6 +27,7 @@ import kr.co.awesomelead.groupware_backend.domain.user.enums.Authority;
 import kr.co.awesomelead.groupware_backend.domain.user.enums.JobType;
 import kr.co.awesomelead.groupware_backend.domain.user.enums.Position;
 import kr.co.awesomelead.groupware_backend.domain.user.enums.Role;
+import kr.co.awesomelead.groupware_backend.domain.user.enums.Status;
 import kr.co.awesomelead.groupware_backend.global.common.response.ApiResponse;
 
 import lombok.RequiredArgsConstructor;
@@ -133,9 +134,9 @@ public class AdminController {
             @Parameter(description = "역할 필터", required = false, example = "일반 사용자")
                     @RequestParam(required = false)
                     Role role,
-            @Parameter(description = "퇴사자(SUSPENDED) 제외 여부", required = false, example = "false")
-                    @RequestParam(required = false, defaultValue = "false")
-                    Boolean excludeSuspended,
+            @Parameter(description = "상태 필터 (AVAILABLE, SUSPENDED, PENDING 등 다중 선택 가능)")
+                    @RequestParam(required = false)
+                    List<Status> statuses,
             @ParameterObject @PageableDefault(page = 0, size = 20) Pageable pageable) {
 
         Page<AdminUserSummaryResponseDto> result =
@@ -146,7 +147,7 @@ public class AdminController {
                         departmentId,
                         jobType,
                         role,
-                        excludeSuspended,
+                        statuses,
                         pageable);
 
         return ResponseEntity.ok(ApiResponse.onSuccess(result));

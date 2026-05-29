@@ -12,6 +12,8 @@ import kr.co.awesomelead.groupware_backend.domain.user.enums.Position;
 import kr.co.awesomelead.groupware_backend.domain.user.enums.Role;
 import kr.co.awesomelead.groupware_backend.domain.user.enums.Status;
 
+import java.util.List;
+
 import lombok.RequiredArgsConstructor;
 
 import org.springframework.data.domain.Page;
@@ -19,8 +21,6 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.support.PageableExecutionUtils;
 import org.springframework.stereotype.Repository;
 import org.springframework.util.StringUtils;
-
-import java.util.List;
 
 @Repository
 @RequiredArgsConstructor
@@ -34,7 +34,7 @@ public class UserQueryRepository {
             Long departmentId,
             JobType jobType,
             Role role,
-            Boolean excludeSuspended,
+            List<Status> statuses,
             Pageable pageable) {
 
         List<User> content =
@@ -43,7 +43,7 @@ public class UserQueryRepository {
                         .leftJoin(user.department, QDepartment.department)
                         .fetchJoin()
                         .where(
-                                statusFilter(excludeSuspended),
+                                statusFilter(statuses),
                                 keywordFilter(keyword),
                                 positionFilter(position),
                                 departmentFilter(departmentId),
@@ -62,7 +62,7 @@ public class UserQueryRepository {
                                 .select(user.count())
                                 .from(user)
                                 .where(
-                                        statusFilter(excludeSuspended),
+                                        statusFilter(statuses),
                                         keywordFilter(keyword),
                                         positionFilter(position),
                                         departmentFilter(departmentId),
@@ -71,11 +71,16 @@ public class UserQueryRepository {
                                 .fetchOne());
     }
 
-    private BooleanExpression statusFilter(Boolean excludeSuspended) {
-        if (Boolean.TRUE.equals(excludeSuspended)) {
-            return user.status.eq(Status.AVAILABLE);
+    private BooleanExpression statusFilter(List<Status> statuses) {
+        if (statuses == null || statuses.isEmpty()) {
+            return user.status.in(Status.AVAILABLE, Status.SUSPENDED);
         }
-        return user.status.in(Status.AVAILABLE, Status.SUSPENDED);
+        List<Status> safeStatuses =
+                statuses.stream().filter(s -> s != Status.PENDING).toList();
+        if (safeStatuses.isEmpty()) {
+            return user.id.isNull();
+        }
+        return user.status.in(safeStatuses);
     }
 
     public Page<User> findAllForAdminWithFilters(
@@ -84,7 +89,7 @@ public class UserQueryRepository {
             Long departmentId,
             JobType jobType,
             Role role,
-            Boolean excludeSuspended,
+            List<Status> statuses,
             Pageable pageable) {
         List<User> content =
                 queryFactory
@@ -97,7 +102,7 @@ public class UserQueryRepository {
                                 departmentFilter(departmentId),
                                 jobTypeFilter(jobType),
                                 roleFilter(role),
-                                excludeSuspendedFilter(excludeSuspended))
+                                adminStatusFilter(statuses))
                         .orderBy(user.id.desc())
                         .offset(pageable.getOffset())
                         .limit(pageable.getPageSize())
@@ -116,12 +121,15 @@ public class UserQueryRepository {
                                         departmentFilter(departmentId),
                                         jobTypeFilter(jobType),
                                         roleFilter(role),
-                                        excludeSuspendedFilter(excludeSuspended))
+                                        adminStatusFilter(statuses))
                                 .fetchOne());
     }
 
-    private BooleanExpression excludeSuspendedFilter(Boolean excludeSuspended) {
-        return Boolean.TRUE.equals(excludeSuspended) ? user.status.ne(Status.SUSPENDED) : null;
+    private BooleanExpression adminStatusFilter(List<Status> statuses) {
+        if (statuses == null || statuses.isEmpty()) {
+            return null;
+        }
+        return user.status.in(statuses);
     }
 
     private BooleanExpression keywordFilter(String keyword) {

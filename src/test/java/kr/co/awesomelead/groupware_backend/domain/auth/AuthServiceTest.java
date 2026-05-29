@@ -225,6 +225,85 @@ class AuthServiceTest {
     }
 
     @Test
+    @DisplayName("[테스트용] 인증 우회 회원가입 성공 테스트")
+    void signupWithoutVerification_Success() {
+        // given
+        SignupRequestDto signupDto = new SignupRequestDto();
+        signupDto.setEmail("test-no-verify@example.com");
+        signupDto.setPassword("password123!");
+        signupDto.setPasswordConfirm("password123!");
+        signupDto.setNameKor("김테스트");
+        signupDto.setNameEng("Test Kim");
+        signupDto.setNationality("대한민국");
+        signupDto.setZipcode("06234");
+        signupDto.setAddress1("서울특별시 강남구 테헤란로 123");
+        signupDto.setAddress2("테스트빌딩 5층");
+        signupDto.setRegistrationNumber("9601011234567");
+        signupDto.setPhoneNumber("01098765432");
+        signupDto.setCompany(Company.AWESOME);
+
+        User mockUser =
+                User.builder()
+                        .email(signupDto.getEmail())
+                        .nameKor(signupDto.getNameKor())
+                        .nameEng(signupDto.getNameEng())
+                        .nationality(signupDto.getNationality())
+                        .zipcode(signupDto.getZipcode())
+                        .address1(signupDto.getAddress1())
+                        .address2(signupDto.getAddress2())
+                        .registrationNumber(signupDto.getRegistrationNumber())
+                        .phoneNumber(signupDto.getPhoneNumber())
+                        .workLocation(Company.AWESOME)
+                        .role(Role.USER)
+                        .status(Status.PENDING)
+                        .build();
+        mockUser.onPrePersist();
+
+        User savedMockUser =
+                User.builder()
+                        .id(2L)
+                        .email(signupDto.getEmail())
+                        .nameKor(signupDto.getNameKor())
+                        .nameEng(signupDto.getNameEng())
+                        .nationality(signupDto.getNationality())
+                        .zipcode(signupDto.getZipcode())
+                        .address1(signupDto.getAddress1())
+                        .address2(signupDto.getAddress2())
+                        .registrationNumber(signupDto.getRegistrationNumber())
+                        .phoneNumber(signupDto.getPhoneNumber())
+                        .password("encodedPassword")
+                        .workLocation(Company.AWESOME)
+                        .role(Role.USER)
+                        .status(Status.PENDING)
+                        .birthDate(LocalDate.of(1996, 1, 1))
+                        .phoneNumberHash(User.hashValue(signupDto.getPhoneNumber()))
+                        .build();
+
+        when(userRepository.existsByEmail(signupDto.getEmail())).thenReturn(false);
+        when(userRepository.existsByRegistrationNumber(signupDto.getRegistrationNumber()))
+                .thenReturn(false);
+        when(userMapper.toEntity(signupDto)).thenReturn(mockUser);
+        when(bCryptPasswordEncoder.encode(signupDto.getPassword())).thenReturn("encodedPassword");
+        when(userRepository.save(any(User.class))).thenReturn(savedMockUser);
+
+        // when
+        SignupResponseDto result = authService.signupWithoutVerification(signupDto);
+
+        // then
+        assertThat(result).isNotNull();
+        assertThat(result.getUserId()).isEqualTo(2L);
+        assertThat(result.getEmail()).isEqualTo(signupDto.getEmail());
+
+        verify(phoneAuthService, never()).isPhoneVerified(anyString());
+        verify(emailAuthService, never()).isEmailVerified(anyString());
+        verify(emailAuthService, never()).clearVerification(anyString());
+        verify(phoneAuthService, never()).clearVerification(anyString());
+        verify(userRepository, times(1)).save(any(User.class));
+        verify(notificationService, times(1))
+                .sendAlertToAdminsRequiringApproval(any(), any(), any(), any(Map.class), any());
+    }
+
+    @Test
     @DisplayName("회원가입 실패 테스트 - 비밀번호 불일치")
     void signup_Fail_PasswordMismatch() {
         // given

@@ -118,11 +118,11 @@ public class PayslipServiceTest {
                 MockMultipartFile pdfFile =
                         new MockMultipartFile(
                                 "payslipFiles",
-                                "홍길동_20240101_급여명세서.pdf",
+                                "홍길동_19900101_급여명세서.pdf",
                                 "application/pdf",
                                 "pdf content".getBytes());
 
-                given(userRepository.findByNameAndJoinDate("홍길동", LocalDate.of(2024, 1, 1)))
+                given(userRepository.findByNameAndBirthDate("홍길동", LocalDate.of(1990, 1, 1)))
                         .willReturn(Optional.of(employee));
                 given(s3Service.uploadFile(pdfFile)).willReturn("s3-key");
                 Payslip savedPayslip = Payslip.builder().id(99L).user(employee).build();

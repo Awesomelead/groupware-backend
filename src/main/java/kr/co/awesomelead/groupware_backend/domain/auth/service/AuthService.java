@@ -74,45 +74,56 @@ public class AuthService {
 
     @Transactional
     public SignupResponseDto signup(SignupRequestDto joinDto) {
+        return signupInternal(joinDto, true);
+    }
 
+    @Transactional
+    public SignupResponseDto signupWithoutVerification(SignupRequestDto joinDto) {
+        return signupInternal(joinDto, false);
+    }
+
+    private SignupResponseDto signupInternal(
+            SignupRequestDto joinDto, boolean requireContactVerification) {
         // 1. 비밀번호 확인 검증
         if (!joinDto.getPassword().equals(joinDto.getPasswordConfirm())) {
             throw new CustomException(ErrorCode.PASSWORD_MISMATCH);
         }
 
-        // 2. 전화번호 인증 여부 확인
-        if (!phoneAuthService.isPhoneVerified(joinDto.getPhoneNumber())) {
-            throw new CustomException(ErrorCode.PHONE_NOT_VERIFIED);
+        // 2. 전화번호/이메일 인증 여부 확인 (테스트 전용 회원가입에서는 생략)
+        if (requireContactVerification) {
+            if (!phoneAuthService.isPhoneVerified(joinDto.getPhoneNumber())) {
+                throw new CustomException(ErrorCode.PHONE_NOT_VERIFIED);
+            }
+            if (!emailAuthService.isEmailVerified(joinDto.getEmail())) {
+                throw new CustomException(ErrorCode.EMAIL_NOT_VERIFIED);
+            }
         }
 
-        // 3. 이메일 인증 여부 확인
-        if (!emailAuthService.isEmailVerified(joinDto.getEmail())) {
-            throw new CustomException(ErrorCode.EMAIL_NOT_VERIFIED);
-        }
-
-        // 4. 이메일 중복 검사
+        // 3. 이메일 중복 검사
         if (userRepository.existsByEmail(joinDto.getEmail())) {
             throw new CustomException(ErrorCode.DUPLICATE_LOGIN_ID);
         }
 
-        // 5. 주민등록번호 중복 검사
+        // 4. 주민등록번호 중복 검사
         if (userRepository.existsByRegistrationNumber(joinDto.getRegistrationNumber())) {
             throw new CustomException(ErrorCode.DUPLICATE_REGISTRATION_NUMBER);
         }
 
-        // 6. DTO를 Entity로 변환
+        // 5. DTO를 Entity로 변환
         User user = userMapper.toEntity(joinDto);
         // Mapper에서 처리 안 되는 필드만 설정
         user.setPassword(bCryptPasswordEncoder.encode(joinDto.getPassword()));
 
-        // 7. DB에 저장
+        // 6. DB에 저장
         User savedUser = userRepository.save(user);
 
-        // 8. 인증 완료 플래그 삭제
-        emailAuthService.clearVerification(joinDto.getEmail());
-        phoneAuthService.clearVerification(joinDto.getPhoneNumber());
+        // 7. 인증 완료 플래그 삭제
+        if (requireContactVerification) {
+            emailAuthService.clearVerification(joinDto.getEmail());
+            phoneAuthService.clearVerification(joinDto.getPhoneNumber());
+        }
 
-        // 10. Admin 유저에게 신규 가입 알림 전송 (FCM + Notification DB)
+        // 8. Admin 유저에게 신규 가입 알림 전송 (FCM + Notification DB)
         notificationService.sendAlertToAdminsRequiringApproval(
                 NotificationMessage.SIGNUP_ADMIN_ALERT,
                 NotificationDomainType.AUTH,

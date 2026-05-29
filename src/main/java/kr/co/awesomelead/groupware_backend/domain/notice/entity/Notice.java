@@ -66,6 +66,21 @@ public class Notice {
     @Column(columnDefinition = "TEXT")
     private String content;
 
+    // Quill Delta 본문(JSON 문자열)
+    @Lob
+    @Column(name = "content_delta", columnDefinition = "TEXT")
+    private String contentDelta;
+
+    // HTML 본문
+    @Lob
+    @Column(name = "content_html", columnDefinition = "TEXT")
+    private String contentHtml;
+
+    // 본문 검색용 평문
+    @Lob
+    @Column(name = "content_text", columnDefinition = "TEXT")
+    private String contentText;
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "author_id", nullable = false)
     @JsonBackReference
@@ -122,7 +137,7 @@ public class Notice {
         if (StringUtils.hasText(title)) {
             this.title = title;
         }
-        if (StringUtils.hasText(content)) {
+        if (content != null) {
             this.content = content;
         }
         if (pinned != null) {
@@ -134,6 +149,9 @@ public class Notice {
             NoticeType type,
             String title,
             String content,
+            String contentDelta,
+            String contentHtml,
+            String contentText,
             Boolean pinned,
             List<Company> targetCompanies,
             List<Long> targetDepartments,
@@ -144,8 +162,17 @@ public class Notice {
         if (StringUtils.hasText(title)) {
             this.title = title;
         }
-        if (StringUtils.hasText(content)) {
+        if (content != null) {
             this.content = content;
+        }
+        if (contentDelta != null) {
+            this.contentDelta = contentDelta;
+        }
+        if (contentHtml != null) {
+            this.contentHtml = contentHtml;
+        }
+        if (contentText != null) {
+            this.contentText = contentText;
         }
         if (pinned != null) {
             this.pinned = pinned;
@@ -158,6 +185,22 @@ public class Notice {
         }
         if (targetUsers != null) {
             this.targetUsers = new ArrayList<>(targetUsers);
+        }
+    }
+
+    public void updateEditorContent(
+            String content, String contentDelta, String contentHtml, String contentText) {
+        if (content != null) {
+            this.content = content;
+        }
+        if (contentDelta != null) {
+            this.contentDelta = contentDelta;
+        }
+        if (contentHtml != null) {
+            this.contentHtml = contentHtml;
+        }
+        if (contentText != null) {
+            this.contentText = contentText;
         }
     }
 

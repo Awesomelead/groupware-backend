@@ -511,10 +511,13 @@ public class EduReportController {
             @Parameter(description = "진행상태 필터(OPEN: 진행중, CLOSED: 종료)", example = "OPEN")
                     @RequestParam(required = false)
                     EduReportStatus status,
+            @Parameter(description = "제목 검색 키워드 (부분 일치 검색)", example = "안전교육")
+                    @RequestParam(required = false)
+                    String title,
             @Parameter(hidden = true) @AuthenticationPrincipal CustomUserDetails userDetails) {
         List<EduReportSummaryDto> reports =
                 eduReportService.getDepartmentEduReports(
-                        departmentName, status, userDetails.getId());
+                        departmentName, status, userDetails.getId(), title);
         return ResponseEntity.ok(ApiResponse.onSuccess(reports));
     }
 
@@ -589,7 +592,7 @@ public class EduReportController {
             @Parameter(description = "카테고리 ID 필터(PSM)", example = "1")
                     @RequestParam(required = false)
                     Long categoryId,
-            @Parameter(description = "제목 검색 키워드 (FULLTEXT 검색)", example = "변경관리")
+            @Parameter(description = "제목 검색 키워드 (부분 일치 검색)", example = "변경관리")
                     @RequestParam(required = false)
                     String title,
             @Parameter(hidden = true) @AuthenticationPrincipal CustomUserDetails userDetails) {
@@ -669,7 +672,7 @@ public class EduReportController {
             @Parameter(description = "카테고리 ID 필터(안전 보건)", example = "1")
                     @RequestParam(required = false)
                     Long categoryId,
-            @Parameter(description = "제목 검색 키워드 (FULLTEXT 검색)", example = "정기교육")
+            @Parameter(description = "제목 검색 키워드 (부분 일치 검색)", example = "정기교육")
                     @RequestParam(required = false)
                     String title,
             @Parameter(hidden = true) @AuthenticationPrincipal CustomUserDetails userDetails) {

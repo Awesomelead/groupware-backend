@@ -295,8 +295,8 @@ public class EduReportService {
 
     @Transactional(readOnly = true)
     public List<EduReportSummaryDto> getDepartmentEduReports(
-            DepartmentName departmentName, EduReportStatus status, Long id) {
-        return getEduReports(EduType.DEPARTMENT, departmentName, status, null, id, null);
+            DepartmentName departmentName, EduReportStatus status, Long id, String title) {
+        return getEduReports(EduType.DEPARTMENT, departmentName, status, null, id, title);
     }
 
     @Transactional(readOnly = true)

@@ -426,12 +426,7 @@ public class EduReportQueryRepository {
         if (!StringUtils.hasText(title)) {
             return null;
         }
-        return Expressions.numberTemplate(
-                        Double.class,
-                        "function('match_against', {0}, {1})",
-                        eduReport.title,
-                        Expressions.constant(title))
-                .gt(0);
+        return eduReport.title.contains(title);
     }
 
     /** 교육 유형 필터 — null 이면 조건 없음 (전체) */

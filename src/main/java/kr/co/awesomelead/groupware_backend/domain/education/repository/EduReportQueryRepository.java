@@ -148,7 +148,8 @@ public class EduReportQueryRepository {
 
     public List<EduReportSummaryDto> findPsmEduReports(
             Long categoryId, Long userId, Company company, boolean canReadAllCompanies) {
-        return findPsmEduReports(categoryId, userId, company, canReadAllCompanies, null, null, null);
+        return findPsmEduReports(
+                categoryId, userId, company, canReadAllCompanies, null, null, null);
     }
 
     public List<EduReportSummaryDto> findPsmEduReports(

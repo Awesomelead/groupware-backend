@@ -773,8 +773,7 @@ public class EduReportServiceTest {
                         .build();
 
         when(userRepository.findById(1L)).thenReturn(Optional.of(user));
-        when(eduReportQueryRepository.findPsmEduReports(
-                        null, 1L, null, true, null, null, null))
+        when(eduReportQueryRepository.findPsmEduReports(null, 1L, null, true, null, null, null))
                 .thenReturn(List.of(psmReport));
 
         // when
@@ -855,8 +854,7 @@ public class EduReportServiceTest {
                         .build();
 
         when(userRepository.findById(1L)).thenReturn(Optional.of(user));
-        when(eduReportQueryRepository.findSafetyEduReports(
-                        null, 1L, null, true, null, null, null))
+        when(eduReportQueryRepository.findSafetyEduReports(null, 1L, null, true, null, null, null))
                 .thenReturn(List.of(safetyReport));
 
         // when

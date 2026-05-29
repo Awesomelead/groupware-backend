@@ -12,8 +12,6 @@ import kr.co.awesomelead.groupware_backend.domain.user.enums.Position;
 import kr.co.awesomelead.groupware_backend.domain.user.enums.Role;
 import kr.co.awesomelead.groupware_backend.domain.user.enums.Status;
 
-import java.util.List;
-
 import lombok.RequiredArgsConstructor;
 
 import org.springframework.data.domain.Page;
@@ -21,6 +19,8 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.support.PageableExecutionUtils;
 import org.springframework.stereotype.Repository;
 import org.springframework.util.StringUtils;
+
+import java.util.List;
 
 @Repository
 @RequiredArgsConstructor
@@ -75,8 +75,7 @@ public class UserQueryRepository {
         if (statuses == null || statuses.isEmpty()) {
             return user.status.in(Status.AVAILABLE, Status.SUSPENDED);
         }
-        List<Status> safeStatuses =
-                statuses.stream().filter(s -> s != Status.PENDING).toList();
+        List<Status> safeStatuses = statuses.stream().filter(s -> s != Status.PENDING).toList();
         if (safeStatuses.isEmpty()) {
             return user.id.isNull();
         }

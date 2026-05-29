@@ -624,7 +624,13 @@ class UserServiceTest {
 
             given(
                             userQueryRepository.findAllAvailableWithFilters(
-                                    null, null, null, null, null, List.of(Status.AVAILABLE), unsorted))
+                                    null,
+                                    null,
+                                    null,
+                                    null,
+                                    null,
+                                    List.of(Status.AVAILABLE),
+                                    unsorted))
                     .willReturn(userPage);
 
             // when
@@ -651,7 +657,13 @@ class UserServiceTest {
 
             given(
                             userQueryRepository.findAllAvailableWithFilters(
-                                    null, null, null, null, null, List.of(Status.PENDING), unsorted))
+                                    null,
+                                    null,
+                                    null,
+                                    null,
+                                    null,
+                                    List.of(Status.PENDING),
+                                    unsorted))
                     .willReturn(userPage);
 
             // when

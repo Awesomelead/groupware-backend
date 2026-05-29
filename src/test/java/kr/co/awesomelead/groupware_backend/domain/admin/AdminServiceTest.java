@@ -358,11 +358,13 @@ class AdminServiceTest {
                     .thenReturn(Page.empty());
 
             // when
-            adminService.getUsers(adminId, null, null, null, null, null, (List<Status>) null, pageable);
+            adminService.getUsers(
+                    adminId, null, null, null, null, null, (List<Status>) null, pageable);
 
             // then
             verify(userQueryRepository)
-                    .findAllForAdminWithFilters(null, null, null, null, null, (List<Status>) null, pageable);
+                    .findAllForAdminWithFilters(
+                            null, null, null, null, null, (List<Status>) null, pageable);
         }
 
         @Test

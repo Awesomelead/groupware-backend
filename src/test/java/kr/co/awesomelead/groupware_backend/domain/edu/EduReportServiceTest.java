@@ -832,18 +832,21 @@ public class EduReportServiceTest {
                         .build();
 
         when(userRepository.findById(1L)).thenReturn(Optional.of(user));
-        when(eduReportQueryRepository.findSafetyEduReports(null, 1L, null, true, null))
+        when(eduReportQueryRepository.findSafetyEduReports(
+                        null, 1L, null, true, null, null, null))
                 .thenReturn(List.of(safetyReport));
 
         // when
-        List<EduReportSummaryDto> result = eduReportService.getSafetyEduReports(null, 1L, null);
+        List<EduReportSummaryDto> result =
+                eduReportService.getSafetyEduReports(null, null, null, 1L, null);
 
         // then
         assertThat(result).isNotNull();
         assertThat(result.size()).isEqualTo(1);
         assertThat(result.get(0).getEduType()).isEqualTo(EduType.SAFETY);
         assertThat(result.get(0).getCompanyScope()).isEqualTo(List.of("AWESOME", "MARUI"));
-        verify(eduReportQueryRepository, times(1)).findSafetyEduReports(null, 1L, null, true, null);
+        verify(eduReportQueryRepository, times(1))
+                .findSafetyEduReports(null, 1L, null, true, null, null, null);
     }
 
     @Test
@@ -861,18 +864,38 @@ public class EduReportServiceTest {
                         .company(Company.AWESOME)
                         .build();
 
-        when(eduReportQueryRepository.findSafetyEduReports(null, 1L, Company.AWESOME, false, null))
+        when(eduReportQueryRepository.findSafetyEduReports(
+                        null, 1L, Company.AWESOME, false, null, null, null))
                 .thenReturn(List.of(safetyReport));
 
         // when
-        List<EduReportSummaryDto> result = eduReportService.getSafetyEduReports(null, 1L, null);
+        List<EduReportSummaryDto> result =
+                eduReportService.getSafetyEduReports(null, null, null, 1L, null);
 
         // then
         assertThat(result).isNotNull();
         assertThat(result.size()).isEqualTo(1);
         assertThat(result.get(0).getCompanyScope()).isEqualTo(List.of("AWESOME"));
         verify(eduReportQueryRepository, times(1))
-                .findSafetyEduReports(null, 1L, Company.AWESOME, false, null);
+                .findSafetyEduReports(null, 1L, Company.AWESOME, false, null, null, null);
+    }
+
+    @Test
+    @DisplayName("안전 보건 게시물 목록 조회 - MANAGE_SAFETY 권한 없고 타 회사 필터면 빈 목록")
+    void getSafetyEduReports_WithoutManageSafety_FilterOtherCompany_ReturnsEmpty() {
+        // given
+        User user = createNormalUser(); // workLocation=AWESOME
+        when(userRepository.findById(1L)).thenReturn(Optional.of(user));
+
+        // when
+        List<EduReportSummaryDto> result =
+                eduReportService.getSafetyEduReports(null, Company.MARUI, null, 1L, "정기");
+
+        // then
+        assertThat(result).isNotNull();
+        assertThat(result.size()).isEqualTo(0);
+        verify(eduReportQueryRepository, never())
+                .findSafetyEduReports(any(), anyLong(), any(), anyBoolean(), any(), any(), any());
     }
 
     @Test

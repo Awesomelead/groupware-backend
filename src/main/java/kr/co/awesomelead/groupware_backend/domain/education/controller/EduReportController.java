@@ -12,6 +12,7 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses;
 
 import jakarta.validation.Valid;
 
+import kr.co.awesomelead.groupware_backend.domain.department.enums.Company;
 import kr.co.awesomelead.groupware_backend.domain.department.enums.DepartmentName;
 import kr.co.awesomelead.groupware_backend.domain.education.dto.request.DepartmentEduReportCreateRequestDto;
 import kr.co.awesomelead.groupware_backend.domain.education.dto.request.EduReportStatusUpdateRequestDto;
@@ -672,12 +673,19 @@ public class EduReportController {
             @Parameter(description = "카테고리 ID 필터(안전 보건)", example = "1")
                     @RequestParam(required = false)
                     Long categoryId,
+            @Parameter(description = "대상 회사 필터", example = "AWESOME")
+                    @RequestParam(required = false)
+                    Company company,
+            @Parameter(description = "진행상태 필터(OPEN: 진행중, CLOSED: 종료)", example = "OPEN")
+                    @RequestParam(required = false)
+                    EduReportStatus status,
             @Parameter(description = "제목 검색 키워드 (부분 일치 검색)", example = "정기교육")
                     @RequestParam(required = false)
                     String title,
             @Parameter(hidden = true) @AuthenticationPrincipal CustomUserDetails userDetails) {
         List<EduReportSummaryDto> reports =
-                eduReportService.getSafetyEduReports(categoryId, userDetails.getId(), title);
+                eduReportService.getSafetyEduReports(
+                        categoryId, company, status, userDetails.getId(), title);
         return ResponseEntity.ok(ApiResponse.onSuccess(reports));
     }
 

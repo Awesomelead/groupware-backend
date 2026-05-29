@@ -16,6 +16,7 @@ import kr.co.awesomelead.groupware_backend.domain.user.dto.response.UserSummaryR
 import kr.co.awesomelead.groupware_backend.domain.user.enums.JobType;
 import kr.co.awesomelead.groupware_backend.domain.user.enums.Position;
 import kr.co.awesomelead.groupware_backend.domain.user.enums.Role;
+import kr.co.awesomelead.groupware_backend.domain.user.enums.Status;
 import kr.co.awesomelead.groupware_backend.domain.user.service.UserService;
 import kr.co.awesomelead.groupware_backend.global.common.response.ApiResponse;
 
@@ -34,6 +35,8 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+
+import java.util.List;
 
 @Tag(
         name = "User",
@@ -136,12 +139,10 @@ public class UserController {
             @RequestParam(required = false)
                     @io.swagger.v3.oas.annotations.Parameter(description = "역할 필터")
                     Role role,
-            @RequestParam(required = false, defaultValue = "false")
+            @RequestParam(required = false)
                     @io.swagger.v3.oas.annotations.Parameter(
-                            description = "퇴사자(SUSPENDED) 제외 여부",
-                            required = false,
-                            example = "false")
-                    Boolean excludeSuspended,
+                            description = "상태 필터 (AVAILABLE, SUSPENDED)")
+                    List<Status> statuses,
             @PageableDefault(size = 20) Pageable pageable) {
         return ResponseEntity.ok(
                 ApiResponse.onSuccess(
@@ -151,7 +152,7 @@ public class UserController {
                                 departmentId,
                                 jobType,
                                 role,
-                                excludeSuspended,
+                                statuses,
                                 pageable)));
     }
 

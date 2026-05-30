@@ -215,7 +215,7 @@ public class NoticeController {
             @Parameter(
                             description =
                                     "공지사항 생성 정보(JSON). 권장: contentDelta(에디터 원본) + contentHtml(렌더링용)"
-                                        + " 함께 전달",
+                                            + " 함께 전달",
                             required = true,
                             schema = @Schema(implementation = NoticeCreateRequestDto.class))
                     @RequestPart("requestDto")
@@ -481,7 +481,7 @@ public class NoticeController {
             summary = "공지 수정",
             description =
                     "특정 공지를 수정합니다. multipart/form-data 기반으로"
-                        + " 제목/본문(content/contentDelta/contentHtml)/유형/대상자/첨부파일을 수정할 수 있습니다.",
+                            + " 제목/본문(content/contentDelta/contentHtml)/유형/대상자/첨부파일을 수정할 수 있습니다.",
             requestBody =
                     @io.swagger.v3.oas.annotations.parameters.RequestBody(
                             required = true,
@@ -611,7 +611,7 @@ public class NoticeController {
             @Parameter(
                             description =
                                     "공지 수정 정보(JSON). content/contentDelta/contentHtml 중 필요한 필드만 부분"
-                                        + " 수정 가능",
+                                            + " 수정 가능",
                             required = true,
                             schema = @Schema(implementation = NoticeUpdateRequestDto.class))
                     @Valid

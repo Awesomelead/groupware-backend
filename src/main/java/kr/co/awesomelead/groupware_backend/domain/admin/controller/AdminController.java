@@ -135,8 +135,7 @@ public class AdminController {
             @Parameter(description = "역할 필터", required = false, example = "일반 사용자")
                     @RequestParam(required = false)
                     Role role,
-            @Parameter(description = "근무사업장 필터 (AWESOME, MARUI)")
-                    @RequestParam(required = false)
+            @Parameter(description = "근무사업장 필터 (AWESOME, MARUI)") @RequestParam(required = false)
                     Company workLocation,
             @Parameter(description = "상태 필터 (AVAILABLE, SUSPENDED, PENDING 등 다중 선택 가능)")
                     @RequestParam(required = false)

@@ -22,6 +22,7 @@ import kr.co.awesomelead.groupware_backend.domain.admin.dto.response.MyInfoUpdat
 import kr.co.awesomelead.groupware_backend.domain.admin.dto.response.PendingUserSummaryResponseDto;
 import kr.co.awesomelead.groupware_backend.domain.admin.enums.AuthorityAction;
 import kr.co.awesomelead.groupware_backend.domain.admin.service.AdminService;
+import kr.co.awesomelead.groupware_backend.domain.department.enums.Company;
 import kr.co.awesomelead.groupware_backend.domain.user.dto.CustomUserDetails;
 import kr.co.awesomelead.groupware_backend.domain.user.enums.Authority;
 import kr.co.awesomelead.groupware_backend.domain.user.enums.JobType;
@@ -134,6 +135,8 @@ public class AdminController {
             @Parameter(description = "역할 필터", required = false, example = "일반 사용자")
                     @RequestParam(required = false)
                     Role role,
+            @Parameter(description = "근무사업장 필터 (AWESOME, MARUI)") @RequestParam(required = false)
+                    Company workLocation,
             @Parameter(description = "상태 필터 (AVAILABLE, SUSPENDED, PENDING 등 다중 선택 가능)")
                     @RequestParam(required = false)
                     List<Status> statuses,
@@ -147,6 +150,7 @@ public class AdminController {
                         departmentId,
                         jobType,
                         role,
+                        workLocation,
                         statuses,
                         pageable);
 
@@ -1029,6 +1033,7 @@ public class AdminController {
             @RequestParam(required = false) Long departmentId,
             @RequestParam(required = false) JobType jobType,
             @RequestParam(required = false) Role role,
+            @RequestParam(required = false) Company workLocation,
             @RequestParam(required = false) List<Status> statuses) {
         byte[] excelBytes =
                 adminService.getUsersExcel(
@@ -1038,9 +1043,10 @@ public class AdminController {
                         departmentId,
                         jobType,
                         role,
+                        workLocation,
                         statuses);
         String filename =
-                "직원명단_"
+                "근로자명부_"
                         + java.time.LocalDate.now()
                                 .format(java.time.format.DateTimeFormatter.ofPattern("yyyyMMdd"))
                         + ".xlsx";

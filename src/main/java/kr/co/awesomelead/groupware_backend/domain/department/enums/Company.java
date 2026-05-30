@@ -9,7 +9,7 @@ import lombok.Getter;
 @AllArgsConstructor
 public enum Company {
     AWESOME("어썸리드"),
-    MARUI("마루이");
+    MARUI("한국마루이");
 
     private final String description;
 

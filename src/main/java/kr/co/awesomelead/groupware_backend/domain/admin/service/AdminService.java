@@ -12,6 +12,7 @@ import kr.co.awesomelead.groupware_backend.domain.admin.mapper.AdminMapper;
 import kr.co.awesomelead.groupware_backend.domain.aligo.service.PhoneAuthService;
 import kr.co.awesomelead.groupware_backend.domain.auth.service.RefreshTokenService;
 import kr.co.awesomelead.groupware_backend.domain.department.entity.Department;
+import kr.co.awesomelead.groupware_backend.domain.department.enums.Company;
 import kr.co.awesomelead.groupware_backend.domain.department.repository.DepartmentRepository;
 import kr.co.awesomelead.groupware_backend.domain.notification.enums.NotificationDomainType;
 import kr.co.awesomelead.groupware_backend.domain.notification.enums.NotificationMessage;
@@ -189,6 +190,7 @@ public class AdminService {
             Long departmentId,
             JobType jobType,
             Role role,
+            Company workLocation,
             List<Status> statuses,
             Pageable pageable) {
         User admin =
@@ -212,6 +214,7 @@ public class AdminService {
                         departmentId,
                         jobType,
                         role,
+                        workLocation,
                         statuses,
                         pageable)
                 .map(
@@ -563,6 +566,7 @@ public class AdminService {
             Long departmentId,
             JobType jobType,
             Role role,
+            Company workLocation,
             List<Status> statuses) {
         User admin =
                 userRepository
@@ -572,7 +576,7 @@ public class AdminService {
 
         List<User> users =
                 userQueryRepository.findAllForAdminWithFiltersNoPaging(
-                        keyword, position, departmentId, jobType, role, statuses);
+                        keyword, position, departmentId, jobType, role, workLocation, statuses);
 
         String[] headers = {
             "No.", "한글 이름", "영문 이름", "생년월일", "국적", "우편번호", "주소1", "주소2", "주민등록번호", "전화번호", "이메일",
@@ -623,7 +627,7 @@ public class AdminService {
                 createDataCell(
                         row,
                         col++,
-                        u.getWorkLocation() != null ? u.getWorkLocation().name() : "",
+                        u.getWorkLocation() != null ? u.getWorkLocation().getDescription() : "",
                         dataStyle);
                 createDataCell(
                         row,
@@ -653,13 +657,21 @@ public class AdminService {
                         u.getResignationDate() != null ? u.getResignationDate().toString() : "",
                         dataStyle);
                 createDataCell(
-                        row, col++, u.getRole() != null ? u.getRole().name() : "", dataStyle);
+                        row,
+                        col++,
+                        u.getRole() != null ? u.getRole().getDescription() : "",
+                        dataStyle);
                 createDataCell(
-                        row, col++, u.getStatus() != null ? u.getStatus().name() : "", dataStyle);
+                        row,
+                        col++,
+                        u.getStatus() != null ? u.getStatus().getDescription() : "",
+                        dataStyle);
             }
 
             for (int i = 0; i < headers.length; i++) {
                 sheet.autoSizeColumn(i);
+                int currentWidth = sheet.getColumnWidth(i);
+                sheet.setColumnWidth(i, Math.max((int) (currentWidth * 1.3), 3000));
             }
 
             ByteArrayOutputStream out = new ByteArrayOutputStream();

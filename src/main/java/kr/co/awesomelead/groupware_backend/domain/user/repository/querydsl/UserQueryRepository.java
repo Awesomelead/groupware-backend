@@ -6,6 +6,7 @@ import com.querydsl.core.types.dsl.BooleanExpression;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 
 import kr.co.awesomelead.groupware_backend.domain.department.entity.QDepartment;
+import kr.co.awesomelead.groupware_backend.domain.department.enums.Company;
 import kr.co.awesomelead.groupware_backend.domain.user.entity.User;
 import kr.co.awesomelead.groupware_backend.domain.user.enums.JobType;
 import kr.co.awesomelead.groupware_backend.domain.user.enums.Position;
@@ -88,6 +89,7 @@ public class UserQueryRepository {
             Long departmentId,
             JobType jobType,
             Role role,
+            Company workLocation,
             List<Status> statuses,
             Pageable pageable) {
         List<User> content =
@@ -101,6 +103,7 @@ public class UserQueryRepository {
                                 departmentFilter(departmentId),
                                 jobTypeFilter(jobType),
                                 roleFilter(role),
+                                workLocationFilter(workLocation),
                                 adminStatusFilter(statuses))
                         .orderBy(user.id.desc())
                         .offset(pageable.getOffset())
@@ -120,6 +123,7 @@ public class UserQueryRepository {
                                         departmentFilter(departmentId),
                                         jobTypeFilter(jobType),
                                         roleFilter(role),
+                                        workLocationFilter(workLocation),
                                         adminStatusFilter(statuses))
                                 .fetchOne());
     }
@@ -130,6 +134,7 @@ public class UserQueryRepository {
             Long departmentId,
             JobType jobType,
             Role role,
+            Company workLocation,
             List<Status> statuses) {
         return queryFactory
                 .selectFrom(user)
@@ -141,6 +146,7 @@ public class UserQueryRepository {
                         departmentFilter(departmentId),
                         jobTypeFilter(jobType),
                         roleFilter(role),
+                        workLocationFilter(workLocation),
                         adminStatusFilter(statuses))
                 .orderBy(user.id.desc())
                 .fetch();
@@ -179,5 +185,9 @@ public class UserQueryRepository {
 
     private BooleanExpression roleFilter(Role role) {
         return role != null ? user.role.eq(role) : null;
+    }
+
+    private BooleanExpression workLocationFilter(Company workLocation) {
+        return workLocation != null ? user.workLocation.eq(workLocation) : null;
     }
 }

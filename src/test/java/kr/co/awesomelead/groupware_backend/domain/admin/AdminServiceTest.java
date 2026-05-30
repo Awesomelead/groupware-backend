@@ -292,6 +292,7 @@ class AdminServiceTest {
                             JobType.MANAGEMENT,
                             Role.USER,
                             null,
+                            null,
                             pageable))
                     .thenReturn(userPage);
             when(myInfoUpdateRequestRepository.findDistinctUserIdsByStatus(
@@ -307,6 +308,7 @@ class AdminServiceTest {
                             11L,
                             JobType.MANAGEMENT,
                             Role.USER,
+                            null,
                             null,
                             pageable);
 
@@ -340,6 +342,7 @@ class AdminServiceTest {
                                             null,
                                             null,
                                             null,
+                                            null,
                                             PageRequest.of(0, 20)))
                     .isInstanceOf(CustomException.class)
                     .extracting("errorCode")
@@ -354,17 +357,17 @@ class AdminServiceTest {
             when(myInfoUpdateRequestRepository.findDistinctUserIdsByStatus(any()))
                     .thenReturn(List.of());
             when(userQueryRepository.findAllForAdminWithFilters(
-                            null, null, null, null, null, (List<Status>) null, pageable))
+                            null, null, null, null, null, null, (List<Status>) null, pageable))
                     .thenReturn(Page.empty());
 
             // when
             adminService.getUsers(
-                    adminId, null, null, null, null, null, (List<Status>) null, pageable);
+                    adminId, null, null, null, null, null, null, (List<Status>) null, pageable);
 
             // then
             verify(userQueryRepository)
                     .findAllForAdminWithFilters(
-                            null, null, null, null, null, (List<Status>) null, pageable);
+                            null, null, null, null, null, null, (List<Status>) null, pageable);
         }
 
         @Test
@@ -375,15 +378,16 @@ class AdminServiceTest {
             when(myInfoUpdateRequestRepository.findDistinctUserIdsByStatus(any()))
                     .thenReturn(List.of());
             when(userQueryRepository.findAllForAdminWithFilters(
-                            null, null, null, null, null, List.of(), pageable))
+                            null, null, null, null, null, null, List.of(), pageable))
                     .thenReturn(Page.empty());
 
             // when
-            adminService.getUsers(adminId, null, null, null, null, null, List.of(), pageable);
+            adminService.getUsers(adminId, null, null, null, null, null, null, List.of(), pageable);
 
             // then
             verify(userQueryRepository)
-                    .findAllForAdminWithFilters(null, null, null, null, null, List.of(), pageable);
+                    .findAllForAdminWithFilters(
+                            null, null, null, null, null, null, List.of(), pageable);
         }
 
         @Test
@@ -395,15 +399,16 @@ class AdminServiceTest {
             when(myInfoUpdateRequestRepository.findDistinctUserIdsByStatus(any()))
                     .thenReturn(List.of());
             when(userQueryRepository.findAllForAdminWithFilters(
-                            null, null, null, null, null, statuses, pageable))
+                            null, null, null, null, null, null, statuses, pageable))
                     .thenReturn(Page.empty());
 
             // when
-            adminService.getUsers(adminId, null, null, null, null, null, statuses, pageable);
+            adminService.getUsers(adminId, null, null, null, null, null, null, statuses, pageable);
 
             // then
             verify(userQueryRepository)
-                    .findAllForAdminWithFilters(null, null, null, null, null, statuses, pageable);
+                    .findAllForAdminWithFilters(
+                            null, null, null, null, null, null, statuses, pageable);
         }
 
         @Test
@@ -415,15 +420,16 @@ class AdminServiceTest {
             when(myInfoUpdateRequestRepository.findDistinctUserIdsByStatus(any()))
                     .thenReturn(List.of());
             when(userQueryRepository.findAllForAdminWithFilters(
-                            null, null, null, null, null, statuses, pageable))
+                            null, null, null, null, null, null, statuses, pageable))
                     .thenReturn(Page.empty());
 
             // when
-            adminService.getUsers(adminId, null, null, null, null, null, statuses, pageable);
+            adminService.getUsers(adminId, null, null, null, null, null, null, statuses, pageable);
 
             // then
             verify(userQueryRepository)
-                    .findAllForAdminWithFilters(null, null, null, null, null, statuses, pageable);
+                    .findAllForAdminWithFilters(
+                            null, null, null, null, null, null, statuses, pageable);
         }
     }
 
@@ -944,12 +950,13 @@ class AdminServiceTest {
                                 .hireDate(LocalDate.of(2025, 1, 1))
                                 .build();
                 when(userQueryRepository.findAllForAdminWithFiltersNoPaging(
-                                null, null, null, null, null, null))
+                                null, null, null, null, null, null, null))
                         .thenReturn(List.of(user));
 
                 // when
                 byte[] result =
-                        adminService.getUsersExcel(adminId, null, null, null, null, null, null);
+                        adminService.getUsersExcel(
+                                adminId, null, null, null, null, null, null, null);
 
                 // then
                 assertThat(result).isNotNull();
@@ -973,7 +980,7 @@ class AdminServiceTest {
                 assertThatThrownBy(
                                 () ->
                                         adminService.getUsersExcel(
-                                                adminId, null, null, null, null, null, null))
+                                                adminId, null, null, null, null, null, null, null))
                         .isInstanceOf(CustomException.class)
                         .extracting("errorCode")
                         .isEqualTo(ErrorCode.NO_AUTHORITY_FOR_REGISTRATION);

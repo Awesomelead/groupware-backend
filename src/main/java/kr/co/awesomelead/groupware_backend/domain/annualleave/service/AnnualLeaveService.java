@@ -1,5 +1,6 @@
 package kr.co.awesomelead.groupware_backend.domain.annualleave.service;
 
+import kr.co.awesomelead.groupware_backend.domain.annualleave.dto.response.AdminAnnualLeaveDispatchDetailResponseDto;
 import kr.co.awesomelead.groupware_backend.domain.annualleave.dto.response.AdminAnnualLeaveDispatchGroupResponseDto;
 import kr.co.awesomelead.groupware_backend.domain.annualleave.dto.response.AdminAnnualLeaveDispatchItemResponseDto;
 import kr.co.awesomelead.groupware_backend.domain.annualleave.dto.response.AnnualLeaveResponseDto;
@@ -254,6 +255,29 @@ public class AnnualLeaveService {
                 .dispatchId(history.getId())
                 .originalFileName(history.getOriginalFileName())
                 .sheetName(normalizeSheetName(history.getSheetName()))
+                .fileUrl(s3Service.getPresignedViewUrl(history.getFileKey()))
+                .build();
+    }
+
+    @Transactional(readOnly = true)
+    public AdminAnnualLeaveDispatchDetailResponseDto getAnnualLeaveDispatchDetailForAdmin(
+            Long userId, Long dispatchId) {
+        validateAnnualLeaveEditAuthority(userId);
+
+        AnnualLeaveDispatchHistory history =
+                annualLeaveDispatchHistoryRepository
+                        .findById(dispatchId)
+                        .orElseThrow(
+                                () ->
+                                        new CustomException(
+                                                ErrorCode
+                                                        .ANNUAL_LEAVE_DISPATCH_HISTORY_NOT_FOUND));
+
+        return AdminAnnualLeaveDispatchDetailResponseDto.builder()
+                .dispatchId(history.getId())
+                .originalFileName(history.getOriginalFileName())
+                .sheetName(normalizeSheetName(history.getSheetName()))
+                .createdAt(history.getCreatedAt())
                 .fileUrl(s3Service.getPresignedViewUrl(history.getFileKey()))
                 .build();
     }

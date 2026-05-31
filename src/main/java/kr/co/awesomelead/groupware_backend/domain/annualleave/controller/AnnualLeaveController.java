@@ -2,6 +2,7 @@ package kr.co.awesomelead.groupware_backend.domain.annualleave.controller;
 
 import io.swagger.v3.oas.annotations.Operation;
 
+import kr.co.awesomelead.groupware_backend.domain.annualleave.dto.response.AdminAnnualLeaveDispatchDetailResponseDto;
 import kr.co.awesomelead.groupware_backend.domain.annualleave.dto.response.AdminAnnualLeaveDispatchGroupResponseDto;
 import kr.co.awesomelead.groupware_backend.domain.annualleave.dto.response.AnnualLeaveResponseDto;
 import kr.co.awesomelead.groupware_backend.domain.annualleave.dto.response.ExcelUploadResponseDto;
@@ -15,6 +16,7 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -60,6 +62,18 @@ public class AnnualLeaveController {
             @AuthenticationPrincipal CustomUserDetails userDetails) {
         List<AdminAnnualLeaveDispatchGroupResponseDto> responseDto =
                 annualLeaveService.getAnnualLeavesForAdmin(userDetails.getId());
+        return ResponseEntity.ok(ApiResponse.onSuccess(responseDto));
+    }
+
+    @Operation(summary = "보낸 연차 상세 조회 (관리자)", description = "관리자가 특정 연차 발송 이력을 상세 조회합니다.")
+    @GetMapping("/admin/{dispatchId}")
+    public ResponseEntity<ApiResponse<AdminAnnualLeaveDispatchDetailResponseDto>>
+            getAnnualLeaveDispatchDetailForAdmin(
+            @PathVariable Long dispatchId,
+            @AuthenticationPrincipal CustomUserDetails userDetails) {
+        AdminAnnualLeaveDispatchDetailResponseDto responseDto =
+                annualLeaveService.getAnnualLeaveDispatchDetailForAdmin(
+                        userDetails.getId(), dispatchId);
         return ResponseEntity.ok(ApiResponse.onSuccess(responseDto));
     }
 }

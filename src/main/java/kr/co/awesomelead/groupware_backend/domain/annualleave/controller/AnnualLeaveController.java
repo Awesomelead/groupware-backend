@@ -2,6 +2,7 @@ package kr.co.awesomelead.groupware_backend.domain.annualleave.controller;
 
 import io.swagger.v3.oas.annotations.Operation;
 
+import kr.co.awesomelead.groupware_backend.domain.annualleave.dto.response.AdminAnnualLeaveDispatchGroupResponseDto;
 import kr.co.awesomelead.groupware_backend.domain.annualleave.dto.response.AnnualLeaveResponseDto;
 import kr.co.awesomelead.groupware_backend.domain.annualleave.dto.response.ExcelUploadResponseDto;
 import kr.co.awesomelead.groupware_backend.domain.annualleave.service.AnnualLeaveService;
@@ -20,6 +21,8 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RequestPart;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
+
+import java.util.List;
 
 @RestController
 @RequestMapping("/api/annualleaves")
@@ -45,6 +48,18 @@ public class AnnualLeaveController {
     public ResponseEntity<ApiResponse<AnnualLeaveResponseDto>> getAnnualLeave(
             @AuthenticationPrincipal CustomUserDetails userDetails) {
         AnnualLeaveResponseDto responseDto = annualLeaveService.getAnnualLeave(userDetails.getId());
+        return ResponseEntity.ok(ApiResponse.onSuccess(responseDto));
+    }
+
+    @Operation(
+            summary = "보낸 연차 목록 조회 (관리자)",
+            description = "관리자가 보낸 연차 이력을 시트명 기준 그룹으로 조회합니다.")
+    @GetMapping("/admin")
+    public ResponseEntity<ApiResponse<List<AdminAnnualLeaveDispatchGroupResponseDto>>>
+            getAnnualLeavesForAdmin(
+            @AuthenticationPrincipal CustomUserDetails userDetails) {
+        List<AdminAnnualLeaveDispatchGroupResponseDto> responseDto =
+                annualLeaveService.getAnnualLeavesForAdmin(userDetails.getId());
         return ResponseEntity.ok(ApiResponse.onSuccess(responseDto));
     }
 }

@@ -1,6 +1,6 @@
 package kr.co.awesomelead.groupware_backend.domain.visit.mapper;
 
-import kr.co.awesomelead.groupware_backend.domain.user.entity.User;
+import kr.co.awesomelead.groupware_backend.domain.department.enums.Company;
 import kr.co.awesomelead.groupware_backend.domain.visit.dto.request.LongTermVisitRequestDto;
 import kr.co.awesomelead.groupware_backend.domain.visit.dto.request.MyVisitUpdateRequestDto;
 import kr.co.awesomelead.groupware_backend.domain.visit.dto.request.OnSiteVisitRequestDto;
@@ -8,9 +8,11 @@ import kr.co.awesomelead.groupware_backend.domain.visit.dto.request.OneDayVisitR
 import kr.co.awesomelead.groupware_backend.domain.visit.dto.response.MyVisitDetailResponseDto;
 import kr.co.awesomelead.groupware_backend.domain.visit.dto.response.MyVisitListResponseDto;
 import kr.co.awesomelead.groupware_backend.domain.visit.dto.response.VisitDetailResponseDto;
+import kr.co.awesomelead.groupware_backend.domain.visit.dto.response.VisitHostResponseDto;
 import kr.co.awesomelead.groupware_backend.domain.visit.dto.response.VisitListResponseDto;
 import kr.co.awesomelead.groupware_backend.domain.visit.dto.response.VisitRecordResponseDto;
 import kr.co.awesomelead.groupware_backend.domain.visit.entity.Visit;
+import kr.co.awesomelead.groupware_backend.domain.visit.entity.VisitHost;
 import kr.co.awesomelead.groupware_backend.domain.visit.entity.VisitRecord;
 
 import org.mapstruct.Mapper;
@@ -25,19 +27,19 @@ import java.util.List;
 @Mapper(
         componentModel = "spring",
         unmappedTargetPolicy = ReportingPolicy.IGNORE,
-        nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE) // null은 무시!
+        nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
 public interface VisitMapper {
 
-    @Mapping(target = "id", ignore = true) // 생성 시 ID는 자동 생성되므로 무시
+    @Mapping(target = "id", ignore = true)
     @Mapping(target = "visitorName", source = "dto.visitorName")
     @Mapping(target = "visitorPhoneNumber", source = "dto.visitorPhoneNumber")
     @Mapping(target = "visitorCompany", source = "dto.visitorCompany")
-    @Mapping(target = "hostCompany", source = "host.workLocation")
+    @Mapping(target = "hostCompany", source = "hostCompany")
     @Mapping(target = "carNumber", source = "dto.carNumber")
-    @Mapping(target = "user", source = "host") // 파라미터로 받은 User 객체를 매핑
-    @Mapping(target = "password", source = "encodedPassword") // 암호화된 비밀번호 매핑
-    @Mapping(target = "startDate", source = "dto.visitDate") // 시작일 = 방문일
-    @Mapping(target = "endDate", source = "dto.visitDate") // 종료일 = 방문일
+    @Mapping(target = "hosts", ignore = true)
+    @Mapping(target = "password", source = "encodedPassword")
+    @Mapping(target = "startDate", source = "dto.visitDate")
+    @Mapping(target = "endDate", source = "dto.visitDate")
     @Mapping(target = "plannedEntryTime", source = "dto.plannedEntryTime")
     @Mapping(target = "plannedExitTime", source = "dto.plannedExitTime")
     @Mapping(
@@ -54,13 +56,12 @@ public interface VisitMapper {
     @Mapping(target = "permissionType", ignore = true)
     @Mapping(target = "permissionDetail", ignore = true)
     @Mapping(target = "purpose", ignore = true)
-    Visit toOneDayVisit(OneDayVisitRequestDto dto, User host, String encodedPassword);
+    Visit toOneDayVisit(OneDayVisitRequestDto dto, Company hostCompany, String encodedPassword);
 
     @Mapping(target = "id", ignore = true)
-    @Mapping(target = "user", source = "host")
+    @Mapping(target = "hosts", ignore = true)
     @Mapping(target = "password", source = "encodedPassword")
-    @Mapping(target = "hostCompany", source = "host.workLocation")
-    // 장기 방문은 예정 시간이 없으므로 매핑에서 제외 (null로 들어감)
+    @Mapping(target = "hostCompany", source = "hostCompany")
     @Mapping(target = "plannedEntryTime", ignore = true)
     @Mapping(target = "plannedExitTime", ignore = true)
     @Mapping(
@@ -75,10 +76,10 @@ public interface VisitMapper {
     @Mapping(target = "phoneNumberHash", ignore = true)
     @Mapping(target = "visited", constant = "false")
     @Mapping(target = "purpose", ignore = true)
-    Visit toLongTermVisit(LongTermVisitRequestDto dto, User host, String encodedPassword);
+    Visit toLongTermVisit(LongTermVisitRequestDto dto, Company hostCompany, String encodedPassword);
 
     @Mapping(target = "id", ignore = true)
-    @Mapping(target = "user", source = "host")
+    @Mapping(target = "hosts", ignore = true)
     @Mapping(target = "password", source = "encodedPassword")
     @Mapping(
             target = "visitCategory",
@@ -88,92 +89,82 @@ public interface VisitMapper {
             target = "status",
             expression =
                     "java(kr.co.awesomelead.groupware_backend.domain.visit.enums.VisitStatus.IN_PROGRESS)")
-    @Mapping(target = "visited", constant = "true") // 즉시 방문 처리
+    @Mapping(target = "visited", constant = "true")
     @Mapping(target = "startDate", expression = "java(java.time.LocalDate.now())")
     @Mapping(target = "endDate", expression = "java(java.time.LocalDate.now())")
     @Mapping(target = "plannedEntryTime", expression = "java(java.time.LocalTime.now())")
-    @Mapping(target = "plannedExitTime", ignore = true) // 추가
-    @Mapping(target = "hostCompany", source = "host.workLocation")
+    @Mapping(target = "plannedExitTime", ignore = true)
+    @Mapping(target = "hostCompany", source = "hostCompany")
     @Mapping(target = "records", ignore = true)
     @Mapping(target = "phoneNumberHash", ignore = true)
     @Mapping(target = "purpose", ignore = true)
     @Mapping(target = "permissionType", ignore = true)
     @Mapping(target = "permissionDetail", ignore = true)
-    Visit toOnSiteVisit(OnSiteVisitRequestDto dto, User host, String encodedPassword);
+    Visit toOnSiteVisit(OnSiteVisitRequestDto dto, Company hostCompany, String encodedPassword);
 
-    // MyVisitListResponseDto 매핑
+    @Mapping(target = "userId", source = "user.id")
+    @Mapping(target = "name", expression = "java(visitHost.getUser().getDisplayName())")
+    @Mapping(target = "position", source = "user.position")
+    @Mapping(target = "departmentName", source = "user.department.name")
+    VisitHostResponseDto toVisitHostResponseDto(VisitHost visitHost);
+
+    List<VisitHostResponseDto> toVisitHostResponseDtoList(List<VisitHost> visitHosts);
+
     @Mapping(target = "visitId", source = "id")
     MyVisitListResponseDto toMyVisitListResponseDto(Visit visit);
 
     List<MyVisitListResponseDto> toMyVisitListResponseDtoList(List<Visit> visits);
 
-    // MyVisitDetailResponseDto 매핑
     @Mapping(target = "visitId", source = "id")
-    @Mapping(target = "hostId", source = "user.id")
-    @Mapping(target = "hostName", expression = "java(visit.getUser().getDisplayName())")
-    @Mapping(target = "hostPosition", source = "user.position")
-    @Mapping(target = "departmentName", source = "user.department.name")
+    @Mapping(target = "hosts", source = "hosts")
     @Mapping(target = "entryTime", expression = "java(getEntryTimeLogic(visit))")
     @Mapping(target = "exitTime", expression = "java(getExitTimeLogic(visit))")
     @Mapping(target = "records", source = "records")
     @Mapping(target = "rejectionReason", source = "rejectionReason")
     MyVisitDetailResponseDto toMyVisitDetailResponseDto(Visit visit);
 
-    // VisitMapper.java
-
     default LocalDateTime getEntryTimeLogic(Visit visit) {
-        // 1. 실제 입실 기록이 있으면 그 시간을 최우선 사용
         if (visit.getRecords() != null && !visit.getRecords().isEmpty()) {
             if (visit.getRecords().get(0).getEntryTime() != null) {
                 return visit.getRecords().get(0).getEntryTime();
             }
         }
-
-        // 2. 예정 시간이 없으면 (장기 방문 등) null 혹은 날짜만 반환
         if (visit.getPlannedEntryTime() == null) {
-            // 장기 방문이라면 시작 날짜의 정각(00:00)을 줄 수도 있고, null을 줄 수도 있습니다.
-            // 여기서는 안전하게 null을 반환하고 프론트에서 처리하게 하겠습니다.
             return null;
         }
-
-        // 3. 예정 시간이 있으면 날짜와 합쳐서 반환
         return LocalDateTime.of(visit.getStartDate(), visit.getPlannedEntryTime());
     }
 
     default LocalDateTime getExitTimeLogic(Visit visit) {
-        // 1. 실제 퇴실 기록이 있으면 최우선 사용
         if (visit.getRecords() != null && !visit.getRecords().isEmpty()) {
             if (visit.getRecords().get(0).getExitTime() != null) {
                 return visit.getRecords().get(0).getExitTime();
             }
         }
-
-        // 2. 예정 퇴실 시간이 없으면 null 반환
         if (visit.getPlannedExitTime() == null) {
             return null;
         }
-
         return LocalDateTime.of(visit.getStartDate(), visit.getPlannedExitTime());
     }
 
-    @Mapping(target = "hostDepartmentName", source = "user.department.name")
+    @Mapping(target = "hosts", source = "hosts")
     VisitListResponseDto toVisitListResponseDto(Visit visit);
 
-    @Mapping(target = "hostDepartmentName", source = "user.department.name")
-    @Mapping(target = "hostName", source = "user.nameKor")
+    @Mapping(target = "hosts", source = "hosts")
     @Mapping(target = "records", source = "records")
-    // VisitRecord -> VisitRecordResponseDto 변환 필요
     VisitDetailResponseDto toVisitDetailResponseDto(Visit visit);
 
     @Mapping(target = "signatureUrl", source = "signatureKey")
-    // 키값을 URL로 변환하는 로직은 서비스나 커스텀 매퍼에서 처리 가능
     VisitRecordResponseDto toRecordResponseDto(VisitRecord record);
 
     List<VisitListResponseDto> toVisitListResponseDtos(List<Visit> visits);
 
     @Mapping(target = "id", ignore = true)
     @Mapping(target = "password", ignore = true)
-    @Mapping(target = "status", ignore = true) // 상태는 서비스 로직에서 직접 변경하므로 무시
+    @Mapping(target = "status", ignore = true)
+    @Mapping(target = "hosts", ignore = true)
+    @Mapping(target = "visitorPhoneNumber", ignore = true)
+    @Mapping(target = "phoneNumberHash", ignore = true)
     @Mapping(target = "startDate", source = "startDate")
     @Mapping(target = "endDate", source = "endDate")
     void updateVisitFromDto(MyVisitUpdateRequestDto dto, @MappingTarget Visit visit);

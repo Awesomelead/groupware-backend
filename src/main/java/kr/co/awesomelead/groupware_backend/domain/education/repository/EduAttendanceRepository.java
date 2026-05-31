@@ -21,4 +21,6 @@ public interface EduAttendanceRepository extends JpaRepository<EduAttendance, Lo
                     + "JOIN FETCH ea.user "
                     + "WHERE ea.eduReport.id = :reportId")
     List<EduAttendance> findAllByEduReportIdWithUser(@Param("reportId") Long reportId);
+
+    void deleteByEduReportId(Long eduReportId);
 }

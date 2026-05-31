@@ -6,6 +6,7 @@ import com.querydsl.core.types.dsl.BooleanExpression;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 
 import kr.co.awesomelead.groupware_backend.domain.department.entity.QDepartment;
+import kr.co.awesomelead.groupware_backend.domain.department.enums.Company;
 import kr.co.awesomelead.groupware_backend.domain.user.entity.User;
 import kr.co.awesomelead.groupware_backend.domain.user.enums.JobType;
 import kr.co.awesomelead.groupware_backend.domain.user.enums.Position;
@@ -34,6 +35,20 @@ public class UserQueryRepository {
             Long departmentId,
             JobType jobType,
             Role role,
+            List<Status> statuses,
+            Pageable pageable) {
+        return findAllAvailableWithFilters(
+                keyword, position, departmentId, jobType, role, null, statuses, pageable);
+    }
+
+    public Page<User> findAllAvailableWithFilters(
+            String keyword,
+            Position position,
+            Long departmentId,
+            JobType jobType,
+            Role role,
+            Company workLocation,
+            List<Status> statuses,
             Pageable pageable) {
 
         List<User> content =
@@ -42,12 +57,13 @@ public class UserQueryRepository {
                         .leftJoin(user.department, QDepartment.department)
                         .fetchJoin()
                         .where(
-                                user.status.eq(Status.AVAILABLE),
+                                statusFilter(statuses),
                                 keywordFilter(keyword),
                                 positionFilter(position),
                                 departmentFilter(departmentId),
                                 jobTypeFilter(jobType),
-                                roleFilter(role))
+                                roleFilter(role),
+                                workLocationFilter(workLocation))
                         .orderBy(user.id.desc())
                         .offset(pageable.getOffset())
                         .limit(pageable.getPageSize())
@@ -61,13 +77,101 @@ public class UserQueryRepository {
                                 .select(user.count())
                                 .from(user)
                                 .where(
-                                        user.status.eq(Status.AVAILABLE),
+                                        statusFilter(statuses),
                                         keywordFilter(keyword),
                                         positionFilter(position),
                                         departmentFilter(departmentId),
                                         jobTypeFilter(jobType),
-                                        roleFilter(role))
+                                        roleFilter(role),
+                                        workLocationFilter(workLocation))
                                 .fetchOne());
+    }
+
+    private BooleanExpression statusFilter(List<Status> statuses) {
+        if (statuses == null || statuses.isEmpty()) {
+            return user.status.in(Status.AVAILABLE, Status.SUSPENDED);
+        }
+        List<Status> safeStatuses = statuses.stream().filter(s -> s != Status.PENDING).toList();
+        if (safeStatuses.isEmpty()) {
+            return user.id.isNull();
+        }
+        return user.status.in(safeStatuses);
+    }
+
+    public Page<User> findAllForAdminWithFilters(
+            String keyword,
+            Position position,
+            Long departmentId,
+            JobType jobType,
+            Role role,
+            Company workLocation,
+            List<Status> statuses,
+            Pageable pageable) {
+        List<User> content =
+                queryFactory
+                        .selectFrom(user)
+                        .leftJoin(user.department, QDepartment.department)
+                        .fetchJoin()
+                        .where(
+                                keywordFilter(keyword),
+                                positionFilter(position),
+                                departmentFilter(departmentId),
+                                jobTypeFilter(jobType),
+                                roleFilter(role),
+                                workLocationFilter(workLocation),
+                                adminStatusFilter(statuses))
+                        .orderBy(user.id.desc())
+                        .offset(pageable.getOffset())
+                        .limit(pageable.getPageSize())
+                        .fetch();
+
+        return PageableExecutionUtils.getPage(
+                content,
+                pageable,
+                () ->
+                        queryFactory
+                                .select(user.count())
+                                .from(user)
+                                .where(
+                                        keywordFilter(keyword),
+                                        positionFilter(position),
+                                        departmentFilter(departmentId),
+                                        jobTypeFilter(jobType),
+                                        roleFilter(role),
+                                        workLocationFilter(workLocation),
+                                        adminStatusFilter(statuses))
+                                .fetchOne());
+    }
+
+    public List<User> findAllForAdminWithFiltersNoPaging(
+            String keyword,
+            Position position,
+            Long departmentId,
+            JobType jobType,
+            Role role,
+            Company workLocation,
+            List<Status> statuses) {
+        return queryFactory
+                .selectFrom(user)
+                .leftJoin(user.department, QDepartment.department)
+                .fetchJoin()
+                .where(
+                        keywordFilter(keyword),
+                        positionFilter(position),
+                        departmentFilter(departmentId),
+                        jobTypeFilter(jobType),
+                        roleFilter(role),
+                        workLocationFilter(workLocation),
+                        adminStatusFilter(statuses))
+                .orderBy(user.id.desc())
+                .fetch();
+    }
+
+    private BooleanExpression adminStatusFilter(List<Status> statuses) {
+        if (statuses == null || statuses.isEmpty()) {
+            return null;
+        }
+        return user.status.in(statuses);
     }
 
     private BooleanExpression keywordFilter(String keyword) {
@@ -96,5 +200,9 @@ public class UserQueryRepository {
 
     private BooleanExpression roleFilter(Role role) {
         return role != null ? user.role.eq(role) : null;
+    }
+
+    private BooleanExpression workLocationFilter(Company workLocation) {
+        return workLocation != null ? user.workLocation.eq(workLocation) : null;
     }
 }

@@ -7,8 +7,11 @@ import io.swagger.v3.oas.annotations.media.ExampleObject;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 
+import jakarta.validation.Valid;
+
+import kr.co.awesomelead.groupware_backend.domain.payslip.dto.request.PayslipViewPasswordRequestDto;
 import kr.co.awesomelead.groupware_backend.domain.payslip.dto.response.AdminPayslipDetailDto;
-import kr.co.awesomelead.groupware_backend.domain.payslip.dto.response.AdminPayslipSummaryDto;
+import kr.co.awesomelead.groupware_backend.domain.payslip.dto.response.AdminPayslipGroupDto;
 import kr.co.awesomelead.groupware_backend.domain.payslip.dto.response.EmployeePayslipDetailDto;
 import kr.co.awesomelead.groupware_backend.domain.payslip.dto.response.EmployeePayslipSummaryDto;
 import kr.co.awesomelead.groupware_backend.domain.payslip.enums.PayslipStatus;
@@ -21,9 +24,12 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RequestPart;
@@ -53,7 +59,9 @@ public class PayslipController {
 
     @Operation(
             summary = "급여명세서 일괄 발송 (관리자)",
-            description = "관리자가 다수의 PDF 파일을 업로드하여 발송합니다. 파일명 형식: '성명_입사일_급여명세서.pdf'")
+            description =
+                    "관리자가 다수의 PDF 파일을 업로드하여 발송합니다. 파일명 형식:"
+                            + " '급여명세서(근로기준1)_더존직원코드_직원명_급여지급월.pdf'")
     @ApiResponses(
             value = {
                 @io.swagger.v3.oas.annotations.responses.ApiResponse(
@@ -139,7 +147,59 @@ public class PayslipController {
         return ResponseEntity.ok(ApiResponse.onNoContent("급여명세서가 성공적으로 발송되었습니다."));
     }
 
-    @Operation(summary = "보낸 명세서 목록 조회 (관리자)", description = "관리자가 상태별로 발송한 명세서 목록을 조회합니다.")
+    @Operation(summary = "보낸 명세서 수정 (관리자)", description = "관리자가 특정 급여명세서를 새로운 PDF로 교체합니다.")
+    @ApiResponses(
+            value = {
+                @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                        responseCode = "200",
+                        description = "수정 성공"),
+                @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                        responseCode = "400",
+                        description = "잘못된 파일 형식"),
+                @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                        responseCode = "401",
+                        description = "권한 없음"),
+                @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                        responseCode = "404",
+                        description = "명세서 없음")
+            })
+    @PutMapping(value = "/admin/{payslipId}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ResponseEntity<ApiResponse<Void>> updatePayslip(
+            @Parameter(hidden = true) @AuthenticationPrincipal CustomUserDetails userDetails,
+            @Parameter(description = "명세서 ID", example = "1") @PathVariable Long payslipId,
+            @Parameter(description = "교체할 급여명세서 PDF", required = true) @RequestPart("payslipFile")
+                    MultipartFile payslipFile)
+            throws IOException {
+
+        payslipService.updatePayslip(payslipId, payslipFile, userDetails.getId());
+        return ResponseEntity.ok(ApiResponse.onNoContent("급여명세서가 성공적으로 수정되었습니다."));
+    }
+
+    @Operation(summary = "보낸 명세서 삭제 (관리자)", description = "관리자가 특정 급여명세서를 삭제합니다.")
+    @ApiResponses(
+            value = {
+                @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                        responseCode = "200",
+                        description = "삭제 성공"),
+                @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                        responseCode = "401",
+                        description = "권한 없음"),
+                @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                        responseCode = "404",
+                        description = "명세서 없음")
+            })
+    @DeleteMapping("/admin/{payslipId}")
+    public ResponseEntity<ApiResponse<Void>> deletePayslip(
+            @Parameter(hidden = true) @AuthenticationPrincipal CustomUserDetails userDetails,
+            @Parameter(description = "명세서 ID", example = "1") @PathVariable Long payslipId) {
+
+        payslipService.deletePayslip(payslipId, userDetails.getId());
+        return ResponseEntity.ok(ApiResponse.onNoContent("급여명세서가 성공적으로 삭제되었습니다."));
+    }
+
+    @Operation(
+            summary = "보낸 명세서 목록 조회 (관리자)",
+            description = "관리자가 상태별로 발송한 명세서를 급여지급월(YYYYMM) 기준으로 그룹 조회합니다.")
     @ApiResponses(
             value = {
                 @io.swagger.v3.oas.annotations.responses.ApiResponse(
@@ -147,31 +207,17 @@ public class PayslipController {
                         description = "조회 성공"),
                 @io.swagger.v3.oas.annotations.responses.ApiResponse(
                         responseCode = "401",
-                        description = "권한 없음",
-                        content =
-                                @Content(
-                                        mediaType = "application/json",
-                                        examples =
-                                                @ExampleObject(
-                                                        value =
-                                                                """
-                                {
-                                "isSuccess": false,
-                                "code": "NO_AUTHORITY_FOR_PAYSLIP",
-                                "message": "급여명세서 발송 권한이 없습니다.",
-                                "result": null
-                                }
-                                """)))
+                        description = "권한 없음")
             })
     @GetMapping("/admin")
-    public ResponseEntity<ApiResponse<List<AdminPayslipSummaryDto>>> getPayslipsForAdmin(
+    public ResponseEntity<ApiResponse<List<AdminPayslipGroupDto>>> getPayslipsForAdminGrouped(
             @Parameter(hidden = true) @AuthenticationPrincipal CustomUserDetails userDetails,
             @Parameter(description = "명세서 상태 (생략 시 전체 조회)", example = "SENT")
                     @RequestParam(required = false)
                     PayslipStatus status) {
 
-        List<AdminPayslipSummaryDto> response =
-                payslipService.getPayslipsForAdmin(userDetails.getId(), status);
+        List<AdminPayslipGroupDto> response =
+                payslipService.getPayslipsForAdminGrouped(userDetails.getId(), status);
         return ResponseEntity.ok(ApiResponse.onSuccess(response));
     }
 
@@ -241,12 +287,31 @@ public class PayslipController {
         return ResponseEntity.ok(ApiResponse.onSuccess(response));
     }
 
-    @Operation(summary = "내 명세서 상세 조회 (직원)", description = "직원이 특정 급여명세서의 상세 내용을 확인합니다.")
+    @Operation(
+            summary = "내 명세서 상세 조회 (직원)",
+            description = "직원이 로그인 비밀번호를 입력한 뒤 특정 급여명세서의 상세 내용을 확인합니다.")
     @ApiResponses(
             value = {
                 @io.swagger.v3.oas.annotations.responses.ApiResponse(
                         responseCode = "200",
                         description = "조회 성공"),
+                @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                        responseCode = "400",
+                        description = "비밀번호 불일치",
+                        content =
+                                @Content(
+                                        mediaType = "application/json",
+                                        examples =
+                                                @ExampleObject(
+                                                        value =
+                                                                """
+                                {
+                                "isSuccess": false,
+                                "code": "PASSWORD_MISMATCH",
+                                "message": "비밀번호가 일치하지 않습니다.",
+                                "result": null
+                                }
+                                """))),
                 @io.swagger.v3.oas.annotations.responses.ApiResponse(
                         responseCode = "401",
                         description = "접근 권한 없음",
@@ -282,13 +347,14 @@ public class PayslipController {
                                 }
                                 """)))
             })
-    @GetMapping("/me/{payslipId}")
+    @PostMapping("/me/{payslipId}")
     public ResponseEntity<ApiResponse<EmployeePayslipDetailDto>> getMyPayslipDetail(
             @Parameter(hidden = true) @AuthenticationPrincipal CustomUserDetails userDetails,
-            @Parameter(description = "명세서 ID", example = "1") @PathVariable Long payslipId) {
+            @Parameter(description = "명세서 ID", example = "1") @PathVariable Long payslipId,
+            @Valid @RequestBody PayslipViewPasswordRequestDto requestDto) {
 
         EmployeePayslipDetailDto response =
-                payslipService.getPayslip(userDetails.getId(), payslipId);
+                payslipService.getPayslip(userDetails.getId(), payslipId, requestDto.getPassword());
         return ResponseEntity.ok(ApiResponse.onSuccess(response));
     }
 }

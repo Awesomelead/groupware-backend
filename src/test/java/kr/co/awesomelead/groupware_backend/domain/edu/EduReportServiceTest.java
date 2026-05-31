@@ -592,12 +592,21 @@ public class EduReportServiceTest {
 
         when(userRepository.findById(1L)).thenReturn(Optional.of(user));
         when(eduReportQueryRepository.findEduReports(
-                        EduType.SAFETY, department, null, 1L, false, Company.AWESOME, false, null))
+                        EduType.SAFETY,
+                        department,
+                        List.of(1L),
+                        null,
+                        null,
+                        1L,
+                        false,
+                        Company.AWESOME,
+                        false,
+                        null))
                 .thenReturn(mockList);
 
         // when
         List<EduReportSummaryDto> result =
-                eduReportService.getEduReports(EduType.SAFETY, null, null, 1L, null);
+                eduReportService.getEduReports(EduType.SAFETY, null, null, null, 1L, null);
 
         // then
         assertThat(result).isNotNull();
@@ -606,7 +615,16 @@ public class EduReportServiceTest {
 
         verify(eduReportQueryRepository, times(1))
                 .findEduReports(
-                        EduType.SAFETY, department, null, 1L, false, Company.AWESOME, false, null);
+                        EduType.SAFETY,
+                        department,
+                        List.of(1L),
+                        null,
+                        null,
+                        1L,
+                        false,
+                        Company.AWESOME,
+                        false,
+                        null);
     }
 
     @Test
@@ -632,12 +650,12 @@ public class EduReportServiceTest {
         when(userRepository.findById(1L)).thenReturn(Optional.of(user));
         // dept=null + PSM 조회 범위는 본인 회사 제한
         when(eduReportQueryRepository.findEduReports(
-                        null, null, null, 1L, true, Company.AWESOME, false, null))
+                        null, null, null, null, null, 1L, true, Company.AWESOME, false, null))
                 .thenReturn(mockList);
 
         // when
         List<EduReportSummaryDto> result =
-                eduReportService.getEduReports(null, null, null, 1L, null);
+                eduReportService.getEduReports(null, null, null, null, 1L, null);
 
         // then
         assertThat(result).isNotNull();
@@ -645,7 +663,8 @@ public class EduReportServiceTest {
 
         // hasAccess=true, dept=null + PSM 조회 범위는 본인 회사 제한
         verify(eduReportQueryRepository, times(1))
-                .findEduReports(null, null, null, 1L, true, Company.AWESOME, false, null);
+                .findEduReports(
+                        null, null, null, null, null, 1L, true, Company.AWESOME, false, null);
     }
 
     @Test
@@ -675,6 +694,8 @@ public class EduReportServiceTest {
                         EduType.DEPARTMENT,
                         salesDept,
                         null,
+                        null,
+                        null,
                         1L,
                         true,
                         Company.AWESOME,
@@ -685,7 +706,7 @@ public class EduReportServiceTest {
         // when
         List<EduReportSummaryDto> result =
                 eduReportService.getEduReports(
-                        EduType.DEPARTMENT, DepartmentName.SALES_DEPT, null, 1L, null);
+                        EduType.DEPARTMENT, DepartmentName.SALES_DEPT, null, null, 1L, null);
 
         // then
         assertThat(result).isNotNull();
@@ -697,6 +718,8 @@ public class EduReportServiceTest {
                 .findEduReports(
                         EduType.DEPARTMENT,
                         salesDept,
+                        null,
+                        null,
                         null,
                         1L,
                         true,
@@ -713,14 +736,25 @@ public class EduReportServiceTest {
 
         // when & then
         assertThatThrownBy(
-                        () -> eduReportService.getEduReports(EduType.SAFETY, null, null, 1L, null))
+                        () ->
+                                eduReportService.getEduReports(
+                                        EduType.SAFETY, null, null, null, 1L, null))
                 .isInstanceOf(CustomException.class)
                 .extracting("errorCode")
                 .isEqualTo(ErrorCode.USER_NOT_FOUND);
 
         verify(eduReportQueryRepository, never())
                 .findEduReports(
-                        any(), any(), any(), anyLong(), anyBoolean(), any(), anyBoolean(), any());
+                        any(),
+                        any(),
+                        any(),
+                        any(),
+                        any(),
+                        anyLong(),
+                        anyBoolean(),
+                        any(),
+                        anyBoolean(),
+                        any());
     }
 
     @Test
@@ -735,20 +769,24 @@ public class EduReportServiceTest {
                         .id(11L)
                         .title("PSM 전사 교육")
                         .eduType(EduType.PSM)
+                        .company(null)
                         .build();
 
         when(userRepository.findById(1L)).thenReturn(Optional.of(user));
-        when(eduReportQueryRepository.findPsmEduReports(null, 1L, null, true, null))
+        when(eduReportQueryRepository.findPsmEduReports(null, 1L, null, true, null, null, null))
                 .thenReturn(List.of(psmReport));
 
         // when
-        List<EduReportSummaryDto> result = eduReportService.getPsmEduReports(null, 1L, null);
+        List<EduReportSummaryDto> result =
+                eduReportService.getPsmEduReports(null, null, null, 1L, null);
 
         // then
         assertThat(result).isNotNull();
         assertThat(result.size()).isEqualTo(1);
         assertThat(result.get(0).getEduType()).isEqualTo(EduType.PSM);
-        verify(eduReportQueryRepository, times(1)).findPsmEduReports(null, 1L, null, true, null);
+        assertThat(result.get(0).getCompanyScope()).isEqualTo(List.of("AWESOME", "MARUI"));
+        verify(eduReportQueryRepository, times(1))
+                .findPsmEduReports(null, 1L, null, true, null, null, null);
     }
 
     @Test
@@ -758,16 +796,46 @@ public class EduReportServiceTest {
         User user = createNormalUser(); // workLocation=AWESOME
 
         when(userRepository.findById(1L)).thenReturn(Optional.of(user));
-        when(eduReportQueryRepository.findPsmEduReports(null, 1L, Company.AWESOME, false, null))
-                .thenReturn(List.of());
+        EduReportSummaryDto psmReport =
+                EduReportSummaryDto.builder()
+                        .id(12L)
+                        .title("PSM 어썸리드 교육")
+                        .eduType(EduType.PSM)
+                        .company(Company.AWESOME)
+                        .build();
+
+        when(eduReportQueryRepository.findPsmEduReports(
+                        null, 1L, Company.AWESOME, false, null, null, null))
+                .thenReturn(List.of(psmReport));
 
         // when
-        List<EduReportSummaryDto> result = eduReportService.getPsmEduReports(null, 1L, null);
+        List<EduReportSummaryDto> result =
+                eduReportService.getPsmEduReports(null, null, null, 1L, null);
 
         // then
         assertThat(result).isNotNull();
+        assertThat(result.size()).isEqualTo(1);
+        assertThat(result.get(0).getCompanyScope()).isEqualTo(List.of("AWESOME"));
         verify(eduReportQueryRepository, times(1))
-                .findPsmEduReports(null, 1L, Company.AWESOME, false, null);
+                .findPsmEduReports(null, 1L, Company.AWESOME, false, null, null, null);
+    }
+
+    @Test
+    @DisplayName("PSM 게시물 목록 조회 - MANAGE_PSM 권한 없고 타 회사 필터면 빈 목록")
+    void getPsmEduReports_WithoutManagePsm_FilterOtherCompany_ReturnsEmpty() {
+        // given
+        User user = createNormalUser(); // workLocation=AWESOME
+        when(userRepository.findById(1L)).thenReturn(Optional.of(user));
+
+        // when
+        List<EduReportSummaryDto> result =
+                eduReportService.getPsmEduReports(null, Company.MARUI, null, 1L, "변경");
+
+        // then
+        assertThat(result).isNotNull();
+        assertThat(result.size()).isEqualTo(0);
+        verify(eduReportQueryRepository, never())
+                .findPsmEduReports(any(), anyLong(), any(), anyBoolean(), any(), any(), any());
     }
 
     @Test
@@ -782,20 +850,24 @@ public class EduReportServiceTest {
                         .id(21L)
                         .title("안전 보건 전사 교육")
                         .eduType(EduType.SAFETY)
+                        .company(null)
                         .build();
 
         when(userRepository.findById(1L)).thenReturn(Optional.of(user));
-        when(eduReportQueryRepository.findSafetyEduReports(null, 1L, null, true, null))
+        when(eduReportQueryRepository.findSafetyEduReports(null, 1L, null, true, null, null, null))
                 .thenReturn(List.of(safetyReport));
 
         // when
-        List<EduReportSummaryDto> result = eduReportService.getSafetyEduReports(null, 1L, null);
+        List<EduReportSummaryDto> result =
+                eduReportService.getSafetyEduReports(null, null, null, 1L, null);
 
         // then
         assertThat(result).isNotNull();
         assertThat(result.size()).isEqualTo(1);
         assertThat(result.get(0).getEduType()).isEqualTo(EduType.SAFETY);
-        verify(eduReportQueryRepository, times(1)).findSafetyEduReports(null, 1L, null, true, null);
+        assertThat(result.get(0).getCompanyScope()).isEqualTo(List.of("AWESOME", "MARUI"));
+        verify(eduReportQueryRepository, times(1))
+                .findSafetyEduReports(null, 1L, null, true, null, null, null);
     }
 
     @Test
@@ -805,16 +877,46 @@ public class EduReportServiceTest {
         User user = createNormalUser(); // workLocation=AWESOME
 
         when(userRepository.findById(1L)).thenReturn(Optional.of(user));
-        when(eduReportQueryRepository.findSafetyEduReports(null, 1L, Company.AWESOME, false, null))
-                .thenReturn(List.of());
+        EduReportSummaryDto safetyReport =
+                EduReportSummaryDto.builder()
+                        .id(22L)
+                        .title("안전 보건 어썸리드 교육")
+                        .eduType(EduType.SAFETY)
+                        .company(Company.AWESOME)
+                        .build();
+
+        when(eduReportQueryRepository.findSafetyEduReports(
+                        null, 1L, Company.AWESOME, false, null, null, null))
+                .thenReturn(List.of(safetyReport));
 
         // when
-        List<EduReportSummaryDto> result = eduReportService.getSafetyEduReports(null, 1L, null);
+        List<EduReportSummaryDto> result =
+                eduReportService.getSafetyEduReports(null, null, null, 1L, null);
 
         // then
         assertThat(result).isNotNull();
+        assertThat(result.size()).isEqualTo(1);
+        assertThat(result.get(0).getCompanyScope()).isEqualTo(List.of("AWESOME"));
         verify(eduReportQueryRepository, times(1))
-                .findSafetyEduReports(null, 1L, Company.AWESOME, false, null);
+                .findSafetyEduReports(null, 1L, Company.AWESOME, false, null, null, null);
+    }
+
+    @Test
+    @DisplayName("안전 보건 게시물 목록 조회 - MANAGE_SAFETY 권한 없고 타 회사 필터면 빈 목록")
+    void getSafetyEduReports_WithoutManageSafety_FilterOtherCompany_ReturnsEmpty() {
+        // given
+        User user = createNormalUser(); // workLocation=AWESOME
+        when(userRepository.findById(1L)).thenReturn(Optional.of(user));
+
+        // when
+        List<EduReportSummaryDto> result =
+                eduReportService.getSafetyEduReports(null, Company.MARUI, null, 1L, "정기");
+
+        // then
+        assertThat(result).isNotNull();
+        assertThat(result.size()).isEqualTo(0);
+        verify(eduReportQueryRepository, never())
+                .findSafetyEduReports(any(), anyLong(), any(), anyBoolean(), any(), any(), any());
     }
 
     @Test
@@ -1970,6 +2072,27 @@ public class EduReportServiceTest {
     }
 
     @Test
+    @DisplayName("서명 현황 조회 실패 - 부서 교육이 아닌 게시물")
+    void getSignatureStatuses_Fail_NotDepartmentReport() {
+        // Given
+        User user = createNormalUser();
+        user.addAuthority(Authority.MANAGE_DEPARTMENT_EDUCATION);
+
+        EduReport report = EduReport.builder().id(100L).eduType(EduType.PSM).build();
+
+        when(userRepository.findById(1L)).thenReturn(Optional.of(user));
+        when(eduReportRepository.findById(100L)).thenReturn(Optional.of(report));
+
+        // When & Then
+        assertThatThrownBy(() -> eduReportService.getSignatureStatuses(100L, null, 1L))
+                .isInstanceOf(CustomException.class)
+                .extracting("errorCode")
+                .isEqualTo(ErrorCode.EDU_REPORT_NOT_FOUND);
+
+        verify(eduReportQueryRepository, never()).findSignatureStatuses(any(), any());
+    }
+
+    @Test
     @DisplayName("서명 현황 조회 실패 - 부서 교육 권한 없음")
     void getSignatureStatuses_Fail_NoAuthority() {
         // Given
@@ -2015,5 +2138,247 @@ public class EduReportServiceTest {
                 .isInstanceOf(CustomException.class)
                 .hasFieldOrPropertyWithValue("errorCode", ErrorCode.EDU_REPORT_CLOSED);
         verify(eduAttendanceRepository, never()).save(any());
+    }
+
+    @org.junit.jupiter.api.Nested
+    @DisplayName("remindEduReport")
+    class RemindEduReport {
+
+        @Test
+        @DisplayName("리마인드 실패 - 사용자 없음")
+        void remindEduReport_throwsWhenUserNotFound() {
+            // given
+            when(userRepository.findById(1L)).thenReturn(Optional.empty());
+
+            // when & then
+            assertThatThrownBy(() -> eduReportService.remindEduReport(10L, 1L))
+                    .isInstanceOf(CustomException.class)
+                    .extracting("errorCode")
+                    .isEqualTo(ErrorCode.USER_NOT_FOUND);
+        }
+
+        @Test
+        @DisplayName("리마인드 실패 - 교육 보고서 없음")
+        void remindEduReport_throwsWhenEduReportNotFound() {
+            // given
+            User user = createNormalUser();
+            when(userRepository.findById(1L)).thenReturn(Optional.of(user));
+            when(eduReportRepository.findById(10L)).thenReturn(Optional.empty());
+
+            // when & then
+            assertThatThrownBy(() -> eduReportService.remindEduReport(10L, 1L))
+                    .isInstanceOf(CustomException.class)
+                    .extracting("errorCode")
+                    .isEqualTo(ErrorCode.EDU_REPORT_NOT_FOUND);
+        }
+
+        @Test
+        @DisplayName("리마인드 실패 - SAFETY 타입 권한 없음")
+        void remindEduReport_throwsWhenNoSafetyAuthority() {
+            // given
+            User user = createNormalUser();
+            EduReport report =
+                    EduReport.builder().id(10L).eduType(EduType.SAFETY).title("안전 교육").build();
+
+            when(userRepository.findById(1L)).thenReturn(Optional.of(user));
+            when(eduReportRepository.findById(10L)).thenReturn(Optional.of(report));
+
+            // when & then
+            assertThatThrownBy(() -> eduReportService.remindEduReport(10L, 1L))
+                    .isInstanceOf(CustomException.class)
+                    .extracting("errorCode")
+                    .isEqualTo(ErrorCode.NO_AUTHORITY_FOR_SAFETY_WRITE);
+        }
+
+        @Test
+        @DisplayName("리마인드 실패 - PSM 타입 권한 없음")
+        void remindEduReport_throwsWhenNoPsmAuthority() {
+            // given
+            User requestUser = createNormalUser(); // id = 1L
+
+            EduReport report =
+                    EduReport.builder().id(10L).eduType(EduType.PSM).title("PSM 교육").build();
+
+            when(userRepository.findById(1L)).thenReturn(Optional.of(requestUser));
+            when(eduReportRepository.findById(10L)).thenReturn(Optional.of(report));
+
+            // when & then
+            assertThatThrownBy(() -> eduReportService.remindEduReport(10L, 1L))
+                    .isInstanceOf(CustomException.class)
+                    .extracting("errorCode")
+                    .isEqualTo(ErrorCode.NO_AUTHORITY_FOR_PSM_MANAGE);
+        }
+
+        @Test
+        @DisplayName("PSM 타입 - company가 null이면 findAllActiveUserIds 호출")
+        void remindEduReport_psmType_companyNull_callsFindAllActiveUserIds() {
+            // given
+            User user = createNormalUser();
+            user.addAuthority(Authority.MANAGE_PSM);
+            EduReport report =
+                    EduReport.builder()
+                            .id(10L)
+                            .eduType(EduType.PSM)
+                            .title("PSM 교육")
+                            .company(null)
+                            .createdBy(user)
+                            .build();
+
+            List<Long> targetIds = List.of(1L, 2L, 3L);
+            when(userRepository.findById(1L)).thenReturn(Optional.of(user));
+            when(eduReportRepository.findById(10L)).thenReturn(Optional.of(report));
+            when(userRepository.findAllActiveUserIds()).thenReturn(targetIds);
+
+            // when
+            eduReportService.remindEduReport(10L, 1L);
+
+            // then
+            verify(userRepository, times(1)).findAllActiveUserIds();
+            verify(userRepository, never()).findAllIdsByCompany(any());
+            verify(notificationService, times(1))
+                    .sendEduReportRemindAlertToTargets(
+                            anyString(), anyString(), anyLong(), any(), any(Map.class));
+        }
+
+        @Test
+        @DisplayName("PSM 타입 - company가 있으면 findAllIdsByCompany 호출")
+        void remindEduReport_psmType_withCompany_callsFindAllIdsByCompany() {
+            // given
+            User user = createNormalUser();
+            user.addAuthority(Authority.MANAGE_PSM);
+            EduReport report =
+                    EduReport.builder()
+                            .id(10L)
+                            .eduType(EduType.PSM)
+                            .title("PSM 교육")
+                            .company(Company.AWESOME)
+                            .createdBy(user)
+                            .build();
+
+            List<Long> targetIds = List.of(1L, 2L);
+            when(userRepository.findById(1L)).thenReturn(Optional.of(user));
+            when(eduReportRepository.findById(10L)).thenReturn(Optional.of(report));
+            when(userRepository.findAllIdsByCompany(Company.AWESOME)).thenReturn(targetIds);
+
+            // when
+            eduReportService.remindEduReport(10L, 1L);
+
+            // then
+            verify(userRepository, times(1)).findAllIdsByCompany(Company.AWESOME);
+            verify(userRepository, never()).findAllActiveUserIds();
+            verify(notificationService, times(1))
+                    .sendEduReportRemindAlertToTargets(
+                            anyString(), anyString(), anyLong(), any(), any(Map.class));
+        }
+
+        @Test
+        @DisplayName("SAFETY 타입 - metadata에 detailType=GENERAL 포함")
+        void remindEduReport_safetyType_metadataContainsDetailTypeGeneral() {
+            // given
+            User user = createNormalUser();
+            user.addAuthority(Authority.MANAGE_SAFETY);
+            EduReport report =
+                    EduReport.builder()
+                            .id(10L)
+                            .eduType(EduType.SAFETY)
+                            .title("안전 보건 교육")
+                            .company(null)
+                            .createdBy(user)
+                            .build();
+
+            when(userRepository.findById(1L)).thenReturn(Optional.of(user));
+            when(eduReportRepository.findById(10L)).thenReturn(Optional.of(report));
+            when(userRepository.findAllActiveUserIds()).thenReturn(List.of(1L));
+
+            // when
+            eduReportService.remindEduReport(10L, 1L);
+
+            // then
+            ArgumentCaptor<Map> metadataCaptor = ArgumentCaptor.forClass(Map.class);
+            verify(notificationService, times(1))
+                    .sendEduReportRemindAlertToTargets(
+                            anyString(), anyString(), anyLong(), any(), metadataCaptor.capture());
+            Map<String, Object> capturedMetadata = metadataCaptor.getValue();
+            assertThat(capturedMetadata.get("detailType")).isEqualTo("GENERAL");
+            assertThat(capturedMetadata.get("educationType")).isEqualTo("SAFETY");
+        }
+
+        @Test
+        @DisplayName("DEPARTMENT 타입 - department가 있으면 findAllByDepartmentIdIn 호출")
+        void remindEduReport_departmentType_withDepartment_callsFindAllByDepartmentIdIn() {
+            // given
+            User user = createNormalUser();
+            user.addAuthority(Authority.MANAGE_DEPARTMENT_EDUCATION);
+            EduReport report =
+                    EduReport.builder()
+                            .id(10L)
+                            .eduType(EduType.DEPARTMENT)
+                            .title("부서 교육")
+                            .department(defaultDept)
+                            .createdBy(user)
+                            .build();
+
+            List<Long> targetIds = List.of(1L, 2L);
+            when(userRepository.findById(1L)).thenReturn(Optional.of(user));
+            when(eduReportRepository.findById(10L)).thenReturn(Optional.of(report));
+            when(userRepository.findAllByDepartmentIdIn(List.of(defaultDept.getId())))
+                    .thenReturn(
+                            targetIds.stream()
+                                    .map(targetId -> User.builder().id(targetId).build())
+                                    .toList());
+
+            // when
+            eduReportService.remindEduReport(10L, 1L);
+
+            // then
+            verify(userRepository, times(1)).findAllByDepartmentIdIn(List.of(defaultDept.getId()));
+            verify(notificationService, times(1))
+                    .sendEduReportRemindAlertToTargets(
+                            anyString(), anyString(), anyLong(), any(), any(Map.class));
+        }
+
+        @Test
+        @DisplayName("sendEduReportRemindAlertToTargets 호출 검증 - 올바른 인자 전달")
+        void remindEduReport_callsNotificationServiceWithCorrectArgs() {
+            // given
+            User user = createNormalUser();
+            user.addAuthority(Authority.MANAGE_PSM);
+            EduReport report =
+                    EduReport.builder()
+                            .id(10L)
+                            .eduType(EduType.PSM)
+                            .title("PSM 교육 제목")
+                            .company(null)
+                            .createdBy(user)
+                            .build();
+
+            List<Long> targetIds = List.of(1L, 2L, 3L);
+            when(userRepository.findById(1L)).thenReturn(Optional.of(user));
+            when(eduReportRepository.findById(10L)).thenReturn(Optional.of(report));
+            when(userRepository.findAllActiveUserIds()).thenReturn(targetIds);
+
+            // when
+            eduReportService.remindEduReport(10L, 1L);
+
+            // then
+            ArgumentCaptor<String> eduTypeLabelCaptor = ArgumentCaptor.forClass(String.class);
+            ArgumentCaptor<String> eduTitleCaptor = ArgumentCaptor.forClass(String.class);
+            ArgumentCaptor<Long> reportIdCaptor = ArgumentCaptor.forClass(Long.class);
+            @SuppressWarnings("unchecked")
+            ArgumentCaptor<List<Long>> targetIdsCaptor = ArgumentCaptor.forClass(List.class);
+            ArgumentCaptor<Map> metadataCaptor = ArgumentCaptor.forClass(Map.class);
+
+            verify(notificationService, times(1))
+                    .sendEduReportRemindAlertToTargets(
+                            eduTypeLabelCaptor.capture(),
+                            eduTitleCaptor.capture(),
+                            reportIdCaptor.capture(),
+                            targetIdsCaptor.capture(),
+                            metadataCaptor.capture());
+
+            assertThat(eduTitleCaptor.getValue()).isEqualTo("PSM 교육 제목");
+            assertThat(reportIdCaptor.getValue()).isEqualTo(10L);
+            assertThat(targetIdsCaptor.getValue()).isEqualTo(targetIds);
+        }
     }
 }

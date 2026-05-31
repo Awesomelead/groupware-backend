@@ -39,6 +39,9 @@ import java.util.Map;
 
         ### 사용되는 Enum 타입
         - **NotificationDomainType**: 알림 관련 도메인 유형 (`VISIT`: 방문, `APPROVAL`: 전자결재, `NOTICE`: 공지사항, `ANNUAL_LEAVE`: 연차휴가, `GENERAL`: 일반알림, `AUTH`: 계정관련, `EDUCATION`: 교육, `PAYSLIP`: 급여명세서, `REQUEST_HISTORY`: 신청내역, `MY_INFO_UPDATE`: 내정보수정, `CHECK_SHEET`: 체크시트)
+
+        ### 알림 내용 포맷 참고
+        - **VISIT_CHECK_IN**: `[%s] 고객이 %s에 입실했습니다.` (`%s` 시간 포맷: `HH:mm:ss`)
         """)
 @RestController
 @RequiredArgsConstructor

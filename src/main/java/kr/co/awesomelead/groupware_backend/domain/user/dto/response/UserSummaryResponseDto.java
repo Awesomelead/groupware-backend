@@ -2,6 +2,7 @@ package kr.co.awesomelead.groupware_backend.domain.user.dto.response;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 
+import kr.co.awesomelead.groupware_backend.domain.department.enums.Company;
 import kr.co.awesomelead.groupware_backend.domain.department.enums.DepartmentName;
 import kr.co.awesomelead.groupware_backend.domain.user.entity.User;
 import kr.co.awesomelead.groupware_backend.domain.user.enums.JobType;
@@ -32,6 +33,9 @@ public class UserSummaryResponseDto {
     @Schema(description = "근무 직종", example = "MANAGEMENT")
     private JobType jobType;
 
+    @Schema(description = "근무 사업장", example = "어썸리드")
+    private Company workLocation;
+
     @Schema(description = "입사일", example = "2022-03-01")
     private LocalDate hireDate;
 
@@ -46,6 +50,7 @@ public class UserSummaryResponseDto {
                 .departmentName(
                         user.getDepartment() != null ? user.getDepartment().getName() : null)
                 .jobType(user.getJobType())
+                .workLocation(user.getWorkLocation())
                 .hireDate(user.getHireDate())
                 .resignationDate(user.getResignationDate())
                 .build();

@@ -10,7 +10,9 @@ import kr.co.awesomelead.groupware_backend.domain.admin.dto.response.PendingUser
 import kr.co.awesomelead.groupware_backend.domain.admin.enums.AuthorityAction;
 import kr.co.awesomelead.groupware_backend.domain.admin.mapper.AdminMapper;
 import kr.co.awesomelead.groupware_backend.domain.aligo.service.PhoneAuthService;
+import kr.co.awesomelead.groupware_backend.domain.auth.service.RefreshTokenService;
 import kr.co.awesomelead.groupware_backend.domain.department.entity.Department;
+import kr.co.awesomelead.groupware_backend.domain.department.enums.Company;
 import kr.co.awesomelead.groupware_backend.domain.department.repository.DepartmentRepository;
 import kr.co.awesomelead.groupware_backend.domain.notification.enums.NotificationDomainType;
 import kr.co.awesomelead.groupware_backend.domain.notification.enums.NotificationMessage;
@@ -25,16 +27,21 @@ import kr.co.awesomelead.groupware_backend.domain.user.enums.Role;
 import kr.co.awesomelead.groupware_backend.domain.user.enums.Status;
 import kr.co.awesomelead.groupware_backend.domain.user.repository.MyInfoUpdateRequestRepository;
 import kr.co.awesomelead.groupware_backend.domain.user.repository.UserRepository;
+import kr.co.awesomelead.groupware_backend.domain.user.repository.querydsl.UserQueryRepository;
 import kr.co.awesomelead.groupware_backend.global.error.CustomException;
 import kr.co.awesomelead.groupware_backend.global.error.ErrorCode;
 
 import lombok.RequiredArgsConstructor;
 
+import org.apache.poi.ss.usermodel.*;
+import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -45,9 +52,11 @@ import java.util.stream.Collectors;
 public class AdminService {
 
     private final UserRepository userRepository;
+    private final UserQueryRepository userQueryRepository;
     private final DepartmentRepository departmentRepository;
     private final MyInfoUpdateRequestRepository myInfoUpdateRequestRepository;
     private final PhoneAuthService phoneAuthService;
+    private final RefreshTokenService refreshTokenService;
     private final NotificationService notificationService;
     private final AdminMapper adminMapper;
 
@@ -127,10 +136,6 @@ public class AdminService {
         user.setWorkLocation(requestDto.getWorkLocation());
         user.setDepartment(department);
         user.setJobType(requestDto.getJobType());
-
-        if (requestDto.getJobType() == JobType.FIELD && requestDto.getRole() == Role.ADMIN) {
-            throw new CustomException(ErrorCode.INVALID_JOB_TYPE_FOR_ADMIN_ROLE);
-        }
         if (requestDto.getRole() != null) {
             user.setRole(requestDto.getRole());
         }
@@ -159,6 +164,9 @@ public class AdminService {
             }
         }
         userRepository.save(user);
+
+        // 회원가입 승인 처리 완료 시 관리자 승인대기 알림 해제
+        notificationService.resolveRequiresApproval(NotificationDomainType.AUTH, user.getId());
     }
 
     @Transactional(readOnly = true)
@@ -182,6 +190,8 @@ public class AdminService {
             Long departmentId,
             JobType jobType,
             Role role,
+            Company workLocation,
+            List<Status> statuses,
             Pageable pageable) {
         User admin =
                 userRepository
@@ -197,9 +207,16 @@ public class AdminService {
 
         String normalizedKeyword = hasText(keyword) ? keyword.trim() : null;
 
-        return userRepository
-                .findAllWithDepartmentAndKeyword(
-                        normalizedKeyword, position, departmentId, jobType, role, pageable)
+        return userQueryRepository
+                .findAllForAdminWithFilters(
+                        normalizedKeyword,
+                        position,
+                        departmentId,
+                        jobType,
+                        role,
+                        workLocation,
+                        statuses,
+                        pageable)
                 .map(
                         u ->
                                 AdminUserSummaryResponseDto.from(
@@ -306,12 +323,6 @@ public class AdminService {
             user.setRole(requestDto.getRole());
         }
 
-        JobType finalJobType = user.getJobType();
-        Role finalRole = user.getRole();
-        if (finalJobType == JobType.FIELD && finalRole == Role.ADMIN) {
-            throw new CustomException(ErrorCode.INVALID_JOB_TYPE_FOR_ADMIN_ROLE);
-        }
-
         if (requestDto.getAuthorities() != null) {
             user.getAuthorities().clear();
             requestDto.getAuthorities().forEach(user::addAuthority);
@@ -320,8 +331,9 @@ public class AdminService {
         if (requestDto.getHireDate() != null) {
             user.setHireDate(requestDto.getHireDate());
         }
-        if (requestDto.getResignationDate() != null) {
-            user.setResignationDate(requestDto.getResignationDate());
+        user.updateResignationInfo(requestDto.getResignationDate());
+        if (user.getStatus() == Status.SUSPENDED) {
+            refreshTokenService.deleteRefreshTokenByEmail(user.getEmail());
         }
 
         userRepository.save(user);
@@ -453,7 +465,7 @@ public class AdminService {
 
         // 관리자들의 승인 대기 알림 해제
         notificationService.resolveRequiresApproval(
-                NotificationDomainType.MY_INFO_UPDATE, request.getId());
+                NotificationDomainType.MY_INFO_UPDATE, request.getUser().getId());
 
         // 요청 승인 알림 전송 (FCM + Notification DB)
         notificationService.sendAlertToUser(
@@ -493,7 +505,7 @@ public class AdminService {
 
         // 관리자들의 승인 대기 알림 해제
         notificationService.resolveRequiresApproval(
-                NotificationDomainType.MY_INFO_UPDATE, request.getId());
+                NotificationDomainType.MY_INFO_UPDATE, request.getUser().getId());
 
         // 요청 반려 알림 전송 (FCM + Notification DB)
         notificationService.sendAlertToUser(
@@ -544,6 +556,143 @@ public class AdminService {
                                                 ErrorCode.MY_INFO_UPDATE_REQUEST_NOT_FOUND));
 
         return adminMapper.toDetailDto(request);
+    }
+
+    @Transactional(readOnly = true)
+    public byte[] getUsersExcel(
+            Long adminId,
+            String keyword,
+            Position position,
+            Long departmentId,
+            JobType jobType,
+            Role role,
+            Company workLocation,
+            List<Status> statuses) {
+        User admin =
+                userRepository
+                        .findById(adminId)
+                        .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
+        validateRegistrationAuthority(admin);
+
+        List<User> users =
+                userQueryRepository.findAllForAdminWithFiltersNoPaging(
+                        keyword, position, departmentId, jobType, role, workLocation, statuses);
+
+        String[] headers = {
+            "No.", "한글 이름", "영문 이름", "생년월일", "국적", "우편번호", "주소1", "주소2", "주민등록번호", "전화번호", "이메일",
+            "근무사업장", "부서명", "직급", "근무직종", "입사일", "퇴사일", "역할", "회원가입 상태"
+        };
+
+        try (XSSFWorkbook workbook = new XSSFWorkbook()) {
+            Sheet sheet = workbook.createSheet("직원명단");
+
+            CellStyle headerStyle = workbook.createCellStyle();
+            headerStyle.setFillForegroundColor(IndexedColors.GREY_25_PERCENT.getIndex());
+            headerStyle.setFillPattern(FillPatternType.SOLID_FOREGROUND);
+            Font headerFont = workbook.createFont();
+            headerFont.setBold(true);
+            headerStyle.setFont(headerFont);
+            headerStyle.setAlignment(HorizontalAlignment.CENTER);
+            setBorderThin(headerStyle);
+
+            CellStyle dataStyle = workbook.createCellStyle();
+            setBorderThin(dataStyle);
+
+            Row headerRow = sheet.createRow(0);
+            for (int i = 0; i < headers.length; i++) {
+                Cell cell = headerRow.createCell(i);
+                cell.setCellValue(headers[i]);
+                cell.setCellStyle(headerStyle);
+            }
+
+            for (int i = 0; i < users.size(); i++) {
+                User u = users.get(i);
+                Row row = sheet.createRow(i + 1);
+                int col = 0;
+                createDataCell(row, col++, String.valueOf(i + 1), dataStyle);
+                createDataCell(row, col++, u.getNameKor(), dataStyle);
+                createDataCell(row, col++, u.getNameEng(), dataStyle);
+                createDataCell(
+                        row,
+                        col++,
+                        u.getBirthDate() != null ? u.getBirthDate().toString() : "",
+                        dataStyle);
+                createDataCell(row, col++, u.getNationality(), dataStyle);
+                createDataCell(row, col++, u.getZipcode(), dataStyle);
+                createDataCell(row, col++, u.getAddress1(), dataStyle);
+                createDataCell(row, col++, u.getAddress2(), dataStyle);
+                createDataCell(row, col++, u.getRegistrationNumber(), dataStyle);
+                createDataCell(row, col++, u.getPhoneNumber(), dataStyle);
+                createDataCell(row, col++, u.getEmail(), dataStyle);
+                createDataCell(
+                        row,
+                        col++,
+                        u.getWorkLocation() != null ? u.getWorkLocation().getDescription() : "",
+                        dataStyle);
+                createDataCell(
+                        row,
+                        col++,
+                        u.getDepartment() != null
+                                ? u.getDepartment().getName().getDescription()
+                                : "",
+                        dataStyle);
+                createDataCell(
+                        row,
+                        col++,
+                        u.getPosition() != null ? u.getPosition().getDescription() : "",
+                        dataStyle);
+                createDataCell(
+                        row,
+                        col++,
+                        u.getJobType() != null ? u.getJobType().getDescription() : "",
+                        dataStyle);
+                createDataCell(
+                        row,
+                        col++,
+                        u.getHireDate() != null ? u.getHireDate().toString() : "",
+                        dataStyle);
+                createDataCell(
+                        row,
+                        col++,
+                        u.getResignationDate() != null ? u.getResignationDate().toString() : "",
+                        dataStyle);
+                createDataCell(
+                        row,
+                        col++,
+                        u.getRole() != null ? u.getRole().getDescription() : "",
+                        dataStyle);
+                createDataCell(
+                        row,
+                        col++,
+                        u.getStatus() != null ? u.getStatus().getDescription() : "",
+                        dataStyle);
+            }
+
+            for (int i = 0; i < headers.length; i++) {
+                sheet.autoSizeColumn(i);
+                int currentWidth = sheet.getColumnWidth(i);
+                sheet.setColumnWidth(i, Math.max((int) (currentWidth * 1.3), 3000));
+            }
+
+            ByteArrayOutputStream out = new ByteArrayOutputStream();
+            workbook.write(out);
+            return out.toByteArray();
+        } catch (IOException e) {
+            throw new RuntimeException("엑셀 파일 생성 중 오류가 발생했습니다.", e);
+        }
+    }
+
+    private void setBorderThin(CellStyle style) {
+        style.setBorderTop(BorderStyle.THIN);
+        style.setBorderBottom(BorderStyle.THIN);
+        style.setBorderLeft(BorderStyle.THIN);
+        style.setBorderRight(BorderStyle.THIN);
+    }
+
+    private void createDataCell(Row row, int col, String value, CellStyle style) {
+        Cell cell = row.createCell(col);
+        cell.setCellValue(value != null ? value : "");
+        cell.setCellStyle(style);
     }
 
     private boolean hasText(String value) {

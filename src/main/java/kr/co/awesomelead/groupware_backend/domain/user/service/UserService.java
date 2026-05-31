@@ -1,6 +1,7 @@
 package kr.co.awesomelead.groupware_backend.domain.user.service;
 
 import kr.co.awesomelead.groupware_backend.domain.aligo.service.PhoneAuthService;
+import kr.co.awesomelead.groupware_backend.domain.department.enums.Company;
 import kr.co.awesomelead.groupware_backend.domain.notification.enums.NotificationDomainType;
 import kr.co.awesomelead.groupware_backend.domain.notification.enums.NotificationMessage;
 import kr.co.awesomelead.groupware_backend.domain.notification.service.NotificationService;
@@ -14,6 +15,7 @@ import kr.co.awesomelead.groupware_backend.domain.user.enums.JobType;
 import kr.co.awesomelead.groupware_backend.domain.user.enums.MyInfoUpdateRequestStatus;
 import kr.co.awesomelead.groupware_backend.domain.user.enums.Position;
 import kr.co.awesomelead.groupware_backend.domain.user.enums.Role;
+import kr.co.awesomelead.groupware_backend.domain.user.enums.Status;
 import kr.co.awesomelead.groupware_backend.domain.user.repository.MyInfoUpdateRequestRepository;
 import kr.co.awesomelead.groupware_backend.domain.user.repository.UserRepository;
 import kr.co.awesomelead.groupware_backend.domain.user.repository.querydsl.UserQueryRepository;
@@ -30,6 +32,7 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.List;
 import java.util.Map;
 
 @Slf4j
@@ -145,7 +148,7 @@ public class UserService {
         notificationService.sendAlertToAdminsRequiringApproval(
                 NotificationMessage.MY_INFO_UPDATE_REQUEST_ADMIN,
                 NotificationDomainType.MY_INFO_UPDATE,
-                saved.getId(),
+                user.getId(),
                 Map.of("requestId", saved.getId()),
                 user.getDisplayName());
 
@@ -182,7 +185,7 @@ public class UserService {
         log.info("내 정보 수정 요청 취소 - 사용자 ID: {}, 요청 ID: {}", user.getId(), requestId);
     }
 
-    // 전 직원 목록 조회 (AVAILABLE 상태)
+    // 전 직원 목록 조회
     @Transactional(readOnly = true)
     public Page<UserSummaryResponseDto> getEmployeeList(
             String keyword,
@@ -190,11 +193,37 @@ public class UserService {
             Long departmentId,
             JobType jobType,
             Role role,
+            List<Status> statuses,
             Pageable pageable) {
         Pageable unsorted = PageRequest.of(pageable.getPageNumber(), pageable.getPageSize());
         return userQueryRepository
                 .findAllAvailableWithFilters(
-                        keyword, position, departmentId, jobType, role, unsorted)
+                        keyword, position, departmentId, jobType, role, statuses, unsorted)
+                .map(UserSummaryResponseDto::from);
+    }
+
+    // 전 직원 목록 조회 (근무사업장 필터 포함)
+    @Transactional(readOnly = true)
+    public Page<UserSummaryResponseDto> getEmployeeList(
+            String keyword,
+            Position position,
+            Long departmentId,
+            JobType jobType,
+            Role role,
+            Company workLocation,
+            List<Status> statuses,
+            Pageable pageable) {
+        Pageable unsorted = PageRequest.of(pageable.getPageNumber(), pageable.getPageSize());
+        return userQueryRepository
+                .findAllAvailableWithFilters(
+                        keyword,
+                        position,
+                        departmentId,
+                        jobType,
+                        role,
+                        workLocation,
+                        statuses,
+                        unsorted)
                 .map(UserSummaryResponseDto::from);
     }
 

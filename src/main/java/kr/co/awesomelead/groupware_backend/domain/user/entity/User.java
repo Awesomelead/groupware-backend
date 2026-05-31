@@ -34,7 +34,6 @@ import kr.co.awesomelead.groupware_backend.domain.user.enums.JobType;
 import kr.co.awesomelead.groupware_backend.domain.user.enums.Position;
 import kr.co.awesomelead.groupware_backend.domain.user.enums.Role;
 import kr.co.awesomelead.groupware_backend.domain.user.enums.Status;
-import kr.co.awesomelead.groupware_backend.domain.visit.entity.Visit;
 import kr.co.awesomelead.groupware_backend.global.encryption.Encryptor;
 
 import lombok.AllArgsConstructor;
@@ -158,11 +157,6 @@ public class User {
     @Builder.Default
     @OneToMany(mappedBy = "user", fetch = FetchType.LAZY)
     @JsonManagedReference
-    private List<Visit> visits = new ArrayList<>();
-
-    @Builder.Default
-    @OneToMany(mappedBy = "user", fetch = FetchType.LAZY)
-    @JsonManagedReference
     private List<CheckSheet> checkSheets = new ArrayList<>();
 
     @Builder.Default
@@ -219,6 +213,18 @@ public class User {
             this.registrationNumberHash = hashValue(newRegNum);
             // 2. 생년월일 갱신
             this.birthDate = calculateBirthDate(newRegNum);
+        }
+    }
+
+    public void updateResignationInfo(LocalDate resignationDate) {
+        if (resignationDate != null) {
+            this.resignationDate = resignationDate;
+            this.status = Status.SUSPENDED;
+        } else {
+            this.resignationDate = null;
+            if (this.status != Status.PENDING) {
+                this.status = Status.AVAILABLE;
+            }
         }
     }
 

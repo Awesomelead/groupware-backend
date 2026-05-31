@@ -73,7 +73,7 @@ public class SafetyTrainingSession {
     private Company companyScope;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "instructor_user_id", nullable = false)
+    @JoinColumn(name = "instructor_user_id")
     private User instructorUser;
 
     @Column(name = "instructor_name_snapshot", nullable = false, length = 100)
@@ -104,7 +104,7 @@ public class SafetyTrainingSession {
     private String reportFileKey;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "created_by", nullable = false)
+    @JoinColumn(name = "created_by", nullable = true)
     private User createdBy;
 
     @Column(name = "created_at", nullable = false, updatable = false)

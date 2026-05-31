@@ -1,5 +1,8 @@
 package kr.co.awesomelead.groupware_backend.domain.education.service;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+
 import kr.co.awesomelead.groupware_backend.domain.department.entity.Department;
 import kr.co.awesomelead.groupware_backend.domain.department.enums.Company;
 import kr.co.awesomelead.groupware_backend.domain.department.enums.DepartmentName;
@@ -41,6 +44,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.StringUtils;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
@@ -54,6 +58,7 @@ import java.util.Map;
 @Service
 @RequiredArgsConstructor
 public class EduReportService {
+    private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
 
     private final EduReportRepository eduReportRepository;
     private final EduReportQueryRepository eduReportQueryRepository;
@@ -76,11 +81,20 @@ public class EduReportService {
     public Long createPsmEduReport(
             PsmEduReportCreateRequestDto requestDto, List<MultipartFile> files, Long id)
             throws IOException {
+        EditorContentFields contentFields =
+                resolveEditorCreateContentFields(
+                        requestDto.getContent(),
+                        requestDto.getContentDelta(),
+                        requestDto.getContentHtml());
+
         EduReportRequestDto baseRequest =
                 EduReportRequestDto.builder()
                         .eduType(EduType.PSM)
                         .title(requestDto.getTitle())
-                        .content(requestDto.getContent())
+                        .content(contentFields.content())
+                        .contentDelta(contentFields.contentDelta())
+                        .contentHtml(contentFields.contentHtml())
+                        .contentText(contentFields.contentText())
                         .pinned(requestDto.isPinned())
                         .signatureRequired(false)
                         .categoryId(requestDto.getCategoryId())
@@ -93,11 +107,20 @@ public class EduReportService {
     public Long createSafetyEduReport(
             SafetyEduReportCreateRequestDto requestDto, List<MultipartFile> files, Long id)
             throws IOException {
+        EditorContentFields contentFields =
+                resolveEditorCreateContentFields(
+                        requestDto.getContent(),
+                        requestDto.getContentDelta(),
+                        requestDto.getContentHtml());
+
         EduReportRequestDto baseRequest =
                 EduReportRequestDto.builder()
                         .eduType(EduType.SAFETY)
                         .title(requestDto.getTitle())
-                        .content(requestDto.getContent())
+                        .content(contentFields.content())
+                        .contentDelta(contentFields.contentDelta())
+                        .contentHtml(contentFields.contentHtml())
+                        .contentText(contentFields.contentText())
                         .pinned(requestDto.isPinned())
                         .signatureRequired(false)
                         .categoryId(requestDto.getCategoryId())
@@ -179,7 +202,7 @@ public class EduReportService {
                 targetUserIds = userRepository.findAllIdsByCompany(report.getCompany());
             }
         } else {
-            targetUserIds = userRepository.findAllIdsByDepartmentId(requestDto.getDepartmentId());
+            targetUserIds = findDepartmentNotificationTargetUserIds(department);
         }
         Map<String, Object> metadata =
                 requestDto.getEduType() == EduType.SAFETY
@@ -203,11 +226,20 @@ public class EduReportService {
     public Long createDepartmentEduReport(
             DepartmentEduReportCreateRequestDto requestDto, List<MultipartFile> files, Long id)
             throws IOException {
+        EditorContentFields contentFields =
+                resolveEditorCreateContentFields(
+                        requestDto.getContent(),
+                        requestDto.getContentDelta(),
+                        requestDto.getContentHtml());
+
         EduReportRequestDto baseRequest =
                 EduReportRequestDto.builder()
                         .eduType(EduType.DEPARTMENT)
                         .title(requestDto.getTitle())
-                        .content(requestDto.getContent())
+                        .content(contentFields.content())
+                        .contentDelta(contentFields.contentDelta())
+                        .contentHtml(contentFields.contentHtml())
+                        .contentText(contentFields.contentText())
                         .pinned(requestDto.isPinned())
                         .signatureRequired(requestDto.isSignatureRequired())
                         .departmentId(requestDto.getDepartmentId())
@@ -237,7 +269,12 @@ public class EduReportService {
 
     @Transactional(readOnly = true)
     public List<EduReportSummaryDto> getEduReports(
-            EduType type, DepartmentName departmentName, Long categoryId, Long id, String title) {
+            EduType type,
+            DepartmentName departmentName,
+            EduReportStatus status,
+            Long categoryId,
+            Long id,
+            String title) {
 
         User user =
                 userRepository
@@ -249,6 +286,7 @@ public class EduReportService {
         Company psmCompanyFilter = canReadAllPsmCompanies ? null : user.getWorkLocation();
 
         Department dept;
+        List<Long> accessibleDepartmentIds = null;
         if (hasAccess) {
             // 권한 있음: departmentName이 지정되면 해당 부서, 없으면 null(전체 조회)
             dept =
@@ -263,12 +301,15 @@ public class EduReportService {
         } else {
             // 권한 없음: 자신의 부서로 제한
             dept = user.getDepartment();
+            accessibleDepartmentIds = collectDepartmentAndChildrenIds(dept);
         }
 
         List<EduReportSummaryDto> summaries =
                 eduReportQueryRepository.findEduReports(
                         type,
                         dept,
+                        accessibleDepartmentIds,
+                        status,
                         categoryId,
                         id,
                         hasAccess,
@@ -276,18 +317,23 @@ public class EduReportService {
                         canReadAllPsmCompanies,
                         title);
 
-        summaries.forEach(summary -> applyDepartmentMyStatusToSummary(user, summary));
+        summaries.forEach(
+                summary -> {
+                    applyDepartmentMyStatusToSummary(user, summary);
+                    applyCompanyScopeToSummary(summary);
+                });
         return summaries;
     }
 
     @Transactional(readOnly = true)
     public List<EduReportSummaryDto> getDepartmentEduReports(
-            DepartmentName departmentName, Long id, String title) {
-        return getEduReports(EduType.DEPARTMENT, departmentName, null, id, title);
+            DepartmentName departmentName, EduReportStatus status, Long id, String title) {
+        return getEduReports(EduType.DEPARTMENT, departmentName, status, null, id, title);
     }
 
     @Transactional(readOnly = true)
-    public List<EduReportSummaryDto> getPsmEduReports(Long categoryId, Long id, String title) {
+    public List<EduReportSummaryDto> getPsmEduReports(
+            Long categoryId, Company company, EduReportStatus status, Long id, String title) {
         User user =
                 userRepository
                         .findById(id)
@@ -295,12 +341,21 @@ public class EduReportService {
 
         boolean canReadAllCompanies = user.hasAuthority(Authority.MANAGE_PSM);
         Company companyFilter = canReadAllCompanies ? null : user.getWorkLocation();
-        return eduReportQueryRepository.findPsmEduReports(
-                categoryId, id, companyFilter, canReadAllCompanies, title);
+        if (!canReadAllCompanies
+                && company != null
+                && (companyFilter == null || company != companyFilter)) {
+            return List.of();
+        }
+        List<EduReportSummaryDto> summaries =
+                eduReportQueryRepository.findPsmEduReports(
+                        categoryId, id, companyFilter, canReadAllCompanies, company, status, title);
+        summaries.forEach(this::applyCompanyScopeToSummary);
+        return summaries;
     }
 
     @Transactional(readOnly = true)
-    public List<EduReportSummaryDto> getSafetyEduReports(Long categoryId, Long id, String title) {
+    public List<EduReportSummaryDto> getSafetyEduReports(
+            Long categoryId, Company company, EduReportStatus status, Long id, String title) {
         User user =
                 userRepository
                         .findById(id)
@@ -308,8 +363,16 @@ public class EduReportService {
 
         boolean canReadAllCompanies = user.hasAuthority(Authority.MANAGE_SAFETY);
         Company companyFilter = canReadAllCompanies ? null : user.getWorkLocation();
-        return eduReportQueryRepository.findSafetyEduReports(
-                categoryId, id, companyFilter, canReadAllCompanies, title);
+        if (!canReadAllCompanies
+                && company != null
+                && (companyFilter == null || company != companyFilter)) {
+            return List.of();
+        }
+        List<EduReportSummaryDto> summaries =
+                eduReportQueryRepository.findSafetyEduReports(
+                        categoryId, id, companyFilter, canReadAllCompanies, company, status, title);
+        summaries.forEach(this::applyCompanyScopeToSummary);
+        return summaries;
     }
 
     @Transactional(readOnly = true)
@@ -349,7 +412,7 @@ public class EduReportService {
         if (!hasAccess) {
             if (user.getDepartment() == null
                     || report.getDepartment() == null
-                    || !report.getDepartment().getId().equals(user.getDepartment().getId())) {
+                    || !isSameOrAncestorDepartment(user.getDepartment(), report.getDepartment())) {
                 throw new CustomException(ErrorCode.EDU_REPORT_NOT_FOUND);
             }
         }
@@ -508,6 +571,14 @@ public class EduReportService {
                 resolveDepartmentMyCompletionStatus(summary.isSignatureRequired(), mySigned));
     }
 
+    private void applyCompanyScopeToSummary(EduReportSummaryDto summary) {
+        if (summary.getEduType() != EduType.PSM && summary.getEduType() != EduType.SAFETY) {
+            summary.setCompanyScope(null);
+            return;
+        }
+        summary.setCompanyScope(toCompanyScopeList(summary.getCompany()));
+    }
+
     private Boolean resolveDepartmentMySigned(
             User user, DepartmentName reportDepartmentName, boolean attended) {
         if (user.getDepartment() == null
@@ -620,6 +691,7 @@ public class EduReportService {
                         attachment -> {
                             s3Service.deleteFile(attachment.getS3Key());
                         });
+        eduAttendanceRepository.deleteByEduReportId(report.getId());
         eduReportRepository.delete(report);
     }
 
@@ -834,9 +906,32 @@ public class EduReportService {
         List<String> uploadedAttachmentKeys = new ArrayList<>();
         try {
             report.setTitle(requestDto.getTitle().trim());
-            report.setContent(requestDto.getContent().trim());
             report.setPinned(requestDto.isPinned());
             report.setSignatureRequired(requestDto.isSignatureRequired());
+
+            if (report.getEduType() == EduType.PSM
+                    || report.getEduType() == EduType.DEPARTMENT
+                    || report.getEduType() == EduType.SAFETY) {
+                EditorContentFields contentFields =
+                        resolveEditorUpdateContentFields(
+                                report,
+                                requestDto.getContent(),
+                                requestDto.getContentDelta(),
+                                requestDto.getContentHtml());
+                report.updateEditorContent(
+                        contentFields.content(),
+                        contentFields.contentDelta(),
+                        contentFields.contentHtml(),
+                        contentFields.contentText());
+            } else {
+                if (!StringUtils.hasText(requestDto.getContent())) {
+                    throw new CustomException(ErrorCode.INVALID_ARGUMENT);
+                }
+                report.setContent(requestDto.getContent().trim());
+                report.setContentDelta(null);
+                report.setContentHtml(null);
+                report.setContentText(null);
+            }
 
             if (report.getEduType() == EduType.DEPARTMENT) {
                 if (requestDto.getDepartmentId() == null) {
@@ -964,7 +1059,8 @@ public class EduReportService {
             return false;
         }
 
-        // Swagger UI generated curl can send placeholder part: files=string -> filename "blob"
+        // Swagger UI generated curl can send placeholder part: files=string -> filename
+        // "blob"
         if ("blob".equalsIgnoreCase(originalFileName) && file.getSize() <= 32) {
             try {
                 String payload = new String(file.getBytes(), StandardCharsets.UTF_8).trim();
@@ -1061,6 +1157,164 @@ public class EduReportService {
         return category;
     }
 
+    private EditorContentFields resolveEditorCreateContentFields(
+            String requestContent, String requestContentDelta, String requestContentHtml) {
+        String content = requestContent;
+        if (!StringUtils.hasText(content)) {
+            if (StringUtils.hasText(requestContentDelta)) {
+                content = extractPlainTextFromDelta(requestContentDelta);
+            } else if (StringUtils.hasText(requestContentHtml)) {
+                content = extractPlainTextFromHtml(requestContentHtml);
+            }
+        }
+
+        String contentText =
+                resolveSearchableText(requestContentDelta, requestContentHtml, content, null);
+
+        if (!StringUtils.hasText(content) && !StringUtils.hasText(contentText)) {
+            throw new CustomException(ErrorCode.INVALID_ARGUMENT);
+        }
+
+        return new EditorContentFields(
+                normalizeNullableContent(content),
+                normalizeNullableContent(requestContentDelta),
+                normalizeNullableContent(requestContentHtml),
+                contentText);
+    }
+
+    private EditorContentFields resolveEditorUpdateContentFields(
+            EduReport report,
+            String requestContent,
+            String requestContentDelta,
+            String requestContentHtml) {
+        String resolvedContentDelta =
+                requestContentDelta != null ? requestContentDelta : report.getContentDelta();
+        String resolvedContentHtml =
+                requestContentHtml != null ? requestContentHtml : report.getContentHtml();
+
+        String resolvedContent;
+        if (requestContent != null) {
+            resolvedContent = requestContent;
+        } else if (requestContentDelta != null) {
+            resolvedContent = extractPlainTextFromDelta(requestContentDelta);
+        } else if (requestContentHtml != null) {
+            resolvedContent = extractPlainTextFromHtml(requestContentHtml);
+        } else {
+            resolvedContent = report.getContent();
+        }
+
+        String resolvedContentText =
+                resolveSearchableText(
+                        resolvedContentDelta,
+                        resolvedContentHtml,
+                        resolvedContent,
+                        report.getContentText());
+
+        if (!StringUtils.hasText(resolvedContent) && !StringUtils.hasText(resolvedContentText)) {
+            throw new CustomException(ErrorCode.INVALID_ARGUMENT);
+        }
+
+        return new EditorContentFields(
+                normalizeNullableContent(resolvedContent),
+                normalizeNullableContent(resolvedContentDelta),
+                normalizeNullableContent(resolvedContentHtml),
+                resolvedContentText);
+    }
+
+    private String resolveSearchableText(
+            String contentDelta, String contentHtml, String content, String fallbackContentText) {
+        String deltaText = extractPlainTextFromDelta(contentDelta);
+        if (StringUtils.hasText(deltaText)) {
+            return deltaText;
+        }
+
+        String htmlText = extractPlainTextFromHtml(contentHtml);
+        if (StringUtils.hasText(htmlText)) {
+            return htmlText;
+        }
+
+        String contentText = extractPlainTextFromHtml(content);
+        if (StringUtils.hasText(contentText)) {
+            return contentText;
+        }
+
+        if (StringUtils.hasText(content)) {
+            return content.trim();
+        }
+
+        if (StringUtils.hasText(fallbackContentText)) {
+            return fallbackContentText;
+        }
+        return "";
+    }
+
+    private String extractPlainTextFromDelta(String contentDelta) {
+        if (!StringUtils.hasText(contentDelta)) {
+            return "";
+        }
+
+        try {
+            JsonNode root = OBJECT_MAPPER.readTree(contentDelta);
+            JsonNode ops = root.path("ops");
+            if (!ops.isArray()) {
+                return "";
+            }
+
+            StringBuilder plain = new StringBuilder();
+            for (JsonNode op : ops) {
+                JsonNode insert = op.get("insert");
+                if (insert == null) {
+                    continue;
+                }
+                if (insert.isTextual()) {
+                    plain.append(insert.asText());
+                } else if (insert.isObject() && insert.has("image")) {
+                    plain.append(' ');
+                }
+            }
+            return normalizeWhitespace(plain.toString());
+        } catch (Exception e) {
+            return "";
+        }
+    }
+
+    private String extractPlainTextFromHtml(String html) {
+        if (!StringUtils.hasText(html)) {
+            return "";
+        }
+        String text =
+                html.replaceAll("(?is)<script[^>]*>.*?</script>", " ")
+                        .replaceAll("(?is)<style[^>]*>.*?</style>", " ")
+                        .replaceAll("(?is)<br\\s*/?>", "\n")
+                        .replaceAll("(?is)</p>", "\n")
+                        .replaceAll("(?is)</tr>", "\n")
+                        .replaceAll("(?is)<[^>]+>", " ")
+                        .replace("&nbsp;", " ")
+                        .replace("&amp;", "&")
+                        .replace("&lt;", "<")
+                        .replace("&gt;", ">");
+        return normalizeWhitespace(text);
+    }
+
+    private String normalizeWhitespace(String text) {
+        if (!StringUtils.hasText(text)) {
+            return "";
+        }
+        return text.replace('\u00A0', ' ')
+                .replaceAll("[\\t\\x0B\\f\\r ]+", " ")
+                .replaceAll(" *\\n *", "\n")
+                .replaceAll("\\n{3,}", "\n\n")
+                .trim();
+    }
+
+    private String normalizeNullableContent(String content) {
+        if (content == null) {
+            return null;
+        }
+        String normalized = content.trim();
+        return normalized.isEmpty() ? null : normalized;
+    }
+
     @Transactional(readOnly = true)
     public List<EduReportSignatureStatusDto> getSignatureStatuses(
             Long educationId, String name, Long userId) {
@@ -1074,6 +1328,11 @@ public class EduReportService {
                 eduReportRepository
                         .findById(educationId)
                         .orElseThrow(() -> new CustomException(ErrorCode.EDU_REPORT_NOT_FOUND));
+
+        // 부서 교육 서명 현황 조회 API는 부서 교육 게시물에 대해서만 허용한다.
+        if (report.getEduType() != EduType.DEPARTMENT) {
+            throw new CustomException(ErrorCode.EDU_REPORT_NOT_FOUND);
+        }
 
         validateCreateAuthority(user, report.getEduType());
 
@@ -1099,6 +1358,62 @@ public class EduReportService {
                 .isSigned(isSigned)
                 .signatureUrl(signatureUrl)
                 .build();
+    }
+
+    private boolean isSameOrAncestorDepartment(
+            Department ancestorCandidate, Department department) {
+        if (ancestorCandidate == null || department == null) {
+            return false;
+        }
+
+        Department cursor = department;
+        while (cursor != null) {
+            if (ancestorCandidate.getId().equals(cursor.getId())) {
+                return true;
+            }
+            cursor = cursor.getParent();
+        }
+        return false;
+    }
+
+    private List<Long> collectDepartmentAndChildrenIds(Department department) {
+        if (department == null) {
+            return List.of();
+        }
+
+        LinkedHashSet<Long> departmentIds = new LinkedHashSet<>();
+        collectDepartmentAndChildrenIdsRecursive(department, departmentIds);
+        return new ArrayList<>(departmentIds);
+    }
+
+    private void collectDepartmentAndChildrenIdsRecursive(
+            Department department, LinkedHashSet<Long> departmentIds) {
+        departmentIds.add(department.getId());
+        if (department.getChildren() == null) {
+            return;
+        }
+        for (Department child : department.getChildren()) {
+            collectDepartmentAndChildrenIdsRecursive(child, departmentIds);
+        }
+    }
+
+    private List<Long> findDepartmentNotificationTargetUserIds(Department department) {
+        if (department == null) {
+            return List.of();
+        }
+
+        LinkedHashSet<Long> departmentIds = new LinkedHashSet<>();
+        collectDepartmentAndChildrenIdsRecursive(department, departmentIds);
+
+        Department cursor = department.getParent();
+        while (cursor != null) {
+            departmentIds.add(cursor.getId());
+            cursor = cursor.getParent();
+        }
+
+        return userRepository.findAllByDepartmentIdIn(new ArrayList<>(departmentIds)).stream()
+                .map(User::getId)
+                .toList();
     }
 
     private long calculateTargetPeopleCount(EduReport report) {
@@ -1136,6 +1451,47 @@ public class EduReportService {
         return List.of(storedCompany.name());
     }
 
+    @Transactional
+    public void remindEduReport(Long eduReportId, Long userId) {
+        User user =
+                userRepository
+                        .findById(userId)
+                        .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
+
+        EduReport report =
+                eduReportRepository
+                        .findById(eduReportId)
+                        .orElseThrow(() -> new CustomException(ErrorCode.EDU_REPORT_NOT_FOUND));
+
+        validateCreateAuthority(user, report.getEduType());
+
+        List<Long> targetUserIds;
+        if (report.getEduType() == EduType.PSM || report.getEduType() == EduType.SAFETY) {
+            if (report.getCompany() == null) {
+                targetUserIds = userRepository.findAllActiveUserIds();
+            } else {
+                targetUserIds = userRepository.findAllIdsByCompany(report.getCompany());
+            }
+        } else {
+            targetUserIds =
+                    report.getDepartment() != null
+                            ? findDepartmentNotificationTargetUserIds(report.getDepartment())
+                            : List.of();
+        }
+
+        Map<String, Object> metadata =
+                report.getEduType() == EduType.SAFETY
+                        ? Map.of("educationType", "SAFETY", "detailType", "GENERAL")
+                        : Map.of("educationType", report.getEduType().name());
+
+        notificationService.sendEduReportRemindAlertToTargets(
+                report.getEduType().getDescription(),
+                report.getTitle(),
+                eduReportId,
+                targetUserIds,
+                metadata);
+    }
+
     private Integer safeToInteger(long value) {
         if (value < 0L) {
             return null;
@@ -1145,4 +1501,7 @@ public class EduReportService {
         }
         return (int) value;
     }
+
+    private record EditorContentFields(
+            String content, String contentDelta, String contentHtml, String contentText) {}
 }

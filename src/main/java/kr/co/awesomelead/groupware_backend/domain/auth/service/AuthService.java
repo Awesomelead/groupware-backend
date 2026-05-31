@@ -19,6 +19,7 @@ import kr.co.awesomelead.groupware_backend.domain.auth.util.JWTUtil;
 import kr.co.awesomelead.groupware_backend.domain.notification.enums.NotificationDomainType;
 import kr.co.awesomelead.groupware_backend.domain.notification.enums.NotificationMessage;
 import kr.co.awesomelead.groupware_backend.domain.notification.service.NotificationService;
+import kr.co.awesomelead.groupware_backend.domain.safetytraining.repository.SafetyTrainingSessionRepository;
 import kr.co.awesomelead.groupware_backend.domain.user.dto.response.MyInfoAuthorityItemDto;
 import kr.co.awesomelead.groupware_backend.domain.user.entity.User;
 import kr.co.awesomelead.groupware_backend.domain.user.enums.Authority;
@@ -36,6 +37,7 @@ import lombok.extern.slf4j.Slf4j;
 
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.DisabledException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.AuthenticationException;
@@ -63,6 +65,7 @@ public class AuthService {
     private final JWTUtil jwtUtil;
     private final RefreshTokenService refreshTokenService;
     private final NotificationService notificationService;
+    private final SafetyTrainingSessionRepository safetyTrainingSessionRepository;
 
     @PersistenceContext private EntityManager entityManager;
 
@@ -71,49 +74,60 @@ public class AuthService {
 
     @Transactional
     public SignupResponseDto signup(SignupRequestDto joinDto) {
+        return signupInternal(joinDto, true);
+    }
 
+    @Transactional
+    public SignupResponseDto signupWithoutVerification(SignupRequestDto joinDto) {
+        return signupInternal(joinDto, false);
+    }
+
+    private SignupResponseDto signupInternal(
+            SignupRequestDto joinDto, boolean requireContactVerification) {
         // 1. 비밀번호 확인 검증
         if (!joinDto.getPassword().equals(joinDto.getPasswordConfirm())) {
             throw new CustomException(ErrorCode.PASSWORD_MISMATCH);
         }
 
-        // 2. 전화번호 인증 여부 확인
-        if (!phoneAuthService.isPhoneVerified(joinDto.getPhoneNumber())) {
-            throw new CustomException(ErrorCode.PHONE_NOT_VERIFIED);
+        // 2. 전화번호/이메일 인증 여부 확인 (테스트 전용 회원가입에서는 생략)
+        if (requireContactVerification) {
+            if (!phoneAuthService.isPhoneVerified(joinDto.getPhoneNumber())) {
+                throw new CustomException(ErrorCode.PHONE_NOT_VERIFIED);
+            }
+            if (!emailAuthService.isEmailVerified(joinDto.getEmail())) {
+                throw new CustomException(ErrorCode.EMAIL_NOT_VERIFIED);
+            }
         }
 
-        // 3. 이메일 인증 여부 확인
-        if (!emailAuthService.isEmailVerified(joinDto.getEmail())) {
-            throw new CustomException(ErrorCode.EMAIL_NOT_VERIFIED);
-        }
-
-        // 4. 이메일 중복 검사
+        // 3. 이메일 중복 검사
         if (userRepository.existsByEmail(joinDto.getEmail())) {
             throw new CustomException(ErrorCode.DUPLICATE_LOGIN_ID);
         }
 
-        // 5. 주민등록번호 중복 검사
+        // 4. 주민등록번호 중복 검사
         if (userRepository.existsByRegistrationNumber(joinDto.getRegistrationNumber())) {
             throw new CustomException(ErrorCode.DUPLICATE_REGISTRATION_NUMBER);
         }
 
-        // 6. DTO를 Entity로 변환
+        // 5. DTO를 Entity로 변환
         User user = userMapper.toEntity(joinDto);
         // Mapper에서 처리 안 되는 필드만 설정
         user.setPassword(bCryptPasswordEncoder.encode(joinDto.getPassword()));
 
-        // 7. DB에 저장
+        // 6. DB에 저장
         User savedUser = userRepository.save(user);
 
-        // 8. 인증 완료 플래그 삭제
-        emailAuthService.clearVerification(joinDto.getEmail());
-        phoneAuthService.clearVerification(joinDto.getPhoneNumber());
+        // 7. 인증 완료 플래그 삭제
+        if (requireContactVerification) {
+            emailAuthService.clearVerification(joinDto.getEmail());
+            phoneAuthService.clearVerification(joinDto.getPhoneNumber());
+        }
 
-        // 10. Admin 유저에게 신규 가입 알림 전송 (FCM + Notification DB)
-        notificationService.sendAlertToAdmins(
+        // 8. Admin 유저에게 신규 가입 알림 전송 (FCM + Notification DB)
+        notificationService.sendAlertToAdminsRequiringApproval(
                 NotificationMessage.SIGNUP_ADMIN_ALERT,
                 NotificationDomainType.AUTH,
-                null,
+                savedUser.getId(),
                 Map.of("targetId", savedUser.getId()),
                 savedUser.getDisplayName());
 
@@ -159,6 +173,12 @@ public class AuthService {
         Authentication authentication;
         try {
             authentication = authenticationManager.authenticate(authToken);
+        } catch (DisabledException e) {
+            User user = userRepository.findByEmail(requestDto.getEmail()).orElse(null);
+            if (user != null && user.getStatus() == Status.SUSPENDED) {
+                throw new CustomException(ErrorCode.SUSPENDED_ACCOUNT);
+            }
+            throw new CustomException(ErrorCode.INVALID_LOGIN_CREDENTIALS);
         } catch (AuthenticationException e) {
             throw new CustomException(ErrorCode.INVALID_LOGIN_CREDENTIALS);
         }
@@ -226,6 +246,12 @@ public class AuthService {
         // 2. 토큰에서 사용자 정보 추출
         String username = jwtUtil.getUsername(storedToken.getTokenValue());
         String role = jwtUtil.getRole(storedToken.getTokenValue());
+
+        User user = userRepository.findByEmail(username).orElse(null);
+        if (user != null && user.getStatus() == Status.SUSPENDED) {
+            refreshTokenService.deleteRefreshTokenByEmail(username);
+            throw new CustomException(ErrorCode.SUSPENDED_ACCOUNT);
+        }
 
         // 3. 새로운 Access Token 생성
         String newAccessToken = jwtUtil.createJwt(username, role, accessTokenValidation);
@@ -413,17 +439,27 @@ public class AuthService {
         // 1) 토큰 및 사용자 직접 참조 데이터 정리
         deleteByQuery(
                 "delete from RefreshToken rt where rt.email = :email", "email", user.getEmail());
+        deleteByQuery("delete from FcmToken ft where ft.user.id = :userId", "userId", userId);
+        deleteByQuery("delete from TopicMember tm where tm.user.id = :userId", "userId", userId);
         deleteByQuery(
                 "delete from MyInfoUpdateRequest r where r.reviewedBy.id = :userId",
                 "userId",
                 userId);
         deleteByQuery(
                 "delete from MyInfoUpdateRequest r where r.user.id = :userId", "userId", userId);
+        deleteByQuery(
+                "update RequestHistory rh set rh.processedBy = null where rh.processedBy.id ="
+                        + " :userId",
+                "userId",
+                userId);
         deleteByQuery("delete from RequestHistory rh where rh.user.id = :userId", "userId", userId);
         deleteByQuery("delete from EduAttendance ea where ea.user.id = :userId", "userId", userId);
+        deleteByQuery(
+                "update EduReport er set er.createdBy = null where er.createdBy.id = :userId",
+                "userId",
+                userId);
         deleteByQuery("delete from CheckSheet cs where cs.user.id = :userId", "userId", userId);
         deleteByQuery("delete from Payslip p where p.user.id = :userId", "userId", userId);
-        deleteByQuery("delete from AnnualLeave al where al.user.id = :userId", "userId", userId);
         deleteByQuery(
                 "delete from VisitRecord vr where vr.visit.user.id = :userId", "userId", userId);
         deleteByQuery("delete from Visit v where v.user.id = :userId", "userId", userId);
@@ -446,9 +482,91 @@ public class AuthService {
                 "userId",
                 userId);
         deleteByQuery("delete from Notice n where n.author.id = :userId", "userId", userId);
+        deleteByQuery(
+                "delete from ApprovalPersonalViewerTarget vt where vt.setting.user.id = :userId",
+                "userId",
+                userId);
+        deleteByQuery(
+                "delete from ApprovalPersonalSetting aps where aps.user.id = :userId",
+                "userId",
+                userId);
+        deleteByQuery(
+                "delete from SavedApprovalLineDetail d where d.savedLine.ownerUser.id = :userId",
+                "userId",
+                userId);
+        deleteByQuery(
+                "delete from SavedApprovalLine sal where sal.ownerUser.id = :userId",
+                "userId",
+                userId);
+        deleteByQuery(
+                "update SavedApprovalLine sal set sal.createdByUser = null where"
+                        + " sal.createdByUser.id = :userId",
+                "userId",
+                userId);
+        deleteByQuery(
+                "delete from ApprovalActionHistory ah where ah.document.drafterUser.id = :userId",
+                "userId",
+                userId);
+        deleteByQuery(
+                "delete from ApprovalDocumentLine dl where dl.document.drafterUser.id = :userId",
+                "userId",
+                userId);
+        deleteByQuery(
+                "delete from ApprovalDocumentRead dr where dr.document.drafterUser.id = :userId",
+                "userId",
+                userId);
+        deleteByQuery(
+                "delete from ApprovalAttachment aa where aa.document.drafterUser.id = :userId",
+                "userId",
+                userId);
+        deleteByQuery(
+                "delete from ApprovalDocument ad where ad.drafterUser.id = :userId",
+                "userId",
+                userId);
+        deleteByQuery(
+                "update ApprovalDocumentLine dl set dl.targetUser = null where dl.targetUser.id ="
+                        + " :userId",
+                "userId",
+                userId);
+        deleteByQuery(
+                "update ApprovalDocumentLine dl set dl.processedByUser = null where"
+                        + " dl.processedByUser.id = :userId",
+                "userId",
+                userId);
+        deleteByQuery(
+                "update ApprovalDocumentRead dr set dr.targetUser = null where dr.targetUser.id ="
+                        + " :userId",
+                "userId",
+                userId);
+        deleteByQuery(
+                "update ApprovalActionHistory ah set ah.actorUser = null where ah.actorUser.id ="
+                        + " :userId",
+                "userId",
+                userId);
+        deleteByQuery(
+                "update ApprovalAttachment aa set aa.uploadedByUser = null where"
+                        + " aa.uploadedByUser.id = :userId",
+                "userId",
+                userId);
 
         // 2) 권한 테이블 정리 후 사용자 삭제
         user.getAuthorities().clear();
+        deleteByQuery(
+                "delete from SafetyTrainingSessionAttendee a where a.user.id = :userId",
+                "userId",
+                userId);
+        safetyTrainingSessionRepository.updateCreatedByToNull(userId);
+        safetyTrainingSessionRepository.updateInstructorUserToNull(userId);
+        deleteByQuery(
+                "update ApprovalTemplate at set at.createdBy = null where at.createdBy.id ="
+                        + " :userId",
+                "userId",
+                userId);
+        deleteByQuery(
+                "update ApprovalTemplateLine atl set atl.targetUser = null where atl.targetUser.id"
+                        + " = :userId",
+                "userId",
+                userId);
         userRepository.delete(user);
 
         log.info("계정 삭제 완료 - userId: {}, email: {}", userId, user.getEmail());

@@ -69,6 +69,11 @@ public class RefreshTokenService {
     }
 
     @Transactional
+    public void deleteRefreshTokenByEmail(String email) {
+        refreshTokenRepository.findByEmail(email).ifPresent(refreshTokenRepository::delete);
+    }
+
+    @Transactional
     public RefreshToken validateRefreshToken(String tokenValue) {
         // DB에서 토큰을 찾지 못하면 예외 발생
         RefreshToken token =

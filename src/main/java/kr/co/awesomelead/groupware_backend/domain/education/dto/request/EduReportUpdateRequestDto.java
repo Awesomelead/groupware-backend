@@ -24,9 +24,18 @@ public class EduReportUpdateRequestDto {
     @NotBlank(message = "제목은 필수입니다.")
     private String title;
 
-    @Schema(description = "교육 내용", example = "개인정보 보호 및 사내 보안 규정 안내 (수정)")
-    @NotBlank(message = "내용은 필수입니다.")
+    @Schema(
+            description = "레거시 평문 본문(하위 호환용). PSM은 contentDelta/contentHtml과 함께 사용할 수 있습니다.",
+            example = "개인정보 보호 및 사내 보안 규정 안내 (수정)")
     private String content;
+
+    @Schema(
+            description = "Quill Delta JSON 문자열(에디터 원본, 선택)",
+            example = "{\"ops\":[{\"insert\":\"PSM 수정 본문입니다.\\n\"}]}")
+    private String contentDelta;
+
+    @Schema(description = "HTML 본문(선택)", example = "<p>PSM 수정 본문입니다.</p>")
+    private String contentHtml;
 
     @Schema(description = "상단 고정 여부", example = "false", defaultValue = "false")
     private boolean pinned;

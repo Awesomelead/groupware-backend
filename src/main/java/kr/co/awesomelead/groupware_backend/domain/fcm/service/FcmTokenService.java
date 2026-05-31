@@ -45,6 +45,12 @@ public class FcmTokenService {
         }
     }
 
+    /** 무효 토큰 삭제 (Firebase UNREGISTERED 응답 시) */
+    @Transactional
+    public void removeInvalidToken(String token) {
+        fcmTokenRepository.deleteByToken(token);
+    }
+
     /** FCM 토큰 삭제 (로그아웃 시) */
     @Transactional
     public void deleteToken(Long userId, String token) {

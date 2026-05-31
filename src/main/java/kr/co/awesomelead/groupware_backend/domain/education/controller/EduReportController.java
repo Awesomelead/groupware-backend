@@ -12,6 +12,7 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses;
 
 import jakarta.validation.Valid;
 
+import kr.co.awesomelead.groupware_backend.domain.department.enums.Company;
 import kr.co.awesomelead.groupware_backend.domain.department.enums.DepartmentName;
 import kr.co.awesomelead.groupware_backend.domain.education.dto.request.DepartmentEduReportCreateRequestDto;
 import kr.co.awesomelead.groupware_backend.domain.education.dto.request.EduReportStatusUpdateRequestDto;
@@ -21,6 +22,7 @@ import kr.co.awesomelead.groupware_backend.domain.education.dto.request.SafetyEd
 import kr.co.awesomelead.groupware_backend.domain.education.dto.response.EduReportDetailDto;
 import kr.co.awesomelead.groupware_backend.domain.education.dto.response.EduReportSignatureStatusDto;
 import kr.co.awesomelead.groupware_backend.domain.education.dto.response.EduReportSummaryDto;
+import kr.co.awesomelead.groupware_backend.domain.education.enums.EduReportStatus;
 import kr.co.awesomelead.groupware_backend.domain.education.service.EduReportService;
 import kr.co.awesomelead.groupware_backend.domain.user.dto.CustomUserDetails;
 import kr.co.awesomelead.groupware_backend.global.common.response.ApiResponse;
@@ -59,12 +61,13 @@ public class EduReportController {
             summary = "부서 교육 게시물 생성",
             description =
                     """
-                `multipart/form-data`로 부서 교육 게시물을 생성합니다.
+                                        `multipart/form-data`로 부서 교육 게시물을 생성합니다.
 
-                - `requestDto`(JSON 파트)는 필수입니다.
-                - `files`(파일 파트)는 선택입니다.
-                - 부서 교육 관리 권한(`MANAGE_DEPARTMENT_EDUCATION`)이 있어야 생성할 수 있습니다.
-                """,
+                                        - `requestDto`(JSON 파트)는 필수입니다.
+                                        - `files`(파일 파트)는 선택입니다.
+                                        - 부서 교육 관리 권한(`MANAGE_DEPARTMENT_EDUCATION`)이 있어야 생성할 수 있습니다.
+                                        - 본문은 `content`(plain) 또는 `contentDelta`/`contentHtml`(에디터 원본/렌더링용)으로 전달할 수 있습니다.
+                                        """,
             requestBody =
                     @io.swagger.v3.oas.annotations.parameters.RequestBody(
                             required = true,
@@ -95,13 +98,13 @@ public class EduReportController {
                                         @ExampleObject(
                                                 value =
                                                         """
-                            {
-                              "isSuccess": true,
-                              "code": "COMMON201",
-                              "message": "성공적으로 생성되었습니다.",
-                              "result": 1
-                            }
-                            """))),
+                                        {
+                                          "isSuccess": true,
+                                          "code": "COMMON201",
+                                          "message": "성공적으로 생성되었습니다.",
+                                          "result": 1
+                                        }
+                                        """))),
         @io.swagger.v3.oas.annotations.responses.ApiResponse(
                 responseCode = "403",
                 description = "권한 없음",
@@ -112,13 +115,13 @@ public class EduReportController {
                                         @ExampleObject(
                                                 value =
                                                         """
-                            {
-                              "isSuccess": false,
-                              "code": "NO_AUTHORITY_FOR_EDU_REPORT",
-                              "message": "교육 게시물 관리 권한이 없습니다.",
-                              "result": null
-                            }
-                            """))),
+                                        {
+                                          "isSuccess": false,
+                                          "code": "NO_AUTHORITY_FOR_EDU_REPORT",
+                                          "message": "교육 게시물 관리 권한이 없습니다.",
+                                          "result": null
+                                        }
+                                        """))),
         @io.swagger.v3.oas.annotations.responses.ApiResponse(
                 responseCode = "404",
                 description = "리소스 없음",
@@ -129,13 +132,13 @@ public class EduReportController {
                                         @ExampleObject(
                                                 value =
                                                         """
-                            {
-                              "isSuccess": false,
-                              "code": "DEPARTMENT_NOT_FOUND",
-                              "message": "해당 부서를 찾을 수 없습니다.",
-                              "result": null
-                            }
-                            """)))
+                                        {
+                                          "isSuccess": false,
+                                          "code": "DEPARTMENT_NOT_FOUND",
+                                          "message": "해당 부서를 찾을 수 없습니다.",
+                                          "result": null
+                                        }
+                                        """)))
     })
     @PostMapping(value = "/department", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<ApiResponse<Long>> createDepartmentEduReport(
@@ -165,15 +168,16 @@ public class EduReportController {
             summary = "PSM 게시물 생성",
             description =
                     """
-                `multipart/form-data`로 PSM 게시물을 생성합니다.
+                                        `multipart/form-data`로 PSM 게시물을 생성합니다.
 
-                - `requestDto`(JSON 파트)는 필수입니다.
-                - `files`(파일 파트)는 선택입니다.
-                - PSM 관리 권한(`MANAGE_PSM`)이 있어야 생성할 수 있습니다.
-                - `companyScope`는 회사 목록 배열입니다.
-                - `[AWESOME]`처럼 1개를 보내면 해당 회사 게시물로 생성됩니다.
-                - `[AWESOME, MARUI]`, `null`, `[]`는 모든 회사 공통 게시물로 생성됩니다.
-                """,
+                                        - `requestDto`(JSON 파트)는 필수입니다.
+                                        - `files`(파일 파트)는 선택입니다.
+                                        - PSM 관리 권한(`MANAGE_PSM`)이 있어야 생성할 수 있습니다.
+                                        - 본문은 `content`(plain) 또는 `contentDelta`/`contentHtml`(에디터 원본/렌더링용)으로 전달할 수 있습니다.
+                                        - `companyScope`는 회사 목록 배열입니다.
+                                        - `[AWESOME]`처럼 1개를 보내면 해당 회사 게시물로 생성됩니다.
+                                        - `[AWESOME, MARUI]`, `null`, `[]`는 모든 회사 공통 게시물로 생성됩니다.
+                                        """,
             requestBody =
                     @io.swagger.v3.oas.annotations.parameters.RequestBody(
                             required = true,
@@ -203,13 +207,13 @@ public class EduReportController {
                                         @ExampleObject(
                                                 value =
                                                         """
-                            {
-                              "isSuccess": true,
-                              "code": "COMMON201",
-                              "message": "성공적으로 생성되었습니다.",
-                              "result": 2
-                            }
-                            """))),
+                                        {
+                                          "isSuccess": true,
+                                          "code": "COMMON201",
+                                          "message": "성공적으로 생성되었습니다.",
+                                          "result": 2
+                                        }
+                                        """))),
         @io.swagger.v3.oas.annotations.responses.ApiResponse(
                 responseCode = "403",
                 description = "권한 없음",
@@ -220,13 +224,13 @@ public class EduReportController {
                                         @ExampleObject(
                                                 value =
                                                         """
-                            {
-                              "isSuccess": false,
-                              "code": "NO_AUTHORITY_FOR_PSM_MANAGE",
-                              "message": "PSM 관리 권한이 없습니다.",
-                              "result": null
-                            }
-                            """))),
+                                        {
+                                          "isSuccess": false,
+                                          "code": "NO_AUTHORITY_FOR_PSM_MANAGE",
+                                          "message": "PSM 관리 권한이 없습니다.",
+                                          "result": null
+                                        }
+                                        """))),
         @io.swagger.v3.oas.annotations.responses.ApiResponse(
                 responseCode = "404",
                 description = "리소스 없음",
@@ -237,13 +241,13 @@ public class EduReportController {
                                         @ExampleObject(
                                                 value =
                                                         """
-                            {
-                              "isSuccess": false,
-                              "code": "EDUCATION_CATEGORY_NOT_FOUND",
-                              "message": "해당 교육 카테고리를 찾을 수 없습니다.",
-                              "result": null
-                            }
-                            """)))
+                                        {
+                                          "isSuccess": false,
+                                          "code": "EDUCATION_CATEGORY_NOT_FOUND",
+                                          "message": "해당 교육 카테고리를 찾을 수 없습니다.",
+                                          "result": null
+                                        }
+                                        """)))
     })
     @PostMapping(value = "/psm", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<ApiResponse<Long>> createPsmEduReport(
@@ -272,15 +276,16 @@ public class EduReportController {
             summary = "안전 보건 게시물 생성",
             description =
                     """
-                `multipart/form-data`로 안전 보건 게시물을 생성합니다.
+                                        `multipart/form-data`로 안전 보건 게시물을 생성합니다.
 
-                - `requestDto`(JSON 파트)는 필수입니다.
-                - `files`(파일 파트)는 선택입니다.
-                - 안전 보건 관리 권한(`MANAGE_SAFETY`)이 있어야 생성할 수 있습니다.
-                - `companyScope`는 회사 목록 배열입니다.
-                - `[AWESOME]`처럼 1개를 보내면 해당 회사 게시물로 생성됩니다.
-                - `[AWESOME, MARUI]`, `null`, `[]`는 모든 회사 공통 게시물로 생성됩니다.
-                """,
+                                        - `requestDto`(JSON 파트)는 필수입니다.
+                                        - `files`(파일 파트)는 선택입니다.
+                                        - 안전 보건 관리 권한(`MANAGE_SAFETY`)이 있어야 생성할 수 있습니다.
+                                        - 본문은 `content`(plain) 또는 `contentDelta`/`contentHtml`(에디터 원본/렌더링용)으로 전달할 수 있습니다.
+                                        - `companyScope`는 회사 목록 배열입니다.
+                                        - `[AWESOME]`처럼 1개를 보내면 해당 회사 게시물로 생성됩니다.
+                                        - `[AWESOME, MARUI]`, `null`, `[]`는 모든 회사 공통 게시물로 생성됩니다.
+                                        """,
             requestBody =
                     @io.swagger.v3.oas.annotations.parameters.RequestBody(
                             required = true,
@@ -310,13 +315,13 @@ public class EduReportController {
                                         @ExampleObject(
                                                 value =
                                                         """
-                            {
-                              "isSuccess": true,
-                              "code": "COMMON201",
-                              "message": "성공적으로 생성되었습니다.",
-                              "result": 3
-                            }
-                            """))),
+                                        {
+                                          "isSuccess": true,
+                                          "code": "COMMON201",
+                                          "message": "성공적으로 생성되었습니다.",
+                                          "result": 3
+                                        }
+                                        """))),
         @io.swagger.v3.oas.annotations.responses.ApiResponse(
                 responseCode = "403",
                 description = "권한 없음",
@@ -327,13 +332,13 @@ public class EduReportController {
                                         @ExampleObject(
                                                 value =
                                                         """
-                            {
-                              "isSuccess": false,
-                              "code": "NO_AUTHORITY_FOR_SAFETY_WRITE",
-                              "message": "안전 보건 관리 권한이 없습니다.",
-                              "result": null
-                            }
-                            """))),
+                                        {
+                                          "isSuccess": false,
+                                          "code": "NO_AUTHORITY_FOR_SAFETY_WRITE",
+                                          "message": "안전 보건 관리 권한이 없습니다.",
+                                          "result": null
+                                        }
+                                        """))),
         @io.swagger.v3.oas.annotations.responses.ApiResponse(
                 responseCode = "404",
                 description = "리소스 없음",
@@ -344,13 +349,13 @@ public class EduReportController {
                                         @ExampleObject(
                                                 value =
                                                         """
-                            {
-                              "isSuccess": false,
-                              "code": "EDUCATION_CATEGORY_NOT_FOUND",
-                              "message": "해당 교육 카테고리를 찾을 수 없습니다.",
-                              "result": null
-                            }
-                            """)))
+                                        {
+                                          "isSuccess": false,
+                                          "code": "EDUCATION_CATEGORY_NOT_FOUND",
+                                          "message": "해당 교육 카테고리를 찾을 수 없습니다.",
+                                          "result": null
+                                        }
+                                        """)))
     })
     @PostMapping(value = "/safety", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<ApiResponse<Long>> createSafetyEduReport(
@@ -428,14 +433,14 @@ public class EduReportController {
             summary = "부서 교육 게시물 목록 조회",
             description =
                     """
-                부서 교육 게시물 목록을 조회합니다.
+                                        부서 교육 게시물 목록을 조회합니다.
 
-                - `MANAGE_DEPARTMENT_EDUCATION` 권한 사용자는 `departmentName`으로 전체 부서 대상 필터 조회가 가능합니다.
-                - `MANAGE_DEPARTMENT_EDUCATION` 권한이 없는 사용자는 본인 소속 부서 게시물만 조회됩니다.
-                - `canSign`은 목록 기준 서명 가능 여부이며, `signatureRequired=true` + `OPEN` 상태 + 미서명 + 본인 소속 부서 게시물일 때 `true`입니다.
-                - `mySigned`, `myCompletionStatus`는 부서교육 + 본인 소속 부서 게시물일 때만 값이 채워집니다.
-                - `myCompletionStatus`는 `signatureRequired=false`이면 항상 `COMPLETED`이며, `signatureRequired=true`이면 내 서명 여부에 따라 `COMPLETED/INCOMPLETE`로 계산됩니다.
-                """)
+                                        - `MANAGE_DEPARTMENT_EDUCATION` 권한 사용자는 `departmentName`으로 전체 부서 대상 필터 조회가 가능합니다.
+                                        - `MANAGE_DEPARTMENT_EDUCATION` 권한이 없는 사용자는 본인 소속 부서 게시물만 조회됩니다.
+                                        - `canSign`은 목록 기준 서명 가능 여부이며, `signatureRequired=true` + `OPEN` 상태 + 미서명 + 본인 소속 부서 게시물일 때 `true`입니다.
+                                        - `mySigned`, `myCompletionStatus`는 부서교육 + 본인 소속 부서 게시물일 때만 값이 채워집니다.
+                                        - `myCompletionStatus`는 `signatureRequired=false`이면 항상 `COMPLETED`이며, `signatureRequired=true`이면 내 서명 여부에 따라 `COMPLETED/INCOMPLETE`로 계산됩니다.
+                                        """)
     @ApiResponses({
         @io.swagger.v3.oas.annotations.responses.ApiResponse(
                 responseCode = "200",
@@ -447,30 +452,30 @@ public class EduReportController {
                                         @ExampleObject(
                                                 value =
                                                         """
-                            {
-                              "isSuccess": true,
-                              "code": "COMMON200",
-                              "message": "요청에 성공했습니다.",
-                              "result": [
-                                {
-                                  "id": 202,
-                                  "title": "경영지원부 교육",
-                                  "eduType": "부서 교육",
-                                  "eduDate": "2026-03-16",
-                                  "content": "부서교육 게시글입니다.",
-                                  "attendance": false,
-                                  "mySigned": false,
-                                  "myCompletionStatus": "INCOMPLETE",
-                                  "canSign": true,
-                                  "pinned": false,
-                                  "signatureRequired": true,
-                                  "status": "OPEN",
-                                  "categoryId": null,
-                                  "categoryName": null
-                                }
-                              ]
-                            }
-                            """))),
+                                        {
+                                          "isSuccess": true,
+                                          "code": "COMMON200",
+                                          "message": "요청에 성공했습니다.",
+                                          "result": [
+                                            {
+                                              "id": 202,
+                                              "title": "경영지원부 교육",
+                                              "eduType": "부서 교육",
+                                              "eduDate": "2026-03-16",
+                                              "content": "부서교육 게시글입니다.",
+                                              "attendance": false,
+                                              "mySigned": false,
+                                              "myCompletionStatus": "INCOMPLETE",
+                                              "canSign": true,
+                                              "pinned": false,
+                                              "signatureRequired": true,
+                                              "status": "OPEN",
+                                              "categoryId": null,
+                                              "categoryName": null
+                                            }
+                                          ]
+                                        }
+                                        """))),
         @io.swagger.v3.oas.annotations.responses.ApiResponse(
                 responseCode = "404",
                 description = "리소스 없음",
@@ -482,24 +487,24 @@ public class EduReportController {
                                             name = "사용자 없음",
                                             value =
                                                     """
-                                {
-                                  "isSuccess": false,
-                                  "code": "USER_NOT_FOUND",
-                                  "message": "해당 사용자를 찾을 수 없습니다.",
-                                  "result": null
-                                }
-                                """),
+                                                        {
+                                                          "isSuccess": false,
+                                                          "code": "USER_NOT_FOUND",
+                                                          "message": "해당 사용자를 찾을 수 없습니다.",
+                                                          "result": null
+                                                        }
+                                                        """),
                                     @ExampleObject(
                                             name = "부서 없음",
                                             value =
                                                     """
-                                {
-                                  "isSuccess": false,
-                                  "code": "DEPARTMENT_NOT_FOUND",
-                                  "message": "해당 부서를 찾을 수 없습니다.",
-                                  "result": null
-                                }
-                                """)
+                                                        {
+                                                          "isSuccess": false,
+                                                          "code": "DEPARTMENT_NOT_FOUND",
+                                                          "message": "해당 부서를 찾을 수 없습니다.",
+                                                          "result": null
+                                                        }
+                                                        """)
                                 }))
     })
     @GetMapping("/department")
@@ -507,13 +512,16 @@ public class EduReportController {
             @Parameter(description = "부서명 필터(권한 사용자 전용)", example = "SALES_DEPT")
                     @RequestParam(required = false)
                     DepartmentName departmentName,
-            @Parameter(description = "제목 검색 키워드 (FULLTEXT 검색)", example = "안전교육")
+            @Parameter(description = "진행상태 필터(OPEN: 진행중, CLOSED: 종료)", example = "OPEN")
+                    @RequestParam(required = false)
+                    EduReportStatus status,
+            @Parameter(description = "제목 검색 키워드 (부분 일치 검색)", example = "안전교육")
                     @RequestParam(required = false)
                     String title,
             @Parameter(hidden = true) @AuthenticationPrincipal CustomUserDetails userDetails) {
         List<EduReportSummaryDto> reports =
                 eduReportService.getDepartmentEduReports(
-                        departmentName, userDetails.getId(), title);
+                        departmentName, status, userDetails.getId(), title);
         return ResponseEntity.ok(ApiResponse.onSuccess(reports));
     }
 
@@ -522,11 +530,13 @@ public class EduReportController {
             summary = "PSM 게시물 목록 조회",
             description =
                     """
-                PSM 게시물 목록을 조회합니다.
+                        PSM 게시물 목록을 조회합니다.
 
-                - `MANAGE_PSM` 권한 사용자는 모든 회사의 PSM 게시물을 조회할 수 있습니다.
-                - `MANAGE_PSM` 권한이 없는 사용자는 본인 소속 회사의 PSM 게시물만 조회됩니다.
-                """)
+                        - `MANAGE_PSM` 권한 사용자는 모든 회사의 PSM 게시물을 조회할 수 있습니다.
+                        - `MANAGE_PSM` 권한이 없는 사용자는 본인 소속 회사의 PSM 게시물만 조회됩니다.
+                        - 응답의 `companyScope`는 대상 회사 목록 배열로 반환됩니다.
+                        - 공통 게시물은 `companyScope: ["AWESOME", "MARUI"]`로 응답됩니다.
+                        """)
     @ApiResponses({
         @io.swagger.v3.oas.annotations.responses.ApiResponse(
                 responseCode = "200",
@@ -538,28 +548,29 @@ public class EduReportController {
                                         @ExampleObject(
                                                 value =
                                                         """
-                            {
-                              "isSuccess": true,
-                              "code": "COMMON200",
-                              "message": "요청에 성공했습니다.",
-                              "result": [
-                                {
-                                  "id": 301,
-                                  "title": "PSM 변경관리 교육",
-                                  "eduType": "PSM",
-                                  "eduDate": "2026-04-14",
-                                  "content": "PSM 교육 게시글입니다.",
-                                  "attendance": false,
-                                  "canSign": false,
-                                  "pinned": false,
-                                  "signatureRequired": false,
-                                  "status": "OPEN",
-                                  "categoryId": 2,
-                                  "categoryName": "변경관리"
-                                }
-                              ]
-                            }
-                            """))),
+                                        {
+                                          "isSuccess": true,
+                                          "code": "COMMON200",
+                                          "message": "요청에 성공했습니다.",
+                                          "result": [
+                                            {
+                                              "id": 301,
+                                              "title": "PSM 변경관리 교육",
+                                              "eduType": "PSM",
+                                              "eduDate": "2026-04-14",
+                                              "content": "PSM 교육 게시글입니다.",
+                                              "attendance": false,
+                                              "canSign": false,
+                                              "pinned": false,
+                                              "signatureRequired": false,
+                                              "status": "OPEN",
+                                              "categoryId": 2,
+                                              "categoryName": "변경관리",
+                                              "companyScope": ["AWESOME", "MARUI"]
+                                            }
+                                          ]
+                                        }
+                                        """))),
         @io.swagger.v3.oas.annotations.responses.ApiResponse(
                 responseCode = "404",
                 description = "리소스 없음",
@@ -571,13 +582,13 @@ public class EduReportController {
                                             name = "사용자 없음",
                                             value =
                                                     """
-                                {
-                                  "isSuccess": false,
-                                  "code": "USER_NOT_FOUND",
-                                  "message": "해당 사용자를 찾을 수 없습니다.",
-                                  "result": null
-                                }
-                                """)
+                                                        {
+                                                          "isSuccess": false,
+                                                          "code": "USER_NOT_FOUND",
+                                                          "message": "해당 사용자를 찾을 수 없습니다.",
+                                                          "result": null
+                                                        }
+                                                        """)
                                 }))
     })
     @GetMapping("/psm")
@@ -585,12 +596,19 @@ public class EduReportController {
             @Parameter(description = "카테고리 ID 필터(PSM)", example = "1")
                     @RequestParam(required = false)
                     Long categoryId,
-            @Parameter(description = "제목 검색 키워드 (FULLTEXT 검색)", example = "변경관리")
+            @Parameter(description = "대상 회사 필터", example = "AWESOME")
+                    @RequestParam(required = false)
+                    Company company,
+            @Parameter(description = "진행상태 필터(OPEN: 진행중, CLOSED: 종료)", example = "OPEN")
+                    @RequestParam(required = false)
+                    EduReportStatus status,
+            @Parameter(description = "제목 검색 키워드 (부분 일치 검색)", example = "변경관리")
                     @RequestParam(required = false)
                     String title,
             @Parameter(hidden = true) @AuthenticationPrincipal CustomUserDetails userDetails) {
         List<EduReportSummaryDto> reports =
-                eduReportService.getPsmEduReports(categoryId, userDetails.getId(), title);
+                eduReportService.getPsmEduReports(
+                        categoryId, company, status, userDetails.getId(), title);
         return ResponseEntity.ok(ApiResponse.onSuccess(reports));
     }
 
@@ -599,11 +617,13 @@ public class EduReportController {
             summary = "안전 보건 게시물 목록 조회",
             description =
                     """
-                안전 보건 게시물 목록을 조회합니다.
+                        안전 보건 게시물 목록을 조회합니다.
 
-                - `MANAGE_SAFETY` 권한 사용자는 모든 회사의 안전 보건 게시물을 조회할 수 있습니다.
-                - `MANAGE_SAFETY` 권한이 없는 사용자는 본인 소속 회사의 안전 보건 게시물만 조회됩니다.
-                """)
+                        - `MANAGE_SAFETY` 권한 사용자는 모든 회사의 안전 보건 게시물을 조회할 수 있습니다.
+                        - `MANAGE_SAFETY` 권한이 없는 사용자는 본인 소속 회사의 안전 보건 게시물만 조회됩니다.
+                        - 응답의 `companyScope`는 대상 회사 목록 배열로 반환됩니다.
+                        - 공통 게시물은 `companyScope: ["AWESOME", "MARUI"]`로 응답됩니다.
+                        """)
     @ApiResponses({
         @io.swagger.v3.oas.annotations.responses.ApiResponse(
                 responseCode = "200",
@@ -615,28 +635,29 @@ public class EduReportController {
                                         @ExampleObject(
                                                 value =
                                                         """
-                            {
-                              "isSuccess": true,
-                              "code": "COMMON200",
-                              "message": "요청에 성공했습니다.",
-                              "result": [
-                                {
-                                  "id": 401,
-                                  "title": "안전 보건 정기교육",
-                                  "eduType": "안전 보건",
-                                  "eduDate": "2026-04-14",
-                                  "content": "안전 보건 교육 게시글입니다.",
-                                  "attendance": false,
-                                  "canSign": false,
-                                  "pinned": false,
-                                  "signatureRequired": true,
-                                  "status": "OPEN",
-                                  "categoryId": 3,
-                                  "categoryName": "정기교육"
-                                }
-                              ]
-                            }
-                            """))),
+                                        {
+                                          "isSuccess": true,
+                                          "code": "COMMON200",
+                                          "message": "요청에 성공했습니다.",
+                                          "result": [
+                                            {
+                                              "id": 401,
+                                              "title": "안전 보건 정기교육",
+                                              "eduType": "안전 보건",
+                                              "eduDate": "2026-04-14",
+                                              "content": "안전 보건 교육 게시글입니다.",
+                                              "attendance": false,
+                                              "canSign": false,
+                                              "pinned": false,
+                                              "signatureRequired": true,
+                                              "status": "OPEN",
+                                              "categoryId": 3,
+                                              "categoryName": "정기교육",
+                                              "companyScope": ["AWESOME"]
+                                            }
+                                          ]
+                                        }
+                                        """))),
         @io.swagger.v3.oas.annotations.responses.ApiResponse(
                 responseCode = "404",
                 description = "리소스 없음",
@@ -648,13 +669,13 @@ public class EduReportController {
                                             name = "사용자 없음",
                                             value =
                                                     """
-                                {
-                                  "isSuccess": false,
-                                  "code": "USER_NOT_FOUND",
-                                  "message": "해당 사용자를 찾을 수 없습니다.",
-                                  "result": null
-                                }
-                                """)
+                                                        {
+                                                          "isSuccess": false,
+                                                          "code": "USER_NOT_FOUND",
+                                                          "message": "해당 사용자를 찾을 수 없습니다.",
+                                                          "result": null
+                                                        }
+                                                        """)
                                 }))
     })
     @GetMapping("/safety")
@@ -662,12 +683,19 @@ public class EduReportController {
             @Parameter(description = "카테고리 ID 필터(안전 보건)", example = "1")
                     @RequestParam(required = false)
                     Long categoryId,
-            @Parameter(description = "제목 검색 키워드 (FULLTEXT 검색)", example = "정기교육")
+            @Parameter(description = "대상 회사 필터", example = "AWESOME")
+                    @RequestParam(required = false)
+                    Company company,
+            @Parameter(description = "진행상태 필터(OPEN: 진행중, CLOSED: 종료)", example = "OPEN")
+                    @RequestParam(required = false)
+                    EduReportStatus status,
+            @Parameter(description = "제목 검색 키워드 (부분 일치 검색)", example = "정기교육")
                     @RequestParam(required = false)
                     String title,
             @Parameter(hidden = true) @AuthenticationPrincipal CustomUserDetails userDetails) {
         List<EduReportSummaryDto> reports =
-                eduReportService.getSafetyEduReports(categoryId, userDetails.getId(), title);
+                eduReportService.getSafetyEduReports(
+                        categoryId, company, status, userDetails.getId(), title);
         return ResponseEntity.ok(ApiResponse.onSuccess(reports));
     }
 
@@ -676,17 +704,17 @@ public class EduReportController {
             summary = "부서 교육 게시물 상세 조회",
             description =
                     """
-                부서 교육 게시물 상세 정보를 조회합니다.
+                                        부서 교육 게시물 상세 정보를 조회합니다.
 
-                - `MANAGE_DEPARTMENT_EDUCATION` 권한 사용자는 전체 부서의 부서 교육 게시물을 조회할 수 있습니다.
-                - 권한이 없는 사용자는 본인 소속 부서의 게시물만 조회할 수 있습니다.
-                - 권한이 없는 사용자가 타 부서 게시물을 조회하면 `EDU_REPORT_NOT_FOUND(404)`가 반환됩니다.
-                - `MANAGE_DEPARTMENT_EDUCATION` 권한 사용자는 `attendees`, `numberOfPeople`, `numberOfAttendees`를 조회할 수 있으며, 권한이 없는 사용자는 위 필드가 `null`로 반환됩니다.
-                - `targetCount`, `signedCount`, `unsignedCount`는 부서 교육 상세에서 공통으로 제공됩니다.
-                - `canSign`은 현재 사용자의 서명 가능 여부를 의미하며, `signatureRequired=true` + `OPEN` 상태 + 미서명 + 본인 소속 부서 게시물인 경우 `true`입니다.
-                - `mySigned`, `myCompletionStatus`는 부서교육 + 본인 소속 부서 게시물일 때만 값이 채워집니다.
-                - `myCompletionStatus`는 `signatureRequired=false`이면 항상 `COMPLETED`이며, `signatureRequired=true`이면 내 서명 여부에 따라 `COMPLETED/INCOMPLETE`로 계산됩니다.
-                """)
+                                        - `MANAGE_DEPARTMENT_EDUCATION` 권한 사용자는 전체 부서의 부서 교육 게시물을 조회할 수 있습니다.
+                                        - 권한이 없는 사용자는 본인 소속 부서의 게시물만 조회할 수 있습니다.
+                                        - 권한이 없는 사용자가 타 부서 게시물을 조회하면 `EDU_REPORT_NOT_FOUND(404)`가 반환됩니다.
+                                        - `MANAGE_DEPARTMENT_EDUCATION` 권한 사용자는 `attendees`, `numberOfPeople`, `numberOfAttendees`를 조회할 수 있으며, 권한이 없는 사용자는 위 필드가 `null`로 반환됩니다.
+                                        - `targetCount`, `signedCount`, `unsignedCount`는 부서 교육 상세에서 공통으로 제공됩니다.
+                                        - `canSign`은 현재 사용자의 서명 가능 여부를 의미하며, `signatureRequired=true` + `OPEN` 상태 + 미서명 + 본인 소속 부서 게시물인 경우 `true`입니다.
+                                        - `mySigned`, `myCompletionStatus`는 부서교육 + 본인 소속 부서 게시물일 때만 값이 채워집니다.
+                                        - `myCompletionStatus`는 `signatureRequired=false`이면 항상 `COMPLETED`이며, `signatureRequired=true`이면 내 서명 여부에 따라 `COMPLETED/INCOMPLETE`로 계산됩니다.
+                                        """)
     @ApiResponses({
         @io.swagger.v3.oas.annotations.responses.ApiResponse(
                 responseCode = "200",
@@ -702,35 +730,35 @@ public class EduReportController {
                                             name = "게시물 없음",
                                             value =
                                                     """
-                                {
-                                  "isSuccess": false,
-                                  "code": "EDU_REPORT_NOT_FOUND",
-                                  "message": "해당 교육 게시물을 찾을 수 없습니다.",
-                                  "result": null
-                                }
-                                """),
+                                                        {
+                                                          "isSuccess": false,
+                                                          "code": "EDU_REPORT_NOT_FOUND",
+                                                          "message": "해당 교육 게시물을 찾을 수 없습니다.",
+                                                          "result": null
+                                                        }
+                                                        """),
                                     @ExampleObject(
                                             name = "타 부서 접근",
                                             value =
                                                     """
-                                {
-                                  "isSuccess": false,
-                                  "code": "EDU_REPORT_NOT_FOUND",
-                                  "message": "해당 교육 게시물을 찾을 수 없습니다.",
-                                  "result": null
-                                }
-                                """),
+                                                        {
+                                                          "isSuccess": false,
+                                                          "code": "EDU_REPORT_NOT_FOUND",
+                                                          "message": "해당 교육 게시물을 찾을 수 없습니다.",
+                                                          "result": null
+                                                        }
+                                                        """),
                                     @ExampleObject(
                                             name = "사용자 없음",
                                             value =
                                                     """
-                                {
-                                  "isSuccess": false,
-                                  "code": "USER_NOT_FOUND",
-                                  "message": "해당 사용자를 찾을 수 없습니다.",
-                                  "result": null
-                                }
-                                """)
+                                                        {
+                                                          "isSuccess": false,
+                                                          "code": "USER_NOT_FOUND",
+                                                          "message": "해당 사용자를 찾을 수 없습니다.",
+                                                          "result": null
+                                                        }
+                                                        """)
                                 }))
     })
     @GetMapping("/department/{educationId}")
@@ -748,14 +776,14 @@ public class EduReportController {
             summary = "PSM 게시물 상세 조회",
             description =
                     """
-                PSM 게시물 상세 정보를 조회합니다.
+                        PSM 게시물 상세 정보를 조회합니다.
 
-                - `MANAGE_PSM` 권한 사용자는 모든 회사의 PSM 게시물을 조회할 수 있습니다.
-                - 권한이 없는 사용자는 본인 소속 회사 게시물과 공통 게시물(`company` 컬럼이 null인 게시물)만 조회할 수 있습니다.
-                - 권한이 없는 사용자가 타 회사 게시물을 조회하면 `EDU_REPORT_NOT_FOUND(404)`가 반환됩니다.
-                - 응답의 `companyScope`는 회사 목록 배열로 반환됩니다.
-                - 공통 게시물은 `companyScope: ["AWESOME", "MARUI"]`로 응답됩니다.
-                """)
+                        - `MANAGE_PSM` 권한 사용자는 모든 회사의 PSM 게시물을 조회할 수 있습니다.
+                        - 권한이 없는 사용자는 본인 소속 회사 게시물과 공통 게시물(`company` 컬럼이 null인 게시물)만 조회할 수 있습니다.
+                        - 권한이 없는 사용자가 타 회사 게시물을 조회하면 `EDU_REPORT_NOT_FOUND(404)`가 반환됩니다.
+                        - 응답의 `companyScope`는 회사 목록 배열로 반환됩니다.
+                        - 공통 게시물은 `companyScope: ["AWESOME", "MARUI"]`로 응답됩니다.
+                        """)
     @ApiResponses({
         @io.swagger.v3.oas.annotations.responses.ApiResponse(
                 responseCode = "200",
@@ -771,35 +799,35 @@ public class EduReportController {
                                             name = "게시물 없음",
                                             value =
                                                     """
-                                {
-                                  "isSuccess": false,
-                                  "code": "EDU_REPORT_NOT_FOUND",
-                                  "message": "해당 교육 게시물을 찾을 수 없습니다.",
-                                  "result": null
-                                }
-                                """),
+                                                        {
+                                                          "isSuccess": false,
+                                                          "code": "EDU_REPORT_NOT_FOUND",
+                                                          "message": "해당 교육 게시물을 찾을 수 없습니다.",
+                                                          "result": null
+                                                        }
+                                                        """),
                                     @ExampleObject(
                                             name = "타 회사 접근",
                                             value =
                                                     """
-                                {
-                                  "isSuccess": false,
-                                  "code": "EDU_REPORT_NOT_FOUND",
-                                  "message": "해당 교육 게시물을 찾을 수 없습니다.",
-                                  "result": null
-                                }
-                                """),
+                                                        {
+                                                          "isSuccess": false,
+                                                          "code": "EDU_REPORT_NOT_FOUND",
+                                                          "message": "해당 교육 게시물을 찾을 수 없습니다.",
+                                                          "result": null
+                                                        }
+                                                        """),
                                     @ExampleObject(
                                             name = "사용자 없음",
                                             value =
                                                     """
-                                {
-                                  "isSuccess": false,
-                                  "code": "USER_NOT_FOUND",
-                                  "message": "해당 사용자를 찾을 수 없습니다.",
-                                  "result": null
-                                }
-                                """)
+                                                        {
+                                                          "isSuccess": false,
+                                                          "code": "USER_NOT_FOUND",
+                                                          "message": "해당 사용자를 찾을 수 없습니다.",
+                                                          "result": null
+                                                        }
+                                                        """)
                                 }))
     })
     @GetMapping("/psm/{educationId}")
@@ -817,14 +845,14 @@ public class EduReportController {
             summary = "안전 보건 게시물 상세 조회",
             description =
                     """
-                안전 보건 게시물 상세 정보를 조회합니다.
+                        안전 보건 게시물 상세 정보를 조회합니다.
 
-                - `MANAGE_SAFETY` 권한 사용자는 모든 회사의 안전 보건 게시물을 조회할 수 있습니다.
-                - 권한이 없는 사용자는 본인 소속 회사 게시물과 공통 게시물(`company` 컬럼이 null인 게시물)만 조회할 수 있습니다.
-                - 권한이 없는 사용자가 타 회사 게시물을 조회하면 `EDU_REPORT_NOT_FOUND(404)`가 반환됩니다.
-                - 응답의 `companyScope`는 회사 목록 배열로 반환됩니다.
-                - 공통 게시물은 `companyScope: ["AWESOME", "MARUI"]`로 응답됩니다.
-                """)
+                        - `MANAGE_SAFETY` 권한 사용자는 모든 회사의 안전 보건 게시물을 조회할 수 있습니다.
+                        - 권한이 없는 사용자는 본인 소속 회사 게시물과 공통 게시물(`company` 컬럼이 null인 게시물)만 조회할 수 있습니다.
+                        - 권한이 없는 사용자가 타 회사 게시물을 조회하면 `EDU_REPORT_NOT_FOUND(404)`가 반환됩니다.
+                        - 응답의 `companyScope`는 회사 목록 배열로 반환됩니다.
+                        - 공통 게시물은 `companyScope: ["AWESOME", "MARUI"]`로 응답됩니다.
+                        """)
     @ApiResponses({
         @io.swagger.v3.oas.annotations.responses.ApiResponse(
                 responseCode = "200",
@@ -840,35 +868,35 @@ public class EduReportController {
                                             name = "게시물 없음",
                                             value =
                                                     """
-                                {
-                                  "isSuccess": false,
-                                  "code": "EDU_REPORT_NOT_FOUND",
-                                  "message": "해당 교육 게시물을 찾을 수 없습니다.",
-                                  "result": null
-                                }
-                                """),
+                                                        {
+                                                          "isSuccess": false,
+                                                          "code": "EDU_REPORT_NOT_FOUND",
+                                                          "message": "해당 교육 게시물을 찾을 수 없습니다.",
+                                                          "result": null
+                                                        }
+                                                        """),
                                     @ExampleObject(
                                             name = "타 회사 접근",
                                             value =
                                                     """
-                                {
-                                  "isSuccess": false,
-                                  "code": "EDU_REPORT_NOT_FOUND",
-                                  "message": "해당 교육 게시물을 찾을 수 없습니다.",
-                                  "result": null
-                                }
-                                """),
+                                                        {
+                                                          "isSuccess": false,
+                                                          "code": "EDU_REPORT_NOT_FOUND",
+                                                          "message": "해당 교육 게시물을 찾을 수 없습니다.",
+                                                          "result": null
+                                                        }
+                                                        """),
                                     @ExampleObject(
                                             name = "사용자 없음",
                                             value =
                                                     """
-                                {
-                                  "isSuccess": false,
-                                  "code": "USER_NOT_FOUND",
-                                  "message": "해당 사용자를 찾을 수 없습니다.",
-                                  "result": null
-                                }
-                                """)
+                                                        {
+                                                          "isSuccess": false,
+                                                          "code": "USER_NOT_FOUND",
+                                                          "message": "해당 사용자를 찾을 수 없습니다.",
+                                                          "result": null
+                                                        }
+                                                        """)
                                 }))
     })
     @GetMapping("/safety/{educationId}")
@@ -886,14 +914,15 @@ public class EduReportController {
             summary = "부서 교육 게시물 수정",
             description =
                     """
-                `multipart/form-data`로 부서 교육 게시물을 수정합니다.
+                                        `multipart/form-data`로 부서 교육 게시물을 수정합니다.
 
-                - 부서 교육 관리 권한(`MANAGE_DEPARTMENT_EDUCATION`)이 필요합니다.
-                - `OPEN` 상태에서만 수정 가능합니다.
-                - 출석 완료자가 1명이라도 있으면 수정할 수 없습니다.
-                - `requestDto`(JSON 파트)는 필수이며, `files`(파일 파트)는 선택입니다.
-                - `requestDto.deleteAttachmentIds`로 기존 첨부파일 삭제가 가능합니다.
-                """,
+                                        - 부서 교육 관리 권한(`MANAGE_DEPARTMENT_EDUCATION`)이 필요합니다.
+                                        - `OPEN` 상태에서만 수정 가능합니다.
+                                        - 출석 완료자가 1명이라도 있으면 수정할 수 없습니다.
+                                        - `requestDto`(JSON 파트)는 필수이며, `files`(파일 파트)는 선택입니다.
+                                        - 본문은 `content`(plain) 또는 `contentDelta`/`contentHtml`(에디터 원본/렌더링용)으로 수정할 수 있습니다.
+                                        - `requestDto.deleteAttachmentIds`로 기존 첨부파일 삭제가 가능합니다.
+                                        """,
             requestBody =
                     @io.swagger.v3.oas.annotations.parameters.RequestBody(
                             required = true,
@@ -963,14 +992,15 @@ public class EduReportController {
             summary = "PSM 게시물 수정",
             description =
                     """
-                `multipart/form-data`로 PSM 게시물을 수정합니다.
+                                        `multipart/form-data`로 PSM 게시물을 수정합니다.
 
-                - PSM 관리 권한(`MANAGE_PSM`)이 필요합니다.
-                - `OPEN` 상태에서만 수정 가능합니다.
-                - 출석 완료자가 1명이라도 있으면 수정할 수 없습니다.
-                - `requestDto`(JSON 파트)는 필수이며, `files`(파일 파트)는 선택입니다.
-                - `requestDto.deleteAttachmentIds`로 기존 첨부파일 삭제가 가능합니다.
-                """,
+                                        - PSM 관리 권한(`MANAGE_PSM`)이 필요합니다.
+                                        - `OPEN` 상태에서만 수정 가능합니다.
+                                        - 출석 완료자가 1명이라도 있으면 수정할 수 없습니다.
+                                        - `requestDto`(JSON 파트)는 필수이며, `files`(파일 파트)는 선택입니다.
+                                        - 본문은 `content`(plain) 또는 `contentDelta`/`contentHtml`(에디터 원본/렌더링용)으로 수정할 수 있습니다.
+                                        - `requestDto.deleteAttachmentIds`로 기존 첨부파일 삭제가 가능합니다.
+                                        """,
             requestBody =
                     @io.swagger.v3.oas.annotations.parameters.RequestBody(
                             required = true,
@@ -1037,14 +1067,15 @@ public class EduReportController {
             summary = "안전 보건 게시물 수정",
             description =
                     """
-                `multipart/form-data`로 안전 보건 게시물을 수정합니다.
+                                        `multipart/form-data`로 안전 보건 게시물을 수정합니다.
 
-                - 안전 보건 관리 권한(`MANAGE_SAFETY`)이 필요합니다.
-                - `OPEN` 상태에서만 수정 가능합니다.
-                - 출석 완료자가 1명이라도 있으면 수정할 수 없습니다.
-                - `requestDto`(JSON 파트)는 필수이며, `files`(파일 파트)는 선택입니다.
-                - `requestDto.deleteAttachmentIds`로 기존 첨부파일 삭제가 가능합니다.
-                """,
+                                        - 안전 보건 관리 권한(`MANAGE_SAFETY`)이 필요합니다.
+                                        - `OPEN` 상태에서만 수정 가능합니다.
+                                        - 출석 완료자가 1명이라도 있으면 수정할 수 없습니다.
+                                        - `requestDto`(JSON 파트)는 필수이며, `files`(파일 파트)는 선택입니다.
+                                        - 본문은 `content`(plain) 또는 `contentDelta`/`contentHtml`(에디터 원본/렌더링용)으로 수정할 수 있습니다.
+                                        - `requestDto.deleteAttachmentIds`로 기존 첨부파일 삭제가 가능합니다.
+                                        """,
             requestBody =
                     @io.swagger.v3.oas.annotations.parameters.RequestBody(
                             required = true,
@@ -1112,10 +1143,10 @@ public class EduReportController {
             summary = "부서 교육 게시물 상태 변경",
             description =
                     """
-                부서 교육 게시물 상태를 `OPEN`/`CLOSED`로 변경합니다.
+                        부서 교육 게시물 상태를 `OPEN`/`CLOSED`로 변경합니다.
 
-                - 부서 교육 관리 권한(`MANAGE_DEPARTMENT_EDUCATION`)이 필요합니다.
-                """)
+                        - 부서 교육 관리 권한(`MANAGE_DEPARTMENT_EDUCATION`)이 필요합니다.
+                        """)
     @ApiResponses({
         @io.swagger.v3.oas.annotations.responses.ApiResponse(
                 responseCode = "200",
@@ -1147,10 +1178,10 @@ public class EduReportController {
             summary = "PSM 게시물 상태 변경",
             description =
                     """
-                PSM 게시물 상태를 `OPEN`/`CLOSED`로 변경합니다.
+                        PSM 게시물 상태를 `OPEN`/`CLOSED`로 변경합니다.
 
-                - PSM 관리 권한(`MANAGE_PSM`)이 필요합니다.
-                """)
+                        - PSM 관리 권한(`MANAGE_PSM`)이 필요합니다.
+                        """)
     @ApiResponses({
         @io.swagger.v3.oas.annotations.responses.ApiResponse(
                 responseCode = "200",
@@ -1182,10 +1213,10 @@ public class EduReportController {
             summary = "안전 보건 게시물 상태 변경",
             description =
                     """
-                안전 보건 게시물 상태를 `OPEN`/`CLOSED`로 변경합니다.
+                        안전 보건 게시물 상태를 `OPEN`/`CLOSED`로 변경합니다.
 
-                - 안전 보건 관리 권한(`MANAGE_SAFETY`)이 필요합니다.
-                """)
+                        - 안전 보건 관리 권한(`MANAGE_SAFETY`)이 필요합니다.
+                        """)
     @ApiResponses({
         @io.swagger.v3.oas.annotations.responses.ApiResponse(
                 responseCode = "200",
@@ -1289,12 +1320,12 @@ public class EduReportController {
             summary = "부서 교육 게시물 출석(서명) 처리",
             description =
                     """
-                부서 교육 게시물 출석을 처리합니다.
+                                        부서 교육 게시물 출석을 처리합니다.
 
-                - `signatureRequired=true` 게시물은 PNG 서명 파일(`signature`)이 필수입니다.
-                - `signatureRequired=false` 게시물은 파일 없이도 출석 처리됩니다.
-                - 동일 사용자 중복 출석은 허용되지 않습니다.
-                """,
+                                        - `signatureRequired=true` 게시물은 PNG 서명 파일(`signature`)이 필수입니다.
+                                        - `signatureRequired=false` 게시물은 파일 없이도 출석 처리됩니다.
+                                        - 동일 사용자 중복 출석은 허용되지 않습니다.
+                                        """,
             requestBody =
                     @io.swagger.v3.oas.annotations.parameters.RequestBody(
                             required = false,
@@ -1337,18 +1368,15 @@ public class EduReportController {
     }
 
     @Operation(
-            tags = {"부서교육", "PSM", "안전보건"},
-            summary = "서명 현황 목록 조회",
+            tags = {"부서교육"},
+            summary = "부서 교육 서명 현황 목록 조회",
             description =
                     """
-                교육 보고서의 대상 직원별 서명 현황을 조회합니다.
+                        부서 교육 게시물의 대상 직원별 서명 현황을 조회합니다.
 
-                - 교육 유형에 따라 권한 검증이 이루어집니다.
-                  - 부서교육: `MANAGE_DEPARTMENT_EDUCATION`
-                  - PSM: `MANAGE_PSM`
-                  - 안전보건: `MANAGE_SAFETY`
-                - `name` 파라미터로 한글명(nameKor) 또는 영문명(nameEng)에 대한 부분 일치 검색이 가능합니다.
-                """)
+                        - `MANAGE_DEPARTMENT_EDUCATION` 권한이 필요합니다.
+                        - `name` 파라미터로 한글명(nameKor) 또는 영문명(nameEng)에 대한 부분 일치 검색이 가능합니다.
+                        """)
     @ApiResponses({
         @io.swagger.v3.oas.annotations.responses.ApiResponse(
                 responseCode = "200",
@@ -1370,6 +1398,95 @@ public class EduReportController {
         List<EduReportSignatureStatusDto> result =
                 eduReportService.getSignatureStatuses(educationId, name, userDetails.getId());
         return ResponseEntity.ok(ApiResponse.onSuccess(result));
+    }
+
+    @Operation(
+            tags = {"교육 (공통)"},
+            summary = "교육 리마인드 알림 전송",
+            description =
+                    """
+                        교육 유형별 관리 권한이 있는 사용자가 요청 가능합니다.
+
+                        - 부서 교육: `MANAGE_DEPARTMENT_EDUCATION`
+                        - PSM: `MANAGE_PSM`
+                        - 안전보건: `MANAGE_SAFETY`
+
+                        - 생성 시와 동일한 대상자에게 title에 `[리마인드]` prefix를 붙여 알림을 재전송합니다.
+                        - 부서교육 / PSM / 안전보건 모든 타입에 사용 가능합니다.
+                        """)
+    @ApiResponses({
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                responseCode = "200",
+                description = "전송 성공"),
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                responseCode = "403",
+                description = "권한 없음 (교육 유형별 관리 권한 필요)",
+                content =
+                        @Content(
+                                mediaType = "application/json",
+                                examples = {
+                                    @ExampleObject(
+                                            name = "DEPARTMENT_NO_AUTHORITY",
+                                            summary = "부서 교육 권한 없음",
+                                            value =
+                                                    """
+                                        {
+                                          "isSuccess": false,
+                                          "code": "NO_AUTHORITY_FOR_EDU_REPORT",
+                                          "message": "교육 게시물 관리 권한이 없습니다.",
+                                          "result": null
+                                        }
+                                        """),
+                                    @ExampleObject(
+                                            name = "PSM_NO_AUTHORITY",
+                                            summary = "PSM 권한 없음",
+                                            value =
+                                                    """
+                                        {
+                                          "isSuccess": false,
+                                          "code": "NO_AUTHORITY_FOR_PSM_MANAGE",
+                                          "message": "PSM 관리 권한이 없습니다.",
+                                          "result": null
+                                        }
+                                        """),
+                                    @ExampleObject(
+                                            name = "SAFETY_NO_AUTHORITY",
+                                            summary = "안전보건 권한 없음",
+                                            value =
+                                                    """
+                                        {
+                                          "isSuccess": false,
+                                          "code": "NO_AUTHORITY_FOR_SAFETY_WRITE",
+                                          "message": "안전 보건 관리 권한이 없습니다.",
+                                          "result": null
+                                        }
+                                        """)
+                                })),
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                responseCode = "404",
+                description = "교육 게시물 없음",
+                content =
+                        @Content(
+                                mediaType = "application/json",
+                                examples =
+                                        @ExampleObject(
+                                                value =
+                                                        """
+                                        {
+                                          "isSuccess": false,
+                                          "code": "EDU_REPORT_NOT_FOUND",
+                                          "message": "해당 교육 게시물을 찾을 수 없습니다.",
+                                          "result": null
+                                        }
+                                        """)))
+    })
+    @PostMapping("/{educationId}/remind")
+    public ResponseEntity<ApiResponse<Void>> remindEduReport(
+            @Parameter(description = "리마인드 알림을 전송할 교육 게시물 ID", example = "1") @PathVariable
+                    Long educationId,
+            @Parameter(hidden = true) @AuthenticationPrincipal CustomUserDetails userDetails) {
+        eduReportService.remindEduReport(educationId, userDetails.getId());
+        return ResponseEntity.ok(ApiResponse.onNoContent());
     }
 
     @Schema(name = "EduReportAttendanceMultipartRequestDoc", description = "출석(서명) multipart 요청")

@@ -9,6 +9,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 
 import jakarta.validation.Valid;
 
+import kr.co.awesomelead.groupware_backend.domain.department.enums.Company;
 import kr.co.awesomelead.groupware_backend.domain.user.dto.response.MyInfoResponseDto;
 import kr.co.awesomelead.groupware_backend.domain.user.dto.response.UpdateMyInfoRequestDto;
 import kr.co.awesomelead.groupware_backend.domain.user.dto.response.UserDetailResponseDto;
@@ -16,6 +17,7 @@ import kr.co.awesomelead.groupware_backend.domain.user.dto.response.UserSummaryR
 import kr.co.awesomelead.groupware_backend.domain.user.enums.JobType;
 import kr.co.awesomelead.groupware_backend.domain.user.enums.Position;
 import kr.co.awesomelead.groupware_backend.domain.user.enums.Role;
+import kr.co.awesomelead.groupware_backend.domain.user.enums.Status;
 import kr.co.awesomelead.groupware_backend.domain.user.service.UserService;
 import kr.co.awesomelead.groupware_backend.global.common.response.ApiResponse;
 
@@ -34,6 +36,8 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+
+import java.util.List;
 
 @Tag(
         name = "User",
@@ -100,8 +104,10 @@ public class UserController {
     @Operation(
             summary = "전 직원 목록 조회",
             description =
-                    "AVAILABLE 상태인 전 직원 목록을 페이징으로 조회합니다. "
-                            + "keyword 파라미터를 전달하면 N-gram Full-Text Search로 한글 이름을 검색합니다.")
+                    "전 직원 목록을 페이징으로 조회합니다. "
+                            + "기본값(excludeSuspended=false)은 AVAILABLE·SUSPENDED 상태 직원을 모두 반환하며, "
+                            + "excludeSuspended=true이면 SUSPENDED 상태 직원을 제외하고 AVAILABLE 상태만 반환합니다. "
+                            + "keyword 파라미터를 전달하면 이름·영문이름·이메일 부분 일치로 검색합니다.")
     @ApiResponses(
             value = {
                 @io.swagger.v3.oas.annotations.responses.ApiResponse(
@@ -134,11 +140,26 @@ public class UserController {
             @RequestParam(required = false)
                     @io.swagger.v3.oas.annotations.Parameter(description = "역할 필터")
                     Role role,
+            @RequestParam(required = false)
+                    @io.swagger.v3.oas.annotations.Parameter(
+                            description = "근무사업장 필터 (AWESOME, MARUI)")
+                    Company workLocation,
+            @RequestParam(required = false)
+                    @io.swagger.v3.oas.annotations.Parameter(
+                            description = "상태 필터 (AVAILABLE, SUSPENDED)")
+                    List<Status> statuses,
             @PageableDefault(size = 20) Pageable pageable) {
         return ResponseEntity.ok(
                 ApiResponse.onSuccess(
                         userService.getEmployeeList(
-                                keyword, position, departmentId, jobType, role, pageable)));
+                                keyword,
+                                position,
+                                departmentId,
+                                jobType,
+                                role,
+                                workLocation,
+                                statuses,
+                                pageable)));
     }
 
     @Operation(summary = "직원 상세 조회", description = "특정 직원의 상세 정보를 조회합니다. 인증 토큰이 필요합니다.")

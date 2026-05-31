@@ -82,6 +82,7 @@ dependencies {
     // Apache POI 엑셀
     implementation 'org.apache.poi:poi:5.2.5'
     implementation 'org.apache.poi:poi-ooxml:5.2.5'
+    implementation 'org.apache.pdfbox:pdfbox:2.0.32'
 
     // Spring Retry
     implementation 'org.springframework.retry:spring-retry'

@@ -5,6 +5,8 @@ import static kr.co.awesomelead.groupware_backend.domain.visit.entity.QVisit.vis
 import com.querydsl.core.types.dsl.BooleanExpression;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 
+import kr.co.awesomelead.groupware_backend.domain.user.entity.QUser;
+import kr.co.awesomelead.groupware_backend.domain.visit.entity.QVisitHost;
 import kr.co.awesomelead.groupware_backend.domain.visit.entity.Visit;
 import kr.co.awesomelead.groupware_backend.domain.visit.enums.VisitStatus;
 
@@ -32,15 +34,40 @@ public class VisitQueryRepository {
             LocalDate endDate,
             Pageable pageable) {
 
-        List<Visit> content =
+        QVisitHost qVisitHost = QVisitHost.visitHost;
+        QUser qUser = QUser.user;
+
+        // Count distinct visits (avoid duplicates from hosts join)
+        long total =
+                Optional.ofNullable(
+                                queryFactory
+                                        .select(visit.id.countDistinct())
+                                        .from(visit)
+                                        .leftJoin(visit.hosts, qVisitHost)
+                                        .leftJoin(qVisitHost.user, qUser)
+                                        .leftJoin(qUser.department)
+                                        .where(
+                                                departmentIdEq(qVisitHost, departmentId),
+                                                statusEq(status),
+                                                endDateGoe(startDate),
+                                                startDateLoe(endDate))
+                                        .fetchOne())
+                        .orElse(0L);
+
+        if (total == 0) {
+            return new PageImpl<>(List.of(), pageable, 0);
+        }
+
+        // Get page of distinct visit IDs
+        List<Long> visitIds =
                 queryFactory
-                        .selectFrom(visit)
-                        .join(visit.user)
-                        .fetchJoin()
-                        .join(visit.user.department)
-                        .fetchJoin()
+                        .selectDistinct(visit.id)
+                        .from(visit)
+                        .leftJoin(visit.hosts, qVisitHost)
+                        .leftJoin(qVisitHost.user, qUser)
+                        .leftJoin(qUser.department)
                         .where(
-                                departmentIdEq(departmentId),
+                                departmentIdEq(qVisitHost, departmentId),
                                 statusEq(status),
                                 endDateGoe(startDate),
                                 startDateLoe(endDate))
@@ -49,26 +76,25 @@ public class VisitQueryRepository {
                         .limit(pageable.getPageSize())
                         .fetch();
 
-        long total =
-                Optional.ofNullable(
-                                queryFactory
-                                        .select(visit.count())
-                                        .from(visit)
-                                        .join(visit.user)
-                                        .join(visit.user.department)
-                                        .where(
-                                                departmentIdEq(departmentId),
-                                                statusEq(status),
-                                                endDateGoe(startDate),
-                                                startDateLoe(endDate))
-                                        .fetchOne())
-                        .orElse(0L);
+        // Fetch full Visit entities with hosts eagerly loaded
+        List<Visit> content =
+                queryFactory
+                        .selectFrom(visit)
+                        .leftJoin(visit.hosts, qVisitHost)
+                        .fetchJoin()
+                        .leftJoin(qVisitHost.user, qUser)
+                        .fetchJoin()
+                        .leftJoin(qUser.department)
+                        .fetchJoin()
+                        .where(visit.id.in(visitIds))
+                        .orderBy(visit.id.desc())
+                        .fetch();
 
         return new PageImpl<>(content, pageable, total);
     }
 
-    private BooleanExpression departmentIdEq(Long departmentId) {
-        return departmentId != null ? visit.user.department.id.eq(departmentId) : null;
+    private BooleanExpression departmentIdEq(QVisitHost qVisitHost, Long departmentId) {
+        return departmentId != null ? qVisitHost.user.department.id.eq(departmentId) : null;
     }
 
     private BooleanExpression statusEq(VisitStatus status) {

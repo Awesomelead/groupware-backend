@@ -3,6 +3,7 @@ package kr.co.awesomelead.groupware_backend.domain.visit.dto.request;
 import io.swagger.v3.oas.annotations.media.Schema;
 
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
@@ -17,6 +18,8 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 import org.springframework.web.multipart.MultipartFile;
+
+import java.util.List;
 
 @Getter
 @Setter
@@ -54,9 +57,9 @@ public class OnSiteVisitRequestDto implements VisitRequest {
     @Schema(description = "기타 허가 요구사항 (필요 시 작성)", example = "화기 사용 허가 필요")
     private String permissionDetail;
 
-    @NotNull(message = "담당자 선택은 필수입니다.")
-    @Schema(description = "담당 직원 ID", example = "1")
-    private Long hostId;
+    @NotEmpty(message = "담당자는 1명 이상 선택해야 합니다.")
+    @Schema(description = "담당 직원 ID 목록", example = "[1, 2]")
+    private List<Long> hostIds;
 
     @NotBlank(message = "비밀번호는 필수입니다.")
     @Size(min = 4, max = 4, message = "비밀번호는 숫자 4자리여야 합니다.")

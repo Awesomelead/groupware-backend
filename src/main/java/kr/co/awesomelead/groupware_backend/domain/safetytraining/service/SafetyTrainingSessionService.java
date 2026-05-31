@@ -59,6 +59,7 @@ public class SafetyTrainingSessionService {
             DateTimeFormatter.ofPattern("yyyy년 MM월 dd일 HH시 mm분");
     private static final DateTimeFormatter FILE_DATE_FORMATTER =
             DateTimeFormatter.ofPattern("yyyyMMdd");
+    private static final String EXCEL_FILE_EXTENSION = ".xls";
 
     private final SafetyTrainingSessionRepository sessionRepository;
     private final SafetyTrainingSessionAttendeeRepository attendeeRepository;
@@ -90,7 +91,9 @@ public class SafetyTrainingSessionService {
         String previewFileKey =
                 s3Service.uploadBytes(
                         excelBytes,
-                        "safety-training-preview-" + System.currentTimeMillis() + ".xlsx",
+                        "safety-training-preview-"
+                                + System.currentTimeMillis()
+                                + EXCEL_FILE_EXTENSION,
                         "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
         String previewFileName =
                 buildExportFileName(requestDto.getStartAt(), requestDto.getTitle());
@@ -441,7 +444,7 @@ public class SafetyTrainingSessionService {
                                 + session.getId()
                                 + "-"
                                 + System.currentTimeMillis()
-                                + ".xlsx",
+                                + EXCEL_FILE_EXTENSION,
                         "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
         session.setReportFileKey(newReportKey);
 
@@ -679,6 +682,31 @@ public class SafetyTrainingSessionService {
     }
 
     @Transactional
+    public void remindSession(Long sessionId, Long userId) {
+        userRepository
+                .findById(userId)
+                .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
+
+        SafetyTrainingSession session =
+                sessionRepository
+                        .findById(sessionId)
+                        .orElseThrow(
+                                () ->
+                                        new CustomException(
+                                                ErrorCode.SAFETY_TRAINING_SESSION_NOT_FOUND));
+
+        if (session.getCreatedBy() == null || !session.getCreatedBy().getId().equals(userId)) {
+            throw new CustomException(ErrorCode.NO_AUTHORITY_FOR_SAFETY_WRITE);
+        }
+
+        List<Long> targetUserIds =
+                findTargetAttendees(session.getCompanyScope()).stream().map(User::getId).toList();
+
+        notificationService.sendSafetyTrainingSessionRemindAlertToAttendees(
+                sessionId, session.getTitle(), targetUserIds);
+    }
+
+    @Transactional
     public void delete(Long sessionId, Long userId) {
         User actor =
                 userRepository
@@ -749,7 +777,7 @@ public class SafetyTrainingSessionService {
                 (startAt == null ? LocalDate.now() : startAt.toLocalDate())
                         .format(FILE_DATE_FORMATTER);
         String titlePart = sanitizeFileNamePart(title);
-        return datePart + "_" + titlePart + ".xlsx";
+        return datePart + "_" + titlePart + EXCEL_FILE_EXTENSION;
     }
 
     private String sanitizeFileNamePart(String title) {

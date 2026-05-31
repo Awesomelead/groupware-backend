@@ -3,7 +3,6 @@ package kr.co.awesomelead.groupware_backend.domain.user.repository;
 import kr.co.awesomelead.groupware_backend.domain.department.entity.Department;
 import kr.co.awesomelead.groupware_backend.domain.department.enums.Company;
 import kr.co.awesomelead.groupware_backend.domain.user.entity.User;
-import kr.co.awesomelead.groupware_backend.domain.user.enums.JobType;
 import kr.co.awesomelead.groupware_backend.domain.user.enums.Position;
 import kr.co.awesomelead.groupware_backend.domain.user.enums.Role;
 import kr.co.awesomelead.groupware_backend.domain.user.enums.Status;
@@ -40,6 +39,18 @@ public interface UserRepository extends JpaRepository<User, Long> {
                     + " :joinDate")
     Optional<User> findByNameAndJoinDate(
             @Param("name") String name, @Param("joinDate") LocalDate joinDate);
+
+    @Query(
+            "SELECT u FROM User u WHERE (u.nameKor = :name OR u.nameEng = :name) AND u.birthDate ="
+                    + " :birthDate")
+    Optional<User> findByNameAndBirthDate(
+            @Param("name") String name, @Param("birthDate") LocalDate birthDate);
+
+    @Query(
+            "SELECT u FROM User u WHERE (u.nameKor = :name OR u.nameEng = :name) AND u.birthDate ="
+                    + " :birthDate")
+    List<User> findAllByNameAndBirthDate(
+            @Param("name") String name, @Param("birthDate") LocalDate birthDate);
 
     boolean existsByPhoneNumberHash(String phoneNumberHash);
 
@@ -88,34 +99,4 @@ public interface UserRepository extends JpaRepository<User, Long> {
                             + "AND MATCH(u.name_kor) AGAINST(:keyword IN BOOLEAN MODE)",
             nativeQuery = true)
     Page<User> searchByNameKorFullText(@Param("keyword") String keyword, Pageable pageable);
-
-    @Query(
-            value =
-                    "SELECT u FROM User u LEFT JOIN FETCH u.department d "
-                            + "WHERE (:keyword IS NULL OR :keyword = '' "
-                            + "OR lower(u.nameKor) LIKE lower(concat('%', :keyword, '%')) "
-                            + "OR lower(u.nameEng) LIKE lower(concat('%', :keyword, '%')) "
-                            + "OR lower(u.email) LIKE lower(concat('%', :keyword, '%'))) "
-                            + "AND (:position IS NULL OR u.position = :position) "
-                            + "AND (:departmentId IS NULL OR u.department.id = :departmentId) "
-                            + "AND (:jobType IS NULL OR u.jobType = :jobType) "
-                            + "AND (:role IS NULL OR u.role = :role) "
-                            + "ORDER BY u.id DESC",
-            countQuery =
-                    "SELECT count(u) FROM User u "
-                            + "WHERE (:keyword IS NULL OR :keyword = '' "
-                            + "OR lower(u.nameKor) LIKE lower(concat('%', :keyword, '%')) "
-                            + "OR lower(u.nameEng) LIKE lower(concat('%', :keyword, '%')) "
-                            + "OR lower(u.email) LIKE lower(concat('%', :keyword, '%'))) "
-                            + "AND (:position IS NULL OR u.position = :position) "
-                            + "AND (:departmentId IS NULL OR u.department.id = :departmentId) "
-                            + "AND (:jobType IS NULL OR u.jobType = :jobType) "
-                            + "AND (:role IS NULL OR u.role = :role)")
-    Page<User> findAllWithDepartmentAndKeyword(
-            @Param("keyword") String keyword,
-            @Param("position") Position position,
-            @Param("departmentId") Long departmentId,
-            @Param("jobType") JobType jobType,
-            @Param("role") Role role,
-            Pageable pageable);
 }

@@ -49,7 +49,8 @@ public class EduReportQueryRepository {
      */
     public List<EduReportSummaryDto> findEduReports(
             EduType type, Department dept, Long categoryId, Long userId, boolean hasAccess) {
-        return findEduReports(type, dept, categoryId, userId, hasAccess, null, true, null);
+        return findEduReports(
+                type, dept, null, null, categoryId, userId, hasAccess, null, true, null);
     }
 
     public List<EduReportSummaryDto> findEduReports(
@@ -63,6 +64,8 @@ public class EduReportQueryRepository {
         return findEduReports(
                 type,
                 dept,
+                null,
+                null,
                 categoryId,
                 userId,
                 hasAccess,
@@ -74,6 +77,8 @@ public class EduReportQueryRepository {
     public List<EduReportSummaryDto> findEduReports(
             EduType type,
             Department dept,
+            List<Long> accessibleDepartmentIds,
+            EduReportStatus status,
             Long categoryId,
             Long userId,
             boolean hasAccess,
@@ -122,15 +127,18 @@ public class EduReportQueryRepository {
                                 educationCategory.name,
                                 creatorUser.nameKor.coalesce(creatorUser.nameEng),
                                 eduReport.createdAt,
-                                QDepartment.department.name))
+                                QDepartment.department.name,
+                                eduReport.company,
+                                Expressions.nullExpression(List.class)))
                 .from(eduReport)
                 .leftJoin(eduReport.department, QDepartment.department)
                 .leftJoin(eduReport.category, educationCategory)
                 .leftJoin(eduReport.createdBy, creatorUser)
                 .where(
                         eqEduType(type),
+                        statusFilter(status),
                         eqCategoryId(categoryId),
-                        deptFilter(type, hasAccess, dept),
+                        deptFilter(type, hasAccess, dept, accessibleDepartmentIds),
                         psmFilter(psmCompany, canReadAllPsmCompanies),
                         titleFilter(title))
                 // 같은 eduDate(일자) 내에서는 최신 생성건이 위로 오도록 id DESC를 타이브레이커로 사용
@@ -140,7 +148,8 @@ public class EduReportQueryRepository {
 
     public List<EduReportSummaryDto> findPsmEduReports(
             Long categoryId, Long userId, Company company, boolean canReadAllCompanies) {
-        return findPsmEduReports(categoryId, userId, company, canReadAllCompanies, null);
+        return findPsmEduReports(
+                categoryId, userId, company, canReadAllCompanies, null, null, null);
     }
 
     public List<EduReportSummaryDto> findPsmEduReports(
@@ -148,6 +157,18 @@ public class EduReportQueryRepository {
             Long userId,
             Company company,
             boolean canReadAllCompanies,
+            String title) {
+        return findPsmEduReports(
+                categoryId, userId, company, canReadAllCompanies, null, null, title);
+    }
+
+    public List<EduReportSummaryDto> findPsmEduReports(
+            Long categoryId,
+            Long userId,
+            Company company,
+            boolean canReadAllCompanies,
+            Company targetCompany,
+            EduReportStatus status,
             String title) {
         QUser creatorUser = new QUser("creatorUserForPsm");
         BooleanExpression attendanceExists =
@@ -178,7 +199,9 @@ public class EduReportQueryRepository {
                                 educationCategory.name,
                                 creatorUser.nameKor.coalesce(creatorUser.nameEng),
                                 eduReport.createdAt,
-                                QDepartment.department.name))
+                                QDepartment.department.name,
+                                eduReport.company,
+                                Expressions.nullExpression(List.class)))
                 .from(eduReport)
                 .leftJoin(eduReport.department, QDepartment.department)
                 .leftJoin(eduReport.category, educationCategory)
@@ -187,6 +210,8 @@ public class EduReportQueryRepository {
                         eduReport.eduType.eq(EduType.PSM),
                         eqCategoryId(categoryId),
                         psmCompanyFilter(company, canReadAllCompanies),
+                        psmTargetCompanyFilter(targetCompany),
+                        statusFilter(status),
                         titleFilter(title))
                 .orderBy(eduReport.pinned.desc(), eduReport.eduDate.desc(), eduReport.id.desc())
                 .fetch();
@@ -194,7 +219,8 @@ public class EduReportQueryRepository {
 
     public List<EduReportSummaryDto> findSafetyEduReports(
             Long categoryId, Long userId, Company company, boolean canReadAllCompanies) {
-        return findSafetyEduReports(categoryId, userId, company, canReadAllCompanies, null);
+        return findSafetyEduReports(
+                categoryId, userId, company, canReadAllCompanies, null, null, null);
     }
 
     public List<EduReportSummaryDto> findSafetyEduReports(
@@ -202,6 +228,18 @@ public class EduReportQueryRepository {
             Long userId,
             Company company,
             boolean canReadAllCompanies,
+            String title) {
+        return findSafetyEduReports(
+                categoryId, userId, company, canReadAllCompanies, null, null, title);
+    }
+
+    public List<EduReportSummaryDto> findSafetyEduReports(
+            Long categoryId,
+            Long userId,
+            Company company,
+            boolean canReadAllCompanies,
+            Company targetCompany,
+            EduReportStatus status,
             String title) {
         QUser creatorUser = new QUser("creatorUserForSafety");
         BooleanExpression attendanceExists =
@@ -232,7 +270,9 @@ public class EduReportQueryRepository {
                                 educationCategory.name,
                                 creatorUser.nameKor.coalesce(creatorUser.nameEng),
                                 eduReport.createdAt,
-                                QDepartment.department.name))
+                                QDepartment.department.name,
+                                eduReport.company,
+                                Expressions.nullExpression(List.class)))
                 .from(eduReport)
                 .leftJoin(eduReport.department, QDepartment.department)
                 .leftJoin(eduReport.category, educationCategory)
@@ -241,6 +281,8 @@ public class EduReportQueryRepository {
                         eduReport.eduType.eq(EduType.SAFETY),
                         eqCategoryId(categoryId),
                         psmCompanyFilter(company, canReadAllCompanies),
+                        safetyTargetCompanyFilter(targetCompany),
+                        statusFilter(status),
                         titleFilter(title))
                 .orderBy(eduReport.pinned.desc(), eduReport.eduDate.desc(), eduReport.id.desc())
                 .fetch();
@@ -414,12 +456,7 @@ public class EduReportQueryRepository {
         if (!StringUtils.hasText(title)) {
             return null;
         }
-        return Expressions.numberTemplate(
-                        Double.class,
-                        "function('match_against', {0}, {1})",
-                        eduReport.title,
-                        Expressions.constant(title))
-                .gt(0);
+        return eduReport.title.contains(title);
     }
 
     /** 교육 유형 필터 — null 이면 조건 없음 (전체) */
@@ -431,6 +468,10 @@ public class EduReportQueryRepository {
         return categoryId != null ? educationCategory.id.eq(categoryId) : null;
     }
 
+    private BooleanExpression statusFilter(EduReportStatus status) {
+        return status != null ? eduReport.status.eq(status) : null;
+    }
+
     /**
      * 부서 접근 필터
      *
@@ -440,7 +481,8 @@ public class EduReportQueryRepository {
      *   <li>hasAccess=false → 기존 로직: DEPARTMENT 타입이 아니거나, 타입이 DEPARTMENT이면 자신의 부서만
      * </ul>
      */
-    private BooleanExpression deptFilter(EduType type, boolean hasAccess, Department dept) {
+    private BooleanExpression deptFilter(
+            EduType type, boolean hasAccess, Department dept, List<Long> accessibleDepartmentIds) {
         if (hasAccess) {
             // MANAGE_DEPARTMENT_EDUCATION 권한 있음:
             // - DEPARTMENT 조회일 때만 departmentName 필터 적용
@@ -452,8 +494,17 @@ public class EduReportQueryRepository {
         }
         // MANAGE_DEPARTMENT_EDUCATION 권한 없음: 기존 로직 유지
         // - DEPARTMENT 타입이 아닌 교육(PSM, SAFETY)은 모두 보임
-        // - DEPARTMENT 타입이면 자신의 부서 교육만 보임
-        return eduReport.eduType.ne(EduType.DEPARTMENT).or(eduReport.department.eq(dept));
+        // - DEPARTMENT 타입이면 자신의 부서 + 하위 부서 교육을 보임
+        if (accessibleDepartmentIds == null) {
+            return eduReport.eduType.ne(EduType.DEPARTMENT).or(eduReport.department.eq(dept));
+        }
+        if (accessibleDepartmentIds.isEmpty()) {
+            return eduReport.eduType.ne(EduType.DEPARTMENT);
+        }
+        return eduReport
+                .eduType
+                .ne(EduType.DEPARTMENT)
+                .or(eduReport.department.id.in(accessibleDepartmentIds));
     }
 
     private BooleanExpression psmCompanyFilter(Company company, boolean canReadAllCompanies) {
@@ -465,6 +516,20 @@ public class EduReportQueryRepository {
             return eduReport.company.isNull();
         }
 
+        return eduReport.company.eq(company).or(eduReport.company.isNull());
+    }
+
+    private BooleanExpression psmTargetCompanyFilter(Company company) {
+        if (company == null) {
+            return null;
+        }
+        return eduReport.company.eq(company).or(eduReport.company.isNull());
+    }
+
+    private BooleanExpression safetyTargetCompanyFilter(Company company) {
+        if (company == null) {
+            return null;
+        }
         return eduReport.company.eq(company).or(eduReport.company.isNull());
     }
 

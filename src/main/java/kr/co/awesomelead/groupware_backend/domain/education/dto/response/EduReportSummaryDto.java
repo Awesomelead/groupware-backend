@@ -1,7 +1,10 @@
 package kr.co.awesomelead.groupware_backend.domain.education.dto.response;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+
 import io.swagger.v3.oas.annotations.media.Schema;
 
+import kr.co.awesomelead.groupware_backend.domain.department.enums.Company;
 import kr.co.awesomelead.groupware_backend.domain.department.enums.DepartmentName;
 import kr.co.awesomelead.groupware_backend.domain.education.enums.EduCompletionStatus;
 import kr.co.awesomelead.groupware_backend.domain.education.enums.EduReportStatus;
@@ -14,6 +17,7 @@ import lombok.Setter;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.List;
 
 @Getter
 @Setter
@@ -77,4 +81,14 @@ public class EduReportSummaryDto {
 
     @Schema(description = "교육 부서명", example = "경영지원부")
     private DepartmentName departmentName;
+
+    @JsonIgnore
+    @Schema(hidden = true)
+    private Company company;
+
+    @Schema(
+            description = "대상 회사 범위(PSM/안전 보건 목록에서만 제공, 공통 게시물은 전체 회사 목록)",
+            example = "[\"AWESOME\", \"MARUI\"]",
+            nullable = true)
+    private List<String> companyScope;
 }

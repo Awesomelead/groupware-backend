@@ -17,6 +17,7 @@ import kr.co.awesomelead.groupware_backend.domain.admin.enums.AuthorityAction;
 import kr.co.awesomelead.groupware_backend.domain.admin.mapper.AdminMapper;
 import kr.co.awesomelead.groupware_backend.domain.admin.service.AdminService;
 import kr.co.awesomelead.groupware_backend.domain.aligo.service.PhoneAuthService;
+import kr.co.awesomelead.groupware_backend.domain.auth.service.RefreshTokenService;
 import kr.co.awesomelead.groupware_backend.domain.department.entity.Department;
 import kr.co.awesomelead.groupware_backend.domain.department.enums.Company;
 import kr.co.awesomelead.groupware_backend.domain.department.enums.DepartmentName;
@@ -32,6 +33,7 @@ import kr.co.awesomelead.groupware_backend.domain.user.enums.Role;
 import kr.co.awesomelead.groupware_backend.domain.user.enums.Status;
 import kr.co.awesomelead.groupware_backend.domain.user.repository.MyInfoUpdateRequestRepository;
 import kr.co.awesomelead.groupware_backend.domain.user.repository.UserRepository;
+import kr.co.awesomelead.groupware_backend.domain.user.repository.querydsl.UserQueryRepository;
 import kr.co.awesomelead.groupware_backend.global.error.CustomException;
 import kr.co.awesomelead.groupware_backend.global.error.ErrorCode;
 
@@ -59,9 +61,11 @@ import java.util.Optional;
 class AdminServiceTest {
 
     @Mock private UserRepository userRepository;
+    @Mock private UserQueryRepository userQueryRepository;
     @Mock private DepartmentRepository departmentRepository;
     @Mock private MyInfoUpdateRequestRepository myInfoUpdateRequestRepository;
     @Mock private PhoneAuthService phoneAuthService;
+    @Mock private RefreshTokenService refreshTokenService;
     @Mock private NotificationService notificationService;
     @Mock private AdminMapper adminMapper;
     @InjectMocks private AdminService adminService;
@@ -116,12 +120,13 @@ class AdminServiceTest {
         class Context_with_field_job_and_admin_role {
 
             @Test
-            @DisplayName("INVALID_JOB_TYPE_FOR_ADMIN_ROLE 에러를 던진다")
-            void it_throws_invalid_job_type_for_admin_role_exception() {
+            @DisplayName("정상적으로 승인 처리된다")
+            void it_approves_successfully() {
                 // given
                 Department department =
                         Department.builder().id(1L).name(DepartmentName.SALES_DEPT).build();
                 User pendingUser = new User();
+                pendingUser.setId(userId);
                 pendingUser.setStatus(Status.PENDING);
 
                 when(userRepository.findById(userId)).thenReturn(Optional.of(pendingUser));
@@ -131,14 +136,13 @@ class AdminServiceTest {
                 invalidRequestDto.setJobType(JobType.FIELD);
                 invalidRequestDto.setRole(Role.ADMIN);
 
-                // when & then
-                assertThatThrownBy(
-                                () ->
-                                        adminService.approveUserRegistration(
-                                                userId, invalidRequestDto, adminId))
-                        .isInstanceOf(CustomException.class)
-                        .extracting("errorCode")
-                        .isEqualTo(ErrorCode.INVALID_JOB_TYPE_FOR_ADMIN_ROLE);
+                // when
+                adminService.approveUserRegistration(userId, invalidRequestDto, adminId);
+
+                // then
+                assertThat(pendingUser.getStatus()).isEqualTo(Status.AVAILABLE);
+                assertThat(pendingUser.getJobType()).isEqualTo(JobType.FIELD);
+                assertThat(pendingUser.getRole()).isEqualTo(Role.ADMIN);
             }
         }
 
@@ -274,6 +278,7 @@ class AdminServiceTest {
                             .id(17L)
                             .nameKor("고영민")
                             .department(department)
+                            .workLocation(Company.AWESOME)
                             .hireDate(LocalDate.of(2025, 9, 22))
                             .resignationDate(LocalDate.of(2026, 3, 31))
                             .build();
@@ -281,8 +286,15 @@ class AdminServiceTest {
 
             Pageable pageable = PageRequest.of(0, 20);
             Page<User> userPage = new PageImpl<>(List.of(user), pageable, 1);
-            when(userRepository.findAllWithDepartmentAndKeyword(
-                            "홍길동", Position.STAFF, 11L, JobType.MANAGEMENT, Role.USER, pageable))
+            when(userQueryRepository.findAllForAdminWithFilters(
+                            "홍길동",
+                            Position.STAFF,
+                            11L,
+                            JobType.MANAGEMENT,
+                            Role.USER,
+                            null,
+                            null,
+                            pageable))
                     .thenReturn(userPage);
             when(myInfoUpdateRequestRepository.findDistinctUserIdsByStatus(
                             MyInfoUpdateRequestStatus.PENDING))
@@ -297,6 +309,8 @@ class AdminServiceTest {
                             11L,
                             JobType.MANAGEMENT,
                             Role.USER,
+                            null,
+                            null,
                             pageable);
 
             // then
@@ -304,6 +318,7 @@ class AdminServiceTest {
             assertThat(result.getContent().get(0).getUserId()).isEqualTo(17L);
             assertThat(result.getContent().get(0).isHasPendingMyInfoRequest()).isEqualTo(true);
             assertThat(result.getContent().get(0).getSignupStatus()).isEqualTo(Status.AVAILABLE);
+            assertThat(result.getContent().get(0).getWorkLocation()).isEqualTo(Company.AWESOME);
             assertThat(result.getContent().get(0).getHireDate())
                     .isEqualTo(LocalDate.of(2025, 9, 22));
             assertThat(result.getContent().get(0).getResignationDate())
@@ -328,10 +343,95 @@ class AdminServiceTest {
                                             null,
                                             null,
                                             null,
+                                            null,
+                                            null,
                                             PageRequest.of(0, 20)))
                     .isInstanceOf(CustomException.class)
                     .extracting("errorCode")
                     .isEqualTo(ErrorCode.NO_AUTHORITY_FOR_REGISTRATION);
+        }
+
+        @Test
+        @DisplayName("statuses가 null이면 repository에 null을 전달한다")
+        void getUsers_statuses가_null이면_repository에_null을_전달한다() {
+            // given
+            Pageable pageable = PageRequest.of(0, 20);
+            when(myInfoUpdateRequestRepository.findDistinctUserIdsByStatus(any()))
+                    .thenReturn(List.of());
+            when(userQueryRepository.findAllForAdminWithFilters(
+                            null, null, null, null, null, null, (List<Status>) null, pageable))
+                    .thenReturn(Page.empty());
+
+            // when
+            adminService.getUsers(
+                    adminId, null, null, null, null, null, null, (List<Status>) null, pageable);
+
+            // then
+            verify(userQueryRepository)
+                    .findAllForAdminWithFilters(
+                            null, null, null, null, null, null, (List<Status>) null, pageable);
+        }
+
+        @Test
+        @DisplayName("statuses가 비어있으면 repository에 빈 리스트를 전달한다")
+        void getUsers_statuses가_비어있으면_repository에_빈_리스트를_전달한다() {
+            // given
+            Pageable pageable = PageRequest.of(0, 20);
+            when(myInfoUpdateRequestRepository.findDistinctUserIdsByStatus(any()))
+                    .thenReturn(List.of());
+            when(userQueryRepository.findAllForAdminWithFilters(
+                            null, null, null, null, null, null, List.of(), pageable))
+                    .thenReturn(Page.empty());
+
+            // when
+            adminService.getUsers(adminId, null, null, null, null, null, null, List.of(), pageable);
+
+            // then
+            verify(userQueryRepository)
+                    .findAllForAdminWithFilters(
+                            null, null, null, null, null, null, List.of(), pageable);
+        }
+
+        @Test
+        @DisplayName("statuses에 AVAILABLE이 포함되면 repository에 그대로 전달한다")
+        void getUsers_statuses에_AVAILABLE이_포함되면_repository에_그대로_전달한다() {
+            // given
+            Pageable pageable = PageRequest.of(0, 20);
+            List<Status> statuses = List.of(Status.AVAILABLE);
+            when(myInfoUpdateRequestRepository.findDistinctUserIdsByStatus(any()))
+                    .thenReturn(List.of());
+            when(userQueryRepository.findAllForAdminWithFilters(
+                            null, null, null, null, null, null, statuses, pageable))
+                    .thenReturn(Page.empty());
+
+            // when
+            adminService.getUsers(adminId, null, null, null, null, null, null, statuses, pageable);
+
+            // then
+            verify(userQueryRepository)
+                    .findAllForAdminWithFilters(
+                            null, null, null, null, null, null, statuses, pageable);
+        }
+
+        @Test
+        @DisplayName("statuses에 PENDING이 포함되면 repository에 그대로 전달한다")
+        void getUsers_statuses에_PENDING이_포함되면_repository에_그대로_전달한다() {
+            // given
+            Pageable pageable = PageRequest.of(0, 20);
+            List<Status> statuses = List.of(Status.PENDING);
+            when(myInfoUpdateRequestRepository.findDistinctUserIdsByStatus(any()))
+                    .thenReturn(List.of());
+            when(userQueryRepository.findAllForAdminWithFilters(
+                            null, null, null, null, null, null, statuses, pageable))
+                    .thenReturn(Page.empty());
+
+            // when
+            adminService.getUsers(adminId, null, null, null, null, null, null, statuses, pageable);
+
+            // then
+            verify(userQueryRepository)
+                    .findAllForAdminWithFilters(
+                            null, null, null, null, null, null, statuses, pageable);
         }
     }
 
@@ -457,6 +557,71 @@ class AdminServiceTest {
                     .isInstanceOf(CustomException.class)
                     .extracting("errorCode")
                     .isEqualTo(ErrorCode.PHONE_NOT_VERIFIED);
+        }
+
+        @Nested
+        @DisplayName("퇴사일 설정 및 상태 연동 시나리오")
+        class Context_resignation_update {
+
+            @Test
+            @DisplayName("AVAILABLE 유저의 resignationDate를 입력하면 상태가 SUSPENDED로 변경된다")
+            void updateUserInfo_resignationDateSet_statusChangesToSuspended() {
+                // given
+                User targetUser = User.builder().id(17L).phoneNumber("01011112222").build();
+                targetUser.setPhoneNumberHash(User.hashValue("01011112222"));
+                targetUser.setStatus(Status.AVAILABLE);
+                when(userRepository.findById(17L)).thenReturn(Optional.of(targetUser));
+
+                AdminUserUpdateRequestDto dto = new AdminUserUpdateRequestDto();
+                dto.setResignationDate(LocalDate.of(2026, 6, 30));
+
+                // when
+                adminService.updateUserInfo(17L, dto, adminId);
+
+                // then
+                assertThat(targetUser.getStatus()).isEqualTo(Status.SUSPENDED);
+                assertThat(targetUser.getResignationDate()).isEqualTo(LocalDate.of(2026, 6, 30));
+            }
+
+            @Test
+            @DisplayName("SUSPENDED 유저의 resignationDate를 null로 입력하면 상태가 AVAILABLE로 복구된다")
+            void updateUserInfo_resignationDateCleared_statusChangesToAvailable() {
+                // given
+                User targetUser = User.builder().id(17L).phoneNumber("01011112222").build();
+                targetUser.setPhoneNumberHash(User.hashValue("01011112222"));
+                targetUser.setStatus(Status.SUSPENDED);
+                targetUser.setResignationDate(LocalDate.of(2026, 3, 31));
+                when(userRepository.findById(17L)).thenReturn(Optional.of(targetUser));
+
+                AdminUserUpdateRequestDto dto = new AdminUserUpdateRequestDto();
+                dto.setResignationDate(null);
+
+                // when
+                adminService.updateUserInfo(17L, dto, adminId);
+
+                // then
+                assertThat(targetUser.getStatus()).isEqualTo(Status.AVAILABLE);
+                assertThat(targetUser.getResignationDate()).isNull();
+            }
+
+            @Test
+            @DisplayName("PENDING 유저의 resignationDate를 null로 입력해도 상태가 PENDING으로 유지된다")
+            void updateUserInfo_resignationDateNull_pendingStatusUnchanged() {
+                // given
+                User targetUser = User.builder().id(17L).phoneNumber("01011112222").build();
+                targetUser.setPhoneNumberHash(User.hashValue("01011112222"));
+                targetUser.setStatus(Status.PENDING);
+                when(userRepository.findById(17L)).thenReturn(Optional.of(targetUser));
+
+                AdminUserUpdateRequestDto dto = new AdminUserUpdateRequestDto();
+                dto.setResignationDate(null);
+
+                // when
+                adminService.updateUserInfo(17L, dto, adminId);
+
+                // then
+                assertThat(targetUser.getStatus()).isEqualTo(Status.PENDING);
+            }
         }
     }
 
@@ -756,6 +921,72 @@ class AdminServiceTest {
             assertThat(result.get(0).getRequestedNameEng()).isEqualTo("HONG");
             assertThat(result.get(0).getCurrentPhoneNumber()).isEqualTo("01011112222");
             assertThat(result.get(0).getRequestedPhoneNumber()).isEqualTo("01033334444");
+        }
+    }
+
+    @Nested
+    @DisplayName("getUsersExcel 메서드는")
+    class Describe_getUsersExcel {
+
+        @Nested
+        @DisplayName("관리자 권한으로 요청하면")
+        class Context_with_admin_user {
+
+            @Test
+            @DisplayName("엑셀 바이너리를 반환한다")
+            void it_returns_excel_bytes() {
+                // given
+                Department department =
+                        Department.builder().id(1L).name(DepartmentName.MANAGEMENT_SUPPORT).build();
+                User user =
+                        User.builder()
+                                .id(17L)
+                                .nameKor("홍길동")
+                                .nameEng("HONG GILDONG")
+                                .email("hong@test.com")
+                                .status(Status.AVAILABLE)
+                                .role(Role.USER)
+                                .position(Position.STAFF)
+                                .jobType(JobType.MANAGEMENT)
+                                .department(department)
+                                .hireDate(LocalDate.of(2025, 1, 1))
+                                .build();
+                when(userQueryRepository.findAllForAdminWithFiltersNoPaging(
+                                null, null, null, null, null, null, null))
+                        .thenReturn(List.of(user));
+
+                // when
+                byte[] result =
+                        adminService.getUsersExcel(
+                                adminId, null, null, null, null, null, null, null);
+
+                // then
+                assertThat(result).isNotNull();
+                assertThat(result.length).isGreaterThan(0);
+            }
+        }
+
+        @Nested
+        @DisplayName("권한 없는 사용자가 요청하면")
+        class Context_with_no_authority_user {
+
+            @Test
+            @DisplayName("NO_AUTHORITY_FOR_REGISTRATION 예외를 던진다")
+            void it_throws_no_authority_when_not_admin() {
+                // given
+                User normalUser = new User();
+                normalUser.setRole(Role.USER);
+                when(userRepository.findById(adminId)).thenReturn(Optional.of(normalUser));
+
+                // when & then
+                assertThatThrownBy(
+                                () ->
+                                        adminService.getUsersExcel(
+                                                adminId, null, null, null, null, null, null, null))
+                        .isInstanceOf(CustomException.class)
+                        .extracting("errorCode")
+                        .isEqualTo(ErrorCode.NO_AUTHORITY_FOR_REGISTRATION);
+            }
         }
     }
 

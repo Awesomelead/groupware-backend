@@ -22,11 +22,13 @@ import kr.co.awesomelead.groupware_backend.domain.admin.dto.response.MyInfoUpdat
 import kr.co.awesomelead.groupware_backend.domain.admin.dto.response.PendingUserSummaryResponseDto;
 import kr.co.awesomelead.groupware_backend.domain.admin.enums.AuthorityAction;
 import kr.co.awesomelead.groupware_backend.domain.admin.service.AdminService;
+import kr.co.awesomelead.groupware_backend.domain.department.enums.Company;
 import kr.co.awesomelead.groupware_backend.domain.user.dto.CustomUserDetails;
 import kr.co.awesomelead.groupware_backend.domain.user.enums.Authority;
 import kr.co.awesomelead.groupware_backend.domain.user.enums.JobType;
 import kr.co.awesomelead.groupware_backend.domain.user.enums.Position;
 import kr.co.awesomelead.groupware_backend.domain.user.enums.Role;
+import kr.co.awesomelead.groupware_backend.domain.user.enums.Status;
 import kr.co.awesomelead.groupware_backend.global.common.response.ApiResponse;
 
 import lombok.RequiredArgsConstructor;
@@ -90,6 +92,7 @@ public class AdminController {
                                               "nameKor": "홍길동",
                                               "position": "사원",
                                               "jobType": "관리직",
+                                              "workLocation": "어썸리드",
                                               "departmentName": "경영지원부",
                                               "signupStatus": "AVAILABLE",
                                               "hasPendingMyInfoRequest": true
@@ -133,6 +136,11 @@ public class AdminController {
             @Parameter(description = "역할 필터", required = false, example = "일반 사용자")
                     @RequestParam(required = false)
                     Role role,
+            @Parameter(description = "근무사업장 필터 (AWESOME, MARUI)") @RequestParam(required = false)
+                    Company workLocation,
+            @Parameter(description = "상태 필터 (AVAILABLE, SUSPENDED, PENDING 등 다중 선택 가능)")
+                    @RequestParam(required = false)
+                    List<Status> statuses,
             @ParameterObject @PageableDefault(page = 0, size = 20) Pageable pageable) {
 
         Page<AdminUserSummaryResponseDto> result =
@@ -143,6 +151,8 @@ public class AdminController {
                         departmentId,
                         jobType,
                         role,
+                        workLocation,
+                        statuses,
                         pageable);
 
         return ResponseEntity.ok(ApiResponse.onSuccess(result));
@@ -273,17 +283,6 @@ public class AdminController {
                                                           "isSuccess": false,
                                                           "code": "PHONE_NOT_VERIFIED",
                                                           "message": "전화번호 인증이 필요합니다.",
-                                                          "result": null
-                                                        }
-                                                        """),
-                                            @ExampleObject(
-                                                    name = "잘못된 직무/역할 조합",
-                                                    value =
-                                                            """
-                                                        {
-                                                          "isSuccess": false,
-                                                          "code": "INVALID_JOB_TYPE_FOR_ADMIN_ROLE",
-                                                          "message": "현장직은 관리자 권한을 가질 수 없습니다.",
                                                           "result": null
                                                         }
                                                         """)
@@ -1015,6 +1014,55 @@ public class AdminController {
         List<MyInfoUpdateRequestSummaryResponseDto> result =
                 adminService.getPendingMyInfoUpdateRequests(userDetails.getId());
         return ResponseEntity.ok(ApiResponse.onSuccess(result));
+    }
+
+    @Operation(summary = "관리자 직원 목록 엑셀 다운로드")
+    @ApiResponses({
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                responseCode = "200",
+                content =
+                        @Content(
+                                mediaType =
+                                        "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"))
+    })
+    @GetMapping("/users/excel")
+    @PreAuthorize("hasAnyRole('ADMIN', 'MASTER_ADMIN')")
+    public ResponseEntity<byte[]> getUsersExcel(
+            @Parameter(hidden = true) @AuthenticationPrincipal CustomUserDetails userDetails,
+            @RequestParam(required = false) String keyword,
+            @RequestParam(required = false) Position position,
+            @RequestParam(required = false) Long departmentId,
+            @RequestParam(required = false) JobType jobType,
+            @RequestParam(required = false) Role role,
+            @RequestParam(required = false) Company workLocation,
+            @RequestParam(required = false) List<Status> statuses) {
+        byte[] excelBytes =
+                adminService.getUsersExcel(
+                        userDetails.getId(),
+                        keyword,
+                        position,
+                        departmentId,
+                        jobType,
+                        role,
+                        workLocation,
+                        statuses);
+        String filename =
+                "근로자명부_"
+                        + java.time.LocalDate.now()
+                                .format(java.time.format.DateTimeFormatter.ofPattern("yyyyMMdd"))
+                        + ".xlsx";
+        String encodedFilename;
+        try {
+            encodedFilename = java.net.URLEncoder.encode(filename, "UTF-8");
+        } catch (java.io.UnsupportedEncodingException e) {
+            encodedFilename = filename;
+        }
+        return ResponseEntity.ok()
+                .header("Content-Disposition", "attachment; filename*=UTF-8''" + encodedFilename)
+                .header(
+                        "Content-Type",
+                        "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
+                .body(excelBytes);
     }
 
     @Operation(

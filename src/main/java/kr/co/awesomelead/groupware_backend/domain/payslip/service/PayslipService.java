@@ -67,14 +67,7 @@ public class PayslipService {
 
     @Transactional
     public void sendPayslip(List<MultipartFile> payslipFiles, Long userId) throws IOException {
-
-        User user =
-                userRepository
-                        .findById(userId)
-                        .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
-        if (!user.hasAuthority(Authority.EDIT_EMPLOYEE_INFO)) {
-            throw new CustomException(ErrorCode.NO_AUTHORITY_FOR_PAYSLIP);
-        }
+        validatePayslipEditAuthority(userId);
 
         for (MultipartFile file : payslipFiles) {
 
@@ -102,6 +95,53 @@ public class PayslipService {
 
             Payslip savedPayslip = savePayslipInfo(s3Key, originalFileName, target);
             notificationService.sendPayslipAlertToUser(target.getId(), savedPayslip.getId());
+        }
+    }
+
+    @Transactional
+    public void updatePayslip(Long payslipId, MultipartFile payslipFile, Long userId)
+            throws IOException {
+        validatePayslipEditAuthority(userId);
+
+        Payslip payslip =
+                payslipRepository
+                        .findById(payslipId)
+                        .orElseThrow(() -> new CustomException(ErrorCode.PAYSLIP_NOT_FOUND));
+
+        String originalFileName = payslipFile.getOriginalFilename();
+        if (!Objects.equals(payslipFile.getContentType(), "application/pdf")) {
+            throw new CustomException(ErrorCode.ONLY_PDF_ALLOWED);
+        }
+
+        String fileNameEmployeeName = parseEmployeeNameFromFileName(originalFileName);
+        PayslipPdfInfoExtractor.PayslipPersonalInfo pdfPersonalInfo =
+                extractPersonalInfoWithFallback(payslipFile, originalFileName);
+
+        if (!isSamePersonName(fileNameEmployeeName, pdfPersonalInfo.name())) {
+            throw new CustomException(ErrorCode.PAYSLIP_USER_INFO_MISMATCH);
+        }
+
+        User target =
+                findTargetUserByNameAndBirthDate(
+                        pdfPersonalInfo.name(), fileNameEmployeeName, pdfPersonalInfo.birthDate());
+
+        String oldFileKey = payslip.getFileKey();
+        String newFileKey = s3Service.uploadFile(payslipFile);
+
+        payslip.setFileKey(newFileKey);
+        payslip.setOriginalFileName(originalFileName);
+        payslip.setUser(target);
+        payslip.setStatus(PayslipStatus.SENT);
+        payslip.setReadAt(null);
+
+        notificationService.sendPayslipAlertToUser(target.getId(), payslip.getId());
+
+        if (oldFileKey != null && !oldFileKey.isBlank() && !oldFileKey.equals(newFileKey)) {
+            try {
+                s3Service.deleteFile(oldFileKey);
+            } catch (RuntimeException e) {
+                log.warn("급여명세서 기존 파일 삭제 실패 - payslipId: {}, fileKey: {}", payslipId, oldFileKey, e);
+            }
         }
     }
 
@@ -327,6 +367,16 @@ public class PayslipService {
                         .findById(adminId)
                         .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
         if (admin.getRole() != Role.ADMIN && admin.getRole() != Role.MASTER_ADMIN) {
+            throw new CustomException(ErrorCode.NO_AUTHORITY_FOR_PAYSLIP);
+        }
+    }
+
+    private void validatePayslipEditAuthority(Long userId) {
+        User user =
+                userRepository
+                        .findById(userId)
+                        .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
+        if (!user.hasAuthority(Authority.EDIT_EMPLOYEE_INFO)) {
             throw new CustomException(ErrorCode.NO_AUTHORITY_FOR_PAYSLIP);
         }
     }

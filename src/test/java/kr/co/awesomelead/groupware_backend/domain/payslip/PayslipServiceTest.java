@@ -292,6 +292,100 @@ public class PayslipServiceTest {
     }
 
     @Nested
+    @DisplayName("updatePayslip 메서드는")
+    class Describe_updatePayslip {
+
+        @Test
+        @DisplayName("관리자 권한이 없으면 NO_AUTHORITY_FOR_PAYSLIP 예외를 던진다.")
+        void it_throws_no_authority_exception() {
+            // given
+            given(userRepository.findById(1L)).willReturn(Optional.of(admin));
+            MockMultipartFile pdfFile =
+                    new MockMultipartFile(
+                            "payslipFile",
+                            "급여명세서(근로기준1)_10001_홍길동_202605.pdf",
+                            "application/pdf",
+                            "pdf content".getBytes());
+
+            // when & then
+            assertThatThrownBy(() -> payslipService.updatePayslip(10L, pdfFile, 1L))
+                    .isInstanceOf(CustomException.class)
+                    .hasFieldOrPropertyWithValue("errorCode", ErrorCode.NO_AUTHORITY_FOR_PAYSLIP);
+        }
+
+        @Test
+        @DisplayName("수정 대상 명세서가 없으면 PAYSLIP_NOT_FOUND 예외를 던진다.")
+        void it_throws_payslip_not_found_exception() {
+            // given
+            admin.getAuthorities().add(Authority.EDIT_EMPLOYEE_INFO);
+            given(userRepository.findById(1L)).willReturn(Optional.of(admin));
+            given(payslipRepository.findById(10L)).willReturn(Optional.empty());
+
+            MockMultipartFile pdfFile =
+                    new MockMultipartFile(
+                            "payslipFile",
+                            "급여명세서(근로기준1)_10001_홍길동_202605.pdf",
+                            "application/pdf",
+                            "pdf content".getBytes());
+
+            // when & then
+            assertThatThrownBy(() -> payslipService.updatePayslip(10L, pdfFile, 1L))
+                    .isInstanceOf(CustomException.class)
+                    .hasFieldOrPropertyWithValue("errorCode", ErrorCode.PAYSLIP_NOT_FOUND);
+        }
+
+        @Test
+        @DisplayName("유효한 수정 요청이면 파일/수신자/상태를 교체하고 알림을 보낸다.")
+        void it_updates_payslip_and_sends_notification() throws IOException {
+            // given
+            admin.getAuthorities().add(Authority.EDIT_EMPLOYEE_INFO);
+            given(userRepository.findById(1L)).willReturn(Optional.of(admin));
+
+            User previousOwner = User.builder().id(50L).build();
+            Payslip payslip =
+                    Payslip.builder()
+                            .id(10L)
+                            .user(previousOwner)
+                            .fileKey("old-key")
+                            .originalFileName("급여명세서(근로기준1)_10050_기존직원_202605.pdf")
+                            .status(PayslipStatus.READ)
+                            .readAt(LocalDateTime.of(2026, 5, 30, 10, 0))
+                            .build();
+            given(payslipRepository.findById(10L)).willReturn(Optional.of(payslip));
+
+            MockMultipartFile pdfFile =
+                    new MockMultipartFile(
+                            "payslipFile",
+                            "급여명세서(근로기준1)_10001_홍길동_202605.pdf",
+                            "application/pdf",
+                            "pdf content".getBytes());
+
+            given(payslipPdfInfoExtractor.extract(pdfFile))
+                    .willReturn(
+                            new PayslipPdfInfoExtractor.PayslipPersonalInfo(
+                                    "홍길동", LocalDate.of(1990, 1, 1)));
+            given(payslipPdfInfoExtractor.isNameLikelyCorrupted("홍길동")).willReturn(false);
+            given(userRepository.findAllByNameAndBirthDate("홍길동", LocalDate.of(1990, 1, 1)))
+                    .willReturn(List.of(employee));
+            given(s3Service.uploadFile(pdfFile)).willReturn("new-key");
+
+            // when
+            payslipService.updatePayslip(10L, pdfFile, 1L);
+
+            // then
+            assertThat(payslip.getFileKey()).isEqualTo("new-key");
+            assertThat(payslip.getOriginalFileName())
+                    .isEqualTo("급여명세서(근로기준1)_10001_홍길동_202605.pdf");
+            assertThat(payslip.getUser().getId()).isEqualTo(employee.getId());
+            assertThat(payslip.getStatus()).isEqualTo(PayslipStatus.SENT);
+            assertThat(payslip.getReadAt()).isNull();
+
+            verify(notificationService).sendPayslipAlertToUser(employee.getId(), 10L);
+            verify(s3Service).deleteFile("old-key");
+        }
+    }
+
+    @Nested
     @DisplayName("getPayslipsForAdmin 메서드는 (관리자용 목록 조회)")
     class Describe_getPayslipsForAdmin {
 

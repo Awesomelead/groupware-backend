@@ -14,6 +14,9 @@ import lombok.NoArgsConstructor;
 @Schema(description = "관리자용 연차 발송 목록 아이템")
 public class AdminAnnualLeaveDispatchItemResponseDto {
 
+    @Schema(description = "발송 이력 ID", example = "10")
+    private Long dispatchId;
+
     @Schema(description = "보낸 파일명", example = "2026년_연차현황.xlsx")
     private String originalFileName;
 

@@ -327,6 +327,7 @@ public class AnnualLeaveServiceTest {
             assertThat(result.get(0).getSheetName()).isEqualTo("2026-06");
             assertThat(result.get(0).getTitle()).isEqualTo("2026-06");
             assertThat(result.get(0).getTotalCount()).isEqualTo(2);
+            assertThat(result.get(0).getItems().get(0).getDispatchId()).isEqualTo(10L);
             assertThat(result.get(0).getItems().get(0).getOriginalFileName())
                     .isEqualTo("2026_연차현황.xlsx");
             assertThat(result.get(0).getItems().get(1).getOriginalFileName())

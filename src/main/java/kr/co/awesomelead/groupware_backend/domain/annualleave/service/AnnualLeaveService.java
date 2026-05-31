@@ -251,6 +251,7 @@ public class AnnualLeaveService {
     private AdminAnnualLeaveDispatchItemResponseDto toDispatchItemDto(
             AnnualLeaveDispatchHistory history) {
         return AdminAnnualLeaveDispatchItemResponseDto.builder()
+                .dispatchId(history.getId())
                 .originalFileName(history.getOriginalFileName())
                 .sheetName(normalizeSheetName(history.getSheetName()))
                 .fileUrl(s3Service.getPresignedViewUrl(history.getFileKey()))

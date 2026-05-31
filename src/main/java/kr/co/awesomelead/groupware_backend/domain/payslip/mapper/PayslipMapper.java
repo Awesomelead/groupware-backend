@@ -11,6 +11,7 @@ import org.mapstruct.Context;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 
+import java.text.Normalizer;
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -28,7 +29,7 @@ public interface PayslipMapper {
     @Mapping(target = "employPosition", source = "user.position")
     @Mapping(
             target = "payslipTitle",
-            expression = "java(buildPayslipTitle(payslip.getOriginalFileName()))")
+            expression = "java(buildPayslipTitle(payslip))")
     AdminPayslipSummaryDto toAdminPayslipSummaryDto(Payslip payslip);
 
     List<AdminPayslipSummaryDto> toAdminPayslipSummaryDtoList(List<Payslip> payslips);
@@ -38,7 +39,7 @@ public interface PayslipMapper {
     @Mapping(target = "employPosition", source = "user.position")
     @Mapping(
             target = "payslipTitle",
-            expression = "java(buildPayslipTitle(payslip.getOriginalFileName()))")
+            expression = "java(buildPayslipTitle(payslip))")
     @Mapping(
             target = "presignedUrl",
             expression = "java(s3Service.getPresignedViewUrl(payslip.getFileKey()))")
@@ -47,7 +48,7 @@ public interface PayslipMapper {
     @Mapping(target = "payslipId", source = "payslip.id")
     @Mapping(
             target = "payslipTitle",
-            expression = "java(buildPayslipTitle(payslip.getOriginalFileName()))")
+            expression = "java(buildPayslipTitle(payslip))")
     EmployeePayslipSummaryDto toEmployeePayslipSummaryDto(Payslip payslip);
 
     List<EmployeePayslipSummaryDto> toEmployeePayslipSummaryDtoList(List<Payslip> payslips);
@@ -58,17 +59,25 @@ public interface PayslipMapper {
     @Mapping(target = "payslipId", source = "payslip.id")
     @Mapping(
             target = "payslipTitle",
-            expression = "java(buildPayslipTitle(payslip.getOriginalFileName()))")
+            expression = "java(buildPayslipTitle(payslip))")
     EmployeePayslipDetailDto toEmployeePayslipDetailDto(
             Payslip payslip, @Context S3Service s3Service);
 
-    default String buildPayslipTitle(String originalFileName) {
+    default String buildPayslipTitle(Payslip payslip) {
+        if (payslip == null) {
+            return "급여명세서";
+        }
+        return buildPayslipTitleFromOriginalFileName(payslip.getOriginalFileName());
+    }
+
+    private static String buildPayslipTitleFromOriginalFileName(String originalFileName) {
         if (originalFileName == null || originalFileName.isBlank()) {
             return "급여명세서";
         }
 
         String normalizedPath = originalFileName.replace("\\", "/");
         String baseFileName = normalizedPath.substring(normalizedPath.lastIndexOf('/') + 1);
+        baseFileName = Normalizer.normalize(baseFileName, Normalizer.Form.NFC);
 
         Matcher matcher = PAYSLIP_MONTH_PATTERN.matcher(baseFileName);
         if (!matcher.matches()) {

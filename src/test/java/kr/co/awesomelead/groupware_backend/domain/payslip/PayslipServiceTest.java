@@ -39,6 +39,7 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.mock.web.MockMultipartFile;
 
 import java.io.IOException;
+import java.text.Normalizer;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
@@ -396,6 +397,37 @@ public class PayslipServiceTest {
                 assertThat(secondGroup.getTotalCount()).isEqualTo(2);
                 // createdAt desc로 정렬되어 최신 건이 먼저
                 assertThat(secondGroup.getItems().get(0).getPayslipId()).isEqualTo(2L);
+            }
+
+            @Test
+            @DisplayName("NFD(분해형 한글) 파일명도 정상적으로 월별 그룹핑한다.")
+            void it_groups_nfd_file_name_by_year_month() {
+                // given
+                User adminUser = User.builder().id(1L).role(Role.ADMIN).build();
+                given(userRepository.findById(1L)).willReturn(Optional.of(adminUser));
+
+                List<Payslip> payslips = List.of(new Payslip());
+                given(payslipRepository.findAllByStatusOptionalWithUser(null)).willReturn(payslips);
+
+                String nfdFileName =
+                        Normalizer.normalize(
+                                "급여명세서(근로기준1)_10002_리딘뷰_202604.pdf", Normalizer.Form.NFD);
+                AdminPayslipSummaryDto summary =
+                        AdminPayslipSummaryDto.builder()
+                                .payslipId(10L)
+                                .originalFileName(nfdFileName)
+                                .createdAt(LocalDateTime.of(2026, 4, 30, 9, 0))
+                                .build();
+                given(payslipMapper.toAdminPayslipSummaryDtoList(payslips)).willReturn(List.of(summary));
+
+                // when
+                List<AdminPayslipGroupDto> result =
+                        payslipService.getPayslipsForAdminGrouped(1L, null);
+
+                // then
+                assertThat(result.size()).isEqualTo(1);
+                assertThat(result.get(0).getYearMonth()).isEqualTo("202604");
+                assertThat(result.get(0).getTitle()).isEqualTo("2026년 4월 급여명세서");
             }
         }
     }

@@ -338,6 +338,7 @@ public class PayslipService {
 
         String normalizedPath = originalFileName.replace("\\", "/");
         String baseFileName = normalizedPath.substring(normalizedPath.lastIndexOf('/') + 1);
+        baseFileName = Normalizer.normalize(baseFileName, Normalizer.Form.NFC);
 
         Matcher matcher = PAYSLIP_MONTH_PATTERN.matcher(baseFileName);
         if (!matcher.matches()) {

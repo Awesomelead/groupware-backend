@@ -11,6 +11,7 @@ import jakarta.validation.Valid;
 
 import kr.co.awesomelead.groupware_backend.domain.payslip.dto.request.PayslipViewPasswordRequestDto;
 import kr.co.awesomelead.groupware_backend.domain.payslip.dto.response.AdminPayslipDetailDto;
+import kr.co.awesomelead.groupware_backend.domain.payslip.dto.response.AdminPayslipGroupDto;
 import kr.co.awesomelead.groupware_backend.domain.payslip.dto.response.AdminPayslipSummaryDto;
 import kr.co.awesomelead.groupware_backend.domain.payslip.dto.response.EmployeePayslipDetailDto;
 import kr.co.awesomelead.groupware_backend.domain.payslip.dto.response.EmployeePayslipSummaryDto;
@@ -178,6 +179,30 @@ public class PayslipController {
 
         List<AdminPayslipSummaryDto> response =
                 payslipService.getPayslipsForAdmin(userDetails.getId(), status);
+        return ResponseEntity.ok(ApiResponse.onSuccess(response));
+    }
+
+    @Operation(
+            summary = "보낸 명세서 월별 그룹 조회 (관리자)",
+            description = "관리자가 상태별로 발송한 명세서를 급여지급월(YYYYMM) 기준으로 그룹 조회합니다.")
+    @ApiResponses(
+            value = {
+                @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                        responseCode = "200",
+                        description = "조회 성공"),
+                @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                        responseCode = "401",
+                        description = "권한 없음")
+            })
+    @GetMapping("/admin/grouped")
+    public ResponseEntity<ApiResponse<List<AdminPayslipGroupDto>>> getPayslipsForAdminGrouped(
+            @Parameter(hidden = true) @AuthenticationPrincipal CustomUserDetails userDetails,
+            @Parameter(description = "명세서 상태 (생략 시 전체 조회)", example = "SENT")
+                    @RequestParam(required = false)
+                    PayslipStatus status) {
+
+        List<AdminPayslipGroupDto> response =
+                payslipService.getPayslipsForAdminGrouped(userDetails.getId(), status);
         return ResponseEntity.ok(ApiResponse.onSuccess(response));
     }
 

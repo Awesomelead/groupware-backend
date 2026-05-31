@@ -2,6 +2,7 @@ package kr.co.awesomelead.groupware_backend.domain.payslip.service;
 
 import kr.co.awesomelead.groupware_backend.domain.notification.service.NotificationService;
 import kr.co.awesomelead.groupware_backend.domain.payslip.dto.response.AdminPayslipDetailDto;
+import kr.co.awesomelead.groupware_backend.domain.payslip.dto.response.AdminPayslipGroupDto;
 import kr.co.awesomelead.groupware_backend.domain.payslip.dto.response.AdminPayslipSummaryDto;
 import kr.co.awesomelead.groupware_backend.domain.payslip.dto.response.EmployeePayslipDetailDto;
 import kr.co.awesomelead.groupware_backend.domain.payslip.dto.response.EmployeePayslipSummaryDto;
@@ -31,12 +32,15 @@ import java.text.Normalizer;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 @Service
 @Slf4j
@@ -47,6 +51,11 @@ public class PayslipService {
             Pattern.compile(
                     "^급여명세서\\(근로기준1\\)_([^_]+)_([^_]+)_([0-9]{6})\\.pdf$",
                     Pattern.CASE_INSENSITIVE);
+    private static final Pattern PAYSLIP_MONTH_PATTERN =
+            Pattern.compile(
+                    "^급여명세서\\(근로기준1\\)_[^_]+_[^_]+_([0-9]{6})\\.pdf$",
+                    Pattern.CASE_INSENSITIVE);
+    private static final String UNKNOWN_YEAR_MONTH = "UNKNOWN";
 
     private final PayslipRepository payslipRepository;
     private final PayslipMapper payslipMapper;
@@ -208,29 +217,52 @@ public class PayslipService {
     // 관리자용 보낸 급여명세서 목록 조회 (Status에 따라)
     @Transactional(readOnly = true)
     public List<AdminPayslipSummaryDto> getPayslipsForAdmin(Long adminId, PayslipStatus status) {
-        User admin =
-                userRepository
-                        .findById(adminId)
-                        .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
-        if (admin.getRole() != Role.ADMIN && admin.getRole() != Role.MASTER_ADMIN) {
-            throw new CustomException(ErrorCode.NO_AUTHORITY_FOR_PAYSLIP);
-        }
+        validateAdminAuthority(adminId);
 
         List<Payslip> payslipList = payslipRepository.findAllByStatusOptionalWithUser(status);
 
         return payslipMapper.toAdminPayslipSummaryDtoList(payslipList);
     }
 
+    @Transactional(readOnly = true)
+    public List<AdminPayslipGroupDto> getPayslipsForAdminGrouped(Long adminId, PayslipStatus status) {
+        List<AdminPayslipSummaryDto> summaries = getPayslipsForAdmin(adminId, status);
+
+        Map<String, List<AdminPayslipSummaryDto>> groupedByYearMonth =
+                summaries.stream()
+                        .collect(
+                                Collectors.groupingBy(
+                                        summary -> extractYearMonth(summary.getOriginalFileName())));
+
+        return groupedByYearMonth.entrySet().stream()
+                .sorted((left, right) -> compareYearMonthDesc(left.getKey(), right.getKey()))
+                .map(
+                        entry -> {
+                            String yearMonth = entry.getKey();
+                            List<AdminPayslipSummaryDto> items =
+                                    entry.getValue().stream()
+                                            .sorted(
+                                                    Comparator.comparing(
+                                                                    AdminPayslipSummaryDto::getCreatedAt,
+                                                                    Comparator.nullsLast(
+                                                                            Comparator.naturalOrder()))
+                                                            .reversed())
+                                            .toList();
+
+                            return AdminPayslipGroupDto.builder()
+                                    .yearMonth(UNKNOWN_YEAR_MONTH.equals(yearMonth) ? null : yearMonth)
+                                    .title(buildGroupTitle(yearMonth))
+                                    .totalCount(items.size())
+                                    .items(items)
+                                    .build();
+                        })
+                .toList();
+    }
+
     // 관리자용 보낸 급여명세서 상세 조회
     @Transactional(readOnly = true)
     public AdminPayslipDetailDto getPayslipForAdmin(Long adminId, Long payslipId) {
-        User admin =
-                userRepository
-                        .findById(adminId)
-                        .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
-        if (admin.getRole() != Role.ADMIN && admin.getRole() != Role.MASTER_ADMIN) {
-            throw new CustomException(ErrorCode.NO_AUTHORITY_FOR_PAYSLIP);
-        }
+        validateAdminAuthority(adminId);
 
         Payslip payslip =
                 payslipRepository
@@ -275,5 +307,57 @@ public class PayslipService {
             payslip.setReadAt(LocalDateTime.now());
         }
         return payslipMapper.toEmployeePayslipDetailDto(payslip, s3Service);
+    }
+
+    private void validateAdminAuthority(Long adminId) {
+        User admin =
+                userRepository
+                        .findById(adminId)
+                        .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
+        if (admin.getRole() != Role.ADMIN && admin.getRole() != Role.MASTER_ADMIN) {
+            throw new CustomException(ErrorCode.NO_AUTHORITY_FOR_PAYSLIP);
+        }
+    }
+
+    private String extractYearMonth(String originalFileName) {
+        if (originalFileName == null || originalFileName.isBlank()) {
+            return UNKNOWN_YEAR_MONTH;
+        }
+
+        String normalizedPath = originalFileName.replace("\\", "/");
+        String baseFileName = normalizedPath.substring(normalizedPath.lastIndexOf('/') + 1);
+
+        Matcher matcher = PAYSLIP_MONTH_PATTERN.matcher(baseFileName);
+        if (!matcher.matches()) {
+            return UNKNOWN_YEAR_MONTH;
+        }
+        return matcher.group(1);
+    }
+
+    private String buildGroupTitle(String yearMonth) {
+        if (UNKNOWN_YEAR_MONTH.equals(yearMonth) || yearMonth == null || yearMonth.length() != 6) {
+            return "미분류 급여명세서";
+        }
+
+        int year = Integer.parseInt(yearMonth.substring(0, 4));
+        int month = Integer.parseInt(yearMonth.substring(4, 6));
+        if (month < 1 || month > 12) {
+            return "미분류 급여명세서";
+        }
+
+        return year + "년 " + month + "월 급여명세서";
+    }
+
+    private int compareYearMonthDesc(String first, String second) {
+        if (UNKNOWN_YEAR_MONTH.equals(first) && UNKNOWN_YEAR_MONTH.equals(second)) {
+            return 0;
+        }
+        if (UNKNOWN_YEAR_MONTH.equals(first)) {
+            return 1;
+        }
+        if (UNKNOWN_YEAR_MONTH.equals(second)) {
+            return -1;
+        }
+        return second.compareTo(first);
     }
 }

@@ -9,6 +9,7 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 
 import kr.co.awesomelead.groupware_backend.domain.notification.service.NotificationService;
+import kr.co.awesomelead.groupware_backend.domain.payslip.dto.response.AdminPayslipGroupDto;
 import kr.co.awesomelead.groupware_backend.domain.payslip.dto.response.AdminPayslipSummaryDto;
 import kr.co.awesomelead.groupware_backend.domain.payslip.dto.response.EmployeePayslipDetailDto;
 import kr.co.awesomelead.groupware_backend.domain.payslip.entity.Payslip;
@@ -39,6 +40,7 @@ import org.springframework.mock.web.MockMultipartFile;
 
 import java.io.IOException;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
@@ -300,6 +302,63 @@ public class PayslipServiceTest {
                 // then
                 assertThat(result.size()).isEqualTo(2);
                 verify(payslipRepository).findAllByStatusOptionalWithUser(null);
+            }
+        }
+
+        @Nested
+        @DisplayName("월별 그룹 조회를 요청하면")
+        class Context_with_grouped_response {
+
+            @Test
+            @DisplayName("급여지급월 기준으로 그룹핑해서 최신 월부터 반환한다.")
+            void it_returns_grouped_result() {
+                // given
+                User adminUser = User.builder().id(1L).role(Role.ADMIN).build();
+                given(userRepository.findById(1L)).willReturn(Optional.of(adminUser));
+
+                List<Payslip> payslips = List.of(new Payslip(), new Payslip(), new Payslip());
+                given(payslipRepository.findAllByStatusOptionalWithUser(null)).willReturn(payslips);
+
+                AdminPayslipSummaryDto mayFirst =
+                        AdminPayslipSummaryDto.builder()
+                                .payslipId(1L)
+                                .originalFileName("급여명세서(근로기준1)_10001_홍길동_202605.pdf")
+                                .createdAt(LocalDateTime.of(2026, 5, 20, 9, 0))
+                                .build();
+                AdminPayslipSummaryDto maySecond =
+                        AdminPayslipSummaryDto.builder()
+                                .payslipId(2L)
+                                .originalFileName("급여명세서(근로기준1)_10002_김영희_202605.pdf")
+                                .createdAt(LocalDateTime.of(2026, 5, 21, 9, 0))
+                                .build();
+                AdminPayslipSummaryDto juneOnly =
+                        AdminPayslipSummaryDto.builder()
+                                .payslipId(3L)
+                                .originalFileName("급여명세서(근로기준1)_10003_박민수_202606.pdf")
+                                .createdAt(LocalDateTime.of(2026, 6, 1, 9, 0))
+                                .build();
+                given(payslipMapper.toAdminPayslipSummaryDtoList(payslips))
+                        .willReturn(List.of(mayFirst, maySecond, juneOnly));
+
+                // when
+                List<AdminPayslipGroupDto> result =
+                        payslipService.getPayslipsForAdminGrouped(1L, null);
+
+                // then
+                assertThat(result.size()).isEqualTo(2);
+
+                AdminPayslipGroupDto firstGroup = result.get(0);
+                assertThat(firstGroup.getYearMonth()).isEqualTo("202606");
+                assertThat(firstGroup.getTitle()).isEqualTo("2026년 6월 급여명세서");
+                assertThat(firstGroup.getTotalCount()).isEqualTo(1);
+                assertThat(firstGroup.getItems().get(0).getPayslipId()).isEqualTo(3L);
+
+                AdminPayslipGroupDto secondGroup = result.get(1);
+                assertThat(secondGroup.getYearMonth()).isEqualTo("202605");
+                assertThat(secondGroup.getTitle()).isEqualTo("2026년 5월 급여명세서");
+                assertThat(secondGroup.getTotalCount()).isEqualTo(2);
+                // createdAt desc로 정렬되어 최신 건이 먼저
+                assertThat(secondGroup.getItems().get(0).getPayslipId()).isEqualTo(2L);
             }
         }
     }

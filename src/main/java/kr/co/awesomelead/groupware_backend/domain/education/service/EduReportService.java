@@ -1,5 +1,8 @@
 package kr.co.awesomelead.groupware_backend.domain.education.service;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+
 import kr.co.awesomelead.groupware_backend.domain.department.entity.Department;
 import kr.co.awesomelead.groupware_backend.domain.department.enums.Company;
 import kr.co.awesomelead.groupware_backend.domain.department.enums.DepartmentName;
@@ -41,6 +44,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.StringUtils;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
@@ -54,6 +58,7 @@ import java.util.Map;
 @Service
 @RequiredArgsConstructor
 public class EduReportService {
+    private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
 
     private final EduReportRepository eduReportRepository;
     private final EduReportQueryRepository eduReportQueryRepository;
@@ -76,11 +81,20 @@ public class EduReportService {
     public Long createPsmEduReport(
             PsmEduReportCreateRequestDto requestDto, List<MultipartFile> files, Long id)
             throws IOException {
+        EditorContentFields contentFields =
+                resolveEditorCreateContentFields(
+                        requestDto.getContent(),
+                        requestDto.getContentDelta(),
+                        requestDto.getContentHtml());
+
         EduReportRequestDto baseRequest =
                 EduReportRequestDto.builder()
                         .eduType(EduType.PSM)
                         .title(requestDto.getTitle())
-                        .content(requestDto.getContent())
+                        .content(contentFields.content())
+                        .contentDelta(contentFields.contentDelta())
+                        .contentHtml(contentFields.contentHtml())
+                        .contentText(contentFields.contentText())
                         .pinned(requestDto.isPinned())
                         .signatureRequired(false)
                         .categoryId(requestDto.getCategoryId())
@@ -93,11 +107,20 @@ public class EduReportService {
     public Long createSafetyEduReport(
             SafetyEduReportCreateRequestDto requestDto, List<MultipartFile> files, Long id)
             throws IOException {
+        EditorContentFields contentFields =
+                resolveEditorCreateContentFields(
+                        requestDto.getContent(),
+                        requestDto.getContentDelta(),
+                        requestDto.getContentHtml());
+
         EduReportRequestDto baseRequest =
                 EduReportRequestDto.builder()
                         .eduType(EduType.SAFETY)
                         .title(requestDto.getTitle())
-                        .content(requestDto.getContent())
+                        .content(contentFields.content())
+                        .contentDelta(contentFields.contentDelta())
+                        .contentHtml(contentFields.contentHtml())
+                        .contentText(contentFields.contentText())
                         .pinned(requestDto.isPinned())
                         .signatureRequired(false)
                         .categoryId(requestDto.getCategoryId())
@@ -203,11 +226,20 @@ public class EduReportService {
     public Long createDepartmentEduReport(
             DepartmentEduReportCreateRequestDto requestDto, List<MultipartFile> files, Long id)
             throws IOException {
+        EditorContentFields contentFields =
+                resolveEditorCreateContentFields(
+                        requestDto.getContent(),
+                        requestDto.getContentDelta(),
+                        requestDto.getContentHtml());
+
         EduReportRequestDto baseRequest =
                 EduReportRequestDto.builder()
                         .eduType(EduType.DEPARTMENT)
                         .title(requestDto.getTitle())
-                        .content(requestDto.getContent())
+                        .content(contentFields.content())
+                        .contentDelta(contentFields.contentDelta())
+                        .contentHtml(contentFields.contentHtml())
+                        .contentText(contentFields.contentText())
                         .pinned(requestDto.isPinned())
                         .signatureRequired(requestDto.isSignatureRequired())
                         .departmentId(requestDto.getDepartmentId())
@@ -874,9 +906,32 @@ public class EduReportService {
         List<String> uploadedAttachmentKeys = new ArrayList<>();
         try {
             report.setTitle(requestDto.getTitle().trim());
-            report.setContent(requestDto.getContent().trim());
             report.setPinned(requestDto.isPinned());
             report.setSignatureRequired(requestDto.isSignatureRequired());
+
+            if (report.getEduType() == EduType.PSM
+                    || report.getEduType() == EduType.DEPARTMENT
+                    || report.getEduType() == EduType.SAFETY) {
+                EditorContentFields contentFields =
+                        resolveEditorUpdateContentFields(
+                                report,
+                                requestDto.getContent(),
+                                requestDto.getContentDelta(),
+                                requestDto.getContentHtml());
+                report.updateEditorContent(
+                        contentFields.content(),
+                        contentFields.contentDelta(),
+                        contentFields.contentHtml(),
+                        contentFields.contentText());
+            } else {
+                if (!StringUtils.hasText(requestDto.getContent())) {
+                    throw new CustomException(ErrorCode.INVALID_ARGUMENT);
+                }
+                report.setContent(requestDto.getContent().trim());
+                report.setContentDelta(null);
+                report.setContentHtml(null);
+                report.setContentText(null);
+            }
 
             if (report.getEduType() == EduType.DEPARTMENT) {
                 if (requestDto.getDepartmentId() == null) {
@@ -1102,6 +1157,164 @@ public class EduReportService {
         return category;
     }
 
+    private EditorContentFields resolveEditorCreateContentFields(
+            String requestContent, String requestContentDelta, String requestContentHtml) {
+        String content = requestContent;
+        if (!StringUtils.hasText(content)) {
+            if (StringUtils.hasText(requestContentDelta)) {
+                content = extractPlainTextFromDelta(requestContentDelta);
+            } else if (StringUtils.hasText(requestContentHtml)) {
+                content = extractPlainTextFromHtml(requestContentHtml);
+            }
+        }
+
+        String contentText =
+                resolveSearchableText(requestContentDelta, requestContentHtml, content, null);
+
+        if (!StringUtils.hasText(content) && !StringUtils.hasText(contentText)) {
+            throw new CustomException(ErrorCode.INVALID_ARGUMENT);
+        }
+
+        return new EditorContentFields(
+                normalizeNullableContent(content),
+                normalizeNullableContent(requestContentDelta),
+                normalizeNullableContent(requestContentHtml),
+                contentText);
+    }
+
+    private EditorContentFields resolveEditorUpdateContentFields(
+            EduReport report,
+            String requestContent,
+            String requestContentDelta,
+            String requestContentHtml) {
+        String resolvedContentDelta =
+                requestContentDelta != null ? requestContentDelta : report.getContentDelta();
+        String resolvedContentHtml =
+                requestContentHtml != null ? requestContentHtml : report.getContentHtml();
+
+        String resolvedContent;
+        if (requestContent != null) {
+            resolvedContent = requestContent;
+        } else if (requestContentDelta != null) {
+            resolvedContent = extractPlainTextFromDelta(requestContentDelta);
+        } else if (requestContentHtml != null) {
+            resolvedContent = extractPlainTextFromHtml(requestContentHtml);
+        } else {
+            resolvedContent = report.getContent();
+        }
+
+        String resolvedContentText =
+                resolveSearchableText(
+                        resolvedContentDelta,
+                        resolvedContentHtml,
+                        resolvedContent,
+                        report.getContentText());
+
+        if (!StringUtils.hasText(resolvedContent) && !StringUtils.hasText(resolvedContentText)) {
+            throw new CustomException(ErrorCode.INVALID_ARGUMENT);
+        }
+
+        return new EditorContentFields(
+                normalizeNullableContent(resolvedContent),
+                normalizeNullableContent(resolvedContentDelta),
+                normalizeNullableContent(resolvedContentHtml),
+                resolvedContentText);
+    }
+
+    private String resolveSearchableText(
+            String contentDelta, String contentHtml, String content, String fallbackContentText) {
+        String deltaText = extractPlainTextFromDelta(contentDelta);
+        if (StringUtils.hasText(deltaText)) {
+            return deltaText;
+        }
+
+        String htmlText = extractPlainTextFromHtml(contentHtml);
+        if (StringUtils.hasText(htmlText)) {
+            return htmlText;
+        }
+
+        String contentText = extractPlainTextFromHtml(content);
+        if (StringUtils.hasText(contentText)) {
+            return contentText;
+        }
+
+        if (StringUtils.hasText(content)) {
+            return content.trim();
+        }
+
+        if (StringUtils.hasText(fallbackContentText)) {
+            return fallbackContentText;
+        }
+        return "";
+    }
+
+    private String extractPlainTextFromDelta(String contentDelta) {
+        if (!StringUtils.hasText(contentDelta)) {
+            return "";
+        }
+
+        try {
+            JsonNode root = OBJECT_MAPPER.readTree(contentDelta);
+            JsonNode ops = root.path("ops");
+            if (!ops.isArray()) {
+                return "";
+            }
+
+            StringBuilder plain = new StringBuilder();
+            for (JsonNode op : ops) {
+                JsonNode insert = op.get("insert");
+                if (insert == null) {
+                    continue;
+                }
+                if (insert.isTextual()) {
+                    plain.append(insert.asText());
+                } else if (insert.isObject() && insert.has("image")) {
+                    plain.append(' ');
+                }
+            }
+            return normalizeWhitespace(plain.toString());
+        } catch (Exception e) {
+            return "";
+        }
+    }
+
+    private String extractPlainTextFromHtml(String html) {
+        if (!StringUtils.hasText(html)) {
+            return "";
+        }
+        String text =
+                html.replaceAll("(?is)<script[^>]*>.*?</script>", " ")
+                        .replaceAll("(?is)<style[^>]*>.*?</style>", " ")
+                        .replaceAll("(?is)<br\\s*/?>", "\n")
+                        .replaceAll("(?is)</p>", "\n")
+                        .replaceAll("(?is)</tr>", "\n")
+                        .replaceAll("(?is)<[^>]+>", " ")
+                        .replace("&nbsp;", " ")
+                        .replace("&amp;", "&")
+                        .replace("&lt;", "<")
+                        .replace("&gt;", ">");
+        return normalizeWhitespace(text);
+    }
+
+    private String normalizeWhitespace(String text) {
+        if (!StringUtils.hasText(text)) {
+            return "";
+        }
+        return text.replace('\u00A0', ' ')
+                .replaceAll("[\\t\\x0B\\f\\r ]+", " ")
+                .replaceAll(" *\\n *", "\n")
+                .replaceAll("\\n{3,}", "\n\n")
+                .trim();
+    }
+
+    private String normalizeNullableContent(String content) {
+        if (content == null) {
+            return null;
+        }
+        String normalized = content.trim();
+        return normalized.isEmpty() ? null : normalized;
+    }
+
     @Transactional(readOnly = true)
     public List<EduReportSignatureStatusDto> getSignatureStatuses(
             Long educationId, String name, Long userId) {
@@ -1288,4 +1501,7 @@ public class EduReportService {
         }
         return (int) value;
     }
+
+    private record EditorContentFields(
+            String content, String contentDelta, String contentHtml, String contentText) {}
 }

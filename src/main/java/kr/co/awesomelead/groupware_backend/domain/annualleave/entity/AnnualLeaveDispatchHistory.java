@@ -21,6 +21,7 @@ import lombok.Setter;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 @Entity
@@ -48,6 +49,9 @@ public class AnnualLeaveDispatchHistory {
 
     @Column(length = 500)
     private String fileKey;
+
+    @Column(nullable = true)
+    private LocalDate baseDate;
 
     @CreatedDate
     @Column(nullable = false, updatable = false)

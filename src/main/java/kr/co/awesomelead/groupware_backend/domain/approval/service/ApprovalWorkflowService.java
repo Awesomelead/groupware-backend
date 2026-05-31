@@ -1,7 +1,7 @@
 package kr.co.awesomelead.groupware_backend.domain.approval.service;
 
-import kr.co.awesomelead.groupware_backend.domain.approval.dto.request.ApprovalDirectSubmitRequestDto;
 import kr.co.awesomelead.groupware_backend.domain.approval.dto.request.ApprovalDecisionRequestDto;
+import kr.co.awesomelead.groupware_backend.domain.approval.dto.request.ApprovalDirectSubmitRequestDto;
 import kr.co.awesomelead.groupware_backend.domain.approval.dto.request.ApprovalDraftUpsertRequestDto;
 import kr.co.awesomelead.groupware_backend.domain.approval.dto.request.ApprovalLineRequestDto;
 import kr.co.awesomelead.groupware_backend.domain.approval.dto.request.ApprovalSubmitRequestDto;
@@ -573,7 +573,8 @@ public class ApprovalWorkflowService {
                         .build());
 
         List<ApprovalDecisionResponseDto.OpinionDto> opinions =
-                approvalActionHistoryRepository.findByDocumentIdOrderByCreatedAtAscIdAsc(documentId)
+                approvalActionHistoryRepository
+                        .findByDocumentIdOrderByCreatedAtAscIdAsc(documentId)
                         .stream()
                         .filter(this::isDecisionHistory)
                         .filter(history -> hasAnyComment(history))
@@ -585,9 +586,7 @@ public class ApprovalWorkflowService {
                 .documentNo(document.getDocumentNo())
                 .status(document.getStatus())
                 .statusLabel(
-                        document.getStatus() != null
-                                ? document.getStatus().getDescription()
-                                : null)
+                        document.getStatus() != null ? document.getStatus().getDescription() : null)
                 .processedLine(
                         ApprovalDecisionResponseDto.ProcessedLineDto.builder()
                                 .lineId(currentLine.getId())
@@ -928,7 +927,8 @@ public class ApprovalWorkflowService {
                 .lineStatusLabel(
                         line.getLineStatus() != null ? line.getLineStatus().getDescription() : null)
                 .processedByUserId(processedByUser != null ? processedByUser.getId() : null)
-                .processedByUserName(processedByUser != null ? processedByUser.getDisplayName() : null)
+                .processedByUserName(
+                        processedByUser != null ? processedByUser.getDisplayName() : null)
                 .processedAt(line.getProcessedAt())
                 .processedSignatureImageUrl(
                         resolveSignatureImageUrl(line.getProcessedSignatureImageKey()))
@@ -955,7 +955,8 @@ public class ApprovalWorkflowService {
                 .lineStatusLabel(
                         line.getLineStatus() != null ? line.getLineStatus().getDescription() : null)
                 .processedByUserId(processedByUser != null ? processedByUser.getId() : null)
-                .processedByUserName(processedByUser != null ? processedByUser.getDisplayName() : null)
+                .processedByUserName(
+                        processedByUser != null ? processedByUser.getDisplayName() : null)
                 .processedAt(line.getProcessedAt())
                 .processedSignatureImageUrl(
                         resolveSignatureImageUrl(line.getProcessedSignatureImageKey()))

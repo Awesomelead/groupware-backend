@@ -455,6 +455,7 @@ class UserServiceTest {
                     .isEqualTo(Position.ASSISTANT_MANAGER);
             assertThat(result.getContent().get(0).getDepartmentName())
                     .isEqualTo(DepartmentName.CHUNGNAM_HQ);
+            assertThat(result.getContent().get(0).getWorkLocation()).isEqualTo(Company.AWESOME);
             assertThat(result.getContent().get(1).getUserId()).isEqualTo(2L);
             assertThat(result.getContent().get(1).getName()).isEqualTo("이영희");
 
@@ -561,6 +562,34 @@ class UserServiceTest {
             verify(userQueryRepository)
                     .findAllAvailableWithFilters(
                             null, null, null, JobType.MANAGEMENT, null, null, unsorted);
+        }
+
+        @Test
+        @DisplayName("성공: 근무사업장 필터를 전달하면 필터 쿼리에 반영된다")
+        void getEmployeeList_withWorkLocationFilter() {
+            // given
+            Pageable pageable = PageRequest.of(0, 20);
+            Pageable unsorted = PageRequest.of(0, 20);
+            User user = createTestUser();
+            Page<User> userPage = new PageImpl<>(List.of(user), pageable, 1);
+
+            given(
+                            userQueryRepository.findAllAvailableWithFilters(
+                                    null, null, null, null, null, Company.AWESOME, null, unsorted))
+                    .willReturn(userPage);
+
+            // when
+            Page<UserSummaryResponseDto> result =
+                    userService.getEmployeeList(
+                            null, null, null, null, null, Company.AWESOME, null, pageable);
+
+            // then
+            assertThat(result.getTotalElements()).isEqualTo(1);
+            assertThat(result.getContent().get(0).getWorkLocation()).isEqualTo(Company.AWESOME);
+
+            verify(userQueryRepository)
+                    .findAllAvailableWithFilters(
+                            null, null, null, null, null, Company.AWESOME, null, unsorted);
         }
 
         @Test

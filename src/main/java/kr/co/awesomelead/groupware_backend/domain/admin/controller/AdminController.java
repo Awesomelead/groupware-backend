@@ -92,6 +92,7 @@ public class AdminController {
                                               "nameKor": "홍길동",
                                               "position": "사원",
                                               "jobType": "관리직",
+                                              "workLocation": "어썸리드",
                                               "departmentName": "경영지원부",
                                               "signupStatus": "AVAILABLE",
                                               "hasPendingMyInfoRequest": true

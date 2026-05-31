@@ -37,6 +37,19 @@ public class UserQueryRepository {
             Role role,
             List<Status> statuses,
             Pageable pageable) {
+        return findAllAvailableWithFilters(
+                keyword, position, departmentId, jobType, role, null, statuses, pageable);
+    }
+
+    public Page<User> findAllAvailableWithFilters(
+            String keyword,
+            Position position,
+            Long departmentId,
+            JobType jobType,
+            Role role,
+            Company workLocation,
+            List<Status> statuses,
+            Pageable pageable) {
 
         List<User> content =
                 queryFactory
@@ -49,7 +62,8 @@ public class UserQueryRepository {
                                 positionFilter(position),
                                 departmentFilter(departmentId),
                                 jobTypeFilter(jobType),
-                                roleFilter(role))
+                                roleFilter(role),
+                                workLocationFilter(workLocation))
                         .orderBy(user.id.desc())
                         .offset(pageable.getOffset())
                         .limit(pageable.getPageSize())
@@ -68,7 +82,8 @@ public class UserQueryRepository {
                                         positionFilter(position),
                                         departmentFilter(departmentId),
                                         jobTypeFilter(jobType),
-                                        roleFilter(role))
+                                        roleFilter(role),
+                                        workLocationFilter(workLocation))
                                 .fetchOne());
     }
 

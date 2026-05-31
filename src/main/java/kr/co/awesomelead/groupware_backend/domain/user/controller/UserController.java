@@ -9,6 +9,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 
 import jakarta.validation.Valid;
 
+import kr.co.awesomelead.groupware_backend.domain.department.enums.Company;
 import kr.co.awesomelead.groupware_backend.domain.user.dto.response.MyInfoResponseDto;
 import kr.co.awesomelead.groupware_backend.domain.user.dto.response.UpdateMyInfoRequestDto;
 import kr.co.awesomelead.groupware_backend.domain.user.dto.response.UserDetailResponseDto;
@@ -141,6 +142,10 @@ public class UserController {
                     Role role,
             @RequestParam(required = false)
                     @io.swagger.v3.oas.annotations.Parameter(
+                            description = "근무사업장 필터 (AWESOME, MARUI)")
+                    Company workLocation,
+            @RequestParam(required = false)
+                    @io.swagger.v3.oas.annotations.Parameter(
                             description = "상태 필터 (AVAILABLE, SUSPENDED)")
                     List<Status> statuses,
             @PageableDefault(size = 20) Pageable pageable) {
@@ -152,6 +157,7 @@ public class UserController {
                                 departmentId,
                                 jobType,
                                 role,
+                                workLocation,
                                 statuses,
                                 pageable)));
     }

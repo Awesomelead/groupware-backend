@@ -69,8 +69,7 @@ public class AnnualLeaveService {
         try (InputStream is = file.getInputStream();
                 Workbook workbook = WorkbookFactory.create(is)) {
 
-            Sheet sheet =
-                    workbook.getSheet(normalizedSheetName); // 하나의 엑셀파일에서 월별로 시트를 구분하는 것으로 확인
+            Sheet sheet = workbook.getSheet(normalizedSheetName); // 하나의 엑셀파일에서 월별로 시트를 구분하는 것으로 확인
 
             // 기준일 파싱 (5행 J열(Index 9)에서 기준일 추출)
             LocalDate baseUpdateDate = parseBaseDate(sheet);
@@ -103,11 +102,11 @@ public class AnnualLeaveService {
 
         ExcelUploadResponseDto response =
                 ExcelUploadResponseDto.builder()
-                .totalCount(totalProcessed)
-                .successCount(successCount)
-                .failureCount(failures.size())
-                .failures(failures)
-                .build();
+                        .totalCount(totalProcessed)
+                        .successCount(successCount)
+                        .failureCount(failures.size())
+                        .failures(failures)
+                        .build();
         String fileKey = uploadAnnualLeaveSourceFile(file);
         saveDispatchHistory(currentUser, file.getOriginalFilename(), normalizedSheetName, fileKey);
         return response;
@@ -235,9 +234,7 @@ public class AnnualLeaveService {
                         entry -> {
                             String sheetName = entry.getKey();
                             List<AdminAnnualLeaveDispatchItemResponseDto> items =
-                                    entry.getValue().stream()
-                                            .map(this::toDispatchItemDto)
-                                            .toList();
+                                    entry.getValue().stream().map(this::toDispatchItemDto).toList();
 
                             return AdminAnnualLeaveDispatchGroupResponseDto.builder()
                                     .sheetName(sheetName)
@@ -270,8 +267,7 @@ public class AnnualLeaveService {
                         .orElseThrow(
                                 () ->
                                         new CustomException(
-                                                ErrorCode
-                                                        .ANNUAL_LEAVE_DISPATCH_HISTORY_NOT_FOUND));
+                                                ErrorCode.ANNUAL_LEAVE_DISPATCH_HISTORY_NOT_FOUND));
 
         return AdminAnnualLeaveDispatchDetailResponseDto.builder()
                 .dispatchId(history.getId())

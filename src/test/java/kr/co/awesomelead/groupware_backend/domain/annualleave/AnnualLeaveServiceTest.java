@@ -413,7 +413,8 @@ public class AnnualLeaveServiceTest {
             assertThat(result.getDispatchId()).isEqualTo(10L);
             assertThat(result.getOriginalFileName()).isEqualTo("2026_연차현황.xlsx");
             assertThat(result.getSheetName()).isEqualTo("2026-06");
-            assertThat(result.getFileUrl()).isEqualTo("https://example.com/annual-leave-2026-06-first");
+            assertThat(result.getFileUrl())
+                    .isEqualTo("https://example.com/annual-leave-2026-06-first");
         }
     }
 

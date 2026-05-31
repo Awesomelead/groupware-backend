@@ -66,6 +66,7 @@ public class EduReportController {
                                         - `requestDto`(JSON 파트)는 필수입니다.
                                         - `files`(파일 파트)는 선택입니다.
                                         - 부서 교육 관리 권한(`MANAGE_DEPARTMENT_EDUCATION`)이 있어야 생성할 수 있습니다.
+                                        - 본문은 `content`(plain) 또는 `contentDelta`/`contentHtml`(에디터 원본/렌더링용)으로 전달할 수 있습니다.
                                         """,
             requestBody =
                     @io.swagger.v3.oas.annotations.parameters.RequestBody(
@@ -172,6 +173,7 @@ public class EduReportController {
                                         - `requestDto`(JSON 파트)는 필수입니다.
                                         - `files`(파일 파트)는 선택입니다.
                                         - PSM 관리 권한(`MANAGE_PSM`)이 있어야 생성할 수 있습니다.
+                                        - 본문은 `content`(plain) 또는 `contentDelta`/`contentHtml`(에디터 원본/렌더링용)으로 전달할 수 있습니다.
                                         - `companyScope`는 회사 목록 배열입니다.
                                         - `[AWESOME]`처럼 1개를 보내면 해당 회사 게시물로 생성됩니다.
                                         - `[AWESOME, MARUI]`, `null`, `[]`는 모든 회사 공통 게시물로 생성됩니다.
@@ -279,6 +281,7 @@ public class EduReportController {
                                         - `requestDto`(JSON 파트)는 필수입니다.
                                         - `files`(파일 파트)는 선택입니다.
                                         - 안전 보건 관리 권한(`MANAGE_SAFETY`)이 있어야 생성할 수 있습니다.
+                                        - 본문은 `content`(plain) 또는 `contentDelta`/`contentHtml`(에디터 원본/렌더링용)으로 전달할 수 있습니다.
                                         - `companyScope`는 회사 목록 배열입니다.
                                         - `[AWESOME]`처럼 1개를 보내면 해당 회사 게시물로 생성됩니다.
                                         - `[AWESOME, MARUI]`, `null`, `[]`는 모든 회사 공통 게시물로 생성됩니다.
@@ -917,6 +920,7 @@ public class EduReportController {
                                         - `OPEN` 상태에서만 수정 가능합니다.
                                         - 출석 완료자가 1명이라도 있으면 수정할 수 없습니다.
                                         - `requestDto`(JSON 파트)는 필수이며, `files`(파일 파트)는 선택입니다.
+                                        - 본문은 `content`(plain) 또는 `contentDelta`/`contentHtml`(에디터 원본/렌더링용)으로 수정할 수 있습니다.
                                         - `requestDto.deleteAttachmentIds`로 기존 첨부파일 삭제가 가능합니다.
                                         """,
             requestBody =
@@ -994,6 +998,7 @@ public class EduReportController {
                                         - `OPEN` 상태에서만 수정 가능합니다.
                                         - 출석 완료자가 1명이라도 있으면 수정할 수 없습니다.
                                         - `requestDto`(JSON 파트)는 필수이며, `files`(파일 파트)는 선택입니다.
+                                        - 본문은 `content`(plain) 또는 `contentDelta`/`contentHtml`(에디터 원본/렌더링용)으로 수정할 수 있습니다.
                                         - `requestDto.deleteAttachmentIds`로 기존 첨부파일 삭제가 가능합니다.
                                         """,
             requestBody =
@@ -1068,6 +1073,7 @@ public class EduReportController {
                                         - `OPEN` 상태에서만 수정 가능합니다.
                                         - 출석 완료자가 1명이라도 있으면 수정할 수 없습니다.
                                         - `requestDto`(JSON 파트)는 필수이며, `files`(파일 파트)는 선택입니다.
+                                        - 본문은 `content`(plain) 또는 `contentDelta`/`contentHtml`(에디터 원본/렌더링용)으로 수정할 수 있습니다.
                                         - `requestDto.deleteAttachmentIds`로 기존 첨부파일 삭제가 가능합니다.
                                         """,
             requestBody =

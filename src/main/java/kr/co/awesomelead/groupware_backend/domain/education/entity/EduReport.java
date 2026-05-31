@@ -62,6 +62,18 @@ public class EduReport {
     @Column(columnDefinition = "TEXT", nullable = false)
     private String content;
 
+    @Lob
+    @Column(name = "content_delta", columnDefinition = "TEXT")
+    private String contentDelta;
+
+    @Lob
+    @Column(name = "content_html", columnDefinition = "TEXT")
+    private String contentHtml;
+
+    @Lob
+    @Column(name = "content_text", columnDefinition = "TEXT")
+    private String contentText;
+
     @Builder.Default
     @OneToMany(mappedBy = "eduReport", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<EduAttachment> attachments = new ArrayList<>();
@@ -114,5 +126,13 @@ public class EduReport {
     public void addAttachment(EduAttachment attachment) {
         this.attachments.add(attachment);
         attachment.setEduReport(this);
+    }
+
+    public void updateEditorContent(
+            String content, String contentDelta, String contentHtml, String contentText) {
+        this.content = content;
+        this.contentDelta = contentDelta;
+        this.contentHtml = contentHtml;
+        this.contentText = contentText;
     }
 }

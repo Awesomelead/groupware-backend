@@ -2,6 +2,7 @@ package kr.co.awesomelead.groupware_backend.domain.admin.dto.response;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 
+import kr.co.awesomelead.groupware_backend.domain.department.enums.Company;
 import kr.co.awesomelead.groupware_backend.domain.department.enums.DepartmentName;
 import kr.co.awesomelead.groupware_backend.domain.user.entity.User;
 import kr.co.awesomelead.groupware_backend.domain.user.enums.JobType;
@@ -30,6 +31,9 @@ public class AdminUserSummaryResponseDto {
     @Schema(description = "근무직종")
     private JobType jobType;
 
+    @Schema(description = "근무사업장")
+    private Company workLocation;
+
     @Schema(description = "부서명")
     private DepartmentName departmentName;
 
@@ -51,6 +55,7 @@ public class AdminUserSummaryResponseDto {
                 .nameKor(user.getNameKor())
                 .position(user.getPosition())
                 .jobType(user.getJobType())
+                .workLocation(user.getWorkLocation())
                 .departmentName(
                         user.getDepartment() != null ? user.getDepartment().getName() : null)
                 .signupStatus(user.getStatus())

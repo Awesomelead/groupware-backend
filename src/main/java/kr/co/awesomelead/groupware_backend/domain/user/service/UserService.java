@@ -1,6 +1,7 @@
 package kr.co.awesomelead.groupware_backend.domain.user.service;
 
 import kr.co.awesomelead.groupware_backend.domain.aligo.service.PhoneAuthService;
+import kr.co.awesomelead.groupware_backend.domain.department.enums.Company;
 import kr.co.awesomelead.groupware_backend.domain.notification.enums.NotificationDomainType;
 import kr.co.awesomelead.groupware_backend.domain.notification.enums.NotificationMessage;
 import kr.co.awesomelead.groupware_backend.domain.notification.service.NotificationService;
@@ -198,6 +199,31 @@ public class UserService {
         return userQueryRepository
                 .findAllAvailableWithFilters(
                         keyword, position, departmentId, jobType, role, statuses, unsorted)
+                .map(UserSummaryResponseDto::from);
+    }
+
+    // 전 직원 목록 조회 (근무사업장 필터 포함)
+    @Transactional(readOnly = true)
+    public Page<UserSummaryResponseDto> getEmployeeList(
+            String keyword,
+            Position position,
+            Long departmentId,
+            JobType jobType,
+            Role role,
+            Company workLocation,
+            List<Status> statuses,
+            Pageable pageable) {
+        Pageable unsorted = PageRequest.of(pageable.getPageNumber(), pageable.getPageSize());
+        return userQueryRepository
+                .findAllAvailableWithFilters(
+                        keyword,
+                        position,
+                        departmentId,
+                        jobType,
+                        role,
+                        workLocation,
+                        statuses,
+                        unsorted)
                 .map(UserSummaryResponseDto::from);
     }
 

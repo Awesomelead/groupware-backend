@@ -145,6 +145,27 @@ public class PayslipService {
         }
     }
 
+    @Transactional
+    public void deletePayslip(Long payslipId, Long userId) {
+        validatePayslipEditAuthority(userId);
+
+        Payslip payslip =
+                payslipRepository
+                        .findById(payslipId)
+                        .orElseThrow(() -> new CustomException(ErrorCode.PAYSLIP_NOT_FOUND));
+
+        String fileKey = payslip.getFileKey();
+        payslipRepository.delete(payslip);
+
+        if (fileKey != null && !fileKey.isBlank()) {
+            try {
+                s3Service.deleteFile(fileKey);
+            } catch (RuntimeException e) {
+                log.warn("급여명세서 파일 삭제 실패 - payslipId: {}, fileKey: {}", payslipId, fileKey, e);
+            }
+        }
+    }
+
     private PayslipPdfInfoExtractor.PayslipPersonalInfo extractPersonalInfoWithFallback(
             MultipartFile file, String originalFileName) {
         PayslipPdfInfoExtractor.PayslipPersonalInfo primaryInfo = null;

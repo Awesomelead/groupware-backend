@@ -386,6 +386,55 @@ public class PayslipServiceTest {
     }
 
     @Nested
+    @DisplayName("deletePayslip 메서드는")
+    class Describe_deletePayslip {
+
+        @Test
+        @DisplayName("관리자 권한이 없으면 NO_AUTHORITY_FOR_PAYSLIP 예외를 던진다.")
+        void it_throws_no_authority_exception() {
+            // given
+            given(userRepository.findById(1L)).willReturn(Optional.of(admin));
+
+            // when & then
+            assertThatThrownBy(() -> payslipService.deletePayslip(10L, 1L))
+                    .isInstanceOf(CustomException.class)
+                    .hasFieldOrPropertyWithValue("errorCode", ErrorCode.NO_AUTHORITY_FOR_PAYSLIP);
+        }
+
+        @Test
+        @DisplayName("삭제 대상 명세서가 없으면 PAYSLIP_NOT_FOUND 예외를 던진다.")
+        void it_throws_payslip_not_found_exception() {
+            // given
+            admin.getAuthorities().add(Authority.EDIT_EMPLOYEE_INFO);
+            given(userRepository.findById(1L)).willReturn(Optional.of(admin));
+            given(payslipRepository.findById(10L)).willReturn(Optional.empty());
+
+            // when & then
+            assertThatThrownBy(() -> payslipService.deletePayslip(10L, 1L))
+                    .isInstanceOf(CustomException.class)
+                    .hasFieldOrPropertyWithValue("errorCode", ErrorCode.PAYSLIP_NOT_FOUND);
+        }
+
+        @Test
+        @DisplayName("유효한 삭제 요청이면 명세서와 S3 파일을 삭제한다.")
+        void it_deletes_payslip_and_s3_file() {
+            // given
+            admin.getAuthorities().add(Authority.EDIT_EMPLOYEE_INFO);
+            given(userRepository.findById(1L)).willReturn(Optional.of(admin));
+
+            Payslip payslip = Payslip.builder().id(10L).fileKey("delete-key").build();
+            given(payslipRepository.findById(10L)).willReturn(Optional.of(payslip));
+
+            // when
+            payslipService.deletePayslip(10L, 1L);
+
+            // then
+            verify(payslipRepository).delete(payslip);
+            verify(s3Service).deleteFile("delete-key");
+        }
+    }
+
+    @Nested
     @DisplayName("getPayslipsForAdmin 메서드는 (관리자용 목록 조회)")
     class Describe_getPayslipsForAdmin {
 

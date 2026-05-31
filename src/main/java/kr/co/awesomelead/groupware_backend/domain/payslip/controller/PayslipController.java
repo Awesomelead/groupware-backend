@@ -22,6 +22,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -170,6 +171,28 @@ public class PayslipController {
 
         payslipService.updatePayslip(payslipId, payslipFile, userDetails.getId());
         return ResponseEntity.ok(ApiResponse.onNoContent("급여명세서가 성공적으로 수정되었습니다."));
+    }
+
+    @Operation(summary = "보낸 명세서 삭제 (관리자)", description = "관리자가 특정 급여명세서를 삭제합니다.")
+    @ApiResponses(
+        value = {
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                responseCode = "200",
+                description = "삭제 성공"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                responseCode = "401",
+                description = "권한 없음"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                responseCode = "404",
+                description = "명세서 없음")
+        })
+    @DeleteMapping("/admin/{payslipId}")
+    public ResponseEntity<ApiResponse<Void>> deletePayslip(
+        @Parameter(hidden = true) @AuthenticationPrincipal CustomUserDetails userDetails,
+        @Parameter(description = "명세서 ID", example = "1") @PathVariable Long payslipId) {
+
+        payslipService.deletePayslip(payslipId, userDetails.getId());
+        return ResponseEntity.ok(ApiResponse.onNoContent("급여명세서가 성공적으로 삭제되었습니다."));
     }
 
     @Operation(

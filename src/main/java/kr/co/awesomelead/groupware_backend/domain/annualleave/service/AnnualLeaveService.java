@@ -36,6 +36,7 @@ import org.springframework.web.multipart.MultipartFile;
 import java.io.IOException;
 import java.io.InputStream;
 import java.time.LocalDate;
+import java.time.YearMonth;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
@@ -47,6 +48,7 @@ import java.util.stream.Collectors;
 @Slf4j
 @Service
 @RequiredArgsConstructor
+@Transactional(readOnly = true)
 public class AnnualLeaveService {
 
     private final AnnualLeaveRepository annualLeaveRepository;
@@ -61,10 +63,29 @@ public class AnnualLeaveService {
             MultipartFile file, String sheetName, Long userId) {
         User currentUser = validateAnnualLeaveEditAuthority(userId);
         String normalizedSheetName = normalizeSheetName(sheetName);
-        ExcelUploadResponseDto response = processAnnualLeaveFile(file, normalizedSheetName);
+
+        YearMonth sheetYearMonth = parseYearMonthFromSheetName(normalizedSheetName);
+        if (sheetYearMonth != null) {
+            LocalDate start = sheetYearMonth.atDay(1);
+            LocalDate end = sheetYearMonth.atEndOfMonth();
+            if (annualLeaveDispatchHistoryRepository.existsByBaseDateBetween(start, end)) {
+                throw new CustomException(ErrorCode.DUPLICATE_ANNUAL_LEAVE_DISPATCH);
+            }
+        }
+
+        // S3 업로드를 트랜잭션 전에 수행 (네트워크 I/O를 DB 커넥션 점유 시간에서 분리)
         String fileKey = uploadAnnualLeaveSourceFile(file);
-        saveDispatchHistory(currentUser, file.getOriginalFilename(), normalizedSheetName, fileKey);
-        return response;
+
+        ProcessResult processResult = processAnnualLeaveFile(file, normalizedSheetName);
+        validateSheetMonthMatchesBaseDate(normalizedSheetName, processResult.baseDate());
+
+        saveDispatchHistory(
+                currentUser,
+                file.getOriginalFilename(),
+                normalizedSheetName,
+                fileKey,
+                processResult.baseDate());
+        return processResult.response();
     }
 
     @Transactional
@@ -79,15 +100,29 @@ public class AnnualLeaveService {
                                         new CustomException(
                                                 ErrorCode.ANNUAL_LEAVE_DISPATCH_HISTORY_NOT_FOUND));
         String normalizedSheetName = normalizeSheetName(sheetName);
-        ExcelUploadResponseDto response = processAnnualLeaveFile(file, normalizedSheetName);
 
+        YearMonth sheetYearMonth = parseYearMonthFromSheetName(normalizedSheetName);
+        if (sheetYearMonth != null) {
+            LocalDate start = sheetYearMonth.atDay(1);
+            LocalDate end = sheetYearMonth.atEndOfMonth();
+            if (annualLeaveDispatchHistoryRepository.existsByIdNotAndBaseDateBetween(
+                    dispatchId, start, end)) {
+                throw new CustomException(ErrorCode.DUPLICATE_ANNUAL_LEAVE_DISPATCH);
+            }
+        }
+
+        // S3 업로드를 DB 작업 전에 수행 (트랜잭션 내 네트워크 I/O 제거)
         String oldFileKey = history.getFileKey();
         String newFileKey = uploadAnnualLeaveSourceFile(file);
+
+        ProcessResult processResult = processAnnualLeaveFile(file, normalizedSheetName);
+        validateSheetMonthMatchesBaseDate(normalizedSheetName, processResult.baseDate());
 
         history.setUploadedBy(currentUser);
         history.setOriginalFileName(normalizeOriginalFileName(file.getOriginalFilename()));
         history.setSheetName(normalizeSheetName(sheetName));
         history.setFileKey(newFileKey);
+        history.setBaseDate(processResult.baseDate());
 
         if (oldFileKey != null && !oldFileKey.isBlank() && !oldFileKey.equals(newFileKey)) {
             try {
@@ -101,7 +136,7 @@ public class AnnualLeaveService {
             }
         }
 
-        return response;
+        return processResult.response();
     }
 
     @Transactional
@@ -128,19 +163,24 @@ public class AnnualLeaveService {
         }
     }
 
-    private ExcelUploadResponseDto processAnnualLeaveFile(
-            MultipartFile file, String normalizedSheetName) {
+    private record ProcessResult(ExcelUploadResponseDto response, LocalDate baseDate) {}
+
+    private ProcessResult processAnnualLeaveFile(MultipartFile file, String normalizedSheetName) {
         List<FailureDetail> failures = new ArrayList<>();
         int successCount = 0;
         int totalProcessed = 0;
+        LocalDate baseUpdateDate = null;
 
         try (InputStream is = file.getInputStream();
                 Workbook workbook = WorkbookFactory.create(is)) {
 
-            Sheet sheet = workbook.getSheet(normalizedSheetName); // 하나의 엑셀파일에서 월별로 시트를 구분하는 것으로 확인
+            Sheet sheet = workbook.getSheet(normalizedSheetName);
+            if (sheet == null) {
+                sheet = workbook.getSheetAt(0);
+            }
 
             // 기준일 파싱 (5행 J열(Index 9)에서 기준일 추출)
-            LocalDate baseUpdateDate = parseBaseDate(sheet);
+            baseUpdateDate = parseBaseDate(sheet);
 
             // 데이터 파싱 (8행(Index 7)부터 시작)
             for (int i = 7; i <= sheet.getLastRowNum(); i++) {
@@ -175,7 +215,7 @@ public class AnnualLeaveService {
                         .failureCount(failures.size())
                         .failures(failures)
                         .build();
-        return response;
+        return new ProcessResult(response, baseUpdateDate);
     }
 
     private void processAnnualLeaveRow(Row row, LocalDate updateDate) {
@@ -203,6 +243,15 @@ public class AnnualLeaveService {
         // 기존 정보가 있으면 업데이트, 없으면 신규 생성
         AnnualLeave annualLeave =
                 annualLeaveRepository.findByUser(targetUser).orElse(new AnnualLeave());
+
+        // 기존 연차의 updateDate YearMonth가 새 updateDate YearMonth보다 최신이면 스킵
+        if (annualLeave.getUpdateDate() != null) {
+            YearMonth existingYM = YearMonth.from(annualLeave.getUpdateDate());
+            YearMonth newYM = YearMonth.from(updateDate);
+            if (newYM.isBefore(existingYM)) {
+                return;
+            }
+        }
 
         annualLeave.setUser(targetUser);
         annualLeave.setTotal(total);
@@ -272,7 +321,6 @@ public class AnnualLeaveService {
         return cell == null || cell.getCellType() == CellType.BLANK;
     }
 
-    @Transactional(readOnly = true)
     public AnnualLeaveResponseDto getAnnualLeave(Long userId) {
         User user =
                 userRepository
@@ -281,7 +329,6 @@ public class AnnualLeaveService {
         return annualLeaveMapper.toAnnualLeaveResponseDto(user.getAnnualLeave());
     }
 
-    @Transactional(readOnly = true)
     public List<AdminAnnualLeaveDispatchGroupResponseDto> getAnnualLeavesForAdmin(Long userId) {
         validateAnnualLeaveEditAuthority(userId);
 
@@ -322,7 +369,6 @@ public class AnnualLeaveService {
                 .build();
     }
 
-    @Transactional(readOnly = true)
     public AdminAnnualLeaveDispatchDetailResponseDto getAnnualLeaveDispatchDetailForAdmin(
             Long userId, Long dispatchId) {
         validateAnnualLeaveEditAuthority(userId);
@@ -356,15 +402,59 @@ public class AnnualLeaveService {
     }
 
     private void saveDispatchHistory(
-            User uploader, String originalFileName, String sheetName, String fileKey) {
+            User uploader,
+            String originalFileName,
+            String sheetName,
+            String fileKey,
+            LocalDate baseDate) {
         AnnualLeaveDispatchHistory history =
                 AnnualLeaveDispatchHistory.builder()
                         .uploadedBy(uploader)
                         .originalFileName(normalizeOriginalFileName(originalFileName))
                         .sheetName(normalizeSheetName(sheetName))
                         .fileKey(fileKey)
+                        .baseDate(baseDate)
                         .build();
         annualLeaveDispatchHistoryRepository.save(history);
+    }
+
+    private YearMonth parseYearMonthFromSheetName(String sheetName) {
+        if (sheetName == null || sheetName.isBlank()) {
+            return null;
+        }
+        // "2026-06" 형식
+        try {
+            return YearMonth.parse(sheetName, DateTimeFormatter.ofPattern("yyyy-MM"));
+        } catch (Exception ignored) {
+        }
+        // "8월", "08월", "8" 형식 — 연도는 현재 연도로 추정
+        try {
+            String numericStr = sheetName.replaceAll("[^0-9]", "");
+            if (!numericStr.isEmpty()) {
+                int month = Integer.parseInt(numericStr);
+                if (month >= 1 && month <= 12) {
+                    return YearMonth.of(java.time.LocalDate.now().getYear(), month);
+                }
+            }
+        } catch (Exception ignored) {
+        }
+        return null;
+    }
+
+    private void validateSheetMonthMatchesBaseDate(String sheetName, LocalDate baseDate) {
+        try {
+            String numericStr = sheetName.replaceAll("[^0-9]", "");
+            if (!numericStr.isEmpty()) {
+                int sheetMonth = Integer.parseInt(numericStr);
+                if (sheetMonth >= 1 && sheetMonth <= 12 && sheetMonth != baseDate.getMonthValue()) {
+                    throw new CustomException(ErrorCode.ANNUAL_LEAVE_MONTH_MISMATCH);
+                }
+            }
+        } catch (CustomException e) {
+            throw e;
+        } catch (NumberFormatException e) {
+            // 숫자 파싱 불가 시트명은 검증 통과
+        }
     }
 
     private String uploadAnnualLeaveSourceFile(MultipartFile file) {

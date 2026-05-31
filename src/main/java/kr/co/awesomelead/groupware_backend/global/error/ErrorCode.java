@@ -124,6 +124,7 @@ public enum ErrorCode {
     REQUEST_HISTORY_NOT_CANCELABLE(HttpStatus.BAD_REQUEST, "대기 상태 요청만 취소할 수 있습니다."),
     REQUEST_HISTORY_NOT_DELETABLE(HttpStatus.BAD_REQUEST, "PENDING 상태 요청만 삭제할 수 있습니다."),
     PAYSLIP_NOT_FOUND(HttpStatus.NOT_FOUND, "해당 급여명세서를 찾을 수 없습니다."),
+    ANNUAL_LEAVE_DISPATCH_HISTORY_NOT_FOUND(HttpStatus.NOT_FOUND, "해당 연차 발송 이력을 찾을 수 없습니다."),
     EDUCATION_CATEGORY_NOT_FOUND(HttpStatus.NOT_FOUND, "해당 교육 카테고리를 찾을 수 없습니다."),
     RECORD_NOT_FOUND(HttpStatus.NOT_FOUND, "해당 방문기록을 찾을 수 없습니다."),
     FCM_TOKEN_NOT_FOUND(HttpStatus.NOT_FOUND, "해당 FCM 토큰을 찾을 수 없습니다."),

@@ -1,10 +1,15 @@
 package kr.co.awesomelead.groupware_backend.domain.annualleave.service;
 
+import kr.co.awesomelead.groupware_backend.domain.annualleave.dto.response.AdminAnnualLeaveDispatchDetailResponseDto;
+import kr.co.awesomelead.groupware_backend.domain.annualleave.dto.response.AdminAnnualLeaveDispatchGroupResponseDto;
+import kr.co.awesomelead.groupware_backend.domain.annualleave.dto.response.AdminAnnualLeaveDispatchItemResponseDto;
 import kr.co.awesomelead.groupware_backend.domain.annualleave.dto.response.AnnualLeaveResponseDto;
 import kr.co.awesomelead.groupware_backend.domain.annualleave.dto.response.ExcelUploadResponseDto;
 import kr.co.awesomelead.groupware_backend.domain.annualleave.dto.response.ExcelUploadResponseDto.FailureDetail;
 import kr.co.awesomelead.groupware_backend.domain.annualleave.entity.AnnualLeave;
+import kr.co.awesomelead.groupware_backend.domain.annualleave.entity.AnnualLeaveDispatchHistory;
 import kr.co.awesomelead.groupware_backend.domain.annualleave.mapper.AnnualLeaveMapper;
+import kr.co.awesomelead.groupware_backend.domain.annualleave.repository.AnnualLeaveDispatchHistoryRepository;
 import kr.co.awesomelead.groupware_backend.domain.annualleave.repository.AnnualLeaveRepository;
 import kr.co.awesomelead.groupware_backend.domain.notification.service.NotificationService;
 import kr.co.awesomelead.groupware_backend.domain.user.entity.User;
@@ -12,6 +17,7 @@ import kr.co.awesomelead.groupware_backend.domain.user.enums.Authority;
 import kr.co.awesomelead.groupware_backend.domain.user.repository.UserRepository;
 import kr.co.awesomelead.groupware_backend.global.error.CustomException;
 import kr.co.awesomelead.groupware_backend.global.error.ErrorCode;
+import kr.co.awesomelead.groupware_backend.global.infra.s3.service.S3Service;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -32,7 +38,11 @@ import java.io.InputStream;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.stream.Collectors;
 
 @Slf4j
 @Service
@@ -40,22 +50,86 @@ import java.util.List;
 public class AnnualLeaveService {
 
     private final AnnualLeaveRepository annualLeaveRepository;
+    private final AnnualLeaveDispatchHistoryRepository annualLeaveDispatchHistoryRepository;
     private final AnnualLeaveMapper annualLeaveMapper;
     private final UserRepository userRepository;
     private final NotificationService notificationService;
+    private final S3Service s3Service;
 
     @Transactional
     public ExcelUploadResponseDto uploadAnnualLeaveFile(
             MultipartFile file, String sheetName, Long userId) {
-        // 유저의 연차발송 권한 확인
-        User currentUser =
-                userRepository
-                        .findById(userId)
-                        .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
-        if (!currentUser.hasAuthority(Authority.EDIT_EMPLOYEE_INFO)) {
-            throw new CustomException(ErrorCode.NO_AUTHORITY_FOR_ANNUAL_LEAVE);
+        User currentUser = validateAnnualLeaveEditAuthority(userId);
+        String normalizedSheetName = normalizeSheetName(sheetName);
+        ExcelUploadResponseDto response = processAnnualLeaveFile(file, normalizedSheetName);
+        String fileKey = uploadAnnualLeaveSourceFile(file);
+        saveDispatchHistory(currentUser, file.getOriginalFilename(), normalizedSheetName, fileKey);
+        return response;
+    }
+
+    @Transactional
+    public ExcelUploadResponseDto updateAnnualLeaveDispatchForAdmin(
+            Long userId, Long dispatchId, MultipartFile file, String sheetName) {
+        User currentUser = validateAnnualLeaveEditAuthority(userId);
+        AnnualLeaveDispatchHistory history =
+                annualLeaveDispatchHistoryRepository
+                        .findById(dispatchId)
+                        .orElseThrow(
+                                () ->
+                                        new CustomException(
+                                                ErrorCode.ANNUAL_LEAVE_DISPATCH_HISTORY_NOT_FOUND));
+        String normalizedSheetName = normalizeSheetName(sheetName);
+        ExcelUploadResponseDto response = processAnnualLeaveFile(file, normalizedSheetName);
+
+        String oldFileKey = history.getFileKey();
+        String newFileKey = uploadAnnualLeaveSourceFile(file);
+
+        history.setUploadedBy(currentUser);
+        history.setOriginalFileName(normalizeOriginalFileName(file.getOriginalFilename()));
+        history.setSheetName(normalizeSheetName(sheetName));
+        history.setFileKey(newFileKey);
+
+        if (oldFileKey != null && !oldFileKey.isBlank() && !oldFileKey.equals(newFileKey)) {
+            try {
+                s3Service.deleteFile(oldFileKey);
+            } catch (RuntimeException e) {
+                log.warn(
+                        "연차 발송 기존 파일 삭제 실패 - dispatchId: {}, fileKey: {}",
+                        dispatchId,
+                        oldFileKey,
+                        e);
+            }
         }
 
+        return response;
+    }
+
+    @Transactional
+    public void deleteAnnualLeaveDispatchForAdmin(Long userId, Long dispatchId) {
+        validateAnnualLeaveEditAuthority(userId);
+
+        AnnualLeaveDispatchHistory history =
+                annualLeaveDispatchHistoryRepository
+                        .findById(dispatchId)
+                        .orElseThrow(
+                                () ->
+                                        new CustomException(
+                                                ErrorCode.ANNUAL_LEAVE_DISPATCH_HISTORY_NOT_FOUND));
+
+        String fileKey = history.getFileKey();
+        annualLeaveDispatchHistoryRepository.delete(history);
+
+        if (fileKey != null && !fileKey.isBlank()) {
+            try {
+                s3Service.deleteFile(fileKey);
+            } catch (RuntimeException e) {
+                log.warn("연차 발송 파일 삭제 실패 - dispatchId: {}, fileKey: {}", dispatchId, fileKey, e);
+            }
+        }
+    }
+
+    private ExcelUploadResponseDto processAnnualLeaveFile(
+            MultipartFile file, String normalizedSheetName) {
         List<FailureDetail> failures = new ArrayList<>();
         int successCount = 0;
         int totalProcessed = 0;
@@ -63,7 +137,7 @@ public class AnnualLeaveService {
         try (InputStream is = file.getInputStream();
                 Workbook workbook = WorkbookFactory.create(is)) {
 
-            Sheet sheet = workbook.getSheet(sheetName); // 하나의 엑셀파일에서 월별로 시트를 구분하는 것으로 확인
+            Sheet sheet = workbook.getSheet(normalizedSheetName); // 하나의 엑셀파일에서 월별로 시트를 구분하는 것으로 확인
 
             // 기준일 파싱 (5행 J열(Index 9)에서 기준일 추출)
             LocalDate baseUpdateDate = parseBaseDate(sheet);
@@ -94,12 +168,14 @@ public class AnnualLeaveService {
             throw new CustomException(ErrorCode.FILE_UPLOAD_ERROR);
         }
 
-        return ExcelUploadResponseDto.builder()
-                .totalCount(totalProcessed)
-                .successCount(successCount)
-                .failureCount(failures.size())
-                .failures(failures)
-                .build();
+        ExcelUploadResponseDto response =
+                ExcelUploadResponseDto.builder()
+                        .totalCount(totalProcessed)
+                        .successCount(successCount)
+                        .failureCount(failures.size())
+                        .failures(failures)
+                        .build();
+        return response;
     }
 
     private void processAnnualLeaveRow(Row row, LocalDate updateDate) {
@@ -203,5 +279,113 @@ public class AnnualLeaveService {
                         .findById(userId)
                         .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
         return annualLeaveMapper.toAnnualLeaveResponseDto(user.getAnnualLeave());
+    }
+
+    @Transactional(readOnly = true)
+    public List<AdminAnnualLeaveDispatchGroupResponseDto> getAnnualLeavesForAdmin(Long userId) {
+        validateAnnualLeaveEditAuthority(userId);
+
+        List<AnnualLeaveDispatchHistory> histories =
+                annualLeaveDispatchHistoryRepository.findAllOrderByCreatedAtDesc();
+        Map<String, List<AnnualLeaveDispatchHistory>> groupedBySheetName =
+                histories.stream()
+                        .collect(
+                                Collectors.groupingBy(
+                                        history -> normalizeSheetName(history.getSheetName()),
+                                        LinkedHashMap::new,
+                                        Collectors.toList()));
+
+        return groupedBySheetName.entrySet().stream()
+                .map(
+                        entry -> {
+                            String sheetName = entry.getKey();
+                            List<AdminAnnualLeaveDispatchItemResponseDto> items =
+                                    entry.getValue().stream().map(this::toDispatchItemDto).toList();
+
+                            return AdminAnnualLeaveDispatchGroupResponseDto.builder()
+                                    .sheetName(sheetName)
+                                    .title(sheetName)
+                                    .totalCount(items.size())
+                                    .items(items)
+                                    .build();
+                        })
+                .toList();
+    }
+
+    private AdminAnnualLeaveDispatchItemResponseDto toDispatchItemDto(
+            AnnualLeaveDispatchHistory history) {
+        return AdminAnnualLeaveDispatchItemResponseDto.builder()
+                .dispatchId(history.getId())
+                .originalFileName(history.getOriginalFileName())
+                .sheetName(normalizeSheetName(history.getSheetName()))
+                .fileUrl(s3Service.getPresignedViewUrl(history.getFileKey()))
+                .build();
+    }
+
+    @Transactional(readOnly = true)
+    public AdminAnnualLeaveDispatchDetailResponseDto getAnnualLeaveDispatchDetailForAdmin(
+            Long userId, Long dispatchId) {
+        validateAnnualLeaveEditAuthority(userId);
+
+        AnnualLeaveDispatchHistory history =
+                annualLeaveDispatchHistoryRepository
+                        .findById(dispatchId)
+                        .orElseThrow(
+                                () ->
+                                        new CustomException(
+                                                ErrorCode.ANNUAL_LEAVE_DISPATCH_HISTORY_NOT_FOUND));
+
+        return AdminAnnualLeaveDispatchDetailResponseDto.builder()
+                .dispatchId(history.getId())
+                .originalFileName(history.getOriginalFileName())
+                .sheetName(normalizeSheetName(history.getSheetName()))
+                .createdAt(history.getCreatedAt())
+                .fileUrl(s3Service.getPresignedViewUrl(history.getFileKey()))
+                .build();
+    }
+
+    private User validateAnnualLeaveEditAuthority(Long userId) {
+        User currentUser =
+                userRepository
+                        .findById(userId)
+                        .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
+        if (!currentUser.hasAuthority(Authority.EDIT_EMPLOYEE_INFO)) {
+            throw new CustomException(ErrorCode.NO_AUTHORITY_FOR_ANNUAL_LEAVE);
+        }
+        return currentUser;
+    }
+
+    private void saveDispatchHistory(
+            User uploader, String originalFileName, String sheetName, String fileKey) {
+        AnnualLeaveDispatchHistory history =
+                AnnualLeaveDispatchHistory.builder()
+                        .uploadedBy(uploader)
+                        .originalFileName(normalizeOriginalFileName(originalFileName))
+                        .sheetName(normalizeSheetName(sheetName))
+                        .fileKey(fileKey)
+                        .build();
+        annualLeaveDispatchHistoryRepository.save(history);
+    }
+
+    private String uploadAnnualLeaveSourceFile(MultipartFile file) {
+        try {
+            return s3Service.uploadFile(file);
+        } catch (IOException e) {
+            throw new CustomException(ErrorCode.FILE_UPLOAD_ERROR);
+        }
+    }
+
+    private String normalizeOriginalFileName(String originalFileName) {
+        if (originalFileName == null || originalFileName.isBlank()) {
+            return "unknown.xlsx";
+        }
+        return originalFileName.trim();
+    }
+
+    private String normalizeSheetName(String sheetName) {
+        if (sheetName == null || sheetName.isBlank()) {
+            return "미분류 시트";
+        }
+        return Objects.requireNonNull(sheetName).trim();
     }
 }

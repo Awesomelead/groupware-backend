@@ -134,8 +134,8 @@ public class PayslipServiceTest {
                         .willReturn(
                                 new PayslipPdfInfoExtractor.PayslipPersonalInfo(
                                         "홍길동", LocalDate.of(1990, 1, 1)));
-                given(userRepository.findByNameAndBirthDate("홍길동", LocalDate.of(1990, 1, 1)))
-                        .willReturn(Optional.of(employee));
+                given(userRepository.findAllByNameAndBirthDate("홍길동", LocalDate.of(1990, 1, 1)))
+                        .willReturn(List.of(employee));
                 given(s3Service.uploadFile(pdfFile)).willReturn("s3-key");
                 Payslip savedPayslip = Payslip.builder().id(99L).user(employee).build();
                 given(payslipRepository.save(any(Payslip.class))).willReturn(savedPayslip);
@@ -179,8 +179,8 @@ public class PayslipServiceTest {
                                 new PayslipPdfInfoExtractor.PayslipPersonalInfo(
                                         "리딘뷰", LocalDate.of(1999, 1, 5)));
                 given(payslipPdfInfoExtractor.isNameLikelyCorrupted("리딘뷰")).willReturn(false);
-                given(userRepository.findByNameAndBirthDate("리딘뷰", LocalDate.of(1999, 1, 5)))
-                        .willReturn(Optional.of(employee));
+                given(userRepository.findAllByNameAndBirthDate("리딘뷰", LocalDate.of(1999, 1, 5)))
+                        .willReturn(List.of(employee));
                 given(s3Service.uploadFile(pdfFile)).willReturn("s3-key");
                 Payslip savedPayslip = Payslip.builder().id(100L).user(employee).build();
                 given(payslipRepository.save(any(Payslip.class))).willReturn(savedPayslip);
@@ -192,6 +192,43 @@ public class PayslipServiceTest {
                 verify(payslipOcrInfoExtractor, times(1)).extract(pdfFile);
                 verify(notificationService, times(1))
                         .sendPayslipAlertToUser(employee.getId(), savedPayslip.getId());
+            }
+        }
+
+        @Nested
+        @DisplayName("이름+생년월일이 같은 사용자가 여러 명이면")
+        class Context_with_ambiguous_recipient {
+
+            @Test
+            @DisplayName("AMBIGUOUS_PAYSLIP_RECIPIENT 예외를 던진다.")
+            void it_throws_ambiguous_recipient_exception() {
+                // given
+                admin.getAuthorities().add(Authority.EDIT_EMPLOYEE_INFO);
+                given(userRepository.findById(1L)).willReturn(Optional.of(admin));
+
+                MockMultipartFile pdfFile =
+                        new MockMultipartFile(
+                                "payslipFiles",
+                                "급여명세서(근로기준1)_10001_홍길동_202605.pdf",
+                                "application/pdf",
+                                "pdf content".getBytes());
+
+                given(payslipPdfInfoExtractor.extract(pdfFile))
+                        .willReturn(
+                                new PayslipPdfInfoExtractor.PayslipPersonalInfo(
+                                        "홍길동", LocalDate.of(1990, 1, 1)));
+                given(payslipPdfInfoExtractor.isNameLikelyCorrupted("홍길동")).willReturn(false);
+
+                User duplicate1 = User.builder().id(2L).build();
+                User duplicate2 = User.builder().id(3L).build();
+                given(userRepository.findAllByNameAndBirthDate("홍길동", LocalDate.of(1990, 1, 1)))
+                        .willReturn(List.of(duplicate1, duplicate2));
+
+                // when & then
+                assertThatThrownBy(() -> payslipService.sendPayslip(List.of(pdfFile), 1L))
+                        .isInstanceOf(CustomException.class)
+                        .hasFieldOrPropertyWithValue(
+                                "errorCode", ErrorCode.AMBIGUOUS_PAYSLIP_RECIPIENT);
             }
         }
 

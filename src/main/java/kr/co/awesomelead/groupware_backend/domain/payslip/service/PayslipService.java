@@ -37,7 +37,6 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
-import java.util.Optional;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -168,14 +167,27 @@ public class PayslipService {
             lookupCandidates.add(normalizedFileName);
         }
 
+        User matchedUser = null;
         for (String nameCandidate : lookupCandidates) {
-            Optional<User> foundUser =
-                    userRepository.findByNameAndBirthDate(nameCandidate, birthDate);
-            if (foundUser.isPresent()) {
-                return foundUser.get();
+            List<User> foundUsers =
+                    userRepository.findAllByNameAndBirthDate(nameCandidate, birthDate);
+
+            if (foundUsers.size() > 1) {
+                throw new CustomException(ErrorCode.AMBIGUOUS_PAYSLIP_RECIPIENT);
+            }
+            if (foundUsers.size() == 1) {
+                User foundUser = foundUsers.get(0);
+                if (matchedUser == null) {
+                    matchedUser = foundUser;
+                } else if (!matchedUser.getId().equals(foundUser.getId())) {
+                    throw new CustomException(ErrorCode.AMBIGUOUS_PAYSLIP_RECIPIENT);
+                }
             }
         }
 
+        if (matchedUser != null) {
+            return matchedUser;
+        }
         throw new CustomException(ErrorCode.USER_NOT_FOUND);
     }
 

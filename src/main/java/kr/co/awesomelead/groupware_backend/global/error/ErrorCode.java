@@ -143,6 +143,7 @@ public enum ErrorCode {
     DUPLICATE_LOGIN_ID(HttpStatus.CONFLICT, "이미 사용 중인 아이디입니다."),
     DUPLICATE_PHONE_NUMBER(HttpStatus.CONFLICT, "이미 가입된 전화번호입니다."),
     DUPLICATE_REGISTRATION_NUMBER(HttpStatus.CONFLICT, "이미 가입된 주민등록번호입니다."),
+    AMBIGUOUS_PAYSLIP_RECIPIENT(HttpStatus.CONFLICT, "동명이인으로 급여명세서 수신 대상을 특정할 수 없습니다."),
     DUPLICATE_EDUCATION_CATEGORY_CODE(HttpStatus.CONFLICT, "이미 사용 중인 교육 카테고리 코드입니다."),
     DUPLICATE_APPROVAL_TEMPLATE_CATEGORY_CODE(HttpStatus.CONFLICT, "이미 사용 중인 전자결재 양식구분 코드입니다."),
     DUPLICATE_APPROVAL_TEMPLATE_CODE(HttpStatus.CONFLICT, "이미 사용 중인 전자결재 양식 코드입니다."),

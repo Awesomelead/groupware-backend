@@ -33,6 +33,19 @@ public class EduReportRequestDto {
     @NotBlank(message = "내용은 필수입니다.")
     private String content;
 
+    @Schema(
+            description = "Quill Delta JSON 문자열(에디터 원본, 선택)",
+            example = "{\"ops\":[{\"insert\":\"PSM 교육 본문입니다.\\n\"}]}")
+    private String contentDelta;
+
+    @Schema(
+            description = "HTML 본문(선택)",
+            example = "<p>PSM 교육 본문입니다.</p>")
+    private String contentHtml;
+
+    @Schema(description = "본문 검색용 평문(서버에서 생성, 내부 전달용)")
+    private String contentText;
+
     @Schema(description = "상단 고정 여부", example = "false", defaultValue = "false")
     private boolean pinned;
 

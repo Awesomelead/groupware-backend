@@ -58,6 +58,16 @@ public class EduReportDetailDto {
     @Schema(description = "교육 내용", example = "이번 교육에서는 안전 수칙에 대해 다룹니다.")
     private String content;
 
+    @Schema(
+            description = "Quill Delta JSON 문자열(PSM/안전보건 에디터 원본, 없으면 null)",
+            example = "{\"ops\":[{\"insert\":\"교육 본문입니다.\\n\"}]}")
+    private String contentDelta;
+
+    @Schema(
+            description = "HTML 본문(PSM/안전보건 에디터 렌더링용, 없으면 null)",
+            example = "<p>교육 본문입니다.</p>")
+    private String contentHtml;
+
     @Schema(description = "출석 여부", example = "true")
     private boolean attendance;
 

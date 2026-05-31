@@ -38,9 +38,7 @@ public class EduReportRequestDto {
             example = "{\"ops\":[{\"insert\":\"PSM 교육 본문입니다.\\n\"}]}")
     private String contentDelta;
 
-    @Schema(
-            description = "HTML 본문(선택)",
-            example = "<p>PSM 교육 본문입니다.</p>")
+    @Schema(description = "HTML 본문(선택)", example = "<p>PSM 교육 본문입니다.</p>")
     private String contentHtml;
 
     @Schema(description = "본문 검색용 평문(서버에서 생성, 내부 전달용)")

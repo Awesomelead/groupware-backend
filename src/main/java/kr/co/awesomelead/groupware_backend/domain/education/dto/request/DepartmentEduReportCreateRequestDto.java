@@ -30,9 +30,7 @@ public class DepartmentEduReportCreateRequestDto {
             example = "{\"ops\":[{\"insert\":\"부서 교육 본문입니다.\\n\"}]}")
     private String contentDelta;
 
-    @Schema(
-            description = "HTML 본문(렌더링/미리보기용)",
-            example = "<p>부서 운영 규정 및 공지사항 교육</p>")
+    @Schema(description = "HTML 본문(렌더링/미리보기용)", example = "<p>부서 운영 규정 및 공지사항 교육</p>")
     private String contentHtml;
 
     @Schema(description = "상단 고정 여부", example = "false", defaultValue = "false")

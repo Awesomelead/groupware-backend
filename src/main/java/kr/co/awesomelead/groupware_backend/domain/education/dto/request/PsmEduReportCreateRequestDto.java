@@ -36,9 +36,7 @@ public class PsmEduReportCreateRequestDto {
             example = "{\"ops\":[{\"insert\":\"PSM 교육 내용입니다.\\n\"}]}")
     private String contentDelta;
 
-    @Schema(
-            description = "HTML 본문(렌더링/미리보기용)",
-            example = "<p>변경관리 절차 및 주의사항 안내</p>")
+    @Schema(description = "HTML 본문(렌더링/미리보기용)", example = "<p>변경관리 절차 및 주의사항 안내</p>")
     private String contentHtml;
 
     @Schema(description = "상단 고정 여부", example = "false", defaultValue = "false")

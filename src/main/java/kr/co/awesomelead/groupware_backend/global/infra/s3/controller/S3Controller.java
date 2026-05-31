@@ -15,8 +15,8 @@ import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestPart;
 import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RequestPart;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -42,8 +42,7 @@ public class S3Controller {
 
     @Operation(summary = "파일 단일 삭제", description = "파일 키(fileKey)를 입력하여 S3 파일을 삭제합니다.")
     @DeleteMapping("/delete")
-    public ResponseEntity<ApiResponse<Void>> deleteFile(
-            @RequestParam("fileKey") String fileKey) {
+    public ResponseEntity<ApiResponse<Void>> deleteFile(@RequestParam("fileKey") String fileKey) {
         if (!StringUtils.hasText(fileKey)) {
             throw new CustomException(ErrorCode.INVALID_ARGUMENT);
         }

@@ -36,9 +36,7 @@ public class SafetyEduReportCreateRequestDto {
             example = "{\"ops\":[{\"insert\":\"안전보건 교육 본문입니다.\\n\"}]}")
     private String contentDelta;
 
-    @Schema(
-            description = "HTML 본문(렌더링/미리보기용)",
-            example = "<p>사업장 안전수칙 및 보호구 착용 기준 안내</p>")
+    @Schema(description = "HTML 본문(렌더링/미리보기용)", example = "<p>사업장 안전수칙 및 보호구 착용 기준 안내</p>")
     private String contentHtml;
 
     @Schema(description = "상단 고정 여부", example = "false", defaultValue = "false")

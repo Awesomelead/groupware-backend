@@ -63,9 +63,7 @@ public class EduReportDetailDto {
             example = "{\"ops\":[{\"insert\":\"교육 본문입니다.\\n\"}]}")
     private String contentDelta;
 
-    @Schema(
-            description = "HTML 본문(PSM/안전보건 에디터 렌더링용, 없으면 null)",
-            example = "<p>교육 본문입니다.</p>")
+    @Schema(description = "HTML 본문(PSM/안전보건 에디터 렌더링용, 없으면 null)", example = "<p>교육 본문입니다.</p>")
     private String contentHtml;
 
     @Schema(description = "출석 여부", example = "true")

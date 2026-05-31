@@ -34,6 +34,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.mock.web.MockMultipartFile;
 
 import java.io.IOException;
@@ -53,6 +54,7 @@ public class PayslipServiceTest {
     @Mock private NotificationService notificationService;
     @Mock private PayslipPdfInfoExtractor payslipPdfInfoExtractor;
     @Mock private PayslipOcrInfoExtractor payslipOcrInfoExtractor;
+    @Mock private BCryptPasswordEncoder bCryptPasswordEncoder;
 
     private User admin;
     private User employee;
@@ -317,7 +319,7 @@ public class PayslipServiceTest {
                 given(payslipRepository.findById(anyLong())).willReturn(Optional.empty());
 
                 // when & then
-                assertThatThrownBy(() -> payslipService.getPayslip(1L, 999L))
+                assertThatThrownBy(() -> payslipService.getPayslip(1L, 999L, "password"))
                         .isInstanceOf(CustomException.class)
                         .hasFieldOrPropertyWithValue("errorCode", ErrorCode.PAYSLIP_NOT_FOUND);
             }
@@ -338,10 +340,34 @@ public class PayslipServiceTest {
                 Long intruderId = 1L; // 침입자 ID
 
                 // when & then
-                assertThatThrownBy(() -> payslipService.getPayslip(intruderId, 100L))
+                assertThatThrownBy(() -> payslipService.getPayslip(intruderId, 100L, "password"))
                         .isInstanceOf(CustomException.class)
                         .hasFieldOrPropertyWithValue(
                                 "errorCode", ErrorCode.NO_AUTHORITY_FOR_VIEW_PAYSLIP);
+            }
+        }
+
+        @Nested
+        @DisplayName("비밀번호가 일치하지 않으면")
+        class Context_with_wrong_password {
+
+            @Test
+            @DisplayName("PASSWORD_MISMATCH 예외를 던진다.")
+            void it_throws_password_mismatch_exception() {
+                // given
+                User owner = User.builder().id(1L).password("encoded-password").build();
+                Payslip myPayslip =
+                        Payslip.builder().id(100L).user(owner).status(PayslipStatus.SENT).build();
+
+                given(payslipRepository.findById(100L)).willReturn(Optional.of(myPayslip));
+                given(bCryptPasswordEncoder.matches("wrong-password", "encoded-password"))
+                        .willReturn(false);
+
+                // when & then
+                assertThatThrownBy(
+                                () -> payslipService.getPayslip(1L, 100L, "wrong-password"))
+                        .isInstanceOf(CustomException.class)
+                        .hasFieldOrPropertyWithValue("errorCode", ErrorCode.PASSWORD_MISMATCH);
             }
         }
 
@@ -353,16 +379,18 @@ public class PayslipServiceTest {
             @DisplayName("상세 정보 DTO를 반환한다.")
             void it_returns_detail_dto() {
                 // given
-                User owner = User.builder().id(1L).build();
+                User owner = User.builder().id(1L).password("encoded-password").build();
                 Payslip myPayslip =
                         Payslip.builder().id(100L).user(owner).status(PayslipStatus.SENT).build();
 
                 given(payslipRepository.findById(100L)).willReturn(Optional.of(myPayslip));
+                given(bCryptPasswordEncoder.matches("password123!", "encoded-password"))
+                        .willReturn(true);
                 given(payslipMapper.toEmployeePayslipDetailDto(myPayslip, s3Service))
                         .willReturn(EmployeePayslipDetailDto.builder().payslipId(100L).build());
 
                 // when
-                EmployeePayslipDetailDto result = payslipService.getPayslip(1L, 100L);
+                EmployeePayslipDetailDto result = payslipService.getPayslip(1L, 100L, "password123!");
 
                 // then
                 assertThat(result.getPayslipId()).isEqualTo(100L);

@@ -21,6 +21,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
 import org.springframework.stereotype.Service;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -54,6 +55,7 @@ public class PayslipService {
     private final NotificationService notificationService;
     private final PayslipPdfInfoExtractor payslipPdfInfoExtractor;
     private final PayslipOcrInfoExtractor payslipOcrInfoExtractor;
+    private final BCryptPasswordEncoder bCryptPasswordEncoder;
 
     @Transactional
     public void sendPayslip(List<MultipartFile> payslipFiles, Long userId) throws IOException {
@@ -252,7 +254,7 @@ public class PayslipService {
 
     // 직원의 급여명세서 상세 조회
     @Transactional
-    public EmployeePayslipDetailDto getPayslip(Long userId, Long payslipId) {
+    public EmployeePayslipDetailDto getPayslip(Long userId, Long payslipId, String password) {
 
         Payslip payslip =
                 payslipRepository
@@ -261,6 +263,10 @@ public class PayslipService {
 
         if (!payslip.getUser().getId().equals(userId)) {
             throw new CustomException(ErrorCode.NO_AUTHORITY_FOR_VIEW_PAYSLIP);
+        }
+
+        if (!bCryptPasswordEncoder.matches(password, payslip.getUser().getPassword())) {
+            throw new CustomException(ErrorCode.PASSWORD_MISMATCH);
         }
 
         // 통보형 프로세스: 직원이 상세 조회하면 열람 완료 처리

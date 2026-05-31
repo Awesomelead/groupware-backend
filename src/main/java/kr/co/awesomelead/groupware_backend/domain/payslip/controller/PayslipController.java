@@ -7,6 +7,9 @@ import io.swagger.v3.oas.annotations.media.ExampleObject;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 
+import jakarta.validation.Valid;
+
+import kr.co.awesomelead.groupware_backend.domain.payslip.dto.request.PayslipViewPasswordRequestDto;
 import kr.co.awesomelead.groupware_backend.domain.payslip.dto.response.AdminPayslipDetailDto;
 import kr.co.awesomelead.groupware_backend.domain.payslip.dto.response.AdminPayslipSummaryDto;
 import kr.co.awesomelead.groupware_backend.domain.payslip.dto.response.EmployeePayslipDetailDto;
@@ -25,6 +28,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RequestPart;
 import org.springframework.web.bind.annotation.RestController;
@@ -243,12 +247,31 @@ public class PayslipController {
         return ResponseEntity.ok(ApiResponse.onSuccess(response));
     }
 
-    @Operation(summary = "내 명세서 상세 조회 (직원)", description = "직원이 특정 급여명세서의 상세 내용을 확인합니다.")
+    @Operation(
+            summary = "내 명세서 상세 조회 (직원)",
+            description = "직원이 로그인 비밀번호를 입력한 뒤 특정 급여명세서의 상세 내용을 확인합니다.")
     @ApiResponses(
             value = {
                 @io.swagger.v3.oas.annotations.responses.ApiResponse(
                         responseCode = "200",
                         description = "조회 성공"),
+                @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                        responseCode = "400",
+                        description = "비밀번호 불일치",
+                        content =
+                                @Content(
+                                        mediaType = "application/json",
+                                        examples =
+                                                @ExampleObject(
+                                                        value =
+                                                                """
+                                {
+                                "isSuccess": false,
+                                "code": "PASSWORD_MISMATCH",
+                                "message": "비밀번호가 일치하지 않습니다.",
+                                "result": null
+                                }
+                                """))),
                 @io.swagger.v3.oas.annotations.responses.ApiResponse(
                         responseCode = "401",
                         description = "접근 권한 없음",
@@ -284,13 +307,14 @@ public class PayslipController {
                                 }
                                 """)))
             })
-    @GetMapping("/me/{payslipId}")
+    @PostMapping("/me/{payslipId}")
     public ResponseEntity<ApiResponse<EmployeePayslipDetailDto>> getMyPayslipDetail(
             @Parameter(hidden = true) @AuthenticationPrincipal CustomUserDetails userDetails,
-            @Parameter(description = "명세서 ID", example = "1") @PathVariable Long payslipId) {
+            @Parameter(description = "명세서 ID", example = "1") @PathVariable Long payslipId,
+            @Valid @RequestBody PayslipViewPasswordRequestDto requestDto) {
 
         EmployeePayslipDetailDto response =
-                payslipService.getPayslip(userDetails.getId(), payslipId);
+                payslipService.getPayslip(userDetails.getId(), payslipId, requestDto.getPassword());
         return ResponseEntity.ok(ApiResponse.onSuccess(response));
     }
 }

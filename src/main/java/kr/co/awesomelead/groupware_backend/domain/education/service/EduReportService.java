@@ -81,8 +81,8 @@ public class EduReportService {
     public Long createPsmEduReport(
             PsmEduReportCreateRequestDto requestDto, List<MultipartFile> files, Long id)
             throws IOException {
-        PsmContentFields contentFields =
-                resolvePsmCreateContentFields(
+        EditorContentFields contentFields =
+                resolveEditorCreateContentFields(
                         requestDto.getContent(),
                         requestDto.getContentDelta(),
                         requestDto.getContentHtml());
@@ -217,11 +217,20 @@ public class EduReportService {
     public Long createDepartmentEduReport(
             DepartmentEduReportCreateRequestDto requestDto, List<MultipartFile> files, Long id)
             throws IOException {
+        EditorContentFields contentFields =
+                resolveEditorCreateContentFields(
+                        requestDto.getContent(),
+                        requestDto.getContentDelta(),
+                        requestDto.getContentHtml());
+
         EduReportRequestDto baseRequest =
                 EduReportRequestDto.builder()
                         .eduType(EduType.DEPARTMENT)
                         .title(requestDto.getTitle())
-                        .content(requestDto.getContent())
+                        .content(contentFields.content())
+                        .contentDelta(contentFields.contentDelta())
+                        .contentHtml(contentFields.contentHtml())
+                        .contentText(contentFields.contentText())
                         .pinned(requestDto.isPinned())
                         .signatureRequired(requestDto.isSignatureRequired())
                         .departmentId(requestDto.getDepartmentId())
@@ -891,9 +900,9 @@ public class EduReportService {
             report.setPinned(requestDto.isPinned());
             report.setSignatureRequired(requestDto.isSignatureRequired());
 
-            if (report.getEduType() == EduType.PSM) {
-                PsmContentFields contentFields =
-                        resolvePsmUpdateContentFields(
+            if (report.getEduType() == EduType.PSM || report.getEduType() == EduType.DEPARTMENT) {
+                EditorContentFields contentFields =
+                        resolveEditorUpdateContentFields(
                                 report,
                                 requestDto.getContent(),
                                 requestDto.getContentDelta(),
@@ -1137,7 +1146,7 @@ public class EduReportService {
         return category;
     }
 
-    private PsmContentFields resolvePsmCreateContentFields(
+    private EditorContentFields resolveEditorCreateContentFields(
             String requestContent, String requestContentDelta, String requestContentHtml) {
         String content = requestContent;
         if (!StringUtils.hasText(content)) {
@@ -1155,14 +1164,14 @@ public class EduReportService {
             throw new CustomException(ErrorCode.INVALID_ARGUMENT);
         }
 
-        return new PsmContentFields(
+        return new EditorContentFields(
                 normalizeNullableContent(content),
                 normalizeNullableContent(requestContentDelta),
                 normalizeNullableContent(requestContentHtml),
                 contentText);
     }
 
-    private PsmContentFields resolvePsmUpdateContentFields(
+    private EditorContentFields resolveEditorUpdateContentFields(
             EduReport report,
             String requestContent,
             String requestContentDelta,
@@ -1194,7 +1203,7 @@ public class EduReportService {
             throw new CustomException(ErrorCode.INVALID_ARGUMENT);
         }
 
-        return new PsmContentFields(
+        return new EditorContentFields(
                 normalizeNullableContent(resolvedContent),
                 normalizeNullableContent(resolvedContentDelta),
                 normalizeNullableContent(resolvedContentHtml),
@@ -1482,6 +1491,6 @@ public class EduReportService {
         return (int) value;
     }
 
-    private record PsmContentFields(
+    private record EditorContentFields(
             String content, String contentDelta, String contentHtml, String contentText) {}
 }

@@ -19,7 +19,7 @@ public class EmployeePayslipSummaryDto {
     @Schema(description = "급여명세서 ID", example = "1")
     private Long payslipId;
 
-    @Schema(description = "원본 파일명", example = "홍길동_20251231_급여명세서.pdf")
+    @Schema(description = "원본 파일명", example = "급여명세서(근로기준1)_10001_홍길동_202605.pdf")
     private String originalFileName;
 
     @Schema(description = "생성 일시", example = "2025-12-31T10:15:30")

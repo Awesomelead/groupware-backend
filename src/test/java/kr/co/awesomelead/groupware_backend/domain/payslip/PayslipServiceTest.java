@@ -15,6 +15,8 @@ import kr.co.awesomelead.groupware_backend.domain.payslip.entity.Payslip;
 import kr.co.awesomelead.groupware_backend.domain.payslip.enums.PayslipStatus;
 import kr.co.awesomelead.groupware_backend.domain.payslip.mapper.PayslipMapper;
 import kr.co.awesomelead.groupware_backend.domain.payslip.repository.PayslipRepository;
+import kr.co.awesomelead.groupware_backend.domain.payslip.service.PayslipOcrInfoExtractor;
+import kr.co.awesomelead.groupware_backend.domain.payslip.service.PayslipPdfInfoExtractor;
 import kr.co.awesomelead.groupware_backend.domain.payslip.service.PayslipService;
 import kr.co.awesomelead.groupware_backend.domain.user.entity.User;
 import kr.co.awesomelead.groupware_backend.domain.user.enums.Authority;
@@ -49,6 +51,8 @@ public class PayslipServiceTest {
     @Mock private S3Service s3Service;
     @Mock private PayslipMapper payslipMapper;
     @Mock private NotificationService notificationService;
+    @Mock private PayslipPdfInfoExtractor payslipPdfInfoExtractor;
+    @Mock private PayslipOcrInfoExtractor payslipOcrInfoExtractor;
 
     private User admin;
     private User employee;
@@ -110,7 +114,7 @@ public class PayslipServiceTest {
 
             @Test
             @DisplayName("S3에 업로드하고 정보를 저장한다.")
-            void it_uploads_to_s3_and_saves_info() throws IOException, IOException {
+            void it_uploads_to_s3_and_saves_info() throws IOException {
                 // given
                 admin.getAuthorities().add(Authority.EDIT_EMPLOYEE_INFO);
                 given(userRepository.findById(1L)).willReturn(Optional.of(admin));
@@ -118,10 +122,14 @@ public class PayslipServiceTest {
                 MockMultipartFile pdfFile =
                         new MockMultipartFile(
                                 "payslipFiles",
-                                "홍길동_19900101_급여명세서.pdf",
+                                "급여명세서(근로기준1)_10001_홍길동_202605.pdf",
                                 "application/pdf",
                                 "pdf content".getBytes());
 
+                given(payslipPdfInfoExtractor.extract(pdfFile))
+                        .willReturn(
+                                new PayslipPdfInfoExtractor.PayslipPersonalInfo(
+                                        "홍길동", LocalDate.of(1990, 1, 1)));
                 given(userRepository.findByNameAndBirthDate("홍길동", LocalDate.of(1990, 1, 1)))
                         .willReturn(Optional.of(employee));
                 given(s3Service.uploadFile(pdfFile)).willReturn("s3-key");
@@ -135,6 +143,108 @@ public class PayslipServiceTest {
                 verify(s3Service, times(1)).uploadFile(any());
                 verify(payslipRepository, times(1)).save(any(Payslip.class));
                 verify(notificationService, times(1)).sendPayslipAlertToUser(employee.getId(), 99L);
+            }
+        }
+
+        @Nested
+        @DisplayName("기본 텍스트 추출 이름이 깨졌지만 OCR로 정상 추출되면")
+        class Context_with_corrupted_name_and_ocr_success {
+
+            @Test
+            @DisplayName("OCR 결과로 사용자 매칭 후 발송한다.")
+            void it_uses_ocr_result_for_matching() throws IOException {
+                // given
+                admin.getAuthorities().add(Authority.EDIT_EMPLOYEE_INFO);
+                given(userRepository.findById(1L)).willReturn(Optional.of(admin));
+
+                MockMultipartFile pdfFile =
+                        new MockMultipartFile(
+                                "payslipFiles",
+                                "급여명세서(근로기준1)_10002_리딘뷰_202604.pdf",
+                                "application/pdf",
+                                "pdf content".getBytes());
+
+                given(payslipPdfInfoExtractor.extract(pdfFile))
+                        .willReturn(
+                                new PayslipPdfInfoExtractor.PayslipPersonalInfo(
+                                        "리", LocalDate.of(1999, 1, 5)));
+                given(payslipPdfInfoExtractor.isNameLikelyCorrupted("리")).willReturn(true);
+                given(payslipOcrInfoExtractor.isOcrEnabled()).willReturn(true);
+                given(payslipOcrInfoExtractor.extract(pdfFile))
+                        .willReturn(
+                                new PayslipPdfInfoExtractor.PayslipPersonalInfo(
+                                        "리딘뷰", LocalDate.of(1999, 1, 5)));
+                given(payslipPdfInfoExtractor.isNameLikelyCorrupted("리딘뷰")).willReturn(false);
+                given(userRepository.findByNameAndBirthDate("리딘뷰", LocalDate.of(1999, 1, 5)))
+                        .willReturn(Optional.of(employee));
+                given(s3Service.uploadFile(pdfFile)).willReturn("s3-key");
+                Payslip savedPayslip = Payslip.builder().id(100L).user(employee).build();
+                given(payslipRepository.save(any(Payslip.class))).willReturn(savedPayslip);
+
+                // when
+                payslipService.sendPayslip(List.of(pdfFile), 1L);
+
+                // then
+                verify(payslipOcrInfoExtractor, times(1)).extract(pdfFile);
+                verify(notificationService, times(1))
+                        .sendPayslipAlertToUser(employee.getId(), savedPayslip.getId());
+            }
+        }
+
+        @Nested
+        @DisplayName("파일명 형식이 잘못되면")
+        class Context_with_invalid_file_name_format {
+
+            @Test
+            @DisplayName("INVALID_PAYSLIP_FILE_NAME_FORMAT 예외를 던진다.")
+            void it_throws_invalid_file_name_format_exception() {
+                // given
+                admin.getAuthorities().add(Authority.EDIT_EMPLOYEE_INFO);
+                given(userRepository.findById(1L)).willReturn(Optional.of(admin));
+
+                MockMultipartFile pdfFile =
+                        new MockMultipartFile(
+                                "payslipFiles",
+                                "홍길동_19900101_급여명세서.pdf",
+                                "application/pdf",
+                                "pdf content".getBytes());
+
+                // when & then
+                assertThatThrownBy(() -> payslipService.sendPayslip(List.of(pdfFile), 1L))
+                        .isInstanceOf(CustomException.class)
+                        .hasFieldOrPropertyWithValue(
+                                "errorCode", ErrorCode.INVALID_PAYSLIP_FILE_NAME_FORMAT);
+            }
+        }
+
+        @Nested
+        @DisplayName("파일명 이름과 PDF 이름이 다르면")
+        class Context_with_file_name_and_pdf_name_mismatch {
+
+            @Test
+            @DisplayName("PAYSLIP_USER_INFO_MISMATCH 예외를 던진다.")
+            void it_throws_user_info_mismatch_exception() {
+                // given
+                admin.getAuthorities().add(Authority.EDIT_EMPLOYEE_INFO);
+                given(userRepository.findById(1L)).willReturn(Optional.of(admin));
+
+                MockMultipartFile pdfFile =
+                        new MockMultipartFile(
+                                "payslipFiles",
+                                "급여명세서(근로기준1)_10001_홍길동_202605.pdf",
+                                "application/pdf",
+                                "pdf content".getBytes());
+
+                given(payslipPdfInfoExtractor.extract(pdfFile))
+                        .willReturn(
+                                new PayslipPdfInfoExtractor.PayslipPersonalInfo(
+                                        "임꺽정", LocalDate.of(1990, 1, 1)));
+
+                // when & then
+                assertThatThrownBy(() -> payslipService.sendPayslip(List.of(pdfFile), 1L))
+                        .isInstanceOf(CustomException.class)
+                        .hasFieldOrPropertyWithValue(
+                                "errorCode", ErrorCode.PAYSLIP_USER_INFO_MISMATCH);
             }
         }
     }

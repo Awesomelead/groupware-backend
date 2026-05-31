@@ -18,28 +18,42 @@ import kr.co.awesomelead.groupware_backend.global.error.ErrorCode;
 import kr.co.awesomelead.groupware_backend.global.infra.s3.service.S3Service;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
+import java.nio.file.Paths;
 import java.text.Normalizer;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 import java.util.Objects;
+import java.util.Optional;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 @Service
+@Slf4j
 @RequiredArgsConstructor
 public class PayslipService {
+
+    private static final Pattern PAYSLIP_FILE_NAME_PATTERN =
+            Pattern.compile(
+                    "^급여명세서\\(근로기준1\\)_([^_]+)_([^_]+)_([0-9]{6})\\.pdf$",
+                    Pattern.CASE_INSENSITIVE);
 
     private final PayslipRepository payslipRepository;
     private final PayslipMapper payslipMapper;
     private final UserRepository userRepository;
     private final S3Service s3Service;
     private final NotificationService notificationService;
+    private final PayslipPdfInfoExtractor payslipPdfInfoExtractor;
+    private final PayslipOcrInfoExtractor payslipOcrInfoExtractor;
 
     @Transactional
     public void sendPayslip(List<MultipartFile> payslipFiles, Long userId) throws IOException {
@@ -60,26 +74,121 @@ public class PayslipService {
                 throw new CustomException(ErrorCode.ONLY_PDF_ALLOWED);
             }
 
-            String fileName =
-                    file.getOriginalFilename(); // 파일명은 "name_yyyyMMdd_급여명세서.ext" (생년월일) 형식으로 고정
-            String[] split = fileName.split("_");
+            String fileNameEmployeeName = parseEmployeeNameFromFileName(originalFileName);
+            PayslipPdfInfoExtractor.PayslipPersonalInfo pdfPersonalInfo =
+                    extractPersonalInfoWithFallback(file, originalFileName);
 
-            String name = split[0].trim();
-            String normalizedName = Normalizer.normalize(name, Normalizer.Form.NFC);
-            String birthDateStr = split[1];
-            LocalDate birthDate =
-                    LocalDate.parse(birthDateStr, DateTimeFormatter.ofPattern("yyyyMMdd"));
+            if (!isSamePersonName(fileNameEmployeeName, pdfPersonalInfo.name())) {
+                throw new CustomException(ErrorCode.PAYSLIP_USER_INFO_MISMATCH);
+            }
 
             User target =
-                    userRepository
-                            .findByNameAndBirthDate(normalizedName, birthDate)
-                            .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
+                    findTargetUserByNameAndBirthDate(
+                            pdfPersonalInfo.name(),
+                            fileNameEmployeeName,
+                            pdfPersonalInfo.birthDate());
 
             String s3Key = s3Service.uploadFile(file);
 
             Payslip savedPayslip = savePayslipInfo(s3Key, originalFileName, target);
             notificationService.sendPayslipAlertToUser(target.getId(), savedPayslip.getId());
         }
+    }
+
+    private PayslipPdfInfoExtractor.PayslipPersonalInfo extractPersonalInfoWithFallback(
+            MultipartFile file, String originalFileName) {
+        PayslipPdfInfoExtractor.PayslipPersonalInfo primaryInfo = null;
+        boolean needsOcrFallback = false;
+
+        try {
+            primaryInfo = payslipPdfInfoExtractor.extract(file);
+            needsOcrFallback = payslipPdfInfoExtractor.isNameLikelyCorrupted(primaryInfo.name());
+        } catch (CustomException e) {
+            if (e.getErrorCode() != ErrorCode.INVALID_PAYSLIP_PDF_CONTENT) {
+                throw e;
+            }
+            needsOcrFallback = true;
+        }
+
+        if (!needsOcrFallback || !payslipOcrInfoExtractor.isOcrEnabled()) {
+            if (primaryInfo == null) {
+                throw new CustomException(ErrorCode.INVALID_PAYSLIP_PDF_CONTENT);
+            }
+            return primaryInfo;
+        }
+
+        try {
+            PayslipPdfInfoExtractor.PayslipPersonalInfo ocrInfo = payslipOcrInfoExtractor.extract(file);
+            if (!payslipPdfInfoExtractor.isNameLikelyCorrupted(ocrInfo.name())) {
+                log.info("급여명세서 OCR fallback 적용 성공 - fileName: {}", originalFileName);
+                return ocrInfo;
+            }
+            return primaryInfo != null ? primaryInfo : ocrInfo;
+        } catch (CustomException e) {
+            if (primaryInfo != null) {
+                return primaryInfo;
+            }
+            throw e;
+        }
+    }
+
+    private String parseEmployeeNameFromFileName(String originalFileName) {
+        if (originalFileName == null || originalFileName.isBlank()) {
+            throw new CustomException(ErrorCode.INVALID_PAYSLIP_FILE_NAME_FORMAT);
+        }
+
+        String baseName = extractBaseFileName(originalFileName);
+        Matcher matcher = PAYSLIP_FILE_NAME_PATTERN.matcher(baseName);
+        if (!matcher.matches()) {
+            throw new CustomException(ErrorCode.INVALID_PAYSLIP_FILE_NAME_FORMAT);
+        }
+
+        String employeeName = matcher.group(2);
+        return normalizeNameForLookup(employeeName);
+    }
+
+    private User findTargetUserByNameAndBirthDate(
+            String pdfName, String fileNameName, LocalDate birthDate) {
+        List<String> lookupCandidates = new ArrayList<>();
+        String normalizedPdfName = normalizeNameForLookup(pdfName);
+        String normalizedFileName = normalizeNameForLookup(fileNameName);
+        lookupCandidates.add(normalizedPdfName);
+        if (!normalizedPdfName.equals(normalizedFileName)) {
+            lookupCandidates.add(normalizedFileName);
+        }
+
+        for (String nameCandidate : lookupCandidates) {
+            Optional<User> foundUser =
+                    userRepository.findByNameAndBirthDate(nameCandidate, birthDate);
+            if (foundUser.isPresent()) {
+                return foundUser.get();
+            }
+        }
+
+        throw new CustomException(ErrorCode.USER_NOT_FOUND);
+    }
+
+    private boolean isSamePersonName(String fileNameName, String pdfName) {
+        String normalizedFileNameName = normalizeNameForComparison(fileNameName);
+        String normalizedPdfName = normalizeNameForComparison(pdfName);
+        return normalizedFileNameName.equals(normalizedPdfName);
+    }
+
+    private String normalizeNameForComparison(String name) {
+        return normalizeNameForLookup(name).replaceAll("\\s+", "").toLowerCase(Locale.ROOT);
+    }
+
+    private String normalizeNameForLookup(String name) {
+        if (name == null) {
+            return "";
+        }
+        return Normalizer.normalize(name, Normalizer.Form.NFC).replaceAll("\\s+", " ").trim();
+    }
+
+    private String extractBaseFileName(String fileName) {
+        String normalizedPath = fileName.replace("\\", "/");
+        String fileOnly = Paths.get(normalizedPath).getFileName().toString();
+        return Normalizer.normalize(fileOnly, Normalizer.Form.NFC);
     }
 
     @Transactional

@@ -78,8 +78,7 @@ public enum ErrorCode {
             HttpStatus.BAD_REQUEST, "서명 완료자가 존재하여 교육을 수정할 수 없습니다."),
     SAFETY_TRAINING_ABSENT_REASON_REQUIRED(
             HttpStatus.BAD_REQUEST, "결석자가 있을 경우 교육 미참석 사유 입력은 필수입니다."),
-    ANNUAL_LEAVE_MONTH_MISMATCH(
-            HttpStatus.BAD_REQUEST, "시트명의 월 정보와 엑셀 기준일의 월 정보가 일치하지 않습니다."),
+    ANNUAL_LEAVE_MONTH_MISMATCH(HttpStatus.BAD_REQUEST, "시트명의 월 정보와 엑셀 기준일의 월 정보가 일치하지 않습니다."),
 
     // 401 Unauthorized
     INVALID_TOKEN(HttpStatus.UNAUTHORIZED, "유효하지 않은 토큰입니다."),

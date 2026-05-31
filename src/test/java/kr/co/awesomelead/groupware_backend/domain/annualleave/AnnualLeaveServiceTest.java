@@ -636,8 +636,7 @@ public class AnnualLeaveServiceTest {
                 // then
                 assertThat(code.getHttpStatus())
                         .isEqualTo(org.springframework.http.HttpStatus.CONFLICT);
-                assertThat(code.getMessage())
-                        .isEqualTo("이미 해당 월에 연차가 발송되었습니다.");
+                assertThat(code.getMessage()).isEqualTo("이미 해당 월에 연차가 발송되었습니다.");
             }
         }
 
@@ -656,8 +655,7 @@ public class AnnualLeaveServiceTest {
                 // then
                 assertThat(code.getHttpStatus())
                         .isEqualTo(org.springframework.http.HttpStatus.BAD_REQUEST);
-                assertThat(code.getMessage())
-                        .isEqualTo("시트명의 월 정보와 엑셀 기준일의 월 정보가 일치하지 않습니다.");
+                assertThat(code.getMessage()).isEqualTo("시트명의 월 정보와 엑셀 기준일의 월 정보가 일치하지 않습니다.");
             }
         }
     }
@@ -813,11 +811,9 @@ public class AnnualLeaveServiceTest {
                 // then: 기존 연차가 더 최신이므로 save와 알림 전송이 호출되지 않아야 한다
                 org.mockito.Mockito.verify(annualLeaveRepository, org.mockito.Mockito.never())
                         .save(existingNewerAnnualLeave);
-                org.mockito.Mockito.verify(
-                                notificationService, org.mockito.Mockito.never())
+                org.mockito.Mockito.verify(notificationService, org.mockito.Mockito.never())
                         .sendAnnualLeaveAlertToUser(
-                                org.mockito.ArgumentMatchers.eq(targetUser.getId()),
-                                anyString());
+                                org.mockito.ArgumentMatchers.eq(targetUser.getId()), anyString());
             }
         }
     }

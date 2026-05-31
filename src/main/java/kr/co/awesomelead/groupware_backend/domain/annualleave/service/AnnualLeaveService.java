@@ -165,8 +165,7 @@ public class AnnualLeaveService {
 
     private record ProcessResult(ExcelUploadResponseDto response, LocalDate baseDate) {}
 
-    private ProcessResult processAnnualLeaveFile(
-            MultipartFile file, String normalizedSheetName) {
+    private ProcessResult processAnnualLeaveFile(MultipartFile file, String normalizedSheetName) {
         List<FailureDetail> failures = new ArrayList<>();
         int successCount = 0;
         int totalProcessed = 0;

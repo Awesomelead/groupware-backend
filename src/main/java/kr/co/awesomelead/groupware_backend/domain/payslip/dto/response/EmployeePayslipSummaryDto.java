@@ -22,6 +22,9 @@ public class EmployeePayslipSummaryDto {
     @Schema(description = "원본 파일명", example = "급여명세서(근로기준1)_10001_홍길동_202605.pdf")
     private String originalFileName;
 
+    @Schema(description = "급여명세서 제목", example = "2026년 5월 급여명세서")
+    private String payslipTitle;
+
     @Schema(description = "생성 일시", example = "2025-12-31T10:15:30")
     private LocalDateTime createdAt;
 }

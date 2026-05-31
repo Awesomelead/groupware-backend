@@ -278,6 +278,7 @@ class AdminServiceTest {
                             .id(17L)
                             .nameKor("고영민")
                             .department(department)
+                            .workLocation(Company.AWESOME)
                             .hireDate(LocalDate.of(2025, 9, 22))
                             .resignationDate(LocalDate.of(2026, 3, 31))
                             .build();
@@ -317,6 +318,7 @@ class AdminServiceTest {
             assertThat(result.getContent().get(0).getUserId()).isEqualTo(17L);
             assertThat(result.getContent().get(0).isHasPendingMyInfoRequest()).isEqualTo(true);
             assertThat(result.getContent().get(0).getSignupStatus()).isEqualTo(Status.AVAILABLE);
+            assertThat(result.getContent().get(0).getWorkLocation()).isEqualTo(Company.AWESOME);
             assertThat(result.getContent().get(0).getHireDate())
                     .isEqualTo(LocalDate.of(2025, 9, 22));
             assertThat(result.getContent().get(0).getResignationDate())

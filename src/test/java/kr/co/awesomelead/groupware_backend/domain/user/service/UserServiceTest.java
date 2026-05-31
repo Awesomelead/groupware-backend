@@ -455,6 +455,7 @@ class UserServiceTest {
                     .isEqualTo(Position.ASSISTANT_MANAGER);
             assertThat(result.getContent().get(0).getDepartmentName())
                     .isEqualTo(DepartmentName.CHUNGNAM_HQ);
+            assertThat(result.getContent().get(0).getWorkLocation()).isEqualTo(Company.AWESOME);
             assertThat(result.getContent().get(1).getUserId()).isEqualTo(2L);
             assertThat(result.getContent().get(1).getName()).isEqualTo("이영희");
 

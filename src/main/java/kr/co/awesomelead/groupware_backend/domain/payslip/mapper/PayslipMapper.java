@@ -37,6 +37,9 @@ public interface PayslipMapper {
     @Mapping(target = "employeeName", source = "user.displayName")
     @Mapping(target = "employPosition", source = "user.position")
     @Mapping(
+            target = "payslipTitle",
+            expression = "java(buildPayslipTitle(payslip.getOriginalFileName()))")
+    @Mapping(
             target = "presignedUrl",
             expression = "java(s3Service.getPresignedViewUrl(payslip.getFileKey()))")
     AdminPayslipDetailDto toAdminPayslipDetailDto(Payslip payslip, @Context S3Service s3Service);
@@ -53,6 +56,9 @@ public interface PayslipMapper {
             target = "presignedUrl",
             expression = "java(s3Service.getPresignedViewUrl(payslip.getFileKey()))")
     @Mapping(target = "payslipId", source = "payslip.id")
+    @Mapping(
+            target = "payslipTitle",
+            expression = "java(buildPayslipTitle(payslip.getOriginalFileName()))")
     EmployeePayslipDetailDto toEmployeePayslipDetailDto(
             Payslip payslip, @Context S3Service s3Service);
 

@@ -5,6 +5,7 @@ import kr.co.awesomelead.groupware_backend.domain.payslip.dto.response.AdminPays
 import kr.co.awesomelead.groupware_backend.domain.payslip.dto.response.EmployeePayslipDetailDto;
 import kr.co.awesomelead.groupware_backend.domain.payslip.dto.response.EmployeePayslipSummaryDto;
 import kr.co.awesomelead.groupware_backend.domain.payslip.entity.Payslip;
+import kr.co.awesomelead.groupware_backend.domain.user.enums.Position;
 import kr.co.awesomelead.groupware_backend.global.infra.s3.service.S3Service;
 
 import org.mapstruct.Context;
@@ -26,7 +27,7 @@ public interface PayslipMapper {
 
     @Mapping(target = "payslipId", source = "payslip.id")
     @Mapping(target = "employeeName", source = "user.displayName")
-    @Mapping(target = "employPosition", source = "user.position")
+    @Mapping(target = "employPosition", expression = "java(buildPositionDescription(payslip))")
     @Mapping(
             target = "payslipTitle",
             expression = "java(buildPayslipTitle(payslip))")
@@ -36,7 +37,7 @@ public interface PayslipMapper {
 
     @Mapping(target = "payslipId", source = "payslip.id")
     @Mapping(target = "employeeName", source = "user.displayName")
-    @Mapping(target = "employPosition", source = "user.position")
+    @Mapping(target = "employPosition", expression = "java(buildPositionDescription(payslip))")
     @Mapping(
             target = "payslipTitle",
             expression = "java(buildPayslipTitle(payslip))")
@@ -68,6 +69,17 @@ public interface PayslipMapper {
             return "급여명세서";
         }
         return buildPayslipTitleFromOriginalFileName(payslip.getOriginalFileName());
+    }
+
+    default String buildPositionDescription(Payslip payslip) {
+        if (payslip == null || payslip.getUser() == null) {
+            return null;
+        }
+        Position position = payslip.getUser().getPosition();
+        if (position == null) {
+            return null;
+        }
+        return position.getDescription();
     }
 
     private static String buildPayslipTitleFromOriginalFileName(String originalFileName) {

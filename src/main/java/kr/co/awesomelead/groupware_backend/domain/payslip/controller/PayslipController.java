@@ -146,7 +146,7 @@ public class PayslipController {
     }
 
     @Operation(
-            summary = "보낸 명세서 월별 그룹 조회 (관리자)",
+            summary = "보낸 명세서 목록 조회",
             description = "관리자가 상태별로 발송한 명세서를 급여지급월(YYYYMM) 기준으로 그룹 조회합니다.")
     @ApiResponses(
             value = {

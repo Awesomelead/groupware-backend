@@ -61,7 +61,77 @@ public class AnnualLeaveService {
             MultipartFile file, String sheetName, Long userId) {
         User currentUser = validateAnnualLeaveEditAuthority(userId);
         String normalizedSheetName = normalizeSheetName(sheetName);
+        ExcelUploadResponseDto response = processAnnualLeaveFile(file, normalizedSheetName);
+        String fileKey = uploadAnnualLeaveSourceFile(file);
+        saveDispatchHistory(currentUser, file.getOriginalFilename(), normalizedSheetName, fileKey);
+        return response;
+    }
 
+    @Transactional
+    public ExcelUploadResponseDto updateAnnualLeaveDispatchForAdmin(
+            Long userId, Long dispatchId, MultipartFile file, String sheetName) {
+        User currentUser = validateAnnualLeaveEditAuthority(userId);
+        AnnualLeaveDispatchHistory history =
+                annualLeaveDispatchHistoryRepository
+                        .findById(dispatchId)
+                        .orElseThrow(
+                                () ->
+                                        new CustomException(
+                                                ErrorCode
+                                                        .ANNUAL_LEAVE_DISPATCH_HISTORY_NOT_FOUND));
+        String normalizedSheetName = normalizeSheetName(sheetName);
+        ExcelUploadResponseDto response = processAnnualLeaveFile(file, normalizedSheetName);
+
+        String oldFileKey = history.getFileKey();
+        String newFileKey = uploadAnnualLeaveSourceFile(file);
+
+        history.setUploadedBy(currentUser);
+        history.setOriginalFileName(normalizeOriginalFileName(file.getOriginalFilename()));
+        history.setSheetName(normalizeSheetName(sheetName));
+        history.setFileKey(newFileKey);
+
+        if (oldFileKey != null && !oldFileKey.isBlank() && !oldFileKey.equals(newFileKey)) {
+            try {
+                s3Service.deleteFile(oldFileKey);
+            } catch (RuntimeException e) {
+                log.warn(
+                        "연차 발송 기존 파일 삭제 실패 - dispatchId: {}, fileKey: {}",
+                        dispatchId,
+                        oldFileKey,
+                        e);
+            }
+        }
+
+        return response;
+    }
+
+    @Transactional
+    public void deleteAnnualLeaveDispatchForAdmin(Long userId, Long dispatchId) {
+        validateAnnualLeaveEditAuthority(userId);
+
+        AnnualLeaveDispatchHistory history =
+                annualLeaveDispatchHistoryRepository
+                        .findById(dispatchId)
+                        .orElseThrow(
+                                () ->
+                                        new CustomException(
+                                                ErrorCode
+                                                        .ANNUAL_LEAVE_DISPATCH_HISTORY_NOT_FOUND));
+
+        String fileKey = history.getFileKey();
+        annualLeaveDispatchHistoryRepository.delete(history);
+
+        if (fileKey != null && !fileKey.isBlank()) {
+            try {
+                s3Service.deleteFile(fileKey);
+            } catch (RuntimeException e) {
+                log.warn("연차 발송 파일 삭제 실패 - dispatchId: {}, fileKey: {}", dispatchId, fileKey, e);
+            }
+        }
+    }
+
+    private ExcelUploadResponseDto processAnnualLeaveFile(
+            MultipartFile file, String normalizedSheetName) {
         List<FailureDetail> failures = new ArrayList<>();
         int successCount = 0;
         int totalProcessed = 0;
@@ -102,13 +172,11 @@ public class AnnualLeaveService {
 
         ExcelUploadResponseDto response =
                 ExcelUploadResponseDto.builder()
-                        .totalCount(totalProcessed)
-                        .successCount(successCount)
-                        .failureCount(failures.size())
-                        .failures(failures)
-                        .build();
-        String fileKey = uploadAnnualLeaveSourceFile(file);
-        saveDispatchHistory(currentUser, file.getOriginalFilename(), normalizedSheetName, fileKey);
+                .totalCount(totalProcessed)
+                .successCount(successCount)
+                .failureCount(failures.size())
+                .failures(failures)
+                .build();
         return response;
     }
 

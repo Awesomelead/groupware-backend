@@ -15,9 +15,11 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RequestPart;
@@ -72,5 +74,27 @@ public class AnnualLeaveController {
                 annualLeaveService.getAnnualLeaveDispatchDetailForAdmin(
                         userDetails.getId(), dispatchId);
         return ResponseEntity.ok(ApiResponse.onSuccess(responseDto));
+    }
+
+    @Operation(summary = "보낸 연차 수정 (관리자)", description = "관리자가 특정 연차 발송 이력을 새 파일로 수정합니다.")
+    @PutMapping(value = "/admin/{dispatchId}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ResponseEntity<ApiResponse<ExcelUploadResponseDto>> updateAnnualLeaveDispatch(
+            @PathVariable Long dispatchId,
+            @RequestPart("file") MultipartFile file,
+            @RequestParam("sheetName") String sheetName,
+            @AuthenticationPrincipal CustomUserDetails userDetails) {
+        ExcelUploadResponseDto responseDto =
+                annualLeaveService.updateAnnualLeaveDispatchForAdmin(
+                        userDetails.getId(), dispatchId, file, sheetName);
+        return ResponseEntity.ok(ApiResponse.onSuccess(responseDto));
+    }
+
+    @Operation(summary = "보낸 연차 삭제 (관리자)", description = "관리자가 특정 연차 발송 이력을 삭제합니다.")
+    @DeleteMapping("/admin/{dispatchId}")
+    public ResponseEntity<ApiResponse<Void>> deleteAnnualLeaveDispatch(
+            @PathVariable Long dispatchId,
+            @AuthenticationPrincipal CustomUserDetails userDetails) {
+        annualLeaveService.deleteAnnualLeaveDispatchForAdmin(userDetails.getId(), dispatchId);
+        return ResponseEntity.ok(ApiResponse.onNoContent("연차 발송 이력이 성공적으로 삭제되었습니다."));
     }
 }

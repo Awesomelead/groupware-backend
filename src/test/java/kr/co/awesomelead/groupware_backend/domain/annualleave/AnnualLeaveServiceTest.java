@@ -345,6 +345,158 @@ public class AnnualLeaveServiceTest {
     }
 
     @Nested
+    @DisplayName("updateAnnualLeaveDispatchForAdmin 메서드는")
+    class Describe_updateAnnualLeaveDispatchForAdmin {
+
+        @Test
+        @DisplayName("연차 발송 권한이 없는 유저가 요청하면 NO_AUTHORITY_FOR_ANNUAL_LEAVE 예외를 던진다")
+        void it_throws_when_user_has_no_authority() throws IOException {
+            // given
+            Long userId = 1L;
+            given(userRepository.findById(userId)).willReturn(Optional.of(createMockUser(null)));
+            MultipartFile mockFile = createMockExcelFile();
+
+            // when & then
+            assertThatThrownBy(
+                            () ->
+                                    annualLeaveService.updateAnnualLeaveDispatchForAdmin(
+                                            userId, 10L, mockFile, "8월"))
+                    .isInstanceOf(CustomException.class)
+                    .hasMessageContaining("연차 발송 권한이 없습니다.");
+        }
+
+        @Test
+        @DisplayName("해당 발송 이력이 없으면 ANNUAL_LEAVE_DISPATCH_HISTORY_NOT_FOUND 예외를 던진다")
+        void it_throws_when_history_not_found() throws IOException {
+            // given
+            Long adminId = 1L;
+            User admin = createMockUser(Authority.EDIT_EMPLOYEE_INFO);
+            given(userRepository.findById(adminId)).willReturn(Optional.of(admin));
+            given(annualLeaveDispatchHistoryRepository.findById(999L)).willReturn(Optional.empty());
+            MultipartFile mockFile = createMockExcelFile();
+
+            // when & then
+            assertThatThrownBy(
+                            () ->
+                                    annualLeaveService.updateAnnualLeaveDispatchForAdmin(
+                                            adminId, 999L, mockFile, "8월"))
+                    .isInstanceOf(CustomException.class)
+                    .hasMessageContaining("해당 연차 발송 이력을 찾을 수 없습니다.");
+        }
+
+        @Test
+        @DisplayName("권한이 있는 관리자가 요청하면 발송 이력을 수정하고 기존 파일을 삭제한다")
+        void it_updates_dispatch_history() throws IOException {
+            // given
+            Long adminId = 1L;
+            Long dispatchId = 10L;
+            User admin = createMockUser(Authority.EDIT_EMPLOYEE_INFO);
+            given(userRepository.findById(adminId)).willReturn(Optional.of(admin));
+
+            AnnualLeaveDispatchHistory history =
+                    AnnualLeaveDispatchHistory.builder()
+                            .id(dispatchId)
+                            .uploadedBy(admin)
+                            .originalFileName("old.xlsx")
+                            .sheetName("7월")
+                            .fileKey("annual-leave/old.xlsx")
+                            .build();
+            given(annualLeaveDispatchHistoryRepository.findById(dispatchId))
+                    .willReturn(Optional.of(history));
+
+            MultipartFile mockFile = createMockExcelFile();
+            User targetUser =
+                    User.builder()
+                            .nameKor("테스트 유저")
+                            .hireDate(LocalDate.of(2025, 12, 31))
+                            .build();
+            given(userRepository.findByNameAndJoinDate(anyString(), any()))
+                    .willReturn(Optional.of(targetUser));
+            given(annualLeaveRepository.findByUser(targetUser)).willReturn(Optional.empty());
+            given(s3Service.uploadFile(mockFile)).willReturn("annual-leave/new.xlsx");
+
+            // when
+            ExcelUploadResponseDto result =
+                    annualLeaveService.updateAnnualLeaveDispatchForAdmin(
+                            adminId, dispatchId, mockFile, "8월");
+
+            // then
+            assertThat(result.getSuccessCount()).isGreaterThan(0);
+            assertThat(history.getOriginalFileName()).isEqualTo("annual_leave_test.xlsx");
+            assertThat(history.getSheetName()).isEqualTo("8월");
+            assertThat(history.getFileKey()).isEqualTo("annual-leave/new.xlsx");
+            verify(s3Service).deleteFile("annual-leave/old.xlsx");
+        }
+    }
+
+    @Nested
+    @DisplayName("deleteAnnualLeaveDispatchForAdmin 메서드는")
+    class Describe_deleteAnnualLeaveDispatchForAdmin {
+
+        @Test
+        @DisplayName("연차 발송 권한이 없는 유저가 요청하면 NO_AUTHORITY_FOR_ANNUAL_LEAVE 예외를 던진다")
+        void it_throws_when_user_has_no_authority() {
+            // given
+            Long userId = 1L;
+            given(userRepository.findById(userId)).willReturn(Optional.of(createMockUser(null)));
+
+            // when & then
+            assertThatThrownBy(
+                            () ->
+                                    annualLeaveService.deleteAnnualLeaveDispatchForAdmin(
+                                            userId, 10L))
+                    .isInstanceOf(CustomException.class)
+                    .hasMessageContaining("연차 발송 권한이 없습니다.");
+        }
+
+        @Test
+        @DisplayName("해당 발송 이력이 없으면 ANNUAL_LEAVE_DISPATCH_HISTORY_NOT_FOUND 예외를 던진다")
+        void it_throws_when_history_not_found() {
+            // given
+            Long adminId = 1L;
+            User admin = createMockUser(Authority.EDIT_EMPLOYEE_INFO);
+            given(userRepository.findById(adminId)).willReturn(Optional.of(admin));
+            given(annualLeaveDispatchHistoryRepository.findById(999L)).willReturn(Optional.empty());
+
+            // when & then
+            assertThatThrownBy(
+                            () ->
+                                    annualLeaveService.deleteAnnualLeaveDispatchForAdmin(
+                                            adminId, 999L))
+                    .isInstanceOf(CustomException.class)
+                    .hasMessageContaining("해당 연차 발송 이력을 찾을 수 없습니다.");
+        }
+
+        @Test
+        @DisplayName("권한이 있는 관리자가 요청하면 발송 이력과 연결 파일을 삭제한다")
+        void it_deletes_dispatch_history() {
+            // given
+            Long adminId = 1L;
+            Long dispatchId = 10L;
+            User admin = createMockUser(Authority.EDIT_EMPLOYEE_INFO);
+            given(userRepository.findById(adminId)).willReturn(Optional.of(admin));
+
+            AnnualLeaveDispatchHistory history =
+                    AnnualLeaveDispatchHistory.builder()
+                            .id(dispatchId)
+                            .uploadedBy(admin)
+                            .originalFileName("2026_연차현황.xlsx")
+                            .sheetName("8월")
+                            .fileKey("annual-leave/2026-08.xlsx")
+                            .build();
+            given(annualLeaveDispatchHistoryRepository.findById(dispatchId))
+                    .willReturn(Optional.of(history));
+
+            // when
+            annualLeaveService.deleteAnnualLeaveDispatchForAdmin(adminId, dispatchId);
+
+            // then
+            verify(annualLeaveDispatchHistoryRepository).delete(history);
+            verify(s3Service).deleteFile("annual-leave/2026-08.xlsx");
+        }
+    }
+
+    @Nested
     @DisplayName("getAnnualLeaveDispatchDetailForAdmin 메서드는")
     class Describe_getAnnualLeaveDispatchDetailForAdmin {
 

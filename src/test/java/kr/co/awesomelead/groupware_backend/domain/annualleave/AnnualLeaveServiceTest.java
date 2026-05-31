@@ -406,10 +406,7 @@ public class AnnualLeaveServiceTest {
 
             MultipartFile mockFile = createMockExcelFile();
             User targetUser =
-                    User.builder()
-                            .nameKor("테스트 유저")
-                            .hireDate(LocalDate.of(2025, 12, 31))
-                            .build();
+                    User.builder().nameKor("테스트 유저").hireDate(LocalDate.of(2025, 12, 31)).build();
             given(userRepository.findByNameAndJoinDate(anyString(), any()))
                     .willReturn(Optional.of(targetUser));
             given(annualLeaveRepository.findByUser(targetUser)).willReturn(Optional.empty());
@@ -442,9 +439,7 @@ public class AnnualLeaveServiceTest {
 
             // when & then
             assertThatThrownBy(
-                            () ->
-                                    annualLeaveService.deleteAnnualLeaveDispatchForAdmin(
-                                            userId, 10L))
+                            () -> annualLeaveService.deleteAnnualLeaveDispatchForAdmin(userId, 10L))
                     .isInstanceOf(CustomException.class)
                     .hasMessageContaining("연차 발송 권한이 없습니다.");
         }

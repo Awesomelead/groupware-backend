@@ -92,8 +92,7 @@ public class AnnualLeaveController {
     @Operation(summary = "보낸 연차 삭제 (관리자)", description = "관리자가 특정 연차 발송 이력을 삭제합니다.")
     @DeleteMapping("/admin/{dispatchId}")
     public ResponseEntity<ApiResponse<Void>> deleteAnnualLeaveDispatch(
-            @PathVariable Long dispatchId,
-            @AuthenticationPrincipal CustomUserDetails userDetails) {
+            @PathVariable Long dispatchId, @AuthenticationPrincipal CustomUserDetails userDetails) {
         annualLeaveService.deleteAnnualLeaveDispatchForAdmin(userDetails.getId(), dispatchId);
         return ResponseEntity.ok(ApiResponse.onNoContent("연차 발송 이력이 성공적으로 삭제되었습니다."));
     }

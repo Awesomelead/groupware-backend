@@ -77,8 +77,7 @@ public class AnnualLeaveService {
                         .orElseThrow(
                                 () ->
                                         new CustomException(
-                                                ErrorCode
-                                                        .ANNUAL_LEAVE_DISPATCH_HISTORY_NOT_FOUND));
+                                                ErrorCode.ANNUAL_LEAVE_DISPATCH_HISTORY_NOT_FOUND));
         String normalizedSheetName = normalizeSheetName(sheetName);
         ExcelUploadResponseDto response = processAnnualLeaveFile(file, normalizedSheetName);
 
@@ -115,8 +114,7 @@ public class AnnualLeaveService {
                         .orElseThrow(
                                 () ->
                                         new CustomException(
-                                                ErrorCode
-                                                        .ANNUAL_LEAVE_DISPATCH_HISTORY_NOT_FOUND));
+                                                ErrorCode.ANNUAL_LEAVE_DISPATCH_HISTORY_NOT_FOUND));
 
         String fileKey = history.getFileKey();
         annualLeaveDispatchHistoryRepository.delete(history);
@@ -172,11 +170,11 @@ public class AnnualLeaveService {
 
         ExcelUploadResponseDto response =
                 ExcelUploadResponseDto.builder()
-                .totalCount(totalProcessed)
-                .successCount(successCount)
-                .failureCount(failures.size())
-                .failures(failures)
-                .build();
+                        .totalCount(totalProcessed)
+                        .successCount(successCount)
+                        .failureCount(failures.size())
+                        .failures(failures)
+                        .build();
         return response;
     }
 

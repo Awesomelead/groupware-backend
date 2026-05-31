@@ -78,6 +78,8 @@ public enum ErrorCode {
             HttpStatus.BAD_REQUEST, "서명 완료자가 존재하여 교육을 수정할 수 없습니다."),
     SAFETY_TRAINING_ABSENT_REASON_REQUIRED(
             HttpStatus.BAD_REQUEST, "결석자가 있을 경우 교육 미참석 사유 입력은 필수입니다."),
+    ANNUAL_LEAVE_MONTH_MISMATCH(
+            HttpStatus.BAD_REQUEST, "시트명의 월 정보와 엑셀 기준일의 월 정보가 일치하지 않습니다."),
 
     // 401 Unauthorized
     INVALID_TOKEN(HttpStatus.UNAUTHORIZED, "유효하지 않은 토큰입니다."),
@@ -147,6 +149,7 @@ public enum ErrorCode {
     DUPLICATE_APPROVAL_TEMPLATE_CATEGORY_CODE(HttpStatus.CONFLICT, "이미 사용 중인 전자결재 양식구분 코드입니다."),
     DUPLICATE_APPROVAL_TEMPLATE_CODE(HttpStatus.CONFLICT, "이미 사용 중인 전자결재 양식 코드입니다."),
     BOOTSTRAP_ADMIN_ALREADY_EXISTS(HttpStatus.CONFLICT, "이미 관리자 계정이 존재합니다."),
+    DUPLICATE_ANNUAL_LEAVE_DISPATCH(HttpStatus.CONFLICT, "이미 해당 월에 연차가 발송되었습니다."),
 
     // 500 Internal Server Error
     INTERNAL_SERVER_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "서버 내부 오류가 발생했습니다."),

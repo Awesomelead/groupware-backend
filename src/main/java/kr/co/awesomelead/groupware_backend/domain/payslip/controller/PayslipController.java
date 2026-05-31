@@ -12,7 +12,6 @@ import jakarta.validation.Valid;
 import kr.co.awesomelead.groupware_backend.domain.payslip.dto.request.PayslipViewPasswordRequestDto;
 import kr.co.awesomelead.groupware_backend.domain.payslip.dto.response.AdminPayslipDetailDto;
 import kr.co.awesomelead.groupware_backend.domain.payslip.dto.response.AdminPayslipGroupDto;
-import kr.co.awesomelead.groupware_backend.domain.payslip.dto.response.AdminPayslipSummaryDto;
 import kr.co.awesomelead.groupware_backend.domain.payslip.dto.response.EmployeePayslipDetailDto;
 import kr.co.awesomelead.groupware_backend.domain.payslip.dto.response.EmployeePayslipSummaryDto;
 import kr.co.awesomelead.groupware_backend.domain.payslip.enums.PayslipStatus;
@@ -146,42 +145,6 @@ public class PayslipController {
         return ResponseEntity.ok(ApiResponse.onNoContent("급여명세서가 성공적으로 발송되었습니다."));
     }
 
-    @Operation(summary = "보낸 명세서 목록 조회 (관리자)", description = "관리자가 상태별로 발송한 명세서 목록을 조회합니다.")
-    @ApiResponses(
-            value = {
-                @io.swagger.v3.oas.annotations.responses.ApiResponse(
-                        responseCode = "200",
-                        description = "조회 성공"),
-                @io.swagger.v3.oas.annotations.responses.ApiResponse(
-                        responseCode = "401",
-                        description = "권한 없음",
-                        content =
-                                @Content(
-                                        mediaType = "application/json",
-                                        examples =
-                                                @ExampleObject(
-                                                        value =
-                                                                """
-                                {
-                                "isSuccess": false,
-                                "code": "NO_AUTHORITY_FOR_PAYSLIP",
-                                "message": "급여명세서 발송 권한이 없습니다.",
-                                "result": null
-                                }
-                                """)))
-            })
-    @GetMapping("/admin")
-    public ResponseEntity<ApiResponse<List<AdminPayslipSummaryDto>>> getPayslipsForAdmin(
-            @Parameter(hidden = true) @AuthenticationPrincipal CustomUserDetails userDetails,
-            @Parameter(description = "명세서 상태 (생략 시 전체 조회)", example = "SENT")
-                    @RequestParam(required = false)
-                    PayslipStatus status) {
-
-        List<AdminPayslipSummaryDto> response =
-                payslipService.getPayslipsForAdmin(userDetails.getId(), status);
-        return ResponseEntity.ok(ApiResponse.onSuccess(response));
-    }
-
     @Operation(
             summary = "보낸 명세서 월별 그룹 조회 (관리자)",
             description = "관리자가 상태별로 발송한 명세서를 급여지급월(YYYYMM) 기준으로 그룹 조회합니다.")
@@ -194,7 +157,7 @@ public class PayslipController {
                         responseCode = "401",
                         description = "권한 없음")
             })
-    @GetMapping("/admin/grouped")
+    @GetMapping("/admin")
     public ResponseEntity<ApiResponse<List<AdminPayslipGroupDto>>> getPayslipsForAdminGrouped(
             @Parameter(hidden = true) @AuthenticationPrincipal CustomUserDetails userDetails,
             @Parameter(description = "명세서 상태 (생략 시 전체 조회)", example = "SENT")

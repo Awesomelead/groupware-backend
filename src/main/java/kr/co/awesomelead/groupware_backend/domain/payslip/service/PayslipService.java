@@ -21,8 +21,8 @@ import kr.co.awesomelead.groupware_backend.global.infra.s3.service.S3Service;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
-import org.springframework.stereotype.Service;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -52,8 +52,7 @@ public class PayslipService {
                     Pattern.CASE_INSENSITIVE);
     private static final Pattern PAYSLIP_MONTH_PATTERN =
             Pattern.compile(
-                    "^급여명세서\\(근로기준1\\)_[^_]+_[^_]+_([0-9]{6})\\.pdf$",
-                    Pattern.CASE_INSENSITIVE);
+                    "^급여명세서\\(근로기준1\\)_[^_]+_[^_]+_([0-9]{6})\\.pdf$", Pattern.CASE_INSENSITIVE);
     private static final String UNKNOWN_YEAR_MONTH = "UNKNOWN";
 
     private final PayslipRepository payslipRepository;
@@ -140,7 +139,8 @@ public class PayslipService {
             try {
                 s3Service.deleteFile(oldFileKey);
             } catch (RuntimeException e) {
-                log.warn("급여명세서 기존 파일 삭제 실패 - payslipId: {}, fileKey: {}", payslipId, oldFileKey, e);
+                log.warn(
+                        "급여명세서 기존 파일 삭제 실패 - payslipId: {}, fileKey: {}", payslipId, oldFileKey, e);
             }
         }
     }
@@ -189,7 +189,8 @@ public class PayslipService {
         }
 
         try {
-            PayslipPdfInfoExtractor.PayslipPersonalInfo ocrInfo = payslipOcrInfoExtractor.extract(file);
+            PayslipPdfInfoExtractor.PayslipPersonalInfo ocrInfo =
+                    payslipOcrInfoExtractor.extract(file);
             if (!payslipPdfInfoExtractor.isNameLikelyCorrupted(ocrInfo.name())) {
                 log.info("급여명세서 OCR fallback 적용 성공 - fileName: {}", originalFileName);
                 return ocrInfo;
@@ -298,14 +299,16 @@ public class PayslipService {
     }
 
     @Transactional(readOnly = true)
-    public List<AdminPayslipGroupDto> getPayslipsForAdminGrouped(Long adminId, PayslipStatus status) {
+    public List<AdminPayslipGroupDto> getPayslipsForAdminGrouped(
+            Long adminId, PayslipStatus status) {
         List<AdminPayslipSummaryDto> summaries = getPayslipsForAdmin(adminId, status);
 
         Map<String, List<AdminPayslipSummaryDto>> groupedByYearMonth =
                 summaries.stream()
                         .collect(
                                 Collectors.groupingBy(
-                                        summary -> extractYearMonth(summary.getOriginalFileName())));
+                                        summary ->
+                                                extractYearMonth(summary.getOriginalFileName())));
 
         return groupedByYearMonth.entrySet().stream()
                 .sorted((left, right) -> compareYearMonthDesc(left.getKey(), right.getKey()))
@@ -316,14 +319,17 @@ public class PayslipService {
                                     entry.getValue().stream()
                                             .sorted(
                                                     Comparator.comparing(
-                                                                    AdminPayslipSummaryDto::getCreatedAt,
+                                                                    AdminPayslipSummaryDto
+                                                                            ::getCreatedAt,
                                                                     Comparator.nullsLast(
-                                                                            Comparator.naturalOrder()))
+                                                                            Comparator
+                                                                                    .naturalOrder()))
                                                             .reversed())
                                             .toList();
 
                             return AdminPayslipGroupDto.builder()
-                                    .yearMonth(UNKNOWN_YEAR_MONTH.equals(yearMonth) ? null : yearMonth)
+                                    .yearMonth(
+                                            UNKNOWN_YEAR_MONTH.equals(yearMonth) ? null : yearMonth)
                                     .title(buildGroupTitle(yearMonth))
                                     .totalCount(items.size())
                                     .items(items)

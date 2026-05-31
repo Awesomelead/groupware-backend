@@ -22,15 +22,12 @@ public interface PayslipMapper {
 
     Pattern PAYSLIP_MONTH_PATTERN =
             Pattern.compile(
-                    "^급여명세서\\(근로기준1\\)_[^_]+_[^_]+_([0-9]{6})\\.pdf$",
-                    Pattern.CASE_INSENSITIVE);
+                    "^급여명세서\\(근로기준1\\)_[^_]+_[^_]+_([0-9]{6})\\.pdf$", Pattern.CASE_INSENSITIVE);
 
     @Mapping(target = "payslipId", source = "payslip.id")
     @Mapping(target = "employeeName", source = "user.displayName")
     @Mapping(target = "employPosition", expression = "java(buildPositionDescription(payslip))")
-    @Mapping(
-            target = "payslipTitle",
-            expression = "java(buildPayslipTitle(payslip))")
+    @Mapping(target = "payslipTitle", expression = "java(buildPayslipTitle(payslip))")
     AdminPayslipSummaryDto toAdminPayslipSummaryDto(Payslip payslip);
 
     List<AdminPayslipSummaryDto> toAdminPayslipSummaryDtoList(List<Payslip> payslips);
@@ -38,18 +35,14 @@ public interface PayslipMapper {
     @Mapping(target = "payslipId", source = "payslip.id")
     @Mapping(target = "employeeName", source = "user.displayName")
     @Mapping(target = "employPosition", expression = "java(buildPositionDescription(payslip))")
-    @Mapping(
-            target = "payslipTitle",
-            expression = "java(buildPayslipTitle(payslip))")
+    @Mapping(target = "payslipTitle", expression = "java(buildPayslipTitle(payslip))")
     @Mapping(
             target = "presignedUrl",
             expression = "java(s3Service.getPresignedViewUrl(payslip.getFileKey()))")
     AdminPayslipDetailDto toAdminPayslipDetailDto(Payslip payslip, @Context S3Service s3Service);
 
     @Mapping(target = "payslipId", source = "payslip.id")
-    @Mapping(
-            target = "payslipTitle",
-            expression = "java(buildPayslipTitle(payslip))")
+    @Mapping(target = "payslipTitle", expression = "java(buildPayslipTitle(payslip))")
     EmployeePayslipSummaryDto toEmployeePayslipSummaryDto(Payslip payslip);
 
     List<EmployeePayslipSummaryDto> toEmployeePayslipSummaryDtoList(List<Payslip> payslips);
@@ -58,9 +51,7 @@ public interface PayslipMapper {
             target = "presignedUrl",
             expression = "java(s3Service.getPresignedViewUrl(payslip.getFileKey()))")
     @Mapping(target = "payslipId", source = "payslip.id")
-    @Mapping(
-            target = "payslipTitle",
-            expression = "java(buildPayslipTitle(payslip))")
+    @Mapping(target = "payslipTitle", expression = "java(buildPayslipTitle(payslip))")
     EmployeePayslipDetailDto toEmployeePayslipDetailDto(
             Payslip payslip, @Context S3Service s3Service);
 

@@ -1,6 +1,7 @@
 package kr.co.awesomelead.groupware_backend.domain.user.service;
 
 import kr.co.awesomelead.groupware_backend.domain.aligo.service.PhoneAuthService;
+import kr.co.awesomelead.groupware_backend.domain.department.enums.Company;
 import kr.co.awesomelead.groupware_backend.domain.notification.enums.NotificationDomainType;
 import kr.co.awesomelead.groupware_backend.domain.notification.enums.NotificationMessage;
 import kr.co.awesomelead.groupware_backend.domain.notification.service.NotificationService;
@@ -15,7 +16,6 @@ import kr.co.awesomelead.groupware_backend.domain.user.enums.MyInfoUpdateRequest
 import kr.co.awesomelead.groupware_backend.domain.user.enums.Position;
 import kr.co.awesomelead.groupware_backend.domain.user.enums.Role;
 import kr.co.awesomelead.groupware_backend.domain.user.enums.Status;
-import kr.co.awesomelead.groupware_backend.domain.department.enums.Company;
 import kr.co.awesomelead.groupware_backend.domain.user.repository.MyInfoUpdateRequestRepository;
 import kr.co.awesomelead.groupware_backend.domain.user.repository.UserRepository;
 import kr.co.awesomelead.groupware_backend.domain.user.repository.querydsl.UserQueryRepository;

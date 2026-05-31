@@ -575,14 +575,7 @@ class UserServiceTest {
 
             given(
                             userQueryRepository.findAllAvailableWithFilters(
-                                    null,
-                                    null,
-                                    null,
-                                    null,
-                                    null,
-                                    Company.AWESOME,
-                                    null,
-                                    unsorted))
+                                    null, null, null, null, null, Company.AWESOME, null, unsorted))
                     .willReturn(userPage);
 
             // when

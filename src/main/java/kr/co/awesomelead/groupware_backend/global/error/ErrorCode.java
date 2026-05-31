@@ -29,10 +29,8 @@ public enum ErrorCode {
     INVALID_BASE_DATE_FORMAT(HttpStatus.BAD_REQUEST, "유효하지 않은 기준일자 형식입니다. (yyyy-MM-dd)"),
     ONLY_PDF_ALLOWED(HttpStatus.BAD_REQUEST, "PDF 파일 형식만 업로드할 수 있습니다."),
     INVALID_PAYSLIP_FILE_NAME_FORMAT(HttpStatus.BAD_REQUEST, "급여명세서 파일명 형식이 올바르지 않습니다."),
-    INVALID_PAYSLIP_PDF_CONTENT(
-            HttpStatus.BAD_REQUEST, "PDF에서 직원명 또는 생년월일을 확인할 수 없습니다."),
-    PAYSLIP_USER_INFO_MISMATCH(
-            HttpStatus.BAD_REQUEST, "파일명의 직원명과 PDF의 직원 정보가 일치하지 않습니다."),
+    INVALID_PAYSLIP_PDF_CONTENT(HttpStatus.BAD_REQUEST, "PDF에서 직원명 또는 생년월일을 확인할 수 없습니다."),
+    PAYSLIP_USER_INFO_MISMATCH(HttpStatus.BAD_REQUEST, "파일명의 직원명과 PDF의 직원 정보가 일치하지 않습니다."),
     IDENTITY_VERIFICATION_NOT_COMPLETED(HttpStatus.BAD_REQUEST, "본인인증이 완료되지 않았습니다."),
     IDENTITY_VERIFICATION_NOT_FOUND(HttpStatus.BAD_REQUEST, "해당 본인인증 정보를 찾을 수 없습니다."),
     NO_REJECTION_REASON_PROVIDED(HttpStatus.BAD_REQUEST, "반려 사유가 제공되지 않았습니다."),

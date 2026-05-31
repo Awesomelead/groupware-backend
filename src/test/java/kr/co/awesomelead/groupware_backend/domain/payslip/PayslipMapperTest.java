@@ -16,8 +16,8 @@ import kr.co.awesomelead.groupware_backend.global.infra.s3.service.S3Service;
 import org.junit.jupiter.api.Test;
 import org.mapstruct.factory.Mappers;
 
-import java.time.LocalDateTime;
 import java.text.Normalizer;
+import java.time.LocalDateTime;
 
 class PayslipMapperTest {
 
@@ -47,8 +47,7 @@ class PayslipMapperTest {
     @Test
     void toAdminPayslipSummaryDto_shouldBuildTitleForNfdFileName() {
         String nfdFileName =
-                Normalizer.normalize(
-                        "급여명세서(근로기준1)_10002_리딘뷰_202604.pdf", Normalizer.Form.NFD);
+                Normalizer.normalize("급여명세서(근로기준1)_10002_리딘뷰_202604.pdf", Normalizer.Form.NFD);
         User user = User.builder().nameKor("리딘뷰").position(Position.STAFF).build();
         Payslip payslip =
                 Payslip.builder()
@@ -80,7 +79,8 @@ class PayslipMapperTest {
                         .build();
 
         S3Service s3Service = mock(S3Service.class);
-        when(s3Service.getPresignedViewUrl("payslip-7")).thenReturn("https://example.com/payslip-7");
+        when(s3Service.getPresignedViewUrl("payslip-7"))
+                .thenReturn("https://example.com/payslip-7");
 
         AdminPayslipDetailDto response = payslipMapper.toAdminPayslipDetailDto(payslip, s3Service);
 

@@ -9,11 +9,11 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 
 import jakarta.validation.Valid;
 
+import kr.co.awesomelead.groupware_backend.domain.department.enums.Company;
 import kr.co.awesomelead.groupware_backend.domain.user.dto.response.MyInfoResponseDto;
 import kr.co.awesomelead.groupware_backend.domain.user.dto.response.UpdateMyInfoRequestDto;
 import kr.co.awesomelead.groupware_backend.domain.user.dto.response.UserDetailResponseDto;
 import kr.co.awesomelead.groupware_backend.domain.user.dto.response.UserSummaryResponseDto;
-import kr.co.awesomelead.groupware_backend.domain.department.enums.Company;
 import kr.co.awesomelead.groupware_backend.domain.user.enums.JobType;
 import kr.co.awesomelead.groupware_backend.domain.user.enums.Position;
 import kr.co.awesomelead.groupware_backend.domain.user.enums.Role;

@@ -35,8 +35,8 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.mock.web.MockMultipartFile;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 
 import java.io.IOException;
 import java.text.Normalizer;
@@ -561,7 +561,8 @@ public class PayslipServiceTest {
                                 .originalFileName(nfdFileName)
                                 .createdAt(LocalDateTime.of(2026, 4, 30, 9, 0))
                                 .build();
-                given(payslipMapper.toAdminPayslipSummaryDtoList(payslips)).willReturn(List.of(summary));
+                given(payslipMapper.toAdminPayslipSummaryDtoList(payslips))
+                        .willReturn(List.of(summary));
 
                 // when
                 List<AdminPayslipGroupDto> result =
@@ -635,8 +636,7 @@ public class PayslipServiceTest {
                         .willReturn(false);
 
                 // when & then
-                assertThatThrownBy(
-                                () -> payslipService.getPayslip(1L, 100L, "wrong-password"))
+                assertThatThrownBy(() -> payslipService.getPayslip(1L, 100L, "wrong-password"))
                         .isInstanceOf(CustomException.class)
                         .hasFieldOrPropertyWithValue("errorCode", ErrorCode.PASSWORD_MISMATCH);
             }
@@ -661,7 +661,8 @@ public class PayslipServiceTest {
                         .willReturn(EmployeePayslipDetailDto.builder().payslipId(100L).build());
 
                 // when
-                EmployeePayslipDetailDto result = payslipService.getPayslip(1L, 100L, "password123!");
+                EmployeePayslipDetailDto result =
+                        payslipService.getPayslip(1L, 100L, "password123!");
 
                 // then
                 assertThat(result.getPayslipId()).isEqualTo(100L);

@@ -107,11 +107,20 @@ public class EduReportService {
     public Long createSafetyEduReport(
             SafetyEduReportCreateRequestDto requestDto, List<MultipartFile> files, Long id)
             throws IOException {
+        EditorContentFields contentFields =
+                resolveEditorCreateContentFields(
+                        requestDto.getContent(),
+                        requestDto.getContentDelta(),
+                        requestDto.getContentHtml());
+
         EduReportRequestDto baseRequest =
                 EduReportRequestDto.builder()
                         .eduType(EduType.SAFETY)
                         .title(requestDto.getTitle())
-                        .content(requestDto.getContent())
+                        .content(contentFields.content())
+                        .contentDelta(contentFields.contentDelta())
+                        .contentHtml(contentFields.contentHtml())
+                        .contentText(contentFields.contentText())
                         .pinned(requestDto.isPinned())
                         .signatureRequired(false)
                         .categoryId(requestDto.getCategoryId())
@@ -900,7 +909,9 @@ public class EduReportService {
             report.setPinned(requestDto.isPinned());
             report.setSignatureRequired(requestDto.isSignatureRequired());
 
-            if (report.getEduType() == EduType.PSM || report.getEduType() == EduType.DEPARTMENT) {
+            if (report.getEduType() == EduType.PSM
+                    || report.getEduType() == EduType.DEPARTMENT
+                    || report.getEduType() == EduType.SAFETY) {
                 EditorContentFields contentFields =
                         resolveEditorUpdateContentFields(
                                 report,

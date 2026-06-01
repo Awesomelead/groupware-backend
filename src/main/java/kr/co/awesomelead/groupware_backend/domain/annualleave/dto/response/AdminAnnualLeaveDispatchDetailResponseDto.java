@@ -2,17 +2,15 @@ package kr.co.awesomelead.groupware_backend.domain.annualleave.dto.response;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 
-import lombok.AllArgsConstructor;
+import kr.co.awesomelead.groupware_backend.domain.department.enums.Company;
+
 import lombok.Builder;
 import lombok.Getter;
-import lombok.NoArgsConstructor;
 
 import java.time.LocalDateTime;
 
 @Getter
 @Builder
-@NoArgsConstructor
-@AllArgsConstructor
 @Schema(description = "관리자용 연차 발송 상세 응답")
 public class AdminAnnualLeaveDispatchDetailResponseDto {
 
@@ -30,4 +28,10 @@ public class AdminAnnualLeaveDispatchDetailResponseDto {
 
     @Schema(description = "엑셀 파일 열람 URL(Presigned)", example = "https://...presigned-url")
     private String fileUrl;
+
+    @Schema(description = "아이템 제목(월)", example = "7월")
+    private String title;
+
+    @Schema(description = "소속 회사", example = "AWESOME")
+    private Company company;
 }

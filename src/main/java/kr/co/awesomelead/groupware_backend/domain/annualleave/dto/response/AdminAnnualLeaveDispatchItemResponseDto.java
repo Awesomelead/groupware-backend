@@ -17,6 +17,9 @@ public class AdminAnnualLeaveDispatchItemResponseDto {
     @Schema(description = "발송 이력 ID", example = "10")
     private Long dispatchId;
 
+    @Schema(description = "아이템 제목(월)", example = "7월")
+    private String title;
+
     @Schema(description = "보낸 파일명", example = "2026년_연차현황.xlsx")
     private String originalFileName;
 

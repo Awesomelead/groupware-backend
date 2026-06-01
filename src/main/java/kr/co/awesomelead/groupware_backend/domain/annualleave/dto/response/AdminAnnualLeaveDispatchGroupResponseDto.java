@@ -2,17 +2,13 @@ package kr.co.awesomelead.groupware_backend.domain.annualleave.dto.response;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 
-import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
-import lombok.NoArgsConstructor;
 
 import java.util.List;
 
 @Getter
 @Builder
-@NoArgsConstructor
-@AllArgsConstructor
 @Schema(description = "관리자용 연차 발송 목록 그룹 응답")
 public class AdminAnnualLeaveDispatchGroupResponseDto {
 

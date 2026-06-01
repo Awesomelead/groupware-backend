@@ -1,6 +1,7 @@
 package kr.co.awesomelead.groupware_backend.domain.payslip;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -11,6 +12,8 @@ import kr.co.awesomelead.groupware_backend.domain.payslip.enums.PayslipStatus;
 import kr.co.awesomelead.groupware_backend.domain.payslip.mapper.PayslipMapper;
 import kr.co.awesomelead.groupware_backend.domain.user.entity.User;
 import kr.co.awesomelead.groupware_backend.domain.user.enums.Position;
+import kr.co.awesomelead.groupware_backend.global.error.CustomException;
+import kr.co.awesomelead.groupware_backend.global.error.ErrorCode;
 import kr.co.awesomelead.groupware_backend.global.infra.s3.service.S3Service;
 
 import org.junit.jupiter.api.Test;
@@ -41,7 +44,7 @@ class PayslipMapperTest {
         assertThat(response.getEmployeeName()).isEqualTo("리딘뷰");
         assertThat(response.getEmployPosition()).isEqualTo("사원");
         assertThat(response.getOriginalFileName()).isEqualTo(originalFileName);
-        assertThat(response.getPayslipTitle()).isEqualTo("2026년 4월 급여명세서");
+        assertThat(response.getPayslipTitle()).isEqualTo("2026년 4월");
     }
 
     @Test
@@ -61,7 +64,7 @@ class PayslipMapperTest {
         AdminPayslipSummaryDto response = payslipMapper.toAdminPayslipSummaryDto(payslip);
 
         assertThat(response.getOriginalFileName()).isEqualTo(nfdFileName);
-        assertThat(response.getPayslipTitle()).isEqualTo("2026년 4월 급여명세서");
+        assertThat(response.getPayslipTitle()).isEqualTo("2026년 4월");
     }
 
     @Test
@@ -85,5 +88,30 @@ class PayslipMapperTest {
         AdminPayslipDetailDto response = payslipMapper.toAdminPayslipDetailDto(payslip, s3Service);
 
         assertThat(response.getEmployPosition()).isEqualTo("대리");
+    }
+
+    @Test
+    void buildPayslipTitle_throwsWhenPayslipIsNull() {
+        assertThatThrownBy(() -> payslipMapper.buildPayslipTitle(null))
+                .isInstanceOf(CustomException.class)
+                .hasFieldOrPropertyWithValue("errorCode", ErrorCode.PAYSLIP_NOT_FOUND);
+    }
+
+    @Test
+    void buildPayslipTitle_throwsWhenOriginalFileNameIsNull() {
+        Payslip payslip = Payslip.builder().id(1L).originalFileName(null).build();
+
+        assertThatThrownBy(() -> payslipMapper.toAdminPayslipSummaryDto(payslip))
+                .isInstanceOf(CustomException.class)
+                .hasFieldOrPropertyWithValue("errorCode", ErrorCode.INVALID_PAYSLIP_FILE_NAME_FORMAT);
+    }
+
+    @Test
+    void buildPayslipTitle_throwsWhenOriginalFileNameIsInvalidFormat() {
+        Payslip payslip = Payslip.builder().id(1L).originalFileName("잘못된_파일명.pdf").build();
+
+        assertThatThrownBy(() -> payslipMapper.toAdminPayslipSummaryDto(payslip))
+                .isInstanceOf(CustomException.class)
+                .hasFieldOrPropertyWithValue("errorCode", ErrorCode.INVALID_PAYSLIP_FILE_NAME_FORMAT);
     }
 }

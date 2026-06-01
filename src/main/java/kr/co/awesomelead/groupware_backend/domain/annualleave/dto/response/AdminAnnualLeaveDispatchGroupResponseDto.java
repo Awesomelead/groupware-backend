@@ -16,15 +16,15 @@ import java.util.List;
 @Schema(description = "관리자용 연차 발송 목록 그룹 응답")
 public class AdminAnnualLeaveDispatchGroupResponseDto {
 
-    @Schema(description = "시트명", example = "2026-06")
+    @Schema(description = "그룹 기준 연도", example = "2026년")
     private String sheetName;
 
-    @Schema(description = "그룹 제목(시트명)", example = "2026-06")
+    @Schema(description = "그룹 제목(연도)", example = "2026년")
     private String title;
 
-    @Schema(description = "해당 시트 발송 건수", example = "3")
+    @Schema(description = "해당 연도 발송 건수", example = "3")
     private int totalCount;
 
-    @Schema(description = "해당 시트의 발송 목록")
+    @Schema(description = "해당 연도의 발송 목록")
     private List<AdminAnnualLeaveDispatchItemResponseDto> items;
 }

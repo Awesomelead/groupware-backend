@@ -279,7 +279,7 @@ public class AnnualLeaveServiceTest {
         }
 
         @Test
-        @DisplayName("권한이 있는 관리자가 요청하면 시트명 그룹으로 발송 목록을 반환한다")
+        @DisplayName("권한이 있는 관리자가 요청하면 연도 그룹과 월 제목으로 발송 목록을 반환한다")
         void it_returns_dispatched_annual_leave_list() {
             // given
             Long adminId = 1L;
@@ -293,6 +293,7 @@ public class AnnualLeaveServiceTest {
                             .originalFileName("2026_연차현황.xlsx")
                             .sheetName("2026-06")
                             .fileKey("annual-leave/2026-06-first.xlsx")
+                            .baseDate(LocalDate.of(2026, 6, 1))
                             .build();
             AnnualLeaveDispatchHistory second =
                     AnnualLeaveDispatchHistory.builder()
@@ -301,6 +302,7 @@ public class AnnualLeaveServiceTest {
                             .originalFileName("2026_연차현황_수정본.xlsx")
                             .sheetName("2026-06")
                             .fileKey("annual-leave/2026-06-second.xlsx")
+                            .baseDate(LocalDate.of(2026, 6, 1))
                             .build();
             AnnualLeaveDispatchHistory third =
                     AnnualLeaveDispatchHistory.builder()
@@ -309,6 +311,7 @@ public class AnnualLeaveServiceTest {
                             .originalFileName("2026_연차현황_7월.xlsx")
                             .sheetName("2026-07")
                             .fileKey("annual-leave/2026-07-first.xlsx")
+                            .baseDate(LocalDate.of(2026, 7, 1))
                             .build();
             given(annualLeaveDispatchHistoryRepository.findAllOrderByCreatedAtDesc())
                     .willReturn(List.of(first, second, third));
@@ -324,22 +327,22 @@ public class AnnualLeaveServiceTest {
                     annualLeaveService.getAnnualLeavesForAdmin(adminId);
 
             // then
-            assertThat(result.size()).isEqualTo(2);
-            assertThat(result.get(0).getSheetName()).isEqualTo("2026-06");
-            assertThat(result.get(0).getTitle()).isEqualTo("2026-06");
-            assertThat(result.get(0).getTotalCount()).isEqualTo(2);
+            assertThat(result.size()).isEqualTo(1);
+            assertThat(result.get(0).getSheetName()).isEqualTo("2026년");
+            assertThat(result.get(0).getTitle()).isEqualTo("2026년");
+            assertThat(result.get(0).getTotalCount()).isEqualTo(3);
             assertThat(result.get(0).getItems().get(0).getDispatchId()).isEqualTo(10L);
+            assertThat(result.get(0).getItems().get(0).getTitle()).isEqualTo("6월");
             assertThat(result.get(0).getItems().get(0).getOriginalFileName())
                     .isEqualTo("2026_연차현황.xlsx");
+            assertThat(result.get(0).getItems().get(0).getSheetName()).isEqualTo("2026-06");
+            assertThat(result.get(0).getItems().get(1).getTitle()).isEqualTo("6월");
             assertThat(result.get(0).getItems().get(1).getOriginalFileName())
                     .isEqualTo("2026_연차현황_수정본.xlsx");
             assertThat(result.get(0).getItems().get(0).getFileUrl())
                     .isEqualTo("https://example.com/annual-leave-2026-06-first");
-
-            assertThat(result.get(1).getSheetName()).isEqualTo("2026-07");
-            assertThat(result.get(1).getTitle()).isEqualTo("2026-07");
-            assertThat(result.get(1).getTotalCount()).isEqualTo(1);
-            assertThat(result.get(1).getItems().get(0).getFileUrl())
+            assertThat(result.get(0).getItems().get(2).getTitle()).isEqualTo("7월");
+            assertThat(result.get(0).getItems().get(2).getFileUrl())
                     .isEqualTo("https://example.com/annual-leave-2026-07-first");
         }
     }
@@ -481,13 +484,70 @@ public class AnnualLeaveServiceTest {
                             .build();
             given(annualLeaveDispatchHistoryRepository.findById(dispatchId))
                     .willReturn(Optional.of(history));
+            given(annualLeaveDispatchHistoryRepository.findAll()).willReturn(List.of());
 
             // when
             annualLeaveService.deleteAnnualLeaveDispatchForAdmin(adminId, dispatchId);
 
             // then
             verify(annualLeaveDispatchHistoryRepository).delete(history);
+            verify(annualLeaveRepository).deleteAllInBatch();
             verify(s3Service).deleteFile("annual-leave/2026-08.xlsx");
+        }
+
+        @Test
+        @DisplayName("삭제 후 남은 발송 이력의 원본 파일 기준으로 연차 정보를 다시 계산한다")
+        void it_rebuilds_annual_leaves_from_remaining_dispatch_histories() throws IOException {
+            // given
+            Long adminId = 1L;
+            Long dispatchId = 10L;
+            User admin = createMockUser(Authority.EDIT_EMPLOYEE_INFO);
+            given(userRepository.findById(adminId)).willReturn(Optional.of(admin));
+
+            AnnualLeaveDispatchHistory deletedHistory =
+                    AnnualLeaveDispatchHistory.builder()
+                            .id(dispatchId)
+                            .uploadedBy(admin)
+                            .originalFileName("2026_연차현황_9월.xlsx")
+                            .sheetName("9월")
+                            .fileKey("annual-leave/2026-09.xlsx")
+                            .baseDate(LocalDate.of(2026, 9, 1))
+                            .build();
+            AnnualLeaveDispatchHistory remainingHistory =
+                    AnnualLeaveDispatchHistory.builder()
+                            .id(9L)
+                            .uploadedBy(admin)
+                            .originalFileName("2026_연차현황_8월.xlsx")
+                            .sheetName("8월")
+                            .fileKey("annual-leave/2026-08.xlsx")
+                            .baseDate(LocalDate.of(2026, 8, 1))
+                            .build();
+            given(annualLeaveDispatchHistoryRepository.findById(dispatchId))
+                    .willReturn(Optional.of(deletedHistory));
+            given(annualLeaveDispatchHistoryRepository.findAll())
+                    .willReturn(List.of(deletedHistory, remainingHistory));
+
+            MultipartFile remainingFile = createMockExcelFile();
+            given(s3Service.downloadFile("annual-leave/2026-08.xlsx"))
+                    .willReturn(remainingFile.getBytes());
+
+            User targetUser =
+                    User.builder().nameKor("테스트 유저").hireDate(LocalDate.of(2025, 12, 31)).build();
+            given(userRepository.findByNameAndJoinDate(anyString(), any()))
+                    .willReturn(Optional.of(targetUser));
+            given(annualLeaveRepository.findByUser(targetUser)).willReturn(Optional.empty());
+
+            // when
+            annualLeaveService.deleteAnnualLeaveDispatchForAdmin(adminId, dispatchId);
+
+            // then
+            verify(annualLeaveDispatchHistoryRepository).delete(deletedHistory);
+            verify(annualLeaveRepository).deleteAllInBatch();
+            verify(s3Service).downloadFile("annual-leave/2026-08.xlsx");
+            verify(annualLeaveRepository, atLeastOnce()).save(any(AnnualLeave.class));
+            org.mockito.Mockito.verify(notificationService, org.mockito.Mockito.never())
+                    .sendAnnualLeaveAlertToUser(any(), anyString());
+            verify(s3Service).deleteFile("annual-leave/2026-09.xlsx");
         }
     }
 
@@ -562,6 +622,64 @@ public class AnnualLeaveServiceTest {
             assertThat(result.getSheetName()).isEqualTo("2026-06");
             assertThat(result.getFileUrl())
                     .isEqualTo("https://example.com/annual-leave-2026-06-first");
+        }
+    }
+
+    @Nested
+    @DisplayName("rebuildAnnualLeavesForAdmin 메서드는")
+    class Describe_rebuildAnnualLeavesForAdmin {
+
+        @Test
+        @DisplayName("연차 발송 권한이 없는 유저가 요청하면 NO_AUTHORITY_FOR_ANNUAL_LEAVE 예외를 던진다")
+        void it_throws_when_user_has_no_authority() {
+            // given
+            Long userId = 1L;
+            given(userRepository.findById(userId)).willReturn(Optional.of(createMockUser(null)));
+
+            // when & then
+            assertThatThrownBy(() -> annualLeaveService.rebuildAnnualLeavesForAdmin(userId))
+                    .isInstanceOf(CustomException.class)
+                    .hasMessageContaining("연차 발송 권한이 없습니다.");
+        }
+
+        @Test
+        @DisplayName("권한이 있는 관리자가 요청하면 남은 발송 이력 기준으로 연차 정보를 다시 계산한다")
+        void it_rebuilds_annual_leaves() throws IOException {
+            // given
+            Long adminId = 1L;
+            User admin = createMockUser(Authority.EDIT_EMPLOYEE_INFO);
+            given(userRepository.findById(adminId)).willReturn(Optional.of(admin));
+
+            AnnualLeaveDispatchHistory history =
+                    AnnualLeaveDispatchHistory.builder()
+                            .id(9L)
+                            .uploadedBy(admin)
+                            .originalFileName("2026_연차현황_8월.xlsx")
+                            .sheetName("8월")
+                            .fileKey("annual-leave/2026-08.xlsx")
+                            .baseDate(LocalDate.of(2026, 8, 1))
+                            .build();
+            given(annualLeaveDispatchHistoryRepository.findAll()).willReturn(List.of(history));
+
+            MultipartFile remainingFile = createMockExcelFile();
+            given(s3Service.downloadFile("annual-leave/2026-08.xlsx"))
+                    .willReturn(remainingFile.getBytes());
+
+            User targetUser =
+                    User.builder().nameKor("테스트 유저").hireDate(LocalDate.of(2025, 12, 31)).build();
+            given(userRepository.findByNameAndJoinDate(anyString(), any()))
+                    .willReturn(Optional.of(targetUser));
+            given(annualLeaveRepository.findByUser(targetUser)).willReturn(Optional.empty());
+
+            // when
+            annualLeaveService.rebuildAnnualLeavesForAdmin(adminId);
+
+            // then
+            verify(annualLeaveRepository).deleteAllInBatch();
+            verify(s3Service).downloadFile("annual-leave/2026-08.xlsx");
+            verify(annualLeaveRepository, atLeastOnce()).save(any(AnnualLeave.class));
+            org.mockito.Mockito.verify(notificationService, org.mockito.Mockito.never())
+                    .sendAnnualLeaveAlertToUser(any(), anyString());
         }
     }
 

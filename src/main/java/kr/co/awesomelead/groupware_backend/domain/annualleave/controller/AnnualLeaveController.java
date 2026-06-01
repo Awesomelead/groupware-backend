@@ -19,6 +19,7 @@ import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -55,7 +56,7 @@ public class AnnualLeaveController {
         return ResponseEntity.ok(ApiResponse.onSuccess(responseDto));
     }
 
-    @Operation(summary = "보낸 연차 목록 조회 (관리자)", description = "관리자가 보낸 연차 이력을 시트명 기준 그룹으로 조회합니다.")
+    @Operation(summary = "보낸 연차 목록 조회 (관리자)", description = "관리자가 보낸 연차 이력을 연도 기준 그룹으로 조회합니다.")
     @GetMapping("/admin")
     public ResponseEntity<ApiResponse<List<AdminAnnualLeaveDispatchGroupResponseDto>>>
             getAnnualLeavesForAdmin(@AuthenticationPrincipal CustomUserDetails userDetails) {
@@ -87,6 +88,16 @@ public class AnnualLeaveController {
                 annualLeaveService.updateAnnualLeaveDispatchForAdmin(
                         userDetails.getId(), dispatchId, file, sheetName);
         return ResponseEntity.ok(ApiResponse.onSuccess(responseDto));
+    }
+
+    @Operation(
+            summary = "연차 정보 재계산 (관리자)",
+            description = "남아 있는 연차 발송 이력의 원본 파일 기준으로 사용자 연차 정보를 다시 계산합니다.")
+    @PostMapping("/admin/rebuild")
+    public ResponseEntity<ApiResponse<Void>> rebuildAnnualLeavesForAdmin(
+            @AuthenticationPrincipal CustomUserDetails userDetails) {
+        annualLeaveService.rebuildAnnualLeavesForAdmin(userDetails.getId());
+        return ResponseEntity.ok(ApiResponse.onNoContent("연차 정보가 성공적으로 재계산되었습니다."));
     }
 
     @Operation(summary = "보낸 연차 삭제 (관리자)", description = "관리자가 특정 연차 발송 이력을 삭제합니다.")

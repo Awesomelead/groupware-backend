@@ -90,7 +90,9 @@ public class AnnualLeaveController {
         return ResponseEntity.ok(ApiResponse.onSuccess(responseDto));
     }
 
-    @Operation(summary = "연차 정보 재계산 (관리자)", description = "남아 있는 연차 발송 이력의 원본 파일 기준으로 사용자 연차 정보를 다시 계산합니다.")
+    @Operation(
+            summary = "연차 정보 재계산 (관리자)",
+            description = "남아 있는 연차 발송 이력의 원본 파일 기준으로 사용자 연차 정보를 다시 계산합니다.")
     @PostMapping("/admin/rebuild")
     public ResponseEntity<ApiResponse<Void>> rebuildAnnualLeavesForAdmin(
             @AuthenticationPrincipal CustomUserDetails userDetails) {

@@ -282,8 +282,7 @@ public class AnnualLeaveService {
 
         if (sendNotification) {
             // 연차 알림 전송 (LocalDate를 "yyyy년 MM월 dd일" 형식으로 변환하여 템플릿과 매칭)
-            String formattedDate =
-                    updateDate.format(DateTimeFormatter.ofPattern("yyyy년 MM월 dd일"));
+            String formattedDate = updateDate.format(DateTimeFormatter.ofPattern("yyyy년 MM월 dd일"));
             notificationService.sendAnnualLeaveAlertToUser(targetUser.getId(), formattedDate);
         }
     }

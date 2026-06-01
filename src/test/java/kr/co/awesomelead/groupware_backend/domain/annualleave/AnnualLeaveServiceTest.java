@@ -532,10 +532,7 @@ public class AnnualLeaveServiceTest {
                     .willReturn(remainingFile.getBytes());
 
             User targetUser =
-                    User.builder()
-                            .nameKor("테스트 유저")
-                            .hireDate(LocalDate.of(2025, 12, 31))
-                            .build();
+                    User.builder().nameKor("테스트 유저").hireDate(LocalDate.of(2025, 12, 31)).build();
             given(userRepository.findByNameAndJoinDate(anyString(), any()))
                     .willReturn(Optional.of(targetUser));
             given(annualLeaveRepository.findByUser(targetUser)).willReturn(Optional.empty());
@@ -669,10 +666,7 @@ public class AnnualLeaveServiceTest {
                     .willReturn(remainingFile.getBytes());
 
             User targetUser =
-                    User.builder()
-                            .nameKor("테스트 유저")
-                            .hireDate(LocalDate.of(2025, 12, 31))
-                            .build();
+                    User.builder().nameKor("테스트 유저").hireDate(LocalDate.of(2025, 12, 31)).build();
             given(userRepository.findByNameAndJoinDate(anyString(), any()))
                     .willReturn(Optional.of(targetUser));
             given(annualLeaveRepository.findByUser(targetUser)).willReturn(Optional.empty());

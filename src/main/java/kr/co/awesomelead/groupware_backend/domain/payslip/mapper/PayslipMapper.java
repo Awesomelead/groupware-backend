@@ -6,6 +6,8 @@ import kr.co.awesomelead.groupware_backend.domain.payslip.dto.response.EmployeeP
 import kr.co.awesomelead.groupware_backend.domain.payslip.dto.response.EmployeePayslipSummaryDto;
 import kr.co.awesomelead.groupware_backend.domain.payslip.entity.Payslip;
 import kr.co.awesomelead.groupware_backend.domain.user.enums.Position;
+import kr.co.awesomelead.groupware_backend.global.error.CustomException;
+import kr.co.awesomelead.groupware_backend.global.error.ErrorCode;
 import kr.co.awesomelead.groupware_backend.global.infra.s3.service.S3Service;
 
 import org.mapstruct.Context;
@@ -57,7 +59,7 @@ public interface PayslipMapper {
 
     default String buildPayslipTitle(Payslip payslip) {
         if (payslip == null) {
-            return "급여명세서";
+            throw new CustomException(ErrorCode.PAYSLIP_NOT_FOUND);
         }
         return buildPayslipTitleFromOriginalFileName(payslip.getOriginalFileName());
     }
@@ -75,7 +77,7 @@ public interface PayslipMapper {
 
     private static String buildPayslipTitleFromOriginalFileName(String originalFileName) {
         if (originalFileName == null || originalFileName.isBlank()) {
-            return "급여명세서";
+            throw new CustomException(ErrorCode.INVALID_PAYSLIP_FILE_NAME_FORMAT);
         }
 
         String normalizedPath = originalFileName.replace("\\", "/");
@@ -84,7 +86,7 @@ public interface PayslipMapper {
 
         Matcher matcher = PAYSLIP_MONTH_PATTERN.matcher(baseFileName);
         if (!matcher.matches()) {
-            return "급여명세서";
+            throw new CustomException(ErrorCode.INVALID_PAYSLIP_FILE_NAME_FORMAT);
         }
 
         String yearMonth = matcher.group(1);
@@ -92,9 +94,9 @@ public interface PayslipMapper {
         int month = Integer.parseInt(yearMonth.substring(4, 6));
 
         if (month < 1 || month > 12) {
-            return "급여명세서";
+            throw new CustomException(ErrorCode.INVALID_PAYSLIP_FILE_NAME_FORMAT);
         }
 
-        return year + "년 " + month + "월 급여명세서";
+        return year + "년 " + month + "월";
     }
 }

@@ -75,7 +75,10 @@ public class AnnualLeaveService {
 
         if (processResult.baseDate() != null) {
             LocalDate start = processResult.baseDate().withDayOfMonth(1);
-            LocalDate end = processResult.baseDate().withDayOfMonth(processResult.baseDate().lengthOfMonth());
+            LocalDate end =
+                    processResult
+                            .baseDate()
+                            .withDayOfMonth(processResult.baseDate().lengthOfMonth());
             if (annualLeaveDispatchHistoryRepository.existsByCompanyAndBaseDateBetween(
                     company, start, end)) {
                 throw new CustomException(ErrorCode.DUPLICATE_ANNUAL_LEAVE_DISPATCH);
@@ -114,7 +117,10 @@ public class AnnualLeaveService {
 
         if (processResult.baseDate() != null) {
             LocalDate start = processResult.baseDate().withDayOfMonth(1);
-            LocalDate end = processResult.baseDate().withDayOfMonth(processResult.baseDate().lengthOfMonth());
+            LocalDate end =
+                    processResult
+                            .baseDate()
+                            .withDayOfMonth(processResult.baseDate().lengthOfMonth());
             if (annualLeaveDispatchHistoryRepository.existsByIdNotAndCompanyAndBaseDateBetween(
                     dispatchId, company, start, end)) {
                 throw new CustomException(ErrorCode.DUPLICATE_ANNUAL_LEAVE_DISPATCH);

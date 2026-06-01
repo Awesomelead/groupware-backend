@@ -62,7 +62,8 @@ public class AnnualLeaveController {
             @AuthenticationPrincipal CustomUserDetails userDetails) {
 
         ExcelUploadResponseDto responseDto =
-                annualLeaveService.uploadAnnualLeaveFile(file, sheetName, userDetails.getId(), company);
+                annualLeaveService.uploadAnnualLeaveFile(
+                        file, sheetName, userDetails.getId(), company);
         return ResponseEntity.ok(ApiResponse.onSuccess(responseDto));
     }
 
@@ -99,7 +100,8 @@ public class AnnualLeaveController {
                                         schema =
                                                 @Schema(
                                                         implementation =
-                                                                AdminAnnualLeaveDispatchGroupResponseDto.class)))
+                                                                AdminAnnualLeaveDispatchGroupResponseDto
+                                                                        .class)))
             })
     @GetMapping("/admin")
     public ResponseEntity<ApiResponse<List<AdminAnnualLeaveDispatchGroupResponseDto>>>
@@ -123,7 +125,8 @@ public class AnnualLeaveController {
                                         schema =
                                                 @Schema(
                                                         implementation =
-                                                                AdminAnnualLeaveDispatchDetailResponseDto.class)))
+                                                                AdminAnnualLeaveDispatchDetailResponseDto
+                                                                        .class)))
             })
     @GetMapping("/admin/{dispatchId}")
     public ResponseEntity<ApiResponse<AdminAnnualLeaveDispatchDetailResponseDto>>

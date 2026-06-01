@@ -63,7 +63,13 @@ public class AnnualLeaveDispatchHistory {
     @Column(nullable = false, updatable = false)
     private LocalDateTime createdAt;
 
-    public void updateDispatch(User uploader, String originalFileName, String sheetName, String fileKey, LocalDate baseDate, Company company) {
+    public void updateDispatch(
+            User uploader,
+            String originalFileName,
+            String sheetName,
+            String fileKey,
+            LocalDate baseDate,
+            Company company) {
         this.uploadedBy = uploader;
         this.originalFileName = originalFileName;
         this.sheetName = sheetName;

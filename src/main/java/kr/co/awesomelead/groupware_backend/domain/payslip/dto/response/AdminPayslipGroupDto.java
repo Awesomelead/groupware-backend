@@ -19,7 +19,7 @@ public class AdminPayslipGroupDto {
     @Schema(description = "급여지급월(YYYYMM)", example = "202606")
     private String yearMonth;
 
-    @Schema(description = "월별 그룹 제목", example = "2026년 6월 급여명세서")
+    @Schema(description = "월별 그룹 제목", example = "2026년 6월")
     private String title;
 
     @Schema(description = "해당 월 명세서 건수", example = "18")

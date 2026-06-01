@@ -426,16 +426,16 @@ public class PayslipService {
 
     private String buildGroupTitle(String yearMonth) {
         if (UNKNOWN_YEAR_MONTH.equals(yearMonth) || yearMonth == null || yearMonth.length() != 6) {
-            return "미분류 급여명세서";
+            throw new CustomException(ErrorCode.INVALID_PAYSLIP_FILE_NAME_FORMAT);
         }
 
         int year = Integer.parseInt(yearMonth.substring(0, 4));
         int month = Integer.parseInt(yearMonth.substring(4, 6));
         if (month < 1 || month > 12) {
-            return "미분류 급여명세서";
+            throw new CustomException(ErrorCode.INVALID_PAYSLIP_FILE_NAME_FORMAT);
         }
 
-        return year + "년 " + month + "월 급여명세서";
+        return year + "년 " + month + "월";
     }
 
     private int compareYearMonthDesc(String first, String second) {

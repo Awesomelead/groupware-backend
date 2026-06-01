@@ -575,7 +575,8 @@ public class PayslipServiceTest {
             }
 
             @Test
-            @DisplayName("originalFileName이 null인 DTO가 있으면 INVALID_PAYSLIP_FILE_NAME_FORMAT 예외를 던진다.")
+            @DisplayName(
+                    "originalFileName이 null인 DTO가 있으면 INVALID_PAYSLIP_FILE_NAME_FORMAT 예외를 던진다.")
             void getPayslipsForAdminGrouped_throwsWhenOriginalFileNameIsNull() {
                 // given
                 User adminUser = User.builder().id(1L).role(Role.ADMIN).build();

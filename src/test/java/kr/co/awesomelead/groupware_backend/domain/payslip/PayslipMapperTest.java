@@ -103,7 +103,8 @@ class PayslipMapperTest {
 
         assertThatThrownBy(() -> payslipMapper.toAdminPayslipSummaryDto(payslip))
                 .isInstanceOf(CustomException.class)
-                .hasFieldOrPropertyWithValue("errorCode", ErrorCode.INVALID_PAYSLIP_FILE_NAME_FORMAT);
+                .hasFieldOrPropertyWithValue(
+                        "errorCode", ErrorCode.INVALID_PAYSLIP_FILE_NAME_FORMAT);
     }
 
     @Test
@@ -112,6 +113,7 @@ class PayslipMapperTest {
 
         assertThatThrownBy(() -> payslipMapper.toAdminPayslipSummaryDto(payslip))
                 .isInstanceOf(CustomException.class)
-                .hasFieldOrPropertyWithValue("errorCode", ErrorCode.INVALID_PAYSLIP_FILE_NAME_FORMAT);
+                .hasFieldOrPropertyWithValue(
+                        "errorCode", ErrorCode.INVALID_PAYSLIP_FILE_NAME_FORMAT);
     }
 }

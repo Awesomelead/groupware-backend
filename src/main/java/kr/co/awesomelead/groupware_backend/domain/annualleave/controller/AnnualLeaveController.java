@@ -55,7 +55,7 @@ public class AnnualLeaveController {
         return ResponseEntity.ok(ApiResponse.onSuccess(responseDto));
     }
 
-    @Operation(summary = "보낸 연차 목록 조회 (관리자)", description = "관리자가 보낸 연차 이력을 시트명 기준 그룹으로 조회합니다.")
+    @Operation(summary = "보낸 연차 목록 조회 (관리자)", description = "관리자가 보낸 연차 이력을 연도 기준 그룹으로 조회합니다.")
     @GetMapping("/admin")
     public ResponseEntity<ApiResponse<List<AdminAnnualLeaveDispatchGroupResponseDto>>>
             getAnnualLeavesForAdmin(@AuthenticationPrincipal CustomUserDetails userDetails) {

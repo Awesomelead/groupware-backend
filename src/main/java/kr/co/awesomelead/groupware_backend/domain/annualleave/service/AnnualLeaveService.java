@@ -334,24 +334,24 @@ public class AnnualLeaveService {
 
         List<AnnualLeaveDispatchHistory> histories =
                 annualLeaveDispatchHistoryRepository.findAllOrderByCreatedAtDesc();
-        Map<String, List<AnnualLeaveDispatchHistory>> groupedBySheetName =
+        Map<String, List<AnnualLeaveDispatchHistory>> groupedByYear =
                 histories.stream()
                         .collect(
                                 Collectors.groupingBy(
-                                        history -> normalizeSheetName(history.getSheetName()),
+                                        this::resolveDispatchYearTitle,
                                         LinkedHashMap::new,
                                         Collectors.toList()));
 
-        return groupedBySheetName.entrySet().stream()
+        return groupedByYear.entrySet().stream()
                 .map(
                         entry -> {
-                            String sheetName = entry.getKey();
+                            String yearTitle = entry.getKey();
                             List<AdminAnnualLeaveDispatchItemResponseDto> items =
                                     entry.getValue().stream().map(this::toDispatchItemDto).toList();
 
                             return AdminAnnualLeaveDispatchGroupResponseDto.builder()
-                                    .sheetName(sheetName)
-                                    .title(sheetName)
+                                    .sheetName(yearTitle)
+                                    .title(yearTitle)
                                     .totalCount(items.size())
                                     .items(items)
                                     .build();
@@ -363,11 +363,46 @@ public class AnnualLeaveService {
             AnnualLeaveDispatchHistory history) {
         return AdminAnnualLeaveDispatchItemResponseDto.builder()
                 .dispatchId(history.getId())
+                .title(resolveDispatchMonthTitle(history))
                 .originalFileName(history.getOriginalFileName())
                 .sheetName(normalizeSheetName(history.getSheetName()))
                 .fileUrl(s3Service.getPresignedViewUrl(history.getFileKey()))
                 .build();
     }
+
+    private String resolveDispatchYearTitle(AnnualLeaveDispatchHistory history) {
+        DispatchPeriod period = resolveDispatchPeriod(history);
+        if (period.year() == null) {
+            return "연도 미상";
+        }
+        return period.year() + "년";
+    }
+
+    private String resolveDispatchMonthTitle(AnnualLeaveDispatchHistory history) {
+        DispatchPeriod period = resolveDispatchPeriod(history);
+        if (period.month() == null) {
+            return normalizeSheetName(history.getSheetName());
+        }
+        return period.month() + "월";
+    }
+
+    private DispatchPeriod resolveDispatchPeriod(AnnualLeaveDispatchHistory history) {
+        LocalDate baseDate = history.getBaseDate();
+        if (baseDate != null) {
+            return new DispatchPeriod(baseDate.getYear(), baseDate.getMonthValue());
+        }
+
+        YearMonth sheetYearMonth =
+                parseStrictYearMonthFromSheetName(normalizeSheetName(history.getSheetName()));
+        if (sheetYearMonth != null) {
+            return new DispatchPeriod(sheetYearMonth.getYear(), sheetYearMonth.getMonthValue());
+        }
+
+        Integer month = parseMonthFromSheetName(normalizeSheetName(history.getSheetName()));
+        return new DispatchPeriod(null, month);
+    }
+
+    private record DispatchPeriod(Integer year, Integer month) {}
 
     public AdminAnnualLeaveDispatchDetailResponseDto getAnnualLeaveDispatchDetailForAdmin(
             Long userId, Long dispatchId) {
@@ -423,20 +458,46 @@ public class AnnualLeaveService {
             return null;
         }
         // "2026-06" 형식
-        try {
-            return YearMonth.parse(sheetName, DateTimeFormatter.ofPattern("yyyy-MM"));
-        } catch (Exception ignored) {
+        YearMonth strictYearMonth = parseStrictYearMonthFromSheetName(sheetName);
+        if (strictYearMonth != null) {
+            return strictYearMonth;
         }
         // "8월", "08월", "8" 형식 — 연도는 현재 연도로 추정
         try {
-            String numericStr = sheetName.replaceAll("[^0-9]", "");
-            if (!numericStr.isEmpty()) {
-                int month = Integer.parseInt(numericStr);
-                if (month >= 1 && month <= 12) {
-                    return YearMonth.of(java.time.LocalDate.now().getYear(), month);
-                }
+            Integer month = parseMonthFromSheetName(sheetName);
+            if (month != null) {
+                return YearMonth.of(java.time.LocalDate.now().getYear(), month);
             }
         } catch (Exception ignored) {
+        }
+        return null;
+    }
+
+    private YearMonth parseStrictYearMonthFromSheetName(String sheetName) {
+        if (sheetName == null || sheetName.isBlank()) {
+            return null;
+        }
+        try {
+            return YearMonth.parse(sheetName, DateTimeFormatter.ofPattern("yyyy-MM"));
+        } catch (Exception ignored) {
+            return null;
+        }
+    }
+
+    private Integer parseMonthFromSheetName(String sheetName) {
+        if (sheetName == null || sheetName.isBlank()) {
+            return null;
+        }
+        String numericStr = sheetName.replaceAll("[^0-9]", "");
+        if (numericStr.isEmpty()) {
+            return null;
+        }
+        try {
+            int month = Integer.parseInt(numericStr);
+            if (month >= 1 && month <= 12) {
+                return month;
+            }
+        } catch (NumberFormatException ignored) {
         }
         return null;
     }

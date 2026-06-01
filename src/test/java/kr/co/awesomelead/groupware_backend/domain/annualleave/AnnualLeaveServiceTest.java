@@ -279,7 +279,7 @@ public class AnnualLeaveServiceTest {
         }
 
         @Test
-        @DisplayName("권한이 있는 관리자가 요청하면 시트명 그룹으로 발송 목록을 반환한다")
+        @DisplayName("권한이 있는 관리자가 요청하면 연도 그룹과 월 제목으로 발송 목록을 반환한다")
         void it_returns_dispatched_annual_leave_list() {
             // given
             Long adminId = 1L;
@@ -293,6 +293,7 @@ public class AnnualLeaveServiceTest {
                             .originalFileName("2026_연차현황.xlsx")
                             .sheetName("2026-06")
                             .fileKey("annual-leave/2026-06-first.xlsx")
+                            .baseDate(LocalDate.of(2026, 6, 1))
                             .build();
             AnnualLeaveDispatchHistory second =
                     AnnualLeaveDispatchHistory.builder()
@@ -301,6 +302,7 @@ public class AnnualLeaveServiceTest {
                             .originalFileName("2026_연차현황_수정본.xlsx")
                             .sheetName("2026-06")
                             .fileKey("annual-leave/2026-06-second.xlsx")
+                            .baseDate(LocalDate.of(2026, 6, 1))
                             .build();
             AnnualLeaveDispatchHistory third =
                     AnnualLeaveDispatchHistory.builder()
@@ -309,6 +311,7 @@ public class AnnualLeaveServiceTest {
                             .originalFileName("2026_연차현황_7월.xlsx")
                             .sheetName("2026-07")
                             .fileKey("annual-leave/2026-07-first.xlsx")
+                            .baseDate(LocalDate.of(2026, 7, 1))
                             .build();
             given(annualLeaveDispatchHistoryRepository.findAllOrderByCreatedAtDesc())
                     .willReturn(List.of(first, second, third));
@@ -324,22 +327,22 @@ public class AnnualLeaveServiceTest {
                     annualLeaveService.getAnnualLeavesForAdmin(adminId);
 
             // then
-            assertThat(result.size()).isEqualTo(2);
-            assertThat(result.get(0).getSheetName()).isEqualTo("2026-06");
-            assertThat(result.get(0).getTitle()).isEqualTo("2026-06");
-            assertThat(result.get(0).getTotalCount()).isEqualTo(2);
+            assertThat(result.size()).isEqualTo(1);
+            assertThat(result.get(0).getSheetName()).isEqualTo("2026년");
+            assertThat(result.get(0).getTitle()).isEqualTo("2026년");
+            assertThat(result.get(0).getTotalCount()).isEqualTo(3);
             assertThat(result.get(0).getItems().get(0).getDispatchId()).isEqualTo(10L);
+            assertThat(result.get(0).getItems().get(0).getTitle()).isEqualTo("6월");
             assertThat(result.get(0).getItems().get(0).getOriginalFileName())
                     .isEqualTo("2026_연차현황.xlsx");
+            assertThat(result.get(0).getItems().get(0).getSheetName()).isEqualTo("2026-06");
+            assertThat(result.get(0).getItems().get(1).getTitle()).isEqualTo("6월");
             assertThat(result.get(0).getItems().get(1).getOriginalFileName())
                     .isEqualTo("2026_연차현황_수정본.xlsx");
             assertThat(result.get(0).getItems().get(0).getFileUrl())
                     .isEqualTo("https://example.com/annual-leave-2026-06-first");
-
-            assertThat(result.get(1).getSheetName()).isEqualTo("2026-07");
-            assertThat(result.get(1).getTitle()).isEqualTo("2026-07");
-            assertThat(result.get(1).getTotalCount()).isEqualTo(1);
-            assertThat(result.get(1).getItems().get(0).getFileUrl())
+            assertThat(result.get(0).getItems().get(2).getTitle()).isEqualTo("7월");
+            assertThat(result.get(0).getItems().get(2).getFileUrl())
                     .isEqualTo("https://example.com/annual-leave-2026-07-first");
         }
     }

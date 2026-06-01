@@ -1,12 +1,16 @@
 package kr.co.awesomelead.groupware_backend.domain.annualleave.controller;
 
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
 
 import kr.co.awesomelead.groupware_backend.domain.annualleave.dto.response.AdminAnnualLeaveDispatchDetailResponseDto;
 import kr.co.awesomelead.groupware_backend.domain.annualleave.dto.response.AdminAnnualLeaveDispatchGroupResponseDto;
 import kr.co.awesomelead.groupware_backend.domain.annualleave.dto.response.AnnualLeaveResponseDto;
 import kr.co.awesomelead.groupware_backend.domain.annualleave.dto.response.ExcelUploadResponseDto;
 import kr.co.awesomelead.groupware_backend.domain.annualleave.service.AnnualLeaveService;
+import kr.co.awesomelead.groupware_backend.domain.department.enums.Company;
 import kr.co.awesomelead.groupware_backend.domain.user.dto.CustomUserDetails;
 import kr.co.awesomelead.groupware_backend.global.common.response.ApiResponse;
 
@@ -37,18 +41,45 @@ public class AnnualLeaveController {
     private final AnnualLeaveService annualLeaveService;
 
     @Operation(summary = "연차 발송", description = "엑셀 파일과 시트명을 입력하여 연차를 일괄적으로 발송합니다.")
+    @ApiResponses(
+            value = {
+                @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                        responseCode = "200",
+                        description = "업로드 성공",
+                        content =
+                                @Content(
+                                        mediaType = "application/json",
+                                        schema =
+                                                @Schema(
+                                                        implementation =
+                                                                ExcelUploadResponseDto.class)))
+            })
     @PatchMapping(value = "/upload", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<ApiResponse<ExcelUploadResponseDto>> uploadAnnualLeaveFile(
             @RequestPart("file") MultipartFile file,
             @RequestParam("sheetName") String sheetName,
+            @RequestParam("company") Company company,
             @AuthenticationPrincipal CustomUserDetails userDetails) {
 
         ExcelUploadResponseDto responseDto =
-                annualLeaveService.uploadAnnualLeaveFile(file, sheetName, userDetails.getId());
+                annualLeaveService.uploadAnnualLeaveFile(file, sheetName, userDetails.getId(), company);
         return ResponseEntity.ok(ApiResponse.onSuccess(responseDto));
     }
 
     @Operation(summary = "연차 조회", description = "연차 정보를 조회합니다.")
+    @ApiResponses(
+            value = {
+                @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                        responseCode = "200",
+                        description = "조회 성공",
+                        content =
+                                @Content(
+                                        mediaType = "application/json",
+                                        schema =
+                                                @Schema(
+                                                        implementation =
+                                                                AnnualLeaveResponseDto.class)))
+            })
     @GetMapping
     public ResponseEntity<ApiResponse<AnnualLeaveResponseDto>> getAnnualLeave(
             @AuthenticationPrincipal CustomUserDetails userDetails) {
@@ -57,15 +88,43 @@ public class AnnualLeaveController {
     }
 
     @Operation(summary = "보낸 연차 목록 조회 (관리자)", description = "관리자가 보낸 연차 이력을 연도 기준 그룹으로 조회합니다.")
+    @ApiResponses(
+            value = {
+                @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                        responseCode = "200",
+                        description = "조회 성공",
+                        content =
+                                @Content(
+                                        mediaType = "application/json",
+                                        schema =
+                                                @Schema(
+                                                        implementation =
+                                                                AdminAnnualLeaveDispatchGroupResponseDto.class)))
+            })
     @GetMapping("/admin")
     public ResponseEntity<ApiResponse<List<AdminAnnualLeaveDispatchGroupResponseDto>>>
-            getAnnualLeavesForAdmin(@AuthenticationPrincipal CustomUserDetails userDetails) {
+            getAnnualLeavesForAdmin(
+                    @RequestParam(value = "company", required = false) Company company,
+                    @AuthenticationPrincipal CustomUserDetails userDetails) {
         List<AdminAnnualLeaveDispatchGroupResponseDto> responseDto =
-                annualLeaveService.getAnnualLeavesForAdmin(userDetails.getId());
+                annualLeaveService.getAnnualLeavesForAdmin(userDetails.getId(), company);
         return ResponseEntity.ok(ApiResponse.onSuccess(responseDto));
     }
 
     @Operation(summary = "보낸 연차 상세 조회 (관리자)", description = "관리자가 특정 연차 발송 이력을 상세 조회합니다.")
+    @ApiResponses(
+            value = {
+                @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                        responseCode = "200",
+                        description = "조회 성공",
+                        content =
+                                @Content(
+                                        mediaType = "application/json",
+                                        schema =
+                                                @Schema(
+                                                        implementation =
+                                                                AdminAnnualLeaveDispatchDetailResponseDto.class)))
+            })
     @GetMapping("/admin/{dispatchId}")
     public ResponseEntity<ApiResponse<AdminAnnualLeaveDispatchDetailResponseDto>>
             getAnnualLeaveDispatchDetailForAdmin(
@@ -78,21 +137,41 @@ public class AnnualLeaveController {
     }
 
     @Operation(summary = "보낸 연차 수정 (관리자)", description = "관리자가 특정 연차 발송 이력을 새 파일로 수정합니다.")
+    @ApiResponses(
+            value = {
+                @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                        responseCode = "200",
+                        description = "수정 성공",
+                        content =
+                                @Content(
+                                        mediaType = "application/json",
+                                        schema =
+                                                @Schema(
+                                                        implementation =
+                                                                ExcelUploadResponseDto.class)))
+            })
     @PutMapping(value = "/admin/{dispatchId}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<ApiResponse<ExcelUploadResponseDto>> updateAnnualLeaveDispatch(
             @PathVariable Long dispatchId,
             @RequestPart("file") MultipartFile file,
             @RequestParam("sheetName") String sheetName,
+            @RequestParam("company") Company company,
             @AuthenticationPrincipal CustomUserDetails userDetails) {
         ExcelUploadResponseDto responseDto =
                 annualLeaveService.updateAnnualLeaveDispatchForAdmin(
-                        userDetails.getId(), dispatchId, file, sheetName);
+                        userDetails.getId(), dispatchId, file, sheetName, company);
         return ResponseEntity.ok(ApiResponse.onSuccess(responseDto));
     }
 
     @Operation(
             summary = "연차 정보 재계산 (관리자)",
             description = "남아 있는 연차 발송 이력의 원본 파일 기준으로 사용자 연차 정보를 다시 계산합니다.")
+    @ApiResponses(
+            value = {
+                @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                        responseCode = "200",
+                        description = "처리 성공")
+            })
     @PostMapping("/admin/rebuild")
     public ResponseEntity<ApiResponse<Void>> rebuildAnnualLeavesForAdmin(
             @AuthenticationPrincipal CustomUserDetails userDetails) {
@@ -101,6 +180,12 @@ public class AnnualLeaveController {
     }
 
     @Operation(summary = "보낸 연차 삭제 (관리자)", description = "관리자가 특정 연차 발송 이력을 삭제합니다.")
+    @ApiResponses(
+            value = {
+                @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                        responseCode = "200",
+                        description = "처리 성공")
+            })
     @DeleteMapping("/admin/{dispatchId}")
     public ResponseEntity<ApiResponse<Void>> deleteAnnualLeaveDispatch(
             @PathVariable Long dispatchId, @AuthenticationPrincipal CustomUserDetails userDetails) {

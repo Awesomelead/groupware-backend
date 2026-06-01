@@ -33,12 +33,14 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.time.LocalDate;
 import java.time.YearMonth;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -153,6 +155,7 @@ public class AnnualLeaveService {
 
         String fileKey = history.getFileKey();
         annualLeaveDispatchHistoryRepository.delete(history);
+        rebuildAnnualLeavesFromDispatchHistories(dispatchId);
 
         if (fileKey != null && !fileKey.isBlank()) {
             try {
@@ -163,16 +166,30 @@ public class AnnualLeaveService {
         }
     }
 
+    @Transactional
+    public void rebuildAnnualLeavesForAdmin(Long userId) {
+        validateAnnualLeaveEditAuthority(userId);
+        rebuildAnnualLeavesFromDispatchHistories(null);
+    }
+
     private record ProcessResult(ExcelUploadResponseDto response, LocalDate baseDate) {}
 
     private ProcessResult processAnnualLeaveFile(MultipartFile file, String normalizedSheetName) {
+        try (InputStream is = file.getInputStream()) {
+            return processAnnualLeaveFile(is, normalizedSheetName, true);
+        } catch (IOException e) {
+            throw new CustomException(ErrorCode.FILE_UPLOAD_ERROR);
+        }
+    }
+
+    private ProcessResult processAnnualLeaveFile(
+            InputStream is, String normalizedSheetName, boolean sendNotification) {
         List<FailureDetail> failures = new ArrayList<>();
         int successCount = 0;
         int totalProcessed = 0;
         LocalDate baseUpdateDate = null;
 
-        try (InputStream is = file.getInputStream();
-                Workbook workbook = WorkbookFactory.create(is)) {
+        try (Workbook workbook = WorkbookFactory.create(is)) {
 
             Sheet sheet = workbook.getSheet(normalizedSheetName);
             if (sheet == null) {
@@ -191,7 +208,7 @@ public class AnnualLeaveService {
 
                 totalProcessed++; // 파싱 작업 수 증가
                 try {
-                    processAnnualLeaveRow(row, baseUpdateDate);
+                    processAnnualLeaveRow(row, baseUpdateDate, sendNotification);
                     successCount++; // 성공 작업 수 증가
                 } catch (Exception e) {
                     log.warn("엑셀 업로드 실패 - 행 {}: {}", i + 1, e.getMessage());
@@ -218,7 +235,7 @@ public class AnnualLeaveService {
         return new ProcessResult(response, baseUpdateDate);
     }
 
-    private void processAnnualLeaveRow(Row row, LocalDate updateDate) {
+    private void processAnnualLeaveRow(Row row, LocalDate updateDate, boolean sendNotification) {
         // 엑셀 컬럼 정의 기반 데이터 추출
         String name = getCellValueAsString(row.getCell(3)).trim();
         LocalDate joinDate = getCellValueAsLocalDate(row.getCell(4));
@@ -263,9 +280,12 @@ public class AnnualLeaveService {
 
         annualLeaveRepository.save(annualLeave);
 
-        // 연차 알림 전송 (LocalDate를 "yyyy년 MM월 dd일" 형식으로 변환하여 템플릿과 매칭)
-        String formattedDate = updateDate.format(DateTimeFormatter.ofPattern("yyyy년 MM월 dd일"));
-        notificationService.sendAnnualLeaveAlertToUser(targetUser.getId(), formattedDate);
+        if (sendNotification) {
+            // 연차 알림 전송 (LocalDate를 "yyyy년 MM월 dd일" 형식으로 변환하여 템플릿과 매칭)
+            String formattedDate =
+                    updateDate.format(DateTimeFormatter.ofPattern("yyyy년 MM월 dd일"));
+            notificationService.sendAnnualLeaveAlertToUser(targetUser.getId(), formattedDate);
+        }
     }
 
     // 연차 데이터 공지 기준일 파싱
@@ -403,6 +423,45 @@ public class AnnualLeaveService {
     }
 
     private record DispatchPeriod(Integer year, Integer month) {}
+
+    private void rebuildAnnualLeavesFromDispatchHistories(Long excludedDispatchId) {
+        annualLeaveRepository.deleteAllInBatch();
+
+        List<AnnualLeaveDispatchHistory> remainingHistories =
+                annualLeaveDispatchHistoryRepository.findAll().stream()
+                        .filter(
+                                history ->
+                                        excludedDispatchId == null
+                                                || !Objects.equals(
+                                                        history.getId(), excludedDispatchId))
+                        .sorted(dispatchHistoryReplayOrder())
+                        .toList();
+
+        for (AnnualLeaveDispatchHistory history : remainingHistories) {
+            if (history.getFileKey() == null || history.getFileKey().isBlank()) {
+                log.warn("연차 재계산 스킵 - dispatchId: {}, fileKey 없음", history.getId());
+                continue;
+            }
+
+            byte[] fileBytes = s3Service.downloadFile(history.getFileKey());
+            processAnnualLeaveFile(
+                    new ByteArrayInputStream(fileBytes),
+                    normalizeSheetName(history.getSheetName()),
+                    false);
+        }
+    }
+
+    private Comparator<AnnualLeaveDispatchHistory> dispatchHistoryReplayOrder() {
+        return Comparator.comparing(
+                        AnnualLeaveDispatchHistory::getBaseDate,
+                        Comparator.nullsLast(Comparator.naturalOrder()))
+                .thenComparing(
+                        AnnualLeaveDispatchHistory::getCreatedAt,
+                        Comparator.nullsLast(Comparator.naturalOrder()))
+                .thenComparing(
+                        AnnualLeaveDispatchHistory::getId,
+                        Comparator.nullsLast(Comparator.naturalOrder()));
+    }
 
     public AdminAnnualLeaveDispatchDetailResponseDto getAnnualLeaveDispatchDetailForAdmin(
             Long userId, Long dispatchId) {

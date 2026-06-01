@@ -18,7 +18,7 @@ public interface AnnualLeaveDispatchHistoryRepository
 
     @Query(
             "SELECT h FROM AnnualLeaveDispatchHistory h WHERE (:company IS NULL OR h.company ="
-                + " :company) ORDER BY h.createdAt DESC, h.id DESC")
+                    + " :company) ORDER BY h.createdAt DESC, h.id DESC")
     List<AnnualLeaveDispatchHistory> findAllByCompanyOrderByCreatedAtDesc(
             @Param("company") Company company);
 

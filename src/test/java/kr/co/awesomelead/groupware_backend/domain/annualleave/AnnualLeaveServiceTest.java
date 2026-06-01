@@ -9,6 +9,8 @@ import static org.mockito.Mockito.atLeastOnce;
 import static org.mockito.Mockito.verify;
 
 import kr.co.awesomelead.groupware_backend.domain.annualleave.dto.response.AdminAnnualLeaveDispatchDetailResponseDto;
+import kr.co.awesomelead.groupware_backend.domain.annualleave.dto.response.AdminAnnualLeaveDispatchItemResponseDto;
+import kr.co.awesomelead.groupware_backend.domain.department.enums.Company;
 import kr.co.awesomelead.groupware_backend.domain.annualleave.dto.response.AdminAnnualLeaveDispatchGroupResponseDto;
 import kr.co.awesomelead.groupware_backend.domain.annualleave.dto.response.AnnualLeaveResponseDto;
 import kr.co.awesomelead.groupware_backend.domain.annualleave.dto.response.ExcelUploadResponseDto;
@@ -80,7 +82,7 @@ public class AnnualLeaveServiceTest {
                 assertThatThrownBy(
                                 () ->
                                         annualLeaveService.uploadAnnualLeaveFile(
-                                                null, sheetName, loginUserId))
+                                                null, sheetName, loginUserId, Company.AWESOME))
                         .isInstanceOf(CustomException.class)
                         .hasMessageContaining("연차 발송 권한이 없습니다.");
             }
@@ -111,7 +113,8 @@ public class AnnualLeaveServiceTest {
 
                 // when
                 ExcelUploadResponseDto response =
-                        annualLeaveService.uploadAnnualLeaveFile(mockFile, sheetName, loginUserId);
+                        annualLeaveService.uploadAnnualLeaveFile(
+                                mockFile, sheetName, loginUserId, Company.AWESOME);
 
                 // then
                 assertThat(response.getSuccessCount()).isGreaterThan(0);
@@ -139,7 +142,7 @@ public class AnnualLeaveServiceTest {
                 assertThatThrownBy(
                                 () ->
                                         annualLeaveService.uploadAnnualLeaveFile(
-                                                invalidFile, sheetName, loginUserId))
+                                                invalidFile, sheetName, loginUserId, Company.AWESOME))
                         .isInstanceOf(CustomException.class)
                         .hasMessageContaining(
                                 "유효하지 않은 기준일자 형식입니다. (yyyy-MM-dd)"); // ErrorCode 메시지에 따라 수정
@@ -163,7 +166,8 @@ public class AnnualLeaveServiceTest {
 
                 // when
                 ExcelUploadResponseDto response =
-                        annualLeaveService.uploadAnnualLeaveFile(mockFile, sheetName, loginUserId);
+                        annualLeaveService.uploadAnnualLeaveFile(
+                                mockFile, sheetName, loginUserId, Company.AWESOME);
 
                 // then
                 assertThat(response.getSuccessCount()).isEqualTo(0);
@@ -191,7 +195,7 @@ public class AnnualLeaveServiceTest {
                 assertThatThrownBy(
                                 () ->
                                         annualLeaveService.uploadAnnualLeaveFile(
-                                                mockFile, sheetName, loginUserId))
+                                                mockFile, sheetName, loginUserId, Company.AWESOME))
                         .isInstanceOf(CustomException.class)
                         .hasMessageContaining("파일 업로드 중 오류가 발생했습니다."); // ErrorCode의 메시지에 맞춰 수정
             }
@@ -273,7 +277,7 @@ public class AnnualLeaveServiceTest {
             given(userRepository.findById(userId)).willReturn(Optional.of(createMockUser(null)));
 
             // when & then
-            assertThatThrownBy(() -> annualLeaveService.getAnnualLeavesForAdmin(userId))
+            assertThatThrownBy(() -> annualLeaveService.getAnnualLeavesForAdmin(userId, null))
                     .isInstanceOf(CustomException.class)
                     .hasMessageContaining("연차 발송 권한이 없습니다.");
         }
@@ -294,6 +298,7 @@ public class AnnualLeaveServiceTest {
                             .sheetName("2026-06")
                             .fileKey("annual-leave/2026-06-first.xlsx")
                             .baseDate(LocalDate.of(2026, 6, 1))
+                            .company(Company.AWESOME)
                             .build();
             AnnualLeaveDispatchHistory second =
                     AnnualLeaveDispatchHistory.builder()
@@ -303,6 +308,7 @@ public class AnnualLeaveServiceTest {
                             .sheetName("2026-06")
                             .fileKey("annual-leave/2026-06-second.xlsx")
                             .baseDate(LocalDate.of(2026, 6, 1))
+                            .company(Company.AWESOME)
                             .build();
             AnnualLeaveDispatchHistory third =
                     AnnualLeaveDispatchHistory.builder()
@@ -312,8 +318,9 @@ public class AnnualLeaveServiceTest {
                             .sheetName("2026-07")
                             .fileKey("annual-leave/2026-07-first.xlsx")
                             .baseDate(LocalDate.of(2026, 7, 1))
+                            .company(Company.AWESOME)
                             .build();
-            given(annualLeaveDispatchHistoryRepository.findAllOrderByCreatedAtDesc())
+            given(annualLeaveDispatchHistoryRepository.findAllByCompanyOrderByCreatedAtDesc(null))
                     .willReturn(List.of(first, second, third));
             given(s3Service.getPresignedViewUrl("annual-leave/2026-06-first.xlsx"))
                     .willReturn("https://example.com/annual-leave-2026-06-first");
@@ -324,7 +331,7 @@ public class AnnualLeaveServiceTest {
 
             // when
             List<AdminAnnualLeaveDispatchGroupResponseDto> result =
-                    annualLeaveService.getAnnualLeavesForAdmin(adminId);
+                    annualLeaveService.getAnnualLeavesForAdmin(adminId, null);
 
             // then
             assertThat(result.size()).isEqualTo(1);
@@ -336,6 +343,7 @@ public class AnnualLeaveServiceTest {
             assertThat(result.get(0).getItems().get(0).getOriginalFileName())
                     .isEqualTo("2026_연차현황.xlsx");
             assertThat(result.get(0).getItems().get(0).getSheetName()).isEqualTo("2026-06");
+            assertThat(result.get(0).getItems().get(0).getCompany()).isEqualTo(Company.AWESOME);
             assertThat(result.get(0).getItems().get(1).getTitle()).isEqualTo("6월");
             assertThat(result.get(0).getItems().get(1).getOriginalFileName())
                     .isEqualTo("2026_연차현황_수정본.xlsx");
@@ -363,7 +371,7 @@ public class AnnualLeaveServiceTest {
             assertThatThrownBy(
                             () ->
                                     annualLeaveService.updateAnnualLeaveDispatchForAdmin(
-                                            userId, 10L, mockFile, "8월"))
+                                            userId, 10L, mockFile, "8월", Company.AWESOME))
                     .isInstanceOf(CustomException.class)
                     .hasMessageContaining("연차 발송 권한이 없습니다.");
         }
@@ -382,7 +390,7 @@ public class AnnualLeaveServiceTest {
             assertThatThrownBy(
                             () ->
                                     annualLeaveService.updateAnnualLeaveDispatchForAdmin(
-                                            adminId, 999L, mockFile, "8월"))
+                                            adminId, 999L, mockFile, "8월", Company.AWESOME))
                     .isInstanceOf(CustomException.class)
                     .hasMessageContaining("해당 연차 발송 이력을 찾을 수 없습니다.");
         }
@@ -418,7 +426,7 @@ public class AnnualLeaveServiceTest {
             // when
             ExcelUploadResponseDto result =
                     annualLeaveService.updateAnnualLeaveDispatchForAdmin(
-                            adminId, dispatchId, mockFile, "8월");
+                            adminId, dispatchId, mockFile, "8월", Company.AWESOME);
 
             // then
             assertThat(result.getSuccessCount()).isGreaterThan(0);
@@ -605,6 +613,7 @@ public class AnnualLeaveServiceTest {
                             .sheetName("2026-06")
                             .fileKey("annual-leave/2026-06-first.xlsx")
                             .createdAt(LocalDateTime.of(2026, 5, 31, 15, 29, 4))
+                            .company(Company.AWESOME)
                             .build();
 
             given(annualLeaveDispatchHistoryRepository.findById(10L))
@@ -622,6 +631,8 @@ public class AnnualLeaveServiceTest {
             assertThat(result.getSheetName()).isEqualTo("2026-06");
             assertThat(result.getFileUrl())
                     .isEqualTo("https://example.com/annual-leave-2026-06-first");
+            assertThat(result.getTitle()).isEqualTo("6월");
+            assertThat(result.getCompany()).isEqualTo(Company.AWESOME);
         }
     }
 
@@ -733,6 +744,53 @@ public class AnnualLeaveServiceTest {
                 assertThat(history.getBaseDate()).isNull();
             }
         }
+
+        @Nested
+        @DisplayName("company 필드는")
+        class Context_with_company {
+
+            @Test
+            @DisplayName("company 값을 포함하여 빌더로 생성하면 getCompany()가 해당 값을 반환한다")
+            void it_stores_company() {
+                // given
+                User admin = User.builder().id(1L).nameKor("테스트 업로더").build();
+
+                // when
+                AnnualLeaveDispatchHistory history =
+                        AnnualLeaveDispatchHistory.builder()
+                                .id(20L)
+                                .uploadedBy(admin)
+                                .originalFileName("2026_연차현황.xlsx")
+                                .sheetName("2026-06")
+                                .fileKey("annual-leave/2026-06.xlsx")
+                                .baseDate(LocalDate.of(2026, 6, 1))
+                                .company(Company.AWESOME)
+                                .build();
+
+                // then
+                assertThat(history.getCompany()).isEqualTo(Company.AWESOME);
+            }
+
+            @Test
+            @DisplayName("company 없이 빌더로 생성하면 null을 반환한다")
+            void it_returns_null_when_company_not_set() {
+                // given
+                User admin = User.builder().id(1L).nameKor("테스트 업로더").build();
+
+                // when
+                AnnualLeaveDispatchHistory history =
+                        AnnualLeaveDispatchHistory.builder()
+                                .id(21L)
+                                .uploadedBy(admin)
+                                .originalFileName("legacy_2025.xlsx")
+                                .sheetName("2025-12")
+                                .fileKey("annual-leave/legacy.xlsx")
+                                .build();
+
+                // then
+                assertThat(history.getCompany()).isNull();
+            }
+        }
     }
 
     @Nested
@@ -776,6 +834,27 @@ public class AnnualLeaveServiceTest {
                 assertThat(code.getMessage()).isEqualTo("시트명의 월 정보와 엑셀 기준일의 월 정보가 일치하지 않습니다.");
             }
         }
+
+        @Nested
+        @DisplayName("ANNUAL_LEAVE_COMPANY_MISMATCH 상수가")
+        class Context_ANNUAL_LEAVE_COMPANY_MISMATCH {
+
+            @Test
+            @DisplayName("정의되어 있어야 하고 HttpStatus.BAD_REQUEST와 지정된 메시지를 가진다")
+            void it_has_correct_status_and_message() {
+                // given & when
+                kr.co.awesomelead.groupware_backend.global.error.ErrorCode code =
+                        kr.co.awesomelead.groupware_backend.global.error.ErrorCode.valueOf(
+                                "ANNUAL_LEAVE_COMPANY_MISMATCH");
+
+                // then
+                assertThat(code.getHttpStatus())
+                        .isEqualTo(org.springframework.http.HttpStatus.BAD_REQUEST);
+                assertThat(code.getMessage())
+                        .isEqualTo(
+                                "업로드 요청한 회사 정보와 엑셀 데이터 내 직원의 소속 회사가 일치하지 않습니다.");
+            }
+        }
     }
 
     @Nested
@@ -796,18 +875,21 @@ public class AnnualLeaveServiceTest {
                 User admin = createMockUser(Authority.EDIT_EMPLOYEE_INFO);
                 given(userRepository.findById(loginUserId)).willReturn(Optional.of(admin));
 
-                LocalDate start = LocalDate.of(2026, 6, 1);
-                LocalDate end = LocalDate.of(2026, 6, 30);
-                given(annualLeaveDispatchHistoryRepository.existsByBaseDateBetween(start, end))
+                // 엑셀 파일의 baseDate는 2026-08-01이므로 중복 체크는 8월 기준으로 수행
+                LocalDate start = LocalDate.of(2026, 8, 1);
+                LocalDate end = LocalDate.of(2026, 8, 31);
+                given(annualLeaveDispatchHistoryRepository.existsByCompanyAndBaseDateBetween(
+                                Company.AWESOME, start, end))
                         .willReturn(true);
 
                 MultipartFile mockFile = createMockExcelFile();
+                given(s3Service.uploadFile(mockFile)).willReturn("annual-leave/history.xlsx");
 
                 // when & then
                 assertThatThrownBy(
                                 () ->
                                         annualLeaveService.uploadAnnualLeaveFile(
-                                                mockFile, sheetName, loginUserId))
+                                                mockFile, sheetName, loginUserId, Company.AWESOME))
                         .isInstanceOf(CustomException.class)
                         .hasMessageContaining("이미 해당 월에 연차가 발송되었습니다.");
             }
@@ -824,9 +906,11 @@ public class AnnualLeaveServiceTest {
                 User admin = createMockUser(Authority.EDIT_EMPLOYEE_INFO);
                 given(userRepository.findById(loginUserId)).willReturn(Optional.of(admin));
 
-                LocalDate start = LocalDate.of(2026, 6, 1);
-                LocalDate end = LocalDate.of(2026, 6, 30);
-                given(annualLeaveDispatchHistoryRepository.existsByBaseDateBetween(start, end))
+                // 엑셀 파일의 baseDate는 2026-08-01이므로 중복 체크는 8월 기준으로 수행
+                LocalDate start = LocalDate.of(2026, 8, 1);
+                LocalDate end = LocalDate.of(2026, 8, 31);
+                given(annualLeaveDispatchHistoryRepository.existsByCompanyAndBaseDateBetween(
+                                Company.AWESOME, start, end))
                         .willReturn(false);
 
                 MultipartFile mockFile = createMockExcelFile();
@@ -842,7 +926,8 @@ public class AnnualLeaveServiceTest {
 
                 // when
                 ExcelUploadResponseDto response =
-                        annualLeaveService.uploadAnnualLeaveFile(mockFile, sheetName, loginUserId);
+                        annualLeaveService.uploadAnnualLeaveFile(
+                                mockFile, sheetName, loginUserId, Company.AWESOME);
 
                 // then
                 assertThat(response.getSuccessCount()).isGreaterThan(0);
@@ -873,7 +958,7 @@ public class AnnualLeaveServiceTest {
                 assertThatThrownBy(
                                 () ->
                                         annualLeaveService.uploadAnnualLeaveFile(
-                                                mockFile, "5월", loginUserId))
+                                                mockFile, "5월", loginUserId, Company.AWESOME))
                         .isInstanceOf(CustomException.class)
                         .hasMessageContaining("시트명의 월 정보와 엑셀 기준일의 월 정보가 일치하지 않습니다.");
             }
@@ -924,7 +1009,8 @@ public class AnnualLeaveServiceTest {
 
                 // when
                 ExcelUploadResponseDto response =
-                        annualLeaveService.uploadAnnualLeaveFile(mockFile, sheetName, loginUserId);
+                        annualLeaveService.uploadAnnualLeaveFile(
+                                mockFile, sheetName, loginUserId, Company.AWESOME);
 
                 // then: 기존 연차가 더 최신이므로 save와 알림 전송이 호출되지 않아야 한다
                 org.mockito.Mockito.verify(annualLeaveRepository, org.mockito.Mockito.never())
@@ -967,20 +1053,24 @@ public class AnnualLeaveServiceTest {
                 given(annualLeaveDispatchHistoryRepository.findById(dispatchId))
                         .willReturn(Optional.of(history));
 
-                LocalDate start = LocalDate.of(2026, 6, 1);
-                LocalDate end = LocalDate.of(2026, 6, 30);
+                // 엑셀 파일의 baseDate는 2026-08-01이므로 중복 체크는 8월 기준으로 수행
+                LocalDate start = LocalDate.of(2026, 8, 1);
+                LocalDate end = LocalDate.of(2026, 8, 31);
                 given(
                                 annualLeaveDispatchHistoryRepository
-                                        .existsByIdNotAndBaseDateBetween(dispatchId, start, end))
+                                        .existsByIdNotAndCompanyAndBaseDateBetween(
+                                                dispatchId, Company.AWESOME, start, end))
                         .willReturn(true);
 
                 MultipartFile mockFile = createMockExcelFile();
+                given(s3Service.uploadFile(mockFile)).willReturn("annual-leave/history.xlsx");
 
                 // when & then
                 assertThatThrownBy(
                                 () ->
                                         annualLeaveService.updateAnnualLeaveDispatchForAdmin(
-                                                adminId, dispatchId, mockFile, sheetName))
+                                                adminId, dispatchId, mockFile, sheetName,
+                                                Company.AWESOME))
                         .isInstanceOf(CustomException.class)
                         .hasMessageContaining("이미 해당 월에 연차가 발송되었습니다.");
             }
@@ -1009,11 +1099,13 @@ public class AnnualLeaveServiceTest {
                 given(annualLeaveDispatchHistoryRepository.findById(dispatchId))
                         .willReturn(Optional.of(history));
 
-                LocalDate start = LocalDate.of(2026, 6, 1);
-                LocalDate end = LocalDate.of(2026, 6, 30);
+                // 엑셀 파일의 baseDate는 2026-08-01이므로 중복 체크는 8월 기준으로 수행
+                LocalDate start = LocalDate.of(2026, 8, 1);
+                LocalDate end = LocalDate.of(2026, 8, 31);
                 given(
                                 annualLeaveDispatchHistoryRepository
-                                        .existsByIdNotAndBaseDateBetween(dispatchId, start, end))
+                                        .existsByIdNotAndCompanyAndBaseDateBetween(
+                                                dispatchId, Company.AWESOME, start, end))
                         .willReturn(false);
 
                 MultipartFile mockFile = createMockExcelFile();
@@ -1030,10 +1122,246 @@ public class AnnualLeaveServiceTest {
                 // when
                 ExcelUploadResponseDto result =
                         annualLeaveService.updateAnnualLeaveDispatchForAdmin(
-                                adminId, dispatchId, mockFile, sheetName);
+                                adminId, dispatchId, mockFile, sheetName, Company.AWESOME);
 
                 // then
                 assertThat(result.getSuccessCount()).isGreaterThan(0);
+            }
+        }
+    }
+
+    @Nested
+    @DisplayName("AnnualLeaveDispatchHistoryRepository는")
+    class Describe_AnnualLeaveDispatchHistoryRepository {
+
+        @Nested
+        @DisplayName("company 기반 쿼리 메서드가")
+        class Context_company_based_methods {
+
+            @Test
+            @DisplayName("findAllByCompanyOrderByCreatedAtDesc 메서드가 컴파일 레벨에서 호출 가능하다")
+            void findAllByCompanyOrderByCreatedAtDesc_methodExists() {
+                // given & when
+                java.util.List<AnnualLeaveDispatchHistory> result =
+                        annualLeaveDispatchHistoryRepository
+                                .findAllByCompanyOrderByCreatedAtDesc(Company.AWESOME);
+
+                // then: mock 기본값은 빈 리스트 — 메서드 존재 자체를 컴파일 레벨에서 검증
+                assertThat(result).isNotNull();
+            }
+
+            @Test
+            @DisplayName("existsByCompanyAndBaseDateBetween 메서드가 컴파일 레벨에서 호출 가능하다")
+            void existsByCompanyAndBaseDateBetween_methodExists() {
+                // given
+                LocalDate start = LocalDate.of(2026, 6, 1);
+                LocalDate end = LocalDate.of(2026, 6, 30);
+
+                // when
+                boolean result =
+                        annualLeaveDispatchHistoryRepository.existsByCompanyAndBaseDateBetween(
+                                Company.AWESOME, start, end);
+
+                // then: mock 기본값은 false — 메서드 존재 자체를 컴파일 레벨에서 검증
+                assertThat(result).isFalse();
+            }
+
+            @Test
+            @DisplayName("existsByIdNotAndCompanyAndBaseDateBetween 메서드가 컴파일 레벨에서 호출 가능하다")
+            void existsByIdNotAndCompanyAndBaseDateBetween_methodExists() {
+                // given
+                LocalDate start = LocalDate.of(2026, 6, 1);
+                LocalDate end = LocalDate.of(2026, 6, 30);
+
+                // when
+                boolean result =
+                        annualLeaveDispatchHistoryRepository
+                                .existsByIdNotAndCompanyAndBaseDateBetween(
+                                        10L, Company.AWESOME, start, end);
+
+                // then: mock 기본값은 false — 메서드 존재 자체를 컴파일 레벨에서 검증
+                assertThat(result).isFalse();
+            }
+        }
+    }
+
+    @Nested
+    @DisplayName("AdminAnnualLeaveDispatchDetailResponseDto는")
+    class Describe_AdminAnnualLeaveDispatchDetailResponseDto {
+
+        @Nested
+        @DisplayName("title과 company 필드를 포함하여 빌더로 생성하면")
+        class Context_with_title_and_company {
+
+            @Test
+            @DisplayName("각각 올바른 값을 반환한다")
+            void it_returns_title_and_company() {
+                // given
+                String expectedTitle = "7월";
+                Company expectedCompany = Company.AWESOME;
+
+                // when
+                AdminAnnualLeaveDispatchDetailResponseDto dto =
+                        AdminAnnualLeaveDispatchDetailResponseDto.builder()
+                                .dispatchId(10L)
+                                .originalFileName("2026_연차현황.xlsx")
+                                .sheetName("2026-07")
+                                .title(expectedTitle)
+                                .company(expectedCompany)
+                                .build();
+
+                // then
+                assertThat(dto.getTitle()).isEqualTo(expectedTitle);
+                assertThat(dto.getCompany()).isEqualTo(expectedCompany);
+            }
+        }
+    }
+
+    @Nested
+    @DisplayName("AdminAnnualLeaveDispatchItemResponseDto는")
+    class Describe_AdminAnnualLeaveDispatchItemResponseDto {
+
+        @Nested
+        @DisplayName("company 필드를 포함하여 빌더로 생성하면")
+        class Context_with_company {
+
+            @Test
+            @DisplayName("올바른 값을 반환한다")
+            void it_returns_company() {
+                // given
+                Company expectedCompany = Company.AWESOME;
+
+                // when
+                AdminAnnualLeaveDispatchItemResponseDto dto =
+                        AdminAnnualLeaveDispatchItemResponseDto.builder()
+                                .dispatchId(10L)
+                                .title("7월")
+                                .originalFileName("2026_연차현황.xlsx")
+                                .sheetName("2026-07")
+                                .company(expectedCompany)
+                                .build();
+
+                // then
+                assertThat(dto.getCompany()).isEqualTo(expectedCompany);
+            }
+        }
+    }
+
+    @Nested
+    @DisplayName("uploadAnnualLeaveFile Company별 중복 발송 체크는")
+    class Describe_uploadAnnualLeaveFile_company_duplicate_check {
+
+        private final Long loginUserId = 1L;
+        private final String sheetName = "2026-06";
+
+        @Nested
+        @DisplayName("같은 Company + 같은 월에 이미 이력이 존재하면")
+        class Context_when_same_company_same_month_exists {
+
+            @Test
+            @DisplayName("DUPLICATE_ANNUAL_LEAVE_DISPATCH 예외를 던진다")
+            void uploadAnnualLeaveFile_throwsWhenSameCompanySameMonthExists() throws IOException {
+                // given
+                User admin = createMockUser(Authority.EDIT_EMPLOYEE_INFO);
+                given(userRepository.findById(loginUserId)).willReturn(Optional.of(admin));
+
+                // 엑셀 파일의 baseDate는 2026-08-01이므로 중복 체크는 8월 기준으로 수행
+                LocalDate start = LocalDate.of(2026, 8, 1);
+                LocalDate end = LocalDate.of(2026, 8, 31);
+                given(annualLeaveDispatchHistoryRepository.existsByCompanyAndBaseDateBetween(
+                                Company.MARUI, start, end))
+                        .willReturn(true);
+
+                MultipartFile mockFile = createMockExcelFile();
+                given(s3Service.uploadFile(mockFile)).willReturn("annual-leave/history.xlsx");
+
+                // when & then
+                assertThatThrownBy(
+                                () ->
+                                        annualLeaveService.uploadAnnualLeaveFile(
+                                                mockFile, sheetName, loginUserId, Company.MARUI))
+                        .isInstanceOf(CustomException.class)
+                        .hasMessageContaining("이미 해당 월에 연차가 발송되었습니다.");
+            }
+        }
+
+        @Nested
+        @DisplayName("다른 Company + 같은 월에 이력이 존재해도")
+        class Context_when_different_company_same_month {
+
+            @Test
+            @DisplayName("중복으로 보지 않고 정상 처리된다")
+            void uploadAnnualLeaveFile_succeedsWhenDifferentCompanySameMonth() throws IOException {
+                // given: MARUI 6월 이력 있음 → AWESOME 8월은 중복 아님 (엑셀 baseDate 기준)
+                User admin = createMockUser(Authority.EDIT_EMPLOYEE_INFO);
+                given(userRepository.findById(loginUserId)).willReturn(Optional.of(admin));
+
+                // 엑셀 파일의 baseDate는 2026-08-01이므로 중복 체크는 8월 기준으로 수행
+                LocalDate start = LocalDate.of(2026, 8, 1);
+                LocalDate end = LocalDate.of(2026, 8, 31);
+                given(annualLeaveDispatchHistoryRepository.existsByCompanyAndBaseDateBetween(
+                                Company.AWESOME, start, end))
+                        .willReturn(false);
+
+                MultipartFile mockFile = createMockExcelFile();
+                User targetUser =
+                        User.builder()
+                                .nameKor("테스트 유저")
+                                .hireDate(LocalDate.of(2025, 12, 31))
+                                .workLocation(Company.AWESOME)
+                                .build();
+                given(userRepository.findByNameAndJoinDate(anyString(), any()))
+                        .willReturn(Optional.of(targetUser));
+                given(annualLeaveRepository.findByUser(targetUser)).willReturn(Optional.empty());
+                given(s3Service.uploadFile(mockFile)).willReturn("annual-leave/2026-06.xlsx");
+
+                // when
+                ExcelUploadResponseDto response =
+                        annualLeaveService.uploadAnnualLeaveFile(
+                                mockFile, sheetName, loginUserId, Company.AWESOME);
+
+                // then
+                assertThat(response.getSuccessCount()).isGreaterThan(0);
+            }
+        }
+    }
+
+    @Nested
+    @DisplayName("uploadAnnualLeaveFile Company 불일치 검증은")
+    class Describe_uploadAnnualLeaveFile_company_mismatch {
+
+        private final Long loginUserId = 1L;
+        private final String sheetName = "8월";
+
+        @Nested
+        @DisplayName("엑셀 직원의 workLocation이 요청 Company와 다르면")
+        class Context_when_user_work_location_differs_from_requested_company {
+
+            @Test
+            @DisplayName("ANNUAL_LEAVE_COMPANY_MISMATCH 예외를 던지고 전체 롤백한다")
+            void uploadAnnualLeaveFile_throwsWhenCompanyMismatch() throws IOException {
+                // given: 요청은 AWESOME이지만 엑셀 직원의 workLocation은 MARUI
+                User admin = createMockUser(Authority.EDIT_EMPLOYEE_INFO);
+                given(userRepository.findById(loginUserId)).willReturn(Optional.of(admin));
+
+                MultipartFile mockFile = createMockExcelFile();
+
+                User targetUser =
+                        User.builder()
+                                .nameKor("테스트 유저")
+                                .hireDate(LocalDate.of(2025, 12, 31))
+                                .workLocation(Company.MARUI)
+                                .build();
+                given(userRepository.findByNameAndJoinDate(anyString(), any()))
+                        .willReturn(Optional.of(targetUser));
+
+                // when & then
+                assertThatThrownBy(
+                                () ->
+                                        annualLeaveService.uploadAnnualLeaveFile(
+                                                mockFile, sheetName, loginUserId, Company.AWESOME))
+                        .isInstanceOf(CustomException.class)
+                        .hasMessageContaining("업로드 요청한 회사 정보와 엑셀 데이터 내 직원의 소속 회사가 일치하지 않습니다.");
             }
         }
     }

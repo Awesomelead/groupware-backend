@@ -8,8 +8,6 @@ spring:
     username: ${DB_USERNAME}
     password: ${DB_PASSWORD}
     driver-class-name: com.mysql.cj.jdbc.Driver
-    hikari:
-      connection-init-sql: SET NAMES utf8mb4 COLLATE utf8mb4_unicode_ci
   jwt:
     secret: ${JWT_SECRET}
     access-validation: ${ACCESS_VALIDATION}

@@ -25,6 +25,7 @@ import kr.co.awesomelead.groupware_backend.domain.user.entity.User;
 import kr.co.awesomelead.groupware_backend.domain.user.enums.Authority;
 import kr.co.awesomelead.groupware_backend.domain.user.repository.UserRepository;
 import kr.co.awesomelead.groupware_backend.global.error.CustomException;
+import kr.co.awesomelead.groupware_backend.global.error.ErrorCode;
 import kr.co.awesomelead.groupware_backend.global.infra.s3.service.S3Service;
 
 import org.junit.jupiter.api.DisplayName;
@@ -1375,6 +1376,72 @@ public class AnnualLeaveServiceTest {
                                                 mockFile, sheetName, loginUserId, Company.AWESOME))
                         .isInstanceOf(CustomException.class)
                         .hasMessageContaining("업로드 요청한 회사 정보와 엑셀 데이터 내 직원의 소속 회사가 일치하지 않습니다.");
+            }
+        }
+    }
+
+    @Nested
+    @DisplayName("getMonthlyDispatchStatus 메서드는")
+    class Describe_getMonthlyDispatchStatus {
+
+        private final Long loginUserId = 1L;
+
+        @Nested
+        @DisplayName("권한이 있는 관리자가 요청하면")
+        class Context_with_authority {
+
+            @Test
+            @DisplayName("각 회사별 당월 발송 이력 존재 여부를 Map으로 반환한다")
+            void getMonthlyDispatchStatus_success() {
+                // given
+                User admin = createMockUser(Authority.EDIT_EMPLOYEE_INFO);
+                given(userRepository.findById(loginUserId)).willReturn(Optional.of(admin));
+
+                given(annualLeaveDispatchHistoryRepository.existsByCompanyAndBaseDateBetween(
+                                org.mockito.ArgumentMatchers.eq(Company.AWESOME),
+                                any(LocalDate.class),
+                                any(LocalDate.class)))
+                        .willReturn(true);
+                given(annualLeaveDispatchHistoryRepository.existsByCompanyAndBaseDateBetween(
+                                org.mockito.ArgumentMatchers.eq(Company.MARUI),
+                                any(LocalDate.class),
+                                any(LocalDate.class)))
+                        .willReturn(false);
+
+                // when
+                java.util.Map<String, Boolean> result =
+                        annualLeaveService.getMonthlyDispatchStatus(loginUserId);
+
+                // then
+                assertThat(result).isNotNull();
+                assertThat(result.get("어썸리드")).isEqualTo(true);
+                assertThat(result.get("한국마루이")).isEqualTo(false);
+
+                // 키 순서가 Company.values() 순서(AWESOME → MARUI)와 일치하는지 검증
+                java.util.List<String> keys = new java.util.ArrayList<>(result.keySet());
+                assertThat(keys.get(0)).isEqualTo("어썸리드");
+                assertThat(keys.get(1)).isEqualTo("한국마루이");
+            }
+        }
+
+        @Nested
+        @DisplayName("권한이 없는 사용자가 요청하면")
+        class Context_without_authority {
+
+            @Test
+            @DisplayName("NO_AUTHORITY_FOR_ANNUAL_LEAVE 예외를 던진다")
+            void getMonthlyDispatchStatus_throwsWhenNoAuthority() {
+                // given
+                User userWithoutAuth = createMockUser(null);
+                given(userRepository.findById(loginUserId))
+                        .willReturn(Optional.of(userWithoutAuth));
+
+                // when & then
+                assertThatThrownBy(
+                                () -> annualLeaveService.getMonthlyDispatchStatus(loginUserId))
+                        .isInstanceOf(CustomException.class)
+                        .extracting("errorCode")
+                        .isEqualTo(ErrorCode.NO_AUTHORITY_FOR_ANNUAL_LEAVE);
             }
         }
     }

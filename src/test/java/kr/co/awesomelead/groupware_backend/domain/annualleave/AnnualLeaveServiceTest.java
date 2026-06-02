@@ -1397,15 +1397,19 @@ public class AnnualLeaveServiceTest {
                 User admin = createMockUser(Authority.EDIT_EMPLOYEE_INFO);
                 given(userRepository.findById(loginUserId)).willReturn(Optional.of(admin));
 
-                given(annualLeaveDispatchHistoryRepository.existsByCompanyAndBaseDateBetween(
-                                org.mockito.ArgumentMatchers.eq(Company.AWESOME),
-                                any(LocalDate.class),
-                                any(LocalDate.class)))
+                given(
+                                annualLeaveDispatchHistoryRepository
+                                        .existsByCompanyAndBaseDateBetween(
+                                                org.mockito.ArgumentMatchers.eq(Company.AWESOME),
+                                                any(LocalDate.class),
+                                                any(LocalDate.class)))
                         .willReturn(true);
-                given(annualLeaveDispatchHistoryRepository.existsByCompanyAndBaseDateBetween(
-                                org.mockito.ArgumentMatchers.eq(Company.MARUI),
-                                any(LocalDate.class),
-                                any(LocalDate.class)))
+                given(
+                                annualLeaveDispatchHistoryRepository
+                                        .existsByCompanyAndBaseDateBetween(
+                                                org.mockito.ArgumentMatchers.eq(Company.MARUI),
+                                                any(LocalDate.class),
+                                                any(LocalDate.class)))
                         .willReturn(false);
 
                 // when
@@ -1437,8 +1441,7 @@ public class AnnualLeaveServiceTest {
                         .willReturn(Optional.of(userWithoutAuth));
 
                 // when & then
-                assertThatThrownBy(
-                                () -> annualLeaveService.getMonthlyDispatchStatus(loginUserId))
+                assertThatThrownBy(() -> annualLeaveService.getMonthlyDispatchStatus(loginUserId))
                         .isInstanceOf(CustomException.class)
                         .extracting("errorCode")
                         .isEqualTo(ErrorCode.NO_AUTHORITY_FOR_ANNUAL_LEAVE);

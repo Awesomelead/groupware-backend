@@ -516,8 +516,9 @@ public class AnnualLeaveService {
 
         Map<String, Boolean> result = new LinkedHashMap<>();
         for (Company company : Company.values()) {
-            boolean dispatched = annualLeaveDispatchHistoryRepository
-                    .existsByCompanyAndBaseDateBetween(company, start, end);
+            boolean dispatched =
+                    annualLeaveDispatchHistoryRepository.existsByCompanyAndBaseDateBetween(
+                            company, start, end);
             result.put(company.getDescription(), dispatched);
         }
         return result;

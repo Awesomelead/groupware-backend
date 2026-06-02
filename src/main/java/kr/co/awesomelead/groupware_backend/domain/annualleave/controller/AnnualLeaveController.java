@@ -197,7 +197,9 @@ public class AnnualLeaveController {
         return ResponseEntity.ok(ApiResponse.onNoContent("연차 발송 이력이 성공적으로 삭제되었습니다."));
     }
 
-    @Operation(summary = "회사별 당월 연차 발송 현황 조회", description = "당월 회사별 연차 발송 여부를 조회합니다. EDIT_EMPLOYEE_INFO 권한 필요.")
+    @Operation(
+            summary = "회사별 당월 연차 발송 현황 조회",
+            description = "당월 회사별 연차 발송 여부를 조회합니다. EDIT_EMPLOYEE_INFO 권한 필요.")
     @ApiResponses(
             value = {
                 @io.swagger.v3.oas.annotations.responses.ApiResponse(
@@ -209,7 +211,8 @@ public class AnnualLeaveController {
                                         schema =
                                                 @Schema(
                                                         example =
-                                                                "{\"isSuccess\":true,\"code\":\"COMMON200\",\"message\":\"요청에 성공하였습니다.\",\"result\":{\"어썸리드\":true,\"한국마루이\":false}}")))
+                                                                "{\"isSuccess\":true,\"code\":\"COMMON200\",\"message\":\"요청에"
+                                                                    + " 성공하였습니다.\",\"result\":{\"어썸리드\":true,\"한국마루이\":false}}")))
             })
     @GetMapping("/admin/dispatch-status")
     public ResponseEntity<ApiResponse<Map<String, Boolean>>> getMonthlyDispatchStatus(

@@ -58,3 +58,6 @@ src/main/resources/firebase/serviceAccountKey.json
 **/generated/
 build/
 out/
+
+# Claude Code
+CLAUDE.md

@@ -39,6 +39,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.time.LocalDate;
 import java.time.YearMonth;
+import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -505,6 +506,22 @@ public class AnnualLeaveService {
                 .title(resolveDispatchMonthTitle(history))
                 .company(history.getCompany())
                 .build();
+    }
+
+    public Map<String, Boolean> getMonthlyDispatchStatus(Long userId) {
+        validateAnnualLeaveEditAuthority(userId);
+        LocalDate now = LocalDate.now(ZoneId.of("Asia/Seoul"));
+        LocalDate start = now.withDayOfMonth(1);
+        LocalDate end = now.withDayOfMonth(now.lengthOfMonth());
+
+        Map<String, Boolean> result = new LinkedHashMap<>();
+        for (Company company : Company.values()) {
+            boolean dispatched =
+                    annualLeaveDispatchHistoryRepository.existsByCompanyAndBaseDateBetween(
+                            company, start, end);
+            result.put(company.getDescription(), dispatched);
+        }
+        return result;
     }
 
     private User validateAnnualLeaveEditAuthority(Long userId) {

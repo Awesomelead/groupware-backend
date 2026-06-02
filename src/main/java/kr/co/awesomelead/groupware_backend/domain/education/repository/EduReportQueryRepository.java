@@ -85,7 +85,6 @@ public class EduReportQueryRepository {
             Company psmCompany,
             boolean canReadAllPsmCompanies,
             String title) {
-        QUser currentUser = new QUser("currentUserForCanSign");
         QUser creatorUser = new QUser("creatorUser");
         BooleanExpression attendanceExists =
                 JPAExpressions.selectOne()
@@ -94,18 +93,6 @@ public class EduReportQueryRepository {
                                 eduAttendance.eduReport.eq(eduReport),
                                 eduAttendance.user.id.eq(userId))
                         .exists();
-        BooleanExpression canSignDepartment =
-                eduReport
-                        .eduType
-                        .eq(EduType.DEPARTMENT)
-                        .and(eduReport.signatureRequired.isTrue())
-                        .and(eduReport.status.eq(EduReportStatus.OPEN))
-                        .and(attendanceExists.not())
-                        .and(
-                                eduReport.department.id.eq(
-                                        JPAExpressions.select(currentUser.department.id)
-                                                .from(currentUser)
-                                                .where(currentUser.id.eq(userId))));
 
         return queryFactory
                 .select(
@@ -119,7 +106,7 @@ public class EduReportQueryRepository {
                                 attendanceExists,
                                 Expressions.nullExpression(Boolean.class),
                                 Expressions.nullExpression(EduCompletionStatus.class),
-                                canSignDepartment,
+                                Expressions.constant(false),
                                 eduReport.pinned,
                                 eduReport.signatureRequired,
                                 eduReport.status,

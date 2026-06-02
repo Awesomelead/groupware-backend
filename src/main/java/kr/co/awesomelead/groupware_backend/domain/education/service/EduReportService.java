@@ -560,6 +560,7 @@ public class EduReportService {
         if (summary.getEduType() != EduType.DEPARTMENT) {
             summary.setMySigned(null);
             summary.setMyCompletionStatus(null);
+            summary.setCanSign(false);
             return;
         }
 
@@ -569,6 +570,10 @@ public class EduReportService {
         summary.setMySigned(mySigned);
         summary.setMyCompletionStatus(
                 resolveDepartmentMyCompletionStatus(summary.isSignatureRequired(), mySigned));
+        summary.setCanSign(
+                summary.isSignatureRequired()
+                        && summary.getStatus() == EduReportStatus.OPEN
+                        && Boolean.FALSE.equals(mySigned));
     }
 
     private void applyCompanyScopeToSummary(EduReportSummaryDto summary) {

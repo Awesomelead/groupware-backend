@@ -27,6 +27,12 @@ public class AdminPayslipDetailDto {
     @Schema(description = "직원 직급", example = "대리")
     private String employPosition;
 
+    @Schema(description = "발송자 이름", example = "김관리")
+    private String senderName;
+
+    @Schema(description = "발송자 직급", example = "과장")
+    private String senderPosition;
+
     @Schema(
             description = "파일 조회 URL",
             example = "https://bucket.s3.amazonaws.com/payslips/unique-file-key.pdf")

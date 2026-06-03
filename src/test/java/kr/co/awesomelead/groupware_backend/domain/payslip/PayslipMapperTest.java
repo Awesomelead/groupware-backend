@@ -71,10 +71,12 @@ class PayslipMapperTest {
     void toAdminPayslipDetailDto_shouldMapPositionAsKorean() {
         String originalFileName = "급여명세서(근로기준1)_10002_리딘뷰_202604.pdf";
         User user = User.builder().nameKor("리딘뷰").position(Position.ASSISTANT_MANAGER).build();
+        User sender = User.builder().nameKor("김관리").position(Position.MANAGER).build();
         Payslip payslip =
                 Payslip.builder()
                         .id(7L)
                         .user(user)
+                        .sentBy(sender)
                         .fileKey("payslip-7")
                         .originalFileName(originalFileName)
                         .createdAt(LocalDateTime.of(2026, 5, 31, 15, 29, 4))
@@ -88,6 +90,8 @@ class PayslipMapperTest {
         AdminPayslipDetailDto response = payslipMapper.toAdminPayslipDetailDto(payslip, s3Service);
 
         assertThat(response.getEmployPosition()).isEqualTo("대리");
+        assertThat(response.getSenderName()).isEqualTo("김관리");
+        assertThat(response.getSenderPosition()).isEqualTo("과장");
     }
 
     @Test

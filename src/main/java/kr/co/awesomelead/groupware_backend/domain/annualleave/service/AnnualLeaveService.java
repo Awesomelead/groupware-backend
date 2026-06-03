@@ -15,6 +15,7 @@ import kr.co.awesomelead.groupware_backend.domain.department.enums.Company;
 import kr.co.awesomelead.groupware_backend.domain.notification.service.NotificationService;
 import kr.co.awesomelead.groupware_backend.domain.user.entity.User;
 import kr.co.awesomelead.groupware_backend.domain.user.enums.Authority;
+import kr.co.awesomelead.groupware_backend.domain.user.enums.Position;
 import kr.co.awesomelead.groupware_backend.domain.user.repository.UserRepository;
 import kr.co.awesomelead.groupware_backend.global.error.CustomException;
 import kr.co.awesomelead.groupware_backend.global.error.ErrorCode;
@@ -501,11 +502,31 @@ public class AnnualLeaveService {
                 .dispatchId(history.getId())
                 .originalFileName(history.getOriginalFileName())
                 .sheetName(normalizeSheetName(history.getSheetName()))
+                .senderName(resolveSenderName(history))
+                .senderPosition(resolveSenderPosition(history))
                 .createdAt(history.getCreatedAt())
                 .fileUrl(s3Service.getPresignedViewUrl(history.getFileKey()))
                 .title(resolveDispatchMonthTitle(history))
                 .company(history.getCompany())
                 .build();
+    }
+
+    private String resolveSenderName(AnnualLeaveDispatchHistory history) {
+        if (history == null || history.getUploadedBy() == null) {
+            return null;
+        }
+        return history.getUploadedBy().getDisplayName();
+    }
+
+    private String resolveSenderPosition(AnnualLeaveDispatchHistory history) {
+        if (history == null || history.getUploadedBy() == null) {
+            return null;
+        }
+        Position position = history.getUploadedBy().getPosition();
+        if (position == null) {
+            return null;
+        }
+        return position.getDescription();
     }
 
     public Map<String, Boolean> getMonthlyDispatchStatus(Long userId) {

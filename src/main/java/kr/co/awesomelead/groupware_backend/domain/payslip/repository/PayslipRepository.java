@@ -1,5 +1,6 @@
 package kr.co.awesomelead.groupware_backend.domain.payslip.repository;
 
+import kr.co.awesomelead.groupware_backend.domain.department.enums.Company;
 import kr.co.awesomelead.groupware_backend.domain.payslip.entity.Payslip;
 import kr.co.awesomelead.groupware_backend.domain.payslip.enums.PayslipStatus;
 
@@ -13,8 +14,10 @@ public interface PayslipRepository extends JpaRepository<Payslip, Long> {
 
     @Query(
             "SELECT p FROM Payslip p JOIN FETCH p.user "
-                    + "WHERE (:status IS NULL OR p.status = :status)")
-    List<Payslip> findAllByStatusOptionalWithUser(@Param("status") PayslipStatus status);
+                    + "WHERE (:status IS NULL OR p.status = :status) "
+                    + "AND (:company IS NULL OR p.user.workLocation = :company)")
+    List<Payslip> findAllByStatusAndCompanyOptionalWithUser(
+            @Param("status") PayslipStatus status, @Param("company") Company company);
 
     List<Payslip> findAllByUserIdOrderByCreatedAtDesc(Long userId);
 }

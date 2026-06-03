@@ -23,6 +23,12 @@ public class AdminAnnualLeaveDispatchDetailResponseDto {
     @Schema(description = "시트명", example = "2026-06")
     private String sheetName;
 
+    @Schema(description = "발송자 이름", example = "김관리")
+    private String senderName;
+
+    @Schema(description = "발송자 직급", example = "과장")
+    private String senderPosition;
+
     @Schema(description = "업로드 시각", example = "2026-05-31T15:29:04")
     private LocalDateTime createdAt;
 

@@ -23,6 +23,7 @@ import kr.co.awesomelead.groupware_backend.domain.department.enums.Company;
 import kr.co.awesomelead.groupware_backend.domain.notification.service.NotificationService;
 import kr.co.awesomelead.groupware_backend.domain.user.entity.User;
 import kr.co.awesomelead.groupware_backend.domain.user.enums.Authority;
+import kr.co.awesomelead.groupware_backend.domain.user.enums.Position;
 import kr.co.awesomelead.groupware_backend.domain.user.repository.UserRepository;
 import kr.co.awesomelead.groupware_backend.global.error.CustomException;
 import kr.co.awesomelead.groupware_backend.global.infra.s3.service.S3Service;
@@ -606,6 +607,7 @@ public class AnnualLeaveServiceTest {
             // given
             Long adminId = 1L;
             User admin = createMockUser(Authority.EDIT_EMPLOYEE_INFO);
+            admin.setPosition(Position.MANAGER);
             given(userRepository.findById(adminId)).willReturn(Optional.of(admin));
 
             AnnualLeaveDispatchHistory history =
@@ -632,6 +634,8 @@ public class AnnualLeaveServiceTest {
             assertThat(result.getDispatchId()).isEqualTo(10L);
             assertThat(result.getOriginalFileName()).isEqualTo("2026_연차현황.xlsx");
             assertThat(result.getSheetName()).isEqualTo("2026-06");
+            assertThat(result.getSenderName()).isEqualTo("테스트 업로더");
+            assertThat(result.getSenderPosition()).isEqualTo("과장");
             assertThat(result.getFileUrl())
                     .isEqualTo("https://example.com/annual-leave-2026-06-first");
             assertThat(result.getTitle()).isEqualTo("6월");
@@ -1215,11 +1219,15 @@ public class AnnualLeaveServiceTest {
                                 .dispatchId(10L)
                                 .originalFileName("2026_연차현황.xlsx")
                                 .sheetName("2026-07")
+                                .senderName("김관리")
+                                .senderPosition("과장")
                                 .title(expectedTitle)
                                 .company(expectedCompany)
                                 .build();
 
                 // then
+                assertThat(dto.getSenderName()).isEqualTo("김관리");
+                assertThat(dto.getSenderPosition()).isEqualTo("과장");
                 assertThat(dto.getTitle()).isEqualTo(expectedTitle);
                 assertThat(dto.getCompany()).isEqualTo(expectedCompany);
             }

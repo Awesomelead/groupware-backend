@@ -37,6 +37,8 @@ public interface PayslipMapper {
     @Mapping(target = "payslipId", source = "payslip.id")
     @Mapping(target = "employeeName", source = "user.displayName")
     @Mapping(target = "employPosition", expression = "java(buildPositionDescription(payslip))")
+    @Mapping(target = "senderName", source = "sentBy.displayName")
+    @Mapping(target = "senderPosition", expression = "java(buildSenderPositionDescription(payslip))")
     @Mapping(target = "payslipTitle", expression = "java(buildPayslipTitle(payslip))")
     @Mapping(
             target = "presignedUrl",
@@ -69,6 +71,17 @@ public interface PayslipMapper {
             return null;
         }
         Position position = payslip.getUser().getPosition();
+        if (position == null) {
+            return null;
+        }
+        return position.getDescription();
+    }
+
+    default String buildSenderPositionDescription(Payslip payslip) {
+        if (payslip == null || payslip.getSentBy() == null) {
+            return null;
+        }
+        Position position = payslip.getSentBy().getPosition();
         if (position == null) {
             return null;
         }

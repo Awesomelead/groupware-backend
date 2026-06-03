@@ -226,7 +226,33 @@ public class PayslipController {
             value = {
                 @io.swagger.v3.oas.annotations.responses.ApiResponse(
                         responseCode = "200",
-                        description = "조회 성공"),
+                        description = "조회 성공",
+                        content =
+                                @Content(
+                                        mediaType = "application/json",
+                                        examples =
+                                                @ExampleObject(
+                                                        value =
+                                                                """
+                                {
+                                "isSuccess": true,
+                                "code": "COMMON200",
+                                "message": "성공입니다.",
+                                "result": {
+                                    "payslipId": 1,
+                                    "employeeName": "홍길동",
+                                    "employPosition": "대리",
+                                    "senderName": "김관리",
+                                    "senderPosition": "과장",
+                                    "presignedUrl": "https://bucket.s3.amazonaws.com/payslips/unique-file-key.pdf",
+                                    "originalFileName": "급여명세서(근로기준1)_10001_홍길동_202605.pdf",
+                                    "payslipTitle": "2026년 5월",
+                                    "createdAt": "2026-05-31T10:15:30",
+                                    "status": "READ",
+                                    "readAt": "2026-05-31T12:30:00"
+                                }
+                                }
+                                """))),
                 @io.swagger.v3.oas.annotations.responses.ApiResponse(
                         responseCode = "404",
                         description = "명세서 없음",

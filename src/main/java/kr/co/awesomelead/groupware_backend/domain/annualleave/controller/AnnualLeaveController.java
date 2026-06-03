@@ -2,6 +2,7 @@ package kr.co.awesomelead.groupware_backend.domain.annualleave.controller;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.ExampleObject;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 
@@ -127,7 +128,28 @@ public class AnnualLeaveController {
                                                 @Schema(
                                                         implementation =
                                                                 AdminAnnualLeaveDispatchDetailResponseDto
-                                                                        .class)))
+                                                                        .class),
+                                        examples =
+                                                @ExampleObject(
+                                                        value =
+                                                                """
+                                {
+                                "isSuccess": true,
+                                "code": "COMMON200",
+                                "message": "성공입니다.",
+                                "result": {
+                                    "dispatchId": 10,
+                                    "originalFileName": "2026_연차현황.xlsx",
+                                    "sheetName": "2026-06",
+                                    "senderName": "김관리",
+                                    "senderPosition": "과장",
+                                    "createdAt": "2026-05-31T15:29:04",
+                                    "fileUrl": "https://...presigned-url",
+                                    "title": "6월",
+                                    "company": "AWESOME"
+                                }
+                                }
+                                """)))
             })
     @GetMapping("/admin/{dispatchId}")
     public ResponseEntity<ApiResponse<AdminAnnualLeaveDispatchDetailResponseDto>>

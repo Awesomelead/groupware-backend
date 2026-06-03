@@ -9,6 +9,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 
 import jakarta.validation.Valid;
 
+import kr.co.awesomelead.groupware_backend.domain.department.enums.Company;
 import kr.co.awesomelead.groupware_backend.domain.payslip.dto.request.PayslipViewPasswordRequestDto;
 import kr.co.awesomelead.groupware_backend.domain.payslip.dto.response.AdminPayslipDetailDto;
 import kr.co.awesomelead.groupware_backend.domain.payslip.dto.response.AdminPayslipGroupDto;
@@ -199,7 +200,7 @@ public class PayslipController {
 
     @Operation(
             summary = "보낸 명세서 목록 조회 (관리자)",
-            description = "관리자가 상태별로 발송한 명세서를 급여지급월(YYYYMM) 기준으로 그룹 조회합니다.")
+            description = "관리자가 상태 및 회사별로 발송한 명세서를 급여지급월(YYYYMM) 기준으로 그룹 조회합니다.")
     @ApiResponses(
             value = {
                 @io.swagger.v3.oas.annotations.responses.ApiResponse(
@@ -214,10 +215,13 @@ public class PayslipController {
             @Parameter(hidden = true) @AuthenticationPrincipal CustomUserDetails userDetails,
             @Parameter(description = "명세서 상태 (생략 시 전체 조회)", example = "SENT")
                     @RequestParam(required = false)
-                    PayslipStatus status) {
+                    PayslipStatus status,
+            @Parameter(description = "소속 회사 (생략 시 전체 조회)", example = "AWESOME")
+                    @RequestParam(required = false)
+                    Company company) {
 
         List<AdminPayslipGroupDto> response =
-                payslipService.getPayslipsForAdminGrouped(userDetails.getId(), status);
+                payslipService.getPayslipsForAdminGrouped(userDetails.getId(), status, company);
         return ResponseEntity.ok(ApiResponse.onSuccess(response));
     }
 
@@ -226,7 +230,33 @@ public class PayslipController {
             value = {
                 @io.swagger.v3.oas.annotations.responses.ApiResponse(
                         responseCode = "200",
-                        description = "조회 성공"),
+                        description = "조회 성공",
+                        content =
+                                @Content(
+                                        mediaType = "application/json",
+                                        examples =
+                                                @ExampleObject(
+                                                        value =
+                                                                """
+                                {
+                                "isSuccess": true,
+                                "code": "COMMON200",
+                                "message": "성공입니다.",
+                                "result": {
+                                    "payslipId": 1,
+                                    "employeeName": "홍길동",
+                                    "employPosition": "대리",
+                                    "senderName": "김관리",
+                                    "senderPosition": "과장",
+                                    "presignedUrl": "https://bucket.s3.amazonaws.com/payslips/unique-file-key.pdf",
+                                    "originalFileName": "급여명세서(근로기준1)_10001_홍길동_202605.pdf",
+                                    "payslipTitle": "2026년 5월",
+                                    "createdAt": "2026-05-31T10:15:30",
+                                    "status": "READ",
+                                    "readAt": "2026-05-31T12:30:00"
+                                }
+                                }
+                                """))),
                 @io.swagger.v3.oas.annotations.responses.ApiResponse(
                         responseCode = "404",
                         description = "명세서 없음",

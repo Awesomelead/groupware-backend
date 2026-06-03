@@ -46,6 +46,10 @@ public class Payslip {
     @JsonBackReference
     private User user;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "sent_by_id")
+    private User sentBy;
+
     @Column(nullable = false, length = 200)
     private String fileKey; // 파일 키
 

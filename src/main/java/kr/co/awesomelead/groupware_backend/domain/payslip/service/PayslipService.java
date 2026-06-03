@@ -1,5 +1,6 @@
 package kr.co.awesomelead.groupware_backend.domain.payslip.service;
 
+import kr.co.awesomelead.groupware_backend.domain.department.enums.Company;
 import kr.co.awesomelead.groupware_backend.domain.notification.service.NotificationService;
 import kr.co.awesomelead.groupware_backend.domain.payslip.dto.response.AdminPayslipDetailDto;
 import kr.co.awesomelead.groupware_backend.domain.payslip.dto.response.AdminPayslipGroupDto;
@@ -66,7 +67,7 @@ public class PayslipService {
 
     @Transactional
     public void sendPayslip(List<MultipartFile> payslipFiles, Long userId) throws IOException {
-        validatePayslipEditAuthority(userId);
+        User sender = validatePayslipEditAuthority(userId);
 
         for (MultipartFile file : payslipFiles) {
 
@@ -92,7 +93,7 @@ public class PayslipService {
 
             String s3Key = s3Service.uploadFile(file);
 
-            Payslip savedPayslip = savePayslipInfo(s3Key, originalFileName, target);
+            Payslip savedPayslip = savePayslipInfo(s3Key, originalFileName, target, sender);
             notificationService.sendPayslipAlertToUser(target.getId(), savedPayslip.getId());
         }
     }
@@ -100,7 +101,7 @@ public class PayslipService {
     @Transactional
     public void updatePayslip(Long payslipId, MultipartFile payslipFile, Long userId)
             throws IOException {
-        validatePayslipEditAuthority(userId);
+        User sender = validatePayslipEditAuthority(userId);
 
         Payslip payslip =
                 payslipRepository
@@ -130,6 +131,7 @@ public class PayslipService {
         payslip.setFileKey(newFileKey);
         payslip.setOriginalFileName(originalFileName);
         payslip.setUser(target);
+        payslip.setSentBy(sender);
         payslip.setStatus(PayslipStatus.SENT);
         payslip.setReadAt(null);
 
@@ -277,31 +279,35 @@ public class PayslipService {
     }
 
     @Transactional
-    protected Payslip savePayslipInfo(String s3Key, String originalFileName, User targetUser) {
+    protected Payslip savePayslipInfo(
+            String s3Key, String originalFileName, User targetUser, User sender) {
         Payslip payslip =
                 Payslip.builder()
                         .fileKey(s3Key)
                         .originalFileName(originalFileName)
                         .status(PayslipStatus.SENT)
                         .user(targetUser)
+                        .sentBy(sender)
                         .build();
         return payslipRepository.save(payslip);
     }
 
     // 관리자용 보낸 급여명세서 목록 조회 (Status에 따라)
     @Transactional(readOnly = true)
-    public List<AdminPayslipSummaryDto> getPayslipsForAdmin(Long adminId, PayslipStatus status) {
+    public List<AdminPayslipSummaryDto> getPayslipsForAdmin(
+            Long adminId, PayslipStatus status, Company company) {
         validateAdminAuthority(adminId);
 
-        List<Payslip> payslipList = payslipRepository.findAllByStatusOptionalWithUser(status);
+        List<Payslip> payslipList =
+                payslipRepository.findAllByStatusAndCompanyOptionalWithUser(status, company);
 
         return payslipMapper.toAdminPayslipSummaryDtoList(payslipList);
     }
 
     @Transactional(readOnly = true)
     public List<AdminPayslipGroupDto> getPayslipsForAdminGrouped(
-            Long adminId, PayslipStatus status) {
-        List<AdminPayslipSummaryDto> summaries = getPayslipsForAdmin(adminId, status);
+            Long adminId, PayslipStatus status, Company company) {
+        List<AdminPayslipSummaryDto> summaries = getPayslipsForAdmin(adminId, status, company);
 
         Map<String, List<AdminPayslipSummaryDto>> groupedByYearMonth =
                 summaries.stream()
@@ -398,7 +404,7 @@ public class PayslipService {
         }
     }
 
-    private void validatePayslipEditAuthority(Long userId) {
+    private User validatePayslipEditAuthority(Long userId) {
         User user =
                 userRepository
                         .findById(userId)
@@ -406,6 +412,7 @@ public class PayslipService {
         if (!user.hasAuthority(Authority.EDIT_EMPLOYEE_INFO)) {
             throw new CustomException(ErrorCode.NO_AUTHORITY_FOR_PAYSLIP);
         }
+        return user;
     }
 
     private String extractYearMonth(String originalFileName) {

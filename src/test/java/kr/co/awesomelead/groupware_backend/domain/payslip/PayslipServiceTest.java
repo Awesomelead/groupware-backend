@@ -8,6 +8,7 @@ import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 
+import kr.co.awesomelead.groupware_backend.domain.department.enums.Company;
 import kr.co.awesomelead.groupware_backend.domain.notification.service.NotificationService;
 import kr.co.awesomelead.groupware_backend.domain.payslip.dto.response.AdminPayslipGroupDto;
 import kr.co.awesomelead.groupware_backend.domain.payslip.dto.response.AdminPayslipSummaryDto;
@@ -450,7 +451,7 @@ public class PayslipServiceTest {
                 given(userRepository.findById(1L)).willReturn(Optional.of(normalUser));
 
                 // when & then
-                assertThatThrownBy(() -> payslipService.getPayslipsForAdmin(1L, null))
+                assertThatThrownBy(() -> payslipService.getPayslipsForAdmin(1L, null, null))
                         .isInstanceOf(CustomException.class)
                         .hasFieldOrPropertyWithValue(
                                 "errorCode", ErrorCode.NO_AUTHORITY_FOR_PAYSLIP);
@@ -469,7 +470,7 @@ public class PayslipServiceTest {
                 given(userRepository.findById(1L)).willReturn(Optional.of(adminUser));
 
                 List<Payslip> allPayslips = List.of(new Payslip(), new Payslip());
-                given(payslipRepository.findAllByStatusOptionalWithUser(null))
+                given(payslipRepository.findAllByStatusAndCompanyOptionalWithUser(null, null))
                         .willReturn(allPayslips);
                 given(payslipMapper.toAdminPayslipSummaryDtoList(allPayslips))
                         .willReturn(
@@ -478,11 +479,39 @@ public class PayslipServiceTest {
                                         new AdminPayslipSummaryDto()));
 
                 // when
-                List<AdminPayslipSummaryDto> result = payslipService.getPayslipsForAdmin(1L, null);
+                List<AdminPayslipSummaryDto> result =
+                        payslipService.getPayslipsForAdmin(1L, null, null);
 
                 // then
                 assertThat(result.size()).isEqualTo(2);
-                verify(payslipRepository).findAllByStatusOptionalWithUser(null);
+                verify(payslipRepository).findAllByStatusAndCompanyOptionalWithUser(null, null);
+            }
+
+            @Test
+            @DisplayName("회사 조건이 있으면 해당 회사로 필터링해 조회한다.")
+            void it_filters_payslips_by_company() {
+                // given
+                User adminUser = User.builder().id(1L).role(Role.ADMIN).build();
+                given(userRepository.findById(1L)).willReturn(Optional.of(adminUser));
+
+                List<Payslip> awesomePayslips = List.of(new Payslip());
+                given(
+                                payslipRepository.findAllByStatusAndCompanyOptionalWithUser(
+                                        PayslipStatus.SENT, Company.AWESOME))
+                        .willReturn(awesomePayslips);
+                given(payslipMapper.toAdminPayslipSummaryDtoList(awesomePayslips))
+                        .willReturn(List.of(new AdminPayslipSummaryDto()));
+
+                // when
+                List<AdminPayslipSummaryDto> result =
+                        payslipService.getPayslipsForAdmin(
+                                1L, PayslipStatus.SENT, Company.AWESOME);
+
+                // then
+                assertThat(result.size()).isEqualTo(1);
+                verify(payslipRepository)
+                        .findAllByStatusAndCompanyOptionalWithUser(
+                                PayslipStatus.SENT, Company.AWESOME);
             }
         }
 
@@ -498,7 +527,8 @@ public class PayslipServiceTest {
                 given(userRepository.findById(1L)).willReturn(Optional.of(adminUser));
 
                 List<Payslip> payslips = List.of(new Payslip(), new Payslip(), new Payslip());
-                given(payslipRepository.findAllByStatusOptionalWithUser(null)).willReturn(payslips);
+                given(payslipRepository.findAllByStatusAndCompanyOptionalWithUser(null, null))
+                        .willReturn(payslips);
 
                 AdminPayslipSummaryDto mayFirst =
                         AdminPayslipSummaryDto.builder()
@@ -523,7 +553,7 @@ public class PayslipServiceTest {
 
                 // when
                 List<AdminPayslipGroupDto> result =
-                        payslipService.getPayslipsForAdminGrouped(1L, null);
+                        payslipService.getPayslipsForAdminGrouped(1L, null, null);
 
                 // then
                 assertThat(result.size()).isEqualTo(2);
@@ -550,7 +580,8 @@ public class PayslipServiceTest {
                 given(userRepository.findById(1L)).willReturn(Optional.of(adminUser));
 
                 List<Payslip> payslips = List.of(new Payslip());
-                given(payslipRepository.findAllByStatusOptionalWithUser(null)).willReturn(payslips);
+                given(payslipRepository.findAllByStatusAndCompanyOptionalWithUser(null, null))
+                        .willReturn(payslips);
 
                 String nfdFileName =
                         Normalizer.normalize(
@@ -566,7 +597,7 @@ public class PayslipServiceTest {
 
                 // when
                 List<AdminPayslipGroupDto> result =
-                        payslipService.getPayslipsForAdminGrouped(1L, null);
+                        payslipService.getPayslipsForAdminGrouped(1L, null, null);
 
                 // then
                 assertThat(result.size()).isEqualTo(1);
@@ -583,7 +614,8 @@ public class PayslipServiceTest {
                 given(userRepository.findById(1L)).willReturn(Optional.of(adminUser));
 
                 List<Payslip> payslips = List.of(new Payslip());
-                given(payslipRepository.findAllByStatusOptionalWithUser(null)).willReturn(payslips);
+                given(payslipRepository.findAllByStatusAndCompanyOptionalWithUser(null, null))
+                        .willReturn(payslips);
 
                 AdminPayslipSummaryDto nullFileName =
                         AdminPayslipSummaryDto.builder()
@@ -595,7 +627,8 @@ public class PayslipServiceTest {
                         .willReturn(List.of(nullFileName));
 
                 // when & then
-                assertThatThrownBy(() -> payslipService.getPayslipsForAdminGrouped(1L, null))
+                assertThatThrownBy(
+                                () -> payslipService.getPayslipsForAdminGrouped(1L, null, null))
                         .isInstanceOf(CustomException.class)
                         .hasFieldOrPropertyWithValue(
                                 "errorCode", ErrorCode.INVALID_PAYSLIP_FILE_NAME_FORMAT);

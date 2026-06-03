@@ -9,6 +9,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 
 import jakarta.validation.Valid;
 
+import kr.co.awesomelead.groupware_backend.domain.department.enums.Company;
 import kr.co.awesomelead.groupware_backend.domain.payslip.dto.request.PayslipViewPasswordRequestDto;
 import kr.co.awesomelead.groupware_backend.domain.payslip.dto.response.AdminPayslipDetailDto;
 import kr.co.awesomelead.groupware_backend.domain.payslip.dto.response.AdminPayslipGroupDto;
@@ -199,7 +200,7 @@ public class PayslipController {
 
     @Operation(
             summary = "보낸 명세서 목록 조회 (관리자)",
-            description = "관리자가 상태별로 발송한 명세서를 급여지급월(YYYYMM) 기준으로 그룹 조회합니다.")
+            description = "관리자가 상태 및 회사별로 발송한 명세서를 급여지급월(YYYYMM) 기준으로 그룹 조회합니다.")
     @ApiResponses(
             value = {
                 @io.swagger.v3.oas.annotations.responses.ApiResponse(
@@ -214,10 +215,13 @@ public class PayslipController {
             @Parameter(hidden = true) @AuthenticationPrincipal CustomUserDetails userDetails,
             @Parameter(description = "명세서 상태 (생략 시 전체 조회)", example = "SENT")
                     @RequestParam(required = false)
-                    PayslipStatus status) {
+                    PayslipStatus status,
+            @Parameter(description = "소속 회사 (생략 시 전체 조회)", example = "AWESOME")
+                    @RequestParam(required = false)
+                    Company company) {
 
         List<AdminPayslipGroupDto> response =
-                payslipService.getPayslipsForAdminGrouped(userDetails.getId(), status);
+                payslipService.getPayslipsForAdminGrouped(userDetails.getId(), status, company);
         return ResponseEntity.ok(ApiResponse.onSuccess(response));
     }
 

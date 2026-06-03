@@ -1,6 +1,7 @@
 package kr.co.awesomelead.groupware_backend.domain.payslip.service;
 
 import kr.co.awesomelead.groupware_backend.domain.notification.service.NotificationService;
+import kr.co.awesomelead.groupware_backend.domain.department.enums.Company;
 import kr.co.awesomelead.groupware_backend.domain.payslip.dto.response.AdminPayslipDetailDto;
 import kr.co.awesomelead.groupware_backend.domain.payslip.dto.response.AdminPayslipGroupDto;
 import kr.co.awesomelead.groupware_backend.domain.payslip.dto.response.AdminPayslipSummaryDto;
@@ -293,18 +294,20 @@ public class PayslipService {
 
     // 관리자용 보낸 급여명세서 목록 조회 (Status에 따라)
     @Transactional(readOnly = true)
-    public List<AdminPayslipSummaryDto> getPayslipsForAdmin(Long adminId, PayslipStatus status) {
+    public List<AdminPayslipSummaryDto> getPayslipsForAdmin(
+            Long adminId, PayslipStatus status, Company company) {
         validateAdminAuthority(adminId);
 
-        List<Payslip> payslipList = payslipRepository.findAllByStatusOptionalWithUser(status);
+        List<Payslip> payslipList =
+                payslipRepository.findAllByStatusAndCompanyOptionalWithUser(status, company);
 
         return payslipMapper.toAdminPayslipSummaryDtoList(payslipList);
     }
 
     @Transactional(readOnly = true)
     public List<AdminPayslipGroupDto> getPayslipsForAdminGrouped(
-            Long adminId, PayslipStatus status) {
-        List<AdminPayslipSummaryDto> summaries = getPayslipsForAdmin(adminId, status);
+            Long adminId, PayslipStatus status, Company company) {
+        List<AdminPayslipSummaryDto> summaries = getPayslipsForAdmin(adminId, status, company);
 
         Map<String, List<AdminPayslipSummaryDto>> groupedByYearMonth =
                 summaries.stream()

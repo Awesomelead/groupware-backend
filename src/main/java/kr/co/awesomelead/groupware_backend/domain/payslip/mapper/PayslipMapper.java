@@ -38,7 +38,9 @@ public interface PayslipMapper {
     @Mapping(target = "employeeName", source = "user.displayName")
     @Mapping(target = "employPosition", expression = "java(buildPositionDescription(payslip))")
     @Mapping(target = "senderName", source = "sentBy.displayName")
-    @Mapping(target = "senderPosition", expression = "java(buildSenderPositionDescription(payslip))")
+    @Mapping(
+            target = "senderPosition",
+            expression = "java(buildSenderPositionDescription(payslip))")
     @Mapping(target = "payslipTitle", expression = "java(buildPayslipTitle(payslip))")
     @Mapping(
             target = "presignedUrl",

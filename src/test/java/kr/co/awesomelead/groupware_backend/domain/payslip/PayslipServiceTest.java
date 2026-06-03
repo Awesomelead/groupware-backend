@@ -504,8 +504,7 @@ public class PayslipServiceTest {
 
                 // when
                 List<AdminPayslipSummaryDto> result =
-                        payslipService.getPayslipsForAdmin(
-                                1L, PayslipStatus.SENT, Company.AWESOME);
+                        payslipService.getPayslipsForAdmin(1L, PayslipStatus.SENT, Company.AWESOME);
 
                 // then
                 assertThat(result.size()).isEqualTo(1);
@@ -627,8 +626,7 @@ public class PayslipServiceTest {
                         .willReturn(List.of(nullFileName));
 
                 // when & then
-                assertThatThrownBy(
-                                () -> payslipService.getPayslipsForAdminGrouped(1L, null, null))
+                assertThatThrownBy(() -> payslipService.getPayslipsForAdminGrouped(1L, null, null))
                         .isInstanceOf(CustomException.class)
                         .hasFieldOrPropertyWithValue(
                                 "errorCode", ErrorCode.INVALID_PAYSLIP_FILE_NAME_FORMAT);

@@ -113,6 +113,33 @@ class AdminServiceTest {
                 assertThat(savedUser.getStatus()).isEqualTo(Status.AVAILABLE);
                 assertThat(savedUser.getRole()).isEqualTo(Role.USER);
             }
+
+            @Test
+            @DisplayName("MASTER_ADMIN으로 승인하면 모든 권한을 부여한다")
+            void it_grants_all_authorities_to_master_admin() {
+                // given
+                Department department =
+                        Department.builder().id(1L).name(DepartmentName.SALES_DEPT).build();
+                User pendingUser = new User();
+                pendingUser.setId(userId);
+                pendingUser.setStatus(Status.PENDING);
+
+                UserApprovalRequestDto masterAdminRequestDto = createRequestDto();
+                masterAdminRequestDto.setRole(Role.MASTER_ADMIN);
+
+                when(userRepository.findById(userId)).thenReturn(Optional.of(pendingUser));
+                when(departmentRepository.findByName(any())).thenReturn(Optional.of(department));
+
+                // when
+                adminService.approveUserRegistration(userId, masterAdminRequestDto, adminId);
+
+                // then
+                assertThat(pendingUser.getRole()).isEqualTo(Role.MASTER_ADMIN);
+                assertThat(pendingUser.getAuthorities().size()).isEqualTo(Authority.values().length);
+                for (Authority authority : Authority.values()) {
+                    assertThat(pendingUser.hasAuthority(authority)).isEqualTo(true);
+                }
+            }
         }
 
         @Nested

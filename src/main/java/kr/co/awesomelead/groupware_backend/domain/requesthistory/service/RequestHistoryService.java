@@ -12,6 +12,7 @@ import kr.co.awesomelead.groupware_backend.domain.requesthistory.dto.response.Re
 import kr.co.awesomelead.groupware_backend.domain.requesthistory.dto.response.RequestHistorySummaryResponseDto;
 import kr.co.awesomelead.groupware_backend.domain.requesthistory.entity.RequestHistory;
 import kr.co.awesomelead.groupware_backend.domain.requesthistory.enums.RequestHistoryStatus;
+import kr.co.awesomelead.groupware_backend.domain.requesthistory.enums.RequestPurpose;
 import kr.co.awesomelead.groupware_backend.domain.requesthistory.repository.RequestHistoryQueryRepository;
 import kr.co.awesomelead.groupware_backend.domain.requesthistory.repository.RequestHistoryRepository;
 import kr.co.awesomelead.groupware_backend.domain.user.entity.User;
@@ -58,6 +59,7 @@ public class RequestHistoryService {
         requestHistory.setName(user.getNameKor());
         requestHistory.setPosition(user.getPosition().getDescription());
         requestHistory.setPurpose(requestDto.getPurpose());
+        requestHistory.setPurposeDetail(resolvePurposeDetail(requestDto));
         requestHistory.setCopies(requestDto.getCopies());
         requestHistory.setWishDate(requestDto.getWishDate());
         requestHistory.setApprovalStatus(RequestHistoryStatus.PENDING);
@@ -72,6 +74,16 @@ public class RequestHistoryService {
                 user.getNameKor());
 
         return requestId;
+    }
+
+    private String resolvePurposeDetail(RequestHistoryCreateRequestDto requestDto) {
+        if (requestDto.getPurpose() != RequestPurpose.ETC) {
+            return null;
+        }
+        if (!StringUtils.hasText(requestDto.getPurposeDetail())) {
+            throw new CustomException(ErrorCode.REQUEST_PURPOSE_DETAIL_REQUIRED);
+        }
+        return requestDto.getPurposeDetail().trim();
     }
 
     @Transactional(readOnly = true)

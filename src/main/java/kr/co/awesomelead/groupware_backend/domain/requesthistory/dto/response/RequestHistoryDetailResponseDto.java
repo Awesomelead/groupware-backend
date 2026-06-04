@@ -4,6 +4,7 @@ import io.swagger.v3.oas.annotations.media.Schema;
 
 import kr.co.awesomelead.groupware_backend.domain.requesthistory.entity.RequestHistory;
 import kr.co.awesomelead.groupware_backend.domain.requesthistory.enums.RequestHistoryStatus;
+import kr.co.awesomelead.groupware_backend.domain.requesthistory.enums.RequestPurpose;
 import kr.co.awesomelead.groupware_backend.domain.requesthistory.enums.RequestType;
 
 import lombok.Builder;
@@ -28,8 +29,11 @@ public class RequestHistoryDetailResponseDto {
     @Schema(description = "증명서 구분", example = "재직증명서")
     private RequestType requestType;
 
-    @Schema(description = "용도", example = "은행 제출용")
-    private String purpose;
+    @Schema(description = "용도", example = "금융기관 제출용")
+    private RequestPurpose purpose;
+
+    @Schema(description = "기타 선택 시 상세 용도", example = "기타입니다", nullable = true)
+    private String purposeDetail;
 
     @Schema(description = "발급 부수", example = "1")
     private Integer copies;
@@ -56,6 +60,7 @@ public class RequestHistoryDetailResponseDto {
                 .position(requestHistory.getPosition())
                 .requestType(requestHistory.getRequestType())
                 .purpose(requestHistory.getPurpose())
+                .purposeDetail(requestHistory.getPurposeDetail())
                 .copies(requestHistory.getCopies())
                 .wishDate(requestHistory.getWishDate())
                 .requestDate(requestHistory.getRequestDate())

@@ -112,7 +112,8 @@ class RequestHistoryServiceTest {
             ReflectionTestUtils.setField(requestHistory, "id", 10L);
             ReflectionTestUtils.setField(
                     requestHistory, "requestType", RequestType.CAREER_CERTIFICATE);
-            ReflectionTestUtils.setField(requestHistory, "purpose", RequestPurpose.GOVERNMENT_OFFICE);
+            ReflectionTestUtils.setField(
+                    requestHistory, "purpose", RequestPurpose.GOVERNMENT_OFFICE);
             ReflectionTestUtils.setField(requestHistory, "copies", 2);
 
             given(userRepository.findById(1L)).willReturn(Optional.of(user));

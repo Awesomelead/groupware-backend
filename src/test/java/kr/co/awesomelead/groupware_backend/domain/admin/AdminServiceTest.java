@@ -135,7 +135,8 @@ class AdminServiceTest {
 
                 // then
                 assertThat(pendingUser.getRole()).isEqualTo(Role.MASTER_ADMIN);
-                assertThat(pendingUser.getAuthorities().size()).isEqualTo(Authority.values().length);
+                assertThat(pendingUser.getAuthorities().size())
+                        .isEqualTo(Authority.values().length);
                 for (Authority authority : Authority.values()) {
                     assertThat(pendingUser.hasAuthority(authority)).isEqualTo(true);
                 }

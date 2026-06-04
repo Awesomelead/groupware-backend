@@ -6,6 +6,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.verify;
 
+import kr.co.awesomelead.groupware_backend.domain.department.enums.Company;
 import kr.co.awesomelead.groupware_backend.domain.notification.dto.response.NotificationResponseDto;
 import kr.co.awesomelead.groupware_backend.domain.notification.entity.Notification;
 import kr.co.awesomelead.groupware_backend.domain.notification.enums.NotificationDomainType;
@@ -243,18 +244,47 @@ class RequestHistoryServiceTest {
             given(userRepository.findById(100L)).willReturn(Optional.of(admin));
             given(
                             requestHistoryQueryRepository.findAllWithUserAndDepartmentByStatus(
-                                    RequestHistoryStatus.PENDING, pageable))
+                                    null, RequestHistoryStatus.PENDING, pageable))
                     .willReturn(page);
 
             // when
             Page<AdminRequestHistorySummaryResponseDto> result =
                     requestHistoryService.getAllRequestsForAdmin(
-                            100L, RequestHistoryStatus.PENDING, pageable);
+                            100L, null, RequestHistoryStatus.PENDING, pageable);
 
             // then
             assertThat(result.getTotalElements()).isEqualTo(1);
             assertThat(result.getContent()).hasSize(1);
             assertThat(result.getContent().get(0).getRequestId()).isEqualTo(10L);
+        }
+
+        @Test
+        @DisplayName("회사 필터가 있으면 해당 회사 조건으로 신청 목록을 조회한다")
+        void it_returns_requests_filtered_by_company_for_admin() {
+            // given
+            User admin = new User();
+            ReflectionTestUtils.setField(admin, "id", 100L);
+            admin.addAuthority(Authority.MANAGE_CERTIFICATE_REQUEST);
+
+            PageRequest pageable = PageRequest.of(0, 20);
+            Page<RequestHistory> page = new PageImpl<>(List.of(), pageable, 0);
+
+            given(userRepository.findById(100L)).willReturn(Optional.of(admin));
+            given(
+                            requestHistoryQueryRepository.findAllWithUserAndDepartmentByStatus(
+                                    Company.AWESOME, RequestHistoryStatus.PENDING, pageable))
+                    .willReturn(page);
+
+            // when
+            Page<AdminRequestHistorySummaryResponseDto> result =
+                    requestHistoryService.getAllRequestsForAdmin(
+                            100L, Company.AWESOME, RequestHistoryStatus.PENDING, pageable);
+
+            // then
+            assertThat(result.getTotalElements()).isZero();
+            verify(requestHistoryQueryRepository)
+                    .findAllWithUserAndDepartmentByStatus(
+                            Company.AWESOME, RequestHistoryStatus.PENDING, pageable);
         }
 
         @Test
@@ -270,7 +300,7 @@ class RequestHistoryServiceTest {
             assertThatThrownBy(
                             () ->
                                     requestHistoryService.getAllRequestsForAdmin(
-                                            200L, null, PageRequest.of(0, 20)))
+                                            200L, null, null, PageRequest.of(0, 20)))
                     .isInstanceOf(CustomException.class)
                     .extracting("errorCode")
                     .isEqualTo(ErrorCode.NO_AUTHORITY_FOR_CERTIFICATE_REQUEST_REVIEW);

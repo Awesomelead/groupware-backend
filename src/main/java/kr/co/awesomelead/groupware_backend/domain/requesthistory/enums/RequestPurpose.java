@@ -30,21 +30,14 @@ public enum RequestPurpose {
             return null;
         }
 
-        String normalized = normalize(value);
-        if (normalize("은행 제출용").equals(normalized)) {
-            return FINANCIAL_INSTITUTION;
-        }
+        String trimmedValue = value.trim();
 
         return Arrays.stream(values())
                 .filter(
                         purpose ->
-                                purpose.name().equalsIgnoreCase(value.trim())
-                                        || normalize(purpose.getDescription()).equals(normalized))
+                                purpose.name().equalsIgnoreCase(trimmedValue)
+                                        || purpose.getDescription().equals(trimmedValue))
                 .findFirst()
                 .orElseThrow(() -> new IllegalArgumentException("알 수 없는 제증명 발급 용도: " + value));
-    }
-
-    private static String normalize(String value) {
-        return value.trim().replace("_", "").replace(" ", "").replace(",", "");
     }
 }

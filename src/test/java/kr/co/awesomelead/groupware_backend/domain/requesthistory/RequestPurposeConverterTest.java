@@ -1,6 +1,7 @@
 package kr.co.awesomelead.groupware_backend.domain.requesthistory;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import kr.co.awesomelead.groupware_backend.domain.requesthistory.converter.RequestPurposeConverter;
 import kr.co.awesomelead.groupware_backend.domain.requesthistory.enums.RequestPurpose;
@@ -21,16 +22,25 @@ class RequestPurposeConverterTest {
     }
 
     @Test
-    @DisplayName("convertToEntityAttribute 메서드는 언더바가 포함된 기존 한글 값을 enum으로 변환한다")
-    void convertToEntityAttribute_supports_legacy_underscore_value() {
-        assertThat(converter.convertToEntityAttribute("관공서_제출용"))
+    @DisplayName("convertToEntityAttribute 메서드는 enum 코드를 enum으로 변환한다")
+    void convertToEntityAttribute_supports_enum_name() {
+        assertThat(converter.convertToEntityAttribute("GOVERNMENT_OFFICE"))
                 .isEqualTo(RequestPurpose.GOVERNMENT_OFFICE);
     }
 
     @Test
-    @DisplayName("convertToEntityAttribute 메서드는 기존 은행 제출용 값을 금융기관 제출용으로 변환한다")
-    void convertToEntityAttribute_supports_legacy_bank_value() {
-        assertThat(converter.convertToEntityAttribute("은행 제출용"))
+    @DisplayName("convertToEntityAttribute 메서드는 현재 한글 표시값을 enum으로 변환한다")
+    void convertToEntityAttribute_supports_current_description() {
+        assertThat(converter.convertToEntityAttribute("금융기관 제출용"))
                 .isEqualTo(RequestPurpose.FINANCIAL_INSTITUTION);
+    }
+
+    @Test
+    @DisplayName("convertToEntityAttribute 메서드는 기존 호환 값을 변환하지 않는다")
+    void convertToEntityAttribute_rejects_legacy_values() {
+        assertThatThrownBy(() -> converter.convertToEntityAttribute("관공서_제출용"))
+                .isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(() -> converter.convertToEntityAttribute("은행 제출용"))
+                .isInstanceOf(IllegalArgumentException.class);
     }
 }

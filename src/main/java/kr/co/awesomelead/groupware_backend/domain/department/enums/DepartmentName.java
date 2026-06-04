@@ -12,9 +12,12 @@ import java.util.Arrays;
 public enum DepartmentName {
 
     // Level 0: 최상위 부서
+    AWESOME_GROUP("어썸그룹"),
+
+    // Level 1: 어썸그룹 하위
     CHUNGNAM_HQ("충남사업본부"),
 
-    // Level 1: 충남사업본부 하위
+    // Level 2: 충남사업본부 하위
     MARUI_LAB("(주)한국마루이 연구소"),
     AWESOME_LAB("(주)어썸리드 연구소"),
     SALES_DEPT("영업부"),
@@ -27,7 +30,7 @@ public enum DepartmentName {
     AWESOME_SECURITY_DEPT("어썸리드 경비"),
     MARUI_SECURITY_DEPT("마루이 경비"),
 
-    // Level 2: 하위 부서들
+    // Level 3: 하위 부서들
     MANAGEMENT_SUPPORT("경영지원부"),
     CHAMBER_PROD("챔버생산부"),
     PARTS_PROD("부품생산부"),

@@ -9,6 +9,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 
 import jakarta.validation.Valid;
 
+import kr.co.awesomelead.groupware_backend.domain.department.enums.Company;
 import kr.co.awesomelead.groupware_backend.domain.requesthistory.dto.request.RequestHistoryRejectRequestDto;
 import kr.co.awesomelead.groupware_backend.domain.requesthistory.dto.response.AdminRequestHistoryDetailResponseDto;
 import kr.co.awesomelead.groupware_backend.domain.requesthistory.dto.response.AdminRequestHistorySummaryResponseDto;
@@ -98,6 +99,9 @@ public class AdminRequestHistoryController {
     @GetMapping
     public ResponseEntity<ApiResponse<Page<AdminRequestHistorySummaryResponseDto>>> getAllRequests(
             @Parameter(hidden = true) @AuthenticationPrincipal CustomUserDetails userDetails,
+            @Parameter(description = "회사 필터", required = false, example = "AWESOME")
+                    @RequestParam(required = false)
+                    Company company,
             @Parameter(
                             description = "상태 필터 (선택값: 발급 대기, 발급 완료, 반려, 취소)",
                             required = false,
@@ -106,7 +110,8 @@ public class AdminRequestHistoryController {
                     RequestHistoryStatus status,
             @ParameterObject @PageableDefault(page = 0, size = 20) Pageable pageable) {
         Page<AdminRequestHistorySummaryResponseDto> result =
-                requestHistoryService.getAllRequestsForAdmin(userDetails.getId(), status, pageable);
+                requestHistoryService.getAllRequestsForAdmin(
+                        userDetails.getId(), company, status, pageable);
         return ResponseEntity.ok(ApiResponse.onSuccess(result));
     }
 

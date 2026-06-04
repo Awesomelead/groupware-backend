@@ -2338,6 +2338,68 @@ public class EduReportServiceTest {
         }
 
         @Test
+        @DisplayName("DEPARTMENT 타입 - 알림 대상에서 어썸그룹과 충남사업본부 상위 부서는 제외")
+        void remindEduReport_departmentType_excludesRootAncestorsFromNotificationTargets() {
+            // given
+            User user = createNormalUser();
+            user.addAuthority(Authority.MANAGE_DEPARTMENT_EDUCATION);
+
+            Department awesomeGroup =
+                    Department.builder().id(1L).name(DepartmentName.AWESOME_GROUP).build();
+            Department chungnam =
+                    Department.builder()
+                            .id(2L)
+                            .name(DepartmentName.CHUNGNAM_HQ)
+                            .parent(awesomeGroup)
+                            .build();
+            Department planning =
+                    Department.builder()
+                            .id(3L)
+                            .name(DepartmentName.CHUNGNAM_PLANNING)
+                            .parent(chungnam)
+                            .build();
+            Department managementSupport =
+                    Department.builder()
+                            .id(4L)
+                            .name(DepartmentName.MANAGEMENT_SUPPORT)
+                            .parent(planning)
+                            .build();
+
+            EduReport report =
+                    EduReport.builder()
+                            .id(10L)
+                            .eduType(EduType.DEPARTMENT)
+                            .title("부서 교육")
+                            .department(managementSupport)
+                            .createdBy(user)
+                            .build();
+            List<Long> targetDepartmentIds = List.of(4L, 3L);
+            List<User> targets =
+                    List.of(User.builder().id(100L).build(), User.builder().id(200L).build());
+
+            when(userRepository.findById(1L)).thenReturn(Optional.of(user));
+            when(eduReportRepository.findById(10L)).thenReturn(Optional.of(report));
+            when(userRepository.findAllByDepartmentIdIn(targetDepartmentIds)).thenReturn(targets);
+
+            // when
+            eduReportService.remindEduReport(10L, 1L);
+
+            // then
+            verify(userRepository, times(1)).findAllByDepartmentIdIn(targetDepartmentIds);
+
+            @SuppressWarnings("unchecked")
+            ArgumentCaptor<List<Long>> targetIdsCaptor = ArgumentCaptor.forClass(List.class);
+            verify(notificationService, times(1))
+                    .sendEduReportRemindAlertToTargets(
+                            anyString(),
+                            anyString(),
+                            anyLong(),
+                            targetIdsCaptor.capture(),
+                            any(Map.class));
+            assertThat(targetIdsCaptor.getValue()).isEqualTo(List.of(100L, 200L));
+        }
+
+        @Test
         @DisplayName("sendEduReportRemindAlertToTargets 호출 검증 - 올바른 인자 전달")
         void remindEduReport_callsNotificationServiceWithCorrectArgs() {
             // given

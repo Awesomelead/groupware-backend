@@ -1412,13 +1412,20 @@ public class EduReportService {
 
         Department cursor = department.getParent();
         while (cursor != null) {
-            departmentIds.add(cursor.getId());
+            if (!isDepartmentNotificationRoot(cursor)) {
+                departmentIds.add(cursor.getId());
+            }
             cursor = cursor.getParent();
         }
 
         return userRepository.findAllByDepartmentIdIn(new ArrayList<>(departmentIds)).stream()
                 .map(User::getId)
                 .toList();
+    }
+
+    private boolean isDepartmentNotificationRoot(Department department) {
+        return department.getName() == DepartmentName.AWESOME_GROUP
+                || department.getName() == DepartmentName.CHUNGNAM_HQ;
     }
 
     private long calculateTargetPeopleCount(EduReport report) {

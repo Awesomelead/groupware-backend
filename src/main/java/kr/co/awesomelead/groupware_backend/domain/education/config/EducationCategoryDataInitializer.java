@@ -21,67 +21,67 @@ public class EducationCategoryDataInitializer implements ApplicationRunner {
     @Transactional
     public void run(ApplicationArguments args) {
         // PSM 루트
-        createIfAbsent("PSM_OVERVIEW", "사업개요", EducationCategoryType.PSM, null, 0, 1);
-        createIfAbsent("PSM_HAZARDOUS_MATERIAL", "유해위험물질", EducationCategoryType.PSM, null, 0, 2);
-        createIfAbsent("PSM_RISK_ASSESSMENT", "위험성평가", EducationCategoryType.PSM, null, 0, 3);
-        createIfAbsent("PSM_SAFE_OPERATION", "안전운전계획", EducationCategoryType.PSM, null, 0, 4);
-        createIfAbsent("PSM_EMERGENCY_PLAN", "비상조치계획", EducationCategoryType.PSM, null, 0, 5);
+        createOrUpdate("PSM_OVERVIEW", "사업개요", EducationCategoryType.PSM, null, 0, 1);
+        createOrUpdate("PSM_HAZARDOUS_MATERIAL", "유해위험물질", EducationCategoryType.PSM, null, 0, 2);
+        createOrUpdate("PSM_RISK_ASSESSMENT", "위험성평가", EducationCategoryType.PSM, null, 0, 3);
+        createOrUpdate("PSM_SAFE_OPERATION", "안전운전계획", EducationCategoryType.PSM, null, 0, 4);
+        createOrUpdate("PSM_EMERGENCY_PLAN", "비상조치계획", EducationCategoryType.PSM, null, 0, 5);
 
         // 안전보건 루트
-        createIfAbsent("SAFETY_EDUCATION", "안전보건교육", EducationCategoryType.SAFETY, null, 0, 1);
-        createIfAbsent("SAFETY_RESOURCE", "안전보건 자료", EducationCategoryType.SAFETY, null, 0, 2);
+        createOrUpdate("SAFETY_EDUCATION", "안전보건교육", EducationCategoryType.SAFETY, null, 0, 1);
+        createOrUpdate("SAFETY_RESOURCE", "안전보건 자료", EducationCategoryType.SAFETY, null, 0, 2);
 
-        createIfAbsent(
+        createOrUpdate(
                 "SAFETY_EDUCATION_PLAN",
                 "안전보건교육계획서",
                 EducationCategoryType.SAFETY,
-                "SAFETY_EDUCATION_SHORTCUT",
+                "SAFETY_EDUCATION",
                 1,
                 1);
-        createIfAbsent(
+        createOrUpdate(
                 "SAFETY_EDUCATION_LOG_ATTENDEE",
                 "안전보건교육 교육일지 및 참석자 명단",
                 EducationCategoryType.SAFETY,
-                "SAFETY_EDUCATION_SHORTCUT",
+                "SAFETY_EDUCATION",
                 1,
                 2);
 
-        createIfAbsent(
+        createOrUpdate(
                 "SAFETY_MANAGEMENT_POLICY",
                 "안전보건경영방침",
                 EducationCategoryType.SAFETY,
                 "SAFETY_RESOURCE",
                 1,
                 1);
-        createIfAbsent(
+        createOrUpdate(
                 "SAFETY_MANAGEMENT_REGULATION",
                 "안전보건관리규정",
                 EducationCategoryType.SAFETY,
                 "SAFETY_RESOURCE",
                 1,
                 2);
-        createIfAbsent(
+        createOrUpdate(
                 "SAFETY_AIR_ENV_MEASUREMENT_RECORD",
                 "대기환경측정기록부",
                 EducationCategoryType.SAFETY,
                 "SAFETY_RESOURCE",
                 1,
                 3);
-        createIfAbsent(
+        createOrUpdate(
                 "SAFETY_WORK_ENV_MEASUREMENT_RECORD",
                 "작업환경측정기록부",
                 EducationCategoryType.SAFETY,
                 "SAFETY_RESOURCE",
                 1,
                 4);
-        createIfAbsent(
+        createOrUpdate(
                 "SAFETY_CHEMICAL_ACCIDENT_PREVENTION_PLAN",
                 "화학사고예방관리계획서",
                 EducationCategoryType.SAFETY,
                 "SAFETY_RESOURCE",
                 1,
                 5);
-        createIfAbsent(
+        createOrUpdate(
                 "SAFETY_INDUSTRIAL_SAFETY_HEALTH_COMMITTEE",
                 "산업안전보건위원회(게시판)",
                 EducationCategoryType.SAFETY,
@@ -90,23 +90,36 @@ public class EducationCategoryDataInitializer implements ApplicationRunner {
                 6);
     }
 
-    private void createIfAbsent(
+    private void createOrUpdate(
             String code,
             String name,
             EducationCategoryType type,
             String parentCode,
             int depth,
             int sortOrder) {
-        if (educationCategoryRepository.findByCode(code).isPresent()) {
+        EducationCategory parent = null;
+        if (parentCode != null) {
+            parent =
+                    educationCategoryRepository
+                            .findByCode(parentCode)
+                            .orElseThrow(
+                                    () ->
+                                            new IllegalStateException(
+                                                    "교육 카테고리 부모 코드를 찾을 수 없습니다: " + parentCode));
+        }
+
+        EducationCategory category = educationCategoryRepository.findByCode(code).orElse(null);
+        if (category != null) {
+            category.setName(name);
+            category.setCategoryType(type);
+            category.setParent(parent);
+            category.setDepth(depth);
+            category.setSortOrder(sortOrder);
+            category.setActive(true);
             return;
         }
 
-        EducationCategory parent = null;
-        if (parentCode != null) {
-            parent = educationCategoryRepository.findByCode(parentCode).orElse(null);
-        }
-
-        EducationCategory category =
+        category =
                 EducationCategory.builder()
                         .code(code)
                         .name(name)

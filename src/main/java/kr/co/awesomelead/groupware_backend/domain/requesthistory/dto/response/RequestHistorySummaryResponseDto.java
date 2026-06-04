@@ -26,6 +26,9 @@ public class RequestHistorySummaryResponseDto {
     @Schema(description = "용도", example = "금융기관 제출용")
     private RequestPurpose purpose;
 
+    @Schema(description = "기타 선택 시 상세 용도", example = "기타입니다", nullable = true)
+    private String purposeDetail;
+
     @Schema(description = "발급 부수", example = "1")
     private Integer copies;
 
@@ -43,6 +46,7 @@ public class RequestHistorySummaryResponseDto {
                 .id(requestHistory.getId())
                 .requestType(requestHistory.getRequestType())
                 .purpose(requestHistory.getPurpose())
+                .purposeDetail(requestHistory.getPurposeDetail())
                 .copies(requestHistory.getCopies())
                 .wishDate(requestHistory.getWishDate())
                 .requestDate(requestHistory.getRequestDate())

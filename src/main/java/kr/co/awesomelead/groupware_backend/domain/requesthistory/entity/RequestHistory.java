@@ -64,6 +64,10 @@ public class RequestHistory {
     @Column(nullable = false, length = 50)
     private RequestPurpose purpose;
 
+    // 기타 용도 상세 입력
+    @Column(length = 100)
+    private String purposeDetail;
+
     // 발급 부수
     @Column(nullable = false)
     private Integer copies;

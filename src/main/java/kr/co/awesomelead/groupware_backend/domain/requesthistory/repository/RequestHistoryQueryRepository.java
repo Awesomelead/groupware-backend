@@ -2,9 +2,11 @@ package kr.co.awesomelead.groupware_backend.domain.requesthistory.repository;
 
 import com.querydsl.core.types.Order;
 import com.querydsl.core.types.OrderSpecifier;
+import com.querydsl.core.types.dsl.BooleanExpression;
 import com.querydsl.core.types.dsl.PathBuilder;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 
+import kr.co.awesomelead.groupware_backend.domain.department.enums.Company;
 import kr.co.awesomelead.groupware_backend.domain.requesthistory.entity.QRequestHistory;
 import kr.co.awesomelead.groupware_backend.domain.requesthistory.entity.RequestHistory;
 import kr.co.awesomelead.groupware_backend.domain.requesthistory.enums.RequestHistoryStatus;
@@ -28,7 +30,7 @@ public class RequestHistoryQueryRepository {
     private final JPAQueryFactory queryFactory;
 
     public Page<RequestHistory> findAllWithUserAndDepartmentByStatus(
-            RequestHistoryStatus status, Pageable pageable) {
+            Company company, RequestHistoryStatus status, Pageable pageable) {
 
         QRequestHistory rh = QRequestHistory.requestHistory;
         QUser user = QUser.user;
@@ -40,7 +42,7 @@ public class RequestHistoryQueryRepository {
                         .fetchJoin()
                         .leftJoin(user.department)
                         .fetchJoin()
-                        .where(status != null ? rh.approvalStatus.eq(status) : null)
+                        .where(statusFilter(rh, status), companyFilter(user, company))
                         .orderBy(orderSpecifiers(rh, pageable))
                         .offset(pageable.getOffset())
                         .limit(pageable.getPageSize())
@@ -54,10 +56,19 @@ public class RequestHistoryQueryRepository {
                             queryFactory
                                     .select(rh.count())
                                     .from(rh)
-                                    .where(status != null ? rh.approvalStatus.eq(status) : null)
+                                    .innerJoin(rh.user, user)
+                                    .where(statusFilter(rh, status), companyFilter(user, company))
                                     .fetchOne();
                     return count != null ? count : 0L;
                 });
+    }
+
+    private BooleanExpression statusFilter(QRequestHistory rh, RequestHistoryStatus status) {
+        return status != null ? rh.approvalStatus.eq(status) : null;
+    }
+
+    private BooleanExpression companyFilter(QUser user, Company company) {
+        return company != null ? user.workLocation.eq(company) : null;
     }
 
     @SuppressWarnings({"unchecked", "rawtypes"})

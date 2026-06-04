@@ -1,5 +1,6 @@
 package kr.co.awesomelead.groupware_backend.domain.requesthistory.service;
 
+import kr.co.awesomelead.groupware_backend.domain.department.enums.Company;
 import kr.co.awesomelead.groupware_backend.domain.notification.enums.NotificationDomainType;
 import kr.co.awesomelead.groupware_backend.domain.notification.enums.NotificationMessage;
 import kr.co.awesomelead.groupware_backend.domain.notification.repository.NotificationRepository;
@@ -144,7 +145,7 @@ public class RequestHistoryService {
 
     @Transactional(readOnly = true)
     public Page<AdminRequestHistorySummaryResponseDto> getAllRequestsForAdmin(
-            Long adminId, RequestHistoryStatus status, Pageable pageable) {
+            Long adminId, Company company, RequestHistoryStatus status, Pageable pageable) {
         User admin =
                 userRepository
                         .findById(adminId)
@@ -152,7 +153,7 @@ public class RequestHistoryService {
         validateAdminAuthority(admin);
 
         return requestHistoryQueryRepository
-                .findAllWithUserAndDepartmentByStatus(status, pageable)
+                .findAllWithUserAndDepartmentByStatus(company, status, pageable)
                 .map(AdminRequestHistorySummaryResponseDto::from);
     }
 

@@ -50,7 +50,7 @@ public class DepartmentService {
 
         Department rootDepartment =
                 allRootDepartments.stream()
-                        .filter(department -> department.getName() == DepartmentName.CHUNGNAM_HQ)
+                        .filter(department -> department.getName() == DepartmentName.AWESOME_GROUP)
                         .findFirst()
                         .orElseGet(
                                 () ->

@@ -26,6 +26,68 @@ public class EducationCategoryDataInitializer implements ApplicationRunner {
         createIfAbsent("PSM_RISK_ASSESSMENT", "위험성평가", EducationCategoryType.PSM, null, 0, 3);
         createIfAbsent("PSM_SAFE_OPERATION", "안전운전계획", EducationCategoryType.PSM, null, 0, 4);
         createIfAbsent("PSM_EMERGENCY_PLAN", "비상조치계획", EducationCategoryType.PSM, null, 0, 5);
+
+        // 안전보건 루트
+        createIfAbsent("SAFETY_EDUCATION", "안전보건교육", EducationCategoryType.SAFETY, null, 0, 1);
+        createIfAbsent("SAFETY_RESOURCE", "안전보건 자료", EducationCategoryType.SAFETY, null, 0, 2);
+
+        createIfAbsent(
+                "SAFETY_EDUCATION_PLAN",
+                "안전보건교육계획서",
+                EducationCategoryType.SAFETY,
+                "SAFETY_EDUCATION_SHORTCUT",
+                1,
+                1);
+        createIfAbsent(
+                "SAFETY_EDUCATION_LOG_ATTENDEE",
+                "안전보건교육 교육일지 및 참석자 명단",
+                EducationCategoryType.SAFETY,
+                "SAFETY_EDUCATION_SHORTCUT",
+                1,
+                2);
+
+        createIfAbsent(
+                "SAFETY_MANAGEMENT_POLICY",
+                "안전보건경영방침",
+                EducationCategoryType.SAFETY,
+                "SAFETY_RESOURCE",
+                1,
+                1);
+        createIfAbsent(
+                "SAFETY_MANAGEMENT_REGULATION",
+                "안전보건관리규정",
+                EducationCategoryType.SAFETY,
+                "SAFETY_RESOURCE",
+                1,
+                2);
+        createIfAbsent(
+                "SAFETY_AIR_ENV_MEASUREMENT_RECORD",
+                "대기환경측정기록부",
+                EducationCategoryType.SAFETY,
+                "SAFETY_RESOURCE",
+                1,
+                3);
+        createIfAbsent(
+                "SAFETY_WORK_ENV_MEASUREMENT_RECORD",
+                "작업환경측정기록부",
+                EducationCategoryType.SAFETY,
+                "SAFETY_RESOURCE",
+                1,
+                4);
+        createIfAbsent(
+                "SAFETY_CHEMICAL_ACCIDENT_PREVENTION_PLAN",
+                "화학사고예방관리계획서",
+                EducationCategoryType.SAFETY,
+                "SAFETY_RESOURCE",
+                1,
+                5);
+        createIfAbsent(
+                "SAFETY_INDUSTRIAL_SAFETY_HEALTH_COMMITTEE",
+                "산업안전보건위원회(게시판)",
+                EducationCategoryType.SAFETY,
+                "SAFETY_RESOURCE",
+                1,
+                6);
     }
 
     private void createIfAbsent(

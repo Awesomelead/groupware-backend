@@ -20,6 +20,7 @@ import kr.co.awesomelead.groupware_backend.domain.requesthistory.dto.response.Re
 import kr.co.awesomelead.groupware_backend.domain.requesthistory.dto.response.RequestHistorySummaryResponseDto;
 import kr.co.awesomelead.groupware_backend.domain.requesthistory.entity.RequestHistory;
 import kr.co.awesomelead.groupware_backend.domain.requesthistory.enums.RequestHistoryStatus;
+import kr.co.awesomelead.groupware_backend.domain.requesthistory.enums.RequestPurpose;
 import kr.co.awesomelead.groupware_backend.domain.requesthistory.enums.RequestType;
 import kr.co.awesomelead.groupware_backend.domain.requesthistory.repository.RequestHistoryQueryRepository;
 import kr.co.awesomelead.groupware_backend.domain.requesthistory.repository.RequestHistoryRepository;
@@ -72,7 +73,7 @@ class RequestHistoryServiceTest {
 
             RequestHistoryCreateRequestDto dto = new RequestHistoryCreateRequestDto();
             ReflectionTestUtils.setField(dto, "requestType", RequestType.EMPLOYMENT_CERTIFICATE);
-            ReflectionTestUtils.setField(dto, "purpose", "은행 제출용");
+            ReflectionTestUtils.setField(dto, "purpose", RequestPurpose.FINANCIAL_INSTITUTION);
             ReflectionTestUtils.setField(dto, "copies", 1);
             ReflectionTestUtils.setField(dto, "wishDate", LocalDate.of(2026, 3, 10));
 
@@ -111,7 +112,7 @@ class RequestHistoryServiceTest {
             ReflectionTestUtils.setField(requestHistory, "id", 10L);
             ReflectionTestUtils.setField(
                     requestHistory, "requestType", RequestType.CAREER_CERTIFICATE);
-            ReflectionTestUtils.setField(requestHistory, "purpose", "관공서 제출용");
+            ReflectionTestUtils.setField(requestHistory, "purpose", RequestPurpose.GOVERNMENT_OFFICE);
             ReflectionTestUtils.setField(requestHistory, "copies", 2);
 
             given(userRepository.findById(1L)).willReturn(Optional.of(user));

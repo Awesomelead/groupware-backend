@@ -4,6 +4,7 @@ import io.swagger.v3.oas.annotations.media.Schema;
 
 import kr.co.awesomelead.groupware_backend.domain.requesthistory.entity.RequestHistory;
 import kr.co.awesomelead.groupware_backend.domain.requesthistory.enums.RequestHistoryStatus;
+import kr.co.awesomelead.groupware_backend.domain.requesthistory.enums.RequestPurpose;
 import kr.co.awesomelead.groupware_backend.domain.requesthistory.enums.RequestType;
 import kr.co.awesomelead.groupware_backend.domain.user.entity.User;
 
@@ -38,8 +39,8 @@ public class AdminRequestHistoryDetailResponseDto {
     @Schema(description = "증명서 구분", example = "재직증명서")
     private RequestType requestType;
 
-    @Schema(description = "용도", example = "은행 제출용")
-    private String purpose;
+    @Schema(description = "용도", example = "금융기관 제출용")
+    private RequestPurpose purpose;
 
     @Schema(description = "발급 부수", example = "2")
     private Integer copies;

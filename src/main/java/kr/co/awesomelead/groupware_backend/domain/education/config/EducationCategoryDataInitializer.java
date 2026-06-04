@@ -105,12 +105,10 @@ public class EducationCategoryDataInitializer implements ApplicationRunner {
                             .orElseThrow(
                                     () ->
                                             new IllegalStateException(
-                                                    "교육 카테고리 부모 코드를 찾을 수 없습니다: "
-                                                            + parentCode));
+                                                    "교육 카테고리 부모 코드를 찾을 수 없습니다: " + parentCode));
         }
 
-        EducationCategory category =
-                educationCategoryRepository.findByCode(code).orElse(null);
+        EducationCategory category = educationCategoryRepository.findByCode(code).orElse(null);
         if (category != null) {
             category.setName(name);
             category.setCategoryType(type);

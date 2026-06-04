@@ -40,7 +40,9 @@ public class RequestHistoryController {
 
     private final RequestHistoryService requestHistoryService;
 
-    @Operation(summary = "제증명 발급 신청", description = "현재 로그인한 사용자가 제증명 발급을 신청합니다.")
+    @Operation(
+            summary = "제증명 발급 신청",
+            description = "현재 로그인한 사용자가 제증명 발급을 신청합니다. 용도가 기타인 경우 상세 용도를 함께 입력합니다.")
     @ApiResponses(
             value = {
                 @io.swagger.v3.oas.annotations.responses.ApiResponse(

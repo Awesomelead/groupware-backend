@@ -4,10 +4,10 @@ import io.swagger.v3.oas.annotations.media.Schema;
 
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
-import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 
+import kr.co.awesomelead.groupware_backend.domain.requesthistory.enums.RequestPurpose;
 import kr.co.awesomelead.groupware_backend.domain.requesthistory.enums.RequestType;
 
 import lombok.Getter;
@@ -22,10 +22,13 @@ public class RequestHistoryCreateRequestDto {
     @Schema(description = "증명서 구분", example = "재직증명서")
     private RequestType requestType;
 
-    @NotBlank(message = "용도는 필수입니다.")
-    @Size(max = 100, message = "용도는 최대 100자까지 입력할 수 있습니다.")
-    @Schema(description = "용도", example = "은행 제출용")
-    private String purpose;
+    @NotNull(message = "용도는 필수입니다.")
+    @Schema(description = "용도", example = "금융기관 제출용")
+    private RequestPurpose purpose;
+
+    @Size(max = 100, message = "상세 용도는 100자 이하여야 합니다.")
+    @Schema(description = "기타 선택 시 상세 용도", example = "기타입니다", nullable = true)
+    private String purposeDetail;
 
     @NotNull(message = "부수는 필수입니다.")
     @Min(value = 1, message = "부수는 1 이상이어야 합니다.")

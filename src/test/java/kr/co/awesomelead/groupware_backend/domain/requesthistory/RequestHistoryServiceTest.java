@@ -20,6 +20,7 @@ import kr.co.awesomelead.groupware_backend.domain.requesthistory.dto.response.Re
 import kr.co.awesomelead.groupware_backend.domain.requesthistory.dto.response.RequestHistorySummaryResponseDto;
 import kr.co.awesomelead.groupware_backend.domain.requesthistory.entity.RequestHistory;
 import kr.co.awesomelead.groupware_backend.domain.requesthistory.enums.RequestHistoryStatus;
+import kr.co.awesomelead.groupware_backend.domain.requesthistory.enums.RequestPurpose;
 import kr.co.awesomelead.groupware_backend.domain.requesthistory.enums.RequestType;
 import kr.co.awesomelead.groupware_backend.domain.requesthistory.repository.RequestHistoryQueryRepository;
 import kr.co.awesomelead.groupware_backend.domain.requesthistory.repository.RequestHistoryRepository;
@@ -35,6 +36,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -72,7 +74,7 @@ class RequestHistoryServiceTest {
 
             RequestHistoryCreateRequestDto dto = new RequestHistoryCreateRequestDto();
             ReflectionTestUtils.setField(dto, "requestType", RequestType.EMPLOYMENT_CERTIFICATE);
-            ReflectionTestUtils.setField(dto, "purpose", "은행 제출용");
+            ReflectionTestUtils.setField(dto, "purpose", RequestPurpose.FINANCIAL_INSTITUTION);
             ReflectionTestUtils.setField(dto, "copies", 1);
             ReflectionTestUtils.setField(dto, "wishDate", LocalDate.of(2026, 3, 10));
 
@@ -95,6 +97,59 @@ class RequestHistoryServiceTest {
                             null,
                             "홍길동");
         }
+
+        @Test
+        @DisplayName("용도가 기타이면 상세 용도를 저장한다")
+        void it_creates_request_with_etc_purpose_detail() {
+            // given
+            User user = User.builder().nameKor("홍길동").position(Position.STAFF).build();
+            ReflectionTestUtils.setField(user, "id", 1L);
+
+            RequestHistoryCreateRequestDto dto = new RequestHistoryCreateRequestDto();
+            ReflectionTestUtils.setField(dto, "requestType", RequestType.EMPLOYMENT_CERTIFICATE);
+            ReflectionTestUtils.setField(dto, "purpose", RequestPurpose.ETC);
+            ReflectionTestUtils.setField(dto, "purposeDetail", " 기타입니다 ");
+            ReflectionTestUtils.setField(dto, "copies", 1);
+            ReflectionTestUtils.setField(dto, "wishDate", LocalDate.of(2026, 3, 10));
+
+            RequestHistory saved = new RequestHistory();
+            ReflectionTestUtils.setField(saved, "id", 100L);
+            given(userRepository.findById(1L)).willReturn(Optional.of(user));
+            given(requestHistoryRepository.save(any(RequestHistory.class))).willReturn(saved);
+
+            // when
+            Long result = requestHistoryService.createRequest(1L, dto);
+
+            // then
+            assertThat(result).isEqualTo(100L);
+            ArgumentCaptor<RequestHistory> captor = ArgumentCaptor.forClass(RequestHistory.class);
+            verify(requestHistoryRepository).save(captor.capture());
+            assertThat(captor.getValue().getPurpose()).isEqualTo(RequestPurpose.ETC);
+            assertThat(captor.getValue().getPurposeDetail()).isEqualTo("기타입니다");
+        }
+
+        @Test
+        @DisplayName("용도가 기타인데 상세 용도가 없으면 REQUEST_PURPOSE_DETAIL_REQUIRED 예외를 던진다")
+        void it_throws_when_etc_purpose_detail_is_blank() {
+            // given
+            User user = User.builder().nameKor("홍길동").position(Position.STAFF).build();
+            ReflectionTestUtils.setField(user, "id", 1L);
+
+            RequestHistoryCreateRequestDto dto = new RequestHistoryCreateRequestDto();
+            ReflectionTestUtils.setField(dto, "requestType", RequestType.EMPLOYMENT_CERTIFICATE);
+            ReflectionTestUtils.setField(dto, "purpose", RequestPurpose.ETC);
+            ReflectionTestUtils.setField(dto, "purposeDetail", " ");
+            ReflectionTestUtils.setField(dto, "copies", 1);
+            ReflectionTestUtils.setField(dto, "wishDate", LocalDate.of(2026, 3, 10));
+
+            given(userRepository.findById(1L)).willReturn(Optional.of(user));
+
+            // when & then
+            assertThatThrownBy(() -> requestHistoryService.createRequest(1L, dto))
+                    .isInstanceOf(CustomException.class)
+                    .extracting("errorCode")
+                    .isEqualTo(ErrorCode.REQUEST_PURPOSE_DETAIL_REQUIRED);
+        }
     }
 
     @Nested
@@ -111,7 +166,9 @@ class RequestHistoryServiceTest {
             ReflectionTestUtils.setField(requestHistory, "id", 10L);
             ReflectionTestUtils.setField(
                     requestHistory, "requestType", RequestType.CAREER_CERTIFICATE);
-            ReflectionTestUtils.setField(requestHistory, "purpose", "관공서 제출용");
+            ReflectionTestUtils.setField(
+                    requestHistory, "purpose", RequestPurpose.GOVERNMENT_OFFICE);
+            ReflectionTestUtils.setField(requestHistory, "purposeDetail", "기타입니다");
             ReflectionTestUtils.setField(requestHistory, "copies", 2);
 
             given(userRepository.findById(1L)).willReturn(Optional.of(user));
@@ -124,6 +181,7 @@ class RequestHistoryServiceTest {
             // then
             assertThat(result).hasSize(1);
             assertThat(result.get(0).getId()).isEqualTo(10L);
+            assertThat(result.get(0).getPurposeDetail()).isEqualTo("기타입니다");
         }
     }
 
@@ -140,6 +198,7 @@ class RequestHistoryServiceTest {
             RequestHistory requestHistory = new RequestHistory();
             ReflectionTestUtils.setField(requestHistory, "id", 10L);
             ReflectionTestUtils.setField(requestHistory, "name", "홍길동");
+            ReflectionTestUtils.setField(requestHistory, "purposeDetail", "기타입니다");
 
             given(userRepository.findById(1L)).willReturn(Optional.of(user));
             given(requestHistoryRepository.findByIdAndUserId(10L, 1L))
@@ -152,6 +211,7 @@ class RequestHistoryServiceTest {
             // then
             assertThat(result.getId()).isEqualTo(10L);
             assertThat(result.getName()).isEqualTo("홍길동");
+            assertThat(result.getPurposeDetail()).isEqualTo("기타입니다");
         }
 
         @Test
@@ -237,6 +297,7 @@ class RequestHistoryServiceTest {
             RequestHistory requestHistory = new RequestHistory();
             ReflectionTestUtils.setField(requestHistory, "id", 10L);
             ReflectionTestUtils.setField(requestHistory, "name", "홍길동");
+            ReflectionTestUtils.setField(requestHistory, "purposeDetail", "기타입니다");
 
             PageRequest pageable = PageRequest.of(0, 20, Sort.by(Sort.Direction.DESC, "createdAt"));
             Page<RequestHistory> page = new PageImpl<>(List.of(requestHistory), pageable, 1);
@@ -256,6 +317,7 @@ class RequestHistoryServiceTest {
             assertThat(result.getTotalElements()).isEqualTo(1);
             assertThat(result.getContent()).hasSize(1);
             assertThat(result.getContent().get(0).getRequestId()).isEqualTo(10L);
+            assertThat(result.getContent().get(0).getPurposeDetail()).isEqualTo("기타입니다");
         }
 
         @Test
@@ -322,6 +384,7 @@ class RequestHistoryServiceTest {
             RequestHistory requestHistory = new RequestHistory();
             ReflectionTestUtils.setField(requestHistory, "id", 101L);
             ReflectionTestUtils.setField(requestHistory, "name", "홍길동");
+            ReflectionTestUtils.setField(requestHistory, "purposeDetail", "기타입니다");
 
             given(userRepository.findById(100L)).willReturn(Optional.of(admin));
             given(requestHistoryRepository.findByIdWithUserAndDepartment(101L))
@@ -334,6 +397,7 @@ class RequestHistoryServiceTest {
             // then
             assertThat(result.getRequestId()).isEqualTo(101L);
             assertThat(result.getNameKor()).isEqualTo("홍길동");
+            assertThat(result.getPurposeDetail()).isEqualTo("기타입니다");
         }
 
         @Test

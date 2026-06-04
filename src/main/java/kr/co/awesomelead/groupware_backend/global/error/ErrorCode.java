@@ -69,6 +69,7 @@ public enum ErrorCode {
     NOTICE_TARGET_REQUIRED(HttpStatus.BAD_REQUEST, "공지 대상자는 최소 1명 이상이어야 합니다."),
     REQUEST_HISTORY_NOT_ISSUABLE(HttpStatus.BAD_REQUEST, "발급 대기 상태 요청만 발급 완료 처리할 수 있습니다."),
     REQUEST_HISTORY_NOT_REJECTABLE(HttpStatus.BAD_REQUEST, "발급 대기 상태 요청만 반려 처리할 수 있습니다."),
+    REQUEST_PURPOSE_DETAIL_REQUIRED(HttpStatus.BAD_REQUEST, "기타 용도 선택 시 상세 용도 입력이 필요합니다."),
     HANBIRO_ACCOUNT_NOT_LINKED(HttpStatus.BAD_REQUEST, "한비로 계정 연동이 필요합니다."),
     EDUCATION_CATEGORY_REQUIRED(HttpStatus.BAD_REQUEST, "PSM/안전보건 교육은 카테고리가 필수입니다."),
     EDU_REPORT_CLOSED(HttpStatus.BAD_REQUEST, "마감된 교육입니다."),

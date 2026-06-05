@@ -162,7 +162,9 @@ public class DepartmentController {
         return ResponseEntity.ok(ApiResponse.onSuccess(hierarchy));
     }
 
-    @Operation(summary = "부서 및 하위 부서 사용자 조회", description = "지정한 부서와 그 하위 부서에 속한 모든 사용자를 조회합니다.")
+    @Operation(
+            summary = "부서 및 하위 부서 사용자 조회",
+            description = "지정한 부서와 그 하위 부서에 속한 모든 사용자를 조회합니다. MASTER_ADMIN 계정은 조회 결과에서 제외됩니다.")
     @ApiResponses(
             value = {
                 @io.swagger.v3.oas.annotations.responses.ApiResponse(
@@ -182,16 +184,12 @@ public class DepartmentController {
                                   "message": "요청에 성공했습니다.",
                                   "result": [
                                     {
-                                      "userId": 1,
-                                      "name": "홍길동",
-                                      "position": "팀장",
-                                      "departmentName": "인사팀"
+                                      "id": 1,
+                                      "name": "홍길동"
                                     },
                                     {
-                                      "userId": 5,
-                                      "name": "김철수",
-                                      "position": "사원",
-                                      "departmentName": "인사팀"
+                                      "id": 5,
+                                      "name": "김철수"
                                     }
                                   ]
                                 }

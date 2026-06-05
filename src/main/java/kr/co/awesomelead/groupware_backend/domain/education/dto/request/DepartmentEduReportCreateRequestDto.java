@@ -39,7 +39,7 @@ public class DepartmentEduReportCreateRequestDto {
     @Schema(description = "서명 필요 여부", example = "true", defaultValue = "false")
     private boolean signatureRequired;
 
-    @Schema(description = "대상 부서 ID", example = "3")
+    @Schema(description = "대상 부서 ID (알림 대상자 산정 시 MASTER_ADMIN 제외)", example = "3")
     @NotNull(message = "부서 ID는 필수입니다.")
     private Long departmentId;
 }

@@ -20,6 +20,7 @@ import kr.co.awesomelead.groupware_backend.domain.department.enums.DepartmentNam
 import kr.co.awesomelead.groupware_backend.domain.department.repository.DepartmentRepository;
 import kr.co.awesomelead.groupware_backend.domain.department.service.DepartmentService;
 import kr.co.awesomelead.groupware_backend.domain.user.entity.User;
+import kr.co.awesomelead.groupware_backend.domain.user.enums.Role;
 import kr.co.awesomelead.groupware_backend.domain.user.enums.Status;
 import kr.co.awesomelead.groupware_backend.domain.user.mapper.UserMapper;
 import kr.co.awesomelead.groupware_backend.domain.user.repository.UserRepository;
@@ -115,12 +116,19 @@ public class DepartmentServiceTest {
     }
 
     @Test
-    @DisplayName("부서원 통합 조회 성공 - 하위 부서 구성원 포함 확인")
+    @DisplayName("부서원 통합 조회 성공 - 하위 부서 구성원을 포함하고 MASTER_ADMIN은 제외한다")
     void getUsersByDepartmentHierarchy_Success() {
         Long targetId = 5L;
         User manager = User.builder().id(1L).nameKor("이생산").department(awesomeProdDept).build();
         User chamberStaff = User.builder().id(2L).nameKor("박챔버").department(chamberDept).build();
         User partStaff = User.builder().id(3L).nameKor("김부품").department(partDept).build();
+        User masterAdmin =
+                User.builder()
+                        .id(4L)
+                        .nameKor("마스터관리자")
+                        .role(Role.MASTER_ADMIN)
+                        .department(partDept)
+                        .build();
 
         given(departmentRepository.findById(targetId)).willReturn(Optional.of(awesomeProdDept));
 
@@ -128,18 +136,28 @@ public class DepartmentServiceTest {
         given(
                         userRepository.findAllByDepartmentIdIn(
                                 argThat(list -> list.containsAll(expectedIds))))
-                .willReturn(List.of(manager, chamberStaff, partStaff));
+                .willReturn(List.of(manager, chamberStaff, partStaff, masterAdmin));
 
         given(userMapper.toSummaryDto(any(User.class)))
-                .willReturn(UserSummaryResponseDto.builder().build());
+                .willAnswer(
+                        invocation -> {
+                            User user = invocation.getArgument(0);
+                            return UserSummaryResponseDto.builder()
+                                    .id(user.getId())
+                                    .name(user.getNameKor())
+                                    .build();
+                        });
 
         // when
         List<UserSummaryResponseDto> result =
                 departmentService.getUsersByDepartmentHierarchy(targetId);
 
         // then
-        assertThat(result).hasSize(3);
+        assertThat(result)
+                .extracting(UserSummaryResponseDto::getName)
+                .containsExactly("이생산", "박챔버", "김부품");
         verify(userRepository, times(1)).findAllByDepartmentIdIn(anyList());
+        verify(userMapper, times(3)).toSummaryDto(any(User.class));
     }
 
     @Test
@@ -172,7 +190,15 @@ public class DepartmentServiceTest {
                         .status(Status.SUSPENDED)
                         .department(chamberDept)
                         .build();
-        chamberDept.setUsers(new ArrayList<>(List.of(availableUser, suspendedUser)));
+        User masterAdmin =
+                User.builder()
+                        .id(19L)
+                        .nameKor("마스터관리자")
+                        .status(Status.AVAILABLE)
+                        .role(Role.MASTER_ADMIN)
+                        .department(chamberDept)
+                        .build();
+        chamberDept.setUsers(new ArrayList<>(List.of(availableUser, suspendedUser, masterAdmin)));
 
         given(departmentRepository.findByParentIsNull()).willReturn(List.of(rootDept));
 
@@ -184,7 +210,8 @@ public class DepartmentServiceTest {
         assertThat(result.getRootDepartment().getCode()).isEqualTo("CHUNGNAM_HQ");
         assertThat(result.getRootDepartment().getChildren()).isNotEmpty();
         assertThat(result.getRootDepartment().getChildren().get(0).getChildren().get(0).getUsers())
-                .hasSize(1);
+                .extracting("name")
+                .containsExactly("고영민");
         assertThat(result.getCompanyOptions()).hasSize(2);
         assertThat(result.getCompanyOptions().get(0).getCompany()).isEqualTo(Company.AWESOME);
         assertThat(result.getCompanyOptions().get(1).getCompany()).isEqualTo(Company.MARUI);

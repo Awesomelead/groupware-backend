@@ -11,6 +11,7 @@ import kr.co.awesomelead.groupware_backend.domain.department.enums.Company;
 import kr.co.awesomelead.groupware_backend.domain.department.enums.DepartmentName;
 import kr.co.awesomelead.groupware_backend.domain.department.repository.DepartmentRepository;
 import kr.co.awesomelead.groupware_backend.domain.user.entity.User;
+import kr.co.awesomelead.groupware_backend.domain.user.enums.Role;
 import kr.co.awesomelead.groupware_backend.domain.user.enums.Status;
 import kr.co.awesomelead.groupware_backend.domain.user.mapper.UserMapper;
 import kr.co.awesomelead.groupware_backend.domain.user.repository.UserRepository;
@@ -95,7 +96,7 @@ public class DepartmentService {
         List<User> users = userRepository.findAllByDepartmentIdIn(allDeptIds);
 
         // DTO 변환 및 반환
-        return users.stream().map(userMapper::toSummaryDto).toList();
+        return users.stream().filter(this::isNotMasterAdmin).map(userMapper::toSummaryDto).toList();
     }
 
     private void collectDepartmentIdsRecursive(Department department, List<Long> ids) {
@@ -113,6 +114,7 @@ public class DepartmentService {
         List<OrganizationUserNodeResponseDto> users =
                 department.getUsers().stream()
                         .filter(user -> user.getStatus() == Status.AVAILABLE)
+                        .filter(this::isNotMasterAdmin)
                         .sorted(Comparator.comparing(User::getId))
                         .map(OrganizationUserNodeResponseDto::from)
                         .toList();
@@ -131,5 +133,9 @@ public class DepartmentService {
                 .users(users)
                 .children(children)
                 .build();
+    }
+
+    private boolean isNotMasterAdmin(User user) {
+        return user.getRole() != Role.MASTER_ADMIN;
     }
 }

@@ -82,6 +82,7 @@ public class NoticeController {
                 3. **개인(targetUserIds)**: 특정 유저를 직접 대상으로 지정합니다.
 
                 *위 세 조건은 **합집합(OR)**으로 계산되어 최종 공지 대상자(NoticeTarget)가 결정됩니다.*
+                *MASTER_ADMIN 계정은 회사/부서/개인 지정 여부와 관계없이 최종 대상자에서 제외됩니다.*
                 """,
             requestBody =
                     @io.swagger.v3.oas.annotations.parameters.RequestBody(
@@ -481,7 +482,8 @@ public class NoticeController {
             summary = "공지 수정",
             description =
                     "특정 공지를 수정합니다. multipart/form-data 기반으로"
-                            + " 제목/본문(content/contentDelta/contentHtml)/유형/대상자/첨부파일을 수정할 수 있습니다.",
+                            + " 제목/본문(content/contentDelta/contentHtml)/유형/대상자/첨부파일을 수정할 수 있습니다."
+                            + " MASTER_ADMIN 계정은 최종 공지 대상자에서 제외됩니다.",
             requestBody =
                     @io.swagger.v3.oas.annotations.parameters.RequestBody(
                             required = true,

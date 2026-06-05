@@ -20,6 +20,7 @@ import kr.co.awesomelead.groupware_backend.domain.department.enums.DepartmentNam
 import kr.co.awesomelead.groupware_backend.domain.department.repository.DepartmentRepository;
 import kr.co.awesomelead.groupware_backend.domain.department.service.DepartmentService;
 import kr.co.awesomelead.groupware_backend.domain.user.entity.User;
+import kr.co.awesomelead.groupware_backend.domain.user.enums.Role;
 import kr.co.awesomelead.groupware_backend.domain.user.enums.Status;
 import kr.co.awesomelead.groupware_backend.domain.user.mapper.UserMapper;
 import kr.co.awesomelead.groupware_backend.domain.user.repository.UserRepository;
@@ -172,7 +173,15 @@ public class DepartmentServiceTest {
                         .status(Status.SUSPENDED)
                         .department(chamberDept)
                         .build();
-        chamberDept.setUsers(new ArrayList<>(List.of(availableUser, suspendedUser)));
+        User masterAdmin =
+                User.builder()
+                        .id(19L)
+                        .nameKor("마스터관리자")
+                        .status(Status.AVAILABLE)
+                        .role(Role.MASTER_ADMIN)
+                        .department(chamberDept)
+                        .build();
+        chamberDept.setUsers(new ArrayList<>(List.of(availableUser, suspendedUser, masterAdmin)));
 
         given(departmentRepository.findByParentIsNull()).willReturn(List.of(rootDept));
 
@@ -184,7 +193,8 @@ public class DepartmentServiceTest {
         assertThat(result.getRootDepartment().getCode()).isEqualTo("CHUNGNAM_HQ");
         assertThat(result.getRootDepartment().getChildren()).isNotEmpty();
         assertThat(result.getRootDepartment().getChildren().get(0).getChildren().get(0).getUsers())
-                .hasSize(1);
+                .extracting("name")
+                .containsExactly("고영민");
         assertThat(result.getCompanyOptions()).hasSize(2);
         assertThat(result.getCompanyOptions().get(0).getCompany()).isEqualTo(Company.AWESOME);
         assertThat(result.getCompanyOptions().get(1).getCompany()).isEqualTo(Company.MARUI);

@@ -11,6 +11,7 @@ import kr.co.awesomelead.groupware_backend.domain.department.enums.Company;
 import kr.co.awesomelead.groupware_backend.domain.department.enums.DepartmentName;
 import kr.co.awesomelead.groupware_backend.domain.department.repository.DepartmentRepository;
 import kr.co.awesomelead.groupware_backend.domain.user.entity.User;
+import kr.co.awesomelead.groupware_backend.domain.user.enums.Role;
 import kr.co.awesomelead.groupware_backend.domain.user.enums.Status;
 import kr.co.awesomelead.groupware_backend.domain.user.mapper.UserMapper;
 import kr.co.awesomelead.groupware_backend.domain.user.repository.UserRepository;
@@ -113,6 +114,7 @@ public class DepartmentService {
         List<OrganizationUserNodeResponseDto> users =
                 department.getUsers().stream()
                         .filter(user -> user.getStatus() == Status.AVAILABLE)
+                        .filter(user -> user.getRole() != Role.MASTER_ADMIN)
                         .sorted(Comparator.comparing(User::getId))
                         .map(OrganizationUserNodeResponseDto::from)
                         .toList();

@@ -48,7 +48,9 @@ public class DepartmentController {
 
     private final DepartmentService departmentService;
 
-    @Operation(summary = "조직도 트리 조회", description = "어썸그룹 기준 부서 트리와 회사 전체 선택 옵션을 함께 조회합니다.")
+    @Operation(
+            summary = "조직도 트리 조회",
+            description = "어썸그룹 기준 부서 트리와 회사 전체 선택 옵션을 함께 조회합니다. MASTER_ADMIN 계정은 사용자 노드에서 제외됩니다.")
     @ApiResponses(
             value = {
                 @io.swagger.v3.oas.annotations.responses.ApiResponse(

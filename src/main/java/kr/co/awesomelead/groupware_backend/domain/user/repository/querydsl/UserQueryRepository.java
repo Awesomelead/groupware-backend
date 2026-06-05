@@ -63,7 +63,8 @@ public class UserQueryRepository {
                                 departmentFilter(departmentId),
                                 jobTypeFilter(jobType),
                                 roleFilter(role),
-                                workLocationFilter(workLocation))
+                                workLocationFilter(workLocation),
+                                excludeMasterAdmin())
                         .orderBy(user.id.desc())
                         .offset(pageable.getOffset())
                         .limit(pageable.getPageSize())
@@ -83,7 +84,8 @@ public class UserQueryRepository {
                                         departmentFilter(departmentId),
                                         jobTypeFilter(jobType),
                                         roleFilter(role),
-                                        workLocationFilter(workLocation))
+                                        workLocationFilter(workLocation),
+                                        excludeMasterAdmin())
                                 .fetchOne());
     }
 
@@ -119,7 +121,8 @@ public class UserQueryRepository {
                                 jobTypeFilter(jobType),
                                 roleFilter(role),
                                 workLocationFilter(workLocation),
-                                adminStatusFilter(statuses))
+                                adminStatusFilter(statuses),
+                                excludeMasterAdmin())
                         .orderBy(user.id.desc())
                         .offset(pageable.getOffset())
                         .limit(pageable.getPageSize())
@@ -139,7 +142,8 @@ public class UserQueryRepository {
                                         jobTypeFilter(jobType),
                                         roleFilter(role),
                                         workLocationFilter(workLocation),
-                                        adminStatusFilter(statuses))
+                                        adminStatusFilter(statuses),
+                                        excludeMasterAdmin())
                                 .fetchOne());
     }
 
@@ -162,7 +166,8 @@ public class UserQueryRepository {
                         jobTypeFilter(jobType),
                         roleFilter(role),
                         workLocationFilter(workLocation),
-                        adminStatusFilter(statuses))
+                        adminStatusFilter(statuses),
+                        excludeMasterAdmin())
                 .orderBy(user.id.desc())
                 .fetch();
     }
@@ -200,6 +205,10 @@ public class UserQueryRepository {
 
     private BooleanExpression roleFilter(Role role) {
         return role != null ? user.role.eq(role) : null;
+    }
+
+    private BooleanExpression excludeMasterAdmin() {
+        return user.role.ne(Role.MASTER_ADMIN);
     }
 
     private BooleanExpression workLocationFilter(Company workLocation) {

@@ -107,7 +107,8 @@ public class UserController {
                     "전 직원 목록을 페이징으로 조회합니다. "
                             + "기본값(excludeSuspended=false)은 AVAILABLE·SUSPENDED 상태 직원을 모두 반환하며, "
                             + "excludeSuspended=true이면 SUSPENDED 상태 직원을 제외하고 AVAILABLE 상태만 반환합니다. "
-                            + "keyword 파라미터를 전달하면 이름·영문이름·이메일 부분 일치로 검색합니다.")
+                            + "keyword 파라미터를 전달하면 이름·영문이름·이메일 부분 일치로 검색합니다. "
+                            + "MASTER_ADMIN 계정은 조회 결과에서 제외됩니다.")
     @ApiResponses(
             value = {
                 @io.swagger.v3.oas.annotations.responses.ApiResponse(

@@ -69,7 +69,9 @@ public class AdminController {
 
     private final AdminService adminService;
 
-    @Operation(summary = "직원 목록 조회", description = "직원 관리 화면용 사용자 목록을 조회합니다.")
+    @Operation(
+            summary = "직원 목록 조회",
+            description = "직원 관리 화면용 사용자 목록을 조회합니다. MASTER_ADMIN 계정은 조회 결과에서 제외됩니다.")
     @ApiResponses(
             value = {
                 @io.swagger.v3.oas.annotations.responses.ApiResponse(
@@ -1016,7 +1018,9 @@ public class AdminController {
         return ResponseEntity.ok(ApiResponse.onSuccess(result));
     }
 
-    @Operation(summary = "관리자 직원 목록 엑셀 다운로드")
+    @Operation(
+            summary = "관리자 직원 목록 엑셀 다운로드",
+            description = "직원 관리 목록을 엑셀로 다운로드합니다. MASTER_ADMIN 계정은 다운로드 결과에서 제외됩니다.")
     @ApiResponses({
         @io.swagger.v3.oas.annotations.responses.ApiResponse(
                 responseCode = "200",

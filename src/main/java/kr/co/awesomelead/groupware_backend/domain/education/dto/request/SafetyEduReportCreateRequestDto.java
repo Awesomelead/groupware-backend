@@ -47,7 +47,9 @@ public class SafetyEduReportCreateRequestDto {
     private Long categoryId;
 
     @Schema(
-            description = "대상 회사 범위 (예: [AWESOME], [AWESOME, MARUI], null/빈 배열이면 모든 회사 공통 게시물)",
+            description =
+                    "대상 회사 범위 (예: [AWESOME], [AWESOME, MARUI], null/빈 배열이면 모든 회사 공통 게시물,"
+                            + " 알림 대상자 산정 시 MASTER_ADMIN 제외)",
             example = "[\"AWESOME\", \"MARUI\"]",
             nullable = true)
     @JsonFormat(with = JsonFormat.Feature.ACCEPT_SINGLE_VALUE_AS_ARRAY)

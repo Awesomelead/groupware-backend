@@ -27,7 +27,9 @@ public interface UserRepository extends JpaRepository<User, Long> {
 
     long countByDepartment(Department department);
 
-    @Query("SELECT u FROM User u JOIN FETCH u.department d WHERE d.id IN :departmentIds")
+    @Query(
+            "SELECT u FROM User u JOIN FETCH u.department d WHERE d.id IN :departmentIds AND"
+                    + " u.role <> 'MASTER_ADMIN'")
     List<User> findAllByDepartmentIdIn(@Param("departmentIds") List<Long> departmentIds);
 
     List<User> findAllByNameKor(String nameKor);
@@ -61,17 +63,18 @@ public interface UserRepository extends JpaRepository<User, Long> {
     @Query("SELECT u.id FROM User u WHERE u.department.id = :departmentId")
     List<Long> findAllIdsByDepartmentId(@Param("departmentId") Long departmentId);
 
-    @Query("SELECT u.id FROM User u WHERE u.status = 'AVAILABLE'")
+    @Query("SELECT u.id FROM User u WHERE u.status = 'AVAILABLE' AND u.role <> 'MASTER_ADMIN'")
     List<Long> findAllActiveUserIds();
 
-    @Query("SELECT u.id FROM User u WHERE u.workLocation = :company")
+    @Query("SELECT u.id FROM User u WHERE u.workLocation = :company AND u.role <> 'MASTER_ADMIN'")
     List<Long> findAllIdsByCompany(@Param("company") Company company);
 
     @Query(
             "SELECT u FROM User u "
                     + "WHERE u.workLocation = :company "
                     + "AND u.status = :status "
-                    + "AND u.position <> :excludedPosition")
+                    + "AND u.position <> :excludedPosition "
+                    + "AND u.role <> 'MASTER_ADMIN'")
     List<User> findAllByCompanyAndStatusExcludingPosition(
             @Param("company") Company company,
             @Param("status") Status status,

@@ -22,6 +22,7 @@ import kr.co.awesomelead.groupware_backend.domain.notice.respository.NoticeTarge
 import kr.co.awesomelead.groupware_backend.domain.notification.service.NotificationService;
 import kr.co.awesomelead.groupware_backend.domain.user.entity.User;
 import kr.co.awesomelead.groupware_backend.domain.user.enums.Authority;
+import kr.co.awesomelead.groupware_backend.domain.user.enums.Role;
 import kr.co.awesomelead.groupware_backend.domain.user.repository.UserRepository;
 import kr.co.awesomelead.groupware_backend.global.error.CustomException;
 import kr.co.awesomelead.groupware_backend.global.error.ErrorCode;
@@ -75,7 +76,20 @@ public class NoticeService {
             throws IOException {
         User author = validateAndGetAuthor(userId);
 
+        List<Long> targetUserIds = excludeMasterAdminTargetIds(requestDto.getTargetUserIds());
+
         Notice notice = noticeMapper.toNoticeEntity(requestDto, author);
+        notice.update(
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                requestDto.getTargetCompanies(),
+                requestDto.getTargetDepartmentIds(),
+                targetUserIds);
         NoticeContentFields contentFields =
                 resolveCreateContentFields(
                         requestDto.getContent(),
@@ -105,10 +119,11 @@ public class NoticeService {
             }
         }
 
-        if (requestDto.getTargetUserIds() != null) {
-            finalTargetUserIds.addAll(requestDto.getTargetUserIds());
+        if (targetUserIds != null) {
+            finalTargetUserIds.addAll(targetUserIds);
         }
 
+        excludeMasterAdminTargets(finalTargetUserIds);
         validateTargetsNotEmpty(finalTargetUserIds);
 
         List<NoticeTarget> targets =
@@ -216,6 +231,8 @@ public class NoticeService {
                 resolveUpdateContentFields(
                         notice, dto.getContent(), dto.getContentDelta(), dto.getContentHtml());
 
+        List<Long> targetUserIds = excludeMasterAdminTargetIds(dto.getTargetUserIds());
+
         notice.update(
                 dto.getType(),
                 dto.getTitle(),
@@ -226,7 +243,7 @@ public class NoticeService {
                 dto.getPinned(),
                 dto.getTargetCompanies(),
                 dto.getTargetDepartmentIds(),
-                dto.getTargetUserIds());
+                targetUserIds);
 
         boolean shouldRebuildTargets =
                 dto.getTargetCompanies() != null
@@ -243,9 +260,13 @@ public class NoticeService {
                             ? dto.getTargetDepartmentIds()
                             : notice.getTargetDepartments();
             List<Long> effectiveUserIds =
-                    dto.getTargetUserIds() != null
-                            ? dto.getTargetUserIds()
-                            : notice.getTargetUsers();
+                    targetUserIds != null
+                            ? targetUserIds
+                            : excludeMasterAdminTargetIds(notice.getTargetUsers());
+            if (targetUserIds == null && effectiveUserIds != null) {
+                notice.update(
+                        null, null, null, null, null, null, null, null, null, effectiveUserIds);
+            }
 
             Set<Long> finalTargetUserIds =
                     resolveTargetUserIds(
@@ -318,7 +339,29 @@ public class NoticeService {
             finalTargetUserIds.addAll(targetUserIds);
         }
 
+        excludeMasterAdminTargets(finalTargetUserIds);
         return finalTargetUserIds;
+    }
+
+    private void excludeMasterAdminTargets(Set<Long> targetUserIds) {
+        targetUserIds.removeAll(findMasterAdminIds());
+    }
+
+    private List<Long> excludeMasterAdminTargetIds(List<Long> targetUserIds) {
+        if (targetUserIds == null || targetUserIds.isEmpty()) {
+            return targetUserIds;
+        }
+
+        Set<Long> masterAdminIds = findMasterAdminIds();
+        return targetUserIds.stream().filter(userId -> !masterAdminIds.contains(userId)).toList();
+    }
+
+    private Set<Long> findMasterAdminIds() {
+        List<User> masterAdmins = userRepository.findAllByRole(Role.MASTER_ADMIN);
+        if (masterAdmins == null || masterAdmins.isEmpty()) {
+            return Set.of();
+        }
+        return masterAdmins.stream().map(User::getId).collect(java.util.stream.Collectors.toSet());
     }
 
     private void validateTargetsNotEmpty(Set<Long> finalTargetUserIds) {

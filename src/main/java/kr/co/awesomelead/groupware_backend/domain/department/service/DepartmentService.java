@@ -96,10 +96,7 @@ public class DepartmentService {
         List<User> users = userRepository.findAllByDepartmentIdIn(allDeptIds);
 
         // DTO 변환 및 반환
-        return users.stream()
-                .filter(this::isNotMasterAdmin)
-                .map(userMapper::toSummaryDto)
-                .toList();
+        return users.stream().filter(this::isNotMasterAdmin).map(userMapper::toSummaryDto).toList();
     }
 
     private void collectDepartmentIdsRecursive(Department department, List<Long> ids) {

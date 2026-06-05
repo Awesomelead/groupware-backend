@@ -31,9 +31,12 @@ class UserQueryRepositoryTest {
     @DisplayName("findAllForAdminWithFilters 메서드는 MASTER_ADMIN을 제외한다")
     void findAllForAdminWithFilters_excludes_master_admin() {
         // given
-        User user = createUser("user@example.com", "일반사용자", "900101-1234567", "01011112222", Role.USER);
-        User admin = createUser("admin@example.com", "관리자", "900102-1234567", "01022223333", Role.ADMIN);
-        createUser("master@example.com", "마스터관리자", "900103-1234567", "01033334444", Role.MASTER_ADMIN);
+        User user =
+                createUser("user@example.com", "일반사용자", "900101-1234567", "01011112222", Role.USER);
+        User admin =
+                createUser("admin@example.com", "관리자", "900102-1234567", "01022223333", Role.ADMIN);
+        createUser(
+                "master@example.com", "마스터관리자", "900103-1234567", "01033334444", Role.MASTER_ADMIN);
         userRepository.saveAll(List.of(user, admin));
         userRepository.save(
                 createUser(
@@ -49,7 +52,9 @@ class UserQueryRepositoryTest {
                         null, null, null, null, null, null, null, PageRequest.of(0, 20));
 
         // then
-        assertThat(result.getContent()).extracting(User::getRole).containsExactlyInAnyOrder(Role.USER, Role.ADMIN);
+        assertThat(result.getContent())
+                .extracting(User::getRole)
+                .containsExactlyInAnyOrder(Role.USER, Role.ADMIN);
     }
 
     @Test
@@ -57,7 +62,12 @@ class UserQueryRepositoryTest {
     void findAllForAdminWithFiltersNoPaging_excludes_master_admin() {
         // given
         userRepository.save(
-                createUser("user-excel@example.com", "엑셀사용자", "900105-1234567", "01055556666", Role.USER));
+                createUser(
+                        "user-excel@example.com",
+                        "엑셀사용자",
+                        "900105-1234567",
+                        "01055556666",
+                        Role.USER));
         userRepository.save(
                 createUser(
                         "master-excel@example.com",
@@ -80,7 +90,12 @@ class UserQueryRepositoryTest {
     void findAllAvailableWithFilters_excludes_master_admin() {
         // given
         userRepository.save(
-                createUser("user-list@example.com", "목록사용자", "900107-1234567", "01077778888", Role.USER));
+                createUser(
+                        "user-list@example.com",
+                        "목록사용자",
+                        "900107-1234567",
+                        "01077778888",
+                        Role.USER));
         userRepository.save(
                 createUser(
                         "master-list@example.com",
@@ -99,7 +114,11 @@ class UserQueryRepositoryTest {
     }
 
     private User createUser(
-            String email, String nameKor, String registrationNumber, String phoneNumber, Role role) {
+            String email,
+            String nameKor,
+            String registrationNumber,
+            String phoneNumber,
+            Role role) {
         User user = new User();
         user.setEmail(email);
         user.setPassword("password");

@@ -353,9 +353,7 @@ public class NoticeService {
         }
 
         Set<Long> masterAdminIds = findMasterAdminIds();
-        return targetUserIds.stream()
-                .filter(userId -> !masterAdminIds.contains(userId))
-                .toList();
+        return targetUserIds.stream().filter(userId -> !masterAdminIds.contains(userId)).toList();
     }
 
     private Set<Long> findMasterAdminIds() {
@@ -363,9 +361,7 @@ public class NoticeService {
         if (masterAdmins == null || masterAdmins.isEmpty()) {
             return Set.of();
         }
-        return masterAdmins.stream()
-                .map(User::getId)
-                .collect(java.util.stream.Collectors.toSet());
+        return masterAdmins.stream().map(User::getId).collect(java.util.stream.Collectors.toSet());
     }
 
     private void validateTargetsNotEmpty(Set<Long> finalTargetUserIds) {

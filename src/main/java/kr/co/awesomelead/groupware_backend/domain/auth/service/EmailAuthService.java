@@ -2,17 +2,21 @@ package kr.co.awesomelead.groupware_backend.domain.auth.service;
 
 import jakarta.mail.MessagingException;
 import jakarta.mail.internet.MimeMessage;
-import java.security.SecureRandom;
-import java.util.concurrent.TimeUnit;
+
 import kr.co.awesomelead.groupware_backend.global.error.CustomException;
 import kr.co.awesomelead.groupware_backend.global.error.ErrorCode;
+
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.stereotype.Service;
+
+import java.security.SecureRandom;
+import java.util.concurrent.TimeUnit;
 
 @Slf4j
 @Service
@@ -45,8 +49,8 @@ public class EmailAuthService {
         // Redis에 인증번호 저장 (5분 유효)
         String key = AUTH_CODE_PREFIX + email;
         redisTemplate
-            .opsForValue()
-            .set(key, authCode, AUTH_CODE_EXPIRATION_MINUTES, TimeUnit.MINUTES);
+                .opsForValue()
+                .set(key, authCode, AUTH_CODE_EXPIRATION_MINUTES, TimeUnit.MINUTES);
     }
 
     // 이메일 인증번호 검증
@@ -107,7 +111,7 @@ public class EmailAuthService {
         helper.setSubject("[어썸그룹] 이메일 인증번호 안내");
 
         String htmlContent =
-            """
+                """
                     <!DOCTYPE html>
                     <html lang="ko">
                     <head>
@@ -119,16 +123,16 @@ public class EmailAuthService {
                             body, table, td, p, a {
                                 font-family: 'Pretendard', 'Apple SD Gothic Neo', 'Malgun Gothic', 'Noto Sans KR', Arial, sans-serif !important;
                             }
-                
+
                             @media only screen and (max-width: 620px) {
                                 .wrapper {
                                     width: 100% !important;
                                 }
-                
+
                                 .card {
                                     padding: 24px 20px !important;
                                 }
-                
+
                                 .code {
                                     font-size: 30px !important;
                                     letter-spacing: 6px !important;
@@ -140,7 +144,7 @@ public class EmailAuthService {
                         <div style="display: none; max-height: 0; overflow: hidden; opacity: 0;">
                             어썸그룹 이메일 인증번호 안내 메일입니다.
                         </div>
-                
+
                         <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="background-color: #F4F6F8;">
                             <tr>
                                 <td align="center" style="padding: 32px 16px;">
@@ -152,7 +156,7 @@ public class EmailAuthService {
                                                 </span>
                                             </td>
                                         </tr>
-                
+
                                         <tr>
                                             <td class="card" style="background-color: #FFFFFF; border: 1px solid #E7E7E7; border-radius: 16px; padding: 32px;">
                                                 <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%">
@@ -167,7 +171,7 @@ public class EmailAuthService {
                                                         </td>
                                                     </tr>
                                                 </table>
-                
+
                                                 <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="margin-top: 24px; background-color: #F3F7FC; border-radius: 14px;">
                                                     <tr>
                                                         <td style="padding: 18px 20px;">
@@ -182,7 +186,7 @@ public class EmailAuthService {
                                                         </td>
                                                     </tr>
                                                 </table>
-                
+
                                                 <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="margin-top: 18px; border: 1px solid #E7E7E7; border-radius: 12px;">
                                                     <tr>
                                                         <td style="padding: 18px 20px; font-size: 14px; line-height: 1.7; color: #414141;">
@@ -205,7 +209,7 @@ public class EmailAuthService {
                                                 </table>
                                             </td>
                                         </tr>
-                
+
                                         <tr>
                                             <td style="padding-top: 16px; text-align: center; font-size: 12px; line-height: 1.6; color: #9D9D9D;">
                                                 본 메일은 발신전용 메일입니다.<br />
@@ -218,7 +222,7 @@ public class EmailAuthService {
                         </table>
                     </body>
                 """
-                .replace(AUTH_CODE_PLACEHOLDER, authCode);
+                        .replace(AUTH_CODE_PLACEHOLDER, authCode);
 
         helper.setText(htmlContent, true);
 

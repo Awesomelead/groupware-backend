@@ -67,6 +67,7 @@ public class EduReportController {
                                         - `files`(파일 파트)는 선택입니다.
                                         - 부서 교육 관리 권한(`MANAGE_DEPARTMENT_EDUCATION`)이 있어야 생성할 수 있습니다.
                                         - 본문은 `content`(plain) 또는 `contentDelta`/`contentHtml`(에디터 원본/렌더링용)으로 전달할 수 있습니다.
+                                        - 알림 대상자 산정 시 MASTER_ADMIN 계정은 제외됩니다.
                                         """,
             requestBody =
                     @io.swagger.v3.oas.annotations.parameters.RequestBody(
@@ -177,6 +178,7 @@ public class EduReportController {
                                         - `companyScope`는 회사 목록 배열입니다.
                                         - `[AWESOME]`처럼 1개를 보내면 해당 회사 게시물로 생성됩니다.
                                         - `[AWESOME, MARUI]`, `null`, `[]`는 모든 회사 공통 게시물로 생성됩니다.
+                                        - 알림 대상자 산정 시 MASTER_ADMIN 계정은 제외됩니다.
                                         """,
             requestBody =
                     @io.swagger.v3.oas.annotations.parameters.RequestBody(
@@ -285,6 +287,7 @@ public class EduReportController {
                                         - `companyScope`는 회사 목록 배열입니다.
                                         - `[AWESOME]`처럼 1개를 보내면 해당 회사 게시물로 생성됩니다.
                                         - `[AWESOME, MARUI]`, `null`, `[]`는 모든 회사 공통 게시물로 생성됩니다.
+                                        - 알림 대상자 산정 시 MASTER_ADMIN 계정은 제외됩니다.
                                         """,
             requestBody =
                     @io.swagger.v3.oas.annotations.parameters.RequestBody(
@@ -1412,6 +1415,7 @@ public class EduReportController {
                         - 안전보건: `MANAGE_SAFETY`
 
                         - 생성 시와 동일한 대상자에게 title에 `[리마인드]` prefix를 붙여 알림을 재전송합니다.
+                        - MASTER_ADMIN 계정은 리마인드 대상자에서 제외됩니다.
                         - 부서교육 / PSM / 안전보건 모든 타입에 사용 가능합니다.
                         """)
     @ApiResponses({

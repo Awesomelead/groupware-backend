@@ -43,14 +43,16 @@ public class EduReportUpdateRequestDto {
     @Schema(description = "서명 필요 여부", example = "true", defaultValue = "false")
     private boolean signatureRequired;
 
-    @Schema(description = "부서 ID (부서 교육 수정 시 필수)", example = "3")
+    @Schema(description = "부서 ID (부서 교육 수정 시 필수, 알림 대상자 산정 시 MASTER_ADMIN 제외)", example = "3")
     private Long departmentId;
 
     @Schema(description = "카테고리 ID (PSM/안전보건 수정 시 선택)", example = "2")
     private Long categoryId;
 
     @Schema(
-            description = "회사 범위(PSM/안전보건 수정 시 선택)." + " [AWESOME, MARUI]를 함께 넣으면 공통 게시물로 저장됩니다.",
+            description =
+                    "회사 범위(PSM/안전보건 수정 시 선택). [AWESOME, MARUI]를 함께 넣으면 공통 게시물로 저장됩니다."
+                            + " 알림 대상자 산정 시 MASTER_ADMIN 계정은 제외됩니다.",
             example = "[\"AWESOME\"]")
     private List<Company> companyScope;
 

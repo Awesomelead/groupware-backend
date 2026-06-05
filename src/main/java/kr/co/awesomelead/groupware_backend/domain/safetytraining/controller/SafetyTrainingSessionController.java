@@ -684,7 +684,7 @@ public class SafetyTrainingSessionController {
 
     @Operation(
             summary = "안전보건 교육일지 등록",
-            description = "안전 보건 관리 권한 사용자가 교육일지를 등록합니다.",
+            description = "안전 보건 관리 권한 사용자가 교육일지를 등록합니다. MASTER_ADMIN 계정은 참석 대상자에서 제외됩니다.",
             requestBody =
                     @io.swagger.v3.oas.annotations.parameters.RequestBody(
                             required = true,
@@ -800,6 +800,7 @@ public class SafetyTrainingSessionController {
                     교육 생성자(createdBy)만 요청 가능합니다.
 
                     - companyScope 기준 현재 활성 사용자에게 `[리마인드]` prefix를 붙여 알림을 재전송합니다.
+                    - MASTER_ADMIN 계정은 리마인드 대상자에서 제외됩니다.
                     """)
     @ApiResponses({
         @io.swagger.v3.oas.annotations.responses.ApiResponse(

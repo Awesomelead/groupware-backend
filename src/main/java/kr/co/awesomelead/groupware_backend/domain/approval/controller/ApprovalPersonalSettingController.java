@@ -31,18 +31,18 @@ import org.springframework.web.multipart.MultipartFile;
 @RequiredArgsConstructor
 @RequestMapping("/api/approval-settings")
 @Tag(
-    name = "전자결재 개인설정",
-    description =
-        """
+        name = "전자결재 개인설정",
+        description =
+                """
             전자결재 > 환경설정 > 개인설정 API
             - 대결지정(기간 포함)
             - 열람권자 기본설정
             - 서명이미지
-            
+
             ### 권한 정보
             - 로그인 필요
             - 명시된 @PreAuthorize 없음 (서비스 레이어 권한 검증)
-            
+
             ### 사용 Enum
             - Company
               - AWESOME (어썸리드)
@@ -82,11 +82,11 @@ public class ApprovalPersonalSettingController {
     private final ApprovalPersonalSettingService approvalPersonalSettingService;
 
     @Operation(
-        summary = "전자결재 개인설정 조회",
-        description =
-            """
+            summary = "전자결재 개인설정 조회",
+            description =
+                    """
                 현재 로그인 사용자의 개인설정을 조회합니다.
-                
+
                 ### 응답 필드
                 - 대결지정: delegateEnabled, delegateUser, delegateStartDate, delegateEndDate
                 - 열람권자 기본설정: defaultViewerTargets
@@ -94,71 +94,71 @@ public class ApprovalPersonalSettingController {
                 """)
     @GetMapping("/me")
     public ResponseEntity<ApiResponse<ApprovalPersonalSettingResponseDto>> getMySetting(
-        @Parameter(hidden = true) @AuthenticationPrincipal CustomUserDetails userDetails) {
+            @Parameter(hidden = true) @AuthenticationPrincipal CustomUserDetails userDetails) {
         return ResponseEntity.ok(
-            ApiResponse.onSuccess(
-                approvalPersonalSettingService.getMySetting(userDetails.getId())));
+                ApiResponse.onSuccess(
+                        approvalPersonalSettingService.getMySetting(userDetails.getId())));
     }
 
     @Operation(
-        summary = "전자결재 개인설정 저장",
-        description =
-            """
+            summary = "전자결재 개인설정 저장",
+            description =
+                    """
                 개인설정의 대결지정/열람권자 기본설정을 저장합니다.
-                
+
                 ### 대결지정 규칙
                 - delegateEnabled=true 인 경우 delegateUserId, delegateStartDate, delegateEndDate 필수
                 - delegateStartDate <= delegateEndDate 여야 함
                 - 본인을 대결자로 지정할 수 없음
-                
+
                 ### 열람권자 기본설정 규칙
                 - targetType=USER -> targetUserId 필수
                 - targetType=DEPARTMENT -> targetDepartmentId 필수
                 """)
     @PutMapping("/me")
     public ResponseEntity<ApiResponse<ApprovalPersonalSettingResponseDto>> saveMySetting(
-        @Valid @RequestBody ApprovalPersonalSettingUpdateRequestDto request,
-        @Parameter(hidden = true) @AuthenticationPrincipal CustomUserDetails userDetails) {
+            @Valid @RequestBody ApprovalPersonalSettingUpdateRequestDto request,
+            @Parameter(hidden = true) @AuthenticationPrincipal CustomUserDetails userDetails) {
         return ResponseEntity.ok(
-            ApiResponse.onSuccess(
-                approvalPersonalSettingService.saveMySetting(
-                    userDetails.getId(), request)));
+                ApiResponse.onSuccess(
+                        approvalPersonalSettingService.saveMySetting(
+                                userDetails.getId(), request)));
     }
 
     @Operation(
-        summary = "서명이미지 업로드",
-        description =
-            """
+            summary = "서명이미지 업로드",
+            description =
+                    """
                 전자결재 서명이미지를 업로드합니다.
-                
+
                 ### 업로드 규칙
                 - multipart 필드명: signatureImage
                 - 허용 확장자: gif, jpg, jpeg, png
                 - 최대 파일 크기: 100KB
-                
+
                 ### 응답
                 - 저장된 서명이미지 URL
                 """)
     @PostMapping(value = "/me/signature-image", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<ApiResponse<String>> uploadSignatureImage(
-        @RequestPart("signatureImage") MultipartFile signatureImage,
-        @Parameter(hidden = true) @AuthenticationPrincipal CustomUserDetails userDetails) {
+            @RequestPart("signatureImage") MultipartFile signatureImage,
+            @Parameter(hidden = true) @AuthenticationPrincipal CustomUserDetails userDetails) {
         return ResponseEntity.ok(
-            ApiResponse.onSuccess(
-                approvalPersonalSettingService.uploadSignatureImage(
-                    userDetails.getId(), signatureImage)));
+                ApiResponse.onSuccess(
+                        approvalPersonalSettingService.uploadSignatureImage(
+                                userDetails.getId(), signatureImage)));
     }
 
     @Operation(
-        summary = "서명이미지 삭제",
-        description =
-            """
+            summary = "서명이미지 삭제",
+            description =
+                    """
                 현재 로그인 사용자의 전자결재 서명이미지를 삭제합니다.
                 - 삭제 후 조회 시 signatureImageUrl은 null로 반환됩니다.
                 """)
     @DeleteMapping("/me/signature-image")
     public ResponseEntity<ApiResponse<Void>> deleteSignatureImage(
-        @Parameter(hidden = true) @AuthenticationPrincipal CustomUserDetails userDetails) {
+            @Parameter(hidden = true) @AuthenticationPrincipal CustomUserDetails userDetails) {
         approvalPersonalSettingService.deleteSignatureImage(userDetails.getId());
         return ResponseEntity.ok(ApiResponse.onNoContent("서명이미지가 삭제되었습니다."));
     }

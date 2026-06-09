@@ -35,14 +35,14 @@ import org.springframework.web.bind.annotation.RestController;
 @RequiredArgsConstructor
 @RequestMapping("/api")
 @Tag(
-    name = "전자결재",
-    description =
-        """
+        name = "전자결재",
+        description =
+                """
             전자결재 작성 1차 API
             - 양식 목록 조회
             - 임시저장 생성/수정
             - 상신(상신 시점 결재선 스냅샷 고정)
-            
+
             ### 권장 엔드포인트(헷갈림 방지)
             - 전체 전체 탭: GET /api/approvals/all
             - 전체 본인기안 탭: GET /api/approvals/all/my-drafted
@@ -61,11 +61,11 @@ import org.springframework.web.bind.annotation.RestController;
             - 임시저장 수정: PUT /api/approvals/drafts/{documentId}
             - 임시저장 문서 상신: POST /api/approvals/drafts/{documentId}/submit
             - 바로 상신(임시저장 없이 1회 요청): POST /api/approvals/submit-direct
-            
+
             ### 권한 정보
             - 로그인 필요
             - 명시된 @PreAuthorize 없음 (서비스 레이어 권한 검증)
-            
+
             ### 사용 Enum
             - Company
               - AWESOME (어썸리드)
@@ -115,11 +115,11 @@ public class ApprovalWorkflowController {
     private final ApprovalWorkflowService approvalWorkflowService;
 
     @Operation(
-        summary = "전자결재 양식 목록 조회",
-        description =
-            """
+            summary = "전자결재 양식 목록 조회",
+            description =
+                    """
                 결재작성 화면에서 사용할 양식구분/양식 목록을 조회합니다.
-                
+
                 ### 응답 구조
                 - categories[]: 양식구분
                   - id, code, name, sortOrder
@@ -130,7 +130,7 @@ public class ApprovalWorkflowController {
                     - linePolicy(FIXED/FLEXIBLE)
                     - defaultContentDelta(기본 본문)
                     - defaultLines(기본 결재선/참조자/열람권자)
-                
+
                 ### 프론트 사용 포인트
                 - templateId를 임시저장/상신 API로 전달합니다.
                 - defaultContentDelta는 양식 선택 시 에디터 초기값으로 사용합니다.
@@ -141,11 +141,11 @@ public class ApprovalWorkflowController {
     }
 
     @Operation(
-        summary = "결재진행 전체 탭 조회",
-        description =
-            """
+            summary = "결재진행 전체 탭 조회",
+            description =
+                    """
                 현재 사용자 기준 `결재진행 > 전체` 문서를 조회합니다.
-                
+
                 ### 조회 대상
                 - 임시저장함: 내가 기안한 DRAFT 문서
                 - 결재하기: IN_PROGRESS 이면서 내 결재선 상태가 PENDING 인 문서
@@ -153,11 +153,11 @@ public class ApprovalWorkflowController {
                 - 기결: 내가 결재(APPROVED) 처리한 결재선이 있는 문서
                 - 반려: 문서 상태가 REJECTED 이고 내/부서 결재선이 실제 REJECTED 처리된 문서
                 - 회수: 문서 상태가 RECALLED 이고 내가 기안한 문서
-                
+
                 ### 제외 대상
                 - `전체 > 본인기안` 전용 문서(결재진행 조건 불충족)
                 - 참조자/열람권자만 걸린 문서(참조문서 메뉴 대상)
-                
+
                 ### 응답 주요 필드
                 - 문서번호(documentNo)
                 - 기안자(drafterName)
@@ -168,20 +168,20 @@ public class ApprovalWorkflowController {
                 """)
     @GetMapping("/approvals/inbox/all")
     public ResponseEntity<ApiResponse<ApprovalInboxAllResponseDto>> getInboxAll(
-        @Parameter(hidden = true) @AuthenticationPrincipal CustomUserDetails userDetails) {
+            @Parameter(hidden = true) @AuthenticationPrincipal CustomUserDetails userDetails) {
         return ResponseEntity.ok(
-            ApiResponse.onSuccess(approvalWorkflowService.getInboxAll(userDetails.getId())));
+                ApiResponse.onSuccess(approvalWorkflowService.getInboxAll(userDetails.getId())));
     }
 
     @Operation(
-        summary = "결재진행 결재하기 탭 조회",
-        description =
-            """
+            summary = "결재진행 결재하기 탭 조회",
+            description =
+                    """
                 현재 사용자 기준 `결재진행 > 결재하기` 문서를 조회합니다.
-                
+
                 ### 조회 대상
                 - IN_PROGRESS 이면서 내/부서 결재선 상태가 PENDING 인 문서
-                
+
                 ### 응답 주요 필드
                 - 문서번호(documentNo)
                 - 기안자(drafterName)
@@ -192,21 +192,21 @@ public class ApprovalWorkflowController {
                 """)
     @GetMapping("/approvals/inbox/to-approve")
     public ResponseEntity<ApiResponse<ApprovalInboxAllResponseDto>> getInboxToApprove(
-        @Parameter(hidden = true) @AuthenticationPrincipal CustomUserDetails userDetails) {
+            @Parameter(hidden = true) @AuthenticationPrincipal CustomUserDetails userDetails) {
         return ResponseEntity.ok(
-            ApiResponse.onSuccess(
-                approvalWorkflowService.getInboxToApprove(userDetails.getId())));
+                ApiResponse.onSuccess(
+                        approvalWorkflowService.getInboxToApprove(userDetails.getId())));
     }
 
     @Operation(
-        summary = "결재진행 결재 전단계 탭 조회",
-        description =
-            """
+            summary = "결재진행 결재 전단계 탭 조회",
+            description =
+                    """
                 현재 사용자 기준 `결재진행 > 결재 전단계` 문서를 조회합니다.
-                
+
                 ### 조회 대상
                 - IN_PROGRESS 이면서 내/부서 결재선 상태가 WAITING 인 문서
-                
+
                 ### 응답 주요 필드
                 - 문서번호(documentNo)
                 - 기안자(drafterName)
@@ -217,21 +217,21 @@ public class ApprovalWorkflowController {
                 """)
     @GetMapping("/approvals/inbox/before-my-turn")
     public ResponseEntity<ApiResponse<ApprovalInboxAllResponseDto>> getInboxBeforeMyTurn(
-        @Parameter(hidden = true) @AuthenticationPrincipal CustomUserDetails userDetails) {
+            @Parameter(hidden = true) @AuthenticationPrincipal CustomUserDetails userDetails) {
         return ResponseEntity.ok(
-            ApiResponse.onSuccess(
-                approvalWorkflowService.getInboxBeforeMyTurn(userDetails.getId())));
+                ApiResponse.onSuccess(
+                        approvalWorkflowService.getInboxBeforeMyTurn(userDetails.getId())));
     }
 
     @Operation(
-        summary = "결재진행 기결 탭 조회",
-        description =
-            """
+            summary = "결재진행 기결 탭 조회",
+            description =
+                    """
                 현재 사용자 기준 `결재진행 > 기결` 문서를 조회합니다.
-                
+
                 ### 조회 대상
                 - 내/부서 결재선이 APPROVED 처리된 문서
-                
+
                 ### 응답 주요 필드
                 - 문서번호(documentNo)
                 - 기안자(drafterName)
@@ -242,22 +242,22 @@ public class ApprovalWorkflowController {
                 """)
     @GetMapping("/approvals/inbox/processed-by-me")
     public ResponseEntity<ApiResponse<ApprovalInboxAllResponseDto>> getInboxProcessedByMe(
-        @Parameter(hidden = true) @AuthenticationPrincipal CustomUserDetails userDetails) {
+            @Parameter(hidden = true) @AuthenticationPrincipal CustomUserDetails userDetails) {
         return ResponseEntity.ok(
-            ApiResponse.onSuccess(
-                approvalWorkflowService.getInboxProcessedByMe(userDetails.getId())));
+                ApiResponse.onSuccess(
+                        approvalWorkflowService.getInboxProcessedByMe(userDetails.getId())));
     }
 
     @Operation(
-        summary = "결재진행 반려/회수 탭 조회",
-        description =
-            """
+            summary = "결재진행 반려/회수 탭 조회",
+            description =
+                    """
                 현재 사용자 기준 `결재진행 > 반려/회수` 문서를 조회합니다.
-                
+
                 ### 조회 대상
                 - 반려: 문서 상태 REJECTED 이고 내/부서 결재선이 실제 REJECTED 처리된 문서
                 - 회수: 문서 상태 RECALLED 이고 내가 기안한 문서
-                
+
                 ### 응답 주요 필드
                 - 문서번호(documentNo)
                 - 기안자(drafterName)
@@ -268,21 +268,21 @@ public class ApprovalWorkflowController {
                 """)
     @GetMapping("/approvals/inbox/rejected-or-recalled")
     public ResponseEntity<ApiResponse<ApprovalInboxAllResponseDto>> getInboxRejectedOrRecalled(
-        @Parameter(hidden = true) @AuthenticationPrincipal CustomUserDetails userDetails) {
+            @Parameter(hidden = true) @AuthenticationPrincipal CustomUserDetails userDetails) {
         return ResponseEntity.ok(
-            ApiResponse.onSuccess(
-                approvalWorkflowService.getInboxRejectedOrRecalled(userDetails.getId())));
+                ApiResponse.onSuccess(
+                        approvalWorkflowService.getInboxRejectedOrRecalled(userDetails.getId())));
     }
 
     @Operation(
-        summary = "결재진행 임시저장함 탭 조회",
-        description =
-            """
+            summary = "결재진행 임시저장함 탭 조회",
+            description =
+                    """
                 현재 사용자 기준 `결재진행 > 임시저장함` 문서를 조회합니다.
-                
+
                 ### 조회 대상
                 - 내가 기안한 DRAFT 문서
-                
+
                 ### 응답 주요 필드
                 - 문서번호(documentNo)
                 - 기안자(drafterName)
@@ -293,23 +293,23 @@ public class ApprovalWorkflowController {
                 """)
     @GetMapping("/approvals/inbox/draft-box")
     public ResponseEntity<ApiResponse<ApprovalInboxAllResponseDto>> getInboxDraftBox(
-        @Parameter(hidden = true) @AuthenticationPrincipal CustomUserDetails userDetails) {
+            @Parameter(hidden = true) @AuthenticationPrincipal CustomUserDetails userDetails) {
         return ResponseEntity.ok(
-            ApiResponse.onSuccess(
-                approvalWorkflowService.getInboxDraftBox(userDetails.getId())));
+                ApiResponse.onSuccess(
+                        approvalWorkflowService.getInboxDraftBox(userDetails.getId())));
     }
 
     @Operation(
-        summary = "전체 전체 탭 조회",
-        description =
-            """
+            summary = "전체 전체 탭 조회",
+            description =
+                    """
                 현재 사용자 기준 `전체 > 전체` 문서를 조회합니다.
-                
+
                 ### 조회 대상
                 - 본인기안 문서(기안자가 본인)
                 - 본인결재 문서(내 결재선/부서 결재선으로 지정된 문서, DRAFT 제외)
                 - 위 두 조건의 합집합(중복 문서는 1건으로 표시)
-                
+
                 ### 응답 주요 필드
                 - 문서번호(documentNo)
                 - 기안자(drafterName)
@@ -320,20 +320,20 @@ public class ApprovalWorkflowController {
                 """)
     @GetMapping("/approvals/all")
     public ResponseEntity<ApiResponse<ApprovalInboxAllResponseDto>> getAllAll(
-        @Parameter(hidden = true) @AuthenticationPrincipal CustomUserDetails userDetails) {
+            @Parameter(hidden = true) @AuthenticationPrincipal CustomUserDetails userDetails) {
         return ResponseEntity.ok(
-            ApiResponse.onSuccess(approvalWorkflowService.getAllAll(userDetails.getId())));
+                ApiResponse.onSuccess(approvalWorkflowService.getAllAll(userDetails.getId())));
     }
 
     @Operation(
-        summary = "전체 본인기안 탭 조회",
-        description =
-            """
+            summary = "전체 본인기안 탭 조회",
+            description =
+                    """
                 현재 사용자 기준 `전체 > 본인기안` 문서를 조회합니다.
-                
+
                 ### 조회 대상
                 - 기안자가 본인인 문서(상태 전체)
-                
+
                 ### 응답 주요 필드
                 - 문서번호(documentNo)
                 - 기안자(drafterName)
@@ -344,22 +344,22 @@ public class ApprovalWorkflowController {
                 """)
     @GetMapping("/approvals/all/my-drafted")
     public ResponseEntity<ApiResponse<ApprovalInboxAllResponseDto>> getAllMyDrafted(
-        @Parameter(hidden = true) @AuthenticationPrincipal CustomUserDetails userDetails) {
+            @Parameter(hidden = true) @AuthenticationPrincipal CustomUserDetails userDetails) {
         return ResponseEntity.ok(
-            ApiResponse.onSuccess(
-                approvalWorkflowService.getAllMyDrafted(userDetails.getId())));
+                ApiResponse.onSuccess(
+                        approvalWorkflowService.getAllMyDrafted(userDetails.getId())));
     }
 
     @Operation(
-        summary = "전체 본인결재 탭 조회",
-        description =
-            """
+            summary = "전체 본인결재 탭 조회",
+            description =
+                    """
                 현재 사용자 기준 `전체 > 본인결재` 문서를 조회합니다.
-                
+
                 ### 조회 대상
                 - 내 결재선(사용자/부서)으로 지정된 문서
                 - 임시저장(DRAFT) 문서는 제외
-                
+
                 ### 응답 주요 필드
                 - 문서번호(documentNo)
                 - 기안자(drafterName)
@@ -370,22 +370,22 @@ public class ApprovalWorkflowController {
                 """)
     @GetMapping("/approvals/all/my-approvals")
     public ResponseEntity<ApiResponse<ApprovalInboxAllResponseDto>> getAllMyApprovals(
-        @Parameter(hidden = true) @AuthenticationPrincipal CustomUserDetails userDetails) {
+            @Parameter(hidden = true) @AuthenticationPrincipal CustomUserDetails userDetails) {
         return ResponseEntity.ok(
-            ApiResponse.onSuccess(
-                approvalWorkflowService.getAllMyApprovals(userDetails.getId())));
+                ApiResponse.onSuccess(
+                        approvalWorkflowService.getAllMyApprovals(userDetails.getId())));
     }
 
     @Operation(
-        summary = "참조문서 참조문서 탭 조회",
-        description =
-            """
+            summary = "참조문서 참조문서 탭 조회",
+            description =
+                    """
                 현재 사용자 기준 `참조문서 > 참조문서` 문서를 조회합니다.
-                
+
                 ### 조회 대상
                 - role=REFERENCE(참조자) 라인에 본인 사용자 또는 본인 부서가 지정된 문서
                 - 임시저장(DRAFT) 문서는 제외
-                
+
                 ### 응답 주요 필드
                 - 문서번호(documentNo)
                 - 기안자(drafterName)
@@ -396,26 +396,26 @@ public class ApprovalWorkflowController {
                 """)
     @GetMapping("/approvals/references")
     public ResponseEntity<ApiResponse<ApprovalInboxAllResponseDto>> getReferenceDocuments(
-        @Parameter(hidden = true) @AuthenticationPrincipal CustomUserDetails userDetails) {
+            @Parameter(hidden = true) @AuthenticationPrincipal CustomUserDetails userDetails) {
         return ResponseEntity.ok(
-            ApiResponse.onSuccess(
-                approvalWorkflowService.getReferenceDocuments(userDetails.getId())));
+                ApiResponse.onSuccess(
+                        approvalWorkflowService.getReferenceDocuments(userDetails.getId())));
     }
 
     @Operation(
-        summary = "참조문서 열람획득문서 탭 조회",
-        description =
-            """
+            summary = "참조문서 열람획득문서 탭 조회",
+            description =
+                    """
                 현재 사용자 기준 `참조문서 > 열람획득문서` 문서를 조회합니다.
-                
+
                 ### 조회 대상
                 - 문서 상태가 APPROVED(완결)
                 - role=VIEWER(열람권자) 라인에 본인 사용자 또는 본인 부서가 지정된 문서
-                
+
                 ### 제외 대상
                 - 임시저장(DRAFT) 문서
                 - 동일 문서에 참조자(REFERENCE)로도 지정된 경우(참조문서 탭으로 분리)
-                
+
                 ### 응답 주요 필드
                 - 문서번호(documentNo)
                 - 기안자(drafterName)
@@ -426,25 +426,25 @@ public class ApprovalWorkflowController {
                 """)
     @GetMapping("/approvals/references/viewer-acquired")
     public ResponseEntity<ApiResponse<ApprovalInboxAllResponseDto>> getViewerAcquiredDocuments(
-        @Parameter(hidden = true) @AuthenticationPrincipal CustomUserDetails userDetails) {
+            @Parameter(hidden = true) @AuthenticationPrincipal CustomUserDetails userDetails) {
         return ResponseEntity.ok(
-            ApiResponse.onSuccess(
-                approvalWorkflowService.getViewerAcquiredDocuments(userDetails.getId())));
+                ApiResponse.onSuccess(
+                        approvalWorkflowService.getViewerAcquiredDocuments(userDetails.getId())));
     }
 
     @Operation(
-        summary = "참조문서 열람부여문서 탭 조회",
-        description =
-            """
+            summary = "참조문서 열람부여문서 탭 조회",
+            description =
+                    """
                 현재 사용자 기준 `참조문서 > 열람부여문서` 문서를 조회합니다.
-                
+
                 ### 조회 대상
                 - 기안자가 본인인 문서
                 - role=VIEWER(열람권자) 라인이 하나 이상 존재하는 문서
-                
+
                 ### 제외 대상
                 - 임시저장(DRAFT) 문서
-                
+
                 ### 응답 주요 필드
                 - 문서번호(documentNo)
                 - 기안자(drafterName)
@@ -455,18 +455,18 @@ public class ApprovalWorkflowController {
                 """)
     @GetMapping("/approvals/references/viewer-granted")
     public ResponseEntity<ApiResponse<ApprovalInboxAllResponseDto>> getViewerGrantedDocuments(
-        @Parameter(hidden = true) @AuthenticationPrincipal CustomUserDetails userDetails) {
+            @Parameter(hidden = true) @AuthenticationPrincipal CustomUserDetails userDetails) {
         return ResponseEntity.ok(
-            ApiResponse.onSuccess(
-                approvalWorkflowService.getViewerGrantedDocuments(userDetails.getId())));
+                ApiResponse.onSuccess(
+                        approvalWorkflowService.getViewerGrantedDocuments(userDetails.getId())));
     }
 
     @Operation(
-        summary = "부서결재함(내 부서) 탭 조회",
-        description =
-            """
+            summary = "부서결재함(내 부서) 탭 조회",
+            description =
+                    """
                 현재 사용자 기준 `부서결재함` 문서를 조회합니다.
-                
+
                 ### 조회 대상
                 - 기안부서가 내 부서인 문서
                 - 또는 내 부서가 부서 대상 결재 라인으로 지정된 문서
@@ -474,14 +474,14 @@ public class ApprovalWorkflowController {
                   - AGREEMENT_REQUIRED(합의부서 필수)
                   - AGREEMENT_OPTIONAL(합의부서 선택)
                   - RECEIVER_DEPARTMENT(수신부서)
-                
+
                 ### 제외 대상
                 - 임시저장(DRAFT) 문서
                 - 내 부서가 참조자/열람권자로만 지정된 문서(참조문서 메뉴 대상)
-                
+
                 ### 권한
                 - 본인 소속 부서 기준으로만 조회(관리자 전체 부서 조회 미지원)
-                
+
                 ### 응답 주요 필드
                 - 문서번호(documentNo)
                 - 기안자(drafterName)
@@ -492,18 +492,18 @@ public class ApprovalWorkflowController {
                 """)
     @GetMapping("/approvals/department-box")
     public ResponseEntity<ApiResponse<ApprovalInboxAllResponseDto>> getDepartmentBox(
-        @Parameter(hidden = true) @AuthenticationPrincipal CustomUserDetails userDetails) {
+            @Parameter(hidden = true) @AuthenticationPrincipal CustomUserDetails userDetails) {
         return ResponseEntity.ok(
-            ApiResponse.onSuccess(
-                approvalWorkflowService.getDepartmentBox(userDetails.getId())));
+                ApiResponse.onSuccess(
+                        approvalWorkflowService.getDepartmentBox(userDetails.getId())));
     }
 
     @Operation(
-        summary = "전자결재 임시저장 생성",
-        description =
-            """
+            summary = "전자결재 임시저장 생성",
+            description =
+                    """
                 임시저장 문서를 생성합니다.
-                
+
                 ### 입력 규칙
                 - templateId: 필수
                 - title/contentDelta: 임시저장 단계에서는 선택 (상신 시 필수)
@@ -513,21 +513,21 @@ public class ApprovalWorkflowController {
                 """)
     @PostMapping("/approvals/drafts")
     public ResponseEntity<ApiResponse<ApprovalDraftResponseDto>> createDraft(
-        @Valid @RequestBody ApprovalDraftCreateRequestDto request,
-        @Parameter(hidden = true) @AuthenticationPrincipal CustomUserDetails userDetails) {
+            @Valid @RequestBody ApprovalDraftCreateRequestDto request,
+            @Parameter(hidden = true) @AuthenticationPrincipal CustomUserDetails userDetails) {
         ApprovalDraftUpsertRequestDto upsertRequest = toUpsertRequest(request);
         upsertRequest.setDocumentId(null);
         ApprovalDraftResponseDto result =
-            approvalWorkflowService.upsertDraft(userDetails.getId(), upsertRequest);
+                approvalWorkflowService.upsertDraft(userDetails.getId(), upsertRequest);
         return ResponseEntity.ok(ApiResponse.onSuccess(result));
     }
 
     @Operation(
-        summary = "전자결재 임시저장 수정",
-        description =
-            """
+            summary = "전자결재 임시저장 수정",
+            description =
+                    """
                 기존 임시저장 문서를 수정합니다.
-                
+
                 ### 입력 규칙
                 - 수정 가능한 상태는 DRAFT(임시저장)만 허용됩니다.
                 - lines 미입력 시 기존 결재선을 유지합니다.
@@ -536,22 +536,22 @@ public class ApprovalWorkflowController {
                 """)
     @PutMapping("/approvals/drafts/{documentId}")
     public ResponseEntity<ApiResponse<ApprovalDraftResponseDto>> updateDraft(
-        @PathVariable Long documentId,
-        @Valid @RequestBody ApprovalDraftUpdateRequestDto request,
-        @Parameter(hidden = true) @AuthenticationPrincipal CustomUserDetails userDetails) {
+            @PathVariable Long documentId,
+            @Valid @RequestBody ApprovalDraftUpdateRequestDto request,
+            @Parameter(hidden = true) @AuthenticationPrincipal CustomUserDetails userDetails) {
         ApprovalDraftUpsertRequestDto upsertRequest = toUpsertRequest(request);
         upsertRequest.setDocumentId(documentId);
         ApprovalDraftResponseDto result =
-            approvalWorkflowService.upsertDraft(userDetails.getId(), upsertRequest);
+                approvalWorkflowService.upsertDraft(userDetails.getId(), upsertRequest);
         return ResponseEntity.ok(ApiResponse.onSuccess(result));
     }
 
     @Operation(
-        summary = "전자결재 임시저장 문서 상신",
-        description =
-            """
+            summary = "전자결재 임시저장 문서 상신",
+            description =
+                    """
                 이미 임시저장된 전자결재 문서를 상신합니다.
-                
+
                 - {documentId}: POST /api/approvals/drafts 로 생성한 임시저장 문서 ID
                 - 임시저장 문서가 없으면 먼저 POST /api/approvals/drafts 로 생성해야 합니다.
                 - 임시저장 없이 바로 상신하려면 POST /api/approvals/submit-direct 를 사용하세요.
@@ -565,20 +565,20 @@ public class ApprovalWorkflowController {
                 """)
     @PostMapping("/approvals/drafts/{documentId}/submit")
     public ResponseEntity<ApiResponse<ApprovalSubmitResponseDto>> submitDraft(
-        @PathVariable Long documentId,
-        @Valid @RequestBody ApprovalSubmitRequestDto request,
-        @Parameter(hidden = true) @AuthenticationPrincipal CustomUserDetails userDetails) {
+            @PathVariable Long documentId,
+            @Valid @RequestBody ApprovalSubmitRequestDto request,
+            @Parameter(hidden = true) @AuthenticationPrincipal CustomUserDetails userDetails) {
         ApprovalSubmitResponseDto result =
-            approvalWorkflowService.submit(userDetails.getId(), documentId, request);
+                approvalWorkflowService.submit(userDetails.getId(), documentId, request);
         return ResponseEntity.ok(ApiResponse.onSuccess(result));
     }
 
     @Operation(
-        summary = "전자결재 바로 상신(임시저장 없이)",
-        description =
-            """
+            summary = "전자결재 바로 상신(임시저장 없이)",
+            description =
+                    """
                 임시저장 생성과 상신을 한 번에 처리합니다.
-                
+
                 - 내부 동작: 임시저장 생성 -> 상신
                 - 결과로 최종 상신된 documentId를 반환합니다.
                 - title/contentDelta는 필수입니다.
@@ -591,10 +591,10 @@ public class ApprovalWorkflowController {
                 """)
     @PostMapping("/approvals/submit-direct")
     public ResponseEntity<ApiResponse<ApprovalSubmitResponseDto>> submitDirect(
-        @Valid @RequestBody ApprovalDirectSubmitRequestDto request,
-        @Parameter(hidden = true) @AuthenticationPrincipal CustomUserDetails userDetails) {
+            @Valid @RequestBody ApprovalDirectSubmitRequestDto request,
+            @Parameter(hidden = true) @AuthenticationPrincipal CustomUserDetails userDetails) {
         ApprovalSubmitResponseDto result =
-            approvalWorkflowService.submitDirect(userDetails.getId(), request);
+                approvalWorkflowService.submitDirect(userDetails.getId(), request);
         return ResponseEntity.ok(ApiResponse.onSuccess(result));
     }
 

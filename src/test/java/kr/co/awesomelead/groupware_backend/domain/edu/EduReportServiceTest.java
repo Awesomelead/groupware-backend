@@ -11,13 +11,6 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-import java.io.IOException;
-import java.nio.charset.StandardCharsets;
-import java.time.LocalDate;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
 import kr.co.awesomelead.groupware_backend.domain.department.entity.Department;
 import kr.co.awesomelead.groupware_backend.domain.department.enums.Company;
 import kr.co.awesomelead.groupware_backend.domain.department.enums.DepartmentName;
@@ -54,6 +47,7 @@ import kr.co.awesomelead.groupware_backend.domain.user.repository.UserRepository
 import kr.co.awesomelead.groupware_backend.global.error.CustomException;
 import kr.co.awesomelead.groupware_backend.global.error.ErrorCode;
 import kr.co.awesomelead.groupware_backend.global.infra.s3.service.S3Service;
+
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -66,34 +60,31 @@ import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import java.time.LocalDate;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+
 @ExtendWith(MockitoExtension.class)
 @ActiveProfiles("test")
 public class EduReportServiceTest {
 
-    @Mock
-    private EduReportRepository eduReportRepository;
-    @Mock
-    private EduAttendanceRepository eduAttendanceRepository;
-    @Mock
-    private EduAttachmentRepository eduAttachmentRepository;
-    @Mock
-    private EducationCategoryRepository educationCategoryRepository;
-    @Mock
-    private EduMapper eduMapper;
-    @Mock
-    private DepartmentRepository departmentRepository;
-    @Mock
-    private UserRepository userRepository;
-    @Mock
-    private S3Service s3Service;
-    @Mock
-    private EduReportQueryRepository eduReportQueryRepository;
+    @Mock private EduReportRepository eduReportRepository;
+    @Mock private EduAttendanceRepository eduAttendanceRepository;
+    @Mock private EduAttachmentRepository eduAttachmentRepository;
+    @Mock private EducationCategoryRepository educationCategoryRepository;
+    @Mock private EduMapper eduMapper;
+    @Mock private DepartmentRepository departmentRepository;
+    @Mock private UserRepository userRepository;
+    @Mock private S3Service s3Service;
+    @Mock private EduReportQueryRepository eduReportQueryRepository;
 
-    @Mock
-    private NotificationService notificationService;
+    @Mock private NotificationService notificationService;
 
-    @InjectMocks
-    private EduReportService eduReportService;
+    @InjectMocks private EduReportService eduReportService;
 
     private Department defaultDept;
 
@@ -104,26 +95,26 @@ public class EduReportServiceTest {
 
     private User createNormalUser() {
         return User.builder()
-            .id(1L)
-            .nameKor("일반직원")
-            .nameEng("Normal User")
-            .email("user@awesomelead.co.kr")
-            .workLocation(Company.AWESOME)
-            .role(Role.USER)
-            .status(Status.AVAILABLE)
-            .department(defaultDept)
-            .build();
+                .id(1L)
+                .nameKor("일반직원")
+                .nameEng("Normal User")
+                .email("user@awesomelead.co.kr")
+                .workLocation(Company.AWESOME)
+                .role(Role.USER)
+                .status(Status.AVAILABLE)
+                .department(defaultDept)
+                .build();
     }
 
     private User createAdminUser() {
         return User.builder()
-            .id(99L)
-            .nameKor("관리자")
-            .nameEng("Admin User")
-            .email("admin@awesomelead.co.kr")
-            .role(Role.ADMIN)
-            .status(Status.AVAILABLE)
-            .build();
+                .id(99L)
+                .nameKor("관리자")
+                .nameEng("Admin User")
+                .email("admin@awesomelead.co.kr")
+                .role(Role.ADMIN)
+                .status(Status.AVAILABLE)
+                .build();
     }
 
     @Test
@@ -131,64 +122,64 @@ public class EduReportServiceTest {
     void createEduReport_Success() throws IOException {
         // given
         EduReportRequestDto requestDto =
-            EduReportRequestDto.builder()
-                .title("교육 보고서 제목")
-                .content("교육 보고서 내용")
-                .eduType(EduType.SAFETY)
-                .categoryId(1L)
-                .departmentId(null) // 안전교육이므로 부서 아이디 제외
-                .build();
+                EduReportRequestDto.builder()
+                        .title("교육 보고서 제목")
+                        .content("교육 보고서 내용")
+                        .eduType(EduType.SAFETY)
+                        .categoryId(1L)
+                        .departmentId(null) // 안전교육이므로 부서 아이디 제외
+                        .build();
 
         MultipartFile file = org.mockito.Mockito.mock(MultipartFile.class);
         when(file.getOriginalFilename()).thenReturn("attachment.pdf");
         when(file.getSize()).thenReturn(2048L);
 
         EduAttachment eduAttachment =
-            EduAttachment.builder()
-                .id(1L)
-                .originalFileName("attachment.pdf")
-                .s3Key("uuid-random-string_attachment.pdf")
-                .build();
+                EduAttachment.builder()
+                        .id(1L)
+                        .originalFileName("attachment.pdf")
+                        .s3Key("uuid-random-string_attachment.pdf")
+                        .build();
 
         ArrayList<EduAttachment> attachments = new ArrayList<>();
         attachments.add(eduAttachment);
 
         EduReport eduReport =
-            EduReport.builder()
-                .id(1L) // Mock 데이터이므로 식별자를 넣어줍니다.
-                .eduType(requestDto.getEduType())
-                .title(requestDto.getTitle())
-                .content(requestDto.getContent())
-                .pinned(false) // 기본값
-                .signatureRequired(false) // 기본값
-                .department(null) // SAFETY 교육이므로 null
-                .attachments(attachments)
-                .build();
+                EduReport.builder()
+                        .id(1L) // Mock 데이터이므로 식별자를 넣어줍니다.
+                        .eduType(requestDto.getEduType())
+                        .title(requestDto.getTitle())
+                        .content(requestDto.getContent())
+                        .pinned(false) // 기본값
+                        .signatureRequired(false) // 기본값
+                        .department(null) // SAFETY 교육이므로 null
+                        .attachments(attachments)
+                        .build();
 
         User user = createNormalUser();
         user.addAuthority(Authority.MANAGE_SAFETY);
         EducationCategory category =
-            EducationCategory.builder()
-                .id(1L)
-                .categoryType(EducationCategoryType.SAFETY)
-                .build();
+                EducationCategory.builder()
+                        .id(1L)
+                        .categoryType(EducationCategoryType.SAFETY)
+                        .build();
 
         when(userRepository.findById(1L)).thenReturn(Optional.of(user));
         when(educationCategoryRepository.findById(1L)).thenReturn(Optional.of(category));
         when(eduMapper.toEduReportEntity(any(EduReportRequestDto.class), any(), any()))
-            .thenReturn(eduReport);
+                .thenReturn(eduReport);
         when(s3Service.uploadFile(file)).thenReturn(eduAttachment.getS3Key());
         when(eduReportRepository.save(eduReport)).thenReturn(eduReport);
 
         // when
         eduReportService.createEduReport(
-            requestDto,
-            new ArrayList<MultipartFile>() {
-                {
-                    add(file);
-                }
-            },
-            1L);
+                requestDto,
+                new ArrayList<MultipartFile>() {
+                    {
+                        add(file);
+                    }
+                },
+                1L);
 
         // then
         verify(s3Service, times(1)).uploadFile(any(MultipartFile.class));
@@ -201,8 +192,8 @@ public class EduReportServiceTest {
         assertThat(savedReport.getContent()).isEqualTo("교육 보고서 내용");
 
         verify(notificationService, times(1))
-            .sendEduReportAlertToTargets(
-                anyString(), anyString(), anyLong(), any(), any(Map.class));
+                .sendEduReportAlertToTargets(
+                        anyString(), anyString(), anyLong(), any(), any(Map.class));
     }
 
     @Test
@@ -210,37 +201,37 @@ public class EduReportServiceTest {
     void createEduReport_IgnoresPlaceholderFilePart() throws IOException {
         // given
         EduReportRequestDto requestDto =
-            EduReportRequestDto.builder()
-                .title("교육 제목")
-                .content("교육 내용")
-                .eduType(EduType.SAFETY)
-                .categoryId(1L)
-                .build();
+                EduReportRequestDto.builder()
+                        .title("교육 제목")
+                        .content("교육 내용")
+                        .eduType(EduType.SAFETY)
+                        .categoryId(1L)
+                        .build();
 
         MultipartFile placeholderFile = org.mockito.Mockito.mock(MultipartFile.class);
         when(placeholderFile.isEmpty()).thenReturn(false);
         when(placeholderFile.getOriginalFilename()).thenReturn(null);
 
         EduReport report =
-            EduReport.builder()
-                .id(1L)
-                .eduType(EduType.SAFETY)
-                .title("교육 제목")
-                .content("교육 내용")
-                .build();
+                EduReport.builder()
+                        .id(1L)
+                        .eduType(EduType.SAFETY)
+                        .title("교육 제목")
+                        .content("교육 내용")
+                        .build();
 
         User user = createNormalUser();
         user.addAuthority(Authority.MANAGE_SAFETY);
         EducationCategory category =
-            EducationCategory.builder()
-                .id(1L)
-                .categoryType(EducationCategoryType.SAFETY)
-                .build();
+                EducationCategory.builder()
+                        .id(1L)
+                        .categoryType(EducationCategoryType.SAFETY)
+                        .build();
 
         when(userRepository.findById(1L)).thenReturn(Optional.of(user));
         when(educationCategoryRepository.findById(1L)).thenReturn(Optional.of(category));
         when(eduMapper.toEduReportEntity(any(EduReportRequestDto.class), any(), any()))
-            .thenReturn(report);
+                .thenReturn(report);
         when(eduReportRepository.save(report)).thenReturn(report);
 
         // when
@@ -256,40 +247,40 @@ public class EduReportServiceTest {
     void createEduReport_IgnoresSwaggerBlobStringPlaceholder() throws IOException {
         // given
         EduReportRequestDto requestDto =
-            EduReportRequestDto.builder()
-                .title("교육 제목")
-                .content("교육 내용")
-                .eduType(EduType.SAFETY)
-                .categoryId(1L)
-                .build();
+                EduReportRequestDto.builder()
+                        .title("교육 제목")
+                        .content("교육 내용")
+                        .eduType(EduType.SAFETY)
+                        .categoryId(1L)
+                        .build();
 
         MultipartFile placeholderFile =
-            new MockMultipartFile(
-                "files",
-                "blob",
-                "application/octet-stream",
-                "string".getBytes(StandardCharsets.UTF_8));
+                new MockMultipartFile(
+                        "files",
+                        "blob",
+                        "application/octet-stream",
+                        "string".getBytes(StandardCharsets.UTF_8));
 
         EduReport report =
-            EduReport.builder()
-                .id(1L)
-                .eduType(EduType.SAFETY)
-                .title("교육 제목")
-                .content("교육 내용")
-                .build();
+                EduReport.builder()
+                        .id(1L)
+                        .eduType(EduType.SAFETY)
+                        .title("교육 제목")
+                        .content("교육 내용")
+                        .build();
 
         User user = createNormalUser();
         user.addAuthority(Authority.MANAGE_SAFETY);
         EducationCategory category =
-            EducationCategory.builder()
-                .id(1L)
-                .categoryType(EducationCategoryType.SAFETY)
-                .build();
+                EducationCategory.builder()
+                        .id(1L)
+                        .categoryType(EducationCategoryType.SAFETY)
+                        .build();
 
         when(userRepository.findById(1L)).thenReturn(Optional.of(user));
         when(educationCategoryRepository.findById(1L)).thenReturn(Optional.of(category));
         when(eduMapper.toEduReportEntity(any(EduReportRequestDto.class), any(), any()))
-            .thenReturn(report);
+                .thenReturn(report);
         when(eduReportRepository.save(report)).thenReturn(report);
 
         // when
@@ -305,21 +296,21 @@ public class EduReportServiceTest {
     void createEduReport_Fail_UserNotFound() {
         // given
         EduReportRequestDto requestDto =
-            EduReportRequestDto.builder()
-                .title("교육 보고서 제목")
-                .content("교육 보고서 내용")
-                .eduType(EduType.SAFETY)
-                .categoryId(1L)
-                .departmentId(null) // 안전교육이므로 부서 아이디 제외
-                .build();
+                EduReportRequestDto.builder()
+                        .title("교육 보고서 제목")
+                        .content("교육 보고서 내용")
+                        .eduType(EduType.SAFETY)
+                        .categoryId(1L)
+                        .departmentId(null) // 안전교육이므로 부서 아이디 제외
+                        .build();
 
         when(userRepository.findById(1L)).thenReturn(Optional.empty());
 
         // when & then
         assertThatThrownBy(() -> eduReportService.createEduReport(requestDto, null, 1L))
-            .isInstanceOf(CustomException.class)
-            .extracting("errorCode") // CustomException 내부의 errorCode 필드 추출
-            .isEqualTo(ErrorCode.USER_NOT_FOUND);
+                .isInstanceOf(CustomException.class)
+                .extracting("errorCode") // CustomException 내부의 errorCode 필드 추출
+                .isEqualTo(ErrorCode.USER_NOT_FOUND);
 
         verify(eduReportRepository, never()).save(any());
     }
@@ -329,13 +320,13 @@ public class EduReportServiceTest {
     void createEduReport_Fail_NO_AUTHORITY_FOR_EDU_REPORT() {
         // given
         EduReportRequestDto requestDto =
-            EduReportRequestDto.builder()
-                .title("교육 보고서 제목")
-                .content("교육 보고서 내용")
-                .eduType(EduType.SAFETY)
-                .categoryId(1L)
-                .departmentId(null) // 안전교육이므로 부서 아이디 제외
-                .build();
+                EduReportRequestDto.builder()
+                        .title("교육 보고서 제목")
+                        .content("교육 보고서 내용")
+                        .eduType(EduType.SAFETY)
+                        .categoryId(1L)
+                        .departmentId(null) // 안전교육이므로 부서 아이디 제외
+                        .build();
 
         User user = createNormalUser(); // 권한이 없는 일반 유저
 
@@ -343,9 +334,9 @@ public class EduReportServiceTest {
 
         // when & then
         assertThatThrownBy(() -> eduReportService.createEduReport(requestDto, null, 1L))
-            .isInstanceOf(CustomException.class)
-            .extracting("errorCode") // CustomException 내부의 errorCode 필드 추출
-            .isEqualTo(ErrorCode.NO_AUTHORITY_FOR_SAFETY_WRITE);
+                .isInstanceOf(CustomException.class)
+                .extracting("errorCode") // CustomException 내부의 errorCode 필드 추출
+                .isEqualTo(ErrorCode.NO_AUTHORITY_FOR_SAFETY_WRITE);
 
         verify(eduReportRepository, never()).save(any());
     }
@@ -355,12 +346,12 @@ public class EduReportServiceTest {
     void createEduReport_Fail_NO_AUTHORITY_FOR_PSM_MANAGE() {
         // given
         EduReportRequestDto requestDto =
-            EduReportRequestDto.builder()
-                .title("PSM 교육 제목")
-                .content("PSM 교육 내용")
-                .eduType(EduType.PSM)
-                .categoryId(1L)
-                .build();
+                EduReportRequestDto.builder()
+                        .title("PSM 교육 제목")
+                        .content("PSM 교육 내용")
+                        .eduType(EduType.PSM)
+                        .categoryId(1L)
+                        .build();
 
         User user = createNormalUser();
         user.addAuthority(Authority.MANAGE_SAFETY);
@@ -369,9 +360,9 @@ public class EduReportServiceTest {
 
         // when & then
         assertThatThrownBy(() -> eduReportService.createEduReport(requestDto, null, 1L))
-            .isInstanceOf(CustomException.class)
-            .extracting("errorCode")
-            .isEqualTo(ErrorCode.NO_AUTHORITY_FOR_PSM_MANAGE);
+                .isInstanceOf(CustomException.class)
+                .extracting("errorCode")
+                .isEqualTo(ErrorCode.NO_AUTHORITY_FOR_PSM_MANAGE);
 
         verify(eduReportRepository, never()).save(any());
     }
@@ -381,31 +372,31 @@ public class EduReportServiceTest {
     void createPsmEduReport_WithCompanyScope_SetsTargetCompany() throws IOException {
         // given
         PsmEduReportCreateRequestDto requestDto =
-            PsmEduReportCreateRequestDto.builder()
-                .title("PSM 게시물")
-                .content("PSM 내용")
-                .pinned(false)
-                .categoryId(1L)
-                .companyScope(List.of(Company.MARUI))
-                .build();
+                PsmEduReportCreateRequestDto.builder()
+                        .title("PSM 게시물")
+                        .content("PSM 내용")
+                        .pinned(false)
+                        .categoryId(1L)
+                        .companyScope(List.of(Company.MARUI))
+                        .build();
 
         EduReport report =
-            EduReport.builder()
-                .id(101L)
-                .eduType(EduType.PSM)
-                .title("PSM 게시물")
-                .content("PSM 내용")
-                .build();
+                EduReport.builder()
+                        .id(101L)
+                        .eduType(EduType.PSM)
+                        .title("PSM 게시물")
+                        .content("PSM 내용")
+                        .build();
 
         User user = createNormalUser();
         user.addAuthority(Authority.MANAGE_PSM);
         EducationCategory category =
-            EducationCategory.builder().id(1L).categoryType(EducationCategoryType.PSM).build();
+                EducationCategory.builder().id(1L).categoryType(EducationCategoryType.PSM).build();
 
         when(userRepository.findById(1L)).thenReturn(Optional.of(user));
         when(educationCategoryRepository.findById(1L)).thenReturn(Optional.of(category));
         when(eduMapper.toEduReportEntity(any(EduReportRequestDto.class), any(), any()))
-            .thenReturn(report);
+                .thenReturn(report);
         when(eduReportRepository.save(report)).thenReturn(report);
         when(userRepository.findAllIdsByCompany(Company.MARUI)).thenReturn(List.of(1L));
 
@@ -423,31 +414,31 @@ public class EduReportServiceTest {
     void createPsmEduReport_WithNullCompanyScope_SetsCommonCompany() throws IOException {
         // given
         PsmEduReportCreateRequestDto requestDto =
-            PsmEduReportCreateRequestDto.builder()
-                .title("PSM 공통 게시물")
-                .content("PSM 공통 내용")
-                .pinned(false)
-                .categoryId(1L)
-                .companyScope(null)
-                .build();
+                PsmEduReportCreateRequestDto.builder()
+                        .title("PSM 공통 게시물")
+                        .content("PSM 공통 내용")
+                        .pinned(false)
+                        .categoryId(1L)
+                        .companyScope(null)
+                        .build();
 
         EduReport report =
-            EduReport.builder()
-                .id(102L)
-                .eduType(EduType.PSM)
-                .title("PSM 공통 게시물")
-                .content("PSM 공통 내용")
-                .build();
+                EduReport.builder()
+                        .id(102L)
+                        .eduType(EduType.PSM)
+                        .title("PSM 공통 게시물")
+                        .content("PSM 공통 내용")
+                        .build();
 
         User user = createNormalUser();
         user.addAuthority(Authority.MANAGE_PSM);
         EducationCategory category =
-            EducationCategory.builder().id(1L).categoryType(EducationCategoryType.PSM).build();
+                EducationCategory.builder().id(1L).categoryType(EducationCategoryType.PSM).build();
 
         when(userRepository.findById(1L)).thenReturn(Optional.of(user));
         when(educationCategoryRepository.findById(1L)).thenReturn(Optional.of(category));
         when(eduMapper.toEduReportEntity(any(EduReportRequestDto.class), any(), any()))
-            .thenReturn(report);
+                .thenReturn(report);
         when(eduReportRepository.save(report)).thenReturn(report);
         when(userRepository.findAllActiveUserIds()).thenReturn(List.of(1L, 2L));
 
@@ -466,34 +457,34 @@ public class EduReportServiceTest {
     void createSafetyEduReport_WithCompanyScope_SetsTargetCompany() throws IOException {
         // given
         SafetyEduReportCreateRequestDto requestDto =
-            SafetyEduReportCreateRequestDto.builder()
-                .title("안전 보건 게시물")
-                .content("안전 보건 내용")
-                .pinned(false)
-                .categoryId(2L)
-                .companyScope(List.of(Company.AWESOME))
-                .build();
+                SafetyEduReportCreateRequestDto.builder()
+                        .title("안전 보건 게시물")
+                        .content("안전 보건 내용")
+                        .pinned(false)
+                        .categoryId(2L)
+                        .companyScope(List.of(Company.AWESOME))
+                        .build();
 
         EduReport report =
-            EduReport.builder()
-                .id(201L)
-                .eduType(EduType.SAFETY)
-                .title("안전 보건 게시물")
-                .content("안전 보건 내용")
-                .build();
+                EduReport.builder()
+                        .id(201L)
+                        .eduType(EduType.SAFETY)
+                        .title("안전 보건 게시물")
+                        .content("안전 보건 내용")
+                        .build();
 
         User user = createNormalUser();
         user.addAuthority(Authority.MANAGE_SAFETY);
         EducationCategory category =
-            EducationCategory.builder()
-                .id(2L)
-                .categoryType(EducationCategoryType.SAFETY)
-                .build();
+                EducationCategory.builder()
+                        .id(2L)
+                        .categoryType(EducationCategoryType.SAFETY)
+                        .build();
 
         when(userRepository.findById(1L)).thenReturn(Optional.of(user));
         when(educationCategoryRepository.findById(2L)).thenReturn(Optional.of(category));
         when(eduMapper.toEduReportEntity(any(EduReportRequestDto.class), any(), any()))
-            .thenReturn(report);
+                .thenReturn(report);
         when(eduReportRepository.save(report)).thenReturn(report);
         when(userRepository.findAllIdsByCompany(Company.AWESOME)).thenReturn(List.of(1L));
 
@@ -511,34 +502,34 @@ public class EduReportServiceTest {
     void createSafetyEduReport_WithNullCompanyScope_SetsCommonCompany() throws IOException {
         // given
         SafetyEduReportCreateRequestDto requestDto =
-            SafetyEduReportCreateRequestDto.builder()
-                .title("안전 보건 공통 게시물")
-                .content("안전 보건 공통 내용")
-                .pinned(false)
-                .categoryId(2L)
-                .companyScope(null)
-                .build();
+                SafetyEduReportCreateRequestDto.builder()
+                        .title("안전 보건 공통 게시물")
+                        .content("안전 보건 공통 내용")
+                        .pinned(false)
+                        .categoryId(2L)
+                        .companyScope(null)
+                        .build();
 
         EduReport report =
-            EduReport.builder()
-                .id(202L)
-                .eduType(EduType.SAFETY)
-                .title("안전 보건 공통 게시물")
-                .content("안전 보건 공통 내용")
-                .build();
+                EduReport.builder()
+                        .id(202L)
+                        .eduType(EduType.SAFETY)
+                        .title("안전 보건 공통 게시물")
+                        .content("안전 보건 공통 내용")
+                        .build();
 
         User user = createNormalUser();
         user.addAuthority(Authority.MANAGE_SAFETY);
         EducationCategory category =
-            EducationCategory.builder()
-                .id(2L)
-                .categoryType(EducationCategoryType.SAFETY)
-                .build();
+                EducationCategory.builder()
+                        .id(2L)
+                        .categoryType(EducationCategoryType.SAFETY)
+                        .build();
 
         when(userRepository.findById(1L)).thenReturn(Optional.of(user));
         when(educationCategoryRepository.findById(2L)).thenReturn(Optional.of(category));
         when(eduMapper.toEduReportEntity(any(EduReportRequestDto.class), any(), any()))
-            .thenReturn(report);
+                .thenReturn(report);
         when(eduReportRepository.save(report)).thenReturn(report);
         when(userRepository.findAllActiveUserIds()).thenReturn(List.of(1L, 2L));
 
@@ -557,12 +548,12 @@ public class EduReportServiceTest {
     void createEduReport_Fail_DepartmentNotFound() {
         // given
         EduReportRequestDto requestDto =
-            EduReportRequestDto.builder()
-                .title("교육 보고서 제목")
-                .content("교육 보고서 내용")
-                .eduType(EduType.DEPARTMENT)
-                .departmentId(999L) // 존재하지 않는 부서 아이디
-                .build();
+                EduReportRequestDto.builder()
+                        .title("교육 보고서 제목")
+                        .content("교육 보고서 내용")
+                        .eduType(EduType.DEPARTMENT)
+                        .departmentId(999L) // 존재하지 않는 부서 아이디
+                        .build();
 
         User user = createNormalUser();
         user.addAuthority(Authority.MANAGE_DEPARTMENT_EDUCATION);
@@ -572,9 +563,9 @@ public class EduReportServiceTest {
 
         // when & then
         assertThatThrownBy(() -> eduReportService.createEduReport(requestDto, null, 1L))
-            .isInstanceOf(CustomException.class)
-            .extracting("errorCode") // CustomException 내부의 errorCode 필드 추출
-            .isEqualTo(ErrorCode.DEPARTMENT_NOT_FOUND);
+                .isInstanceOf(CustomException.class)
+                .extracting("errorCode") // CustomException 내부의 errorCode 필드 추출
+                .isEqualTo(ErrorCode.DEPARTMENT_NOT_FOUND);
 
         verify(eduReportRepository, never()).save(any());
     }
@@ -587,35 +578,35 @@ public class EduReportServiceTest {
         Department department = defaultDept;
 
         EduReportSummaryDto report1 =
-            EduReportSummaryDto.builder()
-                .id(1L)
-                .title("안전 교육 보고서")
-                .eduType(EduType.SAFETY)
-                .eduDate(LocalDate.now())
-                .content("안전 교육 보고서 내용")
-                .attendance(true)
-                .pinned(false)
-                .build();
+                EduReportSummaryDto.builder()
+                        .id(1L)
+                        .title("안전 교육 보고서")
+                        .eduType(EduType.SAFETY)
+                        .eduDate(LocalDate.now())
+                        .content("안전 교육 보고서 내용")
+                        .attendance(true)
+                        .pinned(false)
+                        .build();
 
         List<EduReportSummaryDto> mockList = List.of(report1);
 
         when(userRepository.findById(1L)).thenReturn(Optional.of(user));
         when(eduReportQueryRepository.findEduReports(
-            EduType.SAFETY,
-            department,
-            List.of(1L),
-            null,
-            null,
-            1L,
-            false,
-            Company.AWESOME,
-            false,
-            null))
-            .thenReturn(mockList);
+                        EduType.SAFETY,
+                        department,
+                        List.of(1L),
+                        null,
+                        null,
+                        1L,
+                        false,
+                        Company.AWESOME,
+                        false,
+                        null))
+                .thenReturn(mockList);
 
         // when
         List<EduReportSummaryDto> result =
-            eduReportService.getEduReports(EduType.SAFETY, null, null, null, 1L, null);
+                eduReportService.getEduReports(EduType.SAFETY, null, null, null, 1L, null);
 
         // then
         assertThat(result).isNotNull();
@@ -623,17 +614,17 @@ public class EduReportServiceTest {
         assertThat(result.get(0).getTitle()).isEqualTo("안전 교육 보고서");
 
         verify(eduReportQueryRepository, times(1))
-            .findEduReports(
-                EduType.SAFETY,
-                department,
-                List.of(1L),
-                null,
-                null,
-                1L,
-                false,
-                Company.AWESOME,
-                false,
-                null);
+                .findEduReports(
+                        EduType.SAFETY,
+                        department,
+                        List.of(1L),
+                        null,
+                        null,
+                        1L,
+                        false,
+                        Company.AWESOME,
+                        false,
+                        null);
     }
 
     @Test
@@ -644,27 +635,27 @@ public class EduReportServiceTest {
         user.addAuthority(Authority.MANAGE_DEPARTMENT_EDUCATION);
 
         EduReportSummaryDto report1 =
-            EduReportSummaryDto.builder()
-                .id(1L)
-                .title("전체 공개 안전 교육")
-                .eduType(EduType.SAFETY)
-                .eduDate(LocalDate.now())
-                .content("전체 공개 안전 교육 내용")
-                .attendance(false)
-                .pinned(false)
-                .build();
+                EduReportSummaryDto.builder()
+                        .id(1L)
+                        .title("전체 공개 안전 교육")
+                        .eduType(EduType.SAFETY)
+                        .eduDate(LocalDate.now())
+                        .content("전체 공개 안전 교육 내용")
+                        .attendance(false)
+                        .pinned(false)
+                        .build();
 
         List<EduReportSummaryDto> mockList = List.of(report1);
 
         when(userRepository.findById(1L)).thenReturn(Optional.of(user));
         // dept=null + PSM 조회 범위는 본인 회사 제한
         when(eduReportQueryRepository.findEduReports(
-            null, null, null, null, null, 1L, true, Company.AWESOME, false, null))
-            .thenReturn(mockList);
+                        null, null, null, null, null, 1L, true, Company.AWESOME, false, null))
+                .thenReturn(mockList);
 
         // when
         List<EduReportSummaryDto> result =
-            eduReportService.getEduReports(null, null, null, null, 1L, null);
+                eduReportService.getEduReports(null, null, null, null, 1L, null);
 
         // then
         assertThat(result).isNotNull();
@@ -672,8 +663,8 @@ public class EduReportServiceTest {
 
         // hasAccess=true, dept=null + PSM 조회 범위는 본인 회사 제한
         verify(eduReportQueryRepository, times(1))
-            .findEduReports(
-                null, null, null, null, null, 1L, true, Company.AWESOME, false, null);
+                .findEduReports(
+                        null, null, null, null, null, 1L, true, Company.AWESOME, false, null);
     }
 
     @Test
@@ -686,36 +677,36 @@ public class EduReportServiceTest {
         Department salesDept = Department.builder().id(2L).name(DepartmentName.SALES_DEPT).build();
 
         EduReportSummaryDto report1 =
-            EduReportSummaryDto.builder()
-                .id(2L)
-                .title("영업부 부서 교육")
-                .eduType(EduType.DEPARTMENT)
-                .eduDate(LocalDate.now())
-                .content("영업부 부서 교육 내용")
-                .attendance(false)
-                .pinned(false)
-                .build();
+                EduReportSummaryDto.builder()
+                        .id(2L)
+                        .title("영업부 부서 교육")
+                        .eduType(EduType.DEPARTMENT)
+                        .eduDate(LocalDate.now())
+                        .content("영업부 부서 교육 내용")
+                        .attendance(false)
+                        .pinned(false)
+                        .build();
 
         when(userRepository.findById(1L)).thenReturn(Optional.of(user));
         when(departmentRepository.findByName(DepartmentName.SALES_DEPT))
-            .thenReturn(Optional.of(salesDept));
+                .thenReturn(Optional.of(salesDept));
         when(eduReportQueryRepository.findEduReports(
-            EduType.DEPARTMENT,
-            salesDept,
-            null,
-            null,
-            null,
-            1L,
-            true,
-            Company.AWESOME,
-            false,
-            null))
-            .thenReturn(List.of(report1));
+                        EduType.DEPARTMENT,
+                        salesDept,
+                        null,
+                        null,
+                        null,
+                        1L,
+                        true,
+                        Company.AWESOME,
+                        false,
+                        null))
+                .thenReturn(List.of(report1));
 
         // when
         List<EduReportSummaryDto> result =
-            eduReportService.getEduReports(
-                EduType.DEPARTMENT, DepartmentName.SALES_DEPT, null, null, 1L, null);
+                eduReportService.getEduReports(
+                        EduType.DEPARTMENT, DepartmentName.SALES_DEPT, null, null, 1L, null);
 
         // then
         assertThat(result).isNotNull();
@@ -724,17 +715,17 @@ public class EduReportServiceTest {
 
         verify(departmentRepository, times(1)).findByName(DepartmentName.SALES_DEPT);
         verify(eduReportQueryRepository, times(1))
-            .findEduReports(
-                EduType.DEPARTMENT,
-                salesDept,
-                null,
-                null,
-                null,
-                1L,
-                true,
-                Company.AWESOME,
-                false,
-                null);
+                .findEduReports(
+                        EduType.DEPARTMENT,
+                        salesDept,
+                        null,
+                        null,
+                        null,
+                        1L,
+                        true,
+                        Company.AWESOME,
+                        false,
+                        null);
     }
 
     @Test
@@ -745,25 +736,25 @@ public class EduReportServiceTest {
 
         // when & then
         assertThatThrownBy(
-            () ->
-                eduReportService.getEduReports(
-                    EduType.SAFETY, null, null, null, 1L, null))
-            .isInstanceOf(CustomException.class)
-            .extracting("errorCode")
-            .isEqualTo(ErrorCode.USER_NOT_FOUND);
+                        () ->
+                                eduReportService.getEduReports(
+                                        EduType.SAFETY, null, null, null, 1L, null))
+                .isInstanceOf(CustomException.class)
+                .extracting("errorCode")
+                .isEqualTo(ErrorCode.USER_NOT_FOUND);
 
         verify(eduReportQueryRepository, never())
-            .findEduReports(
-                any(),
-                any(),
-                any(),
-                any(),
-                any(),
-                anyLong(),
-                anyBoolean(),
-                any(),
-                anyBoolean(),
-                any());
+                .findEduReports(
+                        any(),
+                        any(),
+                        any(),
+                        any(),
+                        any(),
+                        anyLong(),
+                        anyBoolean(),
+                        any(),
+                        anyBoolean(),
+                        any());
     }
 
     @Test
@@ -774,20 +765,20 @@ public class EduReportServiceTest {
         user.addAuthority(Authority.MANAGE_PSM);
 
         EduReportSummaryDto psmReport =
-            EduReportSummaryDto.builder()
-                .id(11L)
-                .title("PSM 전사 교육")
-                .eduType(EduType.PSM)
-                .company(null)
-                .build();
+                EduReportSummaryDto.builder()
+                        .id(11L)
+                        .title("PSM 전사 교육")
+                        .eduType(EduType.PSM)
+                        .company(null)
+                        .build();
 
         when(userRepository.findById(1L)).thenReturn(Optional.of(user));
         when(eduReportQueryRepository.findPsmEduReports(null, 1L, null, true, null, null, null))
-            .thenReturn(List.of(psmReport));
+                .thenReturn(List.of(psmReport));
 
         // when
         List<EduReportSummaryDto> result =
-            eduReportService.getPsmEduReports(null, null, null, 1L, null);
+                eduReportService.getPsmEduReports(null, null, null, 1L, null);
 
         // then
         assertThat(result).isNotNull();
@@ -795,7 +786,7 @@ public class EduReportServiceTest {
         assertThat(result.get(0).getEduType()).isEqualTo(EduType.PSM);
         assertThat(result.get(0).getCompanyScope()).isEqualTo(List.of("AWESOME", "MARUI"));
         verify(eduReportQueryRepository, times(1))
-            .findPsmEduReports(null, 1L, null, true, null, null, null);
+                .findPsmEduReports(null, 1L, null, true, null, null, null);
     }
 
     @Test
@@ -806,27 +797,27 @@ public class EduReportServiceTest {
 
         when(userRepository.findById(1L)).thenReturn(Optional.of(user));
         EduReportSummaryDto psmReport =
-            EduReportSummaryDto.builder()
-                .id(12L)
-                .title("PSM 어썸리드 교육")
-                .eduType(EduType.PSM)
-                .company(Company.AWESOME)
-                .build();
+                EduReportSummaryDto.builder()
+                        .id(12L)
+                        .title("PSM 어썸리드 교육")
+                        .eduType(EduType.PSM)
+                        .company(Company.AWESOME)
+                        .build();
 
         when(eduReportQueryRepository.findPsmEduReports(
-            null, 1L, Company.AWESOME, false, null, null, null))
-            .thenReturn(List.of(psmReport));
+                        null, 1L, Company.AWESOME, false, null, null, null))
+                .thenReturn(List.of(psmReport));
 
         // when
         List<EduReportSummaryDto> result =
-            eduReportService.getPsmEduReports(null, null, null, 1L, null);
+                eduReportService.getPsmEduReports(null, null, null, 1L, null);
 
         // then
         assertThat(result).isNotNull();
         assertThat(result.size()).isEqualTo(1);
         assertThat(result.get(0).getCompanyScope()).isEqualTo(List.of("AWESOME"));
         verify(eduReportQueryRepository, times(1))
-            .findPsmEduReports(null, 1L, Company.AWESOME, false, null, null, null);
+                .findPsmEduReports(null, 1L, Company.AWESOME, false, null, null, null);
     }
 
     @Test
@@ -838,13 +829,13 @@ public class EduReportServiceTest {
 
         // when
         List<EduReportSummaryDto> result =
-            eduReportService.getPsmEduReports(null, Company.MARUI, null, 1L, "변경");
+                eduReportService.getPsmEduReports(null, Company.MARUI, null, 1L, "변경");
 
         // then
         assertThat(result).isNotNull();
         assertThat(result.size()).isEqualTo(0);
         verify(eduReportQueryRepository, never())
-            .findPsmEduReports(any(), anyLong(), any(), anyBoolean(), any(), any(), any());
+                .findPsmEduReports(any(), anyLong(), any(), anyBoolean(), any(), any(), any());
     }
 
     @Test
@@ -855,20 +846,20 @@ public class EduReportServiceTest {
         user.addAuthority(Authority.MANAGE_SAFETY);
 
         EduReportSummaryDto safetyReport =
-            EduReportSummaryDto.builder()
-                .id(21L)
-                .title("안전 보건 전사 교육")
-                .eduType(EduType.SAFETY)
-                .company(null)
-                .build();
+                EduReportSummaryDto.builder()
+                        .id(21L)
+                        .title("안전 보건 전사 교육")
+                        .eduType(EduType.SAFETY)
+                        .company(null)
+                        .build();
 
         when(userRepository.findById(1L)).thenReturn(Optional.of(user));
         when(eduReportQueryRepository.findSafetyEduReports(null, 1L, null, true, null, null, null))
-            .thenReturn(List.of(safetyReport));
+                .thenReturn(List.of(safetyReport));
 
         // when
         List<EduReportSummaryDto> result =
-            eduReportService.getSafetyEduReports(null, null, null, 1L, null);
+                eduReportService.getSafetyEduReports(null, null, null, 1L, null);
 
         // then
         assertThat(result).isNotNull();
@@ -876,7 +867,7 @@ public class EduReportServiceTest {
         assertThat(result.get(0).getEduType()).isEqualTo(EduType.SAFETY);
         assertThat(result.get(0).getCompanyScope()).isEqualTo(List.of("AWESOME", "MARUI"));
         verify(eduReportQueryRepository, times(1))
-            .findSafetyEduReports(null, 1L, null, true, null, null, null);
+                .findSafetyEduReports(null, 1L, null, true, null, null, null);
     }
 
     @Test
@@ -887,27 +878,27 @@ public class EduReportServiceTest {
 
         when(userRepository.findById(1L)).thenReturn(Optional.of(user));
         EduReportSummaryDto safetyReport =
-            EduReportSummaryDto.builder()
-                .id(22L)
-                .title("안전 보건 어썸리드 교육")
-                .eduType(EduType.SAFETY)
-                .company(Company.AWESOME)
-                .build();
+                EduReportSummaryDto.builder()
+                        .id(22L)
+                        .title("안전 보건 어썸리드 교육")
+                        .eduType(EduType.SAFETY)
+                        .company(Company.AWESOME)
+                        .build();
 
         when(eduReportQueryRepository.findSafetyEduReports(
-            null, 1L, Company.AWESOME, false, null, null, null))
-            .thenReturn(List.of(safetyReport));
+                        null, 1L, Company.AWESOME, false, null, null, null))
+                .thenReturn(List.of(safetyReport));
 
         // when
         List<EduReportSummaryDto> result =
-            eduReportService.getSafetyEduReports(null, null, null, 1L, null);
+                eduReportService.getSafetyEduReports(null, null, null, 1L, null);
 
         // then
         assertThat(result).isNotNull();
         assertThat(result.size()).isEqualTo(1);
         assertThat(result.get(0).getCompanyScope()).isEqualTo(List.of("AWESOME"));
         verify(eduReportQueryRepository, times(1))
-            .findSafetyEduReports(null, 1L, Company.AWESOME, false, null, null, null);
+                .findSafetyEduReports(null, 1L, Company.AWESOME, false, null, null, null);
     }
 
     @Test
@@ -919,13 +910,13 @@ public class EduReportServiceTest {
 
         // when
         List<EduReportSummaryDto> result =
-            eduReportService.getSafetyEduReports(null, Company.MARUI, null, 1L, "정기");
+                eduReportService.getSafetyEduReports(null, Company.MARUI, null, 1L, "정기");
 
         // then
         assertThat(result).isNotNull();
         assertThat(result.size()).isEqualTo(0);
         verify(eduReportQueryRepository, never())
-            .findSafetyEduReports(any(), anyLong(), any(), anyBoolean(), any(), any(), any());
+                .findSafetyEduReports(any(), anyLong(), any(), anyBoolean(), any(), any(), any());
     }
 
     @Test
@@ -939,7 +930,7 @@ public class EduReportServiceTest {
         EduReport report = EduReport.builder().id(reportId).title("단일 조회 테스트 제목").build();
 
         EduReportDetailDto mockDto =
-            EduReportDetailDto.builder().id(reportId).title("단일 조회 테스트 제목").build();
+                EduReportDetailDto.builder().id(reportId).title("단일 조회 테스트 제목").build();
 
         when(userRepository.findById(userId)).thenReturn(Optional.of(user));
         when(eduReportRepository.findById(reportId)).thenReturn(Optional.of(report));
@@ -971,8 +962,8 @@ public class EduReportServiceTest {
 
         // when & then
         assertThatThrownBy(() -> eduReportService.getEduReport(10L, userId))
-            .isInstanceOf(CustomException.class)
-            .hasFieldOrPropertyWithValue("errorCode", ErrorCode.USER_NOT_FOUND);
+                .isInstanceOf(CustomException.class)
+                .hasFieldOrPropertyWithValue("errorCode", ErrorCode.USER_NOT_FOUND);
 
         // 핵심: 유저가 없으므로 보고서 Repository는 호출되지 않아야 함
         verify(eduReportRepository, never()).findById(anyLong());
@@ -991,8 +982,8 @@ public class EduReportServiceTest {
 
         // when & then
         assertThatThrownBy(() -> eduReportService.getEduReport(reportId, userId))
-            .isInstanceOf(CustomException.class)
-            .hasFieldOrPropertyWithValue("errorCode", ErrorCode.EDU_REPORT_NOT_FOUND);
+                .isInstanceOf(CustomException.class)
+                .hasFieldOrPropertyWithValue("errorCode", ErrorCode.EDU_REPORT_NOT_FOUND);
 
         verify(userRepository, times(1)).findById(userId);
         verify(eduAttendanceRepository, never()).existsByEduReportAndUser(any(), any());
@@ -1006,24 +997,24 @@ public class EduReportServiceTest {
         Long userId = 1L;
 
         Department otherDepartment =
-            Department.builder().id(2L).name(DepartmentName.MANAGEMENT_SUPPORT).build();
+                Department.builder().id(2L).name(DepartmentName.MANAGEMENT_SUPPORT).build();
         User user = createNormalUser(); // defaultDept(SALES_DEPT)
 
         EduReport report =
-            EduReport.builder()
-                .id(reportId)
-                .eduType(EduType.DEPARTMENT)
-                .department(otherDepartment)
-                .title("타 부서 교육")
-                .build();
+                EduReport.builder()
+                        .id(reportId)
+                        .eduType(EduType.DEPARTMENT)
+                        .department(otherDepartment)
+                        .title("타 부서 교육")
+                        .build();
 
         when(userRepository.findById(userId)).thenReturn(Optional.of(user));
         when(eduReportRepository.findById(reportId)).thenReturn(Optional.of(report));
 
         // when & then
         assertThatThrownBy(() -> eduReportService.getDepartmentEduReport(reportId, userId))
-            .isInstanceOf(CustomException.class)
-            .hasFieldOrPropertyWithValue("errorCode", ErrorCode.EDU_REPORT_NOT_FOUND);
+                .isInstanceOf(CustomException.class)
+                .hasFieldOrPropertyWithValue("errorCode", ErrorCode.EDU_REPORT_NOT_FOUND);
 
         verify(eduMapper, never()).toDetailDto(any(), any(), anyLong(), any());
     }
@@ -1037,20 +1028,20 @@ public class EduReportServiceTest {
         User user = createNormalUser(); // defaultDept(SALES_DEPT)
 
         EduReport report =
-            EduReport.builder()
-                .id(reportId)
-                .eduType(EduType.DEPARTMENT)
-                .department(defaultDept)
-                .signatureRequired(true)
-                .title("본인 부서 교육")
-                .build();
+                EduReport.builder()
+                        .id(reportId)
+                        .eduType(EduType.DEPARTMENT)
+                        .department(defaultDept)
+                        .signatureRequired(true)
+                        .title("본인 부서 교육")
+                        .build();
 
         EduReportDetailDto mockDto =
-            EduReportDetailDto.builder()
-                .id(reportId)
-                .title("본인 부서 교육")
-                .eduType(EduType.DEPARTMENT)
-                .build();
+                EduReportDetailDto.builder()
+                        .id(reportId)
+                        .title("본인 부서 교육")
+                        .eduType(EduType.DEPARTMENT)
+                        .build();
 
         when(userRepository.findById(userId)).thenReturn(Optional.of(user));
         when(eduReportRepository.findById(reportId)).thenReturn(Optional.of(report));
@@ -1076,21 +1067,21 @@ public class EduReportServiceTest {
         User user = createNormalUser();
 
         EduReport report =
-            EduReport.builder()
-                .id(reportId)
-                .eduType(EduType.DEPARTMENT)
-                .department(defaultDept)
-                .signatureRequired(false)
-                .status(EduReportStatus.OPEN)
-                .title("서명 불필요 부서 교육")
-                .build();
+                EduReport.builder()
+                        .id(reportId)
+                        .eduType(EduType.DEPARTMENT)
+                        .department(defaultDept)
+                        .signatureRequired(false)
+                        .status(EduReportStatus.OPEN)
+                        .title("서명 불필요 부서 교육")
+                        .build();
 
         EduReportDetailDto mockDto =
-            EduReportDetailDto.builder()
-                .id(reportId)
-                .title("서명 불필요 부서 교육")
-                .eduType(EduType.DEPARTMENT)
-                .build();
+                EduReportDetailDto.builder()
+                        .id(reportId)
+                        .title("서명 불필요 부서 교육")
+                        .eduType(EduType.DEPARTMENT)
+                        .build();
 
         when(userRepository.findById(userId)).thenReturn(Optional.of(user));
         when(eduReportRepository.findById(reportId)).thenReturn(Optional.of(report));
@@ -1115,28 +1106,28 @@ public class EduReportServiceTest {
         user.addAuthority(Authority.MANAGE_DEPARTMENT_EDUCATION);
 
         Department otherDepartment =
-            Department.builder().id(2L).name(DepartmentName.MANAGEMENT_SUPPORT).build();
+                Department.builder().id(2L).name(DepartmentName.MANAGEMENT_SUPPORT).build();
 
         EduReport report =
-            EduReport.builder()
-                .id(reportId)
-                .eduType(EduType.DEPARTMENT)
-                .department(otherDepartment)
-                .status(EduReportStatus.OPEN)
-                .title("타 부서 교육")
-                .build();
+                EduReport.builder()
+                        .id(reportId)
+                        .eduType(EduType.DEPARTMENT)
+                        .department(otherDepartment)
+                        .status(EduReportStatus.OPEN)
+                        .title("타 부서 교육")
+                        .build();
 
         EduReportDetailDto mockDto =
-            EduReportDetailDto.builder()
-                .id(reportId)
-                .title("타 부서 교육")
-                .eduType(EduType.DEPARTMENT)
-                .build();
+                EduReportDetailDto.builder()
+                        .id(reportId)
+                        .title("타 부서 교육")
+                        .eduType(EduType.DEPARTMENT)
+                        .build();
 
         when(userRepository.findById(userId)).thenReturn(Optional.of(user));
         when(eduReportRepository.findById(reportId)).thenReturn(Optional.of(report));
         when(eduAttendanceRepository.findAllByEduReportIdWithUser(reportId))
-            .thenReturn(new ArrayList<>());
+                .thenReturn(new ArrayList<>());
         when(eduMapper.toDetailDto(report, new ArrayList<>(), 0L, s3Service)).thenReturn(mockDto);
         when(eduAttendanceRepository.existsByEduReportAndUser(report, user)).thenReturn(false);
 
@@ -1157,20 +1148,20 @@ public class EduReportServiceTest {
         User user = createNormalUser(); // workLocation=AWESOME
 
         EduReport report =
-            EduReport.builder()
-                .id(reportId)
-                .eduType(EduType.PSM)
-                .company(Company.MARUI)
-                .title("한국마루이 PSM")
-                .build();
+                EduReport.builder()
+                        .id(reportId)
+                        .eduType(EduType.PSM)
+                        .company(Company.MARUI)
+                        .title("한국마루이 PSM")
+                        .build();
 
         when(userRepository.findById(userId)).thenReturn(Optional.of(user));
         when(eduReportRepository.findById(reportId)).thenReturn(Optional.of(report));
 
         // when & then
         assertThatThrownBy(() -> eduReportService.getPsmEduReport(reportId, userId))
-            .isInstanceOf(CustomException.class)
-            .hasFieldOrPropertyWithValue("errorCode", ErrorCode.EDU_REPORT_NOT_FOUND);
+                .isInstanceOf(CustomException.class)
+                .hasFieldOrPropertyWithValue("errorCode", ErrorCode.EDU_REPORT_NOT_FOUND);
         verify(eduMapper, never()).toDetailDto(any(), any(), anyLong(), any());
     }
 
@@ -1183,14 +1174,14 @@ public class EduReportServiceTest {
         User user = createNormalUser(); // workLocation=AWESOME
 
         EduReport report =
-            EduReport.builder()
-                .id(reportId)
-                .eduType(EduType.PSM)
-                .company(Company.AWESOME)
-                .title("어썸 PSM")
-                .build();
+                EduReport.builder()
+                        .id(reportId)
+                        .eduType(EduType.PSM)
+                        .company(Company.AWESOME)
+                        .title("어썸 PSM")
+                        .build();
         EduReportDetailDto mockDto =
-            EduReportDetailDto.builder().id(reportId).eduType(EduType.PSM).build();
+                EduReportDetailDto.builder().id(reportId).eduType(EduType.PSM).build();
 
         when(userRepository.findById(userId)).thenReturn(Optional.of(user));
         when(eduReportRepository.findById(reportId)).thenReturn(Optional.of(report));
@@ -1216,14 +1207,14 @@ public class EduReportServiceTest {
         user.addAuthority(Authority.MANAGE_PSM);
 
         EduReport report =
-            EduReport.builder()
-                .id(reportId)
-                .eduType(EduType.PSM)
-                .company(Company.MARUI)
-                .title("한국마루이 PSM")
-                .build();
+                EduReport.builder()
+                        .id(reportId)
+                        .eduType(EduType.PSM)
+                        .company(Company.MARUI)
+                        .title("한국마루이 PSM")
+                        .build();
         EduReportDetailDto mockDto =
-            EduReportDetailDto.builder().id(reportId).eduType(EduType.PSM).build();
+                EduReportDetailDto.builder().id(reportId).eduType(EduType.PSM).build();
 
         when(userRepository.findById(userId)).thenReturn(Optional.of(user));
         when(eduReportRepository.findById(reportId)).thenReturn(Optional.of(report));
@@ -1248,20 +1239,20 @@ public class EduReportServiceTest {
         User user = createNormalUser(); // workLocation=AWESOME
 
         EduReport report =
-            EduReport.builder()
-                .id(reportId)
-                .eduType(EduType.SAFETY)
-                .company(Company.MARUI)
-                .title("한국마루이 안전보건")
-                .build();
+                EduReport.builder()
+                        .id(reportId)
+                        .eduType(EduType.SAFETY)
+                        .company(Company.MARUI)
+                        .title("한국마루이 안전보건")
+                        .build();
 
         when(userRepository.findById(userId)).thenReturn(Optional.of(user));
         when(eduReportRepository.findById(reportId)).thenReturn(Optional.of(report));
 
         // when & then
         assertThatThrownBy(() -> eduReportService.getSafetyEduReport(reportId, userId))
-            .isInstanceOf(CustomException.class)
-            .hasFieldOrPropertyWithValue("errorCode", ErrorCode.EDU_REPORT_NOT_FOUND);
+                .isInstanceOf(CustomException.class)
+                .hasFieldOrPropertyWithValue("errorCode", ErrorCode.EDU_REPORT_NOT_FOUND);
         verify(eduMapper, never()).toDetailDto(any(), any(), anyLong(), any());
     }
 
@@ -1274,14 +1265,14 @@ public class EduReportServiceTest {
         User user = createNormalUser(); // workLocation=AWESOME
 
         EduReport report =
-            EduReport.builder()
-                .id(reportId)
-                .eduType(EduType.SAFETY)
-                .company(Company.AWESOME)
-                .title("어썸 안전보건")
-                .build();
+                EduReport.builder()
+                        .id(reportId)
+                        .eduType(EduType.SAFETY)
+                        .company(Company.AWESOME)
+                        .title("어썸 안전보건")
+                        .build();
         EduReportDetailDto mockDto =
-            EduReportDetailDto.builder().id(reportId).eduType(EduType.SAFETY).build();
+                EduReportDetailDto.builder().id(reportId).eduType(EduType.SAFETY).build();
 
         when(userRepository.findById(userId)).thenReturn(Optional.of(user));
         when(eduReportRepository.findById(reportId)).thenReturn(Optional.of(report));
@@ -1307,14 +1298,14 @@ public class EduReportServiceTest {
         user.addAuthority(Authority.MANAGE_SAFETY);
 
         EduReport report =
-            EduReport.builder()
-                .id(reportId)
-                .eduType(EduType.SAFETY)
-                .company(Company.MARUI)
-                .title("한국마루이 안전보건")
-                .build();
+                EduReport.builder()
+                        .id(reportId)
+                        .eduType(EduType.SAFETY)
+                        .company(Company.MARUI)
+                        .title("한국마루이 안전보건")
+                        .build();
         EduReportDetailDto mockDto =
-            EduReportDetailDto.builder().id(reportId).eduType(EduType.SAFETY).build();
+                EduReportDetailDto.builder().id(reportId).eduType(EduType.SAFETY).build();
 
         when(userRepository.findById(userId)).thenReturn(Optional.of(user));
         when(eduReportRepository.findById(reportId)).thenReturn(Optional.of(report));
@@ -1340,27 +1331,27 @@ public class EduReportServiceTest {
         adminUser.addAuthority(Authority.MANAGE_DEPARTMENT_EDUCATION);
 
         EduAttachment attachment1 =
-            EduAttachment.builder()
-                .id(1L)
-                .originalFileName("file1.pdf")
-                .s3Key("s3://bucket/file1.pdf")
-                .build();
+                EduAttachment.builder()
+                        .id(1L)
+                        .originalFileName("file1.pdf")
+                        .s3Key("s3://bucket/file1.pdf")
+                        .build();
 
         EduAttachment attachment2 =
-            EduAttachment.builder()
-                .id(2L)
-                .originalFileName("file2.pdf")
-                .s3Key("s3://bucket/file2.pdf")
-                .build();
+                EduAttachment.builder()
+                        .id(2L)
+                        .originalFileName("file2.pdf")
+                        .s3Key("s3://bucket/file2.pdf")
+                        .build();
 
         List<EduAttachment> attachments = List.of(attachment1, attachment2);
 
         EduReport report =
-            EduReport.builder()
-                .id(reportId)
-                .title("삭제 테스트 보고서")
-                .attachments(attachments)
-                .build();
+                EduReport.builder()
+                        .id(reportId)
+                        .title("삭제 테스트 보고서")
+                        .attachments(attachments)
+                        .build();
 
         when(userRepository.findById(userId)).thenReturn(Optional.of(adminUser));
         when(eduReportRepository.findById(reportId)).thenReturn(Optional.of(report));
@@ -1383,8 +1374,8 @@ public class EduReportServiceTest {
 
         // when & then
         assertThatThrownBy(() -> eduReportService.deleteEduReport(10L, userId))
-            .isInstanceOf(CustomException.class)
-            .hasFieldOrPropertyWithValue("errorCode", ErrorCode.USER_NOT_FOUND);
+                .isInstanceOf(CustomException.class)
+                .hasFieldOrPropertyWithValue("errorCode", ErrorCode.USER_NOT_FOUND);
 
         verify(eduReportRepository, never()).findById(anyLong());
     }
@@ -1400,8 +1391,8 @@ public class EduReportServiceTest {
 
         // when & then
         assertThatThrownBy(() -> eduReportService.deleteEduReport(10L, userId))
-            .isInstanceOf(CustomException.class)
-            .hasFieldOrPropertyWithValue("errorCode", ErrorCode.NO_AUTHORITY_FOR_EDU_REPORT);
+                .isInstanceOf(CustomException.class)
+                .hasFieldOrPropertyWithValue("errorCode", ErrorCode.NO_AUTHORITY_FOR_EDU_REPORT);
 
         verify(eduReportRepository, never()).findById(anyLong());
     }
@@ -1419,8 +1410,8 @@ public class EduReportServiceTest {
 
         // when & then
         assertThatThrownBy(() -> eduReportService.deleteEduReport(10L, userId))
-            .isInstanceOf(CustomException.class)
-            .hasFieldOrPropertyWithValue("errorCode", ErrorCode.EDU_REPORT_NOT_FOUND);
+                .isInstanceOf(CustomException.class)
+                .hasFieldOrPropertyWithValue("errorCode", ErrorCode.EDU_REPORT_NOT_FOUND);
 
         verify(eduReportRepository, times(1)).findById(10L);
     }
@@ -1441,8 +1432,8 @@ public class EduReportServiceTest {
 
         // when & then
         assertThatThrownBy(() -> eduReportService.deleteSafetyEduReport(reportId, userId))
-            .isInstanceOf(CustomException.class)
-            .hasFieldOrPropertyWithValue("errorCode", ErrorCode.EDU_REPORT_NOT_FOUND);
+                .isInstanceOf(CustomException.class)
+                .hasFieldOrPropertyWithValue("errorCode", ErrorCode.EDU_REPORT_NOT_FOUND);
         verify(eduReportRepository, never()).delete(any(EduReport.class));
     }
 
@@ -1452,14 +1443,14 @@ public class EduReportServiceTest {
         // given
         Long attachmentId = 1L;
         EduAttachment attachment =
-            EduAttachment.builder()
-                .id(attachmentId)
-                .originalFileName("download.pdf")
-                .s3Key("s3://bucket/download.pdf")
-                .fileSize(4096L)
-                .build();
+                EduAttachment.builder()
+                        .id(attachmentId)
+                        .originalFileName("download.pdf")
+                        .s3Key("s3://bucket/download.pdf")
+                        .fileSize(4096L)
+                        .build();
 
-        byte[] fileData = new byte[]{0x25, 0x50, 0x44, 0x46}; // PDF 파일의 일부 바이트 예시
+        byte[] fileData = new byte[] {0x25, 0x50, 0x44, 0x46}; // PDF 파일의 일부 바이트 예시
 
         when(eduAttachmentRepository.findById(attachmentId)).thenReturn(Optional.of(attachment));
         when(s3Service.downloadFile(attachment.getS3Key())).thenReturn(fileData);
@@ -1486,8 +1477,8 @@ public class EduReportServiceTest {
 
         // when & then
         assertThatThrownBy(() -> eduReportService.getFileForDownload(attachmentId))
-            .isInstanceOf(CustomException.class)
-            .hasFieldOrPropertyWithValue("errorCode", ErrorCode.EDU_ATTACHMENT_NOT_FOUND);
+                .isInstanceOf(CustomException.class)
+                .hasFieldOrPropertyWithValue("errorCode", ErrorCode.EDU_ATTACHMENT_NOT_FOUND);
 
         verify(s3Service, never()).downloadFile(anyString());
     }
@@ -1500,20 +1491,20 @@ public class EduReportServiceTest {
         Long userId = 1L;
         User user = createNormalUser();
         EduReport report =
-            EduReport.builder()
-                .id(reportId)
-                .eduType(EduType.PSM)
-                .status(EduReportStatus.OPEN)
-                .signatureRequired(false)
-                .build();
+                EduReport.builder()
+                        .id(reportId)
+                        .eduType(EduType.PSM)
+                        .status(EduReportStatus.OPEN)
+                        .signatureRequired(false)
+                        .build();
 
         when(userRepository.findById(userId)).thenReturn(Optional.of(user));
         when(eduReportRepository.findById(reportId)).thenReturn(Optional.of(report));
 
         // when & then
         assertThatThrownBy(() -> eduReportService.markDepartmentAttendance(reportId, null, userId))
-            .isInstanceOf(CustomException.class)
-            .hasFieldOrPropertyWithValue("errorCode", ErrorCode.EDU_REPORT_NOT_FOUND);
+                .isInstanceOf(CustomException.class)
+                .hasFieldOrPropertyWithValue("errorCode", ErrorCode.EDU_REPORT_NOT_FOUND);
         verify(eduAttendanceRepository, never()).save(any());
     }
 
@@ -1525,11 +1516,11 @@ public class EduReportServiceTest {
         Long userId = 1L;
 
         EduReport report =
-            EduReport.builder()
-                .id(reportId)
-                .title("출석 체크 테스트 보고서")
-                .signatureRequired(true)
-                .build();
+                EduReport.builder()
+                        .id(reportId)
+                        .title("출석 체크 테스트 보고서")
+                        .signatureRequired(true)
+                        .build();
 
         User user = createNormalUser();
 
@@ -1540,8 +1531,8 @@ public class EduReportServiceTest {
         when(eduReportRepository.findById(reportId)).thenReturn(Optional.of(report));
         when(userRepository.findById(userId)).thenReturn(Optional.of(user));
         when(eduAttendanceRepository.existsByEduReportAndUser(
-            any(EduReport.class), any(User.class)))
-            .thenReturn(false);
+                        any(EduReport.class), any(User.class)))
+                .thenReturn(false);
         when(s3Service.uploadFile(signatureFile)).thenReturn("s3://bucket/signature.png");
 
         // when
@@ -1560,11 +1551,11 @@ public class EduReportServiceTest {
         Long userId = 1L;
 
         EduReport report =
-            EduReport.builder()
-                .id(reportId)
-                .title("출석 체크 테스트 보고서")
-                .signatureRequired(false)
-                .build();
+                EduReport.builder()
+                        .id(reportId)
+                        .title("출석 체크 테스트 보고서")
+                        .signatureRequired(false)
+                        .build();
 
         User user = createNormalUser();
 
@@ -1574,8 +1565,8 @@ public class EduReportServiceTest {
 
         // when & then
         assertThatThrownBy(() -> eduReportService.markAttendance(reportId, null, userId))
-            .isInstanceOf(CustomException.class)
-            .hasFieldOrPropertyWithValue("errorCode", ErrorCode.ALREADY_MARKED_ATTENDANCE);
+                .isInstanceOf(CustomException.class)
+                .hasFieldOrPropertyWithValue("errorCode", ErrorCode.ALREADY_MARKED_ATTENDANCE);
 
         verify(s3Service, never()).uploadFile(any());
         verify(eduAttendanceRepository, never()).save(any());
@@ -1590,7 +1581,7 @@ public class EduReportServiceTest {
 
         // 서명이 필수인 보고서 설정
         EduReport report =
-            EduReport.builder().id(reportId).title("서명 필수 보고서").signatureRequired(true).build();
+                EduReport.builder().id(reportId).title("서명 필수 보고서").signatureRequired(true).build();
 
         User user = createNormalUser();
 
@@ -1600,8 +1591,8 @@ public class EduReportServiceTest {
 
         // when & then
         assertThatThrownBy(() -> eduReportService.markAttendance(reportId, null, userId))
-            .isInstanceOf(CustomException.class)
-            .hasFieldOrPropertyWithValue("errorCode", ErrorCode.NO_SIGNATURE_PROVIDED);
+                .isInstanceOf(CustomException.class)
+                .hasFieldOrPropertyWithValue("errorCode", ErrorCode.NO_SIGNATURE_PROVIDED);
 
         verify(s3Service, never()).uploadFile(any());
         verify(eduAttendanceRepository, never()).save(any());
@@ -1617,24 +1608,24 @@ public class EduReportServiceTest {
         user.addAuthority(Authority.MANAGE_DEPARTMENT_EDUCATION);
 
         EduReport report =
-            EduReport.builder().id(reportId).title("권한 보고서").eduType(EduType.SAFETY).build();
+                EduReport.builder().id(reportId).title("권한 보고서").eduType(EduType.SAFETY).build();
 
         List<EduAttendance> attendances = new ArrayList<>();
         long totalCount = 30L;
 
         EduReportDetailDto mockDto =
-            EduReportDetailDto.builder()
-                .id(reportId)
-                .title("권한 보고서")
-                .numberOfPeople(30)
-                .numberOfAttendees(0)
-                .attendees(List.of())
-                .build();
+                EduReportDetailDto.builder()
+                        .id(reportId)
+                        .title("권한 보고서")
+                        .numberOfPeople(30)
+                        .numberOfAttendees(0)
+                        .attendees(List.of())
+                        .build();
 
         when(userRepository.findById(userId)).thenReturn(Optional.of(user));
         when(eduReportRepository.findById(reportId)).thenReturn(Optional.of(report));
         when(eduAttendanceRepository.findAllByEduReportIdWithUser(reportId))
-            .thenReturn(attendances);
+                .thenReturn(attendances);
         when(userRepository.count()).thenReturn(totalCount);
         when(eduMapper.toDetailDto(report, attendances, totalCount, s3Service)).thenReturn(mockDto);
         when(eduAttendanceRepository.existsByEduReportAndUser(report, user)).thenReturn(false);
@@ -1659,15 +1650,15 @@ public class EduReportServiceTest {
         User user = createNormalUser(); // 권한 없음
 
         EduReport report =
-            EduReport.builder().id(reportId).title("일반 보고서").eduType(EduType.SAFETY).build();
+                EduReport.builder().id(reportId).title("일반 보고서").eduType(EduType.SAFETY).build();
 
         EduReportDetailDto mockDto =
-            EduReportDetailDto.builder()
-                .id(reportId)
-                .title("일반 보고서")
-                .attendees(null)
-                .numberOfPeople(null)
-                .build();
+                EduReportDetailDto.builder()
+                        .id(reportId)
+                        .title("일반 보고서")
+                        .attendees(null)
+                        .numberOfPeople(null)
+                        .build();
 
         when(userRepository.findById(userId)).thenReturn(Optional.of(user));
         when(eduReportRepository.findById(reportId)).thenReturn(Optional.of(report));
@@ -1694,36 +1685,36 @@ public class EduReportServiceTest {
         user.addAuthority(Authority.MANAGE_SAFETY);
 
         EducationCategory oldCategory =
-            EducationCategory.builder()
-                .id(1L)
-                .categoryType(EducationCategoryType.SAFETY)
-                .build();
+                EducationCategory.builder()
+                        .id(1L)
+                        .categoryType(EducationCategoryType.SAFETY)
+                        .build();
         EducationCategory newCategory =
-            EducationCategory.builder()
-                .id(2L)
-                .categoryType(EducationCategoryType.SAFETY)
-                .build();
+                EducationCategory.builder()
+                        .id(2L)
+                        .categoryType(EducationCategoryType.SAFETY)
+                        .build();
 
         EduReport report =
-            EduReport.builder()
-                .id(reportId)
-                .eduType(EduType.SAFETY)
-                .title("기존 제목")
-                .content("기존 내용")
-                .pinned(false)
-                .signatureRequired(false)
-                .status(EduReportStatus.OPEN)
-                .category(oldCategory)
-                .build();
+                EduReport.builder()
+                        .id(reportId)
+                        .eduType(EduType.SAFETY)
+                        .title("기존 제목")
+                        .content("기존 내용")
+                        .pinned(false)
+                        .signatureRequired(false)
+                        .status(EduReportStatus.OPEN)
+                        .category(oldCategory)
+                        .build();
 
         EduReportUpdateRequestDto requestDto =
-            EduReportUpdateRequestDto.builder()
-                .title("수정 제목")
-                .content("수정 내용")
-                .pinned(true)
-                .signatureRequired(false)
-                .categoryId(2L)
-                .build();
+                EduReportUpdateRequestDto.builder()
+                        .title("수정 제목")
+                        .content("수정 내용")
+                        .pinned(true)
+                        .signatureRequired(false)
+                        .categoryId(2L)
+                        .build();
 
         when(userRepository.findById(userId)).thenReturn(Optional.of(user));
         when(eduReportRepository.findById(reportId)).thenReturn(Optional.of(report));
@@ -1751,22 +1742,22 @@ public class EduReportServiceTest {
         User user = createNormalUser();
 
         EduReport report =
-            EduReport.builder()
-                .id(reportId)
-                .eduType(EduType.SAFETY)
-                .status(EduReportStatus.OPEN)
-                .build();
+                EduReport.builder()
+                        .id(reportId)
+                        .eduType(EduType.SAFETY)
+                        .status(EduReportStatus.OPEN)
+                        .build();
 
         EduReportUpdateRequestDto requestDto =
-            EduReportUpdateRequestDto.builder().title("수정 제목").content("수정 내용").build();
+                EduReportUpdateRequestDto.builder().title("수정 제목").content("수정 내용").build();
 
         when(userRepository.findById(userId)).thenReturn(Optional.of(user));
         when(eduReportRepository.findById(reportId)).thenReturn(Optional.of(report));
 
         // when & then
         assertThatThrownBy(() -> eduReportService.updateEduReport(reportId, requestDto, userId))
-            .isInstanceOf(CustomException.class)
-            .hasFieldOrPropertyWithValue("errorCode", ErrorCode.NO_AUTHORITY_FOR_SAFETY_WRITE);
+                .isInstanceOf(CustomException.class)
+                .hasFieldOrPropertyWithValue("errorCode", ErrorCode.NO_AUTHORITY_FOR_SAFETY_WRITE);
         verify(eduAttendanceRepository, never()).countByEduReportId(anyLong());
     }
 
@@ -1780,14 +1771,14 @@ public class EduReportServiceTest {
         user.addAuthority(Authority.MANAGE_DEPARTMENT_EDUCATION);
 
         EduReport report =
-            EduReport.builder()
-                .id(reportId)
-                .eduType(EduType.DEPARTMENT)
-                .status(EduReportStatus.OPEN)
-                .build();
+                EduReport.builder()
+                        .id(reportId)
+                        .eduType(EduType.DEPARTMENT)
+                        .status(EduReportStatus.OPEN)
+                        .build();
 
         EduReportUpdateRequestDto requestDto =
-            EduReportUpdateRequestDto.builder().title("수정 제목").content("수정 내용").build();
+                EduReportUpdateRequestDto.builder().title("수정 제목").content("수정 내용").build();
 
         when(userRepository.findById(userId)).thenReturn(Optional.of(user));
         when(eduReportRepository.findById(reportId)).thenReturn(Optional.of(report));
@@ -1795,8 +1786,8 @@ public class EduReportServiceTest {
 
         // when & then
         assertThatThrownBy(() -> eduReportService.updateEduReport(reportId, requestDto, userId))
-            .isInstanceOf(CustomException.class)
-            .hasFieldOrPropertyWithValue("errorCode", ErrorCode.DEPARTMENT_ID_REQUIRED);
+                .isInstanceOf(CustomException.class)
+                .hasFieldOrPropertyWithValue("errorCode", ErrorCode.DEPARTMENT_ID_REQUIRED);
         verify(departmentRepository, never()).findById(anyLong());
     }
 
@@ -1810,25 +1801,25 @@ public class EduReportServiceTest {
         user.addAuthority(Authority.MANAGE_DEPARTMENT_EDUCATION);
 
         EduReport report =
-            EduReport.builder()
-                .id(reportId)
-                .eduType(EduType.PSM)
-                .status(EduReportStatus.OPEN)
-                .build();
+                EduReport.builder()
+                        .id(reportId)
+                        .eduType(EduType.PSM)
+                        .status(EduReportStatus.OPEN)
+                        .build();
 
         EduReportUpdateRequestDto requestDto =
-            EduReportUpdateRequestDto.builder().title("수정 제목").content("수정 내용").build();
+                EduReportUpdateRequestDto.builder().title("수정 제목").content("수정 내용").build();
 
         when(userRepository.findById(userId)).thenReturn(Optional.of(user));
         when(eduReportRepository.findById(reportId)).thenReturn(Optional.of(report));
 
         // when & then
         assertThatThrownBy(
-            () ->
-                eduReportService.updateDepartmentEduReport(
-                    reportId, requestDto, userId))
-            .isInstanceOf(CustomException.class)
-            .hasFieldOrPropertyWithValue("errorCode", ErrorCode.EDU_REPORT_NOT_FOUND);
+                        () ->
+                                eduReportService.updateDepartmentEduReport(
+                                        reportId, requestDto, userId))
+                .isInstanceOf(CustomException.class)
+                .hasFieldOrPropertyWithValue("errorCode", ErrorCode.EDU_REPORT_NOT_FOUND);
         verify(eduAttendanceRepository, never()).countByEduReportId(anyLong());
     }
 
@@ -1842,19 +1833,19 @@ public class EduReportServiceTest {
         user.addAuthority(Authority.MANAGE_DEPARTMENT_EDUCATION);
 
         EduReport report =
-            EduReport.builder()
-                .id(reportId)
-                .eduType(EduType.DEPARTMENT)
-                .status(EduReportStatus.OPEN)
-                .build();
+                EduReport.builder()
+                        .id(reportId)
+                        .eduType(EduType.DEPARTMENT)
+                        .status(EduReportStatus.OPEN)
+                        .build();
 
         EduAttachment oldAttachment =
-            EduAttachment.builder()
-                .id(100L)
-                .originalFileName("old.pdf")
-                .s3Key("old-s3-key")
-                .fileSize(123L)
-                .build();
+                EduAttachment.builder()
+                        .id(100L)
+                        .originalFileName("old.pdf")
+                        .s3Key("old-s3-key")
+                        .fileSize(123L)
+                        .build();
         report.addAttachment(oldAttachment);
 
         MultipartFile newFile = org.mockito.Mockito.mock(MultipartFile.class);
@@ -1863,26 +1854,26 @@ public class EduReportServiceTest {
         when(newFile.getSize()).thenReturn(456L);
 
         EduReportUpdateRequestDto requestDto =
-            EduReportUpdateRequestDto.builder()
-                .title("수정 제목")
-                .content("수정 내용")
-                .pinned(false)
-                .signatureRequired(false)
-                .departmentId(defaultDept.getId())
-                .deleteAttachmentIds(List.of(100L))
-                .build();
+                EduReportUpdateRequestDto.builder()
+                        .title("수정 제목")
+                        .content("수정 내용")
+                        .pinned(false)
+                        .signatureRequired(false)
+                        .departmentId(defaultDept.getId())
+                        .deleteAttachmentIds(List.of(100L))
+                        .build();
 
         when(userRepository.findById(userId)).thenReturn(Optional.of(user));
         when(eduReportRepository.findById(reportId)).thenReturn(Optional.of(report));
         when(eduAttendanceRepository.countByEduReportId(reportId)).thenReturn(0L);
         when(departmentRepository.findById(defaultDept.getId()))
-            .thenReturn(Optional.of(defaultDept));
+                .thenReturn(Optional.of(defaultDept));
         when(eduAttachmentRepository.findById(100L)).thenReturn(Optional.of(oldAttachment));
         when(s3Service.uploadFile(newFile)).thenReturn("new-s3-key");
 
         // when
         Long updatedId =
-            eduReportService.updateEduReport(reportId, requestDto, List.of(newFile), userId);
+                eduReportService.updateEduReport(reportId, requestDto, List.of(newFile), userId);
 
         // then
         assertThat(updatedId).isEqualTo(reportId);
@@ -1903,51 +1894,51 @@ public class EduReportServiceTest {
         user.addAuthority(Authority.MANAGE_DEPARTMENT_EDUCATION);
 
         EduReport report =
-            EduReport.builder()
-                .id(reportId)
-                .eduType(EduType.DEPARTMENT)
-                .status(EduReportStatus.OPEN)
-                .build();
+                EduReport.builder()
+                        .id(reportId)
+                        .eduType(EduType.DEPARTMENT)
+                        .status(EduReportStatus.OPEN)
+                        .build();
 
         EduReport otherReport =
-            EduReport.builder()
-                .id(999L)
-                .eduType(EduType.DEPARTMENT)
-                .status(EduReportStatus.OPEN)
-                .build();
+                EduReport.builder()
+                        .id(999L)
+                        .eduType(EduType.DEPARTMENT)
+                        .status(EduReportStatus.OPEN)
+                        .build();
 
         EduAttachment foreignAttachment =
-            EduAttachment.builder()
-                .id(777L)
-                .originalFileName("foreign.pdf")
-                .s3Key("foreign-s3-key")
-                .build();
+                EduAttachment.builder()
+                        .id(777L)
+                        .originalFileName("foreign.pdf")
+                        .s3Key("foreign-s3-key")
+                        .build();
         otherReport.addAttachment(foreignAttachment);
 
         EduReportUpdateRequestDto requestDto =
-            EduReportUpdateRequestDto.builder()
-                .title("수정 제목")
-                .content("수정 내용")
-                .pinned(false)
-                .signatureRequired(false)
-                .departmentId(defaultDept.getId())
-                .deleteAttachmentIds(List.of(777L))
-                .build();
+                EduReportUpdateRequestDto.builder()
+                        .title("수정 제목")
+                        .content("수정 내용")
+                        .pinned(false)
+                        .signatureRequired(false)
+                        .departmentId(defaultDept.getId())
+                        .deleteAttachmentIds(List.of(777L))
+                        .build();
 
         when(userRepository.findById(userId)).thenReturn(Optional.of(user));
         when(eduReportRepository.findById(reportId)).thenReturn(Optional.of(report));
         when(eduAttendanceRepository.countByEduReportId(reportId)).thenReturn(0L);
         when(departmentRepository.findById(defaultDept.getId()))
-            .thenReturn(Optional.of(defaultDept));
+                .thenReturn(Optional.of(defaultDept));
         when(eduAttachmentRepository.findById(777L)).thenReturn(Optional.of(foreignAttachment));
 
         // when & then
         assertThatThrownBy(
-            () ->
-                eduReportService.updateEduReport(
-                    reportId, requestDto, List.<MultipartFile>of(), userId))
-            .isInstanceOf(CustomException.class)
-            .hasFieldOrPropertyWithValue("errorCode", ErrorCode.EDU_ATTACHMENT_NOT_FOUND);
+                        () ->
+                                eduReportService.updateEduReport(
+                                        reportId, requestDto, List.<MultipartFile>of(), userId))
+                .isInstanceOf(CustomException.class)
+                .hasFieldOrPropertyWithValue("errorCode", ErrorCode.EDU_ATTACHMENT_NOT_FOUND);
         verify(s3Service, never()).deleteFile("foreign-s3-key");
     }
 
@@ -1961,14 +1952,14 @@ public class EduReportServiceTest {
         user.addAuthority(Authority.MANAGE_SAFETY);
 
         EduReport report =
-            EduReport.builder()
-                .id(reportId)
-                .eduType(EduType.SAFETY)
-                .status(EduReportStatus.OPEN)
-                .build();
+                EduReport.builder()
+                        .id(reportId)
+                        .eduType(EduType.SAFETY)
+                        .status(EduReportStatus.OPEN)
+                        .build();
 
         EduReportStatusUpdateRequestDto requestDto =
-            org.mockito.Mockito.mock(EduReportStatusUpdateRequestDto.class);
+                org.mockito.Mockito.mock(EduReportStatusUpdateRequestDto.class);
         when(requestDto.getStatus()).thenReturn(EduReportStatus.CLOSED);
 
         when(userRepository.findById(userId)).thenReturn(Optional.of(user));
@@ -1990,17 +1981,17 @@ public class EduReportServiceTest {
         Long userId = 1L;
         User user = createNormalUser();
         EduReportStatusUpdateRequestDto requestDto =
-            org.mockito.Mockito.mock(EduReportStatusUpdateRequestDto.class);
+                org.mockito.Mockito.mock(EduReportStatusUpdateRequestDto.class);
 
         when(userRepository.findById(userId)).thenReturn(Optional.of(user));
 
         // when & then
         assertThatThrownBy(
-            () ->
-                eduReportService.updatePsmEduReportStatus(
-                    reportId, requestDto, userId))
-            .isInstanceOf(CustomException.class)
-            .hasFieldOrPropertyWithValue("errorCode", ErrorCode.NO_AUTHORITY_FOR_PSM_MANAGE);
+                        () ->
+                                eduReportService.updatePsmEduReportStatus(
+                                        reportId, requestDto, userId))
+                .isInstanceOf(CustomException.class)
+                .hasFieldOrPropertyWithValue("errorCode", ErrorCode.NO_AUTHORITY_FOR_PSM_MANAGE);
         verify(eduReportRepository, never()).findById(anyLong());
     }
 
@@ -2014,29 +2005,29 @@ public class EduReportServiceTest {
         user.addAuthority(Authority.MANAGE_DEPARTMENT_EDUCATION);
 
         EduReport report =
-            EduReport.builder()
-                .id(reportId)
-                .eduType(EduType.DEPARTMENT)
-                .department(defaultDept)
-                .signatureRequired(true)
-                .build();
+                EduReport.builder()
+                        .id(reportId)
+                        .eduType(EduType.DEPARTMENT)
+                        .department(defaultDept)
+                        .signatureRequired(true)
+                        .build();
 
         EduReportQueryRepository.SignatureStatusRow signedRow =
-            new EduReportQueryRepository.SignatureStatusRow(
-                "홍길동", null, DepartmentName.SALES_DEPT, Position.STAFF, "sig-key-123");
+                new EduReportQueryRepository.SignatureStatusRow(
+                        "홍길동", null, DepartmentName.SALES_DEPT, Position.STAFF, "sig-key-123");
         EduReportQueryRepository.SignatureStatusRow unsignedRow =
-            new EduReportQueryRepository.SignatureStatusRow(
-                "김철수", null, DepartmentName.SALES_DEPT, Position.MANAGER, null);
+                new EduReportQueryRepository.SignatureStatusRow(
+                        "김철수", null, DepartmentName.SALES_DEPT, Position.MANAGER, null);
 
         when(userRepository.findById(userId)).thenReturn(Optional.of(user));
         when(eduReportRepository.findById(reportId)).thenReturn(Optional.of(report));
         when(eduReportQueryRepository.findSignatureStatuses(report, null))
-            .thenReturn(List.of(signedRow, unsignedRow));
+                .thenReturn(List.of(signedRow, unsignedRow));
         when(s3Service.getPresignedViewUrl("sig-key-123")).thenReturn("https://s3/sig-key-123");
 
         // When
         List<EduReportSignatureStatusDto> result =
-            eduReportService.getSignatureStatuses(reportId, null, userId);
+                eduReportService.getSignatureStatuses(reportId, null, userId);
 
         // Then
         assertThat(result).isNotNull();
@@ -2056,9 +2047,9 @@ public class EduReportServiceTest {
 
         // When & Then
         assertThatThrownBy(() -> eduReportService.getSignatureStatuses(100L, null, 1L))
-            .isInstanceOf(CustomException.class)
-            .extracting("errorCode")
-            .isEqualTo(ErrorCode.USER_NOT_FOUND);
+                .isInstanceOf(CustomException.class)
+                .extracting("errorCode")
+                .isEqualTo(ErrorCode.USER_NOT_FOUND);
 
         verify(eduReportRepository, never()).findById(anyLong());
     }
@@ -2075,9 +2066,9 @@ public class EduReportServiceTest {
 
         // When & Then
         assertThatThrownBy(() -> eduReportService.getSignatureStatuses(100L, null, 1L))
-            .isInstanceOf(CustomException.class)
-            .extracting("errorCode")
-            .isEqualTo(ErrorCode.EDU_REPORT_NOT_FOUND);
+                .isInstanceOf(CustomException.class)
+                .extracting("errorCode")
+                .isEqualTo(ErrorCode.EDU_REPORT_NOT_FOUND);
     }
 
     @Test
@@ -2094,9 +2085,9 @@ public class EduReportServiceTest {
 
         // When & Then
         assertThatThrownBy(() -> eduReportService.getSignatureStatuses(100L, null, 1L))
-            .isInstanceOf(CustomException.class)
-            .extracting("errorCode")
-            .isEqualTo(ErrorCode.EDU_REPORT_NOT_FOUND);
+                .isInstanceOf(CustomException.class)
+                .extracting("errorCode")
+                .isEqualTo(ErrorCode.EDU_REPORT_NOT_FOUND);
 
         verify(eduReportQueryRepository, never()).findSignatureStatuses(any(), any());
     }
@@ -2108,20 +2099,20 @@ public class EduReportServiceTest {
         User user = createNormalUser(); // 권한 없음
 
         EduReport report =
-            EduReport.builder()
-                .id(100L)
-                .eduType(EduType.DEPARTMENT)
-                .department(defaultDept)
-                .build();
+                EduReport.builder()
+                        .id(100L)
+                        .eduType(EduType.DEPARTMENT)
+                        .department(defaultDept)
+                        .build();
 
         when(userRepository.findById(1L)).thenReturn(Optional.of(user));
         when(eduReportRepository.findById(100L)).thenReturn(Optional.of(report));
 
         // When & Then
         assertThatThrownBy(() -> eduReportService.getSignatureStatuses(100L, null, 1L))
-            .isInstanceOf(CustomException.class)
-            .extracting("errorCode")
-            .isEqualTo(ErrorCode.NO_AUTHORITY_FOR_EDU_REPORT);
+                .isInstanceOf(CustomException.class)
+                .extracting("errorCode")
+                .isEqualTo(ErrorCode.NO_AUTHORITY_FOR_EDU_REPORT);
     }
 
     @Test
@@ -2132,20 +2123,20 @@ public class EduReportServiceTest {
         Long userId = 1L;
         User user = createNormalUser();
         EduReport report =
-            EduReport.builder()
-                .id(reportId)
-                .eduType(EduType.SAFETY)
-                .status(EduReportStatus.CLOSED)
-                .signatureRequired(false)
-                .build();
+                EduReport.builder()
+                        .id(reportId)
+                        .eduType(EduType.SAFETY)
+                        .status(EduReportStatus.CLOSED)
+                        .signatureRequired(false)
+                        .build();
 
         when(userRepository.findById(userId)).thenReturn(Optional.of(user));
         when(eduReportRepository.findById(reportId)).thenReturn(Optional.of(report));
 
         // when & then
         assertThatThrownBy(() -> eduReportService.markAttendance(reportId, null, userId))
-            .isInstanceOf(CustomException.class)
-            .hasFieldOrPropertyWithValue("errorCode", ErrorCode.EDU_REPORT_CLOSED);
+                .isInstanceOf(CustomException.class)
+                .hasFieldOrPropertyWithValue("errorCode", ErrorCode.EDU_REPORT_CLOSED);
         verify(eduAttendanceRepository, never()).save(any());
     }
 
@@ -2161,9 +2152,9 @@ public class EduReportServiceTest {
 
             // when & then
             assertThatThrownBy(() -> eduReportService.remindEduReport(10L, 1L))
-                .isInstanceOf(CustomException.class)
-                .extracting("errorCode")
-                .isEqualTo(ErrorCode.USER_NOT_FOUND);
+                    .isInstanceOf(CustomException.class)
+                    .extracting("errorCode")
+                    .isEqualTo(ErrorCode.USER_NOT_FOUND);
         }
 
         @Test
@@ -2176,9 +2167,9 @@ public class EduReportServiceTest {
 
             // when & then
             assertThatThrownBy(() -> eduReportService.remindEduReport(10L, 1L))
-                .isInstanceOf(CustomException.class)
-                .extracting("errorCode")
-                .isEqualTo(ErrorCode.EDU_REPORT_NOT_FOUND);
+                    .isInstanceOf(CustomException.class)
+                    .extracting("errorCode")
+                    .isEqualTo(ErrorCode.EDU_REPORT_NOT_FOUND);
         }
 
         @Test
@@ -2187,16 +2178,16 @@ public class EduReportServiceTest {
             // given
             User user = createNormalUser();
             EduReport report =
-                EduReport.builder().id(10L).eduType(EduType.SAFETY).title("안전 교육").build();
+                    EduReport.builder().id(10L).eduType(EduType.SAFETY).title("안전 교육").build();
 
             when(userRepository.findById(1L)).thenReturn(Optional.of(user));
             when(eduReportRepository.findById(10L)).thenReturn(Optional.of(report));
 
             // when & then
             assertThatThrownBy(() -> eduReportService.remindEduReport(10L, 1L))
-                .isInstanceOf(CustomException.class)
-                .extracting("errorCode")
-                .isEqualTo(ErrorCode.NO_AUTHORITY_FOR_SAFETY_WRITE);
+                    .isInstanceOf(CustomException.class)
+                    .extracting("errorCode")
+                    .isEqualTo(ErrorCode.NO_AUTHORITY_FOR_SAFETY_WRITE);
         }
 
         @Test
@@ -2206,16 +2197,16 @@ public class EduReportServiceTest {
             User requestUser = createNormalUser(); // id = 1L
 
             EduReport report =
-                EduReport.builder().id(10L).eduType(EduType.PSM).title("PSM 교육").build();
+                    EduReport.builder().id(10L).eduType(EduType.PSM).title("PSM 교육").build();
 
             when(userRepository.findById(1L)).thenReturn(Optional.of(requestUser));
             when(eduReportRepository.findById(10L)).thenReturn(Optional.of(report));
 
             // when & then
             assertThatThrownBy(() -> eduReportService.remindEduReport(10L, 1L))
-                .isInstanceOf(CustomException.class)
-                .extracting("errorCode")
-                .isEqualTo(ErrorCode.NO_AUTHORITY_FOR_PSM_MANAGE);
+                    .isInstanceOf(CustomException.class)
+                    .extracting("errorCode")
+                    .isEqualTo(ErrorCode.NO_AUTHORITY_FOR_PSM_MANAGE);
         }
 
         @Test
@@ -2225,13 +2216,13 @@ public class EduReportServiceTest {
             User user = createNormalUser();
             user.addAuthority(Authority.MANAGE_PSM);
             EduReport report =
-                EduReport.builder()
-                    .id(10L)
-                    .eduType(EduType.PSM)
-                    .title("PSM 교육")
-                    .company(null)
-                    .createdBy(user)
-                    .build();
+                    EduReport.builder()
+                            .id(10L)
+                            .eduType(EduType.PSM)
+                            .title("PSM 교육")
+                            .company(null)
+                            .createdBy(user)
+                            .build();
 
             List<Long> targetIds = List.of(1L, 2L, 3L);
             when(userRepository.findById(1L)).thenReturn(Optional.of(user));
@@ -2245,8 +2236,8 @@ public class EduReportServiceTest {
             verify(userRepository, times(1)).findAllActiveUserIds();
             verify(userRepository, never()).findAllIdsByCompany(any());
             verify(notificationService, times(1))
-                .sendEduReportRemindAlertToTargets(
-                    anyString(), anyString(), anyLong(), any(), any(Map.class));
+                    .sendEduReportRemindAlertToTargets(
+                            anyString(), anyString(), anyLong(), any(), any(Map.class));
         }
 
         @Test
@@ -2256,13 +2247,13 @@ public class EduReportServiceTest {
             User user = createNormalUser();
             user.addAuthority(Authority.MANAGE_PSM);
             EduReport report =
-                EduReport.builder()
-                    .id(10L)
-                    .eduType(EduType.PSM)
-                    .title("PSM 교육")
-                    .company(Company.AWESOME)
-                    .createdBy(user)
-                    .build();
+                    EduReport.builder()
+                            .id(10L)
+                            .eduType(EduType.PSM)
+                            .title("PSM 교육")
+                            .company(Company.AWESOME)
+                            .createdBy(user)
+                            .build();
 
             List<Long> targetIds = List.of(1L, 2L);
             when(userRepository.findById(1L)).thenReturn(Optional.of(user));
@@ -2276,8 +2267,8 @@ public class EduReportServiceTest {
             verify(userRepository, times(1)).findAllIdsByCompany(Company.AWESOME);
             verify(userRepository, never()).findAllActiveUserIds();
             verify(notificationService, times(1))
-                .sendEduReportRemindAlertToTargets(
-                    anyString(), anyString(), anyLong(), any(), any(Map.class));
+                    .sendEduReportRemindAlertToTargets(
+                            anyString(), anyString(), anyLong(), any(), any(Map.class));
         }
 
         @Test
@@ -2287,13 +2278,13 @@ public class EduReportServiceTest {
             User user = createNormalUser();
             user.addAuthority(Authority.MANAGE_SAFETY);
             EduReport report =
-                EduReport.builder()
-                    .id(10L)
-                    .eduType(EduType.SAFETY)
-                    .title("안전 보건 교육")
-                    .company(null)
-                    .createdBy(user)
-                    .build();
+                    EduReport.builder()
+                            .id(10L)
+                            .eduType(EduType.SAFETY)
+                            .title("안전 보건 교육")
+                            .company(null)
+                            .createdBy(user)
+                            .build();
 
             when(userRepository.findById(1L)).thenReturn(Optional.of(user));
             when(eduReportRepository.findById(10L)).thenReturn(Optional.of(report));
@@ -2305,8 +2296,8 @@ public class EduReportServiceTest {
             // then
             ArgumentCaptor<Map> metadataCaptor = ArgumentCaptor.forClass(Map.class);
             verify(notificationService, times(1))
-                .sendEduReportRemindAlertToTargets(
-                    anyString(), anyString(), anyLong(), any(), metadataCaptor.capture());
+                    .sendEduReportRemindAlertToTargets(
+                            anyString(), anyString(), anyLong(), any(), metadataCaptor.capture());
             Map<String, Object> capturedMetadata = metadataCaptor.getValue();
             assertThat(capturedMetadata.get("detailType")).isEqualTo("GENERAL");
             assertThat(capturedMetadata.get("educationType")).isEqualTo("SAFETY");
@@ -2319,22 +2310,22 @@ public class EduReportServiceTest {
             User user = createNormalUser();
             user.addAuthority(Authority.MANAGE_DEPARTMENT_EDUCATION);
             EduReport report =
-                EduReport.builder()
-                    .id(10L)
-                    .eduType(EduType.DEPARTMENT)
-                    .title("부서 교육")
-                    .department(defaultDept)
-                    .createdBy(user)
-                    .build();
+                    EduReport.builder()
+                            .id(10L)
+                            .eduType(EduType.DEPARTMENT)
+                            .title("부서 교육")
+                            .department(defaultDept)
+                            .createdBy(user)
+                            .build();
 
             List<Long> targetIds = List.of(1L, 2L);
             when(userRepository.findById(1L)).thenReturn(Optional.of(user));
             when(eduReportRepository.findById(10L)).thenReturn(Optional.of(report));
             when(userRepository.findAllByDepartmentIdIn(List.of(defaultDept.getId())))
-                .thenReturn(
-                    targetIds.stream()
-                        .map(targetId -> User.builder().id(targetId).build())
-                        .toList());
+                    .thenReturn(
+                            targetIds.stream()
+                                    .map(targetId -> User.builder().id(targetId).build())
+                                    .toList());
 
             // when
             eduReportService.remindEduReport(10L, 1L);
@@ -2342,8 +2333,8 @@ public class EduReportServiceTest {
             // then
             verify(userRepository, times(1)).findAllByDepartmentIdIn(List.of(defaultDept.getId()));
             verify(notificationService, times(1))
-                .sendEduReportRemindAlertToTargets(
-                    anyString(), anyString(), anyLong(), any(), any(Map.class));
+                    .sendEduReportRemindAlertToTargets(
+                            anyString(), anyString(), anyLong(), any(), any(Map.class));
         }
 
         @Test
@@ -2354,37 +2345,37 @@ public class EduReportServiceTest {
             user.addAuthority(Authority.MANAGE_DEPARTMENT_EDUCATION);
 
             Department awesomeGroup =
-                Department.builder().id(1L).name(DepartmentName.AWESOME_GROUP).build();
+                    Department.builder().id(1L).name(DepartmentName.AWESOME_GROUP).build();
             Department chungnam =
-                Department.builder()
-                    .id(2L)
-                    .name(DepartmentName.CHUNGNAM_HQ)
-                    .parent(awesomeGroup)
-                    .build();
+                    Department.builder()
+                            .id(2L)
+                            .name(DepartmentName.CHUNGNAM_HQ)
+                            .parent(awesomeGroup)
+                            .build();
             Department planning =
-                Department.builder()
-                    .id(3L)
-                    .name(DepartmentName.CHUNGNAM_PLANNING)
-                    .parent(chungnam)
-                    .build();
+                    Department.builder()
+                            .id(3L)
+                            .name(DepartmentName.CHUNGNAM_PLANNING)
+                            .parent(chungnam)
+                            .build();
             Department managementSupport =
-                Department.builder()
-                    .id(4L)
-                    .name(DepartmentName.MANAGEMENT_SUPPORT)
-                    .parent(planning)
-                    .build();
+                    Department.builder()
+                            .id(4L)
+                            .name(DepartmentName.MANAGEMENT_SUPPORT)
+                            .parent(planning)
+                            .build();
 
             EduReport report =
-                EduReport.builder()
-                    .id(10L)
-                    .eduType(EduType.DEPARTMENT)
-                    .title("부서 교육")
-                    .department(managementSupport)
-                    .createdBy(user)
-                    .build();
+                    EduReport.builder()
+                            .id(10L)
+                            .eduType(EduType.DEPARTMENT)
+                            .title("부서 교육")
+                            .department(managementSupport)
+                            .createdBy(user)
+                            .build();
             List<Long> targetDepartmentIds = List.of(4L, 3L);
             List<User> targets =
-                List.of(User.builder().id(100L).build(), User.builder().id(200L).build());
+                    List.of(User.builder().id(100L).build(), User.builder().id(200L).build());
 
             when(userRepository.findById(1L)).thenReturn(Optional.of(user));
             when(eduReportRepository.findById(10L)).thenReturn(Optional.of(report));
@@ -2399,12 +2390,12 @@ public class EduReportServiceTest {
             @SuppressWarnings("unchecked")
             ArgumentCaptor<List<Long>> targetIdsCaptor = ArgumentCaptor.forClass(List.class);
             verify(notificationService, times(1))
-                .sendEduReportRemindAlertToTargets(
-                    anyString(),
-                    anyString(),
-                    anyLong(),
-                    targetIdsCaptor.capture(),
-                    any(Map.class));
+                    .sendEduReportRemindAlertToTargets(
+                            anyString(),
+                            anyString(),
+                            anyLong(),
+                            targetIdsCaptor.capture(),
+                            any(Map.class));
             assertThat(targetIdsCaptor.getValue()).isEqualTo(List.of(100L, 200L));
         }
 
@@ -2415,13 +2406,13 @@ public class EduReportServiceTest {
             User user = createNormalUser();
             user.addAuthority(Authority.MANAGE_PSM);
             EduReport report =
-                EduReport.builder()
-                    .id(10L)
-                    .eduType(EduType.PSM)
-                    .title("PSM 교육 제목")
-                    .company(null)
-                    .createdBy(user)
-                    .build();
+                    EduReport.builder()
+                            .id(10L)
+                            .eduType(EduType.PSM)
+                            .title("PSM 교육 제목")
+                            .company(null)
+                            .createdBy(user)
+                            .build();
 
             List<Long> targetIds = List.of(1L, 2L, 3L);
             when(userRepository.findById(1L)).thenReturn(Optional.of(user));
@@ -2440,12 +2431,12 @@ public class EduReportServiceTest {
             ArgumentCaptor<Map> metadataCaptor = ArgumentCaptor.forClass(Map.class);
 
             verify(notificationService, times(1))
-                .sendEduReportRemindAlertToTargets(
-                    eduTypeLabelCaptor.capture(),
-                    eduTitleCaptor.capture(),
-                    reportIdCaptor.capture(),
-                    targetIdsCaptor.capture(),
-                    metadataCaptor.capture());
+                    .sendEduReportRemindAlertToTargets(
+                            eduTypeLabelCaptor.capture(),
+                            eduTitleCaptor.capture(),
+                            reportIdCaptor.capture(),
+                            targetIdsCaptor.capture(),
+                            metadataCaptor.capture());
 
             assertThat(eduTitleCaptor.getValue()).isEqualTo("PSM 교육 제목");
             assertThat(reportIdCaptor.getValue()).isEqualTo(10L);

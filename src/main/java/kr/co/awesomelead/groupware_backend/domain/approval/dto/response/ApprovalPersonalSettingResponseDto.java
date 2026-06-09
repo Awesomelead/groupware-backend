@@ -1,12 +1,15 @@
 package kr.co.awesomelead.groupware_backend.domain.approval.dto.response;
 
 import io.swagger.v3.oas.annotations.media.Schema;
-import java.time.LocalDate;
-import java.util.List;
+
 import kr.co.awesomelead.groupware_backend.domain.approval.enums.ApprovalTargetType;
+
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
+
+import java.time.LocalDate;
+import java.util.List;
 
 @Getter
 @Builder
@@ -61,9 +64,9 @@ public class ApprovalPersonalSettingResponseDto {
         private Long id;
 
         @Schema(
-            description = "타겟 타입",
-            example = "USER",
-            allowableValues = {"USER", "DEPARTMENT"})
+                description = "타겟 타입",
+                example = "USER",
+                allowableValues = {"USER", "DEPARTMENT"})
         private ApprovalTargetType targetType;
 
         @Schema(description = "사용자 타겟 ID(targetType=USER일 때)", example = "14")

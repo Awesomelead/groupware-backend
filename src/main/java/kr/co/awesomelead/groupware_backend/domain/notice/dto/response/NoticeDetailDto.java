@@ -1,17 +1,14 @@
 package kr.co.awesomelead.groupware_backend.domain.notice.dto.response;
 
 import io.swagger.v3.oas.annotations.media.Schema;
-
+import java.time.LocalDateTime;
+import java.util.List;
 import kr.co.awesomelead.groupware_backend.domain.department.enums.Company;
-
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
-
-import java.time.LocalDateTime;
-import java.util.List;
 
 @Getter
 @AllArgsConstructor
@@ -30,8 +27,8 @@ public class NoticeDetailDto {
     private String content;
 
     @Schema(
-            description = "Quill Delta JSON 문자열",
-            example = "{\"ops\":[{\"insert\":\"오는 1월 15일 오후 2시에 전체 회의가 있습니다.\\n\"}]}")
+        description = "Quill Delta JSON 문자열",
+        example = "{\"ops\":[{\"insert\":\"오는 1월 15일 오후 2시에 전체 회의가 있습니다.\\n\"}]}")
     private String contentDelta;
 
     @Schema(description = "공지 HTML 본문")
@@ -41,10 +38,10 @@ public class NoticeDetailDto {
     private String authorName;
 
     @Schema(
-            description = "작성일시 (KST, Asia/Seoul)",
-            type = "string",
-            format = "date-time",
-            example = "2026-02-27T10:30:00")
+        description = "작성일시 (KST, Asia/Seoul)",
+        type = "string",
+        format = "date-time",
+        example = "2026-02-27T10:30:00")
     private LocalDateTime createdDate;
 
     @Schema(description = "조회수", example = "42")
@@ -54,12 +51,12 @@ public class NoticeDetailDto {
     private List<AttachmentResponse> attachments;
 
     @Schema(
-            description = "공지사항 유형 (영문 코드)",
-            example = "REGULAR",
-            allowableValues = {"REGULAR", "MENU", "ETC"})
+        description = "공지사항 유형 (영문 코드)",
+        example = "REGULAR",
+        allowableValues = {"REGULAR", "MENU", "ETC"})
     private String type;
 
-    @Schema(description = "대상 회사 목록", example = "[\"어썸리드\", \"마루이\"]")
+    @Schema(description = "대상 회사 목록", example = "[\"어썸리드\", \"한국마루이\"]")
     private List<Company> targetCompanies;
 
     @Schema(description = "대상 부서 ID 목록", example = "[1, 2, 3]")
@@ -94,8 +91,8 @@ public class NoticeDetailDto {
         private long fileSize;
 
         @Schema(
-                description = "파일 조회 URL",
-                example = "https://bucket.s3.amazonaws.com/notices/uuid_file.pdf")
+            description = "파일 조회 URL",
+            example = "https://bucket.s3.amazonaws.com/notices/uuid_file.pdf")
         private String viewUrl; // S3에서 바로 열기 위한 URL
     }
 
@@ -116,10 +113,10 @@ public class NoticeDetailDto {
         private String authorName;
 
         @Schema(
-                description = "작성일시 (KST, Asia/Seoul)",
-                type = "string",
-                format = "date-time",
-                example = "2026-02-27T10:30:00")
+            description = "작성일시 (KST, Asia/Seoul)",
+            type = "string",
+            format = "date-time",
+            example = "2026-02-27T10:30:00")
         private LocalDateTime createdDate;
     }
 }

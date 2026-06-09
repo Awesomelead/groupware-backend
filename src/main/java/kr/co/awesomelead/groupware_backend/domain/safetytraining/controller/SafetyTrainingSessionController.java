@@ -7,9 +7,8 @@ import io.swagger.v3.oas.annotations.media.ExampleObject;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
-
 import jakarta.validation.Valid;
-
+import java.io.IOException;
 import kr.co.awesomelead.groupware_backend.domain.safetytraining.dto.request.SafetyTrainingSessionCreateRequestDto;
 import kr.co.awesomelead.groupware_backend.domain.safetytraining.dto.request.SafetyTrainingSessionSearchConditionDto;
 import kr.co.awesomelead.groupware_backend.domain.safetytraining.dto.request.SafetyTrainingSessionStatusUpdateRequestDto;
@@ -22,9 +21,7 @@ import kr.co.awesomelead.groupware_backend.domain.safetytraining.dto.response.Sa
 import kr.co.awesomelead.groupware_backend.domain.safetytraining.service.SafetyTrainingSessionService;
 import kr.co.awesomelead.groupware_backend.domain.user.dto.CustomUserDetails;
 import kr.co.awesomelead.groupware_backend.global.common.response.ApiResponse;
-
 import lombok.RequiredArgsConstructor;
-
 import org.springdoc.core.annotations.ParameterObject;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -43,809 +40,807 @@ import org.springframework.web.bind.annotation.RequestPart;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.io.IOException;
-
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/api/safety-trainings")
 @Tag(
-        name = "안전보건 교육일지",
-        description =
-                """
-        안전보건 교육일지 API
-
-        ### 권한
-        - 조회: 일반 사용자(`본인 회사만 조회`)
-        - 조회: `MANAGE_SAFETY` 권한 사용자(`전체 회사 조회 가능`)
-        - 참석자 현황 조회: `MANAGE_SAFETY`
-        - 교육일지 상태 변경/미참석 사유 입력: `MANAGE_SAFETY`
-        - 교육일지 삭제: `MANAGE_SAFETY`
-        - 엑셀 파일 생성: `MANAGE_SAFETY` (`OPEN/CLOSED` 모두 가능)
-        - 엑셀 파일 조회: 교육일지 조회 권한 사용자
-        - 수료 처리(서명): 교육일지가 `OPEN`이고 미수료(`PENDING`, `ABSENT`) 상태일 때 본인 서명 가능
-        - 생성: `MANAGE_SAFETY`
-
-        ### 사용 Enum
-        - `SafetyEducationType`
-          - `REGULAR`(정기교육), `HIRING`(채용시), `JOB_CHANGE`(작업내용 변경시), `SPECIAL`(특별교육), `MSDS`(MSDS교육)
-        - `SafetyEducationMethod`
-          - `LECTURE`(강의), `AUDIOVISUAL`(시청각), `FIELD_TRAINING`(현장 교육), `DEMONSTRATION`(시범 실습), `TOUR`(견학), `ROLE_PLAY`(역할연기)
-        - `Company`
-          - `AWESOME`(어썸리드), `MARUI`(마루이)
-        """)
+    name = "안전보건 교육일지",
+    description =
+        """
+            안전보건 교육일지 API
+            
+            ### 권한
+            - 조회: 일반 사용자(`본인 회사만 조회`)
+            - 조회: `MANAGE_SAFETY` 권한 사용자(`전체 회사 조회 가능`)
+            - 참석자 현황 조회: `MANAGE_SAFETY`
+            - 교육일지 상태 변경/미참석 사유 입력: `MANAGE_SAFETY`
+            - 교육일지 삭제: `MANAGE_SAFETY`
+            - 엑셀 파일 생성: `MANAGE_SAFETY` (`OPEN/CLOSED` 모두 가능)
+            - 엑셀 파일 조회: 교육일지 조회 권한 사용자
+            - 수료 처리(서명): 교육일지가 `OPEN`이고 미수료(`PENDING`, `ABSENT`) 상태일 때 본인 서명 가능
+            - 생성: `MANAGE_SAFETY`
+            
+            ### 사용 Enum
+            - `SafetyEducationType`
+              - `REGULAR`(정기교육), `HIRING`(채용시), `JOB_CHANGE`(작업내용 변경시), `SPECIAL`(특별교육), `MSDS`(MSDS교육)
+            - `SafetyEducationMethod`
+              - `LECTURE`(강의), `AUDIOVISUAL`(시청각), `FIELD_TRAINING`(현장 교육), `DEMONSTRATION`(시범 실습), `TOUR`(견학), `ROLE_PLAY`(역할연기)
+            - `Company`
+              - `AWESOME`(어썸리드), `MARUI`(한국마루이)
+            """)
 public class SafetyTrainingSessionController {
 
     private final SafetyTrainingSessionService safetyTrainingSessionService;
 
     @Operation(
-            summary = "안전보건 교육일지 목록 조회",
-            description =
-                    "일반 사용자는 본인 회사 데이터를 조회할 수 있으며, MANAGE_SAFETY 권한 사용자는 전체 회사/상태 조회가 가능합니다. 각 교육일지"
-                            + " 항목에 현재 로그인 사용자의 서명 완료 여부(mySigned)를 포함합니다."
-                            + " titleKeyword 파라미터로 제목 검색이 가능하며, MySQL FULLTEXT ngram 인덱스를 사용합니다.")
+        summary = "안전보건 교육일지 목록 조회",
+        description =
+            "일반 사용자는 본인 회사 데이터를 조회할 수 있으며, MANAGE_SAFETY 권한 사용자는 전체 회사/상태 조회가 가능합니다. 각 교육일지"
+                + " 항목에 현재 로그인 사용자의 서명 완료 여부(mySigned)를 포함합니다."
+                + " titleKeyword 파라미터로 제목 검색이 가능하며, MySQL FULLTEXT ngram 인덱스를 사용합니다.")
     @ApiResponses(
-            value = {
-                @io.swagger.v3.oas.annotations.responses.ApiResponse(
-                        responseCode = "200",
-                        description = "조회 성공",
-                        content =
-                                @Content(
-                                        mediaType = "application/json",
-                                        schema = @Schema(implementation = ApiResponse.class))),
-                @io.swagger.v3.oas.annotations.responses.ApiResponse(
-                        responseCode = "404",
-                        description = "사용자 없음",
-                        content =
-                                @Content(
-                                        mediaType = "application/json",
-                                        examples =
-                                                @ExampleObject(
-                                                        value =
-                                                                """
-            {
-              "isSuccess": false,
-              "code": "USER_NOT_FOUND",
-              "message": "해당 사용자를 찾을 수 없습니다.",
-              "result": null
-            }
-            """)))
-            })
+        value = {
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                responseCode = "200",
+                description = "조회 성공",
+                content =
+                @Content(
+                    mediaType = "application/json",
+                    schema = @Schema(implementation = ApiResponse.class))),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                responseCode = "404",
+                description = "사용자 없음",
+                content =
+                @Content(
+                    mediaType = "application/json",
+                    examples =
+                    @ExampleObject(
+                        value =
+                            """
+                                {
+                                  "isSuccess": false,
+                                  "code": "USER_NOT_FOUND",
+                                  "message": "해당 사용자를 찾을 수 없습니다.",
+                                  "result": null
+                                }
+                                """)))
+        })
     @GetMapping
     public ResponseEntity<ApiResponse<Page<SafetyTrainingSessionSummaryResponseDto>>> getSessions(
-            @ParameterObject SafetyTrainingSessionSearchConditionDto condition,
-            @ParameterObject
-                    @PageableDefault(
-                            page = 0,
-                            size = 20,
-                            sort = "createdAt",
-                            direction = Sort.Direction.DESC)
-                    Pageable pageable,
-            @Parameter(hidden = true) @AuthenticationPrincipal CustomUserDetails userDetails) {
+        @ParameterObject SafetyTrainingSessionSearchConditionDto condition,
+        @ParameterObject
+        @PageableDefault(
+            page = 0,
+            size = 20,
+            sort = "createdAt",
+            direction = Sort.Direction.DESC)
+        Pageable pageable,
+        @Parameter(hidden = true) @AuthenticationPrincipal CustomUserDetails userDetails) {
         Page<SafetyTrainingSessionSummaryResponseDto> result =
-                safetyTrainingSessionService.getSessions(userDetails.getId(), condition, pageable);
+            safetyTrainingSessionService.getSessions(userDetails.getId(), condition, pageable);
         return ResponseEntity.ok(ApiResponse.onSuccess(result));
     }
 
     @Operation(
-            summary = "안전보건 교육일지 상세 조회",
-            description = "제목, 교육 정보(실시자 이름/직급/부서 포함), 엑셀 파일 URL, 내 수료/미수료 및 서명 가능 여부를 조회합니다.")
+        summary = "안전보건 교육일지 상세 조회",
+        description = "제목, 교육 정보(실시자 이름/직급/부서 포함), 엑셀 파일 URL, 내 수료/미수료 및 서명 가능 여부를 조회합니다.")
     @ApiResponses(
-            value = {
-                @io.swagger.v3.oas.annotations.responses.ApiResponse(
-                        responseCode = "200",
-                        description = "조회 성공",
-                        content =
-                                @Content(
-                                        mediaType = "application/json",
-                                        schema = @Schema(implementation = ApiResponse.class))),
-                @io.swagger.v3.oas.annotations.responses.ApiResponse(
-                        responseCode = "403",
-                        description = "조회 권한 없음",
-                        content =
-                                @Content(
-                                        mediaType = "application/json",
-                                        examples =
-                                                @ExampleObject(
-                                                        value =
-                                                                """
-            {
-              "isSuccess": false,
-              "code": "NO_AUTHORITY_FOR_SAFETY_READ",
-              "message": "해당 안전보건 교육 조회 권한이 없습니다.",
-              "result": null
-            }
-            """))),
-                @io.swagger.v3.oas.annotations.responses.ApiResponse(
-                        responseCode = "404",
-                        description = "교육일지 또는 사용자 없음",
-                        content =
-                                @Content(
-                                        mediaType = "application/json",
-                                        examples = {
-                                            @ExampleObject(
-                                                    value =
-                                                            """
-                {
-                  "isSuccess": false,
-                  "code": "SAFETY_TRAINING_SESSION_NOT_FOUND",
-                  "message": "해당 안전보건 교육일지를 찾을 수 없습니다.",
-                  "result": null
-                }
-                """)
-                                        }))
-            })
-    @GetMapping("/{sessionId}")
-    public ResponseEntity<ApiResponse<SafetyTrainingSessionDetailResponseDto>> getSessionDetail(
-            @PathVariable Long sessionId,
-            @Parameter(hidden = true) @AuthenticationPrincipal CustomUserDetails userDetails) {
-        SafetyTrainingSessionDetailResponseDto result =
-                safetyTrainingSessionService.getSessionDetail(sessionId, userDetails.getId());
-        return ResponseEntity.ok(ApiResponse.onSuccess(result));
-    }
-
-    @Operation(
-            summary = "안전보건 교육 참석자 현황 조회",
-            description = "관리 권한(MANAGE_SAFETY) 사용자가 교육일지의 참석자 상태(PENDING/SIGNED/ABSENT)를 조회합니다.")
-    @ApiResponses(
-            value = {
-                @io.swagger.v3.oas.annotations.responses.ApiResponse(
-                        responseCode = "200",
-                        description = "조회 성공",
-                        content =
-                                @Content(
-                                        mediaType = "application/json",
-                                        schema = @Schema(implementation = ApiResponse.class))),
-                @io.swagger.v3.oas.annotations.responses.ApiResponse(
-                        responseCode = "403",
-                        description = "조회 권한 없음",
-                        content =
-                                @Content(
-                                        mediaType = "application/json",
-                                        examples =
-                                                @ExampleObject(
-                                                        value =
-                                                                """
-            {
-              "isSuccess": false,
-              "code": "NO_AUTHORITY_FOR_SAFETY_WRITE",
-              "message": "안전 보건 관리 권한이 없습니다.",
-              "result": null
-            }
-            """))),
-                @io.swagger.v3.oas.annotations.responses.ApiResponse(
-                        responseCode = "404",
-                        description = "교육일지/사용자 없음")
-            })
-    @GetMapping("/{sessionId}/attendees")
-    public ResponseEntity<ApiResponse<SafetyTrainingSessionAttendeesResponseDto>>
-            getSessionAttendees(
-                    @PathVariable Long sessionId,
-                    @Parameter(hidden = true) @AuthenticationPrincipal
-                            CustomUserDetails userDetails) {
-        SafetyTrainingSessionAttendeesResponseDto result =
-                safetyTrainingSessionService.getSessionAttendees(sessionId, userDetails.getId());
-        return ResponseEntity.ok(ApiResponse.onSuccess(result));
-    }
-
-    @Operation(
-            summary = "안전보건 교육 엑셀 파일 생성",
-            description =
-                    "관리 권한(MANAGE_SAFETY) 사용자가 교육일지 엑셀 파일을 생성/재생성합니다. "
-                            + "교육일지 상태(OPEN/CLOSED)와 무관하게 생성 가능합니다. "
-                            + "서명 완료자의 서명 이미지는 참석자 이름 옆 칸에 반영됩니다.")
-    @ApiResponses(
-            value = {
-                @io.swagger.v3.oas.annotations.responses.ApiResponse(
-                        responseCode = "200",
-                        description = "생성 성공",
-                        content =
-                                @Content(
-                                        mediaType = "application/json",
-                                        schema = @Schema(implementation = ApiResponse.class))),
-                @io.swagger.v3.oas.annotations.responses.ApiResponse(
-                        responseCode = "403",
-                        description = "관리 권한 없음",
-                        content =
-                                @Content(
-                                        mediaType = "application/json",
-                                        examples =
-                                                @ExampleObject(
-                                                        value =
-                                                                """
-            {
-              "isSuccess": false,
-              "code": "NO_AUTHORITY_FOR_SAFETY_WRITE",
-              "message": "안전 보건 관리 권한이 없습니다.",
-              "result": null
-            }
-            """))),
-                @io.swagger.v3.oas.annotations.responses.ApiResponse(
-                        responseCode = "404",
-                        description = "교육일지/사용자 없음")
-            })
-    @PostMapping("/{sessionId}/report")
-    public ResponseEntity<ApiResponse<SafetyTrainingSessionReportResponseDto>>
-            generateSessionReport(
-                    @PathVariable Long sessionId,
-                    @Parameter(hidden = true) @AuthenticationPrincipal
-                            CustomUserDetails userDetails) {
-        SafetyTrainingSessionReportResponseDto result =
-                safetyTrainingSessionService.generateSessionReport(sessionId, userDetails.getId());
-        return ResponseEntity.ok(ApiResponse.onSuccess(result));
-    }
-
-    @Operation(
-            summary = "안전보건 교육 엑셀 파일 조회",
-            description = "교육일지 조회 권한이 있는 사용자가 엑셀 파일 다운로드 URL을 조회합니다.")
-    @ApiResponses(
-            value = {
-                @io.swagger.v3.oas.annotations.responses.ApiResponse(
-                        responseCode = "200",
-                        description = "조회 성공",
-                        content =
-                                @Content(
-                                        mediaType = "application/json",
-                                        schema = @Schema(implementation = ApiResponse.class))),
-                @io.swagger.v3.oas.annotations.responses.ApiResponse(
-                        responseCode = "403",
-                        description = "조회 권한 없음",
-                        content =
-                                @Content(
-                                        mediaType = "application/json",
-                                        examples =
-                                                @ExampleObject(
-                                                        value =
-                                                                """
-            {
-              "isSuccess": false,
-              "code": "NO_AUTHORITY_FOR_SAFETY_READ",
-              "message": "해당 안전보건 교육 조회 권한이 없습니다.",
-              "result": null
-            }
-            """))),
-                @io.swagger.v3.oas.annotations.responses.ApiResponse(
-                        responseCode = "404",
-                        description = "교육일지 없음 또는 엑셀 파일 미생성",
-                        content =
-                                @Content(
-                                        mediaType = "application/json",
-                                        examples =
-                                                @ExampleObject(
-                                                        value =
-                                                                """
-            {
-              "isSuccess": false,
-              "code": "SAFETY_TRAINING_REPORT_NOT_FOUND",
-              "message": "안전보건 교육 엑셀 파일이 아직 생성되지 않았습니다.",
-              "result": null
-            }
-            """)))
-            })
-    @GetMapping("/{sessionId}/report")
-    public ResponseEntity<ApiResponse<SafetyTrainingSessionReportResponseDto>> getSessionReport(
-            @PathVariable Long sessionId,
-            @Parameter(hidden = true) @AuthenticationPrincipal CustomUserDetails userDetails) {
-        SafetyTrainingSessionReportResponseDto result =
-                safetyTrainingSessionService.getSessionReport(sessionId, userDetails.getId());
-        return ResponseEntity.ok(ApiResponse.onSuccess(result));
-    }
-
-    @Operation(
-            summary = "안전보건 교육일지 수정",
-            description =
-                    "관리 권한(MANAGE_SAFETY) 사용자가 교육일지를 수정합니다. OPEN 상태 + 서명 완료자 0명인 경우에만 수정 가능합니다.",
-            requestBody =
-                    @io.swagger.v3.oas.annotations.parameters.RequestBody(
-                            required = true,
-                            content =
-                                    @Content(
-                                            mediaType = "application/json",
-                                            examples =
-                                                    @ExampleObject(
-                                                            name = "수정 요청 예시",
-                                                            value =
-                                                                    """
-            {
-              "title": "2026년 1분기 정기 안전보건교육(수정)",
-              "educationType": "REGULAR",
-              "educationMethods": ["LECTURE", "AUDIOVISUAL"],
-              "startAt": "2026-03-24T08:30:00",
-              "endAt": "2026-03-24T10:30:00",
-              "educationContent": "개인정보 보호 및 사내 보안 규정 안내",
-              "place": "3층 대회의실",
-              "instructorUserId": 17,
-              "companyScope": "AWESOME"
-            }
-            """))))
-    @ApiResponses(
-            value = {
-                @io.swagger.v3.oas.annotations.responses.ApiResponse(
-                        responseCode = "200",
-                        description = "수정 성공"),
-                @io.swagger.v3.oas.annotations.responses.ApiResponse(
-                        responseCode = "400",
-                        description = "마감 교육일지 또는 서명 완료자 존재",
-                        content =
-                                @Content(
-                                        mediaType = "application/json",
-                                        examples = {
-                                            @ExampleObject(
-                                                    name = "마감 교육일지",
-                                                    value =
-                                                            """
-            {
-              "isSuccess": false,
-              "code": "SAFETY_TRAINING_SESSION_CLOSED",
-              "message": "마감된 안전보건 교육입니다.",
-              "result": null
-            }
-            """),
-                                            @ExampleObject(
-                                                    name = "서명 완료자 존재",
-                                                    value =
-                                                            """
-            {
-              "isSuccess": false,
-              "code": "SAFETY_TRAINING_SESSION_HAS_SIGNED_ATTENDEE",
-              "message": "서명 완료자가 존재하여 교육을 수정할 수 없습니다.",
-              "result": null
-            }
-            """)
-                                        })),
-                @io.swagger.v3.oas.annotations.responses.ApiResponse(
-                        responseCode = "403",
-                        description = "수정 권한 없음",
-                        content =
-                                @Content(
-                                        mediaType = "application/json",
-                                        examples =
-                                                @ExampleObject(
-                                                        value =
-                                                                """
-            {
-              "isSuccess": false,
-              "code": "NO_AUTHORITY_FOR_SAFETY_WRITE",
-              "message": "안전 보건 관리 권한이 없습니다.",
-              "result": null
-            }
-            """))),
-                @io.swagger.v3.oas.annotations.responses.ApiResponse(
-                        responseCode = "404",
-                        description = "교육일지/사용자 없음")
-            })
-    @PatchMapping("/{sessionId}")
-    public ResponseEntity<ApiResponse<Long>> update(
-            @PathVariable Long sessionId,
-            @Valid @RequestBody SafetyTrainingSessionUpdateRequestDto requestDto,
-            @Parameter(hidden = true) @AuthenticationPrincipal CustomUserDetails userDetails) {
-        Long updatedId =
-                safetyTrainingSessionService.update(sessionId, userDetails.getId(), requestDto);
-        return ResponseEntity.ok(ApiResponse.onSuccess(updatedId));
-    }
-
-    @Operation(
-            summary = "안전보건 교육일지 삭제",
-            description =
-                    "관리 권한(MANAGE_SAFETY) 사용자가 교육일지를 삭제합니다. "
-                            + "교육일지 본문, 참석자 데이터, 생성된 엑셀 파일, 참석자 서명 파일을 함께 정리합니다.")
-    @ApiResponses(
-            value = {
-                @io.swagger.v3.oas.annotations.responses.ApiResponse(
-                        responseCode = "200",
-                        description = "삭제 성공"),
-                @io.swagger.v3.oas.annotations.responses.ApiResponse(
-                        responseCode = "403",
-                        description = "삭제 권한 없음",
-                        content =
-                                @Content(
-                                        mediaType = "application/json",
-                                        examples =
-                                                @ExampleObject(
-                                                        value =
-                                                                """
-            {
-              "isSuccess": false,
-              "code": "NO_AUTHORITY_FOR_SAFETY_WRITE",
-              "message": "안전 보건 관리 권한이 없습니다.",
-              "result": null
-            }
-            """))),
-                @io.swagger.v3.oas.annotations.responses.ApiResponse(
-                        responseCode = "404",
-                        description = "교육일지/사용자 없음")
-            })
-    @DeleteMapping("/{sessionId}")
-    public ResponseEntity<ApiResponse<Void>> delete(
-            @PathVariable Long sessionId,
-            @Parameter(hidden = true) @AuthenticationPrincipal CustomUserDetails userDetails) {
-        safetyTrainingSessionService.delete(sessionId, userDetails.getId());
-        return ResponseEntity.ok(ApiResponse.onNoContent());
-    }
-
-    @Operation(
-            summary = "안전보건 교육일지 상태 변경",
-            description =
-                    "관리 권한(MANAGE_SAFETY) 사용자가 교육일지 상태를 OPEN/CLOSED로 변경합니다. "
-                            + "CLOSED(정상 마감) 전환 시 미서명(PENDING) 대상자는 자동으로 불참(ABSENT) 처리됩니다. "
-                            + "이때 결석자가 존재하면 absentReasonSummary를 입력해야 합니다. "
-                            + "OPEN 전환 시 기존 결석(ABSENT)은 PENDING으로 초기화되어 결석 인원은 0명이 됩니다.",
-            requestBody =
-                    @io.swagger.v3.oas.annotations.parameters.RequestBody(
-                            required = true,
-                            content =
-                                    @Content(
-                                            mediaType = "application/json",
-                                            examples = {
-                                                @ExampleObject(
-                                                        name = "CLOSED 전환(결석자 있음)",
-                                                        value =
-                                                                """
-            {
-              "status": "CLOSED",
-              "absentReasonSummary": "현장 장비 점검으로 일부 인원 교육 참여 불가"
-            }
-            """),
-                                                @ExampleObject(
-                                                        name = "CLOSED 전환(결석자 없음)",
-                                                        value =
-                                                                """
-            {
-              "status": "CLOSED",
-              "absentReasonSummary": null
-            }
-            """),
-                                                @ExampleObject(
-                                                        name = "OPEN 전환",
-                                                        value =
-                                                                """
-            {
-              "status": "OPEN",
-              "absentReasonSummary": null
-            }
-            """)
-                                            })))
-    @ApiResponses(
-            value = {
-                @io.swagger.v3.oas.annotations.responses.ApiResponse(
-                        responseCode = "200",
-                        description = "상태 변경 성공"),
-                @io.swagger.v3.oas.annotations.responses.ApiResponse(
-                        responseCode = "400",
-                        description = "CLOSED 전환 + 결석자 존재 시 미참석 사유 누락",
-                        content =
-                                @Content(
-                                        mediaType = "application/json",
-                                        examples =
-                                                @ExampleObject(
-                                                        value =
-                                                                """
-            {
-              "isSuccess": false,
-              "code": "SAFETY_TRAINING_ABSENT_REASON_REQUIRED",
-              "message": "결석자가 있을 경우 교육 미참석 사유 입력은 필수입니다.",
-              "result": null
-            }
-            """))),
-                @io.swagger.v3.oas.annotations.responses.ApiResponse(
-                        responseCode = "403",
-                        description = "수정 권한 없음",
-                        content =
-                                @Content(
-                                        mediaType = "application/json",
-                                        examples =
-                                                @ExampleObject(
-                                                        value =
-                                                                """
-            {
-              "isSuccess": false,
-              "code": "NO_AUTHORITY_FOR_SAFETY_WRITE",
-              "message": "안전 보건 관리 권한이 없습니다.",
-              "result": null
-            }
-            """))),
-                @io.swagger.v3.oas.annotations.responses.ApiResponse(
-                        responseCode = "404",
-                        description = "교육일지/사용자 없음")
-            })
-    @PatchMapping("/{sessionId}/status")
-    public ResponseEntity<ApiResponse<Long>> updateStatus(
-            @PathVariable Long sessionId,
-            @Valid @RequestBody SafetyTrainingSessionStatusUpdateRequestDto requestDto,
-            @Parameter(hidden = true) @AuthenticationPrincipal CustomUserDetails userDetails) {
-        Long updatedId =
-                safetyTrainingSessionService.updateStatus(
-                        sessionId, userDetails.getId(), requestDto);
-        return ResponseEntity.ok(ApiResponse.onSuccess(updatedId));
-    }
-
-    @Operation(
-            summary = "안전보건 교육일지 수료 서명",
-            description =
-                    "본인의 미수료 상태(PENDING, ABSENT)를 PNG 서명 업로드 후 수료(SIGNED)로 변경합니다. OPEN 상태 교육일지에서만"
-                            + " 서명할 수 있습니다.")
-    @ApiResponses(
-            value = {
-                @io.swagger.v3.oas.annotations.responses.ApiResponse(
-                        responseCode = "200",
-                        description = "서명 성공"),
-                @io.swagger.v3.oas.annotations.responses.ApiResponse(
-                        responseCode = "400",
-                        description = "이미 서명됨 / 서명 파일 누락 / 서명 형식 오류",
-                        content =
-                                @Content(
-                                        mediaType = "application/json",
-                                        examples = {
-                                            @ExampleObject(
-                                                    name = "이미 서명됨",
-                                                    value =
-                                                            """
-            {
-              "isSuccess": false,
-              "code": "ALREADY_MARKED_ATTENDANCE",
-              "message": "이미 출석이 체크된 교육입니다.",
-              "result": null
-            }
-            """),
-                                            @ExampleObject(
-                                                    name = "서명 누락",
-                                                    value =
-                                                            """
-            {
-              "isSuccess": false,
-              "code": "NO_SIGNATURE_PROVIDED",
-              "message": "서명이 제공되지 않았습니다.",
-              "result": null
-            }
-            """),
-                                            @ExampleObject(
-                                                    name = "서명 형식 오류",
-                                                    value =
-                                                            """
-            {
-              "isSuccess": false,
-              "code": "INVALID_SIGNATURE_FORMAT",
-              "message": "서명은 PNG 파일 형식만 지원합니다.",
-              "result": null
-            }
-            """)
-                                        })),
-                @io.swagger.v3.oas.annotations.responses.ApiResponse(
-                        responseCode = "403",
-                        description = "서명 권한 없음(타 회사)",
-                        content =
-                                @Content(
-                                        mediaType = "application/json",
-                                        examples =
-                                                @ExampleObject(
-                                                        value =
-                                                                """
-            {
-              "isSuccess": false,
-              "code": "NO_AUTHORITY_FOR_SAFETY_READ",
-              "message": "해당 안전보건 교육 조회 권한이 없습니다.",
-              "result": null
-            }
-            """))),
-                @io.swagger.v3.oas.annotations.responses.ApiResponse(
-                        responseCode = "404",
-                        description = "교육일지/대상자 없음")
-            })
-    @PostMapping(
-            value = "/{sessionId}/attendance",
-            consumes = org.springframework.http.MediaType.MULTIPART_FORM_DATA_VALUE)
-    public ResponseEntity<ApiResponse<Void>> signAttendance(
-            @PathVariable Long sessionId,
-            @RequestPart(value = "signature", required = false) MultipartFile signature,
-            @Parameter(hidden = true) @AuthenticationPrincipal CustomUserDetails userDetails)
-            throws IOException {
-        safetyTrainingSessionService.signAttendance(sessionId, userDetails.getId(), signature);
-        return ResponseEntity.ok(ApiResponse.onSuccess(null));
-    }
-
-    @Operation(
-            summary = "안전보건 교육 엑셀 파일 미리보기",
-            description = "입력한 값으로 DB 저장 없이 엑셀 파일 미리보기를 생성합니다.",
-            requestBody =
-                    @io.swagger.v3.oas.annotations.parameters.RequestBody(
-                            required = true,
-                            content =
-                                    @Content(
-                                            mediaType = "application/json",
-                                            schema =
-                                                    @Schema(
-                                                            implementation =
-                                                                    SafetyTrainingSessionCreateRequestDto
-                                                                            .class),
-                                            examples =
-                                                    @ExampleObject(
-                                                            name = "미리보기 요청 예시",
-                                                            value =
-                                                                    """
-                    {
-                      "title": "2026년 1분기 정기 안전보건교육",
-                      "educationType": "REGULAR",
-                      "educationMethods": ["LECTURE", "AUDIOVISUAL"],
-                      "startAt": "2026-03-24T08:30:00",
-                      "endAt": "2026-03-24T10:30:00",
-                      "educationContent": "개인정보 보호 및 사내 보안 규정 안내",
-                      "place": "3층 대회의실",
-                      "instructorUserId": 17,
-                      "companyScope": "AWESOME"
-                    }
-                    """))))
-    @PostMapping("/preview")
-    public ResponseEntity<ApiResponse<SafetyTrainingPreviewResponseDto>> preview(
-            @Parameter(hidden = true) @AuthenticationPrincipal CustomUserDetails userDetails,
-            @Valid @RequestBody SafetyTrainingSessionCreateRequestDto requestDto) {
-        return ResponseEntity.ok(
-                ApiResponse.onSuccess(
-                        safetyTrainingSessionService.preview(userDetails.getId(), requestDto)));
-    }
-
-    @Operation(
-            summary = "안전보건 교육일지 등록",
-            description = "안전 보건 관리 권한 사용자가 교육일지를 등록합니다. MASTER_ADMIN 계정은 참석 대상자에서 제외됩니다.",
-            requestBody =
-                    @io.swagger.v3.oas.annotations.parameters.RequestBody(
-                            required = true,
-                            content =
-                                    @Content(
-                                            mediaType = "application/json",
-                                            schema =
-                                                    @Schema(
-                                                            implementation =
-                                                                    SafetyTrainingSessionCreateRequestDto
-                                                                            .class),
-                                            examples =
-                                                    @ExampleObject(
-                                                            value =
-                                                                    """
-                    {
-                      "title": "2026년 1분기 정기 안전보건교육",
-                      "educationType": "REGULAR",
-                      "educationMethods": ["LECTURE", "AUDIOVISUAL"],
-                      "startAt": "2026-03-24T08:30:00",
-                      "endAt": "2026-03-24T10:30:00",
-                      "educationContent": "개인정보 보호 및 사내 보안 규정 안내",
-                      "place": "3층 대회의실",
-                      "instructorUserId": 17,
-                      "companyScope": "AWESOME"
-                    }
-                    """))))
-    @ApiResponses(
-            value = {
-                @io.swagger.v3.oas.annotations.responses.ApiResponse(
-                        responseCode = "200",
-                        description = "생성 성공",
-                        content =
-                                @Content(
-                                        mediaType = "application/json",
-                                        schema = @Schema(implementation = ApiResponse.class),
-                                        examples =
-                                                @ExampleObject(
-                                                        value =
-                                                                """
-            {
-              "isSuccess": true,
-              "code": "COMMON200",
-              "message": "요청에 성공했습니다.",
-              "result": 1
-            }
-            """))),
-                @io.swagger.v3.oas.annotations.responses.ApiResponse(
-                        responseCode = "400",
-                        description = "잘못된 요청",
-                        content =
-                                @Content(
-                                        mediaType = "application/json",
-                                        examples =
-                                                @ExampleObject(
-                                                        value =
-                                                                """
-            {
-              "isSuccess": false,
-              "code": "INVALID_TIME_RANGE",
-              "message": "퇴실 예정 시간은 입실 예정 시간보다 빠를 수 없습니다.",
-              "result": null
-            }
-            """))),
-                @io.swagger.v3.oas.annotations.responses.ApiResponse(
-                        responseCode = "404",
-                        description = "사용자 없음",
-                        content =
-                                @Content(
-                                        mediaType = "application/json",
-                                        examples =
-                                                @ExampleObject(
-                                                        value =
-                                                                """
-            {
-              "isSuccess": false,
-              "code": "USER_NOT_FOUND",
-              "message": "해당 사용자를 찾을 수 없습니다.",
-              "result": null
-            }
-            """))),
-                @io.swagger.v3.oas.annotations.responses.ApiResponse(
-                        responseCode = "403",
-                        description = "권한 없음",
-                        content =
-                                @Content(
-                                        mediaType = "application/json",
-                                        examples =
-                                                @ExampleObject(
-                                                        value =
-                                                                """
-            {
-              "isSuccess": false,
-              "code": "NO_AUTHORITY_FOR_SAFETY_WRITE",
-              "message": "안전 보건 관리 권한이 없습니다.",
-              "result": null
-            }
-            """)))
-            })
-    @PostMapping
-    public ResponseEntity<ApiResponse<Long>> create(
-            @Parameter(hidden = true) @AuthenticationPrincipal CustomUserDetails userDetails,
-            @Valid @RequestBody SafetyTrainingSessionCreateRequestDto requestDto) {
-
-        Long sessionId = safetyTrainingSessionService.create(userDetails.getId(), requestDto);
-        return ResponseEntity.ok(ApiResponse.onSuccess(sessionId));
-    }
-
-    @Operation(
-            summary = "안전보건 교육일지 리마인드 알림 전송",
-            description =
-                    """
-                    교육 생성자(createdBy)만 요청 가능합니다.
-
-                    - companyScope 기준 현재 활성 사용자에게 `[리마인드]` prefix를 붙여 알림을 재전송합니다.
-                    - MASTER_ADMIN 계정은 리마인드 대상자에서 제외됩니다.
-                    """)
-    @ApiResponses({
-        @io.swagger.v3.oas.annotations.responses.ApiResponse(
+        value = {
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(
                 responseCode = "200",
-                description = "전송 성공"),
-        @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                description = "조회 성공",
+                content =
+                @Content(
+                    mediaType = "application/json",
+                    schema = @Schema(implementation = ApiResponse.class))),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(
                 responseCode = "403",
-                description = "권한 없음 (교육일지 생성자가 아님)",
+                description = "조회 권한 없음",
                 content =
-                        @Content(
-                                mediaType = "application/json",
-                                examples =
-                                        @ExampleObject(
-                                                value =
-                                                        """
-                                    {
-                                      "isSuccess": false,
-                                      "code": "NO_AUTHORITY_FOR_SAFETY_WRITE",
-                                      "message": "안전 보건 관리 권한이 없습니다.",
-                                      "result": null
-                                    }
-                                    """))),
-        @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                @Content(
+                    mediaType = "application/json",
+                    examples =
+                    @ExampleObject(
+                        value =
+                            """
+                                {
+                                  "isSuccess": false,
+                                  "code": "NO_AUTHORITY_FOR_SAFETY_READ",
+                                  "message": "해당 안전보건 교육 조회 권한이 없습니다.",
+                                  "result": null
+                                }
+                                """))),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(
                 responseCode = "404",
-                description = "교육일지 없음",
+                description = "교육일지 또는 사용자 없음",
                 content =
-                        @Content(
-                                mediaType = "application/json",
-                                examples =
-                                        @ExampleObject(
-                                                value =
-                                                        """
+                @Content(
+                    mediaType = "application/json",
+                    examples = {
+                        @ExampleObject(
+                            value =
+                                """
                                     {
                                       "isSuccess": false,
                                       "code": "SAFETY_TRAINING_SESSION_NOT_FOUND",
                                       "message": "해당 안전보건 교육일지를 찾을 수 없습니다.",
                                       "result": null
                                     }
-                                    """)))
+                                    """)
+                    }))
+        })
+    @GetMapping("/{sessionId}")
+    public ResponseEntity<ApiResponse<SafetyTrainingSessionDetailResponseDto>> getSessionDetail(
+        @PathVariable Long sessionId,
+        @Parameter(hidden = true) @AuthenticationPrincipal CustomUserDetails userDetails) {
+        SafetyTrainingSessionDetailResponseDto result =
+            safetyTrainingSessionService.getSessionDetail(sessionId, userDetails.getId());
+        return ResponseEntity.ok(ApiResponse.onSuccess(result));
+    }
+
+    @Operation(
+        summary = "안전보건 교육 참석자 현황 조회",
+        description = "관리 권한(MANAGE_SAFETY) 사용자가 교육일지의 참석자 상태(PENDING/SIGNED/ABSENT)를 조회합니다.")
+    @ApiResponses(
+        value = {
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                responseCode = "200",
+                description = "조회 성공",
+                content =
+                @Content(
+                    mediaType = "application/json",
+                    schema = @Schema(implementation = ApiResponse.class))),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                responseCode = "403",
+                description = "조회 권한 없음",
+                content =
+                @Content(
+                    mediaType = "application/json",
+                    examples =
+                    @ExampleObject(
+                        value =
+                            """
+                                {
+                                  "isSuccess": false,
+                                  "code": "NO_AUTHORITY_FOR_SAFETY_WRITE",
+                                  "message": "안전 보건 관리 권한이 없습니다.",
+                                  "result": null
+                                }
+                                """))),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                responseCode = "404",
+                description = "교육일지/사용자 없음")
+        })
+    @GetMapping("/{sessionId}/attendees")
+    public ResponseEntity<ApiResponse<SafetyTrainingSessionAttendeesResponseDto>>
+    getSessionAttendees(
+        @PathVariable Long sessionId,
+        @Parameter(hidden = true) @AuthenticationPrincipal
+        CustomUserDetails userDetails) {
+        SafetyTrainingSessionAttendeesResponseDto result =
+            safetyTrainingSessionService.getSessionAttendees(sessionId, userDetails.getId());
+        return ResponseEntity.ok(ApiResponse.onSuccess(result));
+    }
+
+    @Operation(
+        summary = "안전보건 교육 엑셀 파일 생성",
+        description =
+            "관리 권한(MANAGE_SAFETY) 사용자가 교육일지 엑셀 파일을 생성/재생성합니다. "
+                + "교육일지 상태(OPEN/CLOSED)와 무관하게 생성 가능합니다. "
+                + "서명 완료자의 서명 이미지는 참석자 이름 옆 칸에 반영됩니다.")
+    @ApiResponses(
+        value = {
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                responseCode = "200",
+                description = "생성 성공",
+                content =
+                @Content(
+                    mediaType = "application/json",
+                    schema = @Schema(implementation = ApiResponse.class))),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                responseCode = "403",
+                description = "관리 권한 없음",
+                content =
+                @Content(
+                    mediaType = "application/json",
+                    examples =
+                    @ExampleObject(
+                        value =
+                            """
+                                {
+                                  "isSuccess": false,
+                                  "code": "NO_AUTHORITY_FOR_SAFETY_WRITE",
+                                  "message": "안전 보건 관리 권한이 없습니다.",
+                                  "result": null
+                                }
+                                """))),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                responseCode = "404",
+                description = "교육일지/사용자 없음")
+        })
+    @PostMapping("/{sessionId}/report")
+    public ResponseEntity<ApiResponse<SafetyTrainingSessionReportResponseDto>>
+    generateSessionReport(
+        @PathVariable Long sessionId,
+        @Parameter(hidden = true) @AuthenticationPrincipal
+        CustomUserDetails userDetails) {
+        SafetyTrainingSessionReportResponseDto result =
+            safetyTrainingSessionService.generateSessionReport(sessionId, userDetails.getId());
+        return ResponseEntity.ok(ApiResponse.onSuccess(result));
+    }
+
+    @Operation(
+        summary = "안전보건 교육 엑셀 파일 조회",
+        description = "교육일지 조회 권한이 있는 사용자가 엑셀 파일 다운로드 URL을 조회합니다.")
+    @ApiResponses(
+        value = {
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                responseCode = "200",
+                description = "조회 성공",
+                content =
+                @Content(
+                    mediaType = "application/json",
+                    schema = @Schema(implementation = ApiResponse.class))),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                responseCode = "403",
+                description = "조회 권한 없음",
+                content =
+                @Content(
+                    mediaType = "application/json",
+                    examples =
+                    @ExampleObject(
+                        value =
+                            """
+                                {
+                                  "isSuccess": false,
+                                  "code": "NO_AUTHORITY_FOR_SAFETY_READ",
+                                  "message": "해당 안전보건 교육 조회 권한이 없습니다.",
+                                  "result": null
+                                }
+                                """))),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                responseCode = "404",
+                description = "교육일지 없음 또는 엑셀 파일 미생성",
+                content =
+                @Content(
+                    mediaType = "application/json",
+                    examples =
+                    @ExampleObject(
+                        value =
+                            """
+                                {
+                                  "isSuccess": false,
+                                  "code": "SAFETY_TRAINING_REPORT_NOT_FOUND",
+                                  "message": "안전보건 교육 엑셀 파일이 아직 생성되지 않았습니다.",
+                                  "result": null
+                                }
+                                """)))
+        })
+    @GetMapping("/{sessionId}/report")
+    public ResponseEntity<ApiResponse<SafetyTrainingSessionReportResponseDto>> getSessionReport(
+        @PathVariable Long sessionId,
+        @Parameter(hidden = true) @AuthenticationPrincipal CustomUserDetails userDetails) {
+        SafetyTrainingSessionReportResponseDto result =
+            safetyTrainingSessionService.getSessionReport(sessionId, userDetails.getId());
+        return ResponseEntity.ok(ApiResponse.onSuccess(result));
+    }
+
+    @Operation(
+        summary = "안전보건 교육일지 수정",
+        description =
+            "관리 권한(MANAGE_SAFETY) 사용자가 교육일지를 수정합니다. OPEN 상태 + 서명 완료자 0명인 경우에만 수정 가능합니다.",
+        requestBody =
+        @io.swagger.v3.oas.annotations.parameters.RequestBody(
+            required = true,
+            content =
+            @Content(
+                mediaType = "application/json",
+                examples =
+                @ExampleObject(
+                    name = "수정 요청 예시",
+                    value =
+                        """
+                            {
+                              "title": "2026년 1분기 정기 안전보건교육(수정)",
+                              "educationType": "REGULAR",
+                              "educationMethods": ["LECTURE", "AUDIOVISUAL"],
+                              "startAt": "2026-03-24T08:30:00",
+                              "endAt": "2026-03-24T10:30:00",
+                              "educationContent": "개인정보 보호 및 사내 보안 규정 안내",
+                              "place": "3층 대회의실",
+                              "instructorUserId": 17,
+                              "companyScope": "AWESOME"
+                            }
+                            """))))
+    @ApiResponses(
+        value = {
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                responseCode = "200",
+                description = "수정 성공"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                responseCode = "400",
+                description = "마감 교육일지 또는 서명 완료자 존재",
+                content =
+                @Content(
+                    mediaType = "application/json",
+                    examples = {
+                        @ExampleObject(
+                            name = "마감 교육일지",
+                            value =
+                                """
+                                    {
+                                      "isSuccess": false,
+                                      "code": "SAFETY_TRAINING_SESSION_CLOSED",
+                                      "message": "마감된 안전보건 교육입니다.",
+                                      "result": null
+                                    }
+                                    """),
+                        @ExampleObject(
+                            name = "서명 완료자 존재",
+                            value =
+                                """
+                                    {
+                                      "isSuccess": false,
+                                      "code": "SAFETY_TRAINING_SESSION_HAS_SIGNED_ATTENDEE",
+                                      "message": "서명 완료자가 존재하여 교육을 수정할 수 없습니다.",
+                                      "result": null
+                                    }
+                                    """)
+                    })),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                responseCode = "403",
+                description = "수정 권한 없음",
+                content =
+                @Content(
+                    mediaType = "application/json",
+                    examples =
+                    @ExampleObject(
+                        value =
+                            """
+                                {
+                                  "isSuccess": false,
+                                  "code": "NO_AUTHORITY_FOR_SAFETY_WRITE",
+                                  "message": "안전 보건 관리 권한이 없습니다.",
+                                  "result": null
+                                }
+                                """))),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                responseCode = "404",
+                description = "교육일지/사용자 없음")
+        })
+    @PatchMapping("/{sessionId}")
+    public ResponseEntity<ApiResponse<Long>> update(
+        @PathVariable Long sessionId,
+        @Valid @RequestBody SafetyTrainingSessionUpdateRequestDto requestDto,
+        @Parameter(hidden = true) @AuthenticationPrincipal CustomUserDetails userDetails) {
+        Long updatedId =
+            safetyTrainingSessionService.update(sessionId, userDetails.getId(), requestDto);
+        return ResponseEntity.ok(ApiResponse.onSuccess(updatedId));
+    }
+
+    @Operation(
+        summary = "안전보건 교육일지 삭제",
+        description =
+            "관리 권한(MANAGE_SAFETY) 사용자가 교육일지를 삭제합니다. "
+                + "교육일지 본문, 참석자 데이터, 생성된 엑셀 파일, 참석자 서명 파일을 함께 정리합니다.")
+    @ApiResponses(
+        value = {
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                responseCode = "200",
+                description = "삭제 성공"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                responseCode = "403",
+                description = "삭제 권한 없음",
+                content =
+                @Content(
+                    mediaType = "application/json",
+                    examples =
+                    @ExampleObject(
+                        value =
+                            """
+                                {
+                                  "isSuccess": false,
+                                  "code": "NO_AUTHORITY_FOR_SAFETY_WRITE",
+                                  "message": "안전 보건 관리 권한이 없습니다.",
+                                  "result": null
+                                }
+                                """))),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                responseCode = "404",
+                description = "교육일지/사용자 없음")
+        })
+    @DeleteMapping("/{sessionId}")
+    public ResponseEntity<ApiResponse<Void>> delete(
+        @PathVariable Long sessionId,
+        @Parameter(hidden = true) @AuthenticationPrincipal CustomUserDetails userDetails) {
+        safetyTrainingSessionService.delete(sessionId, userDetails.getId());
+        return ResponseEntity.ok(ApiResponse.onNoContent());
+    }
+
+    @Operation(
+        summary = "안전보건 교육일지 상태 변경",
+        description =
+            "관리 권한(MANAGE_SAFETY) 사용자가 교육일지 상태를 OPEN/CLOSED로 변경합니다. "
+                + "CLOSED(정상 마감) 전환 시 미서명(PENDING) 대상자는 자동으로 불참(ABSENT) 처리됩니다. "
+                + "이때 결석자가 존재하면 absentReasonSummary를 입력해야 합니다. "
+                + "OPEN 전환 시 기존 결석(ABSENT)은 PENDING으로 초기화되어 결석 인원은 0명이 됩니다.",
+        requestBody =
+        @io.swagger.v3.oas.annotations.parameters.RequestBody(
+            required = true,
+            content =
+            @Content(
+                mediaType = "application/json",
+                examples = {
+                    @ExampleObject(
+                        name = "CLOSED 전환(결석자 있음)",
+                        value =
+                            """
+                                {
+                                  "status": "CLOSED",
+                                  "absentReasonSummary": "현장 장비 점검으로 일부 인원 교육 참여 불가"
+                                }
+                                """),
+                    @ExampleObject(
+                        name = "CLOSED 전환(결석자 없음)",
+                        value =
+                            """
+                                {
+                                  "status": "CLOSED",
+                                  "absentReasonSummary": null
+                                }
+                                """),
+                    @ExampleObject(
+                        name = "OPEN 전환",
+                        value =
+                            """
+                                {
+                                  "status": "OPEN",
+                                  "absentReasonSummary": null
+                                }
+                                """)
+                })))
+    @ApiResponses(
+        value = {
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                responseCode = "200",
+                description = "상태 변경 성공"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                responseCode = "400",
+                description = "CLOSED 전환 + 결석자 존재 시 미참석 사유 누락",
+                content =
+                @Content(
+                    mediaType = "application/json",
+                    examples =
+                    @ExampleObject(
+                        value =
+                            """
+                                {
+                                  "isSuccess": false,
+                                  "code": "SAFETY_TRAINING_ABSENT_REASON_REQUIRED",
+                                  "message": "결석자가 있을 경우 교육 미참석 사유 입력은 필수입니다.",
+                                  "result": null
+                                }
+                                """))),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                responseCode = "403",
+                description = "수정 권한 없음",
+                content =
+                @Content(
+                    mediaType = "application/json",
+                    examples =
+                    @ExampleObject(
+                        value =
+                            """
+                                {
+                                  "isSuccess": false,
+                                  "code": "NO_AUTHORITY_FOR_SAFETY_WRITE",
+                                  "message": "안전 보건 관리 권한이 없습니다.",
+                                  "result": null
+                                }
+                                """))),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                responseCode = "404",
+                description = "교육일지/사용자 없음")
+        })
+    @PatchMapping("/{sessionId}/status")
+    public ResponseEntity<ApiResponse<Long>> updateStatus(
+        @PathVariable Long sessionId,
+        @Valid @RequestBody SafetyTrainingSessionStatusUpdateRequestDto requestDto,
+        @Parameter(hidden = true) @AuthenticationPrincipal CustomUserDetails userDetails) {
+        Long updatedId =
+            safetyTrainingSessionService.updateStatus(
+                sessionId, userDetails.getId(), requestDto);
+        return ResponseEntity.ok(ApiResponse.onSuccess(updatedId));
+    }
+
+    @Operation(
+        summary = "안전보건 교육일지 수료 서명",
+        description =
+            "본인의 미수료 상태(PENDING, ABSENT)를 PNG 서명 업로드 후 수료(SIGNED)로 변경합니다. OPEN 상태 교육일지에서만"
+                + " 서명할 수 있습니다.")
+    @ApiResponses(
+        value = {
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                responseCode = "200",
+                description = "서명 성공"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                responseCode = "400",
+                description = "이미 서명됨 / 서명 파일 누락 / 서명 형식 오류",
+                content =
+                @Content(
+                    mediaType = "application/json",
+                    examples = {
+                        @ExampleObject(
+                            name = "이미 서명됨",
+                            value =
+                                """
+                                    {
+                                      "isSuccess": false,
+                                      "code": "ALREADY_MARKED_ATTENDANCE",
+                                      "message": "이미 출석이 체크된 교육입니다.",
+                                      "result": null
+                                    }
+                                    """),
+                        @ExampleObject(
+                            name = "서명 누락",
+                            value =
+                                """
+                                    {
+                                      "isSuccess": false,
+                                      "code": "NO_SIGNATURE_PROVIDED",
+                                      "message": "서명이 제공되지 않았습니다.",
+                                      "result": null
+                                    }
+                                    """),
+                        @ExampleObject(
+                            name = "서명 형식 오류",
+                            value =
+                                """
+                                    {
+                                      "isSuccess": false,
+                                      "code": "INVALID_SIGNATURE_FORMAT",
+                                      "message": "서명은 PNG 파일 형식만 지원합니다.",
+                                      "result": null
+                                    }
+                                    """)
+                    })),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                responseCode = "403",
+                description = "서명 권한 없음(타 회사)",
+                content =
+                @Content(
+                    mediaType = "application/json",
+                    examples =
+                    @ExampleObject(
+                        value =
+                            """
+                                {
+                                  "isSuccess": false,
+                                  "code": "NO_AUTHORITY_FOR_SAFETY_READ",
+                                  "message": "해당 안전보건 교육 조회 권한이 없습니다.",
+                                  "result": null
+                                }
+                                """))),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                responseCode = "404",
+                description = "교육일지/대상자 없음")
+        })
+    @PostMapping(
+        value = "/{sessionId}/attendance",
+        consumes = org.springframework.http.MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ResponseEntity<ApiResponse<Void>> signAttendance(
+        @PathVariable Long sessionId,
+        @RequestPart(value = "signature", required = false) MultipartFile signature,
+        @Parameter(hidden = true) @AuthenticationPrincipal CustomUserDetails userDetails)
+        throws IOException {
+        safetyTrainingSessionService.signAttendance(sessionId, userDetails.getId(), signature);
+        return ResponseEntity.ok(ApiResponse.onSuccess(null));
+    }
+
+    @Operation(
+        summary = "안전보건 교육 엑셀 파일 미리보기",
+        description = "입력한 값으로 DB 저장 없이 엑셀 파일 미리보기를 생성합니다.",
+        requestBody =
+        @io.swagger.v3.oas.annotations.parameters.RequestBody(
+            required = true,
+            content =
+            @Content(
+                mediaType = "application/json",
+                schema =
+                @Schema(
+                    implementation =
+                        SafetyTrainingSessionCreateRequestDto
+                            .class),
+                examples =
+                @ExampleObject(
+                    name = "미리보기 요청 예시",
+                    value =
+                        """
+                            {
+                              "title": "2026년 1분기 정기 안전보건교육",
+                              "educationType": "REGULAR",
+                              "educationMethods": ["LECTURE", "AUDIOVISUAL"],
+                              "startAt": "2026-03-24T08:30:00",
+                              "endAt": "2026-03-24T10:30:00",
+                              "educationContent": "개인정보 보호 및 사내 보안 규정 안내",
+                              "place": "3층 대회의실",
+                              "instructorUserId": 17,
+                              "companyScope": "AWESOME"
+                            }
+                            """))))
+    @PostMapping("/preview")
+    public ResponseEntity<ApiResponse<SafetyTrainingPreviewResponseDto>> preview(
+        @Parameter(hidden = true) @AuthenticationPrincipal CustomUserDetails userDetails,
+        @Valid @RequestBody SafetyTrainingSessionCreateRequestDto requestDto) {
+        return ResponseEntity.ok(
+            ApiResponse.onSuccess(
+                safetyTrainingSessionService.preview(userDetails.getId(), requestDto)));
+    }
+
+    @Operation(
+        summary = "안전보건 교육일지 등록",
+        description = "안전 보건 관리 권한 사용자가 교육일지를 등록합니다. MASTER_ADMIN 계정은 참석 대상자에서 제외됩니다.",
+        requestBody =
+        @io.swagger.v3.oas.annotations.parameters.RequestBody(
+            required = true,
+            content =
+            @Content(
+                mediaType = "application/json",
+                schema =
+                @Schema(
+                    implementation =
+                        SafetyTrainingSessionCreateRequestDto
+                            .class),
+                examples =
+                @ExampleObject(
+                    value =
+                        """
+                            {
+                              "title": "2026년 1분기 정기 안전보건교육",
+                              "educationType": "REGULAR",
+                              "educationMethods": ["LECTURE", "AUDIOVISUAL"],
+                              "startAt": "2026-03-24T08:30:00",
+                              "endAt": "2026-03-24T10:30:00",
+                              "educationContent": "개인정보 보호 및 사내 보안 규정 안내",
+                              "place": "3층 대회의실",
+                              "instructorUserId": 17,
+                              "companyScope": "AWESOME"
+                            }
+                            """))))
+    @ApiResponses(
+        value = {
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                responseCode = "200",
+                description = "생성 성공",
+                content =
+                @Content(
+                    mediaType = "application/json",
+                    schema = @Schema(implementation = ApiResponse.class),
+                    examples =
+                    @ExampleObject(
+                        value =
+                            """
+                                {
+                                  "isSuccess": true,
+                                  "code": "COMMON200",
+                                  "message": "요청에 성공했습니다.",
+                                  "result": 1
+                                }
+                                """))),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                responseCode = "400",
+                description = "잘못된 요청",
+                content =
+                @Content(
+                    mediaType = "application/json",
+                    examples =
+                    @ExampleObject(
+                        value =
+                            """
+                                {
+                                  "isSuccess": false,
+                                  "code": "INVALID_TIME_RANGE",
+                                  "message": "퇴실 예정 시간은 입실 예정 시간보다 빠를 수 없습니다.",
+                                  "result": null
+                                }
+                                """))),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                responseCode = "404",
+                description = "사용자 없음",
+                content =
+                @Content(
+                    mediaType = "application/json",
+                    examples =
+                    @ExampleObject(
+                        value =
+                            """
+                                {
+                                  "isSuccess": false,
+                                  "code": "USER_NOT_FOUND",
+                                  "message": "해당 사용자를 찾을 수 없습니다.",
+                                  "result": null
+                                }
+                                """))),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                responseCode = "403",
+                description = "권한 없음",
+                content =
+                @Content(
+                    mediaType = "application/json",
+                    examples =
+                    @ExampleObject(
+                        value =
+                            """
+                                {
+                                  "isSuccess": false,
+                                  "code": "NO_AUTHORITY_FOR_SAFETY_WRITE",
+                                  "message": "안전 보건 관리 권한이 없습니다.",
+                                  "result": null
+                                }
+                                """)))
+        })
+    @PostMapping
+    public ResponseEntity<ApiResponse<Long>> create(
+        @Parameter(hidden = true) @AuthenticationPrincipal CustomUserDetails userDetails,
+        @Valid @RequestBody SafetyTrainingSessionCreateRequestDto requestDto) {
+
+        Long sessionId = safetyTrainingSessionService.create(userDetails.getId(), requestDto);
+        return ResponseEntity.ok(ApiResponse.onSuccess(sessionId));
+    }
+
+    @Operation(
+        summary = "안전보건 교육일지 리마인드 알림 전송",
+        description =
+            """
+                교육 생성자(createdBy)만 요청 가능합니다.
+                
+                - companyScope 기준 현재 활성 사용자에게 `[리마인드]` prefix를 붙여 알림을 재전송합니다.
+                - MASTER_ADMIN 계정은 리마인드 대상자에서 제외됩니다.
+                """)
+    @ApiResponses({
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(
+            responseCode = "200",
+            description = "전송 성공"),
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(
+            responseCode = "403",
+            description = "권한 없음 (교육일지 생성자가 아님)",
+            content =
+            @Content(
+                mediaType = "application/json",
+                examples =
+                @ExampleObject(
+                    value =
+                        """
+                            {
+                              "isSuccess": false,
+                              "code": "NO_AUTHORITY_FOR_SAFETY_WRITE",
+                              "message": "안전 보건 관리 권한이 없습니다.",
+                              "result": null
+                            }
+                            """))),
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(
+            responseCode = "404",
+            description = "교육일지 없음",
+            content =
+            @Content(
+                mediaType = "application/json",
+                examples =
+                @ExampleObject(
+                    value =
+                        """
+                            {
+                              "isSuccess": false,
+                              "code": "SAFETY_TRAINING_SESSION_NOT_FOUND",
+                              "message": "해당 안전보건 교육일지를 찾을 수 없습니다.",
+                              "result": null
+                            }
+                            """)))
     })
     @PostMapping("/{sessionId}/remind")
     public ResponseEntity<ApiResponse<Void>> remindSession(
-            @Parameter(description = "리마인드 알림을 전송할 교육일지 ID", example = "1") @PathVariable
-                    Long sessionId,
-            @Parameter(hidden = true) @AuthenticationPrincipal CustomUserDetails userDetails) {
+        @Parameter(description = "리마인드 알림을 전송할 교육일지 ID", example = "1") @PathVariable
+        Long sessionId,
+        @Parameter(hidden = true) @AuthenticationPrincipal CustomUserDetails userDetails) {
         safetyTrainingSessionService.remindSession(sessionId, userDetails.getId());
         return ResponseEntity.ok(ApiResponse.onNoContent());
     }

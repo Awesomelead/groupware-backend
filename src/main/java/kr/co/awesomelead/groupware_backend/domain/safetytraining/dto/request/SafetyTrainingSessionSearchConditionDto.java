@@ -1,19 +1,15 @@
 package kr.co.awesomelead.groupware_backend.domain.safetytraining.dto.request;
 
 import io.swagger.v3.oas.annotations.media.Schema;
-
+import java.time.LocalDateTime;
 import kr.co.awesomelead.groupware_backend.domain.department.enums.Company;
 import kr.co.awesomelead.groupware_backend.domain.safetytraining.enums.SafetyEducationType;
 import kr.co.awesomelead.groupware_backend.domain.safetytraining.enums.SafetyTrainingSessionStatus;
-
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
-
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.util.StringUtils;
-
-import java.time.LocalDateTime;
 
 @Getter
 @Setter
@@ -25,23 +21,23 @@ public class SafetyTrainingSessionSearchConditionDto {
     private String titleKeyword;
 
     @Schema(
-            description = "회사 필터 (AWESOME: 어썸리드, MARUI: 마루이)",
-            example = "AWESOME",
-            allowableValues = {"AWESOME", "MARUI"})
+        description = "회사 필터 (AWESOME: 어썸리드, MARUI: 한국마루이)",
+        example = "AWESOME",
+        allowableValues = {"AWESOME", "MARUI"})
     private Company companyScope;
 
     @Schema(
-            description =
-                    "교육 구분 필터 (REGULAR: 정기교육, HIRING: 채용시, JOB_CHANGE: 작업내용 변경시,"
-                            + " SPECIAL: 특별교육, MSDS: MSDS교육)",
-            example = "SPECIAL",
-            allowableValues = {"REGULAR", "HIRING", "JOB_CHANGE", "SPECIAL", "MSDS"})
+        description =
+            "교육 구분 필터 (REGULAR: 정기교육, HIRING: 채용시, JOB_CHANGE: 작업내용 변경시,"
+                + " SPECIAL: 특별교육, MSDS: MSDS교육)",
+        example = "SPECIAL",
+        allowableValues = {"REGULAR", "HIRING", "JOB_CHANGE", "SPECIAL", "MSDS"})
     private SafetyEducationType educationType;
 
     @Schema(
-            description = "교육일지 상태 필터 (OPEN: 진행중, CLOSED: 정상 마감)",
-            example = "OPEN",
-            allowableValues = {"OPEN", "CLOSED"})
+        description = "교육일지 상태 필터 (OPEN: 진행중, CLOSED: 정상 마감)",
+        example = "OPEN",
+        allowableValues = {"OPEN", "CLOSED"})
     private SafetyTrainingSessionStatus status;
 
     @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME)

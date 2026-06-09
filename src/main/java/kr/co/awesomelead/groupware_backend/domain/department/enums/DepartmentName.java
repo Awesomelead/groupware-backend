@@ -1,11 +1,9 @@
 package kr.co.awesomelead.groupware_backend.domain.department.enums;
 
 import com.fasterxml.jackson.annotation.JsonValue;
-
+import java.util.Arrays;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
-
-import java.util.Arrays;
 
 @Getter
 @AllArgsConstructor
@@ -28,7 +26,7 @@ public enum DepartmentName {
     ENVIRONMENT_SAFETY("환경안전부"),
     QUALITY_CONTROL("품질관리부"),
     AWESOME_SECURITY_DEPT("어썸리드 경비"),
-    MARUI_SECURITY_DEPT("마루이 경비"),
+    MARUI_SECURITY_DEPT("한국마루이 경비"),
 
     // Level 3: 하위 부서들
     MANAGEMENT_SUPPORT("경영지원부"),
@@ -43,11 +41,13 @@ public enum DepartmentName {
         return description;
     }
 
-    /** 한글 부서명으로 Enum 상수를 찾는 편의 메서드 */
+    /**
+     * 한글 부서명으로 Enum 상수를 찾는 편의 메서드
+     */
     public static DepartmentName fromDescription(String description) {
         return Arrays.stream(DepartmentName.values())
-                .filter(v -> v.getDescription().equals(description))
-                .findFirst()
-                .orElseThrow(() -> new IllegalArgumentException("일치하는 부서명이 없습니다: " + description));
+            .filter(v -> v.getDescription().equals(description))
+            .findFirst()
+            .orElseThrow(() -> new IllegalArgumentException("일치하는 부서명이 없습니다: " + description));
     }
 }

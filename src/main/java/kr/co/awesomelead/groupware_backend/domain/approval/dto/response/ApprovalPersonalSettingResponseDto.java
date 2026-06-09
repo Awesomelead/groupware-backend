@@ -1,15 +1,12 @@
 package kr.co.awesomelead.groupware_backend.domain.approval.dto.response;
 
 import io.swagger.v3.oas.annotations.media.Schema;
-
+import java.time.LocalDate;
+import java.util.List;
 import kr.co.awesomelead.groupware_backend.domain.approval.enums.ApprovalTargetType;
-
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
-
-import java.time.LocalDate;
-import java.util.List;
 
 @Getter
 @Builder
@@ -40,6 +37,7 @@ public class ApprovalPersonalSettingResponseDto {
     @AllArgsConstructor
     @Schema(description = "대결자 정보")
     public static class DelegateUserDto {
+
         @Schema(description = "대결자 사용자 ID", example = "15")
         private Long id;
 
@@ -49,7 +47,7 @@ public class ApprovalPersonalSettingResponseDto {
         @Schema(description = "대결자 직급", example = "사원")
         private String position;
 
-        @Schema(description = "대결자 부서명", example = "마루이 경비")
+        @Schema(description = "대결자 부서명", example = "한국마루이 경비")
         private String departmentName;
     }
 
@@ -58,13 +56,14 @@ public class ApprovalPersonalSettingResponseDto {
     @AllArgsConstructor
     @Schema(description = "열람권자 기본설정 항목")
     public static class DefaultViewerTargetDto {
+
         @Schema(description = "열람권자 기본설정 항목 ID", example = "201")
         private Long id;
 
         @Schema(
-                description = "타겟 타입",
-                example = "USER",
-                allowableValues = {"USER", "DEPARTMENT"})
+            description = "타겟 타입",
+            example = "USER",
+            allowableValues = {"USER", "DEPARTMENT"})
         private ApprovalTargetType targetType;
 
         @Schema(description = "사용자 타겟 ID(targetType=USER일 때)", example = "14")

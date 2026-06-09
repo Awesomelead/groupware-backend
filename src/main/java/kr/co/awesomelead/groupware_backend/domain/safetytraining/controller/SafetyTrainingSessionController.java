@@ -52,27 +52,27 @@ import java.io.IOException;
         name = "안전보건 교육일지",
         description =
                 """
-        안전보건 교육일지 API
+            안전보건 교육일지 API
 
-        ### 권한
-        - 조회: 일반 사용자(`본인 회사만 조회`)
-        - 조회: `MANAGE_SAFETY` 권한 사용자(`전체 회사 조회 가능`)
-        - 참석자 현황 조회: `MANAGE_SAFETY`
-        - 교육일지 상태 변경/미참석 사유 입력: `MANAGE_SAFETY`
-        - 교육일지 삭제: `MANAGE_SAFETY`
-        - 엑셀 파일 생성: `MANAGE_SAFETY` (`OPEN/CLOSED` 모두 가능)
-        - 엑셀 파일 조회: 교육일지 조회 권한 사용자
-        - 수료 처리(서명): 교육일지가 `OPEN`이고 미수료(`PENDING`, `ABSENT`) 상태일 때 본인 서명 가능
-        - 생성: `MANAGE_SAFETY`
+            ### 권한
+            - 조회: 일반 사용자(`본인 회사만 조회`)
+            - 조회: `MANAGE_SAFETY` 권한 사용자(`전체 회사 조회 가능`)
+            - 참석자 현황 조회: `MANAGE_SAFETY`
+            - 교육일지 상태 변경/미참석 사유 입력: `MANAGE_SAFETY`
+            - 교육일지 삭제: `MANAGE_SAFETY`
+            - 엑셀 파일 생성: `MANAGE_SAFETY` (`OPEN/CLOSED` 모두 가능)
+            - 엑셀 파일 조회: 교육일지 조회 권한 사용자
+            - 수료 처리(서명): 교육일지가 `OPEN`이고 미수료(`PENDING`, `ABSENT`) 상태일 때 본인 서명 가능
+            - 생성: `MANAGE_SAFETY`
 
-        ### 사용 Enum
-        - `SafetyEducationType`
-          - `REGULAR`(정기교육), `HIRING`(채용시), `JOB_CHANGE`(작업내용 변경시), `SPECIAL`(특별교육), `MSDS`(MSDS교육)
-        - `SafetyEducationMethod`
-          - `LECTURE`(강의), `AUDIOVISUAL`(시청각), `FIELD_TRAINING`(현장 교육), `DEMONSTRATION`(시범 실습), `TOUR`(견학), `ROLE_PLAY`(역할연기)
-        - `Company`
-          - `AWESOME`(어썸리드), `MARUI`(마루이)
-        """)
+            ### 사용 Enum
+            - `SafetyEducationType`
+              - `REGULAR`(정기교육), `HIRING`(채용시), `JOB_CHANGE`(작업내용 변경시), `SPECIAL`(특별교육), `MSDS`(MSDS교육)
+            - `SafetyEducationMethod`
+              - `LECTURE`(강의), `AUDIOVISUAL`(시청각), `FIELD_TRAINING`(현장 교육), `DEMONSTRATION`(시범 실습), `TOUR`(견학), `ROLE_PLAY`(역할연기)
+            - `Company`
+              - `AWESOME`(어썸리드), `MARUI`(한국마루이)
+            """)
 public class SafetyTrainingSessionController {
 
     private final SafetyTrainingSessionService safetyTrainingSessionService;
@@ -102,13 +102,13 @@ public class SafetyTrainingSessionController {
                                                 @ExampleObject(
                                                         value =
                                                                 """
-            {
-              "isSuccess": false,
-              "code": "USER_NOT_FOUND",
-              "message": "해당 사용자를 찾을 수 없습니다.",
-              "result": null
-            }
-            """)))
+                                {
+                                  "isSuccess": false,
+                                  "code": "USER_NOT_FOUND",
+                                  "message": "해당 사용자를 찾을 수 없습니다.",
+                                  "result": null
+                                }
+                                """)))
             })
     @GetMapping
     public ResponseEntity<ApiResponse<Page<SafetyTrainingSessionSummaryResponseDto>>> getSessions(
@@ -148,13 +148,13 @@ public class SafetyTrainingSessionController {
                                                 @ExampleObject(
                                                         value =
                                                                 """
-            {
-              "isSuccess": false,
-              "code": "NO_AUTHORITY_FOR_SAFETY_READ",
-              "message": "해당 안전보건 교육 조회 권한이 없습니다.",
-              "result": null
-            }
-            """))),
+                                {
+                                  "isSuccess": false,
+                                  "code": "NO_AUTHORITY_FOR_SAFETY_READ",
+                                  "message": "해당 안전보건 교육 조회 권한이 없습니다.",
+                                  "result": null
+                                }
+                                """))),
                 @io.swagger.v3.oas.annotations.responses.ApiResponse(
                         responseCode = "404",
                         description = "교육일지 또는 사용자 없음",
@@ -165,13 +165,13 @@ public class SafetyTrainingSessionController {
                                             @ExampleObject(
                                                     value =
                                                             """
-                {
-                  "isSuccess": false,
-                  "code": "SAFETY_TRAINING_SESSION_NOT_FOUND",
-                  "message": "해당 안전보건 교육일지를 찾을 수 없습니다.",
-                  "result": null
-                }
-                """)
+                                    {
+                                      "isSuccess": false,
+                                      "code": "SAFETY_TRAINING_SESSION_NOT_FOUND",
+                                      "message": "해당 안전보건 교육일지를 찾을 수 없습니다.",
+                                      "result": null
+                                    }
+                                    """)
                                         }))
             })
     @GetMapping("/{sessionId}")
@@ -205,13 +205,13 @@ public class SafetyTrainingSessionController {
                                                 @ExampleObject(
                                                         value =
                                                                 """
-            {
-              "isSuccess": false,
-              "code": "NO_AUTHORITY_FOR_SAFETY_WRITE",
-              "message": "안전 보건 관리 권한이 없습니다.",
-              "result": null
-            }
-            """))),
+                                {
+                                  "isSuccess": false,
+                                  "code": "NO_AUTHORITY_FOR_SAFETY_WRITE",
+                                  "message": "안전 보건 관리 권한이 없습니다.",
+                                  "result": null
+                                }
+                                """))),
                 @io.swagger.v3.oas.annotations.responses.ApiResponse(
                         responseCode = "404",
                         description = "교육일지/사용자 없음")
@@ -252,13 +252,13 @@ public class SafetyTrainingSessionController {
                                                 @ExampleObject(
                                                         value =
                                                                 """
-            {
-              "isSuccess": false,
-              "code": "NO_AUTHORITY_FOR_SAFETY_WRITE",
-              "message": "안전 보건 관리 권한이 없습니다.",
-              "result": null
-            }
-            """))),
+                                {
+                                  "isSuccess": false,
+                                  "code": "NO_AUTHORITY_FOR_SAFETY_WRITE",
+                                  "message": "안전 보건 관리 권한이 없습니다.",
+                                  "result": null
+                                }
+                                """))),
                 @io.swagger.v3.oas.annotations.responses.ApiResponse(
                         responseCode = "404",
                         description = "교육일지/사용자 없음")
@@ -296,13 +296,13 @@ public class SafetyTrainingSessionController {
                                                 @ExampleObject(
                                                         value =
                                                                 """
-            {
-              "isSuccess": false,
-              "code": "NO_AUTHORITY_FOR_SAFETY_READ",
-              "message": "해당 안전보건 교육 조회 권한이 없습니다.",
-              "result": null
-            }
-            """))),
+                                {
+                                  "isSuccess": false,
+                                  "code": "NO_AUTHORITY_FOR_SAFETY_READ",
+                                  "message": "해당 안전보건 교육 조회 권한이 없습니다.",
+                                  "result": null
+                                }
+                                """))),
                 @io.swagger.v3.oas.annotations.responses.ApiResponse(
                         responseCode = "404",
                         description = "교육일지 없음 또는 엑셀 파일 미생성",
@@ -313,13 +313,13 @@ public class SafetyTrainingSessionController {
                                                 @ExampleObject(
                                                         value =
                                                                 """
-            {
-              "isSuccess": false,
-              "code": "SAFETY_TRAINING_REPORT_NOT_FOUND",
-              "message": "안전보건 교육 엑셀 파일이 아직 생성되지 않았습니다.",
-              "result": null
-            }
-            """)))
+                                {
+                                  "isSuccess": false,
+                                  "code": "SAFETY_TRAINING_REPORT_NOT_FOUND",
+                                  "message": "안전보건 교육 엑셀 파일이 아직 생성되지 않았습니다.",
+                                  "result": null
+                                }
+                                """)))
             })
     @GetMapping("/{sessionId}/report")
     public ResponseEntity<ApiResponse<SafetyTrainingSessionReportResponseDto>> getSessionReport(
@@ -345,18 +345,18 @@ public class SafetyTrainingSessionController {
                                                             name = "수정 요청 예시",
                                                             value =
                                                                     """
-            {
-              "title": "2026년 1분기 정기 안전보건교육(수정)",
-              "educationType": "REGULAR",
-              "educationMethods": ["LECTURE", "AUDIOVISUAL"],
-              "startAt": "2026-03-24T08:30:00",
-              "endAt": "2026-03-24T10:30:00",
-              "educationContent": "개인정보 보호 및 사내 보안 규정 안내",
-              "place": "3층 대회의실",
-              "instructorUserId": 17,
-              "companyScope": "AWESOME"
-            }
-            """))))
+                            {
+                              "title": "2026년 1분기 정기 안전보건교육(수정)",
+                              "educationType": "REGULAR",
+                              "educationMethods": ["LECTURE", "AUDIOVISUAL"],
+                              "startAt": "2026-03-24T08:30:00",
+                              "endAt": "2026-03-24T10:30:00",
+                              "educationContent": "개인정보 보호 및 사내 보안 규정 안내",
+                              "place": "3층 대회의실",
+                              "instructorUserId": 17,
+                              "companyScope": "AWESOME"
+                            }
+                            """))))
     @ApiResponses(
             value = {
                 @io.swagger.v3.oas.annotations.responses.ApiResponse(
@@ -373,24 +373,24 @@ public class SafetyTrainingSessionController {
                                                     name = "마감 교육일지",
                                                     value =
                                                             """
-            {
-              "isSuccess": false,
-              "code": "SAFETY_TRAINING_SESSION_CLOSED",
-              "message": "마감된 안전보건 교육입니다.",
-              "result": null
-            }
-            """),
+                                    {
+                                      "isSuccess": false,
+                                      "code": "SAFETY_TRAINING_SESSION_CLOSED",
+                                      "message": "마감된 안전보건 교육입니다.",
+                                      "result": null
+                                    }
+                                    """),
                                             @ExampleObject(
                                                     name = "서명 완료자 존재",
                                                     value =
                                                             """
-            {
-              "isSuccess": false,
-              "code": "SAFETY_TRAINING_SESSION_HAS_SIGNED_ATTENDEE",
-              "message": "서명 완료자가 존재하여 교육을 수정할 수 없습니다.",
-              "result": null
-            }
-            """)
+                                    {
+                                      "isSuccess": false,
+                                      "code": "SAFETY_TRAINING_SESSION_HAS_SIGNED_ATTENDEE",
+                                      "message": "서명 완료자가 존재하여 교육을 수정할 수 없습니다.",
+                                      "result": null
+                                    }
+                                    """)
                                         })),
                 @io.swagger.v3.oas.annotations.responses.ApiResponse(
                         responseCode = "403",
@@ -402,13 +402,13 @@ public class SafetyTrainingSessionController {
                                                 @ExampleObject(
                                                         value =
                                                                 """
-            {
-              "isSuccess": false,
-              "code": "NO_AUTHORITY_FOR_SAFETY_WRITE",
-              "message": "안전 보건 관리 권한이 없습니다.",
-              "result": null
-            }
-            """))),
+                                {
+                                  "isSuccess": false,
+                                  "code": "NO_AUTHORITY_FOR_SAFETY_WRITE",
+                                  "message": "안전 보건 관리 권한이 없습니다.",
+                                  "result": null
+                                }
+                                """))),
                 @io.swagger.v3.oas.annotations.responses.ApiResponse(
                         responseCode = "404",
                         description = "교육일지/사용자 없음")
@@ -443,13 +443,13 @@ public class SafetyTrainingSessionController {
                                                 @ExampleObject(
                                                         value =
                                                                 """
-            {
-              "isSuccess": false,
-              "code": "NO_AUTHORITY_FOR_SAFETY_WRITE",
-              "message": "안전 보건 관리 권한이 없습니다.",
-              "result": null
-            }
-            """))),
+                                {
+                                  "isSuccess": false,
+                                  "code": "NO_AUTHORITY_FOR_SAFETY_WRITE",
+                                  "message": "안전 보건 관리 권한이 없습니다.",
+                                  "result": null
+                                }
+                                """))),
                 @io.swagger.v3.oas.annotations.responses.ApiResponse(
                         responseCode = "404",
                         description = "교육일지/사용자 없음")
@@ -480,29 +480,29 @@ public class SafetyTrainingSessionController {
                                                         name = "CLOSED 전환(결석자 있음)",
                                                         value =
                                                                 """
-            {
-              "status": "CLOSED",
-              "absentReasonSummary": "현장 장비 점검으로 일부 인원 교육 참여 불가"
-            }
-            """),
+                                {
+                                  "status": "CLOSED",
+                                  "absentReasonSummary": "현장 장비 점검으로 일부 인원 교육 참여 불가"
+                                }
+                                """),
                                                 @ExampleObject(
                                                         name = "CLOSED 전환(결석자 없음)",
                                                         value =
                                                                 """
-            {
-              "status": "CLOSED",
-              "absentReasonSummary": null
-            }
-            """),
+                                {
+                                  "status": "CLOSED",
+                                  "absentReasonSummary": null
+                                }
+                                """),
                                                 @ExampleObject(
                                                         name = "OPEN 전환",
                                                         value =
                                                                 """
-            {
-              "status": "OPEN",
-              "absentReasonSummary": null
-            }
-            """)
+                                {
+                                  "status": "OPEN",
+                                  "absentReasonSummary": null
+                                }
+                                """)
                                             })))
     @ApiResponses(
             value = {
@@ -519,13 +519,13 @@ public class SafetyTrainingSessionController {
                                                 @ExampleObject(
                                                         value =
                                                                 """
-            {
-              "isSuccess": false,
-              "code": "SAFETY_TRAINING_ABSENT_REASON_REQUIRED",
-              "message": "결석자가 있을 경우 교육 미참석 사유 입력은 필수입니다.",
-              "result": null
-            }
-            """))),
+                                {
+                                  "isSuccess": false,
+                                  "code": "SAFETY_TRAINING_ABSENT_REASON_REQUIRED",
+                                  "message": "결석자가 있을 경우 교육 미참석 사유 입력은 필수입니다.",
+                                  "result": null
+                                }
+                                """))),
                 @io.swagger.v3.oas.annotations.responses.ApiResponse(
                         responseCode = "403",
                         description = "수정 권한 없음",
@@ -536,13 +536,13 @@ public class SafetyTrainingSessionController {
                                                 @ExampleObject(
                                                         value =
                                                                 """
-            {
-              "isSuccess": false,
-              "code": "NO_AUTHORITY_FOR_SAFETY_WRITE",
-              "message": "안전 보건 관리 권한이 없습니다.",
-              "result": null
-            }
-            """))),
+                                {
+                                  "isSuccess": false,
+                                  "code": "NO_AUTHORITY_FOR_SAFETY_WRITE",
+                                  "message": "안전 보건 관리 권한이 없습니다.",
+                                  "result": null
+                                }
+                                """))),
                 @io.swagger.v3.oas.annotations.responses.ApiResponse(
                         responseCode = "404",
                         description = "교육일지/사용자 없음")
@@ -579,35 +579,35 @@ public class SafetyTrainingSessionController {
                                                     name = "이미 서명됨",
                                                     value =
                                                             """
-            {
-              "isSuccess": false,
-              "code": "ALREADY_MARKED_ATTENDANCE",
-              "message": "이미 출석이 체크된 교육입니다.",
-              "result": null
-            }
-            """),
+                                    {
+                                      "isSuccess": false,
+                                      "code": "ALREADY_MARKED_ATTENDANCE",
+                                      "message": "이미 출석이 체크된 교육입니다.",
+                                      "result": null
+                                    }
+                                    """),
                                             @ExampleObject(
                                                     name = "서명 누락",
                                                     value =
                                                             """
-            {
-              "isSuccess": false,
-              "code": "NO_SIGNATURE_PROVIDED",
-              "message": "서명이 제공되지 않았습니다.",
-              "result": null
-            }
-            """),
+                                    {
+                                      "isSuccess": false,
+                                      "code": "NO_SIGNATURE_PROVIDED",
+                                      "message": "서명이 제공되지 않았습니다.",
+                                      "result": null
+                                    }
+                                    """),
                                             @ExampleObject(
                                                     name = "서명 형식 오류",
                                                     value =
                                                             """
-            {
-              "isSuccess": false,
-              "code": "INVALID_SIGNATURE_FORMAT",
-              "message": "서명은 PNG 파일 형식만 지원합니다.",
-              "result": null
-            }
-            """)
+                                    {
+                                      "isSuccess": false,
+                                      "code": "INVALID_SIGNATURE_FORMAT",
+                                      "message": "서명은 PNG 파일 형식만 지원합니다.",
+                                      "result": null
+                                    }
+                                    """)
                                         })),
                 @io.swagger.v3.oas.annotations.responses.ApiResponse(
                         responseCode = "403",
@@ -619,13 +619,13 @@ public class SafetyTrainingSessionController {
                                                 @ExampleObject(
                                                         value =
                                                                 """
-            {
-              "isSuccess": false,
-              "code": "NO_AUTHORITY_FOR_SAFETY_READ",
-              "message": "해당 안전보건 교육 조회 권한이 없습니다.",
-              "result": null
-            }
-            """))),
+                                {
+                                  "isSuccess": false,
+                                  "code": "NO_AUTHORITY_FOR_SAFETY_READ",
+                                  "message": "해당 안전보건 교육 조회 권한이 없습니다.",
+                                  "result": null
+                                }
+                                """))),
                 @io.swagger.v3.oas.annotations.responses.ApiResponse(
                         responseCode = "404",
                         description = "교육일지/대상자 없음")
@@ -661,18 +661,18 @@ public class SafetyTrainingSessionController {
                                                             name = "미리보기 요청 예시",
                                                             value =
                                                                     """
-                    {
-                      "title": "2026년 1분기 정기 안전보건교육",
-                      "educationType": "REGULAR",
-                      "educationMethods": ["LECTURE", "AUDIOVISUAL"],
-                      "startAt": "2026-03-24T08:30:00",
-                      "endAt": "2026-03-24T10:30:00",
-                      "educationContent": "개인정보 보호 및 사내 보안 규정 안내",
-                      "place": "3층 대회의실",
-                      "instructorUserId": 17,
-                      "companyScope": "AWESOME"
-                    }
-                    """))))
+                            {
+                              "title": "2026년 1분기 정기 안전보건교육",
+                              "educationType": "REGULAR",
+                              "educationMethods": ["LECTURE", "AUDIOVISUAL"],
+                              "startAt": "2026-03-24T08:30:00",
+                              "endAt": "2026-03-24T10:30:00",
+                              "educationContent": "개인정보 보호 및 사내 보안 규정 안내",
+                              "place": "3층 대회의실",
+                              "instructorUserId": 17,
+                              "companyScope": "AWESOME"
+                            }
+                            """))))
     @PostMapping("/preview")
     public ResponseEntity<ApiResponse<SafetyTrainingPreviewResponseDto>> preview(
             @Parameter(hidden = true) @AuthenticationPrincipal CustomUserDetails userDetails,
@@ -700,18 +700,18 @@ public class SafetyTrainingSessionController {
                                                     @ExampleObject(
                                                             value =
                                                                     """
-                    {
-                      "title": "2026년 1분기 정기 안전보건교육",
-                      "educationType": "REGULAR",
-                      "educationMethods": ["LECTURE", "AUDIOVISUAL"],
-                      "startAt": "2026-03-24T08:30:00",
-                      "endAt": "2026-03-24T10:30:00",
-                      "educationContent": "개인정보 보호 및 사내 보안 규정 안내",
-                      "place": "3층 대회의실",
-                      "instructorUserId": 17,
-                      "companyScope": "AWESOME"
-                    }
-                    """))))
+                            {
+                              "title": "2026년 1분기 정기 안전보건교육",
+                              "educationType": "REGULAR",
+                              "educationMethods": ["LECTURE", "AUDIOVISUAL"],
+                              "startAt": "2026-03-24T08:30:00",
+                              "endAt": "2026-03-24T10:30:00",
+                              "educationContent": "개인정보 보호 및 사내 보안 규정 안내",
+                              "place": "3층 대회의실",
+                              "instructorUserId": 17,
+                              "companyScope": "AWESOME"
+                            }
+                            """))))
     @ApiResponses(
             value = {
                 @io.swagger.v3.oas.annotations.responses.ApiResponse(
@@ -725,13 +725,13 @@ public class SafetyTrainingSessionController {
                                                 @ExampleObject(
                                                         value =
                                                                 """
-            {
-              "isSuccess": true,
-              "code": "COMMON200",
-              "message": "요청에 성공했습니다.",
-              "result": 1
-            }
-            """))),
+                                {
+                                  "isSuccess": true,
+                                  "code": "COMMON200",
+                                  "message": "요청에 성공했습니다.",
+                                  "result": 1
+                                }
+                                """))),
                 @io.swagger.v3.oas.annotations.responses.ApiResponse(
                         responseCode = "400",
                         description = "잘못된 요청",
@@ -742,13 +742,13 @@ public class SafetyTrainingSessionController {
                                                 @ExampleObject(
                                                         value =
                                                                 """
-            {
-              "isSuccess": false,
-              "code": "INVALID_TIME_RANGE",
-              "message": "퇴실 예정 시간은 입실 예정 시간보다 빠를 수 없습니다.",
-              "result": null
-            }
-            """))),
+                                {
+                                  "isSuccess": false,
+                                  "code": "INVALID_TIME_RANGE",
+                                  "message": "퇴실 예정 시간은 입실 예정 시간보다 빠를 수 없습니다.",
+                                  "result": null
+                                }
+                                """))),
                 @io.swagger.v3.oas.annotations.responses.ApiResponse(
                         responseCode = "404",
                         description = "사용자 없음",
@@ -759,13 +759,13 @@ public class SafetyTrainingSessionController {
                                                 @ExampleObject(
                                                         value =
                                                                 """
-            {
-              "isSuccess": false,
-              "code": "USER_NOT_FOUND",
-              "message": "해당 사용자를 찾을 수 없습니다.",
-              "result": null
-            }
-            """))),
+                                {
+                                  "isSuccess": false,
+                                  "code": "USER_NOT_FOUND",
+                                  "message": "해당 사용자를 찾을 수 없습니다.",
+                                  "result": null
+                                }
+                                """))),
                 @io.swagger.v3.oas.annotations.responses.ApiResponse(
                         responseCode = "403",
                         description = "권한 없음",
@@ -776,13 +776,13 @@ public class SafetyTrainingSessionController {
                                                 @ExampleObject(
                                                         value =
                                                                 """
-            {
-              "isSuccess": false,
-              "code": "NO_AUTHORITY_FOR_SAFETY_WRITE",
-              "message": "안전 보건 관리 권한이 없습니다.",
-              "result": null
-            }
-            """)))
+                                {
+                                  "isSuccess": false,
+                                  "code": "NO_AUTHORITY_FOR_SAFETY_WRITE",
+                                  "message": "안전 보건 관리 권한이 없습니다.",
+                                  "result": null
+                                }
+                                """)))
             })
     @PostMapping
     public ResponseEntity<ApiResponse<Long>> create(
@@ -797,11 +797,11 @@ public class SafetyTrainingSessionController {
             summary = "안전보건 교육일지 리마인드 알림 전송",
             description =
                     """
-                    교육 생성자(createdBy)만 요청 가능합니다.
+                교육 생성자(createdBy)만 요청 가능합니다.
 
-                    - companyScope 기준 현재 활성 사용자에게 `[리마인드]` prefix를 붙여 알림을 재전송합니다.
-                    - MASTER_ADMIN 계정은 리마인드 대상자에서 제외됩니다.
-                    """)
+                - companyScope 기준 현재 활성 사용자에게 `[리마인드]` prefix를 붙여 알림을 재전송합니다.
+                - MASTER_ADMIN 계정은 리마인드 대상자에서 제외됩니다.
+                """)
     @ApiResponses({
         @io.swagger.v3.oas.annotations.responses.ApiResponse(
                 responseCode = "200",
@@ -816,13 +816,13 @@ public class SafetyTrainingSessionController {
                                         @ExampleObject(
                                                 value =
                                                         """
-                                    {
-                                      "isSuccess": false,
-                                      "code": "NO_AUTHORITY_FOR_SAFETY_WRITE",
-                                      "message": "안전 보건 관리 권한이 없습니다.",
-                                      "result": null
-                                    }
-                                    """))),
+                            {
+                              "isSuccess": false,
+                              "code": "NO_AUTHORITY_FOR_SAFETY_WRITE",
+                              "message": "안전 보건 관리 권한이 없습니다.",
+                              "result": null
+                            }
+                            """))),
         @io.swagger.v3.oas.annotations.responses.ApiResponse(
                 responseCode = "404",
                 description = "교육일지 없음",
@@ -833,13 +833,13 @@ public class SafetyTrainingSessionController {
                                         @ExampleObject(
                                                 value =
                                                         """
-                                    {
-                                      "isSuccess": false,
-                                      "code": "SAFETY_TRAINING_SESSION_NOT_FOUND",
-                                      "message": "해당 안전보건 교육일지를 찾을 수 없습니다.",
-                                      "result": null
-                                    }
-                                    """)))
+                            {
+                              "isSuccess": false,
+                              "code": "SAFETY_TRAINING_SESSION_NOT_FOUND",
+                              "message": "해당 안전보건 교육일지를 찾을 수 없습니다.",
+                              "result": null
+                            }
+                            """)))
     })
     @PostMapping("/{sessionId}/remind")
     public ResponseEntity<ApiResponse<Void>> remindSession(

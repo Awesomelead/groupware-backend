@@ -28,7 +28,7 @@ public enum DepartmentName {
     ENVIRONMENT_SAFETY("환경안전부"),
     QUALITY_CONTROL("품질관리부"),
     AWESOME_SECURITY_DEPT("어썸리드 경비"),
-    MARUI_SECURITY_DEPT("마루이 경비"),
+    MARUI_SECURITY_DEPT("한국마루이 경비"),
 
     // Level 3: 하위 부서들
     MANAGEMENT_SUPPORT("경영지원부"),

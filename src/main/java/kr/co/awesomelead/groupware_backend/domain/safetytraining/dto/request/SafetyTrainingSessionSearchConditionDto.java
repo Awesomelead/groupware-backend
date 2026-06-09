@@ -25,7 +25,7 @@ public class SafetyTrainingSessionSearchConditionDto {
     private String titleKeyword;
 
     @Schema(
-            description = "회사 필터 (AWESOME: 어썸리드, MARUI: 마루이)",
+            description = "회사 필터 (AWESOME: 어썸리드, MARUI: 한국마루이)",
             example = "AWESOME",
             allowableValues = {"AWESOME", "MARUI"})
     private Company companyScope;

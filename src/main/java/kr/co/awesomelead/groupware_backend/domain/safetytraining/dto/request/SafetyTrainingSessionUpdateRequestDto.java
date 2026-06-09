@@ -82,7 +82,7 @@ public class SafetyTrainingSessionUpdateRequestDto {
 
     @NotNull(message = "회사 선택은 필수입니다.")
     @Schema(
-            description = "회사 범위 코드 (AWESOME: 어썸리드, MARUI: 마루이)",
+            description = "회사 범위 코드 (AWESOME: 어썸리드, MARUI: 한국마루이)",
             example = "AWESOME",
             allowableValues = {"AWESOME", "MARUI"})
     private Company companyScope;

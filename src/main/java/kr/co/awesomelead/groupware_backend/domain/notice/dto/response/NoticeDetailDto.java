@@ -59,7 +59,7 @@ public class NoticeDetailDto {
             allowableValues = {"REGULAR", "MENU", "ETC"})
     private String type;
 
-    @Schema(description = "대상 회사 목록", example = "[\"어썸리드\", \"마루이\"]")
+    @Schema(description = "대상 회사 목록", example = "[\"어썸리드\", \"한국마루이\"]")
     private List<Company> targetCompanies;
 
     @Schema(description = "대상 부서 ID 목록", example = "[1, 2, 3]")

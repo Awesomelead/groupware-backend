@@ -97,8 +97,8 @@ public class DepartmentController {
                                         "companyName": "어썸리드"
                                       },
                                       {
-                                        "company": "마루이",
-                                        "companyName": "마루이"
+                                        "company": "한국마루이",
+                                        "companyName": "한국마루이"
                                       }
                                     ]
                                   }

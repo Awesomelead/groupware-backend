@@ -1152,7 +1152,7 @@ public class EduReportServiceTest {
                         .id(reportId)
                         .eduType(EduType.PSM)
                         .company(Company.MARUI)
-                        .title("마루이 PSM")
+                        .title("한국마루이 PSM")
                         .build();
 
         when(userRepository.findById(userId)).thenReturn(Optional.of(user));
@@ -1211,7 +1211,7 @@ public class EduReportServiceTest {
                         .id(reportId)
                         .eduType(EduType.PSM)
                         .company(Company.MARUI)
-                        .title("마루이 PSM")
+                        .title("한국마루이 PSM")
                         .build();
         EduReportDetailDto mockDto =
                 EduReportDetailDto.builder().id(reportId).eduType(EduType.PSM).build();
@@ -1243,7 +1243,7 @@ public class EduReportServiceTest {
                         .id(reportId)
                         .eduType(EduType.SAFETY)
                         .company(Company.MARUI)
-                        .title("마루이 안전보건")
+                        .title("한국마루이 안전보건")
                         .build();
 
         when(userRepository.findById(userId)).thenReturn(Optional.of(user));
@@ -1302,7 +1302,7 @@ public class EduReportServiceTest {
                         .id(reportId)
                         .eduType(EduType.SAFETY)
                         .company(Company.MARUI)
-                        .title("마루이 안전보건")
+                        .title("한국마루이 안전보건")
                         .build();
         EduReportDetailDto mockDto =
                 EduReportDetailDto.builder().id(reportId).eduType(EduType.SAFETY).build();

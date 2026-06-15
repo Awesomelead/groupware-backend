@@ -11,6 +11,7 @@ import lombok.extern.slf4j.Slf4j;
 
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.redis.core.StringRedisTemplate;
+import org.springframework.mail.MailException;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.stereotype.Service;
@@ -41,7 +42,7 @@ public class EmailAuthService {
         // 이메일 발송
         try {
             sendEmail(email, authCode);
-        } catch (MessagingException e) {
+        } catch (MessagingException | MailException e) {
             log.error("이메일 발송 실패: {}", e.getMessage());
             throw new CustomException(ErrorCode.EMAIL_SEND_FAILED);
         }

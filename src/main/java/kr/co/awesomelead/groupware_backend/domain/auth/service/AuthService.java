@@ -4,7 +4,6 @@ import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
 
 import kr.co.awesomelead.groupware_backend.domain.aligo.service.PhoneAuthService;
-import kr.co.awesomelead.groupware_backend.domain.auth.dto.request.BootstrapAdminPromoteRequestDto;
 import kr.co.awesomelead.groupware_backend.domain.auth.dto.request.LoginRequestDto;
 import kr.co.awesomelead.groupware_backend.domain.auth.dto.request.ResetPasswordByEmailRequestDto;
 import kr.co.awesomelead.groupware_backend.domain.auth.dto.request.ResetPasswordByPhoneRequestDto;
@@ -22,9 +21,6 @@ import kr.co.awesomelead.groupware_backend.domain.notification.service.Notificat
 import kr.co.awesomelead.groupware_backend.domain.safetytraining.repository.SafetyTrainingSessionRepository;
 import kr.co.awesomelead.groupware_backend.domain.user.dto.response.MyInfoAuthorityItemDto;
 import kr.co.awesomelead.groupware_backend.domain.user.entity.User;
-import kr.co.awesomelead.groupware_backend.domain.user.enums.Authority;
-import kr.co.awesomelead.groupware_backend.domain.user.enums.JobType;
-import kr.co.awesomelead.groupware_backend.domain.user.enums.Position;
 import kr.co.awesomelead.groupware_backend.domain.user.enums.Role;
 import kr.co.awesomelead.groupware_backend.domain.user.enums.Status;
 import kr.co.awesomelead.groupware_backend.domain.user.mapper.UserMapper;
@@ -132,35 +128,6 @@ public class AuthService {
                 savedUser.getDisplayName());
 
         return new SignupResponseDto(savedUser.getId(), savedUser.getEmail());
-    }
-
-    @Transactional
-    public SignupResponseDto bootstrapPromoteAdmin(BootstrapAdminPromoteRequestDto requestDto) {
-        if (userRepository.existsByRole(Role.ADMIN)
-                || userRepository.existsByRole(Role.MASTER_ADMIN)) {
-            throw new CustomException(ErrorCode.BOOTSTRAP_ADMIN_ALREADY_EXISTS);
-        }
-
-        User user =
-                userRepository
-                        .findByEmail(requestDto.getEmail())
-                        .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
-
-        user.setRole(Role.ADMIN);
-        user.setStatus(Status.AVAILABLE);
-        if (user.getJobType() == null) {
-            user.setJobType(JobType.MANAGEMENT);
-        }
-        if (user.getPosition() == null) {
-            user.setPosition(Position.STAFF);
-        }
-
-        for (Authority authority : Authority.values()) {
-            user.addAuthority(authority);
-        }
-
-        User saved = userRepository.save(user);
-        return new SignupResponseDto(saved.getId(), saved.getEmail());
     }
 
     @Transactional

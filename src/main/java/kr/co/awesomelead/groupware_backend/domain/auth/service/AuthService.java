@@ -310,6 +310,7 @@ public class AuthService {
         return email.substring(0, 2) + "***" + email.substring(atIndex);
     }
 
+    @Transactional
     public void resetPasswordByEmail(ResetPasswordByEmailRequestDto requestDto) {
         // 1. 이메일 인증 여부 확인
         if (!emailAuthService.isEmailVerified(requestDto.getEmail())) {
@@ -327,7 +328,6 @@ public class AuthService {
 
         // 4. 해당 유저의 비밀번호 변경
         user.setPassword(bCryptPasswordEncoder.encode(requestDto.getNewPassword()));
-        userRepository.save(user);
 
         // 5. 인증 플래그 삭제
         emailAuthService.clearVerification(requestDto.getEmail());
@@ -369,6 +369,7 @@ public class AuthService {
         }
     }
 
+    @Transactional
     public void resetPasswordByPhone(ResetPasswordByPhoneRequestDto requestDto) {
 
         // 1. 이메일로 사용자 조회
@@ -377,10 +378,14 @@ public class AuthService {
                         .findByEmail(requestDto.getEmail())
                         .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
 
-        String registeredPhoneNumber = user.getPhoneNumber();
+        String requestedPhoneNumber = requestDto.getPhoneNumber();
+        String phoneNumberHash = User.hashValue(requestedPhoneNumber);
+        if (!phoneNumberHash.equals(user.getPhoneNumberHash())) {
+            throw new CustomException(ErrorCode.PHONE_NUMBER_MISMATCH);
+        }
 
         // 2. 등록된 휴대폰 번호 인증 여부 확인
-        if (!phoneAuthService.isPhoneVerified(registeredPhoneNumber)) {
+        if (!phoneAuthService.isPhoneVerified(requestedPhoneNumber)) {
             throw new CustomException(ErrorCode.PHONE_NOT_VERIFIED);
         }
 
@@ -391,14 +396,14 @@ public class AuthService {
 
         // 4. 비밀번호 변경
         user.setPassword(bCryptPasswordEncoder.encode(requestDto.getNewPassword()));
-        userRepository.save(user);
 
         // 5. 인증 플래그 삭제
-        phoneAuthService.clearVerification(registeredPhoneNumber);
+        phoneAuthService.clearVerification(requestedPhoneNumber);
 
         log.info("비밀번호 재설정 완료 (휴대폰 인증) - 사용자 ID: {}, 이메일: {}", user.getId(), user.getEmail());
     }
 
+    @Transactional
     public void resetPassword(ResetPasswordRequestDto requestDto, Long userId) {
         // 1. 새비밀번호 일치하는지 확인
         if (!requestDto.getNewPassword().equals(requestDto.getNewPasswordConfirm())) {
@@ -423,7 +428,6 @@ public class AuthService {
 
         // 5. 해당 유저의 비밀번호 변경
         user.setPassword(bCryptPasswordEncoder.encode(requestDto.getNewPassword()));
-        userRepository.save(user);
 
         log.info("비밀번호 변경 완료 - 사용자 ID: {}", userId);
     }

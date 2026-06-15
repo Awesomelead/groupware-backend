@@ -1135,6 +1135,17 @@ public class AuthController {
                                                         }
                                                         """),
                                             @ExampleObject(
+                                                    name = "전화번호 불일치",
+                                                    value =
+                                                            """
+                                                        {
+                                                          "isSuccess": false,
+                                                          "code": "PHONE_NUMBER_MISMATCH",
+                                                          "message": "입력한 전화번호가 계정의 전화번호와 일치하지 않습니다.",
+                                                          "result": null
+                                                        }
+                                                        """),
+                                            @ExampleObject(
                                                     name = "비밀번호 불일치",
                                                     value =
                                                             """

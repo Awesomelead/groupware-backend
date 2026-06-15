@@ -100,6 +100,7 @@ class AuthServiceTest {
         testUser.setEmail(TEST_EMAIL);
         testUser.setPassword(ENCODED_OLD_PASSWORD);
         testUser.setPhoneNumber(TEST_PHONE);
+        testUser.setPhoneNumberHash(User.hashValue(TEST_PHONE));
         testUser.setRole(Role.USER);
     }
 
@@ -456,7 +457,6 @@ class AuthServiceTest {
             verify(emailAuthService).isEmailVerified(TEST_EMAIL);
             verify(userRepository).findByEmail(TEST_EMAIL);
             verify(bCryptPasswordEncoder).encode(NEW_PASSWORD);
-            verify(userRepository).save(testUser);
             verify(emailAuthService).clearVerification(TEST_EMAIL);
             assertThat(testUser.getPassword()).isEqualTo(ENCODED_NEW_PASSWORD);
         }
@@ -474,7 +474,6 @@ class AuthServiceTest {
 
             verify(emailAuthService).isEmailVerified(TEST_EMAIL);
             verify(userRepository, never()).findByEmail(anyString());
-            verify(userRepository, never()).save(any());
         }
 
         @Test
@@ -490,7 +489,6 @@ class AuthServiceTest {
                     .hasFieldOrPropertyWithValue("errorCode", ErrorCode.PASSWORD_MISMATCH);
 
             verify(userRepository, never()).findByEmail(anyString());
-            verify(userRepository, never()).save(any());
         }
 
         @Test
@@ -506,7 +504,6 @@ class AuthServiceTest {
                     .hasFieldOrPropertyWithValue("errorCode", ErrorCode.USER_NOT_FOUND);
 
             verify(userRepository).findByEmail(TEST_EMAIL);
-            verify(userRepository, never()).save(any());
         }
     }
 
@@ -600,6 +597,7 @@ class AuthServiceTest {
         void setUp() {
             requestDto = new ResetPasswordByPhoneRequestDto();
             requestDto.setEmail(TEST_EMAIL);
+            requestDto.setPhoneNumber(TEST_PHONE);
             requestDto.setNewPassword(NEW_PASSWORD);
             requestDto.setNewPasswordConfirm(NEW_PASSWORD);
         }
@@ -619,7 +617,6 @@ class AuthServiceTest {
             verify(userRepository).findByEmail(TEST_EMAIL);
             verify(phoneAuthService).isPhoneVerified(TEST_PHONE);
             verify(bCryptPasswordEncoder).encode(NEW_PASSWORD);
-            verify(userRepository).save(testUser);
             verify(phoneAuthService).clearVerification(TEST_PHONE);
             assertThat(testUser.getPassword()).isEqualTo(ENCODED_NEW_PASSWORD);
         }
@@ -637,7 +634,22 @@ class AuthServiceTest {
 
             verify(userRepository).findByEmail(TEST_EMAIL);
             verify(phoneAuthService, never()).isPhoneVerified(anyString());
-            verify(userRepository, never()).save(any());
+        }
+
+        @Test
+        @DisplayName("실패: 요청 전화번호가 계정과 일치하지 않는 경우")
+        void resetPasswordByPhone_PhoneNumberMismatch() {
+            // given
+            requestDto.setPhoneNumber("01099999999");
+            given(userRepository.findByEmail(TEST_EMAIL)).willReturn(Optional.of(testUser));
+
+            // when & then
+            assertThatThrownBy(() -> authService.resetPasswordByPhone(requestDto))
+                    .isInstanceOf(CustomException.class)
+                    .hasFieldOrPropertyWithValue("errorCode", ErrorCode.PHONE_NUMBER_MISMATCH);
+
+            verify(userRepository).findByEmail(TEST_EMAIL);
+            verify(phoneAuthService, never()).isPhoneVerified(anyString());
         }
 
         @Test
@@ -654,7 +666,6 @@ class AuthServiceTest {
 
             verify(userRepository).findByEmail(TEST_EMAIL);
             verify(phoneAuthService).isPhoneVerified(TEST_PHONE);
-            verify(userRepository, never()).save(any());
         }
 
         @Test
@@ -673,7 +684,6 @@ class AuthServiceTest {
 
             verify(userRepository).findByEmail(TEST_EMAIL);
             verify(phoneAuthService).isPhoneVerified(TEST_PHONE);
-            verify(userRepository, never()).save(any());
             verify(phoneAuthService, never()).clearVerification(anyString());
         }
     }
@@ -876,7 +886,6 @@ class AuthServiceTest {
             verify(userRepository).findById(userId);
             verify(bCryptPasswordEncoder).matches(OLD_PASSWORD, ENCODED_OLD_PASSWORD);
             verify(bCryptPasswordEncoder).encode(NEW_PASSWORD);
-            verify(userRepository).save(testUser);
             assertThat(testUser.getPassword()).isEqualTo(ENCODED_NEW_PASSWORD);
         }
 
@@ -893,7 +902,6 @@ class AuthServiceTest {
                     .hasFieldOrPropertyWithValue("errorCode", ErrorCode.PASSWORD_MISMATCH);
 
             verify(userRepository, never()).findById(any());
-            verify(userRepository, never()).save(any());
         }
 
         @Test
@@ -909,7 +917,6 @@ class AuthServiceTest {
                     .hasFieldOrPropertyWithValue("errorCode", ErrorCode.USER_NOT_FOUND);
 
             verify(userRepository).findById(userId);
-            verify(userRepository, never()).save(any());
         }
 
         @Test
@@ -927,7 +934,6 @@ class AuthServiceTest {
                     .hasFieldOrPropertyWithValue("errorCode", ErrorCode.CURRENT_PASSWORD_MISMATCH);
 
             verify(bCryptPasswordEncoder).matches(OLD_PASSWORD, ENCODED_OLD_PASSWORD);
-            verify(userRepository, never()).save(any());
         }
 
         @Test
@@ -947,7 +953,6 @@ class AuthServiceTest {
                     .hasFieldOrPropertyWithValue("errorCode", ErrorCode.SAME_AS_CURRENT_PASSWORD);
 
             verify(bCryptPasswordEncoder).matches(OLD_PASSWORD, ENCODED_OLD_PASSWORD);
-            verify(userRepository, never()).save(any());
         }
     }
 

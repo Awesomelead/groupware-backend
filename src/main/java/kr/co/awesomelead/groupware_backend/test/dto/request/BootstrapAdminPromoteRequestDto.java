@@ -1,4 +1,4 @@
-package kr.co.awesomelead.groupware_backend.domain.auth.dto.request;
+package kr.co.awesomelead.groupware_backend.test.dto.request;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 
@@ -13,7 +13,10 @@ import lombok.Setter;
 @Schema(description = "테스트용 초기 관리자 승격 요청")
 public class BootstrapAdminPromoteRequestDto {
 
-    @Schema(description = "승격할 사용자 이메일", example = "ko07073@gmail.com", required = true)
+    @Schema(
+            description = "승격할 사용자 이메일",
+            example = "ko07073@gmail.com",
+            requiredMode = Schema.RequiredMode.REQUIRED)
     @NotBlank(message = "이메일은 필수입니다.")
     @Email(message = "유효한 이메일 형식이 아닙니다.")
     private String email;

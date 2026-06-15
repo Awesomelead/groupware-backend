@@ -90,7 +90,6 @@ public class SecurityConfig {
                                         "/api/test/**",
                                         "/api/auth/login",
                                         "/api/auth/signup",
-                                        "/api/auth/bootstrap-promote-admin",
                                         "/api/auth/reissue",
                                         "/api/auth/verify-phone-code",
                                         "/api/auth/check-account/email",
@@ -103,13 +102,7 @@ public class SecurityConfig {
                                         "/api/auth/find-email",
                                         "/api/auth/reset-password/phone",
                                         "/api/auth/reset-password/email",
-                                        "/api/educations/attachments/{id}/download", // 테스트용으로 교육자료
-                                        // 다운로드 열어놓음
-                                        "/api/test/**",
-                                        "/api/departments/hierarchy",
-                                        "/api/departments/{departmentId}/users",
-                                        "/api/visits/**", // 내방객이 본인 방문기록 조회
-                                        "/api/users/list") // 유저 목록 공개 조회
+                                        "/api/visits/**") // 내방객이 본인 방문기록 조회
                                 .permitAll()
                                 .requestMatchers(
                                         "/api/auth/logout",

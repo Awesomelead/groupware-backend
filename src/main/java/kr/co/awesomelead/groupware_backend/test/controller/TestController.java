@@ -10,12 +10,14 @@ import kr.co.awesomelead.groupware_backend.domain.auth.dto.request.SignupRequest
 import kr.co.awesomelead.groupware_backend.domain.auth.dto.response.FindEmailResponseDto;
 import kr.co.awesomelead.groupware_backend.domain.auth.dto.response.SignupResponseDto;
 import kr.co.awesomelead.groupware_backend.global.common.response.ApiResponse;
+import kr.co.awesomelead.groupware_backend.test.dto.request.BootstrapAdminPromoteRequestDto;
 import kr.co.awesomelead.groupware_backend.test.dto.request.DummyUsersCreateRequestDto;
 import kr.co.awesomelead.groupware_backend.test.dto.response.DummyUsersCreateResponseDto;
 import kr.co.awesomelead.groupware_backend.test.service.TestService;
 
 import lombok.RequiredArgsConstructor;
 
+import org.springframework.context.annotation.Profile;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -26,6 +28,7 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @RequestMapping("/api/test")
 @RequiredArgsConstructor
+@Profile("local")
 @Tag(name = "Test", description = """
             ## 개발 중 테스트 API
             """)
@@ -80,6 +83,16 @@ public class TestController {
     public ResponseEntity<ApiResponse<SignupResponseDto>> signupWithoutVerification(
             @Valid @RequestBody SignupRequestDto requestDto) {
         SignupResponseDto result = testService.signupWithoutVerification(requestDto);
+        return ResponseEntity.ok(ApiResponse.onSuccess(result));
+    }
+
+    @Operation(
+            summary = "[테스트] 초기 관리자 승격",
+            description = "로컬 DB 세팅용으로 가입된 사용자를 초기 관리자(ADMIN)로 승격합니다.")
+    @PostMapping("/bootstrap-promote-admin")
+    public ResponseEntity<ApiResponse<SignupResponseDto>> bootstrapPromoteAdmin(
+            @Valid @RequestBody BootstrapAdminPromoteRequestDto requestDto) {
+        SignupResponseDto result = testService.bootstrapPromoteAdmin(requestDto);
         return ResponseEntity.ok(ApiResponse.onSuccess(result));
     }
 }

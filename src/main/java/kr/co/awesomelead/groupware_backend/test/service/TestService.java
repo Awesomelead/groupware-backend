@@ -8,15 +8,22 @@ import kr.co.awesomelead.groupware_backend.domain.department.entity.Department;
 import kr.co.awesomelead.groupware_backend.domain.department.enums.Company;
 import kr.co.awesomelead.groupware_backend.domain.department.repository.DepartmentRepository;
 import kr.co.awesomelead.groupware_backend.domain.user.entity.User;
+import kr.co.awesomelead.groupware_backend.domain.user.enums.Authority;
+import kr.co.awesomelead.groupware_backend.domain.user.enums.JobType;
+import kr.co.awesomelead.groupware_backend.domain.user.enums.Position;
+import kr.co.awesomelead.groupware_backend.domain.user.enums.Role;
+import kr.co.awesomelead.groupware_backend.domain.user.enums.Status;
 import kr.co.awesomelead.groupware_backend.domain.user.repository.UserRepository;
 import kr.co.awesomelead.groupware_backend.global.error.CustomException;
 import kr.co.awesomelead.groupware_backend.global.error.ErrorCode;
+import kr.co.awesomelead.groupware_backend.test.dto.request.BootstrapAdminPromoteRequestDto;
 import kr.co.awesomelead.groupware_backend.test.dto.request.DummyUsersCreateRequestDto;
 import kr.co.awesomelead.groupware_backend.test.dto.response.DummyUsersCreateResponseDto;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
+import org.springframework.context.annotation.Profile;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -26,6 +33,7 @@ import java.util.List;
 
 @Slf4j
 @Service
+@Profile("local")
 @RequiredArgsConstructor
 @Transactional
 public class TestService {
@@ -157,5 +165,33 @@ public class TestService {
 
     public SignupResponseDto signupWithoutVerification(SignupRequestDto requestDto) {
         return authService.signupWithoutVerification(requestDto);
+    }
+
+    public SignupResponseDto bootstrapPromoteAdmin(BootstrapAdminPromoteRequestDto requestDto) {
+        if (userRepository.existsByRole(Role.ADMIN)
+                || userRepository.existsByRole(Role.MASTER_ADMIN)) {
+            throw new CustomException(ErrorCode.BOOTSTRAP_ADMIN_ALREADY_EXISTS);
+        }
+
+        User user =
+                userRepository
+                        .findByEmail(requestDto.getEmail())
+                        .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
+
+        user.setRole(Role.ADMIN);
+        user.setStatus(Status.AVAILABLE);
+        if (user.getJobType() == null) {
+            user.setJobType(JobType.MANAGEMENT);
+        }
+        if (user.getPosition() == null) {
+            user.setPosition(Position.STAFF);
+        }
+
+        for (Authority authority : Authority.values()) {
+            user.addAuthority(authority);
+        }
+
+        User saved = userRepository.save(user);
+        return new SignupResponseDto(saved.getId(), saved.getEmail());
     }
 }

@@ -59,7 +59,6 @@ public class SwaggerConfig {
                     "/api/test/**",
                     "/api/auth/login",
                     "/api/auth/signup",
-                    "/api/auth/bootstrap-promote-admin",
                     "/api/auth/reissue",
                     "/api/auth/verify-phone-code",
                     "/api/auth/check-account/email",
@@ -72,11 +71,7 @@ public class SwaggerConfig {
                     "/api/auth/find-email",
                     "/api/auth/reset-password/phone",
                     "/api/auth/reset-password/email",
-                    "/api/educations/attachments/{id}/download",
-                    "/api/departments/hierarchy",
-                    "/api/departments/{departmentId}/users",
-                    "/api/visits/**",
-                    "/api/users/list");
+                    "/api/visits/**");
 
     @Bean
     public OpenAPI openAPI() {

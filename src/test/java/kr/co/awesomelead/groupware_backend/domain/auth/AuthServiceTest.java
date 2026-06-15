@@ -154,7 +154,8 @@ class AuthServiceTest {
 
         testUser.setStatus(Status.PENDING);
 
-        when(authenticationManager.authenticate(any())).thenThrow(new DisabledException("disabled"));
+        when(authenticationManager.authenticate(any()))
+                .thenThrow(new DisabledException("disabled"));
         when(userRepository.findByEmail(TEST_EMAIL)).thenReturn(Optional.of(testUser));
 
         // when & then

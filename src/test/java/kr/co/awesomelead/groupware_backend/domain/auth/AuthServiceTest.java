@@ -52,6 +52,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.DisabledException;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.test.context.ActiveProfiles;
@@ -141,6 +142,29 @@ class AuthServiceTest {
         assertThat(authorityDto.getLabel())
                 .isEqualTo(Authority.MANAGE_DEPARTMENT_EDUCATION.getDescription());
         assertThat(authorityDto.isEnabled()).isTrue();
+    }
+
+    @Test
+    @DisplayName("로그인 실패 테스트 - 회원가입 승인 대기")
+    void login_Fail_SignupApprovalPending() {
+        // given
+        LoginRequestDto loginRequestDto = new LoginRequestDto();
+        loginRequestDto.setEmail(TEST_EMAIL);
+        loginRequestDto.setPassword(OLD_PASSWORD);
+
+        testUser.setStatus(Status.PENDING);
+
+        when(authenticationManager.authenticate(any())).thenThrow(new DisabledException("disabled"));
+        when(userRepository.findByEmail(TEST_EMAIL)).thenReturn(Optional.of(testUser));
+
+        // when & then
+        assertThatThrownBy(() -> authService.login(loginRequestDto))
+                .isInstanceOf(CustomException.class)
+                .hasFieldOrPropertyWithValue("errorCode", ErrorCode.SIGNUP_APPROVAL_PENDING);
+
+        verify(userRepository).findByEmail(TEST_EMAIL);
+        verify(jwtUtil, never()).createJwt(anyString(), anyString(), anyLong());
+        verify(refreshTokenService, never()).createAndSaveRefreshToken(anyString(), anyString());
     }
 
     @Test

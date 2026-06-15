@@ -175,6 +175,9 @@ public class AuthService {
             authentication = authenticationManager.authenticate(authToken);
         } catch (DisabledException e) {
             User user = userRepository.findByEmail(requestDto.getEmail()).orElse(null);
+            if (user != null && user.getStatus() == Status.PENDING) {
+                throw new CustomException(ErrorCode.SIGNUP_APPROVAL_PENDING);
+            }
             if (user != null && user.getStatus() == Status.SUSPENDED) {
                 throw new CustomException(ErrorCode.SUSPENDED_ACCOUNT);
             }

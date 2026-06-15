@@ -551,17 +551,30 @@ public class AuthController {
                         content =
                                 @Content(
                                         mediaType = "application/json",
-                                        examples =
-                                                @ExampleObject(
-                                                        value =
-                                                                """
+                                        examples = {
+                                            @ExampleObject(
+                                                    name = "아이디 또는 비밀번호 불일치",
+                                                    value =
+                                                            """
                                         {
                                           "isSuccess": false,
                                           "code": "INVALID_LOGIN_CREDENTIALS",
                                           "message": "아이디 또는 비밀번호가 올바르지 않습니다.",
                                           "result": null
                                         }
-                                        """)))
+                                        """),
+                                            @ExampleObject(
+                                                    name = "회원가입 승인 대기",
+                                                    value =
+                                                            """
+                                        {
+                                          "isSuccess": false,
+                                          "code": "SIGNUP_APPROVAL_PENDING",
+                                          "message": "회원가입 승인 대기 중입니다. 관리자 승인 후 로그인할 수 있습니다.",
+                                          "result": null
+                                        }
+                                        """)
+                                        }))
             })
     @PostMapping("/login")
     public ResponseEntity<ApiResponse<LoginResponseDto>> login(

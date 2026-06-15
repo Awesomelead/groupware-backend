@@ -7,6 +7,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
@@ -61,6 +62,16 @@ public class GlobalExceptionHandler {
             MethodArgumentTypeMismatchException ex) {
         return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                 .body(ApiResponse.onFailure("COMMON400", "입력값이 유효하지 않습니다."));
+    }
+
+    // JSON 요청 본문 파싱 실패 처리 (예: 알 수 없는 필드, 타입 불일치)
+    @ExceptionHandler(HttpMessageNotReadableException.class)
+    public ResponseEntity<ApiResponse<Void>> handleHttpMessageNotReadableException(
+            HttpMessageNotReadableException ex) {
+        log.warn("[HttpMessageNotReadableException] message: {}", ex.getMessage());
+
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                .body(ApiResponse.onFailure("COMMON400", "요청 본문 형식이 올바르지 않습니다."));
     }
 
     // 첨부파일 용량 초과시 예외 처리

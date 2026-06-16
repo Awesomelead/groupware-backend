@@ -2,7 +2,7 @@ version: '3.8'
 
 services:
   app:
-    image: ${DEV_BACKEND_IMAGE:-188932086032.dkr.ecr.ap-northeast-2.amazonaws.com/groupware-backend:latest}
+    image: ${DEV_BACKEND_IMAGE:-188932086032.dkr.ecr.ap-northeast-2.amazonaws.com/groupware-backend:dev}
     container_name: groupware-backend-dev
     ports:
       - "8081:8080"
@@ -61,6 +61,8 @@ services:
   mysql:
     image: mysql:8.0
     container_name: groupware-mysql-dev
+    ports:
+      - "127.0.0.1:3307:3306"
     environment:
       - MYSQL_DATABASE=groupware_dev
       - MYSQL_USER=${DEV_DB_USERNAME:-groupware_dev}

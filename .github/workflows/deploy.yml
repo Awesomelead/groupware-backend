@@ -42,7 +42,7 @@ jobs:
           docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
           docker push $ECR_REGISTRY/$ECR_REPOSITORY:latest
 
-      - name: Copy docker-compose.yml to EC2 (1st attempt)
+      - name: Copy docker-compose.prod.yml to EC2 (1st attempt)
         id: scp_copy
         continue-on-error: true
         uses: appleboy/scp-action@v1
@@ -50,18 +50,18 @@ jobs:
           host: ${{ secrets.EC2_HOST }}
           username: ubuntu
           key: ${{ secrets.EC2_SSH_KEY }}
-          source: "./docker-compose.yml"
+          source: "./docker-compose.prod.yml"
           target: "/home/ubuntu"
           overwrite: true
 
-      - name: Retry copy docker-compose.yml to EC2 (if failed)
+      - name: Retry copy docker-compose.prod.yml to EC2 (if failed)
         if: steps.scp_copy.outcome == 'failure'
         uses: appleboy/scp-action@v1
         with:
           host: ${{ secrets.EC2_HOST }}
           username: ubuntu
           key: ${{ secrets.EC2_SSH_KEY }}
-          source: "./docker-compose.yml"
+          source: "./docker-compose.prod.yml"
           target: "/home/ubuntu"
           overwrite: true
 
@@ -115,18 +115,22 @@ jobs:
             EOF
             
             cd /home/ubuntu
+
+            # 운영 compose 이름 분리 전 기존 컨테이너가 남아 있으면 포트 충돌을 막기 위해 정리
+            docker stop groupware-backend groupware-redis 2>/dev/null || true
+            docker rm groupware-backend groupware-redis 2>/dev/null || true
             
             # 기존 컨테이너 중지
-            docker-compose stop app
+            docker-compose -f docker-compose.prod.yml stop app || true
             
             # 중지된 컨테이너 제거
-            docker-compose rm -f app
+            docker-compose -f docker-compose.prod.yml rm -f app || true
             
             # 최신 이미지 다운로드
-            docker-compose pull app
+            docker-compose -f docker-compose.prod.yml pull app
             
             # 컨테이너 시작
-            docker-compose up -d app
+            docker-compose -f docker-compose.prod.yml up -d app
             
             # 새 컨테이너가 정상 시작될 때까지 대기
             echo "Waiting for application to start..."

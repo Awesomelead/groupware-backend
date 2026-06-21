@@ -1,11 +1,11 @@
-name: Deploy to EC2
+name: Deploy Dev to EC2
 
 on:
   push:
-    branches: [ "main" ]
+    branches: [ "dev" ]
 
 jobs:
-  deploy:
+  deploy-dev:
     runs-on: ubuntu-latest
 
     steps:
@@ -31,18 +31,25 @@ jobs:
         id: login-ecr
         uses: aws-actions/amazon-ecr-login@v2
 
-      - name: Build and push Docker image
+      - name: Build and push dev Docker image
         env:
           ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
           ECR_REPOSITORY: groupware-backend
-          IMAGE_TAG: ${{ github.sha }}
+          IMAGE_TAG: dev
         run: |
           docker build --platform linux/amd64 -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG .
-          docker tag $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG $ECR_REGISTRY/$ECR_REPOSITORY:latest
           docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
-          docker push $ECR_REGISTRY/$ECR_REPOSITORY:latest
 
-      - name: Copy docker-compose.prod.yml to EC2 (1st attempt)
+      - name: Prepare dev directory on EC2
+        uses: appleboy/ssh-action@v1
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ubuntu
+          key: ${{ secrets.EC2_SSH_KEY }}
+          script: |
+            mkdir -p /home/ubuntu/groupware-dev
+
+      - name: Copy docker-compose.dev.yml to EC2 (1st attempt)
         id: scp_copy
         continue-on-error: true
         uses: appleboy/scp-action@v1
@@ -50,60 +57,57 @@ jobs:
           host: ${{ secrets.EC2_HOST }}
           username: ubuntu
           key: ${{ secrets.EC2_SSH_KEY }}
-          source: "./docker-compose.prod.yml"
-          target: "/home/ubuntu"
+          source: "./docker-compose.dev.yml"
+          target: "/home/ubuntu/groupware-dev"
           overwrite: true
 
-      - name: Retry copy docker-compose.prod.yml to EC2 (if failed)
+      - name: Retry copy docker-compose.dev.yml to EC2 (if failed)
         if: steps.scp_copy.outcome == 'failure'
         uses: appleboy/scp-action@v1
         with:
           host: ${{ secrets.EC2_HOST }}
           username: ubuntu
           key: ${{ secrets.EC2_SSH_KEY }}
-          source: "./docker-compose.prod.yml"
-          target: "/home/ubuntu"
+          source: "./docker-compose.dev.yml"
+          target: "/home/ubuntu/groupware-dev"
           overwrite: true
 
-      - name: Deploy to EC2 with Docker Compose
+      - name: Deploy dev to EC2 with Docker Compose
         uses: appleboy/ssh-action@v1
         with:
           host: ${{ secrets.EC2_HOST }}
           username: ubuntu
           key: ${{ secrets.EC2_SSH_KEY }}
           script: |
-            # ECR 로그인
             aws ecr get-login-password --region ap-northeast-2 | docker login --username AWS --password-stdin 188932086032.dkr.ecr.ap-northeast-2.amazonaws.com
-            
-            # 환경변수 파일 생성
-            cat > /home/ubuntu/.env << EOF
-            DB_URL=${{ secrets.DB_URL }}
-            DB_USERNAME=${{ secrets.DB_USERNAME }}
-            DB_PASSWORD=${{ secrets.DB_PASSWORD }}
+
+            cat > /home/ubuntu/groupware-dev/.env << EOF
+            DEV_BACKEND_IMAGE=188932086032.dkr.ecr.ap-northeast-2.amazonaws.com/groupware-backend:dev
+            DEV_DB_USERNAME=${{ secrets.DEV_DB_USERNAME }}
+            DEV_DB_PASSWORD=${{ secrets.DEV_DB_PASSWORD }}
+            DEV_DB_ROOT_PASSWORD=${{ secrets.DEV_DB_ROOT_PASSWORD }}
             JWT_SECRET=${{ secrets.JWT_SECRET }}
             JWT_ACCESS_VALIDATION=${{ secrets.JWT_ACCESS_VALIDATION }}
             JWT_REFRESH_VALIDATION=${{ secrets.JWT_REFRESH_VALIDATION }}
-            AWS_S3_ACCESS_KEY=${{ secrets.AWS_S3_ACCESS_KEY }}
-            AWS_S3_SECRET_KEY=${{ secrets.AWS_S3_SECRET_KEY }}
-            AWS_S3_BUCKET=${{ secrets.AWS_S3_BUCKET }}
+            DEV_AWS_S3_ACCESS_KEY=${{ secrets.DEV_AWS_S3_ACCESS_KEY }}
+            DEV_AWS_S3_SECRET_KEY=${{ secrets.DEV_AWS_S3_SECRET_KEY }}
+            DEV_AWS_S3_BUCKET=${{ secrets.DEV_AWS_S3_BUCKET }}
             ALIGO_API_URL=${{ secrets.ALIGO_API_URL }}
             ALIGO_API_KEY=${{ secrets.ALIGO_API_KEY }}
             ALIGO_USER_ID=${{ secrets.ALIGO_USER_ID }}
             ALIGO_SENDER_KEY=${{ secrets.ALIGO_SENDER_KEY }}
             ALIGO_SENDER_PHONE=${{ secrets.ALIGO_SENDER_PHONE }}
             ALIGO_TPL_CODE=${{ secrets.ALIGO_TPL_CODE }}
-            ALIGO_TEST_MODE=${{ secrets.ALIGO_TEST_MODE }}
+            ALIGO_TEST_MODE=${{ secrets.DEV_ALIGO_TEST_MODE }}
+            DEV_SPRING_JPA_HIBERNATE_DDL_AUTO=${{ secrets.DEV_SPRING_JPA_HIBERNATE_DDL_AUTO }}
             SPRING_MAIL_HOST=${{ secrets.SPRING_MAIL_HOST }}
             SPRING_MAIL_PORT=${{ secrets.SPRING_MAIL_PORT }}
-            SPRING_MAIL_USERNAME=${{secrets.SPRING_MAIL_USERNAME}}
-            SPRING_MAIL_PASSWORD=${{secrets.SPRING_MAIL_PASSWORD}}
-            SPRING_MAIL_SMTP_STARTTLS_ENABLE=${{ secrets.SPRING_MAIL_SMTP_STARTTLS_ENABLE }}
-            SPRING_MAIL_SMTP_STARTTLS_REQUIRED=${{ secrets.SPRING_MAIL_SMTP_STARTTLS_REQUIRED }}
-            SPRING_MAIL_SMTP_SSL_ENABLE=${{ secrets.SPRING_MAIL_SMTP_SSL_ENABLE }}
+            SPRING_MAIL_USERNAME=${{ secrets.SPRING_MAIL_USERNAME }}
+            SPRING_MAIL_PASSWORD=${{ secrets.SPRING_MAIL_PASSWORD }}
             ENCRYPTION_SECRET_KEY=${{ secrets.ENCRYPTION_SECRET_KEY }}
             ENCRYPTION_SALT=${{ secrets.ENCRYPTION_SALT }}
             PORTONE_APISECRET=${{ secrets.PORTONE_APISECRET }}
-            FIREBASE_CREDENTIALS_JSON='${{ secrets.FIREBASE_CREDENTIALS_JSON }}'
+            DEV_FIREBASE_CREDENTIALS_JSON='${{ secrets.DEV_FIREBASE_CREDENTIALS_JSON }}'
             MULTIPART_MAX_FILE_SIZE=${{ secrets.MULTIPART_MAX_FILE_SIZE }}
             MULTIPART_MAX_REQUEST_SIZE=${{ secrets.MULTIPART_MAX_REQUEST_SIZE }}
             TOMCAT_MAX_HTTP_FORM_POST_SIZE=${{ secrets.TOMCAT_MAX_HTTP_FORM_POST_SIZE }}
@@ -112,44 +116,26 @@ jobs:
             HANBIRO_SSO_CREATE_TOKEN_PATH=${{ secrets.HANBIRO_SSO_CREATE_TOKEN_PATH }}
             HANBIRO_SSO_RAW=${{ secrets.HANBIRO_SSO_RAW }}
             HANBIRO_SSO_METHOD=${{ secrets.HANBIRO_SSO_METHOD }}
-            SPRING_JPA_HIBERNATE_DDL_AUTO=${{ secrets.SPRING_JPA_HIBERNATE_DDL_AUTO }}
-            TZ=Asia/Seoul
-            JAVA_TOOL_OPTIONS=-Duser.timezone=Asia/Seoul
             EOF
-            
-            cd /home/ubuntu
 
-            # 운영 compose 이름 분리 전 기존 컨테이너가 남아 있으면 포트 충돌을 막기 위해 정리
-            docker stop groupware-backend groupware-redis 2>/dev/null || true
-            docker rm groupware-backend groupware-redis 2>/dev/null || true
-            
-            # 기존 컨테이너 중지
-            docker-compose -f docker-compose.prod.yml stop app || true
-            
-            # 중지된 컨테이너 제거
-            docker-compose -f docker-compose.prod.yml rm -f app || true
-            
-            # 최신 이미지 다운로드
-            docker-compose -f docker-compose.prod.yml pull app
-            
-            # 컨테이너 시작
-            docker-compose -f docker-compose.prod.yml up -d app
-            
-            # 새 컨테이너가 정상 시작될 때까지 대기
-            echo "Waiting for application to start..."
+            cd /home/ubuntu/groupware-dev
+
+            docker-compose -f docker-compose.dev.yml stop app || true
+            docker-compose -f docker-compose.dev.yml rm -f app || true
+            docker-compose -f docker-compose.dev.yml pull app
+            docker-compose -f docker-compose.dev.yml up -d app
+
+            echo "Waiting for dev application to start..."
             sleep 10
-            
+
             for i in {1..30}; do
-              if curl -f http://localhost:8080/ > /dev/null 2>&1; then
-                echo "Application is healthy!"
+              if curl -f http://localhost:8081/ > /dev/null 2>&1; then
+                echo "Dev application is healthy!"
                 break
               fi
               echo "Waiting... ($i/30)"
               sleep 2
             done
-            
-            # 중지된 컨테이너 정리
+
             docker container prune -f
-            
-            # 사용하지 않는 이미지 정리
             docker image prune -f

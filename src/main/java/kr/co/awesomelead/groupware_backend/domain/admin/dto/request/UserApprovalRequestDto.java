@@ -4,6 +4,7 @@ import io.swagger.v3.oas.annotations.media.ArraySchema;
 import io.swagger.v3.oas.annotations.media.Schema;
 
 import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Size;
 
 import kr.co.awesomelead.groupware_backend.domain.department.enums.Company;
 import kr.co.awesomelead.groupware_backend.domain.department.enums.DepartmentName;
@@ -22,7 +23,8 @@ import java.util.List;
 @Setter
 public class UserApprovalRequestDto {
 
-    @Schema(description = "한글 이름", example = "홍길동")
+    @Schema(description = "한글 이름", example = "홍길동", maxLength = 50)
+    @Size(max = 50, message = "한글 이름은 최대 50자까지 입력 가능합니다.")
     private String nameKor;
 
     @Schema(description = "영문 이름", example = "HONG GILDONG")

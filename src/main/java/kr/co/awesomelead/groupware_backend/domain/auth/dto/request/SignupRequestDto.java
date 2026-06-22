@@ -18,8 +18,9 @@ import lombok.Setter;
 @Schema(description = "회원가입 요청")
 public class SignupRequestDto {
 
-    @Schema(description = "한글 이름", example = "홍길동", required = true)
+    @Schema(description = "한글 이름", example = "홍길동", required = true, maxLength = 50)
     @NotBlank(message = "성명은 필수입니다.")
+    @Size(max = 50, message = "한글 이름은 최대 50자까지 입력 가능합니다.")
     private String nameKor;
 
     @Schema(description = "영문 이름", example = "Hong Gildong", required = true)

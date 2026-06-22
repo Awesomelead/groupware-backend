@@ -3,6 +3,8 @@ package kr.co.awesomelead.groupware_backend.domain.admin.dto.request;
 import io.swagger.v3.oas.annotations.media.ArraySchema;
 import io.swagger.v3.oas.annotations.media.Schema;
 
+import jakarta.validation.constraints.Size;
+
 import kr.co.awesomelead.groupware_backend.domain.department.enums.Company;
 import kr.co.awesomelead.groupware_backend.domain.user.enums.Authority;
 import kr.co.awesomelead.groupware_backend.domain.user.enums.JobType;
@@ -20,7 +22,8 @@ import java.util.List;
 @Schema(description = "관리자 직원 정보 수정 요청 (이메일 제외)")
 public class AdminUserUpdateRequestDto {
 
-    @Schema(description = "한글 이름", example = "홍길동")
+    @Schema(description = "한글 이름", example = "홍길동", maxLength = 50)
+    @Size(max = 50, message = "한글 이름은 최대 50자까지 입력 가능합니다.")
     private String nameKor;
 
     @Schema(description = "영문 이름", example = "HONG GILDONG")

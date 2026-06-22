@@ -74,7 +74,7 @@ public class User {
     @Column(nullable = false, columnDefinition = "CHAR(60)")
     private String password; // 비밀번호
 
-    @Column(nullable = false, length = 20)
+    @Column(nullable = false, length = 50)
     private String nameKor; // 한글 이름
 
     @Column(length = 50)

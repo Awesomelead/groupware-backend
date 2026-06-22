@@ -28,7 +28,7 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @RequestMapping("/api/test")
 @RequiredArgsConstructor
-@Profile("local")
+@Profile({"local", "dev"})
 @Tag(name = "Test", description = """
             ## 개발 중 테스트 API
             """)

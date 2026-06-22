@@ -33,7 +33,7 @@ import java.util.List;
 
 @Slf4j
 @Service
-@Profile("local")
+@Profile({"local", "dev"})
 @RequiredArgsConstructor
 @Transactional
 public class TestService {

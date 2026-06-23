@@ -87,6 +87,7 @@ public class VisitService {
 
         Visit visit =
                 visitMapper.toOneDayVisit(dto, hosts.get(0).getWorkLocation(), encodedPassword);
+        normalizeVisitorInfo(visit);
         syncAndValidatePermissions(visit, dto);
         addHostsToVisit(visit, hosts);
 
@@ -115,6 +116,7 @@ public class VisitService {
 
         Visit visit =
                 visitMapper.toLongTermVisit(dto, hosts.get(0).getWorkLocation(), encodedPassword);
+        normalizeVisitorInfo(visit);
         syncAndValidatePermissions(visit, dto);
         addHostsToVisit(visit, hosts);
 
@@ -141,6 +143,7 @@ public class VisitService {
 
         Visit visit =
                 visitMapper.toOnSiteVisit(dto, hosts.get(0).getWorkLocation(), encodedPassword);
+        normalizeVisitorInfo(visit);
         syncAndValidatePermissions(visit, dto);
         addHostsToVisit(visit, hosts);
 
@@ -346,6 +349,7 @@ public class VisitService {
         }
 
         visitMapper.updateVisitFromDto(dto, visit);
+        normalizeVisitorInfo(visit);
 
         if (dto.getHostIds() != null && !dto.getHostIds().isEmpty()) {
             List<User> newHosts = findUsersByIds(dto.getHostIds());
@@ -363,6 +367,18 @@ public class VisitService {
         }
 
         syncAndValidatePermissions(visit, dto);
+    }
+
+    private void normalizeVisitorInfo(Visit visit) {
+        if (visit.getVisitorName() != null) {
+            visit.setVisitorName(visit.getVisitorName().strip());
+        }
+        if (visit.getVisitorCompany() != null) {
+            visit.setVisitorCompany(visit.getVisitorCompany().strip());
+        }
+        if (visit.getCarNumber() != null) {
+            visit.setCarNumber(visit.getCarNumber().replaceAll("\\s+", ""));
+        }
     }
 
     private void validateUpdateStatus(Visit visit) {

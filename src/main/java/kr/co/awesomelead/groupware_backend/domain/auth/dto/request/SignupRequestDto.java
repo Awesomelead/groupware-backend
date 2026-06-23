@@ -41,8 +41,7 @@ public class SignupRequestDto {
     @Size(max = 200, message = "기본 주소는 200자를 초과할 수 없습니다.")
     private String address1;
 
-    @Schema(description = "상세 주소", example = "어썸리드빌딩 5층", required = true)
-    @NotBlank(message = "상세 주소는 필수입니다.")
+    @Schema(description = "상세 주소 (선택)", example = "어썸리드빌딩 5층")
     @Size(max = 100, message = "상세 주소는 100자를 초과할 수 없습니다.")
     private String address2;
 

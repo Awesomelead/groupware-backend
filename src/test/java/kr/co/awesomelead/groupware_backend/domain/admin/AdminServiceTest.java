@@ -22,6 +22,7 @@ import kr.co.awesomelead.groupware_backend.domain.department.entity.Department;
 import kr.co.awesomelead.groupware_backend.domain.department.enums.Company;
 import kr.co.awesomelead.groupware_backend.domain.department.enums.DepartmentName;
 import kr.co.awesomelead.groupware_backend.domain.department.repository.DepartmentRepository;
+import kr.co.awesomelead.groupware_backend.domain.notification.enums.NotificationDomainType;
 import kr.co.awesomelead.groupware_backend.domain.notification.service.NotificationService;
 import kr.co.awesomelead.groupware_backend.domain.user.entity.MyInfoUpdateRequest;
 import kr.co.awesomelead.groupware_backend.domain.user.entity.User;
@@ -243,6 +244,64 @@ class AdminServiceTest {
                         .extracting("errorCode")
                         .isEqualTo(ErrorCode.NO_AUTHORITY_FOR_REGISTRATION);
             }
+        }
+    }
+
+    @Nested
+    @DisplayName("rejectUserRegistration 메서드는")
+    class Describe_rejectUserRegistration {
+
+        @Test
+        @DisplayName("대기 중인 회원가입 신청을 반려하면 사용자 정보를 삭제한다")
+        void it_deletes_pending_user() {
+            User pendingUser = new User();
+            pendingUser.setId(userId);
+            pendingUser.setStatus(Status.PENDING);
+            when(userRepository.findById(userId)).thenReturn(Optional.of(pendingUser));
+
+            adminService.rejectUserRegistration(userId, adminId);
+
+            verify(notificationService)
+                    .resolveRequiresApproval(NotificationDomainType.AUTH, userId);
+            verify(userRepository).delete(pendingUser);
+        }
+
+        @Test
+        @DisplayName("대기 상태가 아닌 사용자를 반려하면 DUPLICATED_SIGNUP_REQUEST 에러를 던진다")
+        void it_throws_when_user_is_not_pending() {
+            User availableUser = new User();
+            availableUser.setId(userId);
+            availableUser.setStatus(Status.AVAILABLE);
+            when(userRepository.findById(userId)).thenReturn(Optional.of(availableUser));
+
+            assertThatThrownBy(() -> adminService.rejectUserRegistration(userId, adminId))
+                    .isInstanceOf(CustomException.class)
+                    .extracting("errorCode")
+                    .isEqualTo(ErrorCode.DUPLICATED_SIGNUP_REQUEST);
+        }
+
+        @Test
+        @DisplayName("존재하지 않는 회원가입 신청을 반려하면 USER_NOT_FOUND 에러를 던진다")
+        void it_throws_when_user_does_not_exist() {
+            when(userRepository.findById(userId)).thenReturn(Optional.empty());
+
+            assertThatThrownBy(() -> adminService.rejectUserRegistration(userId, adminId))
+                    .isInstanceOf(CustomException.class)
+                    .extracting("errorCode")
+                    .isEqualTo(ErrorCode.USER_NOT_FOUND);
+        }
+
+        @Test
+        @DisplayName("관리자 권한이 없으면 NO_AUTHORITY_FOR_REGISTRATION 에러를 던진다")
+        void it_throws_when_admin_has_no_authority() {
+            User normalUser = new User();
+            normalUser.setRole(Role.USER);
+            when(userRepository.findById(adminId)).thenReturn(Optional.of(normalUser));
+
+            assertThatThrownBy(() -> adminService.rejectUserRegistration(userId, adminId))
+                    .isInstanceOf(CustomException.class)
+                    .extracting("errorCode")
+                    .isEqualTo(ErrorCode.NO_AUTHORITY_FOR_REGISTRATION);
         }
     }
 

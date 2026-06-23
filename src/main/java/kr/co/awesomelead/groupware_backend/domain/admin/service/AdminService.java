@@ -169,6 +169,27 @@ public class AdminService {
         notificationService.resolveRequiresApproval(NotificationDomainType.AUTH, user.getId());
     }
 
+    @Transactional
+    public void rejectUserRegistration(Long userId, Long adminId) {
+        User admin =
+                userRepository
+                        .findById(adminId)
+                        .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
+        validateRegistrationAuthority(admin);
+
+        User user =
+                userRepository
+                        .findById(userId)
+                        .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
+
+        if (user.getStatus() != Status.PENDING) {
+            throw new CustomException(ErrorCode.DUPLICATED_SIGNUP_REQUEST);
+        }
+
+        notificationService.resolveRequiresApproval(NotificationDomainType.AUTH, user.getId());
+        userRepository.delete(user);
+    }
+
     @Transactional(readOnly = true)
     public List<PendingUserSummaryResponseDto> getPendingSignupUsers(Long adminId) {
         User admin =

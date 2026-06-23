@@ -98,6 +98,8 @@ class AdminServiceTest {
                 User pendingUser = new User();
                 pendingUser.setId(userId);
                 pendingUser.setStatus(Status.PENDING);
+                requestDto.setNameKor("  홍길동  ");
+                requestDto.setNameEng("  Gildong Hong  ");
 
                 when(userRepository.findById(userId)).thenReturn(Optional.of(pendingUser));
                 when(departmentRepository.findByName(any())).thenReturn(Optional.of(department));
@@ -112,6 +114,8 @@ class AdminServiceTest {
 
                 assertThat(savedUser.getStatus()).isEqualTo(Status.AVAILABLE);
                 assertThat(savedUser.getRole()).isEqualTo(Role.USER);
+                assertThat(savedUser.getNameKor()).isEqualTo("홍길동");
+                assertThat(savedUser.getNameEng()).isEqualTo("Gildong Hong");
             }
 
             @Test
@@ -546,7 +550,8 @@ class AdminServiceTest {
                     .thenReturn(false);
 
             AdminUserUpdateRequestDto dto = new AdminUserUpdateRequestDto();
-            dto.setNameKor("홍길동");
+            dto.setNameKor("  홍길동  ");
+            dto.setNameEng("  Gildong Hong  ");
             dto.setPhoneNumber("01099998888");
             dto.setDepartmentId(11L);
             dto.setWorkLocation(Company.AWESOME);
@@ -560,6 +565,7 @@ class AdminServiceTest {
 
             // then
             assertThat(targetUser.getNameKor()).isEqualTo("홍길동");
+            assertThat(targetUser.getNameEng()).isEqualTo("Gildong Hong");
             assertThat(targetUser.getPhoneNumber()).isEqualTo("01099998888");
             assertThat(targetUser.getDepartment().getId()).isEqualTo(11L);
             assertThat(targetUser.getWorkLocation()).isEqualTo(Company.AWESOME);

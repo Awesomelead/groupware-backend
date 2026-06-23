@@ -82,10 +82,10 @@ public class AdminService {
 
         // 유저가 작성한 값들 중 관리자가 수정하는 값
         if (requestDto.getNameKor() != null) {
-            user.setNameKor(requestDto.getNameKor());
+            user.setNameKor(requestDto.getNameKor().trim());
         }
         if (requestDto.getNameEng() != null) {
-            user.setNameEng(requestDto.getNameEng());
+            user.setNameEng(requestDto.getNameEng().trim());
         }
 
         if (requestDto.getNationality() != null) {
@@ -257,10 +257,10 @@ public class AdminService {
                         .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
 
         if (requestDto.getNameKor() != null) {
-            user.setNameKor(requestDto.getNameKor());
+            user.setNameKor(requestDto.getNameKor().trim());
         }
         if (requestDto.getNameEng() != null) {
-            user.setNameEng(requestDto.getNameEng());
+            user.setNameEng(requestDto.getNameEng().trim());
         }
         if (requestDto.getNationality() != null) {
             user.setNationality(requestDto.getNationality());

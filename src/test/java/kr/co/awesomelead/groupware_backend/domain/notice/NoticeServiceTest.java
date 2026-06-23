@@ -103,7 +103,7 @@ class NoticeServiceTest {
                 // given
                 NoticeCreateRequestDto dto =
                         NoticeCreateRequestDto.builder()
-                                .title("제목")
+                                .title("  제목  ")
                                 .targetCompanies(List.of(Company.AWESOME))
                                 .targetDepartmentIds(List.of(10L))
                                 .targetUserIds(List.of(99L))
@@ -128,6 +128,7 @@ class NoticeServiceTest {
 
                 // then
                 assertThat(resultId).isEqualTo(100L);
+                assertThat(notice.getTitle()).isEqualTo("제목");
                 verify(noticeTargetRepository).saveAll(any());
                 verify(noticeRepository, times(1)).save(any());
                 verify(notificationService).sendNoticeAlertToTargets(any(), any(), any());
@@ -372,7 +373,7 @@ class NoticeServiceTest {
 
             NoticeUpdateRequestDto dto =
                     NoticeUpdateRequestDto.builder()
-                            .title("수정제목")
+                            .title("  수정제목  ")
                             .attachmentsIdsToRemove(List.of(10L))
                             .build();
 
@@ -390,6 +391,7 @@ class NoticeServiceTest {
                     List.of(new MockMultipartFile("new", "new.txt", "text", "c".getBytes())));
 
             // then
+            assertThat(notice.getTitle()).isEqualTo("수정제목");
             verify(s3Service).deleteFile("old-key");
             verify(s3Service).uploadFile(any());
             verify(noticeAttachmentRepository).delete(any());

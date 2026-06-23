@@ -135,7 +135,7 @@ public class Notice {
 
     public void update(String title, String content, Boolean pinned) {
         if (StringUtils.hasText(title)) {
-            this.title = title;
+            this.title = title.strip();
         }
         if (content != null) {
             this.content = content;
@@ -160,7 +160,7 @@ public class Notice {
             this.type = type;
         }
         if (StringUtils.hasText(title)) {
-            this.title = title;
+            this.title = title.strip();
         }
         if (content != null) {
             this.content = content;

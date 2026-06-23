@@ -40,8 +40,8 @@ public class AdminEducationCategoryService {
         validateCategoryManageAuthority(adminId);
 
         List<EducationCategory> categories =
-                educationCategoryRepository
-                        .findAllByCategoryTypeOrderByDepthAscSortOrderAscIdAsc(type);
+                educationCategoryRepository.findAllByCategoryTypeOrderByDepthAscSortOrderAscIdAsc(
+                        type);
 
         Map<Long, AdminEducationCategoryNodeDto> nodeById = new HashMap<>();
         List<AdminEducationCategoryNodeDto> roots = new ArrayList<>();
@@ -65,8 +65,7 @@ public class AdminEducationCategoryService {
                 continue;
             }
 
-            AdminEducationCategoryNodeDto parentNode =
-                    nodeById.get(category.getParent().getId());
+            AdminEducationCategoryNodeDto parentNode = nodeById.get(category.getParent().getId());
             if (parentNode != null) {
                 parentNode.getChildren().add(node);
             }

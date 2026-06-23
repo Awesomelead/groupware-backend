@@ -57,9 +57,8 @@ class AdminEducationCategoryServiceTest {
                         .build();
 
         when(userRepository.findById(adminId)).thenReturn(Optional.of(admin));
-        when(educationCategoryRepository
-                        .findAllByCategoryTypeOrderByDepthAscSortOrderAscIdAsc(
-                                EducationCategoryType.SAFETY))
+        when(educationCategoryRepository.findAllByCategoryTypeOrderByDepthAscSortOrderAscIdAsc(
+                        EducationCategoryType.SAFETY))
                 .thenReturn(List.of(parent, child));
 
         List<AdminEducationCategoryNodeDto> result =

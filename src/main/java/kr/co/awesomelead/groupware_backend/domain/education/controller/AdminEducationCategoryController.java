@@ -48,13 +48,11 @@ public class AdminEducationCategoryController {
     @GetMapping
     public ResponseEntity<ApiResponse<List<AdminEducationCategoryNodeDto>>> getCategoryTree(
             @Parameter(hidden = true) @AuthenticationPrincipal CustomUserDetails userDetails,
-            @Parameter(description = "카테고리 유형", example = "SAFETY", required = true)
-                    @RequestParam
+            @Parameter(description = "카테고리 유형", example = "SAFETY", required = true) @RequestParam
                     EducationCategoryType type) {
         return ResponseEntity.ok(
                 ApiResponse.onSuccess(
-                        adminEducationCategoryService.getCategoryTree(
-                                userDetails.getId(), type)));
+                        adminEducationCategoryService.getCategoryTree(userDetails.getId(), type)));
     }
 
     @Operation(summary = "교육 카테고리 생성", description = "관리자가 교육 카테고리를 생성합니다.")

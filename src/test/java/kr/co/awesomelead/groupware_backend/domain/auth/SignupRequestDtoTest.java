@@ -12,8 +12,7 @@ import org.junit.jupiter.api.Test;
 
 class SignupRequestDtoTest {
 
-    private final Validator validator =
-            Validation.buildDefaultValidatorFactory().getValidator();
+    private final Validator validator = Validation.buildDefaultValidatorFactory().getValidator();
 
     @Test
     void 상세주소는_입력하지_않아도_유효하다() {

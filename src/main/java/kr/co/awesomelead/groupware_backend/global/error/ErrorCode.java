@@ -144,7 +144,7 @@ public enum ErrorCode {
 
     // 409 Conflict
     DUPLICATED_SIGNUP_REQUEST(HttpStatus.CONFLICT, "이미 처리된 가입 요청입니다."),
-    DUPLICATE_LOGIN_ID(HttpStatus.CONFLICT, "이미 사용 중인 아이디입니다."),
+    DUPLICATE_LOGIN_ID(HttpStatus.CONFLICT, "이미 사용 중인 이메일입니다."),
     DUPLICATE_PHONE_NUMBER(HttpStatus.CONFLICT, "이미 가입된 전화번호입니다."),
     DUPLICATE_REGISTRATION_NUMBER(HttpStatus.CONFLICT, "이미 가입된 주민등록번호입니다."),
     AMBIGUOUS_PAYSLIP_RECIPIENT(HttpStatus.CONFLICT, "동명이인으로 급여명세서 수신 대상을 특정할 수 없습니다."),

@@ -67,6 +67,13 @@ public class AuthService {
     @Value("${spring.jwt.access-validation}")
     private long accessTokenValidation;
 
+    @Transactional(readOnly = true)
+    public void checkEmailDuplicate(String email) {
+        if (userRepository.existsByEmail(email)) {
+            throw new CustomException(ErrorCode.DUPLICATE_LOGIN_ID);
+        }
+    }
+
     @Transactional
     public SignupResponseDto signup(SignupRequestDto joinDto) {
         return signupInternal(joinDto, true);

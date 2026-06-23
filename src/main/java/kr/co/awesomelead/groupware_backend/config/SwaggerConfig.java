@@ -59,6 +59,7 @@ public class SwaggerConfig {
                     "/api/test/**",
                     "/api/auth/login",
                     "/api/auth/signup",
+                    "/api/auth/check-email-duplicate",
                     "/api/auth/reissue",
                     "/api/auth/verify-phone-code",
                     "/api/auth/check-account/email",

@@ -3,7 +3,9 @@ package kr.co.awesomelead.groupware_backend.domain.education.service;
 import kr.co.awesomelead.groupware_backend.domain.education.dto.request.EducationCategoryCreateRequestDto;
 import kr.co.awesomelead.groupware_backend.domain.education.dto.request.EducationCategoryReorderRequestDto;
 import kr.co.awesomelead.groupware_backend.domain.education.dto.request.EducationCategoryUpdateRequestDto;
+import kr.co.awesomelead.groupware_backend.domain.education.dto.response.AdminEducationCategoryNodeDto;
 import kr.co.awesomelead.groupware_backend.domain.education.entity.EducationCategory;
+import kr.co.awesomelead.groupware_backend.domain.education.enums.EducationCategoryType;
 import kr.co.awesomelead.groupware_backend.domain.education.repository.EducationCategoryRepository;
 import kr.co.awesomelead.groupware_backend.domain.user.entity.User;
 import kr.co.awesomelead.groupware_backend.domain.user.enums.Role;
@@ -16,6 +18,8 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -29,6 +33,46 @@ public class AdminEducationCategoryService {
 
     private final EducationCategoryRepository educationCategoryRepository;
     private final UserRepository userRepository;
+
+    @Transactional(readOnly = true)
+    public List<AdminEducationCategoryNodeDto> getCategoryTree(
+            Long adminId, EducationCategoryType type) {
+        validateCategoryManageAuthority(adminId);
+
+        List<EducationCategory> categories =
+                educationCategoryRepository.findAllByCategoryTypeOrderByDepthAscSortOrderAscIdAsc(
+                        type);
+
+        Map<Long, AdminEducationCategoryNodeDto> nodeById = new HashMap<>();
+        List<AdminEducationCategoryNodeDto> roots = new ArrayList<>();
+
+        for (EducationCategory category : categories) {
+            AdminEducationCategoryNodeDto node =
+                    AdminEducationCategoryNodeDto.builder()
+                            .id(category.getId())
+                            .code(category.getCode())
+                            .name(category.getName())
+                            .active(category.isActive())
+                            .children(new ArrayList<>())
+                            .build();
+            nodeById.put(category.getId(), node);
+        }
+
+        for (EducationCategory category : categories) {
+            AdminEducationCategoryNodeDto node = nodeById.get(category.getId());
+            if (category.getParent() == null) {
+                roots.add(node);
+                continue;
+            }
+
+            AdminEducationCategoryNodeDto parentNode = nodeById.get(category.getParent().getId());
+            if (parentNode != null) {
+                parentNode.getChildren().add(node);
+            }
+        }
+
+        return roots;
+    }
 
     @Transactional
     public Long createCategory(Long adminId, EducationCategoryCreateRequestDto requestDto) {

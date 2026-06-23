@@ -83,7 +83,7 @@ public class EducationCategoryDataInitializer implements ApplicationRunner {
                 5);
         createOrUpdate(
                 "SAFETY_INDUSTRIAL_SAFETY_HEALTH_COMMITTEE",
-                "산업안전보건위원회(게시판)",
+                "산업안전보건위원회",
                 EducationCategoryType.SAFETY,
                 "SAFETY_RESOURCE",
                 1,

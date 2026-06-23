@@ -164,6 +164,7 @@ public class EduReportService {
         }
 
         EduReport report = eduMapper.toEduReportEntity(requestDto, department, category);
+        report.setTitle(requestDto.getTitle().strip());
         if (requestDto.getEduType() == EduType.PSM || requestDto.getEduType() == EduType.SAFETY) {
             report.setCompany(useCompanyOverride ? companyOverride : user.getWorkLocation());
         } else {
@@ -214,7 +215,7 @@ public class EduReportService {
                         : Map.of("educationType", requestDto.getEduType().name());
         notificationService.sendEduReportAlertToTargets(
                 requestDto.getEduType().getDescription(),
-                requestDto.getTitle(),
+                savedReport.getTitle(),
                 savedReport.getId(),
                 targetUserIds,
                 metadata);
@@ -910,7 +911,7 @@ public class EduReportService {
 
         List<String> uploadedAttachmentKeys = new ArrayList<>();
         try {
-            report.setTitle(requestDto.getTitle().trim());
+            report.setTitle(requestDto.getTitle().strip());
             report.setPinned(requestDto.isPinned());
             report.setSignatureRequired(requestDto.isSignatureRequired());
 

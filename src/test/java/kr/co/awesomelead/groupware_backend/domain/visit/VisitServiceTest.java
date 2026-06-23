@@ -180,6 +180,9 @@ public class VisitServiceTest {
                 Visit mockVisit =
                         createBaseVisit(VisitStatus.NOT_VISITED, VisitCategory.PRE_ONE_DAY);
                 mockVisit.setPurpose(dto.getPurpose());
+                mockVisit.setVisitorName("  홍길동  ");
+                mockVisit.setVisitorCompany("  테스트컴퍼니  ");
+                mockVisit.setCarNumber("  12나  1234  ");
 
                 given(passwordEncoder.encode(dto.getPassword())).willReturn(encodedPassword);
                 given(visitMapper.toOneDayVisit(any(), any(), any())).willReturn(mockVisit);
@@ -190,6 +193,9 @@ public class VisitServiceTest {
 
                 // then
                 assertThat(resultId).isEqualTo(VISIT_ID);
+                assertThat(mockVisit.getVisitorName()).isEqualTo("홍길동");
+                assertThat(mockVisit.getVisitorCompany()).isEqualTo("테스트컴퍼니");
+                assertThat(mockVisit.getCarNumber()).isEqualTo("12나1234");
                 verify(userRepository, times(1)).findById(1L);
                 verify(passwordEncoder, times(1)).encode(dto.getPassword());
                 verify(visitRepository, times(1)).save(any(Visit.class));
@@ -414,7 +420,9 @@ public class VisitServiceTest {
                         MyVisitUpdateRequestDto.builder()
                                 .password(PLAIN_PASSWORD)
                                 .startDate(newDate)
-                                .visitorName("수정된이름")
+                                .visitorName("  수정된이름  ")
+                                .visitorCompany("  수정된회사  ")
+                                .carNumber("  34나  5678  ")
                                 .build();
 
                 Visit visit = createBaseVisit(VisitStatus.NOT_VISITED, VisitCategory.PRE_ONE_DAY);
@@ -428,6 +436,8 @@ public class VisitServiceTest {
 
                 // then
                 assertThat(visit.getVisitorName()).isEqualTo("수정된이름");
+                assertThat(visit.getVisitorCompany()).isEqualTo("수정된회사");
+                assertThat(visit.getCarNumber()).isEqualTo("34나5678");
                 assertThat(visit.getEndDate()).isEqualTo(visit.getStartDate());
                 assertThat(visit.getStartDate()).isEqualTo(newDate);
             }

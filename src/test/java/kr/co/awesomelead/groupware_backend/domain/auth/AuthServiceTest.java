@@ -250,6 +250,64 @@ class AuthServiceTest {
                 .sendAlertToAdminsRequiringApproval(any(), any(), any(), any(Map.class), any());
     }
 
+    @Nested
+    @DisplayName("회원가입 이메일 인증번호 발송")
+    class SendSignupEmailAuthCodeTest {
+
+        @Test
+        @DisplayName("사용 가능한 이메일이면 인증번호를 발송한다")
+        void sendSignupEmailAuthCode_Available() {
+            when(userRepository.existsByEmail(TEST_EMAIL)).thenReturn(false);
+
+            authService.sendSignupEmailAuthCode(TEST_EMAIL);
+
+            verify(userRepository).existsByEmail(TEST_EMAIL);
+            verify(emailAuthService).sendAuthCode(TEST_EMAIL);
+        }
+
+        @Test
+        @DisplayName("이미 사용 중인 이메일이면 인증번호를 발송하지 않는다")
+        void sendSignupEmailAuthCode_Duplicate() {
+            when(userRepository.existsByEmail(TEST_EMAIL)).thenReturn(true);
+
+            assertThatThrownBy(() -> authService.sendSignupEmailAuthCode(TEST_EMAIL))
+                    .isInstanceOf(CustomException.class)
+                    .hasFieldOrPropertyWithValue("errorCode", ErrorCode.DUPLICATE_LOGIN_ID);
+
+            verify(emailAuthService, never()).sendAuthCode(anyString());
+        }
+    }
+
+    @Nested
+    @DisplayName("회원가입 휴대폰 인증번호 발송")
+    class SendSignupPhoneAuthCodeTest {
+
+        @Test
+        @DisplayName("사용 가능한 전화번호이면 인증번호를 발송한다")
+        void sendSignupPhoneAuthCode_Available() {
+            String phoneNumberHash = User.hashValue(TEST_PHONE);
+            when(userRepository.existsByPhoneNumberHash(phoneNumberHash)).thenReturn(false);
+
+            authService.sendSignupPhoneAuthCode(TEST_PHONE);
+
+            verify(userRepository).existsByPhoneNumberHash(phoneNumberHash);
+            verify(phoneAuthService).sendAuthCode(TEST_PHONE);
+        }
+
+        @Test
+        @DisplayName("이미 가입된 전화번호이면 인증번호를 발송하지 않는다")
+        void sendSignupPhoneAuthCode_Duplicate() {
+            String phoneNumberHash = User.hashValue(TEST_PHONE);
+            when(userRepository.existsByPhoneNumberHash(phoneNumberHash)).thenReturn(true);
+
+            assertThatThrownBy(() -> authService.sendSignupPhoneAuthCode(TEST_PHONE))
+                    .isInstanceOf(CustomException.class)
+                    .hasFieldOrPropertyWithValue("errorCode", ErrorCode.DUPLICATE_PHONE_NUMBER);
+
+            verify(phoneAuthService, never()).sendAuthCode(anyString());
+        }
+    }
+
     @Test
     @DisplayName("[테스트용] 인증 우회 회원가입 성공 테스트")
     void signupWithoutVerification_Success() {
@@ -327,6 +385,46 @@ class AuthServiceTest {
         verify(userRepository, times(1)).save(any(User.class));
         verify(notificationService, times(1))
                 .sendAlertToAdminsRequiringApproval(any(), any(), any(), any(Map.class), any());
+    }
+
+    @Test
+    @DisplayName("회원가입 시 한글/영문 이름의 앞뒤 공백을 제거한다")
+    void signup_TrimsNameWhitespace() {
+        // given
+        SignupRequestDto signupDto = new SignupRequestDto();
+        signupDto.setEmail("trim-name@example.com");
+        signupDto.setPassword("password123!");
+        signupDto.setPasswordConfirm("password123!");
+        signupDto.setNameKor("  김어썸  ");
+        signupDto.setNameEng("  Awesome Kim  ");
+        signupDto.setRegistrationNumber("9501011234567");
+
+        User mappedUser =
+                User.builder()
+                        .email(signupDto.getEmail())
+                        .nameKor(signupDto.getNameKor())
+                        .nameEng(signupDto.getNameEng())
+                        .registrationNumber(signupDto.getRegistrationNumber())
+                        .build();
+
+        when(userMapper.toEntity(signupDto)).thenReturn(mappedUser);
+        when(bCryptPasswordEncoder.encode(signupDto.getPassword())).thenReturn("encodedPassword");
+        when(userRepository.save(any(User.class)))
+                .thenAnswer(
+                        invocation -> {
+                            User user = invocation.getArgument(0);
+                            user.setId(3L);
+                            return user;
+                        });
+
+        // when
+        authService.signupWithoutVerification(signupDto);
+
+        // then
+        ArgumentCaptor<User> userCaptor = ArgumentCaptor.forClass(User.class);
+        verify(userRepository).save(userCaptor.capture());
+        assertThat(userCaptor.getValue().getNameKor()).isEqualTo("김어썸");
+        assertThat(userCaptor.getValue().getNameEng()).isEqualTo("Awesome Kim");
     }
 
     @Test
@@ -419,6 +517,31 @@ class AuthServiceTest {
                 assertThrows(CustomException.class, () -> authService.signup(signupDto));
 
         assertThat(exception.getErrorCode()).isEqualTo(ErrorCode.DUPLICATE_LOGIN_ID);
+        verify(userRepository, never()).save(any(User.class));
+        verify(notificationService, never())
+                .sendAlertToAdminsRequiringApproval(any(), any(), any(), any(Map.class), any());
+    }
+
+    @Test
+    @DisplayName("회원가입 실패 테스트 - 전화번호 중복")
+    void signup_Fail_DuplicatePhoneNumber() {
+        // given
+        SignupRequestDto signupDto = new SignupRequestDto();
+        signupDto.setEmail("test@example.com");
+        signupDto.setPassword("password123!");
+        signupDto.setPasswordConfirm("password123!");
+        signupDto.setPhoneNumber(TEST_PHONE);
+
+        when(emailAuthService.isEmailVerified(signupDto.getEmail())).thenReturn(true);
+        when(phoneAuthService.isPhoneVerified(signupDto.getPhoneNumber())).thenReturn(true);
+        when(userRepository.existsByEmail(signupDto.getEmail())).thenReturn(false);
+        when(userRepository.existsByPhoneNumberHash(User.hashValue(TEST_PHONE))).thenReturn(true);
+
+        // when & then
+        assertThatThrownBy(() -> authService.signup(signupDto))
+                .isInstanceOf(CustomException.class)
+                .hasFieldOrPropertyWithValue("errorCode", ErrorCode.DUPLICATE_PHONE_NUMBER);
+
         verify(userRepository, never()).save(any(User.class));
         verify(notificationService, never())
                 .sendAlertToAdminsRequiringApproval(any(), any(), any(), any(Map.class), any());

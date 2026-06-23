@@ -330,6 +330,46 @@ class AuthServiceTest {
     }
 
     @Test
+    @DisplayName("회원가입 시 한글/영문 이름의 앞뒤 공백을 제거한다")
+    void signup_TrimsNameWhitespace() {
+        // given
+        SignupRequestDto signupDto = new SignupRequestDto();
+        signupDto.setEmail("trim-name@example.com");
+        signupDto.setPassword("password123!");
+        signupDto.setPasswordConfirm("password123!");
+        signupDto.setNameKor("  김어썸  ");
+        signupDto.setNameEng("  Awesome Kim  ");
+        signupDto.setRegistrationNumber("9501011234567");
+
+        User mappedUser =
+                User.builder()
+                        .email(signupDto.getEmail())
+                        .nameKor(signupDto.getNameKor())
+                        .nameEng(signupDto.getNameEng())
+                        .registrationNumber(signupDto.getRegistrationNumber())
+                        .build();
+
+        when(userMapper.toEntity(signupDto)).thenReturn(mappedUser);
+        when(bCryptPasswordEncoder.encode(signupDto.getPassword())).thenReturn("encodedPassword");
+        when(userRepository.save(any(User.class)))
+                .thenAnswer(
+                        invocation -> {
+                            User user = invocation.getArgument(0);
+                            user.setId(3L);
+                            return user;
+                        });
+
+        // when
+        authService.signupWithoutVerification(signupDto);
+
+        // then
+        ArgumentCaptor<User> userCaptor = ArgumentCaptor.forClass(User.class);
+        verify(userRepository).save(userCaptor.capture());
+        assertThat(userCaptor.getValue().getNameKor()).isEqualTo("김어썸");
+        assertThat(userCaptor.getValue().getNameEng()).isEqualTo("Awesome Kim");
+    }
+
+    @Test
     @DisplayName("회원가입 실패 테스트 - 비밀번호 불일치")
     void signup_Fail_PasswordMismatch() {
         // given

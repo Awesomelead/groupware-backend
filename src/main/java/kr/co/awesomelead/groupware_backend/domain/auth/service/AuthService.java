@@ -107,6 +107,8 @@ public class AuthService {
         // 5. DTO를 Entity로 변환
         User user = userMapper.toEntity(joinDto);
         // Mapper에서 처리 안 되는 필드만 설정
+        user.setNameKor(joinDto.getNameKor().trim());
+        user.setNameEng(joinDto.getNameEng().trim());
         user.setPassword(bCryptPasswordEncoder.encode(joinDto.getPassword()));
 
         // 6. DB에 저장

@@ -204,6 +204,72 @@ public class AuthController {
         return ResponseEntity.ok(ApiResponse.onNoContent("휴대폰 인증번호가 발송되었습니다."));
     }
 
+    @Operation(
+            summary = "회원가입 휴대폰 인증번호 발송",
+            description = "기존 회원과 전화번호가 중복되지 않는 경우 회원가입용 인증번호를 발송합니다.")
+    @ApiResponses(
+            value = {
+                @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                        responseCode = "200",
+                        description = "인증번호 발송 성공",
+                        content =
+                                @Content(
+                                        mediaType = "application/json",
+                                        examples =
+                                                @ExampleObject(
+                                                        value =
+                                                                """
+                                        {
+                                          "isSuccess": true,
+                                          "code": "COMMON204",
+                                          "message": "회원가입 휴대폰 인증번호가 발송되었습니다.",
+                                          "result": null
+                                        }
+                                        """))),
+                @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                        responseCode = "400",
+                        description = "입력값 검증 실패",
+                        content =
+                                @Content(
+                                        mediaType = "application/json",
+                                        examples =
+                                                @ExampleObject(
+                                                        value =
+                                                                """
+                                        {
+                                          "isSuccess": false,
+                                          "code": "COMMON400",
+                                          "message": "입력값이 유효하지 않습니다.",
+                                          "result": {
+                                            "phoneNumber": "전화번호는 '-' 없이 10~11자리 숫자로 입력해주세요."
+                                          }
+                                        }
+                                        """))),
+                @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                        responseCode = "409",
+                        description = "이미 가입된 전화번호",
+                        content =
+                                @Content(
+                                        mediaType = "application/json",
+                                        examples =
+                                                @ExampleObject(
+                                                        value =
+                                                                """
+                                        {
+                                          "isSuccess": false,
+                                          "code": "DUPLICATE_PHONE_NUMBER",
+                                          "message": "이미 가입된 전화번호입니다.",
+                                          "result": null
+                                        }
+                                        """)))
+            })
+    @PostMapping("/signup/send-phone-code")
+    public ResponseEntity<ApiResponse<Void>> sendSignupPhoneAuthCode(
+            @Valid @RequestBody SendAuthCodeRequestDto requestDto) {
+        authService.sendSignupPhoneAuthCode(requestDto.getPhoneNumber());
+        return ResponseEntity.ok(ApiResponse.onNoContent("회원가입 휴대폰 인증번호가 발송되었습니다."));
+    }
+
     @Operation(summary = "휴대폰 인증번호 확인", description = "발송된 휴대폰 인증번호를 확인합니다.")
     @ApiResponses(
             value = {

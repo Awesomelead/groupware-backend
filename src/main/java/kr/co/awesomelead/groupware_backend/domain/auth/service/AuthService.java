@@ -74,6 +74,12 @@ public class AuthService {
         }
     }
 
+    @Transactional(readOnly = true)
+    public void sendSignupPhoneAuthCode(String phoneNumber) {
+        validatePhoneNumberNotDuplicated(phoneNumber);
+        phoneAuthService.sendAuthCode(phoneNumber);
+    }
+
     @Transactional
     public SignupResponseDto signup(SignupRequestDto joinDto) {
         return signupInternal(joinDto, true);
@@ -106,28 +112,31 @@ public class AuthService {
             throw new CustomException(ErrorCode.DUPLICATE_LOGIN_ID);
         }
 
-        // 4. 주민등록번호 중복 검사
+        // 4. 전화번호 중복 검사
+        validatePhoneNumberNotDuplicated(joinDto.getPhoneNumber());
+
+        // 5. 주민등록번호 중복 검사
         if (userRepository.existsByRegistrationNumber(joinDto.getRegistrationNumber())) {
             throw new CustomException(ErrorCode.DUPLICATE_REGISTRATION_NUMBER);
         }
 
-        // 5. DTO를 Entity로 변환
+        // 6. DTO를 Entity로 변환
         User user = userMapper.toEntity(joinDto);
         // Mapper에서 처리 안 되는 필드만 설정
         user.setNameKor(joinDto.getNameKor().trim());
         user.setNameEng(joinDto.getNameEng().trim());
         user.setPassword(bCryptPasswordEncoder.encode(joinDto.getPassword()));
 
-        // 6. DB에 저장
+        // 7. DB에 저장
         User savedUser = userRepository.save(user);
 
-        // 7. 인증 완료 플래그 삭제
+        // 8. 인증 완료 플래그 삭제
         if (requireContactVerification) {
             emailAuthService.clearVerification(joinDto.getEmail());
             phoneAuthService.clearVerification(joinDto.getPhoneNumber());
         }
 
-        // 8. Admin 유저에게 신규 가입 알림 전송 (FCM + Notification DB)
+        // 9. Admin 유저에게 신규 가입 알림 전송 (FCM + Notification DB)
         notificationService.sendAlertToAdminsRequiringApproval(
                 NotificationMessage.SIGNUP_ADMIN_ALERT,
                 NotificationDomainType.AUTH,
@@ -136,6 +145,12 @@ public class AuthService {
                 savedUser.getDisplayName());
 
         return new SignupResponseDto(savedUser.getId(), savedUser.getEmail());
+    }
+
+    private void validatePhoneNumberNotDuplicated(String phoneNumber) {
+        if (userRepository.existsByPhoneNumberHash(User.hashValue(phoneNumber))) {
+            throw new CustomException(ErrorCode.DUPLICATE_PHONE_NUMBER);
+        }
     }
 
     @Transactional

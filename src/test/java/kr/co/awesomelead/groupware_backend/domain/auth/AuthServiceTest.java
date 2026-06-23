@@ -277,6 +277,36 @@ class AuthServiceTest {
         }
     }
 
+    @Nested
+    @DisplayName("회원가입 휴대폰 인증번호 발송")
+    class SendSignupPhoneAuthCodeTest {
+
+        @Test
+        @DisplayName("사용 가능한 전화번호이면 인증번호를 발송한다")
+        void sendSignupPhoneAuthCode_Available() {
+            String phoneNumberHash = User.hashValue(TEST_PHONE);
+            when(userRepository.existsByPhoneNumberHash(phoneNumberHash)).thenReturn(false);
+
+            authService.sendSignupPhoneAuthCode(TEST_PHONE);
+
+            verify(userRepository).existsByPhoneNumberHash(phoneNumberHash);
+            verify(phoneAuthService).sendAuthCode(TEST_PHONE);
+        }
+
+        @Test
+        @DisplayName("이미 가입된 전화번호이면 인증번호를 발송하지 않는다")
+        void sendSignupPhoneAuthCode_Duplicate() {
+            String phoneNumberHash = User.hashValue(TEST_PHONE);
+            when(userRepository.existsByPhoneNumberHash(phoneNumberHash)).thenReturn(true);
+
+            assertThatThrownBy(() -> authService.sendSignupPhoneAuthCode(TEST_PHONE))
+                    .isInstanceOf(CustomException.class)
+                    .hasFieldOrPropertyWithValue("errorCode", ErrorCode.DUPLICATE_PHONE_NUMBER);
+
+            verify(phoneAuthService, never()).sendAuthCode(anyString());
+        }
+    }
+
     @Test
     @DisplayName("[테스트용] 인증 우회 회원가입 성공 테스트")
     void signupWithoutVerification_Success() {
@@ -486,6 +516,31 @@ class AuthServiceTest {
                 assertThrows(CustomException.class, () -> authService.signup(signupDto));
 
         assertThat(exception.getErrorCode()).isEqualTo(ErrorCode.DUPLICATE_LOGIN_ID);
+        verify(userRepository, never()).save(any(User.class));
+        verify(notificationService, never())
+                .sendAlertToAdminsRequiringApproval(any(), any(), any(), any(Map.class), any());
+    }
+
+    @Test
+    @DisplayName("회원가입 실패 테스트 - 전화번호 중복")
+    void signup_Fail_DuplicatePhoneNumber() {
+        // given
+        SignupRequestDto signupDto = new SignupRequestDto();
+        signupDto.setEmail("test@example.com");
+        signupDto.setPassword("password123!");
+        signupDto.setPasswordConfirm("password123!");
+        signupDto.setPhoneNumber(TEST_PHONE);
+
+        when(emailAuthService.isEmailVerified(signupDto.getEmail())).thenReturn(true);
+        when(phoneAuthService.isPhoneVerified(signupDto.getPhoneNumber())).thenReturn(true);
+        when(userRepository.existsByEmail(signupDto.getEmail())).thenReturn(false);
+        when(userRepository.existsByPhoneNumberHash(User.hashValue(TEST_PHONE))).thenReturn(true);
+
+        // when & then
+        assertThatThrownBy(() -> authService.signup(signupDto))
+                .isInstanceOf(CustomException.class)
+                .hasFieldOrPropertyWithValue("errorCode", ErrorCode.DUPLICATE_PHONE_NUMBER);
+
         verify(userRepository, never()).save(any(User.class));
         verify(notificationService, never())
                 .sendAlertToAdminsRequiringApproval(any(), any(), any(), any(Map.class), any());

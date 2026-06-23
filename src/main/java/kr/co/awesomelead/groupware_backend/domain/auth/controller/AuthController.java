@@ -10,7 +10,6 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 
 import kr.co.awesomelead.groupware_backend.domain.aligo.service.PhoneAuthService;
-import kr.co.awesomelead.groupware_backend.domain.auth.dto.request.CheckEmailDuplicateRequestDto;
 import kr.co.awesomelead.groupware_backend.domain.auth.dto.request.FindEmailRequestDto;
 import kr.co.awesomelead.groupware_backend.domain.auth.dto.request.LoginRequestDto;
 import kr.co.awesomelead.groupware_backend.domain.auth.dto.request.LogoutRequestDto;
@@ -69,70 +68,6 @@ public class AuthController {
     private final EmailAuthService emailAuthService;
     private final AuthService authService;
     private final IdentityVerificationService identityVerificationService;
-
-    @Operation(summary = "회원가입 이메일 중복 확인", description = "회원가입 전에 이메일 사용 가능 여부를 확인합니다.")
-    @ApiResponses(
-            value = {
-                @io.swagger.v3.oas.annotations.responses.ApiResponse(
-                        responseCode = "200",
-                        description = "사용 가능한 이메일",
-                        content =
-                                @Content(
-                                        mediaType = "application/json",
-                                        examples =
-                                                @ExampleObject(
-                                                        value =
-                                                                """
-                                        {
-                                          "isSuccess": true,
-                                          "code": "COMMON204",
-                                          "message": "사용 가능한 이메일입니다.",
-                                          "result": null
-                                        }
-                                        """))),
-                @io.swagger.v3.oas.annotations.responses.ApiResponse(
-                        responseCode = "400",
-                        description = "입력값 검증 실패",
-                        content =
-                                @Content(
-                                        mediaType = "application/json",
-                                        examples =
-                                                @ExampleObject(
-                                                        value =
-                                                                """
-                                        {
-                                          "isSuccess": false,
-                                          "code": "COMMON400",
-                                          "message": "입력값이 유효하지 않습니다.",
-                                          "result": {
-                                            "email": "유효한 이메일 형식이 아닙니다."
-                                          }
-                                        }
-                                        """))),
-                @io.swagger.v3.oas.annotations.responses.ApiResponse(
-                        responseCode = "409",
-                        description = "이미 사용 중인 이메일",
-                        content =
-                                @Content(
-                                        mediaType = "application/json",
-                                        examples =
-                                                @ExampleObject(
-                                                        value =
-                                                                """
-                                        {
-                                          "isSuccess": false,
-                                          "code": "DUPLICATE_LOGIN_ID",
-                                          "message": "이미 사용 중인 이메일입니다.",
-                                          "result": null
-                                        }
-                                        """)))
-            })
-    @PostMapping("/check-email-duplicate")
-    public ResponseEntity<ApiResponse<Void>> checkEmailDuplicate(
-            @Valid @RequestBody CheckEmailDuplicateRequestDto requestDto) {
-        authService.checkEmailDuplicate(requestDto.getEmail());
-        return ResponseEntity.ok(ApiResponse.onNoContent("사용 가능한 이메일입니다."));
-    }
 
     @Operation(summary = "휴대폰 인증번호 발송", description = "휴대폰 인증번호를 발송합니다.")
     @ApiResponses(
@@ -409,6 +344,89 @@ public class AuthController {
             @Valid @RequestBody SendEmailAuthCodeRequestDto requestDto) {
         emailAuthService.sendAuthCode(requestDto.getEmail());
         return ResponseEntity.ok(ApiResponse.onNoContent("이메일 인증번호가 발송되었습니다."));
+    }
+
+    @Operation(
+            summary = "회원가입 이메일 인증번호 발송",
+            description = "기존 회원과 이메일이 중복되지 않는 경우 회원가입용 인증번호를 발송합니다.")
+    @ApiResponses(
+            value = {
+                @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                        responseCode = "200",
+                        description = "인증번호 발송 성공",
+                        content =
+                                @Content(
+                                        mediaType = "application/json",
+                                        examples =
+                                                @ExampleObject(
+                                                        value =
+                                                                """
+                                        {
+                                          "isSuccess": true,
+                                          "code": "COMMON204",
+                                          "message": "회원가입 이메일 인증번호가 발송되었습니다.",
+                                          "result": null
+                                        }
+                                        """))),
+                @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                        responseCode = "400",
+                        description = "입력값 검증 실패",
+                        content =
+                                @Content(
+                                        mediaType = "application/json",
+                                        examples =
+                                                @ExampleObject(
+                                                        value =
+                                                                """
+                                        {
+                                          "isSuccess": false,
+                                          "code": "COMMON400",
+                                          "message": "입력값이 유효하지 않습니다.",
+                                          "result": {
+                                            "email": "유효한 이메일 형식이 아닙니다."
+                                          }
+                                        }
+                                        """))),
+                @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                        responseCode = "409",
+                        description = "이미 사용 중인 이메일",
+                        content =
+                                @Content(
+                                        mediaType = "application/json",
+                                        examples =
+                                                @ExampleObject(
+                                                        value =
+                                                                """
+                                        {
+                                          "isSuccess": false,
+                                          "code": "DUPLICATE_LOGIN_ID",
+                                          "message": "이미 사용 중인 이메일입니다.",
+                                          "result": null
+                                        }
+                                        """))),
+                @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                        responseCode = "500",
+                        description = "이메일 전송 실패",
+                        content =
+                                @Content(
+                                        mediaType = "application/json",
+                                        examples =
+                                                @ExampleObject(
+                                                        value =
+                                                                """
+                                        {
+                                          "isSuccess": false,
+                                          "code": "EMAIL_SEND_FAILED",
+                                          "message": "이메일 전송에 실패했습니다.",
+                                          "result": null
+                                        }
+                                        """)))
+            })
+    @PostMapping("/signup/send-email-code")
+    public ResponseEntity<ApiResponse<Void>> sendSignupEmailAuthCode(
+            @Valid @RequestBody SendEmailAuthCodeRequestDto requestDto) {
+        authService.sendSignupEmailAuthCode(requestDto.getEmail());
+        return ResponseEntity.ok(ApiResponse.onNoContent("회원가입 이메일 인증번호가 발송되었습니다."));
     }
 
     @Operation(summary = "이메일 인증번호 확인", description = "발송된 이메일 인증번호를 확인합니다.")

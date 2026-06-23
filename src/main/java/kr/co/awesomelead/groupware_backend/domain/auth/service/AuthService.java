@@ -68,10 +68,9 @@ public class AuthService {
     private long accessTokenValidation;
 
     @Transactional(readOnly = true)
-    public void checkEmailDuplicate(String email) {
-        if (userRepository.existsByEmail(email)) {
-            throw new CustomException(ErrorCode.DUPLICATE_LOGIN_ID);
-        }
+    public void sendSignupEmailAuthCode(String email) {
+        validateEmailNotDuplicated(email);
+        emailAuthService.sendAuthCode(email);
     }
 
     @Transactional(readOnly = true)
@@ -150,6 +149,12 @@ public class AuthService {
     private void validatePhoneNumberNotDuplicated(String phoneNumber) {
         if (userRepository.existsByPhoneNumberHash(User.hashValue(phoneNumber))) {
             throw new CustomException(ErrorCode.DUPLICATE_PHONE_NUMBER);
+        }
+    }
+
+    private void validateEmailNotDuplicated(String email) {
+        if (userRepository.existsByEmail(email)) {
+            throw new CustomException(ErrorCode.DUPLICATE_LOGIN_ID);
         }
     }
 

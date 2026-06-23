@@ -251,29 +251,30 @@ class AuthServiceTest {
     }
 
     @Nested
-    @DisplayName("회원가입 이메일 중복 확인")
-    class CheckEmailDuplicateTest {
+    @DisplayName("회원가입 이메일 인증번호 발송")
+    class SendSignupEmailAuthCodeTest {
 
         @Test
-        @DisplayName("사용 가능한 이메일이면 정상적으로 통과한다")
-        void checkEmailDuplicate_Available() {
+        @DisplayName("사용 가능한 이메일이면 인증번호를 발송한다")
+        void sendSignupEmailAuthCode_Available() {
             when(userRepository.existsByEmail(TEST_EMAIL)).thenReturn(false);
 
-            authService.checkEmailDuplicate(TEST_EMAIL);
+            authService.sendSignupEmailAuthCode(TEST_EMAIL);
 
             verify(userRepository).existsByEmail(TEST_EMAIL);
+            verify(emailAuthService).sendAuthCode(TEST_EMAIL);
         }
 
         @Test
-        @DisplayName("이미 사용 중인 이메일이면 DUPLICATE_LOGIN_ID 예외를 던진다")
-        void checkEmailDuplicate_Duplicate() {
+        @DisplayName("이미 사용 중인 이메일이면 인증번호를 발송하지 않는다")
+        void sendSignupEmailAuthCode_Duplicate() {
             when(userRepository.existsByEmail(TEST_EMAIL)).thenReturn(true);
 
-            assertThatThrownBy(() -> authService.checkEmailDuplicate(TEST_EMAIL))
+            assertThatThrownBy(() -> authService.sendSignupEmailAuthCode(TEST_EMAIL))
                     .isInstanceOf(CustomException.class)
                     .hasFieldOrPropertyWithValue("errorCode", ErrorCode.DUPLICATE_LOGIN_ID);
 
-            verify(userRepository).existsByEmail(TEST_EMAIL);
+            verify(emailAuthService, never()).sendAuthCode(anyString());
         }
     }
 

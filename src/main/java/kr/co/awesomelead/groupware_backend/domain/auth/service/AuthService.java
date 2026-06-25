@@ -443,6 +443,7 @@ public class AuthService {
                 "delete from RefreshToken rt where rt.email = :email", "email", user.getEmail());
         deleteByQuery("delete from FcmToken ft where ft.user.id = :userId", "userId", userId);
         deleteByQuery("delete from TopicMember tm where tm.user.id = :userId", "userId", userId);
+        deleteByQuery("delete from Notification n where n.userId = :userId", "userId", userId);
         deleteByQuery(
                 "delete from MyInfoUpdateRequest r where r.reviewedBy.id = :userId",
                 "userId",
@@ -461,10 +462,16 @@ public class AuthService {
                 "userId",
                 userId);
         deleteByQuery("delete from CheckSheet cs where cs.user.id = :userId", "userId", userId);
+        deleteByQuery(
+                "delete from AnnualLeaveDispatchHistory h where h.uploadedBy.id = :userId",
+                "userId",
+                userId);
         deleteByQuery("delete from Payslip p where p.user.id = :userId", "userId", userId);
         deleteByQuery(
-                "delete from VisitRecord vr where vr.visit.user.id = :userId", "userId", userId);
-        deleteByQuery("delete from Visit v where v.user.id = :userId", "userId", userId);
+                "update Payslip p set p.sentBy = null where p.sentBy.id = :userId",
+                "userId",
+                userId);
+        deleteByQuery("delete from VisitHost vh where vh.user.id = :userId", "userId", userId);
         deleteByQuery("delete from NoticeTarget nt where nt.user.id = :userId", "userId", userId);
         deleteByQuery(
                 "delete from MessageAttachment ma where ma.message.sender.id = :userId or"
@@ -485,11 +492,27 @@ public class AuthService {
                 userId);
         deleteByQuery("delete from Notice n where n.author.id = :userId", "userId", userId);
         deleteByQuery(
+                "update ApprovalPersonalViewerTarget vt set vt.targetUser = null where"
+                        + " vt.targetUser.id = :userId",
+                "userId",
+                userId);
+        deleteByQuery(
                 "delete from ApprovalPersonalViewerTarget vt where vt.setting.user.id = :userId",
                 "userId",
                 userId);
         deleteByQuery(
+                "update ApprovalPersonalSetting aps set aps.delegateEnabled = false,"
+                        + " aps.delegateUser = null, aps.delegateStartDate = null,"
+                        + " aps.delegateEndDate = null where aps.delegateUser.id = :userId",
+                "userId",
+                userId);
+        deleteByQuery(
                 "delete from ApprovalPersonalSetting aps where aps.user.id = :userId",
+                "userId",
+                userId);
+        deleteByQuery(
+                "update SavedApprovalLineDetail d set d.targetUser = null where"
+                        + " d.targetUser.id = :userId",
                 "userId",
                 userId);
         deleteByQuery(

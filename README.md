@@ -1,4 +1,4 @@
-# 어썸리드 (Awesomelead)
+# 어썸리드 (Awesomelead) 
 
 ![Status](https://img.shields.io/badge/Status-In_Development-yellow?style=for-the-badge)
 

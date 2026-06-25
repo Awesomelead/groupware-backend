@@ -82,10 +82,10 @@ public class AdminService {
 
         // 유저가 작성한 값들 중 관리자가 수정하는 값
         if (requestDto.getNameKor() != null) {
-            user.setNameKor(requestDto.getNameKor());
+            user.setNameKor(requestDto.getNameKor().trim());
         }
         if (requestDto.getNameEng() != null) {
-            user.setNameEng(requestDto.getNameEng());
+            user.setNameEng(requestDto.getNameEng().trim());
         }
 
         if (requestDto.getNationality() != null) {
@@ -167,6 +167,27 @@ public class AdminService {
 
         // 회원가입 승인 처리 완료 시 관리자 승인대기 알림 해제
         notificationService.resolveRequiresApproval(NotificationDomainType.AUTH, user.getId());
+    }
+
+    @Transactional
+    public void rejectUserRegistration(Long userId, Long adminId) {
+        User admin =
+                userRepository
+                        .findById(adminId)
+                        .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
+        validateRegistrationAuthority(admin);
+
+        User user =
+                userRepository
+                        .findById(userId)
+                        .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
+
+        if (user.getStatus() != Status.PENDING) {
+            throw new CustomException(ErrorCode.DUPLICATED_SIGNUP_REQUEST);
+        }
+
+        notificationService.resolveRequiresApproval(NotificationDomainType.AUTH, user.getId());
+        userRepository.delete(user);
     }
 
     @Transactional(readOnly = true)
@@ -257,10 +278,10 @@ public class AdminService {
                         .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
 
         if (requestDto.getNameKor() != null) {
-            user.setNameKor(requestDto.getNameKor());
+            user.setNameKor(requestDto.getNameKor().trim());
         }
         if (requestDto.getNameEng() != null) {
-            user.setNameEng(requestDto.getNameEng());
+            user.setNameEng(requestDto.getNameEng().trim());
         }
         if (requestDto.getNationality() != null) {
             user.setNationality(requestDto.getNationality());

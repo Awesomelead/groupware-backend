@@ -81,7 +81,7 @@ public class NoticeService {
         Notice notice = noticeMapper.toNoticeEntity(requestDto, author);
         notice.update(
                 null,
-                null,
+                requestDto.getTitle(),
                 null,
                 null,
                 null,

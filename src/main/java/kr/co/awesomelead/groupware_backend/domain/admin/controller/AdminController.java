@@ -603,6 +603,92 @@ public class AdminController {
     }
 
     @Operation(
+            summary = "회원가입 반려",
+            description =
+                    "대기 상태(PENDING)인 회원가입 신청을 반려하고 신청자 계정을 삭제합니다. "
+                            + "삭제 후 동일한 이메일, 전화번호, 주민등록번호로 다시 가입할 수 있습니다.")
+    @ApiResponses(
+            value = {
+                @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                        responseCode = "200",
+                        description = "반려 성공",
+                        content =
+                                @Content(
+                                        mediaType = "application/json",
+                                        examples =
+                                                @ExampleObject(
+                                                        value =
+                                                                """
+                                        {
+                                          "isSuccess": true,
+                                          "code": "COMMON200",
+                                          "message": "요청에 성공했습니다.",
+                                          "result": "1번 사용자의 회원가입 신청이 반려되었습니다."
+                                        }
+                                        """))),
+                @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                        responseCode = "403",
+                        description = "회원가입 승인 권한 없음",
+                        content =
+                                @Content(
+                                        mediaType = "application/json",
+                                        examples =
+                                                @ExampleObject(
+                                                        value =
+                                                                """
+                                        {
+                                          "isSuccess": false,
+                                          "code": "NO_AUTHORITY_FOR_REGISTRATION",
+                                          "message": "회원가입 승인 권한이 없습니다.",
+                                          "result": null
+                                        }
+                                        """))),
+                @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                        responseCode = "404",
+                        description = "사용자를 찾을 수 없음",
+                        content =
+                                @Content(
+                                        mediaType = "application/json",
+                                        examples =
+                                                @ExampleObject(
+                                                        value =
+                                                                """
+                                        {
+                                          "isSuccess": false,
+                                          "code": "USER_NOT_FOUND",
+                                          "message": "해당 사용자를 찾을 수 없습니다.",
+                                          "result": null
+                                        }
+                                        """))),
+                @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                        responseCode = "409",
+                        description = "이미 처리된 가입 신청",
+                        content =
+                                @Content(
+                                        mediaType = "application/json",
+                                        examples =
+                                                @ExampleObject(
+                                                        value =
+                                                                """
+                                        {
+                                          "isSuccess": false,
+                                          "code": "DUPLICATED_SIGNUP_REQUEST",
+                                          "message": "이미 처리된 가입 요청입니다.",
+                                          "result": null
+                                        }
+                                        """)))
+            })
+    @PatchMapping("/users/{userId}/reject")
+    public ResponseEntity<ApiResponse<String>> rejectUser(
+            @Parameter(description = "반려할 사용자의 ID", example = "1", required = true)
+                    @PathVariable("userId")
+                    Long userId,
+            @Parameter(hidden = true) @AuthenticationPrincipal CustomUserDetails userDetails) {
+        adminService.rejectUserRegistration(userId, userDetails.getId());
+        return ResponseEntity.ok(ApiResponse.onSuccess(userId + "번 사용자의 회원가입 신청이 반려되었습니다."));
+    }
+
+    @Operation(
             summary = "사용자 역할(Role) 변경",
             description = "특정 사용자의 역할을 변경합니다. 관리자(`ADMIN`) 또는 마스터 관리자(`MASTER_ADMIN`) 권한이 필요합니다.")
     @ApiResponses(

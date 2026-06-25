@@ -123,7 +123,7 @@ public class EduReportServiceTest {
         // given
         EduReportRequestDto requestDto =
                 EduReportRequestDto.builder()
-                        .title("교육 보고서 제목")
+                        .title("  교육 보고서 제목  ")
                         .content("교육 보고서 내용")
                         .eduType(EduType.SAFETY)
                         .categoryId(1L)
@@ -1709,7 +1709,7 @@ public class EduReportServiceTest {
 
         EduReportUpdateRequestDto requestDto =
                 EduReportUpdateRequestDto.builder()
-                        .title("수정 제목")
+                        .title("  수정 제목  ")
                         .content("수정 내용")
                         .pinned(true)
                         .signatureRequired(false)

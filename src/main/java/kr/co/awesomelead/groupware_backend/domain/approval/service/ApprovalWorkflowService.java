@@ -898,7 +898,7 @@ public class ApprovalWorkflowService {
                                         ? document.getContentDelta()
                                         : ""));
 
-        document.setTitle(resolvedTitle);
+        document.setTitle(resolvedTitle.strip());
         document.setContentDelta(resolvedContentDelta);
         document.setContentHtml(contentHtml);
 

@@ -13,6 +13,8 @@ import jakarta.validation.Valid;
 import kr.co.awesomelead.groupware_backend.domain.education.dto.request.EducationCategoryCreateRequestDto;
 import kr.co.awesomelead.groupware_backend.domain.education.dto.request.EducationCategoryReorderRequestDto;
 import kr.co.awesomelead.groupware_backend.domain.education.dto.request.EducationCategoryUpdateRequestDto;
+import kr.co.awesomelead.groupware_backend.domain.education.dto.response.AdminEducationCategoryNodeDto;
+import kr.co.awesomelead.groupware_backend.domain.education.enums.EducationCategoryType;
 import kr.co.awesomelead.groupware_backend.domain.education.service.AdminEducationCategoryService;
 import kr.co.awesomelead.groupware_backend.domain.user.dto.CustomUserDetails;
 import kr.co.awesomelead.groupware_backend.global.common.response.ApiResponse;
@@ -21,12 +23,16 @@ import lombok.RequiredArgsConstructor;
 
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+
+import java.util.List;
 
 @RestController
 @RequiredArgsConstructor
@@ -35,6 +41,19 @@ import org.springframework.web.bind.annotation.RestController;
 public class AdminEducationCategoryController {
 
     private final AdminEducationCategoryService adminEducationCategoryService;
+
+    @Operation(
+            summary = "관리자용 교육 카테고리 트리 조회",
+            description = "유형(PSM/SAFETY)에 해당하는 활성·비활성 카테고리 전체를 트리로 조회합니다.")
+    @GetMapping
+    public ResponseEntity<ApiResponse<List<AdminEducationCategoryNodeDto>>> getCategoryTree(
+            @Parameter(hidden = true) @AuthenticationPrincipal CustomUserDetails userDetails,
+            @Parameter(description = "카테고리 유형", example = "SAFETY", required = true) @RequestParam
+                    EducationCategoryType type) {
+        return ResponseEntity.ok(
+                ApiResponse.onSuccess(
+                        adminEducationCategoryService.getCategoryTree(userDetails.getId(), type)));
+    }
 
     @Operation(summary = "교육 카테고리 생성", description = "관리자가 교육 카테고리를 생성합니다.")
     @ApiResponses(

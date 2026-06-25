@@ -1125,6 +1125,17 @@ class AuthServiceTest {
                     .thenReturn(mockQuery);
         }
 
+        private List<String> executeDeleteAndCaptureJpql(Long userId) {
+            given(userRepository.findById(userId)).willReturn(Optional.of(testUser));
+
+            authService.deleteUser(userId);
+
+            ArgumentCaptor<String> jpqlCaptor = ArgumentCaptor.forClass(String.class);
+            verify(entityManager, org.mockito.Mockito.atLeastOnce())
+                    .createQuery(jpqlCaptor.capture());
+            return jpqlCaptor.getAllValues();
+        }
+
         @Test
         @DisplayName("성공: deleteUser 실행 시 AnnualLeave JPQL 삭제 쿼리가 실행되지 않는다")
         void deleteUser_doesNotExecuteAnnualLeaveJpqlQuery() {
@@ -1142,7 +1153,12 @@ class AuthServiceTest {
 
             List<String> executedJpqls = jpqlCaptor.getAllValues();
             boolean annualLeaveQueryFound =
-                    executedJpqls.stream().anyMatch(jpql -> jpql.contains("AnnualLeave"));
+                    executedJpqls.stream()
+                            .anyMatch(
+                                    jpql ->
+                                            jpql.contains("AnnualLeave")
+                                                    && !jpql.contains(
+                                                            "AnnualLeaveDispatchHistory"));
             assertThat(annualLeaveQueryFound)
                     .as(
                             "AnnualLeave는 CascadeType.ALL + orphanRemoval=true로 매핑되어 있으므로"
@@ -1420,7 +1436,7 @@ class AuthServiceTest {
         @Test
         @DisplayName(
                 "성공: deleteUser 실행 시 ApprovalPersonalSetting 삭제가 ApprovalPersonalViewerTarget 삭제"
-                        + " 직후에 실행된다 - 호출 순서 검증")
+                        + " 이후에 실행된다 - 호출 순서 검증")
         void deleteUser_deletesApprovalPersonalSettingAfterViewerTarget_orderCheck() {
             // given
             Long userId = 1L;
@@ -1440,10 +1456,14 @@ class AuthServiceTest {
             int settingIdx = -1;
             for (int i = 0; i < executedJpqls.size(); i++) {
                 String jpql = executedJpqls.get(i);
-                if (jpql.contains("ApprovalPersonalViewerTarget") && viewerTargetIdx == -1) {
+                if (jpql.contains("ApprovalPersonalViewerTarget")
+                        && jpql.contains("vt.setting.user.id")
+                        && viewerTargetIdx == -1) {
                     viewerTargetIdx = i;
                 }
-                if (jpql.contains("ApprovalPersonalSetting") && settingIdx == -1) {
+                if (jpql.contains("ApprovalPersonalSetting")
+                        && jpql.contains("aps.user.id")
+                        && settingIdx == -1) {
                     settingIdx = i;
                 }
             }
@@ -1455,8 +1475,8 @@ class AuthServiceTest {
                     .as("ApprovalPersonalSetting 삭제 JPQL이 실행되어야 한다")
                     .isGreaterThanOrEqualTo(0);
             assertThat(settingIdx)
-                    .as("ApprovalPersonalSetting 삭제는 ApprovalPersonalViewerTarget 삭제 직후에 실행되어야 한다")
-                    .isEqualTo(viewerTargetIdx + 1);
+                    .as("ApprovalPersonalSetting 삭제는 ApprovalPersonalViewerTarget 삭제 이후에 실행되어야 한다")
+                    .isGreaterThan(viewerTargetIdx);
         }
 
         @Test
@@ -1489,7 +1509,7 @@ class AuthServiceTest {
 
         @Test
         @DisplayName(
-                "성공: deleteUser 실행 시 SavedApprovalLineDetail 삭제가 ApprovalPersonalSetting 삭제 직후에"
+                "성공: deleteUser 실행 시 SavedApprovalLineDetail 삭제가 ApprovalPersonalSetting 삭제 이후에"
                         + " 실행된다 - 호출 순서 검증")
         void deleteUser_deletesSavedApprovalLineDetailAfterApprovalPersonalSetting_orderCheck() {
             // given
@@ -1510,10 +1530,14 @@ class AuthServiceTest {
             int savedLineDetailIdx = -1;
             for (int i = 0; i < executedJpqls.size(); i++) {
                 String jpql = executedJpqls.get(i);
-                if (jpql.contains("ApprovalPersonalSetting") && settingIdx == -1) {
+                if (jpql.contains("ApprovalPersonalSetting")
+                        && jpql.contains("aps.user.id")
+                        && settingIdx == -1) {
                     settingIdx = i;
                 }
-                if (jpql.contains("SavedApprovalLineDetail") && savedLineDetailIdx == -1) {
+                if (jpql.contains("SavedApprovalLineDetail")
+                        && jpql.contains("d.savedLine.ownerUser.id")
+                        && savedLineDetailIdx == -1) {
                     savedLineDetailIdx = i;
                 }
             }
@@ -1525,8 +1549,8 @@ class AuthServiceTest {
                     .as("SavedApprovalLineDetail 삭제 JPQL이 실행되어야 한다")
                     .isGreaterThanOrEqualTo(0);
             assertThat(savedLineDetailIdx)
-                    .as("SavedApprovalLineDetail 삭제는 ApprovalPersonalSetting 삭제 직후에 실행되어야 한다")
-                    .isEqualTo(settingIdx + 1);
+                    .as("SavedApprovalLineDetail 삭제는 ApprovalPersonalSetting 삭제 이후에 실행되어야 한다")
+                    .isGreaterThan(settingIdx);
         }
 
         @Test
@@ -1581,7 +1605,9 @@ class AuthServiceTest {
             int savedLineIdx = -1;
             for (int i = 0; i < executedJpqls.size(); i++) {
                 String jpql = executedJpqls.get(i);
-                if (jpql.contains("SavedApprovalLineDetail") && savedLineDetailIdx == -1) {
+                if (jpql.contains("SavedApprovalLineDetail")
+                        && jpql.contains("d.savedLine.ownerUser.id")
+                        && savedLineDetailIdx == -1) {
                     savedLineDetailIdx = i;
                 }
                 if (jpql.contains("SavedApprovalLine")
@@ -2438,6 +2464,94 @@ class AuthServiceTest {
                             "RequestHistory.processedBy NULLIFY는 RequestHistory 삭제(rh.user.id) 직전에"
                                     + " 실행되어야 한다")
                     .isEqualTo(deleteRequestHistoryIdx - 1);
+        }
+
+        @Test
+        @DisplayName("성공: deleteUser 실행 시 존재하지 않는 Visit.user JPQL 대신 VisitHost 기준으로 정리한다")
+        void deleteUser_deletesVisitHostInsteadOfInvalidVisitUserJpql() {
+            // given
+            Long userId = 1L;
+
+            // when
+            List<String> executedJpqls = executeDeleteAndCaptureJpql(userId);
+
+            // then
+            assertThat(executedJpqls)
+                    .as("Visit 엔티티에는 user 필드가 없으므로 visit.user JPQL을 실행하면 안 된다")
+                    .noneMatch(
+                            jpql ->
+                                    jpql.contains("vr.visit.user.id")
+                                            || jpql.contains("v.user.id"));
+            assertThat(executedJpqls)
+                    .as("방문 담당자 참조는 VisitHost 조인 테이블에서 삭제되어야 한다")
+                    .anyMatch(
+                            jpql ->
+                                    jpql.contains("VisitHost")
+                                            && jpql.contains("vh.user.id")
+                                            && jpql.contains(":userId"));
+        }
+
+        @Test
+        @DisplayName("성공: deleteUser 실행 시 발송자/업로더/대리자/대상자 참조를 정리한다")
+        void deleteUser_cleansNonOwnerUserReferences() {
+            // given
+            Long userId = 1L;
+
+            // when
+            List<String> executedJpqls = executeDeleteAndCaptureJpql(userId);
+
+            // then
+            assertThat(executedJpqls)
+                    .as("연차 발송 이력 업로더 참조가 삭제되어야 한다")
+                    .anyMatch(
+                            jpql ->
+                                    jpql.contains("AnnualLeaveDispatchHistory")
+                                            && jpql.contains("h.uploadedBy.id"));
+            assertThat(executedJpqls)
+                    .as("급여명세서 발송자 참조가 NULL 처리되어야 한다")
+                    .anyMatch(
+                            jpql ->
+                                    jpql.contains("Payslip")
+                                            && jpql.contains("p.sentBy")
+                                            && jpql.contains("null"));
+            assertThat(executedJpqls)
+                    .as("개인 결재 설정 대리자 참조가 NULL 처리되어야 한다")
+                    .anyMatch(
+                            jpql ->
+                                    jpql.contains("ApprovalPersonalSetting")
+                                            && jpql.contains("aps.delegateUser")
+                                            && jpql.contains("aps.delegateEnabled = false"));
+            assertThat(executedJpqls)
+                    .as("개인 결재 기본 열람자 대상 사용자 참조가 NULL 처리되어야 한다")
+                    .anyMatch(
+                            jpql ->
+                                    jpql.contains("ApprovalPersonalViewerTarget")
+                                            && jpql.contains("vt.targetUser"));
+            assertThat(executedJpqls)
+                    .as("저장 결재선 상세 대상 사용자 참조가 NULL 처리되어야 한다")
+                    .anyMatch(
+                            jpql ->
+                                    jpql.contains("SavedApprovalLineDetail")
+                                            && jpql.contains("d.targetUser"));
+        }
+
+        @Test
+        @DisplayName("성공: deleteUser 실행 시 사용자 알림 데이터를 삭제한다")
+        void deleteUser_deletesNotifications() {
+            // given
+            Long userId = 1L;
+
+            // when
+            List<String> executedJpqls = executeDeleteAndCaptureJpql(userId);
+
+            // then
+            assertThat(executedJpqls)
+                    .as("계정 삭제 시 userId 기반 알림 데이터도 함께 삭제되어야 한다")
+                    .anyMatch(
+                            jpql ->
+                                    jpql.contains("Notification")
+                                            && jpql.contains("n.userId")
+                                            && jpql.contains(":userId"));
         }
     }
 }

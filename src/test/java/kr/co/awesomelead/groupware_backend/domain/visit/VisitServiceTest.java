@@ -354,13 +354,10 @@ public class VisitServiceTest {
             @DisplayName("VISIT_NOT_FOUND 예외를 던진다.")
             void it_throws_visit_not_found() {
                 // given
-                VisitSearchRequestDto dto =
-                        new VisitSearchRequestDto("홍길동", "01012345678", "1234");
+                VisitSearchRequestDto dto = new VisitSearchRequestDto("홍길동", "01012345678", "1234");
                 given(
-                                visitRepository
-                                        .findByVisitorNameAndPhoneNumberHashOrderByIdDesc(
-                                                dto.getName(),
-                                                Visit.hashValue(dto.getPhoneNumber())))
+                                visitRepository.findByVisitorNameAndPhoneNumberHashOrderByIdDesc(
+                                        dto.getName(), Visit.hashValue(dto.getPhoneNumber())))
                         .willReturn(List.of());
 
                 // when & then
@@ -378,14 +375,11 @@ public class VisitServiceTest {
             @DisplayName("VISITOR_AUTHENTICATION_FAILED 예외를 던진다.")
             void it_throws_visitor_authentication_failed() {
                 // given
-                VisitSearchRequestDto dto =
-                        new VisitSearchRequestDto("홍길동", "01012345678", "1234");
+                VisitSearchRequestDto dto = new VisitSearchRequestDto("홍길동", "01012345678", "1234");
                 Visit visit = createBaseVisit(VisitStatus.NOT_VISITED, VisitCategory.PRE_ONE_DAY);
                 given(
-                                visitRepository
-                                        .findByVisitorNameAndPhoneNumberHashOrderByIdDesc(
-                                                dto.getName(),
-                                                Visit.hashValue(dto.getPhoneNumber())))
+                                visitRepository.findByVisitorNameAndPhoneNumberHashOrderByIdDesc(
+                                        dto.getName(), Visit.hashValue(dto.getPhoneNumber())))
                         .willReturn(List.of(visit));
                 given(passwordEncoder.matches(dto.getPassword(), ENCODED_PASSWORD))
                         .willReturn(false);
@@ -405,14 +399,11 @@ public class VisitServiceTest {
             @DisplayName("내 방문 목록을 반환한다.")
             void it_returns_my_visit_list() {
                 // given
-                VisitSearchRequestDto dto =
-                        new VisitSearchRequestDto("홍길동", "01012345678", "1234");
+                VisitSearchRequestDto dto = new VisitSearchRequestDto("홍길동", "01012345678", "1234");
                 Visit visit = createBaseVisit(VisitStatus.NOT_VISITED, VisitCategory.PRE_ONE_DAY);
                 given(
-                                visitRepository
-                                        .findByVisitorNameAndPhoneNumberHashOrderByIdDesc(
-                                                dto.getName(),
-                                                Visit.hashValue(dto.getPhoneNumber())))
+                                visitRepository.findByVisitorNameAndPhoneNumberHashOrderByIdDesc(
+                                        dto.getName(), Visit.hashValue(dto.getPhoneNumber())))
                         .willReturn(List.of(visit));
                 given(passwordEncoder.matches(dto.getPassword(), ENCODED_PASSWORD))
                         .willReturn(true);

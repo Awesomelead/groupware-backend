@@ -1149,6 +1149,7 @@ public class AdminController {
         }
         return ResponseEntity.ok()
                 .header("Content-Disposition", "attachment; filename*=UTF-8''" + encodedFilename)
+                .header("Access-Control-Expose-Headers", "Content-Disposition")
                 .header(
                         "Content-Type",
                         "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")

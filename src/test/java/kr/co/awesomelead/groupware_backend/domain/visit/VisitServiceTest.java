@@ -26,6 +26,8 @@ import kr.co.awesomelead.groupware_backend.domain.visit.dto.request.MyVisitUpdat
 import kr.co.awesomelead.groupware_backend.domain.visit.dto.request.OnSiteVisitRequestDto;
 import kr.co.awesomelead.groupware_backend.domain.visit.dto.request.OneDayVisitRequestDto;
 import kr.co.awesomelead.groupware_backend.domain.visit.dto.request.VisitProcessRequestDto;
+import kr.co.awesomelead.groupware_backend.domain.visit.dto.request.VisitSearchRequestDto;
+import kr.co.awesomelead.groupware_backend.domain.visit.dto.response.MyVisitListResponseDto;
 import kr.co.awesomelead.groupware_backend.domain.visit.dto.response.VisitListResponseDto;
 import kr.co.awesomelead.groupware_backend.domain.visit.entity.Visit;
 import kr.co.awesomelead.groupware_backend.domain.visit.entity.VisitHost;
@@ -337,6 +339,81 @@ public class VisitServiceTest {
                                                 .isEqualTo("s3-key-123");
                                         return true;
                                     }));
+        }
+    }
+
+    @Nested
+    @DisplayName("getMyVisitList 메서드는")
+    class Describe_getMyVisitList {
+
+        @Nested
+        @DisplayName("이름과 전화번호에 해당하는 방문 정보가 없으면")
+        class Context_with_no_visit {
+
+            @Test
+            @DisplayName("VISIT_NOT_FOUND 예외를 던진다.")
+            void it_throws_visit_not_found() {
+                // given
+                VisitSearchRequestDto dto = new VisitSearchRequestDto("홍길동", "01012345678", "1234");
+                given(
+                                visitRepository.findByVisitorNameAndPhoneNumberHashOrderByIdDesc(
+                                        dto.getName(), Visit.hashValue(dto.getPhoneNumber())))
+                        .willReturn(List.of());
+
+                // when & then
+                assertThatThrownBy(() -> visitService.getMyVisitList(dto))
+                        .isInstanceOf(CustomException.class)
+                        .hasMessage(ErrorCode.VISIT_NOT_FOUND.getMessage());
+            }
+        }
+
+        @Nested
+        @DisplayName("방문 정보는 있지만 비밀번호가 일치하지 않으면")
+        class Context_with_invalid_password {
+
+            @Test
+            @DisplayName("VISITOR_AUTHENTICATION_FAILED 예외를 던진다.")
+            void it_throws_visitor_authentication_failed() {
+                // given
+                VisitSearchRequestDto dto = new VisitSearchRequestDto("홍길동", "01012345678", "1234");
+                Visit visit = createBaseVisit(VisitStatus.NOT_VISITED, VisitCategory.PRE_ONE_DAY);
+                given(
+                                visitRepository.findByVisitorNameAndPhoneNumberHashOrderByIdDesc(
+                                        dto.getName(), Visit.hashValue(dto.getPhoneNumber())))
+                        .willReturn(List.of(visit));
+                given(passwordEncoder.matches(dto.getPassword(), ENCODED_PASSWORD))
+                        .willReturn(false);
+
+                // when & then
+                assertThatThrownBy(() -> visitService.getMyVisitList(dto))
+                        .isInstanceOf(CustomException.class)
+                        .hasMessage(ErrorCode.VISITOR_AUTHENTICATION_FAILED.getMessage());
+            }
+        }
+
+        @Nested
+        @DisplayName("방문 정보와 비밀번호가 모두 일치하면")
+        class Context_with_valid_credentials {
+
+            @Test
+            @DisplayName("내 방문 목록을 반환한다.")
+            void it_returns_my_visit_list() {
+                // given
+                VisitSearchRequestDto dto = new VisitSearchRequestDto("홍길동", "01012345678", "1234");
+                Visit visit = createBaseVisit(VisitStatus.NOT_VISITED, VisitCategory.PRE_ONE_DAY);
+                given(
+                                visitRepository.findByVisitorNameAndPhoneNumberHashOrderByIdDesc(
+                                        dto.getName(), Visit.hashValue(dto.getPhoneNumber())))
+                        .willReturn(List.of(visit));
+                given(passwordEncoder.matches(dto.getPassword(), ENCODED_PASSWORD))
+                        .willReturn(true);
+
+                // when
+                List<MyVisitListResponseDto> result = visitService.getMyVisitList(dto);
+
+                // then
+                assertThat(result).hasSize(1);
+            }
         }
     }
 

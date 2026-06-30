@@ -295,11 +295,25 @@ public class VisitService {
                 visitRepository.findByVisitorNameAndPhoneNumberHashOrderByIdDesc(
                         dto.getName(), inputPhoneHash);
 
-        return visits.stream()
-                .filter(visit -> StringUtils.hasText(visit.getPassword()))
-                .filter(visit -> passwordEncoder.matches(dto.getPassword(), visit.getPassword()))
-                .map(visitMapper::toMyVisitListResponseDto)
-                .toList();
+        if (visits.isEmpty()) {
+            throw new CustomException(ErrorCode.VISIT_NOT_FOUND);
+        }
+
+        List<MyVisitListResponseDto> matchedVisits =
+                visits.stream()
+                        .filter(visit -> StringUtils.hasText(visit.getPassword()))
+                        .filter(
+                                visit ->
+                                        passwordEncoder.matches(
+                                                dto.getPassword(), visit.getPassword()))
+                        .map(visitMapper::toMyVisitListResponseDto)
+                        .toList();
+
+        if (matchedVisits.isEmpty()) {
+            throw new CustomException(ErrorCode.VISITOR_AUTHENTICATION_FAILED);
+        }
+
+        return matchedVisits;
     }
 
     @Transactional(readOnly = true)

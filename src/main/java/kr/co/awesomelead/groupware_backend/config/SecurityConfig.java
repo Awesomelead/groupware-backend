@@ -104,6 +104,7 @@ public class SecurityConfig {
                                         "/api/auth/find-email",
                                         "/api/auth/reset-password/phone",
                                         "/api/auth/reset-password/email",
+                                        "/api/users/list",
                                         "/api/visits/**") // 내방객이 본인 방문기록 조회
                                 .permitAll()
                                 .requestMatchers(

@@ -583,6 +583,29 @@ public class SafetyTrainingSessionService {
     @Transactional
     public Long update(
             Long sessionId, Long userId, SafetyTrainingSessionUpdateRequestDto requestDto) {
+        try {
+            return updateInternal(sessionId, userId, requestDto, null);
+        } catch (IOException e) {
+            throw new IllegalStateException("안전보건 교육 첨부파일 저장 중 오류가 발생했습니다.", e);
+        }
+    }
+
+    @Transactional(rollbackFor = IOException.class)
+    public Long update(
+            Long sessionId,
+            Long userId,
+            SafetyTrainingSessionUpdateRequestDto requestDto,
+            List<MultipartFile> attachments)
+            throws IOException {
+        return updateInternal(sessionId, userId, requestDto, attachments);
+    }
+
+    private Long updateInternal(
+            Long sessionId,
+            Long userId,
+            SafetyTrainingSessionUpdateRequestDto requestDto,
+            List<MultipartFile> attachments)
+            throws IOException {
         User actor =
                 userRepository
                         .findById(userId)
@@ -644,6 +667,9 @@ public class SafetyTrainingSessionService {
         session.setAttendedCount(0);
         session.setAbsentCount(0);
         session.setAbsentReasonSummary(null);
+
+        deleteAttachments(session, requestDto.getDeleteAttachmentIds());
+        saveAttachments(session, attachments);
 
         return session.getId();
     }
@@ -811,6 +837,32 @@ public class SafetyTrainingSessionService {
         } catch (IOException | RuntimeException e) {
             uploadedKeys.forEach(this::safeDeleteFile);
             throw e;
+        }
+    }
+
+    private void deleteAttachments(
+            SafetyTrainingSession session, List<Long> deleteAttachmentIds) {
+        if (deleteAttachmentIds == null || deleteAttachmentIds.isEmpty()) {
+            return;
+        }
+
+        for (Long attachmentId : new java.util.LinkedHashSet<>(deleteAttachmentIds)) {
+            SafetyTrainingSessionAttachment attachment =
+                    attachmentRepository
+                            .findById(attachmentId)
+                            .orElseThrow(
+                                    () ->
+                                            new CustomException(
+                                                    ErrorCode
+                                                            .SAFETY_TRAINING_ATTACHMENT_NOT_FOUND));
+
+            if (attachment.getSession() == null
+                    || !attachment.getSession().getId().equals(session.getId())) {
+                throw new CustomException(ErrorCode.SAFETY_TRAINING_ATTACHMENT_NOT_FOUND);
+            }
+
+            attachmentRepository.delete(attachment);
+            safeDeleteFile(attachment.getFileKey());
         }
     }
 

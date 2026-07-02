@@ -15,6 +15,7 @@ import static org.mockito.Mockito.when;
 import kr.co.awesomelead.groupware_backend.domain.department.enums.Company;
 import kr.co.awesomelead.groupware_backend.domain.notification.service.NotificationService;
 import kr.co.awesomelead.groupware_backend.domain.safetytraining.dto.request.SafetyTrainingSessionCreateRequestDto;
+import kr.co.awesomelead.groupware_backend.domain.safetytraining.dto.request.SafetyTrainingSessionUpdateRequestDto;
 import kr.co.awesomelead.groupware_backend.domain.safetytraining.dto.response.SafetyTrainingSessionDetailResponseDto;
 import kr.co.awesomelead.groupware_backend.domain.safetytraining.entity.SafetyTrainingSession;
 import kr.co.awesomelead.groupware_backend.domain.safetytraining.entity.SafetyTrainingSessionAttachment;
@@ -190,6 +191,69 @@ class SafetyTrainingSessionServiceTest {
             assertThat(sessionId).isEqualTo(SESSION_ID);
             verify(s3Service, never()).uploadFile(placeholder);
             verify(attachmentRepository, never()).saveAll(anyList());
+        }
+    }
+
+    @Nested
+    @DisplayName("update - 안전보건교육 세션 수정")
+    class Update {
+
+        @Test
+        @DisplayName("deleteAttachmentIds로 기존 첨부파일을 삭제하고 새 첨부파일을 추가한다")
+        void update_deletesSelectedAttachmentsAndAddsNewAttachments() throws Exception {
+            // given
+            SafetyTrainingSessionUpdateRequestDto requestDto = updateRequestDto();
+            ReflectionTestUtils.setField(requestDto, "deleteAttachmentIds", List.of(1L));
+            SafetyTrainingSessionAttachment oldAttachment =
+                    SafetyTrainingSessionAttachment.builder()
+                            .id(1L)
+                            .session(session)
+                            .originalFileName("기존자료.pdf")
+                            .fileKey("safety-training/old-file.pdf")
+                            .contentType("application/pdf")
+                            .fileSize(100L)
+                            .build();
+            MockMultipartFile newAttachment =
+                    new MockMultipartFile(
+                            "attachments",
+                            "새자료.pdf",
+                            "application/pdf",
+                            "new-file".getBytes());
+
+            when(userRepository.findById(USER_ID)).thenReturn(Optional.of(actor));
+            when(sessionRepository.findById(SESSION_ID)).thenReturn(Optional.of(session));
+            when(attendeeRepository.countBySessionIdAndStatus(
+                            SESSION_ID, SafetyTrainingAttendeeStatus.SIGNED))
+                    .thenReturn(0L);
+            when(objectMapper.writeValueAsString(List.of(SafetyEducationMethod.LECTURE)))
+                    .thenReturn("[\"LECTURE\"]");
+            when(userRepository.findAllByCompanyAndStatusExcludingPosition(
+                            Company.AWESOME, Status.AVAILABLE, Position.CEO))
+                    .thenReturn(List.of(actor));
+            when(attachmentRepository.findById(1L)).thenReturn(Optional.of(oldAttachment));
+            when(s3Service.uploadFile(newAttachment)).thenReturn("safety-training/new-file.pdf");
+
+            // when
+            Long updatedId =
+                    safetyTrainingSessionService.update(
+                            SESSION_ID, USER_ID, requestDto, List.of(newAttachment));
+
+            // then
+            assertThat(updatedId).isEqualTo(SESSION_ID);
+            verify(attachmentRepository).delete(oldAttachment);
+            verify(s3Service).deleteFile("safety-training/old-file.pdf");
+            verify(attachmentRepository)
+                    .saveAll(
+                            argThat(
+                                    attachments -> {
+                                        SafetyTrainingSessionAttachment savedAttachment =
+                                                attachments.iterator().next();
+                                        assertThat(savedAttachment.getOriginalFileName())
+                                                .isEqualTo("새자료.pdf");
+                                        assertThat(savedAttachment.getFileKey())
+                                                .isEqualTo("safety-training/new-file.pdf");
+                                        return true;
+                                    }));
         }
     }
 
@@ -381,6 +445,24 @@ class SafetyTrainingSessionServiceTest {
         ReflectionTestUtils.setField(requestDto, "startAt", LocalDateTime.of(2026, 7, 2, 9, 0));
         ReflectionTestUtils.setField(requestDto, "endAt", LocalDateTime.of(2026, 7, 2, 10, 0));
         ReflectionTestUtils.setField(requestDto, "educationContent", "교육 내용");
+        ReflectionTestUtils.setField(requestDto, "place", "교육장");
+        ReflectionTestUtils.setField(requestDto, "instructorUserId", USER_ID);
+        ReflectionTestUtils.setField(requestDto, "companyScope", Company.AWESOME);
+        return requestDto;
+    }
+
+    private SafetyTrainingSessionUpdateRequestDto updateRequestDto() {
+        SafetyTrainingSessionUpdateRequestDto requestDto =
+                new SafetyTrainingSessionUpdateRequestDto();
+        ReflectionTestUtils.setField(requestDto, "title", "2026년 안전보건교육 수정");
+        ReflectionTestUtils.setField(requestDto, "educationType", SafetyEducationType.REGULAR);
+        ReflectionTestUtils.setField(
+                requestDto, "educationMethods", List.of(SafetyEducationMethod.LECTURE));
+        ReflectionTestUtils.setField(
+                requestDto, "startAt", LocalDateTime.of(2026, 7, 2, 9, 0));
+        ReflectionTestUtils.setField(
+                requestDto, "endAt", LocalDateTime.of(2026, 7, 2, 10, 0));
+        ReflectionTestUtils.setField(requestDto, "educationContent", "교육 내용 수정");
         ReflectionTestUtils.setField(requestDto, "place", "교육장");
         ReflectionTestUtils.setField(requestDto, "instructorUserId", USER_ID);
         ReflectionTestUtils.setField(requestDto, "companyScope", Company.AWESOME);

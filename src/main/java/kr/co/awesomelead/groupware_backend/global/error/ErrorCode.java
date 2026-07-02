@@ -123,6 +123,7 @@ public enum ErrorCode {
     DEPARTMENT_NOT_FOUND(HttpStatus.NOT_FOUND, "해당 부서를 찾을 수 없습니다."),
     EDU_REPORT_NOT_FOUND(HttpStatus.NOT_FOUND, "해당 교육 게시물을 찾을 수 없습니다."),
     EDU_ATTACHMENT_NOT_FOUND(HttpStatus.NOT_FOUND, "해당 교육 첨부파일을 찾을 수 없습니다."),
+    SAFETY_TRAINING_ATTACHMENT_NOT_FOUND(HttpStatus.NOT_FOUND, "해당 안전보건 교육일지 첨부파일을 찾을 수 없습니다."),
     NOTICE_NOT_FOUND(HttpStatus.NOT_FOUND, "해당 공지사항을 찾을 수 없습니다."),
     NOTICE_ATTACHMENT_NOT_FOUND(HttpStatus.NOT_FOUND, "해당 공지사항 첨부파일을 찾을 수 없습니다."),
     REQUEST_HISTORY_NOT_FOUND(HttpStatus.NOT_FOUND, "해당 제증명 발급 신청 내역을 찾을 수 없습니다."),

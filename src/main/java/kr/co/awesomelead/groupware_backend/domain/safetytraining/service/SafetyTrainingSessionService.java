@@ -840,8 +840,7 @@ public class SafetyTrainingSessionService {
         }
     }
 
-    private void deleteAttachments(
-            SafetyTrainingSession session, List<Long> deleteAttachmentIds) {
+    private void deleteAttachments(SafetyTrainingSession session, List<Long> deleteAttachmentIds) {
         if (deleteAttachmentIds == null || deleteAttachmentIds.isEmpty()) {
             return;
         }

@@ -465,16 +465,13 @@ public class SafetyTrainingSessionController {
                                                         name = "request",
                                                         contentType =
                                                                 MediaType.APPLICATION_JSON_VALUE),
-                                                @Encoding(
-                                                        name = "attachments",
-                                                        contentType = "*/*")
+                                                @Encoding(name = "attachments", contentType = "*/*")
                                             })))
     @PatchMapping(value = "/{sessionId}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<ApiResponse<Long>> updateWithAttachments(
             @PathVariable Long sessionId,
             @Parameter(hidden = true) @RequestPart("request") String request,
-            @Parameter(hidden = true)
-                    @RequestPart(value = "attachments", required = false)
+            @Parameter(hidden = true) @RequestPart(value = "attachments", required = false)
                     List<MultipartFile> attachments,
             @Parameter(hidden = true) @AuthenticationPrincipal CustomUserDetails userDetails)
             throws IOException {
@@ -482,10 +479,7 @@ public class SafetyTrainingSessionController {
         SafetyTrainingSessionUpdateRequestDto requestDto = parseUpdateRequest(request);
         Long updatedId =
                 safetyTrainingSessionService.update(
-                        sessionId,
-                        userDetails.getId(),
-                        requestDto,
-                        attachments);
+                        sessionId, userDetails.getId(), requestDto, attachments);
         return ResponseEntity.ok(ApiResponse.onSuccess(updatedId));
     }
 
@@ -944,7 +938,9 @@ public class SafetyTrainingSessionController {
             description = "안전보건 교육일지 첨부파일 포함 수정 multipart 요청")
     static class SafetyTrainingSessionUpdateMultipartRequestDoc {
 
-        @Schema(description = "안전보건 교육일지 수정 요청(JSON 파트)", requiredMode = Schema.RequiredMode.REQUIRED)
+        @Schema(
+                description = "안전보건 교육일지 수정 요청(JSON 파트)",
+                requiredMode = Schema.RequiredMode.REQUIRED)
         public SafetyTrainingSessionUpdateRequestDto request;
 
         @ArraySchema(schema = @Schema(type = "string", format = "binary"))

@@ -215,10 +215,7 @@ class SafetyTrainingSessionServiceTest {
                             .build();
             MockMultipartFile newAttachment =
                     new MockMultipartFile(
-                            "attachments",
-                            "새자료.pdf",
-                            "application/pdf",
-                            "new-file".getBytes());
+                            "attachments", "새자료.pdf", "application/pdf", "new-file".getBytes());
 
             when(userRepository.findById(USER_ID)).thenReturn(Optional.of(actor));
             when(sessionRepository.findById(SESSION_ID)).thenReturn(Optional.of(session));
@@ -458,10 +455,8 @@ class SafetyTrainingSessionServiceTest {
         ReflectionTestUtils.setField(requestDto, "educationType", SafetyEducationType.REGULAR);
         ReflectionTestUtils.setField(
                 requestDto, "educationMethods", List.of(SafetyEducationMethod.LECTURE));
-        ReflectionTestUtils.setField(
-                requestDto, "startAt", LocalDateTime.of(2026, 7, 2, 9, 0));
-        ReflectionTestUtils.setField(
-                requestDto, "endAt", LocalDateTime.of(2026, 7, 2, 10, 0));
+        ReflectionTestUtils.setField(requestDto, "startAt", LocalDateTime.of(2026, 7, 2, 9, 0));
+        ReflectionTestUtils.setField(requestDto, "endAt", LocalDateTime.of(2026, 7, 2, 10, 0));
         ReflectionTestUtils.setField(requestDto, "educationContent", "교육 내용 수정");
         ReflectionTestUtils.setField(requestDto, "place", "교육장");
         ReflectionTestUtils.setField(requestDto, "instructorUserId", USER_ID);

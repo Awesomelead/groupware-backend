@@ -385,6 +385,7 @@ class AdminServiceTest {
                             Role.USER,
                             null,
                             null,
+                            null,
                             pageable))
                     .thenReturn(userPage);
             when(myInfoUpdateRequestRepository.findDistinctUserIdsByStatus(
@@ -400,6 +401,7 @@ class AdminServiceTest {
                             11L,
                             JobType.MANAGEMENT,
                             Role.USER,
+                            null,
                             null,
                             null,
                             pageable);
@@ -436,6 +438,7 @@ class AdminServiceTest {
                                             null,
                                             null,
                                             null,
+                                            null,
                                             PageRequest.of(0, 20)))
                     .isInstanceOf(CustomException.class)
                     .extracting("errorCode")
@@ -450,17 +453,42 @@ class AdminServiceTest {
             when(myInfoUpdateRequestRepository.findDistinctUserIdsByStatus(any()))
                     .thenReturn(List.of());
             when(userQueryRepository.findAllForAdminWithFilters(
-                            null, null, null, null, null, null, (List<Status>) null, pageable))
+                            null,
+                            null,
+                            null,
+                            null,
+                            null,
+                            null,
+                            (List<Status>) null,
+                            null,
+                            pageable))
                     .thenReturn(Page.empty());
 
             // when
             adminService.getUsers(
-                    adminId, null, null, null, null, null, null, (List<Status>) null, pageable);
+                    adminId,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    (List<Status>) null,
+                    null,
+                    pageable);
 
             // then
             verify(userQueryRepository)
                     .findAllForAdminWithFilters(
-                            null, null, null, null, null, null, (List<Status>) null, pageable);
+                            null,
+                            null,
+                            null,
+                            null,
+                            null,
+                            null,
+                            (List<Status>) null,
+                            null,
+                            pageable);
         }
 
         @Test
@@ -471,16 +499,17 @@ class AdminServiceTest {
             when(myInfoUpdateRequestRepository.findDistinctUserIdsByStatus(any()))
                     .thenReturn(List.of());
             when(userQueryRepository.findAllForAdminWithFilters(
-                            null, null, null, null, null, null, List.of(), pageable))
+                            null, null, null, null, null, null, List.of(), null, pageable))
                     .thenReturn(Page.empty());
 
             // when
-            adminService.getUsers(adminId, null, null, null, null, null, null, List.of(), pageable);
+            adminService.getUsers(
+                    adminId, null, null, null, null, null, null, List.of(), null, pageable);
 
             // then
             verify(userQueryRepository)
                     .findAllForAdminWithFilters(
-                            null, null, null, null, null, null, List.of(), pageable);
+                            null, null, null, null, null, null, List.of(), null, pageable);
         }
 
         @Test
@@ -492,16 +521,17 @@ class AdminServiceTest {
             when(myInfoUpdateRequestRepository.findDistinctUserIdsByStatus(any()))
                     .thenReturn(List.of());
             when(userQueryRepository.findAllForAdminWithFilters(
-                            null, null, null, null, null, null, statuses, pageable))
+                            null, null, null, null, null, null, statuses, null, pageable))
                     .thenReturn(Page.empty());
 
             // when
-            adminService.getUsers(adminId, null, null, null, null, null, null, statuses, pageable);
+            adminService.getUsers(
+                    adminId, null, null, null, null, null, null, statuses, null, pageable);
 
             // then
             verify(userQueryRepository)
                     .findAllForAdminWithFilters(
-                            null, null, null, null, null, null, statuses, pageable);
+                            null, null, null, null, null, null, statuses, null, pageable);
         }
 
         @Test
@@ -513,16 +543,38 @@ class AdminServiceTest {
             when(myInfoUpdateRequestRepository.findDistinctUserIdsByStatus(any()))
                     .thenReturn(List.of());
             when(userQueryRepository.findAllForAdminWithFilters(
-                            null, null, null, null, null, null, statuses, pageable))
+                            null, null, null, null, null, null, statuses, null, pageable))
                     .thenReturn(Page.empty());
 
             // when
-            adminService.getUsers(adminId, null, null, null, null, null, null, statuses, pageable);
+            adminService.getUsers(
+                    adminId, null, null, null, null, null, null, statuses, null, pageable);
 
             // then
             verify(userQueryRepository)
                     .findAllForAdminWithFilters(
-                            null, null, null, null, null, null, statuses, pageable);
+                            null, null, null, null, null, null, statuses, null, pageable);
+        }
+
+        @Test
+        @DisplayName("hasPendingMyInfoRequest 필터를 repository에 전달한다")
+        void getUsers_hasPendingMyInfoRequest를_repository에_전달한다() {
+            // given
+            Pageable pageable = PageRequest.of(0, 20);
+            when(myInfoUpdateRequestRepository.findDistinctUserIdsByStatus(any()))
+                    .thenReturn(List.of());
+            when(userQueryRepository.findAllForAdminWithFilters(
+                            null, null, null, null, null, null, null, true, pageable))
+                    .thenReturn(Page.empty());
+
+            // when
+            adminService.getUsers(
+                    adminId, null, null, null, null, null, null, null, true, pageable);
+
+            // then
+            verify(userQueryRepository)
+                    .findAllForAdminWithFilters(
+                            null, null, null, null, null, null, null, true, pageable);
         }
     }
 
@@ -631,6 +683,54 @@ class AdminServiceTest {
             assertThat(targetUser.hasAuthority(Authority.SEND_NOTIFICATION)).isEqualTo(true);
             verify(phoneAuthService).clearVerification("01099998888");
             verify(userRepository).save(targetUser);
+        }
+
+        @Test
+        @DisplayName("address2를 null로 명시하면 상세주소를 삭제한다")
+        void it_clears_address2_when_explicit_null() {
+            // given
+            User targetUser =
+                    User.builder()
+                            .id(17L)
+                            .phoneNumber("01011112222")
+                            .zipcode("06234")
+                            .address1("서울특별시 강남구 테헤란로 123")
+                            .address2("어썸리드빌딩 5층")
+                            .build();
+            targetUser.setPhoneNumberHash(User.hashValue("01011112222"));
+            when(userRepository.findById(17L)).thenReturn(Optional.of(targetUser));
+
+            AdminUserUpdateRequestDto dto = new AdminUserUpdateRequestDto();
+            dto.setZipcode("06234");
+            dto.setAddress1("서울특별시 강남구 테헤란로 1234");
+            dto.setAddress2(null);
+
+            // when
+            adminService.updateUserInfo(17L, dto, adminId);
+
+            // then
+            assertThat(targetUser.getZipcode()).isEqualTo("06234");
+            assertThat(targetUser.getAddress1()).isEqualTo("서울특별시 강남구 테헤란로 1234");
+            assertThat(targetUser.getAddress2()).isNull();
+        }
+
+        @Test
+        @DisplayName("address2를 빈 문자열로 명시하면 상세주소를 삭제한다")
+        void it_clears_address2_when_blank() {
+            // given
+            User targetUser =
+                    User.builder().id(17L).phoneNumber("01011112222").address2("어썸리드빌딩 5층").build();
+            targetUser.setPhoneNumberHash(User.hashValue("01011112222"));
+            when(userRepository.findById(17L)).thenReturn(Optional.of(targetUser));
+
+            AdminUserUpdateRequestDto dto = new AdminUserUpdateRequestDto();
+            dto.setAddress2("");
+
+            // when
+            adminService.updateUserInfo(17L, dto, adminId);
+
+            // then
+            assertThat(targetUser.getAddress2()).isNull();
         }
 
         @Test

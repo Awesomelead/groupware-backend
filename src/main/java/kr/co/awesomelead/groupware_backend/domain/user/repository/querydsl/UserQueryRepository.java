@@ -1,14 +1,17 @@
 package kr.co.awesomelead.groupware_backend.domain.user.repository.querydsl;
 
+import static kr.co.awesomelead.groupware_backend.domain.user.entity.QMyInfoUpdateRequest.myInfoUpdateRequest;
 import static kr.co.awesomelead.groupware_backend.domain.user.entity.QUser.user;
 
 import com.querydsl.core.types.dsl.BooleanExpression;
+import com.querydsl.jpa.JPAExpressions;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 
 import kr.co.awesomelead.groupware_backend.domain.department.entity.QDepartment;
 import kr.co.awesomelead.groupware_backend.domain.department.enums.Company;
 import kr.co.awesomelead.groupware_backend.domain.user.entity.User;
 import kr.co.awesomelead.groupware_backend.domain.user.enums.JobType;
+import kr.co.awesomelead.groupware_backend.domain.user.enums.MyInfoUpdateRequestStatus;
 import kr.co.awesomelead.groupware_backend.domain.user.enums.Position;
 import kr.co.awesomelead.groupware_backend.domain.user.enums.Role;
 import kr.co.awesomelead.groupware_backend.domain.user.enums.Status;
@@ -108,6 +111,7 @@ public class UserQueryRepository {
             Role role,
             Company workLocation,
             List<Status> statuses,
+            Boolean hasPendingMyInfoRequest,
             Pageable pageable) {
         List<User> content =
                 queryFactory
@@ -122,6 +126,7 @@ public class UserQueryRepository {
                                 roleFilter(role),
                                 workLocationFilter(workLocation),
                                 adminStatusFilter(statuses),
+                                pendingMyInfoRequestFilter(hasPendingMyInfoRequest),
                                 excludeMasterAdmin())
                         .orderBy(user.id.desc())
                         .offset(pageable.getOffset())
@@ -143,6 +148,7 @@ public class UserQueryRepository {
                                         roleFilter(role),
                                         workLocationFilter(workLocation),
                                         adminStatusFilter(statuses),
+                                        pendingMyInfoRequestFilter(hasPendingMyInfoRequest),
                                         excludeMasterAdmin())
                                 .fetchOne());
     }
@@ -177,6 +183,22 @@ public class UserQueryRepository {
             return null;
         }
         return user.status.in(statuses);
+    }
+
+    private BooleanExpression pendingMyInfoRequestFilter(Boolean hasPendingMyInfoRequest) {
+        if (hasPendingMyInfoRequest == null) {
+            return null;
+        }
+
+        BooleanExpression existsPendingRequest =
+                JPAExpressions.selectOne()
+                        .from(myInfoUpdateRequest)
+                        .where(
+                                myInfoUpdateRequest.user.eq(user),
+                                myInfoUpdateRequest.status.eq(MyInfoUpdateRequestStatus.PENDING))
+                        .exists();
+
+        return hasPendingMyInfoRequest ? existsPendingRequest : existsPendingRequest.not();
     }
 
     private BooleanExpression keywordFilter(String keyword) {

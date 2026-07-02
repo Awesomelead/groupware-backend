@@ -1,5 +1,7 @@
 package kr.co.awesomelead.groupware_backend.domain.admin.dto.request;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+
 import io.swagger.v3.oas.annotations.media.ArraySchema;
 import io.swagger.v3.oas.annotations.media.Schema;
 
@@ -43,6 +45,15 @@ public class AdminUserUpdateRequestDto {
 
     @Schema(description = "주소2", example = "어썸리드빌딩 5층")
     private String address2;
+
+    @JsonIgnore
+    @Schema(hidden = true)
+    private boolean address2Present;
+
+    public void setAddress2(String address2) {
+        this.address2 = address2;
+        this.address2Present = true;
+    }
 
     @Schema(description = "주민등록번호/외국인등록번호", example = "9001011234567")
     private String registrationNumber;

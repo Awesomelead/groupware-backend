@@ -2,9 +2,12 @@ package kr.co.awesomelead.groupware_backend.domain.user;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import kr.co.awesomelead.groupware_backend.domain.user.entity.MyInfoUpdateRequest;
 import kr.co.awesomelead.groupware_backend.domain.user.entity.User;
+import kr.co.awesomelead.groupware_backend.domain.user.enums.MyInfoUpdateRequestStatus;
 import kr.co.awesomelead.groupware_backend.domain.user.enums.Role;
 import kr.co.awesomelead.groupware_backend.domain.user.enums.Status;
+import kr.co.awesomelead.groupware_backend.domain.user.repository.MyInfoUpdateRequestRepository;
 import kr.co.awesomelead.groupware_backend.domain.user.repository.UserRepository;
 import kr.co.awesomelead.groupware_backend.domain.user.repository.querydsl.UserQueryRepository;
 
@@ -25,6 +28,7 @@ import java.util.List;
 class UserQueryRepositoryTest {
 
     @Autowired private UserRepository userRepository;
+    @Autowired private MyInfoUpdateRequestRepository myInfoUpdateRequestRepository;
     @Autowired private UserQueryRepository userQueryRepository;
 
     @Test
@@ -49,12 +53,56 @@ class UserQueryRepositoryTest {
         // when
         var result =
                 userQueryRepository.findAllForAdminWithFilters(
-                        null, null, null, null, null, null, null, PageRequest.of(0, 20));
+                        null, null, null, null, null, null, null, null, PageRequest.of(0, 20));
 
         // then
         assertThat(result.getContent())
                 .extracting(User::getRole)
                 .containsExactlyInAnyOrder(Role.USER, Role.ADMIN);
+    }
+
+    @Test
+    @DisplayName("findAllForAdminWithFilters 메서드는 개인정보 수정 승인 대기 여부로 필터링한다")
+    void findAllForAdminWithFilters_filters_by_pending_my_info_request() {
+        // given
+        User userWithPendingRequest =
+                userRepository.save(
+                        createUser(
+                                "pending-my-info@example.com",
+                                "수정요청사용자",
+                                "900109-1234567",
+                                "01099990000",
+                                Role.USER));
+        User userWithoutPendingRequest =
+                userRepository.save(
+                        createUser(
+                                "no-pending-my-info@example.com",
+                                "일반사용자",
+                                "900110-1234567",
+                                "01099990001",
+                                Role.USER));
+        myInfoUpdateRequestRepository.save(
+                MyInfoUpdateRequest.builder()
+                        .user(userWithPendingRequest)
+                        .requestedAddress1("서울시 강남구 테헤란로 456")
+                        .status(MyInfoUpdateRequestStatus.PENDING)
+                        .build());
+
+        // when
+        var pendingResult =
+                userQueryRepository.findAllForAdminWithFilters(
+                        null, null, null, null, null, null, null, true, PageRequest.of(0, 20));
+        var noPendingResult =
+                userQueryRepository.findAllForAdminWithFilters(
+                        null, null, null, null, null, null, null, false, PageRequest.of(0, 20));
+
+        // then
+        assertThat(pendingResult.getContent())
+                .extracting(User::getId)
+                .containsExactly(userWithPendingRequest.getId());
+        assertThat(noPendingResult.getContent())
+                .extracting(User::getId)
+                .containsExactly(userWithoutPendingRequest.getId());
     }
 
     @Test

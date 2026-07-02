@@ -92,7 +92,7 @@ public class AdminRequestHistoryController {
                                 {
                                   "isSuccess": false,
                                   "code": "NO_AUTHORITY_FOR_CERTIFICATE_REQUEST_REVIEW",
-                                  "message": "제증명 신청 승인/반려 권한이 없습니다.",
+                                  "message": "제증명 발급 관리 권한이 없습니다.",
                                   "result": null
                                 }
                                 """)))
@@ -182,7 +182,7 @@ public class AdminRequestHistoryController {
                                 {
                                   "isSuccess": false,
                                   "code": "NO_AUTHORITY_FOR_CERTIFICATE_REQUEST_REVIEW",
-                                  "message": "제증명 신청 승인/반려 권한이 없습니다.",
+                                  "message": "제증명 발급 관리 권한이 없습니다.",
                                   "result": null
                                 }
                                 """)))
@@ -235,7 +235,7 @@ public class AdminRequestHistoryController {
                                 {
                                   "isSuccess": false,
                                   "code": "NO_AUTHORITY_FOR_CERTIFICATE_REQUEST_REVIEW",
-                                  "message": "제증명 신청 승인/반려 권한이 없습니다.",
+                                  "message": "제증명 발급 관리 권한이 없습니다.",
                                   "result": null
                                 }
                                 """))),
@@ -301,7 +301,7 @@ public class AdminRequestHistoryController {
                                 {
                                   "isSuccess": false,
                                   "code": "NO_AUTHORITY_FOR_CERTIFICATE_REQUEST_REVIEW",
-                                  "message": "제증명 신청 승인/반려 권한이 없습니다.",
+                                  "message": "제증명 발급 관리 권한이 없습니다.",
                                   "result": null
                                 }
                                 """))),

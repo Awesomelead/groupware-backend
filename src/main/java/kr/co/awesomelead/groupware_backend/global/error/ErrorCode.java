@@ -112,7 +112,7 @@ public enum ErrorCode {
     NO_AUTHORITY_FOR_ROLE_UPDATE(HttpStatus.FORBIDDEN, "사용자 역할 변경 권한이 없습니다."),
     NO_AUTHORITY_FOR_VIEW_PAYSLIP(HttpStatus.FORBIDDEN, "급여명세서 조회 권한이 없습니다."),
     NO_AUTHORITY_FOR_NOTIFICATION(HttpStatus.FORBIDDEN, "해당 알림에 대한 접근 권한이 없습니다."),
-    NO_AUTHORITY_FOR_CERTIFICATE_REQUEST_REVIEW(HttpStatus.FORBIDDEN, "제증명 신청 승인/반려 권한이 없습니다."),
+    NO_AUTHORITY_FOR_CERTIFICATE_REQUEST_REVIEW(HttpStatus.FORBIDDEN, "제증명 발급 관리 권한이 없습니다."),
     NO_AUTHORITY_FOR_EDUCATION_CATEGORY_MANAGE(HttpStatus.FORBIDDEN, "교육 카테고리 관리 권한이 없습니다."),
     NO_AUTHORITY_FOR_APPROVAL_CONFIG(HttpStatus.FORBIDDEN, "결재선 설정 관리 권한이 없습니다."),
 

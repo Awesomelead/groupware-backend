@@ -293,7 +293,8 @@ public class UserController {
             summary = "내 정보 수정",
             description =
                     "내 정보 수정 요청을 생성합니다. 요청은 관리자 승인 후 반영됩니다. "
-                            + "수정 가능 필드: 영문 이름, 전화번호, 우편번호, 주소1, 주소2")
+                            + "수정 가능 필드: 영문 이름, 전화번호, 우편번호, 주소1, 주소2. "
+                            + "address2는 null 또는 빈 문자열로 보내면 삭제 요청으로 처리됩니다.")
     @ApiResponses(
             value = {
                 @io.swagger.v3.oas.annotations.responses.ApiResponse(

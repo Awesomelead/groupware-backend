@@ -35,6 +35,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -260,6 +261,72 @@ class UserServiceTest {
             verify(myInfoUpdateRequestRepository).save(any(MyInfoUpdateRequest.class));
             verify(notificationService)
                     .sendAlertToAdminsRequiringApproval(any(), any(), any(), any(Map.class), any());
+        }
+
+        @Test
+        @DisplayName("성공: address2를 null로 명시하면 상세주소 삭제 요청을 생성한다")
+        void updateMyInfo_Address2ExplicitNull_CreatesClearRequest() {
+            // given
+            User testUser = createTestUser();
+            testUser.setAddress2("어썸리드빌딩 5층");
+            requestDto.setAddress2(null);
+
+            given(userRepository.findByEmail(TEST_EMAIL)).willReturn(Optional.of(testUser));
+            given(
+                            myInfoUpdateRequestRepository.existsByUserIdAndStatus(
+                                    testUser.getId(), MyInfoUpdateRequestStatus.PENDING))
+                    .willReturn(false);
+            given(myInfoUpdateRequestRepository.save(any(MyInfoUpdateRequest.class)))
+                    .willAnswer(
+                            invocation -> {
+                                MyInfoUpdateRequest request = invocation.getArgument(0);
+                                request.setId(99L);
+                                return request;
+                            });
+
+            // when
+            MyInfoResponseDto response = userService.updateMyInfo(userDetails, requestDto);
+
+            // then
+            assertThat(response).isNotNull();
+            ArgumentCaptor<MyInfoUpdateRequest> captor =
+                    ArgumentCaptor.forClass(MyInfoUpdateRequest.class);
+            verify(myInfoUpdateRequestRepository).save(captor.capture());
+            assertThat(captor.getValue().isRequestedAddress2Present()).isTrue();
+            assertThat(captor.getValue().getRequestedAddress2()).isNull();
+        }
+
+        @Test
+        @DisplayName("성공: address2를 빈 문자열로 명시하면 상세주소 삭제 요청을 생성한다")
+        void updateMyInfo_Address2Blank_CreatesClearRequest() {
+            // given
+            User testUser = createTestUser();
+            testUser.setAddress2("어썸리드빌딩 5층");
+            requestDto.setAddress2("");
+
+            given(userRepository.findByEmail(TEST_EMAIL)).willReturn(Optional.of(testUser));
+            given(
+                            myInfoUpdateRequestRepository.existsByUserIdAndStatus(
+                                    testUser.getId(), MyInfoUpdateRequestStatus.PENDING))
+                    .willReturn(false);
+            given(myInfoUpdateRequestRepository.save(any(MyInfoUpdateRequest.class)))
+                    .willAnswer(
+                            invocation -> {
+                                MyInfoUpdateRequest request = invocation.getArgument(0);
+                                request.setId(99L);
+                                return request;
+                            });
+
+            // when
+            MyInfoResponseDto response = userService.updateMyInfo(userDetails, requestDto);
+
+            // then
+            assertThat(response).isNotNull();
+            ArgumentCaptor<MyInfoUpdateRequest> captor =
+                    ArgumentCaptor.forClass(MyInfoUpdateRequest.class);
+            verify(myInfoUpdateRequestRepository).save(captor.capture());
+            assertThat(captor.getValue().isRequestedAddress2Present()).isTrue();
+            assertThat(captor.getValue().getRequestedAddress2()).isNull();
         }
 
         @Test

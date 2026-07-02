@@ -250,6 +250,62 @@ class AuthServiceTest {
                 .sendAlertToAdminsRequiringApproval(any(), any(), any(), any(Map.class), any());
     }
 
+    @Test
+    @DisplayName("회원가입 시 address2가 null이면 null로 저장한다")
+    void signup_Address2Null_SavesNull() {
+        // given
+        SignupRequestDto signupDto = createSignupRequestDto();
+        signupDto.setAddress2(null);
+        User mappedUser = createMappedSignupUser(signupDto);
+        User savedUser = createSavedSignupUser(signupDto, 1L);
+        savedUser.setAddress2(null);
+
+        when(emailAuthService.isEmailVerified(signupDto.getEmail())).thenReturn(true);
+        when(phoneAuthService.isPhoneVerified(signupDto.getPhoneNumber())).thenReturn(true);
+        when(userRepository.existsByEmail(signupDto.getEmail())).thenReturn(false);
+        when(userRepository.existsByRegistrationNumber(signupDto.getRegistrationNumber()))
+                .thenReturn(false);
+        when(userMapper.toEntity(signupDto)).thenReturn(mappedUser);
+        when(bCryptPasswordEncoder.encode(signupDto.getPassword())).thenReturn("encodedPassword");
+        when(userRepository.save(any(User.class))).thenReturn(savedUser);
+
+        // when
+        authService.signup(signupDto);
+
+        // then
+        ArgumentCaptor<User> captor = ArgumentCaptor.forClass(User.class);
+        verify(userRepository).save(captor.capture());
+        assertThat(captor.getValue().getAddress2()).isNull();
+    }
+
+    @Test
+    @DisplayName("회원가입 시 address2가 빈 문자열이면 null로 저장한다")
+    void signup_Address2Blank_SavesNull() {
+        // given
+        SignupRequestDto signupDto = createSignupRequestDto();
+        signupDto.setAddress2("");
+        User mappedUser = createMappedSignupUser(signupDto);
+        User savedUser = createSavedSignupUser(signupDto, 1L);
+        savedUser.setAddress2(null);
+
+        when(emailAuthService.isEmailVerified(signupDto.getEmail())).thenReturn(true);
+        when(phoneAuthService.isPhoneVerified(signupDto.getPhoneNumber())).thenReturn(true);
+        when(userRepository.existsByEmail(signupDto.getEmail())).thenReturn(false);
+        when(userRepository.existsByRegistrationNumber(signupDto.getRegistrationNumber()))
+                .thenReturn(false);
+        when(userMapper.toEntity(signupDto)).thenReturn(mappedUser);
+        when(bCryptPasswordEncoder.encode(signupDto.getPassword())).thenReturn("encodedPassword");
+        when(userRepository.save(any(User.class))).thenReturn(savedUser);
+
+        // when
+        authService.signup(signupDto);
+
+        // then
+        ArgumentCaptor<User> captor = ArgumentCaptor.forClass(User.class);
+        verify(userRepository).save(captor.capture());
+        assertThat(captor.getValue().getAddress2()).isNull();
+    }
+
     @Nested
     @DisplayName("회원가입 이메일 인증번호 발송")
     class SendSignupEmailAuthCodeTest {
@@ -2553,5 +2609,62 @@ class AuthServiceTest {
                                             && jpql.contains("n.userId")
                                             && jpql.contains(":userId"));
         }
+    }
+
+    private SignupRequestDto createSignupRequestDto() {
+        SignupRequestDto signupDto = new SignupRequestDto();
+        signupDto.setEmail("address2-test@example.com");
+        signupDto.setPassword("password123!");
+        signupDto.setPasswordConfirm("password123!");
+        signupDto.setNameKor("김어썸");
+        signupDto.setNameEng("Awesome Kim");
+        signupDto.setNationality("대한민국");
+        signupDto.setZipcode("06234");
+        signupDto.setAddress1("서울특별시 강남구 테헤란로 123");
+        signupDto.setAddress2("어썸리드빌딩 5층");
+        signupDto.setRegistrationNumber("9501011234567");
+        signupDto.setPhoneNumber("01012345678");
+        signupDto.setCompany(Company.AWESOME);
+        return signupDto;
+    }
+
+    private User createMappedSignupUser(SignupRequestDto signupDto) {
+        User user =
+                User.builder()
+                        .email(signupDto.getEmail())
+                        .nameKor(signupDto.getNameKor())
+                        .nameEng(signupDto.getNameEng())
+                        .nationality(signupDto.getNationality())
+                        .zipcode(signupDto.getZipcode())
+                        .address1(signupDto.getAddress1())
+                        .address2(signupDto.getAddress2())
+                        .registrationNumber(signupDto.getRegistrationNumber())
+                        .phoneNumber(signupDto.getPhoneNumber())
+                        .workLocation(Company.AWESOME)
+                        .role(Role.USER)
+                        .status(Status.PENDING)
+                        .build();
+        user.onPrePersist();
+        return user;
+    }
+
+    private User createSavedSignupUser(SignupRequestDto signupDto, Long id) {
+        return User.builder()
+                .id(id)
+                .email(signupDto.getEmail())
+                .nameKor(signupDto.getNameKor())
+                .nameEng(signupDto.getNameEng())
+                .nationality(signupDto.getNationality())
+                .zipcode(signupDto.getZipcode())
+                .address1(signupDto.getAddress1())
+                .address2(signupDto.getAddress2())
+                .registrationNumber(signupDto.getRegistrationNumber())
+                .phoneNumber(signupDto.getPhoneNumber())
+                .password("encodedPassword")
+                .workLocation(Company.AWESOME)
+                .role(Role.USER)
+                .status(Status.PENDING)
+                .phoneNumberHash(User.hashValue(signupDto.getPhoneNumber()))
+                .build();
     }
 }

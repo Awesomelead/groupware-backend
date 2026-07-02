@@ -120,6 +120,50 @@ class AdminServiceTest {
             }
 
             @Test
+            @DisplayName("address2를 null로 명시하면 상세주소를 삭제한다")
+            void it_clears_address2_when_explicit_null() {
+                // given
+                Department department =
+                        Department.builder().id(1L).name(DepartmentName.SALES_DEPT).build();
+                User pendingUser = new User();
+                pendingUser.setId(userId);
+                pendingUser.setStatus(Status.PENDING);
+                pendingUser.setAddress2("어썸리드빌딩 5층");
+                requestDto.setAddress2(null);
+
+                when(userRepository.findById(userId)).thenReturn(Optional.of(pendingUser));
+                when(departmentRepository.findByName(any())).thenReturn(Optional.of(department));
+
+                // when
+                adminService.approveUserRegistration(userId, requestDto, adminId);
+
+                // then
+                assertThat(pendingUser.getAddress2()).isNull();
+            }
+
+            @Test
+            @DisplayName("address2를 빈 문자열로 명시하면 상세주소를 삭제한다")
+            void it_clears_address2_when_blank() {
+                // given
+                Department department =
+                        Department.builder().id(1L).name(DepartmentName.SALES_DEPT).build();
+                User pendingUser = new User();
+                pendingUser.setId(userId);
+                pendingUser.setStatus(Status.PENDING);
+                pendingUser.setAddress2("어썸리드빌딩 5층");
+                requestDto.setAddress2("");
+
+                when(userRepository.findById(userId)).thenReturn(Optional.of(pendingUser));
+                when(departmentRepository.findByName(any())).thenReturn(Optional.of(department));
+
+                // when
+                adminService.approveUserRegistration(userId, requestDto, adminId);
+
+                // then
+                assertThat(pendingUser.getAddress2()).isNull();
+            }
+
+            @Test
             @DisplayName("MASTER_ADMIN으로 승인하면 모든 권한을 부여한다")
             void it_grants_all_authorities_to_master_admin() {
                 // given
@@ -1051,6 +1095,32 @@ class AdminServiceTest {
             verify(userRepository).save(targetUser);
             verify(myInfoUpdateRequestRepository).save(request);
             verify(notificationService).sendAlertToUser(any(), any(), any(), any(), any(Map.class));
+        }
+
+        @Test
+        @DisplayName("관리자가 address2 삭제 요청을 승인하면 상세주소가 삭제된다")
+        void approveMyInfoUpdate_clearsAddress2() {
+            // given
+            User targetUser = User.builder().id(userId).address2("어썸리드빌딩 5층").build();
+            MyInfoUpdateRequest request =
+                    MyInfoUpdateRequest.builder()
+                            .id(10L)
+                            .user(targetUser)
+                            .requestedAddress2(null)
+                            .requestedAddress2Present(true)
+                            .status(MyInfoUpdateRequestStatus.PENDING)
+                            .build();
+
+            when(myInfoUpdateRequestRepository.findById(10L)).thenReturn(Optional.of(request));
+
+            // when
+            adminService.approveMyInfoUpdate(10L, adminId);
+
+            // then
+            assertThat(targetUser.getAddress2()).isNull();
+            assertThat(request.getStatus()).isEqualTo(MyInfoUpdateRequestStatus.APPROVED);
+            verify(userRepository).save(targetUser);
+            verify(myInfoUpdateRequestRepository).save(request);
         }
 
         @Test

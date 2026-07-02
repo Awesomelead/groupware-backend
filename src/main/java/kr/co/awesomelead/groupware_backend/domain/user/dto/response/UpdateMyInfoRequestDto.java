@@ -1,5 +1,7 @@
 package kr.co.awesomelead.groupware_backend.domain.user.dto.response;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+
 import io.swagger.v3.oas.annotations.media.Schema;
 
 import jakarta.validation.constraints.Pattern;
@@ -29,7 +31,16 @@ public class UpdateMyInfoRequestDto {
     @Size(max = 255, message = "주소1은 최대 255자까지 입력 가능합니다.")
     private String address1;
 
-    @Schema(description = "주소2", example = "어썸리드빌딩 5층")
+    @Schema(description = "주소2 (null 또는 빈 문자열로 보내면 삭제 요청)", example = "어썸리드빌딩 5층")
     @Size(max = 255, message = "주소2는 최대 255자까지 입력 가능합니다.")
     private String address2;
+
+    @JsonIgnore
+    @Schema(hidden = true)
+    private boolean address2Present;
+
+    public void setAddress2(String address2) {
+        this.address2 = address2;
+        this.address2Present = true;
+    }
 }

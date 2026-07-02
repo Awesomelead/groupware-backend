@@ -634,6 +634,58 @@ class AdminServiceTest {
         }
 
         @Test
+        @DisplayName("address2를 null로 명시하면 상세주소를 삭제한다")
+        void it_clears_address2_when_explicit_null() {
+            // given
+            User targetUser =
+                    User.builder()
+                            .id(17L)
+                            .phoneNumber("01011112222")
+                            .zipcode("06234")
+                            .address1("서울특별시 강남구 테헤란로 123")
+                            .address2("어썸리드빌딩 5층")
+                            .build();
+            targetUser.setPhoneNumberHash(User.hashValue("01011112222"));
+            when(userRepository.findById(17L)).thenReturn(Optional.of(targetUser));
+
+            AdminUserUpdateRequestDto dto = new AdminUserUpdateRequestDto();
+            dto.setZipcode("06234");
+            dto.setAddress1("서울특별시 강남구 테헤란로 1234");
+            dto.setAddress2(null);
+
+            // when
+            adminService.updateUserInfo(17L, dto, adminId);
+
+            // then
+            assertThat(targetUser.getZipcode()).isEqualTo("06234");
+            assertThat(targetUser.getAddress1()).isEqualTo("서울특별시 강남구 테헤란로 1234");
+            assertThat(targetUser.getAddress2()).isNull();
+        }
+
+        @Test
+        @DisplayName("address2를 빈 문자열로 명시하면 상세주소를 삭제한다")
+        void it_clears_address2_when_blank() {
+            // given
+            User targetUser =
+                    User.builder()
+                            .id(17L)
+                            .phoneNumber("01011112222")
+                            .address2("어썸리드빌딩 5층")
+                            .build();
+            targetUser.setPhoneNumberHash(User.hashValue("01011112222"));
+            when(userRepository.findById(17L)).thenReturn(Optional.of(targetUser));
+
+            AdminUserUpdateRequestDto dto = new AdminUserUpdateRequestDto();
+            dto.setAddress2("");
+
+            // when
+            adminService.updateUserInfo(17L, dto, adminId);
+
+            // then
+            assertThat(targetUser.getAddress2()).isNull();
+        }
+
+        @Test
         @DisplayName("전화번호 인증이 안된 상태로 번호를 바꾸면 PHONE_NOT_VERIFIED 에러를 던진다")
         void it_throws_when_phone_not_verified() {
             // given

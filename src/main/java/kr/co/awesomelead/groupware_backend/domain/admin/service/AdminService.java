@@ -295,8 +295,9 @@ public class AdminService {
         if (hasText(requestDto.getAddress1())) {
             user.setAddress1(requestDto.getAddress1().trim());
         }
-        if (hasText(requestDto.getAddress2())) {
-            user.setAddress2(requestDto.getAddress2().trim());
+        if (requestDto.isAddress2Present()) {
+            user.setAddress2(
+                    hasText(requestDto.getAddress2()) ? requestDto.getAddress2().trim() : null);
         }
 
         if (hasText(requestDto.getRegistrationNumber())) {

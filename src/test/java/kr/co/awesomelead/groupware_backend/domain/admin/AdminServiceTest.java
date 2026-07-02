@@ -1054,6 +1054,33 @@ class AdminServiceTest {
         }
 
         @Test
+        @DisplayName("관리자가 address2 삭제 요청을 승인하면 상세주소가 삭제된다")
+        void approveMyInfoUpdate_clearsAddress2() {
+            // given
+            User targetUser =
+                    User.builder().id(userId).address2("어썸리드빌딩 5층").build();
+            MyInfoUpdateRequest request =
+                    MyInfoUpdateRequest.builder()
+                            .id(10L)
+                            .user(targetUser)
+                            .requestedAddress2(null)
+                            .requestedAddress2Present(true)
+                            .status(MyInfoUpdateRequestStatus.PENDING)
+                            .build();
+
+            when(myInfoUpdateRequestRepository.findById(10L)).thenReturn(Optional.of(request));
+
+            // when
+            adminService.approveMyInfoUpdate(10L, adminId);
+
+            // then
+            assertThat(targetUser.getAddress2()).isNull();
+            assertThat(request.getStatus()).isEqualTo(MyInfoUpdateRequestStatus.APPROVED);
+            verify(userRepository).save(targetUser);
+            verify(myInfoUpdateRequestRepository).save(request);
+        }
+
+        @Test
         @DisplayName("관리자가 반려하면 요청 상태가 REJECTED로 바뀐다")
         void rejectMyInfoUpdate_success() {
             // given

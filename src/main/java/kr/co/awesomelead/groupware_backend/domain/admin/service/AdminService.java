@@ -479,7 +479,7 @@ public class AdminService {
         if (request.getRequestedAddress1() != null) {
             targetUser.setAddress1(request.getRequestedAddress1());
         }
-        if (request.getRequestedAddress2() != null) {
+        if (request.isRequestedAddress2Present()) {
             targetUser.setAddress2(request.getRequestedAddress2());
         }
 

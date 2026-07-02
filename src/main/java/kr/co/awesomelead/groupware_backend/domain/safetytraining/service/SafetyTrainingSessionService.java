@@ -14,11 +14,13 @@ import kr.co.awesomelead.groupware_backend.domain.safetytraining.dto.response.Sa
 import kr.co.awesomelead.groupware_backend.domain.safetytraining.dto.response.SafetyTrainingSessionReportResponseDto;
 import kr.co.awesomelead.groupware_backend.domain.safetytraining.dto.response.SafetyTrainingSessionSummaryResponseDto;
 import kr.co.awesomelead.groupware_backend.domain.safetytraining.entity.SafetyTrainingSession;
+import kr.co.awesomelead.groupware_backend.domain.safetytraining.entity.SafetyTrainingSessionAttachment;
 import kr.co.awesomelead.groupware_backend.domain.safetytraining.entity.SafetyTrainingSessionAttendee;
 import kr.co.awesomelead.groupware_backend.domain.safetytraining.enums.SafetyEducationMethod;
 import kr.co.awesomelead.groupware_backend.domain.safetytraining.enums.SafetyTrainingAttendeeStatus;
 import kr.co.awesomelead.groupware_backend.domain.safetytraining.enums.SafetyTrainingCompletionStatus;
 import kr.co.awesomelead.groupware_backend.domain.safetytraining.enums.SafetyTrainingSessionStatus;
+import kr.co.awesomelead.groupware_backend.domain.safetytraining.repository.SafetyTrainingSessionAttachmentRepository;
 import kr.co.awesomelead.groupware_backend.domain.safetytraining.repository.SafetyTrainingSessionAttendeeRepository;
 import kr.co.awesomelead.groupware_backend.domain.safetytraining.repository.SafetyTrainingSessionRepository;
 import kr.co.awesomelead.groupware_backend.domain.user.entity.User;
@@ -44,6 +46,7 @@ import java.time.Duration;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -63,6 +66,7 @@ public class SafetyTrainingSessionService {
 
     private final SafetyTrainingSessionRepository sessionRepository;
     private final SafetyTrainingSessionAttendeeRepository attendeeRepository;
+    private final SafetyTrainingSessionAttachmentRepository attachmentRepository;
     private final UserRepository userRepository;
     private final ObjectMapper objectMapper;
     private final SafetyTrainingExcelService safetyTrainingExcelService;
@@ -110,6 +114,27 @@ public class SafetyTrainingSessionService {
 
     @Transactional
     public Long create(Long userId, SafetyTrainingSessionCreateRequestDto requestDto) {
+        try {
+            return createInternal(userId, requestDto, Collections.emptyList());
+        } catch (IOException e) {
+            throw new IllegalStateException("안전보건 교육 첨부파일 저장 중 오류가 발생했습니다.", e);
+        }
+    }
+
+    @Transactional(rollbackFor = IOException.class)
+    public Long create(
+            Long userId,
+            SafetyTrainingSessionCreateRequestDto requestDto,
+            List<MultipartFile> attachments)
+            throws IOException {
+        return createInternal(userId, requestDto, attachments);
+    }
+
+    private Long createInternal(
+            Long userId,
+            SafetyTrainingSessionCreateRequestDto requestDto,
+            List<MultipartFile> attachments)
+            throws IOException {
         User actor =
                 userRepository
                         .findById(userId)
@@ -155,6 +180,7 @@ public class SafetyTrainingSessionService {
                         .toList();
 
         attendeeRepository.saveAll(rows);
+        saveAttachments(saved, attachments);
 
         saved.setTargetCount(rows.size());
         saved.setAttendedCount(0);
@@ -253,6 +279,10 @@ public class SafetyTrainingSessionService {
                         : s3Service.getPresignedDownloadUrl(
                                 session.getReportFileKey(),
                                 buildExportFileName(session.getStartAt(), session.getTitle()));
+        List<SafetyTrainingSessionDetailResponseDto.AttachmentItem> attachments =
+                attachmentRepository.findAllBySessionIdOrderByIdAsc(sessionId).stream()
+                        .map(this::toAttachmentItem)
+                        .toList();
 
         SafetyTrainingSessionDetailResponseDto.SessionInfo prevSession =
                 findPrevSessionInfo(actor, session);
@@ -299,6 +329,7 @@ public class SafetyTrainingSessionService {
                 .absentCount(session.getAbsentCount())
                 .absentReasonSummary(session.getAbsentReasonSummary())
                 .reportFileUrl(reportFileUrl)
+                .attachments(attachments)
                 .myAttendanceStatus(myStatus)
                 .mySigned(
                         resolveMySigned(
@@ -552,6 +583,29 @@ public class SafetyTrainingSessionService {
     @Transactional
     public Long update(
             Long sessionId, Long userId, SafetyTrainingSessionUpdateRequestDto requestDto) {
+        try {
+            return updateInternal(sessionId, userId, requestDto, null);
+        } catch (IOException e) {
+            throw new IllegalStateException("안전보건 교육 첨부파일 저장 중 오류가 발생했습니다.", e);
+        }
+    }
+
+    @Transactional(rollbackFor = IOException.class)
+    public Long update(
+            Long sessionId,
+            Long userId,
+            SafetyTrainingSessionUpdateRequestDto requestDto,
+            List<MultipartFile> attachments)
+            throws IOException {
+        return updateInternal(sessionId, userId, requestDto, attachments);
+    }
+
+    private Long updateInternal(
+            Long sessionId,
+            Long userId,
+            SafetyTrainingSessionUpdateRequestDto requestDto,
+            List<MultipartFile> attachments)
+            throws IOException {
         User actor =
                 userRepository
                         .findById(userId)
@@ -613,6 +667,9 @@ public class SafetyTrainingSessionService {
         session.setAttendedCount(0);
         session.setAbsentCount(0);
         session.setAbsentReasonSummary(null);
+
+        deleteAttachments(session, requestDto.getDeleteAttachmentIds());
+        saveAttachments(session, attachments);
 
         return session.getId();
     }
@@ -728,6 +785,10 @@ public class SafetyTrainingSessionService {
 
         attendeeRepository.deleteBySessionId(sessionId);
         attendeeRepository.flush();
+        List<SafetyTrainingSessionAttachment> attachments =
+                attachmentRepository.findAllBySessionIdOrderByIdAsc(sessionId);
+        attachmentRepository.deleteBySessionId(sessionId);
+        attachmentRepository.flush();
         sessionRepository.delete(session);
 
         if (reportFileKey != null && !reportFileKey.isBlank()) {
@@ -739,6 +800,97 @@ public class SafetyTrainingSessionService {
                 safeDeleteFile(signatureKey);
             }
         }
+        for (SafetyTrainingSessionAttachment attachment : attachments) {
+            safeDeleteFile(attachment.getFileKey());
+        }
+    }
+
+    private void saveAttachments(SafetyTrainingSession session, List<MultipartFile> attachmentFiles)
+            throws IOException {
+        if (attachmentFiles == null || attachmentFiles.isEmpty()) {
+            return;
+        }
+
+        List<String> uploadedKeys = new ArrayList<>();
+        List<SafetyTrainingSessionAttachment> attachments = new ArrayList<>();
+        try {
+            for (MultipartFile file : attachmentFiles) {
+                if (isSkippableAttachment(file)) {
+                    continue;
+                }
+
+                String fileKey = s3Service.uploadFile(file);
+                uploadedKeys.add(fileKey);
+                attachments.add(
+                        SafetyTrainingSessionAttachment.builder()
+                                .session(session)
+                                .originalFileName(resolveOriginalFileName(file))
+                                .fileKey(fileKey)
+                                .contentType(file.getContentType())
+                                .fileSize(file.getSize())
+                                .build());
+            }
+
+            if (!attachments.isEmpty()) {
+                attachmentRepository.saveAll(attachments);
+            }
+        } catch (IOException | RuntimeException e) {
+            uploadedKeys.forEach(this::safeDeleteFile);
+            throw e;
+        }
+    }
+
+    private void deleteAttachments(SafetyTrainingSession session, List<Long> deleteAttachmentIds) {
+        if (deleteAttachmentIds == null || deleteAttachmentIds.isEmpty()) {
+            return;
+        }
+
+        for (Long attachmentId : new java.util.LinkedHashSet<>(deleteAttachmentIds)) {
+            SafetyTrainingSessionAttachment attachment =
+                    attachmentRepository
+                            .findById(attachmentId)
+                            .orElseThrow(
+                                    () ->
+                                            new CustomException(
+                                                    ErrorCode
+                                                            .SAFETY_TRAINING_ATTACHMENT_NOT_FOUND));
+
+            if (attachment.getSession() == null
+                    || !attachment.getSession().getId().equals(session.getId())) {
+                throw new CustomException(ErrorCode.SAFETY_TRAINING_ATTACHMENT_NOT_FOUND);
+            }
+
+            attachmentRepository.delete(attachment);
+            safeDeleteFile(attachment.getFileKey());
+        }
+    }
+
+    private String resolveOriginalFileName(MultipartFile file) {
+        String originalFileName = file.getOriginalFilename();
+        return originalFileName == null || originalFileName.isBlank()
+                ? "attachment"
+                : originalFileName;
+    }
+
+    private boolean isSkippableAttachment(MultipartFile file) {
+        if (file == null || file.isEmpty()) {
+            return true;
+        }
+
+        String originalFileName = file.getOriginalFilename();
+        String contentType = file.getContentType();
+        return "blob".equals(originalFileName) && "*/*".equals(contentType);
+    }
+
+    private SafetyTrainingSessionDetailResponseDto.AttachmentItem toAttachmentItem(
+            SafetyTrainingSessionAttachment attachment) {
+        return SafetyTrainingSessionDetailResponseDto.AttachmentItem.builder()
+                .attachmentId(attachment.getId())
+                .fileName(attachment.getOriginalFileName())
+                .fileUrl(s3Service.getPresignedViewUrl(attachment.getFileKey()))
+                .contentType(attachment.getContentType())
+                .fileSize(attachment.getFileSize())
+                .build();
     }
 
     private void validateSafetyWriteAuthority(User user) {

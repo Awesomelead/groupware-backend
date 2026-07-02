@@ -98,8 +98,9 @@ public class AdminService {
         if (hasText(requestDto.getAddress1())) {
             user.setAddress1(requestDto.getAddress1().trim());
         }
-        if (hasText(requestDto.getAddress2())) {
-            user.setAddress2(requestDto.getAddress2().trim());
+        if (requestDto.isAddress2Present()) {
+            user.setAddress2(
+                    hasText(requestDto.getAddress2()) ? requestDto.getAddress2().trim() : null);
         }
 
         if (hasText(requestDto.getRegistrationNumber())) {
@@ -213,6 +214,7 @@ public class AdminService {
             Role role,
             Company workLocation,
             List<Status> statuses,
+            Boolean hasPendingMyInfoRequest,
             Pageable pageable) {
         User admin =
                 userRepository
@@ -237,6 +239,7 @@ public class AdminService {
                         role,
                         workLocation,
                         statuses,
+                        hasPendingMyInfoRequest,
                         pageable)
                 .map(
                         u ->
@@ -295,8 +298,9 @@ public class AdminService {
         if (hasText(requestDto.getAddress1())) {
             user.setAddress1(requestDto.getAddress1().trim());
         }
-        if (hasText(requestDto.getAddress2())) {
-            user.setAddress2(requestDto.getAddress2().trim());
+        if (requestDto.isAddress2Present()) {
+            user.setAddress2(
+                    hasText(requestDto.getAddress2()) ? requestDto.getAddress2().trim() : null);
         }
 
         if (hasText(requestDto.getRegistrationNumber())) {
@@ -476,7 +480,7 @@ public class AdminService {
         if (request.getRequestedAddress1() != null) {
             targetUser.setAddress1(request.getRequestedAddress1());
         }
-        if (request.getRequestedAddress2() != null) {
+        if (request.isRequestedAddress2Present()) {
             targetUser.setAddress2(request.getRequestedAddress2());
         }
 

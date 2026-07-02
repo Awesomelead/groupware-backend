@@ -34,6 +34,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 
 @Slf4j
 @Service
@@ -77,6 +78,7 @@ public class UserService {
         String requestedZipcode = null;
         String requestedAddress1 = null;
         String requestedAddress2 = null;
+        boolean requestedAddress2Present = false;
 
         if (hasText(requestDto.getNameEng())) {
             requestedNameEng = requestDto.getNameEng().trim();
@@ -112,9 +114,11 @@ public class UserService {
                 requestedAddress1 = null;
             }
         }
-        if (hasText(requestDto.getAddress2())) {
-            requestedAddress2 = requestDto.getAddress2().trim();
-            if (requestedAddress2.equals(user.getAddress2())) {
+        if (requestDto.isAddress2Present()) {
+            requestedAddress2 =
+                    hasText(requestDto.getAddress2()) ? requestDto.getAddress2().trim() : null;
+            requestedAddress2Present = !Objects.equals(requestedAddress2, user.getAddress2());
+            if (!requestedAddress2Present) {
                 requestedAddress2 = null;
             }
         }
@@ -123,7 +127,7 @@ public class UserService {
                 && requestedPhoneNumber == null
                 && requestedZipcode == null
                 && requestedAddress1 == null
-                && requestedAddress2 == null) {
+                && !requestedAddress2Present) {
             throw new CustomException(ErrorCode.MY_INFO_UPDATE_NO_CHANGES);
         }
 
@@ -136,6 +140,7 @@ public class UserService {
                         .requestedZipcode(requestedZipcode)
                         .requestedAddress1(requestedAddress1)
                         .requestedAddress2(requestedAddress2)
+                        .requestedAddress2Present(requestedAddress2Present)
                         .status(MyInfoUpdateRequestStatus.PENDING)
                         .build();
         MyInfoUpdateRequest saved = myInfoUpdateRequestRepository.save(request);

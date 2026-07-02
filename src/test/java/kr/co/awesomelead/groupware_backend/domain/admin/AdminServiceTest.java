@@ -120,6 +120,50 @@ class AdminServiceTest {
             }
 
             @Test
+            @DisplayName("address2를 null로 명시하면 상세주소를 삭제한다")
+            void it_clears_address2_when_explicit_null() {
+                // given
+                Department department =
+                        Department.builder().id(1L).name(DepartmentName.SALES_DEPT).build();
+                User pendingUser = new User();
+                pendingUser.setId(userId);
+                pendingUser.setStatus(Status.PENDING);
+                pendingUser.setAddress2("어썸리드빌딩 5층");
+                requestDto.setAddress2(null);
+
+                when(userRepository.findById(userId)).thenReturn(Optional.of(pendingUser));
+                when(departmentRepository.findByName(any())).thenReturn(Optional.of(department));
+
+                // when
+                adminService.approveUserRegistration(userId, requestDto, adminId);
+
+                // then
+                assertThat(pendingUser.getAddress2()).isNull();
+            }
+
+            @Test
+            @DisplayName("address2를 빈 문자열로 명시하면 상세주소를 삭제한다")
+            void it_clears_address2_when_blank() {
+                // given
+                Department department =
+                        Department.builder().id(1L).name(DepartmentName.SALES_DEPT).build();
+                User pendingUser = new User();
+                pendingUser.setId(userId);
+                pendingUser.setStatus(Status.PENDING);
+                pendingUser.setAddress2("어썸리드빌딩 5층");
+                requestDto.setAddress2("");
+
+                when(userRepository.findById(userId)).thenReturn(Optional.of(pendingUser));
+                when(departmentRepository.findByName(any())).thenReturn(Optional.of(department));
+
+                // when
+                adminService.approveUserRegistration(userId, requestDto, adminId);
+
+                // then
+                assertThat(pendingUser.getAddress2()).isNull();
+            }
+
+            @Test
             @DisplayName("MASTER_ADMIN으로 승인하면 모든 권한을 부여한다")
             void it_grants_all_authorities_to_master_admin() {
                 // given
@@ -385,6 +429,7 @@ class AdminServiceTest {
                             Role.USER,
                             null,
                             null,
+                            null,
                             pageable))
                     .thenReturn(userPage);
             when(myInfoUpdateRequestRepository.findDistinctUserIdsByStatus(
@@ -400,6 +445,7 @@ class AdminServiceTest {
                             11L,
                             JobType.MANAGEMENT,
                             Role.USER,
+                            null,
                             null,
                             null,
                             pageable);
@@ -436,6 +482,7 @@ class AdminServiceTest {
                                             null,
                                             null,
                                             null,
+                                            null,
                                             PageRequest.of(0, 20)))
                     .isInstanceOf(CustomException.class)
                     .extracting("errorCode")
@@ -450,17 +497,42 @@ class AdminServiceTest {
             when(myInfoUpdateRequestRepository.findDistinctUserIdsByStatus(any()))
                     .thenReturn(List.of());
             when(userQueryRepository.findAllForAdminWithFilters(
-                            null, null, null, null, null, null, (List<Status>) null, pageable))
+                            null,
+                            null,
+                            null,
+                            null,
+                            null,
+                            null,
+                            (List<Status>) null,
+                            null,
+                            pageable))
                     .thenReturn(Page.empty());
 
             // when
             adminService.getUsers(
-                    adminId, null, null, null, null, null, null, (List<Status>) null, pageable);
+                    adminId,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    (List<Status>) null,
+                    null,
+                    pageable);
 
             // then
             verify(userQueryRepository)
                     .findAllForAdminWithFilters(
-                            null, null, null, null, null, null, (List<Status>) null, pageable);
+                            null,
+                            null,
+                            null,
+                            null,
+                            null,
+                            null,
+                            (List<Status>) null,
+                            null,
+                            pageable);
         }
 
         @Test
@@ -471,16 +543,17 @@ class AdminServiceTest {
             when(myInfoUpdateRequestRepository.findDistinctUserIdsByStatus(any()))
                     .thenReturn(List.of());
             when(userQueryRepository.findAllForAdminWithFilters(
-                            null, null, null, null, null, null, List.of(), pageable))
+                            null, null, null, null, null, null, List.of(), null, pageable))
                     .thenReturn(Page.empty());
 
             // when
-            adminService.getUsers(adminId, null, null, null, null, null, null, List.of(), pageable);
+            adminService.getUsers(
+                    adminId, null, null, null, null, null, null, List.of(), null, pageable);
 
             // then
             verify(userQueryRepository)
                     .findAllForAdminWithFilters(
-                            null, null, null, null, null, null, List.of(), pageable);
+                            null, null, null, null, null, null, List.of(), null, pageable);
         }
 
         @Test
@@ -492,16 +565,17 @@ class AdminServiceTest {
             when(myInfoUpdateRequestRepository.findDistinctUserIdsByStatus(any()))
                     .thenReturn(List.of());
             when(userQueryRepository.findAllForAdminWithFilters(
-                            null, null, null, null, null, null, statuses, pageable))
+                            null, null, null, null, null, null, statuses, null, pageable))
                     .thenReturn(Page.empty());
 
             // when
-            adminService.getUsers(adminId, null, null, null, null, null, null, statuses, pageable);
+            adminService.getUsers(
+                    adminId, null, null, null, null, null, null, statuses, null, pageable);
 
             // then
             verify(userQueryRepository)
                     .findAllForAdminWithFilters(
-                            null, null, null, null, null, null, statuses, pageable);
+                            null, null, null, null, null, null, statuses, null, pageable);
         }
 
         @Test
@@ -513,16 +587,38 @@ class AdminServiceTest {
             when(myInfoUpdateRequestRepository.findDistinctUserIdsByStatus(any()))
                     .thenReturn(List.of());
             when(userQueryRepository.findAllForAdminWithFilters(
-                            null, null, null, null, null, null, statuses, pageable))
+                            null, null, null, null, null, null, statuses, null, pageable))
                     .thenReturn(Page.empty());
 
             // when
-            adminService.getUsers(adminId, null, null, null, null, null, null, statuses, pageable);
+            adminService.getUsers(
+                    adminId, null, null, null, null, null, null, statuses, null, pageable);
 
             // then
             verify(userQueryRepository)
                     .findAllForAdminWithFilters(
-                            null, null, null, null, null, null, statuses, pageable);
+                            null, null, null, null, null, null, statuses, null, pageable);
+        }
+
+        @Test
+        @DisplayName("hasPendingMyInfoRequest 필터를 repository에 전달한다")
+        void getUsers_hasPendingMyInfoRequest를_repository에_전달한다() {
+            // given
+            Pageable pageable = PageRequest.of(0, 20);
+            when(myInfoUpdateRequestRepository.findDistinctUserIdsByStatus(any()))
+                    .thenReturn(List.of());
+            when(userQueryRepository.findAllForAdminWithFilters(
+                            null, null, null, null, null, null, null, true, pageable))
+                    .thenReturn(Page.empty());
+
+            // when
+            adminService.getUsers(
+                    adminId, null, null, null, null, null, null, null, true, pageable);
+
+            // then
+            verify(userQueryRepository)
+                    .findAllForAdminWithFilters(
+                            null, null, null, null, null, null, null, true, pageable);
         }
     }
 
@@ -631,6 +727,54 @@ class AdminServiceTest {
             assertThat(targetUser.hasAuthority(Authority.SEND_NOTIFICATION)).isEqualTo(true);
             verify(phoneAuthService).clearVerification("01099998888");
             verify(userRepository).save(targetUser);
+        }
+
+        @Test
+        @DisplayName("address2를 null로 명시하면 상세주소를 삭제한다")
+        void it_clears_address2_when_explicit_null() {
+            // given
+            User targetUser =
+                    User.builder()
+                            .id(17L)
+                            .phoneNumber("01011112222")
+                            .zipcode("06234")
+                            .address1("서울특별시 강남구 테헤란로 123")
+                            .address2("어썸리드빌딩 5층")
+                            .build();
+            targetUser.setPhoneNumberHash(User.hashValue("01011112222"));
+            when(userRepository.findById(17L)).thenReturn(Optional.of(targetUser));
+
+            AdminUserUpdateRequestDto dto = new AdminUserUpdateRequestDto();
+            dto.setZipcode("06234");
+            dto.setAddress1("서울특별시 강남구 테헤란로 1234");
+            dto.setAddress2(null);
+
+            // when
+            adminService.updateUserInfo(17L, dto, adminId);
+
+            // then
+            assertThat(targetUser.getZipcode()).isEqualTo("06234");
+            assertThat(targetUser.getAddress1()).isEqualTo("서울특별시 강남구 테헤란로 1234");
+            assertThat(targetUser.getAddress2()).isNull();
+        }
+
+        @Test
+        @DisplayName("address2를 빈 문자열로 명시하면 상세주소를 삭제한다")
+        void it_clears_address2_when_blank() {
+            // given
+            User targetUser =
+                    User.builder().id(17L).phoneNumber("01011112222").address2("어썸리드빌딩 5층").build();
+            targetUser.setPhoneNumberHash(User.hashValue("01011112222"));
+            when(userRepository.findById(17L)).thenReturn(Optional.of(targetUser));
+
+            AdminUserUpdateRequestDto dto = new AdminUserUpdateRequestDto();
+            dto.setAddress2("");
+
+            // when
+            adminService.updateUserInfo(17L, dto, adminId);
+
+            // then
+            assertThat(targetUser.getAddress2()).isNull();
         }
 
         @Test
@@ -951,6 +1095,32 @@ class AdminServiceTest {
             verify(userRepository).save(targetUser);
             verify(myInfoUpdateRequestRepository).save(request);
             verify(notificationService).sendAlertToUser(any(), any(), any(), any(), any(Map.class));
+        }
+
+        @Test
+        @DisplayName("관리자가 address2 삭제 요청을 승인하면 상세주소가 삭제된다")
+        void approveMyInfoUpdate_clearsAddress2() {
+            // given
+            User targetUser = User.builder().id(userId).address2("어썸리드빌딩 5층").build();
+            MyInfoUpdateRequest request =
+                    MyInfoUpdateRequest.builder()
+                            .id(10L)
+                            .user(targetUser)
+                            .requestedAddress2(null)
+                            .requestedAddress2Present(true)
+                            .status(MyInfoUpdateRequestStatus.PENDING)
+                            .build();
+
+            when(myInfoUpdateRequestRepository.findById(10L)).thenReturn(Optional.of(request));
+
+            // when
+            adminService.approveMyInfoUpdate(10L, adminId);
+
+            // then
+            assertThat(targetUser.getAddress2()).isNull();
+            assertThat(request.getStatus()).isEqualTo(MyInfoUpdateRequestStatus.APPROVED);
+            verify(userRepository).save(targetUser);
+            verify(myInfoUpdateRequestRepository).save(request);
         }
 
         @Test

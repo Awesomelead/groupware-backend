@@ -84,6 +84,9 @@ public class SafetyTrainingSessionDetailResponseDto {
     @Schema(description = "엑셀 파일 URL(확정본 생성 후)", example = "https://...presigned-url")
     private String reportFileUrl;
 
+    @Schema(description = "교육 첨부파일 목록")
+    private List<AttachmentItem> attachments;
+
     @Schema(description = "내 참석 상태", example = "SIGNED")
     private SafetyTrainingAttendeeStatus myAttendanceStatus;
 
@@ -127,5 +130,26 @@ public class SafetyTrainingSessionDetailResponseDto {
 
         @Schema(description = "작성일시", example = "2026-04-06T10:15:00")
         private LocalDateTime createdAt;
+    }
+
+    @Getter
+    @Builder
+    @Schema(description = "안전보건 교육 첨부파일")
+    public static class AttachmentItem {
+
+        @Schema(description = "첨부파일 ID", example = "1")
+        private Long attachmentId;
+
+        @Schema(description = "원본 파일명", example = "교육자료.pdf")
+        private String fileName;
+
+        @Schema(description = "파일 URL", example = "https://...presigned-url")
+        private String fileUrl;
+
+        @Schema(description = "콘텐츠 타입", example = "application/pdf")
+        private String contentType;
+
+        @Schema(description = "파일 크기(byte)", example = "102400")
+        private long fileSize;
     }
 }

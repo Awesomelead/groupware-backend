@@ -111,6 +111,7 @@ public interface VisitMapper {
     List<VisitHostResponseDto> toVisitHostResponseDtoList(List<VisitHost> visitHosts);
 
     @Mapping(target = "visitId", source = "id")
+    @Mapping(target = "purpose", source = "purpose")
     MyVisitListResponseDto toMyVisitListResponseDto(Visit visit);
 
     List<MyVisitListResponseDto> toMyVisitListResponseDtoList(List<Visit> visits);

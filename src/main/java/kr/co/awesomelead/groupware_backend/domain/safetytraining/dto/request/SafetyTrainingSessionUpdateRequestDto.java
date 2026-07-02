@@ -86,4 +86,7 @@ public class SafetyTrainingSessionUpdateRequestDto {
             example = "AWESOME",
             allowableValues = {"AWESOME", "MARUI"})
     private Company companyScope;
+
+    @Schema(description = "삭제할 첨부파일 ID 목록(선택)", example = "[1, 2]")
+    private List<Long> deleteAttachmentIds;
 }

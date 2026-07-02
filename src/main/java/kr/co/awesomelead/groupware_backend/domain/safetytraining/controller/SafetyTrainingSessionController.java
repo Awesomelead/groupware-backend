@@ -1,14 +1,21 @@
 package kr.co.awesomelead.groupware_backend.domain.safetytraining.controller;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.media.ArraySchema;
 import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Encoding;
 import io.swagger.v3.oas.annotations.media.ExampleObject;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 
+import jakarta.validation.ConstraintViolation;
 import jakarta.validation.Valid;
+import jakarta.validation.Validator;
 
 import kr.co.awesomelead.groupware_backend.domain.safetytraining.dto.request.SafetyTrainingSessionCreateRequestDto;
 import kr.co.awesomelead.groupware_backend.domain.safetytraining.dto.request.SafetyTrainingSessionSearchConditionDto;
@@ -22,6 +29,8 @@ import kr.co.awesomelead.groupware_backend.domain.safetytraining.dto.response.Sa
 import kr.co.awesomelead.groupware_backend.domain.safetytraining.service.SafetyTrainingSessionService;
 import kr.co.awesomelead.groupware_backend.domain.user.dto.CustomUserDetails;
 import kr.co.awesomelead.groupware_backend.global.common.response.ApiResponse;
+import kr.co.awesomelead.groupware_backend.global.error.CustomException;
+import kr.co.awesomelead.groupware_backend.global.error.ErrorCode;
 
 import lombok.RequiredArgsConstructor;
 
@@ -30,6 +39,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.web.PageableDefault;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -44,6 +54,8 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
+import java.util.List;
+import java.util.Set;
 
 @RestController
 @RequiredArgsConstructor
@@ -76,6 +88,8 @@ import java.io.IOException;
 public class SafetyTrainingSessionController {
 
     private final SafetyTrainingSessionService safetyTrainingSessionService;
+    private final ObjectMapper objectMapper;
+    private final Validator validator;
 
     @Operation(
             summary = "안전보건 교육일지 목록 조회",
@@ -128,7 +142,8 @@ public class SafetyTrainingSessionController {
 
     @Operation(
             summary = "안전보건 교육일지 상세 조회",
-            description = "제목, 교육 정보(실시자 이름/직급/부서 포함), 엑셀 파일 URL, 내 수료/미수료 및 서명 가능 여부를 조회합니다.")
+            description =
+                    "제목, 교육 정보(실시자 이름/직급/부서 포함), 첨부파일 목록, 엑셀 파일 URL, 내 수료/미수료 및 서명 가능 여부를 조회합니다.")
     @ApiResponses(
             value = {
                 @io.swagger.v3.oas.annotations.responses.ApiResponse(
@@ -784,13 +799,80 @@ public class SafetyTrainingSessionController {
                                 }
                                 """)))
             })
-    @PostMapping
+    @PostMapping(consumes = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<ApiResponse<Long>> create(
             @Parameter(hidden = true) @AuthenticationPrincipal CustomUserDetails userDetails,
             @Valid @RequestBody SafetyTrainingSessionCreateRequestDto requestDto) {
 
         Long sessionId = safetyTrainingSessionService.create(userDetails.getId(), requestDto);
         return ResponseEntity.ok(ApiResponse.onSuccess(sessionId));
+    }
+
+    @Operation(
+            summary = "안전보건 교육일지 등록",
+            description =
+                    "안전 보건 관리 권한 사용자가 첨부파일을 포함해 교육일지를 등록합니다. 첨부파일은 상세 조회에서 제공되며 엑셀 파일에는 포함되지 않습니다.",
+            requestBody =
+                    @io.swagger.v3.oas.annotations.parameters.RequestBody(
+                            required = true,
+                            content =
+                                    @Content(
+                                            mediaType = MediaType.MULTIPART_FORM_DATA_VALUE,
+                                            schema =
+                                                    @Schema(
+                                                            implementation =
+                                                                    SafetyTrainingSessionCreateMultipartRequestDoc
+                                                                            .class),
+                                            encoding = {
+                                                @Encoding(
+                                                        name = "request",
+                                                        contentType =
+                                                                MediaType.APPLICATION_JSON_VALUE),
+                                                @Encoding(
+                                                        name = "attachments",
+                                                        contentType = "*/*")
+                                            })))
+    @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ResponseEntity<ApiResponse<Long>> createWithAttachments(
+            @Parameter(hidden = true) @AuthenticationPrincipal CustomUserDetails userDetails,
+            @Parameter(hidden = true)
+            @RequestPart("request") String request,
+            @Parameter(hidden = true)
+            @RequestPart(value = "attachments", required = false) List<MultipartFile> attachments)
+            throws IOException {
+
+        SafetyTrainingSessionCreateRequestDto requestDto = parseCreateRequest(request);
+        Long sessionId =
+                safetyTrainingSessionService.create(
+                        userDetails.getId(), requestDto, attachments);
+        return ResponseEntity.ok(ApiResponse.onSuccess(sessionId));
+    }
+
+    private SafetyTrainingSessionCreateRequestDto parseCreateRequest(String request) {
+        try {
+            SafetyTrainingSessionCreateRequestDto requestDto =
+                    objectMapper.readValue(request, SafetyTrainingSessionCreateRequestDto.class);
+            Set<ConstraintViolation<SafetyTrainingSessionCreateRequestDto>> violations =
+                    validator.validate(requestDto);
+            if (!violations.isEmpty()) {
+                throw new CustomException(ErrorCode.INVALID_ARGUMENT);
+            }
+            return requestDto;
+        } catch (JsonProcessingException e) {
+            throw new CustomException(ErrorCode.INVALID_ARGUMENT);
+        }
+    }
+
+    @Schema(
+            name = "SafetyTrainingSessionCreateMultipartRequestDoc",
+            description = "안전보건 교육일지 첨부파일 포함 등록 multipart 요청")
+    static class SafetyTrainingSessionCreateMultipartRequestDoc {
+
+        @Schema(description = "안전보건 교육일지 등록 요청(JSON 파트)", requiredMode = Schema.RequiredMode.REQUIRED)
+        public SafetyTrainingSessionCreateRequestDto request;
+
+        @ArraySchema(schema = @Schema(type = "string", format = "binary"))
+        public List<String> attachments;
     }
 
     @Operation(

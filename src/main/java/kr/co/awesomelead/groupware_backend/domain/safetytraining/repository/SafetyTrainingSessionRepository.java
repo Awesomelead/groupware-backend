@@ -26,7 +26,7 @@ public interface SafetyTrainingSessionRepository
               AND (:status IS NULL OR s.status = :status)
               AND (:startAtFrom IS NULL OR s.startAt >= :startAtFrom)
               AND (:startAtTo IS NULL OR s.startAt <= :startAtTo)
-              AND (:titleKeyword IS NULL OR function('match_against', s.title, :titleKeyword) > 0)
+              AND (:titleKeyword IS NULL OR LOWER(s.title) LIKE LOWER(CONCAT('%', :titleKeyword, '%')))
             """)
     Page<SafetyTrainingSession> findAllByFilters(
             @Param("companyScope") Company companyScope,

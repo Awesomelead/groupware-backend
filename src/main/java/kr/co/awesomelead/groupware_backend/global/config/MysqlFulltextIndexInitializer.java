@@ -30,10 +30,6 @@ public class MysqlFulltextIndexInitializer implements ApplicationRunner {
         }
 
         createFulltextIndexIfAbsent(
-                "safety_training_sessions",
-                "ft_sts_title",
-                "ALTER TABLE safety_training_sessions ADD FULLTEXT INDEX ft_sts_title (title)");
-        createFulltextIndexIfAbsent(
                 "users",
                 "ft_users_name_kor",
                 "ALTER TABLE users ADD FULLTEXT INDEX ft_users_name_kor (name_kor)");

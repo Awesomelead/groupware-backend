@@ -453,17 +453,42 @@ class AdminServiceTest {
             when(myInfoUpdateRequestRepository.findDistinctUserIdsByStatus(any()))
                     .thenReturn(List.of());
             when(userQueryRepository.findAllForAdminWithFilters(
-                            null, null, null, null, null, null, (List<Status>) null, null, pageable))
+                            null,
+                            null,
+                            null,
+                            null,
+                            null,
+                            null,
+                            (List<Status>) null,
+                            null,
+                            pageable))
                     .thenReturn(Page.empty());
 
             // when
             adminService.getUsers(
-                    adminId, null, null, null, null, null, null, (List<Status>) null, null, pageable);
+                    adminId,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    (List<Status>) null,
+                    null,
+                    pageable);
 
             // then
             verify(userQueryRepository)
                     .findAllForAdminWithFilters(
-                            null, null, null, null, null, null, (List<Status>) null, null, pageable);
+                            null,
+                            null,
+                            null,
+                            null,
+                            null,
+                            null,
+                            (List<Status>) null,
+                            null,
+                            pageable);
         }
 
         @Test
@@ -694,11 +719,7 @@ class AdminServiceTest {
         void it_clears_address2_when_blank() {
             // given
             User targetUser =
-                    User.builder()
-                            .id(17L)
-                            .phoneNumber("01011112222")
-                            .address2("어썸리드빌딩 5층")
-                            .build();
+                    User.builder().id(17L).phoneNumber("01011112222").address2("어썸리드빌딩 5층").build();
             targetUser.setPhoneNumberHash(User.hashValue("01011112222"));
             when(userRepository.findById(17L)).thenReturn(Optional.of(targetUser));
 

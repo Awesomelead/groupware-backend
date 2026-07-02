@@ -124,6 +124,7 @@ public class AuthService {
         // Mapper에서 처리 안 되는 필드만 설정
         user.setNameKor(joinDto.getNameKor().trim());
         user.setNameEng(joinDto.getNameEng().trim());
+        user.setAddress2(normalizeOptionalText(joinDto.getAddress2()));
         user.setPassword(bCryptPasswordEncoder.encode(joinDto.getPassword()));
 
         // 7. DB에 저장
@@ -150,6 +151,10 @@ public class AuthService {
         if (userRepository.existsByPhoneNumberHash(User.hashValue(phoneNumber))) {
             throw new CustomException(ErrorCode.DUPLICATE_PHONE_NUMBER);
         }
+    }
+
+    private String normalizeOptionalText(String value) {
+        return value != null && !value.isBlank() ? value.trim() : null;
     }
 
     private void validateEmailNotDuplicated(String email) {

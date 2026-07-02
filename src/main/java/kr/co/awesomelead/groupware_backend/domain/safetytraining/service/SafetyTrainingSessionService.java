@@ -779,8 +779,8 @@ public class SafetyTrainingSessionService {
         }
     }
 
-    private void saveAttachments(
-            SafetyTrainingSession session, List<MultipartFile> attachmentFiles) throws IOException {
+    private void saveAttachments(SafetyTrainingSession session, List<MultipartFile> attachmentFiles)
+            throws IOException {
         if (attachmentFiles == null || attachmentFiles.isEmpty()) {
             return;
         }

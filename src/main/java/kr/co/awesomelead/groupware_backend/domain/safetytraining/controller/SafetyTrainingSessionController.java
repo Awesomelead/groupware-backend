@@ -828,23 +828,19 @@ public class SafetyTrainingSessionController {
                                                         name = "request",
                                                         contentType =
                                                                 MediaType.APPLICATION_JSON_VALUE),
-                                                @Encoding(
-                                                        name = "attachments",
-                                                        contentType = "*/*")
+                                                @Encoding(name = "attachments", contentType = "*/*")
                                             })))
     @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<ApiResponse<Long>> createWithAttachments(
             @Parameter(hidden = true) @AuthenticationPrincipal CustomUserDetails userDetails,
-            @Parameter(hidden = true)
-            @RequestPart("request") String request,
-            @Parameter(hidden = true)
-            @RequestPart(value = "attachments", required = false) List<MultipartFile> attachments)
+            @Parameter(hidden = true) @RequestPart("request") String request,
+            @Parameter(hidden = true) @RequestPart(value = "attachments", required = false)
+                    List<MultipartFile> attachments)
             throws IOException {
 
         SafetyTrainingSessionCreateRequestDto requestDto = parseCreateRequest(request);
         Long sessionId =
-                safetyTrainingSessionService.create(
-                        userDetails.getId(), requestDto, attachments);
+                safetyTrainingSessionService.create(userDetails.getId(), requestDto, attachments);
         return ResponseEntity.ok(ApiResponse.onSuccess(sessionId));
     }
 
@@ -868,7 +864,9 @@ public class SafetyTrainingSessionController {
             description = "안전보건 교육일지 첨부파일 포함 등록 multipart 요청")
     static class SafetyTrainingSessionCreateMultipartRequestDoc {
 
-        @Schema(description = "안전보건 교육일지 등록 요청(JSON 파트)", requiredMode = Schema.RequiredMode.REQUIRED)
+        @Schema(
+                description = "안전보건 교육일지 등록 요청(JSON 파트)",
+                requiredMode = Schema.RequiredMode.REQUIRED)
         public SafetyTrainingSessionCreateRequestDto request;
 
         @ArraySchema(schema = @Schema(type = "string", format = "binary"))

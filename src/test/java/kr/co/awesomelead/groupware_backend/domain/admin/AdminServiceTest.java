@@ -120,6 +120,50 @@ class AdminServiceTest {
             }
 
             @Test
+            @DisplayName("address2를 null로 명시하면 상세주소를 삭제한다")
+            void it_clears_address2_when_explicit_null() {
+                // given
+                Department department =
+                        Department.builder().id(1L).name(DepartmentName.SALES_DEPT).build();
+                User pendingUser = new User();
+                pendingUser.setId(userId);
+                pendingUser.setStatus(Status.PENDING);
+                pendingUser.setAddress2("어썸리드빌딩 5층");
+                requestDto.setAddress2(null);
+
+                when(userRepository.findById(userId)).thenReturn(Optional.of(pendingUser));
+                when(departmentRepository.findByName(any())).thenReturn(Optional.of(department));
+
+                // when
+                adminService.approveUserRegistration(userId, requestDto, adminId);
+
+                // then
+                assertThat(pendingUser.getAddress2()).isNull();
+            }
+
+            @Test
+            @DisplayName("address2를 빈 문자열로 명시하면 상세주소를 삭제한다")
+            void it_clears_address2_when_blank() {
+                // given
+                Department department =
+                        Department.builder().id(1L).name(DepartmentName.SALES_DEPT).build();
+                User pendingUser = new User();
+                pendingUser.setId(userId);
+                pendingUser.setStatus(Status.PENDING);
+                pendingUser.setAddress2("어썸리드빌딩 5층");
+                requestDto.setAddress2("");
+
+                when(userRepository.findById(userId)).thenReturn(Optional.of(pendingUser));
+                when(departmentRepository.findByName(any())).thenReturn(Optional.of(department));
+
+                // when
+                adminService.approveUserRegistration(userId, requestDto, adminId);
+
+                // then
+                assertThat(pendingUser.getAddress2()).isNull();
+            }
+
+            @Test
             @DisplayName("MASTER_ADMIN으로 승인하면 모든 권한을 부여한다")
             void it_grants_all_authorities_to_master_admin() {
                 // given

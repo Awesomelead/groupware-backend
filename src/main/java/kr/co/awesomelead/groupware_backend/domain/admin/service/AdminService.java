@@ -213,6 +213,7 @@ public class AdminService {
             Role role,
             Company workLocation,
             List<Status> statuses,
+            Boolean hasPendingMyInfoRequest,
             Pageable pageable) {
         User admin =
                 userRepository
@@ -237,6 +238,7 @@ public class AdminService {
                         role,
                         workLocation,
                         statuses,
+                        hasPendingMyInfoRequest,
                         pageable)
                 .map(
                         u ->

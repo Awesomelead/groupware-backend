@@ -143,6 +143,9 @@ public class AdminController {
             @Parameter(description = "상태 필터 (AVAILABLE, SUSPENDED, PENDING 등 다중 선택 가능)")
                     @RequestParam(required = false)
                     List<Status> statuses,
+            @Parameter(description = "개인정보 수정 승인 대기 여부 필터", required = false, example = "true")
+                    @RequestParam(required = false)
+                    Boolean hasPendingMyInfoRequest,
             @ParameterObject @PageableDefault(page = 0, size = 20) Pageable pageable) {
 
         Page<AdminUserSummaryResponseDto> result =
@@ -155,6 +158,7 @@ public class AdminController {
                         role,
                         workLocation,
                         statuses,
+                        hasPendingMyInfoRequest,
                         pageable);
 
         return ResponseEntity.ok(ApiResponse.onSuccess(result));

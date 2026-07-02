@@ -385,6 +385,7 @@ class AdminServiceTest {
                             Role.USER,
                             null,
                             null,
+                            null,
                             pageable))
                     .thenReturn(userPage);
             when(myInfoUpdateRequestRepository.findDistinctUserIdsByStatus(
@@ -400,6 +401,7 @@ class AdminServiceTest {
                             11L,
                             JobType.MANAGEMENT,
                             Role.USER,
+                            null,
                             null,
                             null,
                             pageable);
@@ -436,6 +438,7 @@ class AdminServiceTest {
                                             null,
                                             null,
                                             null,
+                                            null,
                                             PageRequest.of(0, 20)))
                     .isInstanceOf(CustomException.class)
                     .extracting("errorCode")
@@ -450,17 +453,17 @@ class AdminServiceTest {
             when(myInfoUpdateRequestRepository.findDistinctUserIdsByStatus(any()))
                     .thenReturn(List.of());
             when(userQueryRepository.findAllForAdminWithFilters(
-                            null, null, null, null, null, null, (List<Status>) null, pageable))
+                            null, null, null, null, null, null, (List<Status>) null, null, pageable))
                     .thenReturn(Page.empty());
 
             // when
             adminService.getUsers(
-                    adminId, null, null, null, null, null, null, (List<Status>) null, pageable);
+                    adminId, null, null, null, null, null, null, (List<Status>) null, null, pageable);
 
             // then
             verify(userQueryRepository)
                     .findAllForAdminWithFilters(
-                            null, null, null, null, null, null, (List<Status>) null, pageable);
+                            null, null, null, null, null, null, (List<Status>) null, null, pageable);
         }
 
         @Test
@@ -471,16 +474,17 @@ class AdminServiceTest {
             when(myInfoUpdateRequestRepository.findDistinctUserIdsByStatus(any()))
                     .thenReturn(List.of());
             when(userQueryRepository.findAllForAdminWithFilters(
-                            null, null, null, null, null, null, List.of(), pageable))
+                            null, null, null, null, null, null, List.of(), null, pageable))
                     .thenReturn(Page.empty());
 
             // when
-            adminService.getUsers(adminId, null, null, null, null, null, null, List.of(), pageable);
+            adminService.getUsers(
+                    adminId, null, null, null, null, null, null, List.of(), null, pageable);
 
             // then
             verify(userQueryRepository)
                     .findAllForAdminWithFilters(
-                            null, null, null, null, null, null, List.of(), pageable);
+                            null, null, null, null, null, null, List.of(), null, pageable);
         }
 
         @Test
@@ -492,16 +496,17 @@ class AdminServiceTest {
             when(myInfoUpdateRequestRepository.findDistinctUserIdsByStatus(any()))
                     .thenReturn(List.of());
             when(userQueryRepository.findAllForAdminWithFilters(
-                            null, null, null, null, null, null, statuses, pageable))
+                            null, null, null, null, null, null, statuses, null, pageable))
                     .thenReturn(Page.empty());
 
             // when
-            adminService.getUsers(adminId, null, null, null, null, null, null, statuses, pageable);
+            adminService.getUsers(
+                    adminId, null, null, null, null, null, null, statuses, null, pageable);
 
             // then
             verify(userQueryRepository)
                     .findAllForAdminWithFilters(
-                            null, null, null, null, null, null, statuses, pageable);
+                            null, null, null, null, null, null, statuses, null, pageable);
         }
 
         @Test
@@ -513,16 +518,38 @@ class AdminServiceTest {
             when(myInfoUpdateRequestRepository.findDistinctUserIdsByStatus(any()))
                     .thenReturn(List.of());
             when(userQueryRepository.findAllForAdminWithFilters(
-                            null, null, null, null, null, null, statuses, pageable))
+                            null, null, null, null, null, null, statuses, null, pageable))
                     .thenReturn(Page.empty());
 
             // when
-            adminService.getUsers(adminId, null, null, null, null, null, null, statuses, pageable);
+            adminService.getUsers(
+                    adminId, null, null, null, null, null, null, statuses, null, pageable);
 
             // then
             verify(userQueryRepository)
                     .findAllForAdminWithFilters(
-                            null, null, null, null, null, null, statuses, pageable);
+                            null, null, null, null, null, null, statuses, null, pageable);
+        }
+
+        @Test
+        @DisplayName("hasPendingMyInfoRequest 필터를 repository에 전달한다")
+        void getUsers_hasPendingMyInfoRequest를_repository에_전달한다() {
+            // given
+            Pageable pageable = PageRequest.of(0, 20);
+            when(myInfoUpdateRequestRepository.findDistinctUserIdsByStatus(any()))
+                    .thenReturn(List.of());
+            when(userQueryRepository.findAllForAdminWithFilters(
+                            null, null, null, null, null, null, null, true, pageable))
+                    .thenReturn(Page.empty());
+
+            // when
+            adminService.getUsers(
+                    adminId, null, null, null, null, null, null, null, true, pageable);
+
+            // then
+            verify(userQueryRepository)
+                    .findAllForAdminWithFilters(
+                            null, null, null, null, null, null, null, true, pageable);
         }
     }
 

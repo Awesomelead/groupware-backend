@@ -377,6 +377,7 @@ public class VisitServiceTest {
                 // given
                 VisitSearchRequestDto dto = new VisitSearchRequestDto("홍길동", "01012345678", "1234");
                 Visit visit = createBaseVisit(VisitStatus.NOT_VISITED, VisitCategory.PRE_ONE_DAY);
+                visit.setPurpose(VisitPurpose.MEETING);
                 given(
                                 visitRepository.findByVisitorNameAndPhoneNumberHashOrderByIdDesc(
                                         dto.getName(), Visit.hashValue(dto.getPhoneNumber())))
@@ -401,6 +402,7 @@ public class VisitServiceTest {
                 // given
                 VisitSearchRequestDto dto = new VisitSearchRequestDto("홍길동", "01012345678", "1234");
                 Visit visit = createBaseVisit(VisitStatus.NOT_VISITED, VisitCategory.PRE_ONE_DAY);
+                visit.setPurpose(VisitPurpose.MEETING);
                 given(
                                 visitRepository.findByVisitorNameAndPhoneNumberHashOrderByIdDesc(
                                         dto.getName(), Visit.hashValue(dto.getPhoneNumber())))
@@ -413,6 +415,7 @@ public class VisitServiceTest {
 
                 // then
                 assertThat(result).hasSize(1);
+                assertThat(result.get(0).getPurpose()).isEqualTo(VisitPurpose.MEETING);
             }
         }
     }

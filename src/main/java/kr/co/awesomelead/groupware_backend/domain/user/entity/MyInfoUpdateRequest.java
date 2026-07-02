@@ -64,8 +64,7 @@ public class MyInfoUpdateRequest extends BaseTimeEntity {
     @Convert(converter = Encryptor.class)
     private String requestedAddress2;
 
-    @Builder.Default
-    private boolean requestedAddress2Present = false;
+    @Builder.Default private boolean requestedAddress2Present = false;
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 20)

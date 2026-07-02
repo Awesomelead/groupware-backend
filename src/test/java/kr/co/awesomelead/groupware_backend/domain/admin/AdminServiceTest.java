@@ -1101,8 +1101,7 @@ class AdminServiceTest {
         @DisplayName("관리자가 address2 삭제 요청을 승인하면 상세주소가 삭제된다")
         void approveMyInfoUpdate_clearsAddress2() {
             // given
-            User targetUser =
-                    User.builder().id(userId).address2("어썸리드빌딩 5층").build();
+            User targetUser = User.builder().id(userId).address2("어썸리드빌딩 5층").build();
             MyInfoUpdateRequest request =
                     MyInfoUpdateRequest.builder()
                             .id(10L)

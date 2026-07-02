@@ -428,13 +428,58 @@ public class SafetyTrainingSessionController {
                         responseCode = "404",
                         description = "교육일지/사용자 없음")
             })
-    @PatchMapping("/{sessionId}")
+    @PatchMapping(value = "/{sessionId}", consumes = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<ApiResponse<Long>> update(
             @PathVariable Long sessionId,
             @Valid @RequestBody SafetyTrainingSessionUpdateRequestDto requestDto,
             @Parameter(hidden = true) @AuthenticationPrincipal CustomUserDetails userDetails) {
         Long updatedId =
                 safetyTrainingSessionService.update(sessionId, userDetails.getId(), requestDto);
+        return ResponseEntity.ok(ApiResponse.onSuccess(updatedId));
+    }
+
+    @Operation(
+            summary = "안전보건 교육일지 수정",
+            description =
+                    """
+                    관리 권한(MANAGE_SAFETY) 사용자가 첨부파일을 포함해 교육일지를 수정합니다.
+                    OPEN 상태 + 서명 완료자 0명인 경우에만 수정 가능합니다.
+
+                    - `request.deleteAttachmentIds`로 기존 첨부파일을 삭제합니다.
+                    - `attachments`로 새 첨부파일을 추가합니다.
+                    - 둘 다 없으면 기존 첨부파일을 유지합니다.
+                    """,
+            requestBody =
+                    @io.swagger.v3.oas.annotations.parameters.RequestBody(
+                            required = true,
+                            content =
+                                    @Content(
+                                            mediaType = MediaType.MULTIPART_FORM_DATA_VALUE,
+                                            schema =
+                                                    @Schema(
+                                                            implementation =
+                                                                    SafetyTrainingSessionUpdateMultipartRequestDoc
+                                                                            .class),
+                                            encoding = {
+                                                @Encoding(
+                                                        name = "request",
+                                                        contentType =
+                                                                MediaType.APPLICATION_JSON_VALUE),
+                                                @Encoding(name = "attachments", contentType = "*/*")
+                                            })))
+    @PatchMapping(value = "/{sessionId}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ResponseEntity<ApiResponse<Long>> updateWithAttachments(
+            @PathVariable Long sessionId,
+            @Parameter(hidden = true) @RequestPart("request") String request,
+            @Parameter(hidden = true) @RequestPart(value = "attachments", required = false)
+                    List<MultipartFile> attachments,
+            @Parameter(hidden = true) @AuthenticationPrincipal CustomUserDetails userDetails)
+            throws IOException {
+
+        SafetyTrainingSessionUpdateRequestDto requestDto = parseUpdateRequest(request);
+        Long updatedId =
+                safetyTrainingSessionService.update(
+                        sessionId, userDetails.getId(), requestDto, attachments);
         return ResponseEntity.ok(ApiResponse.onSuccess(updatedId));
     }
 
@@ -859,6 +904,21 @@ public class SafetyTrainingSessionController {
         }
     }
 
+    private SafetyTrainingSessionUpdateRequestDto parseUpdateRequest(String request) {
+        try {
+            SafetyTrainingSessionUpdateRequestDto requestDto =
+                    objectMapper.readValue(request, SafetyTrainingSessionUpdateRequestDto.class);
+            Set<ConstraintViolation<SafetyTrainingSessionUpdateRequestDto>> violations =
+                    validator.validate(requestDto);
+            if (!violations.isEmpty()) {
+                throw new CustomException(ErrorCode.INVALID_ARGUMENT);
+            }
+            return requestDto;
+        } catch (JsonProcessingException e) {
+            throw new CustomException(ErrorCode.INVALID_ARGUMENT);
+        }
+    }
+
     @Schema(
             name = "SafetyTrainingSessionCreateMultipartRequestDoc",
             description = "안전보건 교육일지 첨부파일 포함 등록 multipart 요청")
@@ -868,6 +928,20 @@ public class SafetyTrainingSessionController {
                 description = "안전보건 교육일지 등록 요청(JSON 파트)",
                 requiredMode = Schema.RequiredMode.REQUIRED)
         public SafetyTrainingSessionCreateRequestDto request;
+
+        @ArraySchema(schema = @Schema(type = "string", format = "binary"))
+        public List<String> attachments;
+    }
+
+    @Schema(
+            name = "SafetyTrainingSessionUpdateMultipartRequestDoc",
+            description = "안전보건 교육일지 첨부파일 포함 수정 multipart 요청")
+    static class SafetyTrainingSessionUpdateMultipartRequestDoc {
+
+        @Schema(
+                description = "안전보건 교육일지 수정 요청(JSON 파트)",
+                requiredMode = Schema.RequiredMode.REQUIRED)
+        public SafetyTrainingSessionUpdateRequestDto request;
 
         @ArraySchema(schema = @Schema(type = "string", format = "binary"))
         public List<String> attachments;

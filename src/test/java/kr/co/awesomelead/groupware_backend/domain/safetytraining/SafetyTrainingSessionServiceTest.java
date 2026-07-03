@@ -284,8 +284,7 @@ class SafetyTrainingSessionServiceTest {
                     .thenReturn(Optional.of(attendee));
             when(attachmentRepository.findAllBySessionIdOrderByIdAsc(SESSION_ID))
                     .thenReturn(List.of(attachment));
-            when(s3Service.getPresignedDownloadUrl(
-                            "safety-training/file-key.pdf", "교육자료.pdf"))
+            when(s3Service.getPresignedDownloadUrl("safety-training/file-key.pdf", "교육자료.pdf"))
                     .thenReturn("https://example.com/file-key.pdf");
             when(sessionRepository.findFirstByIdGreaterThanOrderByIdAsc(SESSION_ID))
                     .thenReturn(Optional.empty());

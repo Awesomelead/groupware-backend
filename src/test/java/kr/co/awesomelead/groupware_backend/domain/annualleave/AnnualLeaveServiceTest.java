@@ -327,14 +327,17 @@ public class AnnualLeaveServiceTest {
                             .build();
             given(annualLeaveDispatchHistoryRepository.findAllByCompanyOrderByCreatedAtDesc(null))
                     .willReturn(List.of(first, second, third));
-            given(s3Service.getPresignedDownloadUrl(
-                            "annual-leave/2026-06-first.xlsx", "2026_연차현황.xlsx"))
+            given(
+                            s3Service.getPresignedDownloadUrl(
+                                    "annual-leave/2026-06-first.xlsx", "2026_연차현황.xlsx"))
                     .willReturn("https://example.com/annual-leave-2026-06-first");
-            given(s3Service.getPresignedDownloadUrl(
-                            "annual-leave/2026-06-second.xlsx", "2026_연차현황_수정본.xlsx"))
+            given(
+                            s3Service.getPresignedDownloadUrl(
+                                    "annual-leave/2026-06-second.xlsx", "2026_연차현황_수정본.xlsx"))
                     .willReturn("https://example.com/annual-leave-2026-06-second");
-            given(s3Service.getPresignedDownloadUrl(
-                            "annual-leave/2026-07-first.xlsx", "2026_연차현황_7월.xlsx"))
+            given(
+                            s3Service.getPresignedDownloadUrl(
+                                    "annual-leave/2026-07-first.xlsx", "2026_연차현황_7월.xlsx"))
                     .willReturn("https://example.com/annual-leave-2026-07-first");
 
             // when
@@ -627,8 +630,9 @@ public class AnnualLeaveServiceTest {
 
             given(annualLeaveDispatchHistoryRepository.findById(10L))
                     .willReturn(Optional.of(history));
-            given(s3Service.getPresignedDownloadUrl(
-                            "annual-leave/2026-06-first.xlsx", "2026_연차현황.xlsx"))
+            given(
+                            s3Service.getPresignedDownloadUrl(
+                                    "annual-leave/2026-06-first.xlsx", "2026_연차현황.xlsx"))
                     .willReturn("https://example.com/annual-leave-2026-06-first");
 
             // when

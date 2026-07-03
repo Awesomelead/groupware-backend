@@ -460,6 +460,11 @@ public class AuthService {
                         + " :userId",
                 "userId",
                 userId);
+        deleteByQuery(
+                "update VisitRecord vr set vr.exitTimeUpdatedBy = null where"
+                        + " vr.exitTimeUpdatedBy.id = :userId",
+                "userId",
+                userId);
         deleteByQuery("delete from RequestHistory rh where rh.user.id = :userId", "userId", userId);
         deleteByQuery("delete from EduAttendance ea where ea.user.id = :userId", "userId", userId);
         deleteByQuery(

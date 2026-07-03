@@ -25,6 +25,9 @@ public class VisitRecordResponseDto {
     @Schema(description = "퇴실 시간", example = "2026-02-01 18:00:00")
     private LocalDateTime exitTime;
 
+    @Schema(description = "퇴실 시간 마지막 등록/수정자")
+    private VisitRecordExitTimeUpdatedByResponseDto exitTimeUpdatedBy;
+
     @Schema(description = "서명 이미지 URL", example = "https://s3.bucket.com/signatures/abc.png")
     private String signatureUrl;
 }

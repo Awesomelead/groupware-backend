@@ -585,7 +585,7 @@ public class AdminController {
                                                           "authorities": [
                                                             "알림 전송",
                                                             "부서 교육 관리",
-                                                            "공지 작성",
+                                                            "공지사항 관리",
                                                             "내방객 관리",
                                                             "직원 정보 수정"
                                                           ],

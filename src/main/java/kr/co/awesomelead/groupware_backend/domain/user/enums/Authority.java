@@ -13,7 +13,7 @@ public enum Authority {
     MANAGE_DEPARTMENT_EDUCATION("부서 교육 관리"), // jobType이 관리직일 경우 부여하고 시작
     MANAGE_PSM("PSM 관리"),
     MANAGE_SAFETY("안전 보건 관리"),
-    ACCESS_NOTICE("공지 작성"),
+    ACCESS_NOTICE("공지사항 관리"),
 
     MANAGE_VISITOR("내방객 관리"),
 

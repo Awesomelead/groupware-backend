@@ -564,7 +564,7 @@ public class AdminController {
                                                         }
                                                         """),
                                                 @ExampleObject(
-                                                        name = "권한 5개 선택 예시",
+                                                        name = "권한 여러 개 선택 예시",
                                                         value =
                                                                 """
                                                         {
@@ -585,7 +585,9 @@ public class AdminController {
                                                             "부서 교육 관리",
                                                             "공지사항 관리",
                                                             "내방객 관리",
-                                                            "직원 관리"
+                                                            "직원 관리",
+                                                            "연차 관리",
+                                                            "급여명세서 관리"
                                                           ],
                                                           "hireDate": "2025-09-22",
                                                           "resignationDate": null,

@@ -221,7 +221,7 @@ public class AnnualLeaveController {
 
     @Operation(
             summary = "회사별 당월 연차 발송 현황 조회",
-            description = "당월 회사별 연차 발송 여부를 조회합니다. EDIT_EMPLOYEE_INFO 권한 필요.")
+            description = "당월 회사별 연차 발송 여부를 조회합니다. MANAGE_ANNUAL_LEAVE 권한 필요.")
     @ApiResponses(
             value = {
                 @io.swagger.v3.oas.annotations.responses.ApiResponse(

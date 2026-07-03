@@ -114,7 +114,7 @@ public class PayslipController {
                                 {
                                 "isSuccess": false,
                                 "code": "NO_AUTHORITY_FOR_PAYSLIP",
-                                "message": "급여명세서 발송 권한이 없습니다.",
+                                "message": "급여명세서 관리 권한이 없습니다.",
                                 "result": null
                                 }
                                 """))),

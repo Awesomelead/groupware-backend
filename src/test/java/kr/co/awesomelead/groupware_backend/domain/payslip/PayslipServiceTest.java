@@ -82,7 +82,7 @@ public class PayslipServiceTest {
             void it_throws_no_authority_exception() {
                 // given
                 given(userRepository.findById(1L)).willReturn(Optional.of(admin));
-                // admin.hasAuthority(EDIT_EMPLOYEE_INFO) 가 false인 상황 (기본값)
+                // admin.hasAuthority(MANAGE_PAYSLIP) 가 false인 상황 (기본값)
 
                 // when & then
                 assertThatThrownBy(() -> payslipService.sendPayslip(List.of(), 1L))
@@ -100,7 +100,7 @@ public class PayslipServiceTest {
             @DisplayName("ONLY_PDF_ALLOWED 예외를 던진다.")
             void it_throws_only_pdf_exception() {
                 // given
-                admin.getAuthorities().add(Authority.EDIT_EMPLOYEE_INFO); // 권한 부여
+                admin.getAuthorities().add(Authority.MANAGE_PAYSLIP); // 권한 부여
                 given(userRepository.findById(1L)).willReturn(Optional.of(admin));
 
                 MockMultipartFile txtFile =
@@ -122,7 +122,7 @@ public class PayslipServiceTest {
             @DisplayName("S3에 업로드하고 정보를 저장한다.")
             void it_uploads_to_s3_and_saves_info() throws IOException {
                 // given
-                admin.getAuthorities().add(Authority.EDIT_EMPLOYEE_INFO);
+                admin.getAuthorities().add(Authority.MANAGE_PAYSLIP);
                 given(userRepository.findById(1L)).willReturn(Optional.of(admin));
 
                 MockMultipartFile pdfFile =
@@ -160,7 +160,7 @@ public class PayslipServiceTest {
             @DisplayName("OCR 결과로 사용자 매칭 후 발송한다.")
             void it_uses_ocr_result_for_matching() throws IOException {
                 // given
-                admin.getAuthorities().add(Authority.EDIT_EMPLOYEE_INFO);
+                admin.getAuthorities().add(Authority.MANAGE_PAYSLIP);
                 given(userRepository.findById(1L)).willReturn(Optional.of(admin));
 
                 MockMultipartFile pdfFile =
@@ -205,7 +205,7 @@ public class PayslipServiceTest {
             @DisplayName("AMBIGUOUS_PAYSLIP_RECIPIENT 예외를 던진다.")
             void it_throws_ambiguous_recipient_exception() {
                 // given
-                admin.getAuthorities().add(Authority.EDIT_EMPLOYEE_INFO);
+                admin.getAuthorities().add(Authority.MANAGE_PAYSLIP);
                 given(userRepository.findById(1L)).willReturn(Optional.of(admin));
 
                 MockMultipartFile pdfFile =
@@ -242,7 +242,7 @@ public class PayslipServiceTest {
             @DisplayName("INVALID_PAYSLIP_FILE_NAME_FORMAT 예외를 던진다.")
             void it_throws_invalid_file_name_format_exception() {
                 // given
-                admin.getAuthorities().add(Authority.EDIT_EMPLOYEE_INFO);
+                admin.getAuthorities().add(Authority.MANAGE_PAYSLIP);
                 given(userRepository.findById(1L)).willReturn(Optional.of(admin));
 
                 MockMultipartFile pdfFile =
@@ -268,7 +268,7 @@ public class PayslipServiceTest {
             @DisplayName("PAYSLIP_USER_INFO_MISMATCH 예외를 던진다.")
             void it_throws_user_info_mismatch_exception() {
                 // given
-                admin.getAuthorities().add(Authority.EDIT_EMPLOYEE_INFO);
+                admin.getAuthorities().add(Authority.MANAGE_PAYSLIP);
                 given(userRepository.findById(1L)).willReturn(Optional.of(admin));
 
                 MockMultipartFile pdfFile =
@@ -318,7 +318,7 @@ public class PayslipServiceTest {
         @DisplayName("수정 대상 명세서가 없으면 PAYSLIP_NOT_FOUND 예외를 던진다.")
         void it_throws_payslip_not_found_exception() {
             // given
-            admin.getAuthorities().add(Authority.EDIT_EMPLOYEE_INFO);
+            admin.getAuthorities().add(Authority.MANAGE_PAYSLIP);
             given(userRepository.findById(1L)).willReturn(Optional.of(admin));
             given(payslipRepository.findById(10L)).willReturn(Optional.empty());
 
@@ -339,7 +339,7 @@ public class PayslipServiceTest {
         @DisplayName("유효한 수정 요청이면 파일/수신자/상태를 교체하고 알림을 보낸다.")
         void it_updates_payslip_and_sends_notification() throws IOException {
             // given
-            admin.getAuthorities().add(Authority.EDIT_EMPLOYEE_INFO);
+            admin.getAuthorities().add(Authority.MANAGE_PAYSLIP);
             given(userRepository.findById(1L)).willReturn(Optional.of(admin));
 
             User previousOwner = User.builder().id(50L).build();
@@ -406,7 +406,7 @@ public class PayslipServiceTest {
         @DisplayName("삭제 대상 명세서가 없으면 PAYSLIP_NOT_FOUND 예외를 던진다.")
         void it_throws_payslip_not_found_exception() {
             // given
-            admin.getAuthorities().add(Authority.EDIT_EMPLOYEE_INFO);
+            admin.getAuthorities().add(Authority.MANAGE_PAYSLIP);
             given(userRepository.findById(1L)).willReturn(Optional.of(admin));
             given(payslipRepository.findById(10L)).willReturn(Optional.empty());
 
@@ -420,7 +420,7 @@ public class PayslipServiceTest {
         @DisplayName("유효한 삭제 요청이면 명세서와 S3 파일을 삭제한다.")
         void it_deletes_payslip_and_s3_file() {
             // given
-            admin.getAuthorities().add(Authority.EDIT_EMPLOYEE_INFO);
+            admin.getAuthorities().add(Authority.MANAGE_PAYSLIP);
             given(userRepository.findById(1L)).willReturn(Optional.of(admin));
 
             Payslip payslip = Payslip.builder().id(10L).fileKey("delete-key").build();

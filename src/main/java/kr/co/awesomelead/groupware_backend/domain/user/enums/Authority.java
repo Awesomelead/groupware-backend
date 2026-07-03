@@ -17,7 +17,9 @@ public enum Authority {
 
     MANAGE_VISITOR("내방객 관리"),
 
-    EDIT_EMPLOYEE_INFO("직원 관리"), // 직원 관리, 연차, 급여명세서 권한
+    EDIT_EMPLOYEE_INFO("직원 관리"),
+    MANAGE_ANNUAL_LEAVE("연차 관리"),
+    MANAGE_PAYSLIP("급여명세서 관리"),
     MANAGE_CERTIFICATE_REQUEST("제증명 발급 관리"),
     MANAGE_APPROVAL_LINE("결재선 설정 관리");
 

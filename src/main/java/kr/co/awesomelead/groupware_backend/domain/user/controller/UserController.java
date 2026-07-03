@@ -92,6 +92,8 @@ import java.util.List;
               - ACCESS_NOTICE: 공지사항 관리 권한
               - MANAGE_VISITOR: 내방객 관리 권한
               - EDIT_EMPLOYEE_INFO: 직원 관리 권한
+              - MANAGE_ANNUAL_LEAVE: 연차 관리 권한
+              - MANAGE_PAYSLIP: 급여명세서 관리 권한
               - MANAGE_APPROVAL_LINE: 결재선 설정 관리 권한
             """)
 @RestController
@@ -240,7 +242,9 @@ public class UserController {
                                                                                { "code": "MANAGE_DEPARTMENT_EDUCATION", "label": "부서 교육 관리", "enabled": false },
                                                                                { "code": "ACCESS_NOTICE", "label": "공지사항 관리", "enabled": false },
                                                                                { "code": "MANAGE_VISITOR", "label": "내방객 관리", "enabled": false },
-                                                                               { "code": "EDIT_EMPLOYEE_INFO", "label": "직원 관리", "enabled": false }
+                                                                               { "code": "EDIT_EMPLOYEE_INFO", "label": "직원 관리", "enabled": false },
+                                                                               { "code": "MANAGE_ANNUAL_LEAVE", "label": "연차 관리", "enabled": false },
+                                                                               { "code": "MANAGE_PAYSLIP", "label": "급여명세서 관리", "enabled": false }
                                                                              ],
                                                                              "hireDate": "2024-03-01",
                                                                              "resignationDate": null

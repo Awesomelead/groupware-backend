@@ -121,6 +121,28 @@ class AdminServiceTest {
             }
 
             @Test
+            @DisplayName("관리직을 권한 목록 없이 승인하면 기본 권한을 부여하지 않는다")
+            void it_does_not_grant_default_authorities_to_management_job_type() {
+                // given
+                Department department =
+                        Department.builder().id(1L).name(DepartmentName.SALES_DEPT).build();
+                User pendingUser = new User();
+                pendingUser.setId(userId);
+                pendingUser.setStatus(Status.PENDING);
+                requestDto.setAuthorities(null);
+                requestDto.setJobType(JobType.MANAGEMENT);
+
+                when(userRepository.findById(userId)).thenReturn(Optional.of(pendingUser));
+                when(departmentRepository.findByName(any())).thenReturn(Optional.of(department));
+
+                // when
+                adminService.approveUserRegistration(userId, requestDto, adminId);
+
+                // then
+                assertThat(pendingUser.getAuthorities().size()).isEqualTo(0);
+            }
+
+            @Test
             @DisplayName("birthDate만 보내면 생년월일을 직접 수정하지 않는다")
             void it_ignores_birth_date_without_registration_number() {
                 // given

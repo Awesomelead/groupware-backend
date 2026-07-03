@@ -85,8 +85,8 @@ import java.util.List;
               - SUSPENDED: 비활성
 
             - **Authority**: 권한
-              - SEND_NOTIFICATION: 알림 전송 권한 -> jobType이 관리직일 경우 부여하고 시작
-              - MANAGE_DEPARTMENT_EDUCATION: 부서 교육 관리 -> jobType이 관리직일 경우 부여하고 시작
+              - SEND_NOTIFICATION: 알림 전송 권한
+              - MANAGE_DEPARTMENT_EDUCATION: 부서 교육 관리
               - MANAGE_PSM: PSM 관리 권한
               - MANAGE_SAFETY: 안전 보건 관리 권한
               - ACCESS_NOTICE: 공지사항 관리 권한

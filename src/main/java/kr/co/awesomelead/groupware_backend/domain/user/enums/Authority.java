@@ -15,8 +15,8 @@ import java.util.Locale;
 @AllArgsConstructor
 public enum Authority {
     // 전체 권한은 ADMIN으로 변경할 때, 자동 부여
-    SEND_NOTIFICATION("알림 전송"), // jobType이 관리직일 경우 부여하고 시작
-    MANAGE_DEPARTMENT_EDUCATION("부서 교육 관리"), // jobType이 관리직일 경우 부여하고 시작
+    SEND_NOTIFICATION("알림 전송"),
+    MANAGE_DEPARTMENT_EDUCATION("부서 교육 관리"),
     MANAGE_PSM("PSM 관리"),
     MANAGE_SAFETY("안전 보건 관리"),
     ACCESS_NOTICE("공지사항 관리"),

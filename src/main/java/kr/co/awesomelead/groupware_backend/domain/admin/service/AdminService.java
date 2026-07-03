@@ -149,11 +149,6 @@ public class AdminService {
             user.getAuthorities().clear();
             requestDto.getAuthorities().forEach(user::addAuthority);
         } else {
-            // 관리직의 경우 기본 권한 부여
-            if (requestDto.getJobType() == JobType.MANAGEMENT) {
-                user.addAuthority(Authority.SEND_NOTIFICATION);
-                user.addAuthority(Authority.MANAGE_DEPARTMENT_EDUCATION);
-            }
             // ADMIN/MASTER_ADMIN 역할인 경우 모든 권한 부여
             if (requestDto.getRole() == Role.ADMIN || requestDto.getRole() == Role.MASTER_ADMIN) {
                 for (Authority authority : Authority.values()) {

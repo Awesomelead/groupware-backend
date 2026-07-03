@@ -8,6 +8,7 @@ import kr.co.awesomelead.groupware_backend.domain.user.entity.User;
 import kr.co.awesomelead.groupware_backend.domain.user.enums.JobType;
 import kr.co.awesomelead.groupware_backend.domain.user.enums.Position;
 import kr.co.awesomelead.groupware_backend.domain.user.enums.Role;
+import kr.co.awesomelead.groupware_backend.domain.user.enums.Authority;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -101,9 +102,7 @@ public class MyInfoResponseDto {
                 .jobType(user.getJobType())
                 .role(user.getRole())
                 .authorities(
-                        java.util.Arrays.stream(
-                                        kr.co.awesomelead.groupware_backend.domain.user.enums
-                                                .Authority.values())
+                        Authority.sortedByDescription().stream()
                                 .map(
                                         a ->
                                                 MyInfoAuthorityItemDto.builder()

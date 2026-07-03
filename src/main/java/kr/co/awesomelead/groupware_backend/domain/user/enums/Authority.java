@@ -5,6 +5,12 @@ import com.fasterxml.jackson.annotation.JsonValue;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 
+import java.text.Collator;
+import java.util.Arrays;
+import java.util.Comparator;
+import java.util.List;
+import java.util.Locale;
+
 @Getter
 @AllArgsConstructor
 public enum Authority {
@@ -24,6 +30,18 @@ public enum Authority {
     MANAGE_APPROVAL_LINE("결재선 설정 관리");
 
     private final String description;
+
+    public static List<Authority> sortedByDescription() {
+        return Arrays.stream(values()).sorted(descriptionComparator()).toList();
+    }
+
+    public static Comparator<Authority> descriptionComparator() {
+        Collator collator = Collator.getInstance(Locale.KOREAN);
+        return (left, right) -> {
+            int result = collator.compare(left.getDescription(), right.getDescription());
+            return result != 0 ? result : left.name().compareTo(right.name());
+        };
+    }
 
     @JsonValue
     public String getDescription() {

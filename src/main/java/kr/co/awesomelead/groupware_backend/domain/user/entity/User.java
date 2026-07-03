@@ -183,7 +183,7 @@ public class User {
     @ElementCollection(fetch = FetchType.LAZY)
     @CollectionTable(name = "user_authorities", joinColumns = @JoinColumn(name = "user_id"))
     @Enumerated(EnumType.STRING)
-    @Column(name = "authority")
+    @Column(name = "authority", length = 50)
     private Set<Authority> authorities = new HashSet<>();
 
     @PrePersist

@@ -416,6 +416,7 @@ public class VisitServiceTest {
                 // then
                 assertThat(result).hasSize(1);
                 assertThat(result.get(0).getPurpose()).isEqualTo(VisitPurpose.MEETING);
+                assertThat(result.get(0).getVisitCategory()).isEqualTo(VisitCategory.PRE_ONE_DAY);
             }
         }
     }

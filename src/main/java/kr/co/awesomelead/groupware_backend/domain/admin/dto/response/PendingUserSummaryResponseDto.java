@@ -103,7 +103,9 @@ public class PendingUserSummaryResponseDto {
                 .authorities(
                         user.getAuthorities() == null
                                 ? List.of()
-                                : user.getAuthorities().stream().toList())
+                                : user.getAuthorities().stream()
+                                        .sorted(Authority.descriptionComparator())
+                                        .toList())
                 .hireDate(user.getHireDate())
                 .resignationDate(user.getResignationDate())
                 .role(user.getRole())

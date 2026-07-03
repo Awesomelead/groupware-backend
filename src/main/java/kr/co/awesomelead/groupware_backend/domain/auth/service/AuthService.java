@@ -21,6 +21,7 @@ import kr.co.awesomelead.groupware_backend.domain.notification.service.Notificat
 import kr.co.awesomelead.groupware_backend.domain.safetytraining.repository.SafetyTrainingSessionRepository;
 import kr.co.awesomelead.groupware_backend.domain.user.dto.response.MyInfoAuthorityItemDto;
 import kr.co.awesomelead.groupware_backend.domain.user.entity.User;
+import kr.co.awesomelead.groupware_backend.domain.user.enums.Authority;
 import kr.co.awesomelead.groupware_backend.domain.user.enums.Status;
 import kr.co.awesomelead.groupware_backend.domain.user.mapper.UserMapper;
 import kr.co.awesomelead.groupware_backend.domain.user.repository.UserRepository;
@@ -209,6 +210,7 @@ public class AuthService {
         // 7. 응답 생성
         List<MyInfoAuthorityItemDto> authorityDtos =
                 user.getAuthorities().stream()
+                        .sorted(Authority.descriptionComparator())
                         .map(
                                 authority ->
                                         MyInfoAuthorityItemDto.builder()
@@ -458,6 +460,11 @@ public class AuthService {
         deleteByQuery(
                 "update RequestHistory rh set rh.processedBy = null where rh.processedBy.id ="
                         + " :userId",
+                "userId",
+                userId);
+        deleteByQuery(
+                "update VisitRecord vr set vr.exitTimeUpdatedBy = null where"
+                        + " vr.exitTimeUpdatedBy.id = :userId",
                 "userId",
                 userId);
         deleteByQuery("delete from RequestHistory rh where rh.user.id = :userId", "userId", userId);

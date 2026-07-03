@@ -2477,7 +2477,7 @@ class AuthServiceTest {
         @Test
         @DisplayName(
                 "성공: deleteUser 실행 시 RequestHistory.processedBy NULLIFY가"
-                        + " RequestHistory 삭제(rh.user.id) 직전에 실행된다 - 호출 순서 검증")
+                        + " RequestHistory 삭제(rh.user.id) 전에 실행된다 - 호출 순서 검증")
         void deleteUser_nullifyRequestHistoryProcessedByBeforeRequestHistoryDelete_orderCheck() {
             // given
             Long userId = 1L;
@@ -2517,9 +2517,9 @@ class AuthServiceTest {
                     .isGreaterThanOrEqualTo(0);
             assertThat(nullifyProcessedByIdx)
                     .as(
-                            "RequestHistory.processedBy NULLIFY는 RequestHistory 삭제(rh.user.id) 직전에"
+                            "RequestHistory.processedBy NULLIFY는 RequestHistory 삭제(rh.user.id) 전에"
                                     + " 실행되어야 한다")
-                    .isEqualTo(deleteRequestHistoryIdx - 1);
+                    .isLessThan(deleteRequestHistoryIdx);
         }
 
         @Test

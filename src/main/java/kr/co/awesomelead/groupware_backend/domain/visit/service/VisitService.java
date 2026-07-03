@@ -283,6 +283,7 @@ public class VisitService {
         }
 
         record.setExitTime(dto.getCheckOutTime());
+        record.setExitTimeUpdatedBy(manager);
 
         return visit.getId();
     }
@@ -334,6 +335,7 @@ public class VisitService {
                                     record.setSignatureUrl(
                                             s3Service.getFileUrl(record.getSignatureUrl()));
                                 }
+                                record.setExitTimeUpdatedBy(null);
                             });
         }
         return responseDto;

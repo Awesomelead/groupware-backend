@@ -86,7 +86,7 @@ public class AnnualLeaveServiceTest {
                                         annualLeaveService.uploadAnnualLeaveFile(
                                                 null, sheetName, loginUserId, Company.AWESOME))
                         .isInstanceOf(CustomException.class)
-                        .hasMessageContaining("연차 발송 권한이 없습니다.");
+                        .hasMessageContaining("연차 관리 권한이 없습니다.");
             }
         }
 
@@ -98,7 +98,7 @@ public class AnnualLeaveServiceTest {
             @DisplayName("데이터를 파싱하여 저장하고 성공 결과를 반환한다")
             void it_returns_success_response() throws IOException {
                 // given
-                User admin = createMockUser(Authority.EDIT_EMPLOYEE_INFO); // 연차 발송 권한 추가
+                User admin = createMockUser(Authority.MANAGE_ANNUAL_LEAVE); // 연차 관리 권한 추가
                 given(userRepository.findById(loginUserId)).willReturn(Optional.of(admin));
 
                 MultipartFile mockFile = createMockExcelFile();
@@ -137,7 +137,7 @@ public class AnnualLeaveServiceTest {
             void it_throws_exception_and_stops_everything() throws IOException {
                 // given: 날짜 칸에 "날짜없음" 이라고 적힌 잘못된 엑셀 파일 준비
                 MultipartFile invalidFile = createMockExcelFileWithWrongDateFormat();
-                User admin = createMockUser(Authority.EDIT_EMPLOYEE_INFO);
+                User admin = createMockUser(Authority.MANAGE_ANNUAL_LEAVE);
                 given(userRepository.findById(loginUserId)).willReturn(Optional.of(admin));
 
                 // when & then
@@ -163,7 +163,7 @@ public class AnnualLeaveServiceTest {
             void it_adds_to_failures() throws IOException {
                 // given
                 given(userRepository.findById(loginUserId))
-                        .willReturn(Optional.of(createMockUser(Authority.EDIT_EMPLOYEE_INFO)));
+                        .willReturn(Optional.of(createMockUser(Authority.MANAGE_ANNUAL_LEAVE)));
                 given(userRepository.findByNameAndJoinDate(anyString(), any()))
                         .willReturn(Optional.empty()); // 유저 못 찾음
 
@@ -191,7 +191,7 @@ public class AnnualLeaveServiceTest {
                 // given
                 MultipartFile mockFile = org.mockito.Mockito.mock(MultipartFile.class);
 
-                User admin = createMockUser(Authority.EDIT_EMPLOYEE_INFO);
+                User admin = createMockUser(Authority.MANAGE_ANNUAL_LEAVE);
                 given(userRepository.findById(loginUserId)).willReturn(Optional.of(admin));
 
                 given(mockFile.getInputStream()).willThrow(new IOException("강제 발생 에러"));
@@ -275,7 +275,7 @@ public class AnnualLeaveServiceTest {
     class Describe_getAnnualLeavesForAdmin {
 
         @Test
-        @DisplayName("연차 발송 권한이 없는 유저가 요청하면 NO_AUTHORITY_FOR_ANNUAL_LEAVE 예외를 던진다")
+        @DisplayName("연차 관리 권한이 없는 유저가 요청하면 NO_AUTHORITY_FOR_ANNUAL_LEAVE 예외를 던진다")
         void it_throws_when_user_has_no_authority() {
             // given
             Long userId = 1L;
@@ -284,7 +284,7 @@ public class AnnualLeaveServiceTest {
             // when & then
             assertThatThrownBy(() -> annualLeaveService.getAnnualLeavesForAdmin(userId, null))
                     .isInstanceOf(CustomException.class)
-                    .hasMessageContaining("연차 발송 권한이 없습니다.");
+                    .hasMessageContaining("연차 관리 권한이 없습니다.");
         }
 
         @Test
@@ -292,7 +292,7 @@ public class AnnualLeaveServiceTest {
         void it_returns_dispatched_annual_leave_list() {
             // given
             Long adminId = 1L;
-            User admin = createMockUser(Authority.EDIT_EMPLOYEE_INFO);
+            User admin = createMockUser(Authority.MANAGE_ANNUAL_LEAVE);
             given(userRepository.findById(adminId)).willReturn(Optional.of(admin));
 
             AnnualLeaveDispatchHistory first =
@@ -365,7 +365,7 @@ public class AnnualLeaveServiceTest {
     class Describe_updateAnnualLeaveDispatchForAdmin {
 
         @Test
-        @DisplayName("연차 발송 권한이 없는 유저가 요청하면 NO_AUTHORITY_FOR_ANNUAL_LEAVE 예외를 던진다")
+        @DisplayName("연차 관리 권한이 없는 유저가 요청하면 NO_AUTHORITY_FOR_ANNUAL_LEAVE 예외를 던진다")
         void it_throws_when_user_has_no_authority() throws IOException {
             // given
             Long userId = 1L;
@@ -378,7 +378,7 @@ public class AnnualLeaveServiceTest {
                                     annualLeaveService.updateAnnualLeaveDispatchForAdmin(
                                             userId, 10L, mockFile, "8월", Company.AWESOME))
                     .isInstanceOf(CustomException.class)
-                    .hasMessageContaining("연차 발송 권한이 없습니다.");
+                    .hasMessageContaining("연차 관리 권한이 없습니다.");
         }
 
         @Test
@@ -386,7 +386,7 @@ public class AnnualLeaveServiceTest {
         void it_throws_when_history_not_found() throws IOException {
             // given
             Long adminId = 1L;
-            User admin = createMockUser(Authority.EDIT_EMPLOYEE_INFO);
+            User admin = createMockUser(Authority.MANAGE_ANNUAL_LEAVE);
             given(userRepository.findById(adminId)).willReturn(Optional.of(admin));
             given(annualLeaveDispatchHistoryRepository.findById(999L)).willReturn(Optional.empty());
             MultipartFile mockFile = createMockExcelFile();
@@ -406,7 +406,7 @@ public class AnnualLeaveServiceTest {
             // given
             Long adminId = 1L;
             Long dispatchId = 10L;
-            User admin = createMockUser(Authority.EDIT_EMPLOYEE_INFO);
+            User admin = createMockUser(Authority.MANAGE_ANNUAL_LEAVE);
             given(userRepository.findById(adminId)).willReturn(Optional.of(admin));
 
             AnnualLeaveDispatchHistory history =
@@ -447,7 +447,7 @@ public class AnnualLeaveServiceTest {
     class Describe_deleteAnnualLeaveDispatchForAdmin {
 
         @Test
-        @DisplayName("연차 발송 권한이 없는 유저가 요청하면 NO_AUTHORITY_FOR_ANNUAL_LEAVE 예외를 던진다")
+        @DisplayName("연차 관리 권한이 없는 유저가 요청하면 NO_AUTHORITY_FOR_ANNUAL_LEAVE 예외를 던진다")
         void it_throws_when_user_has_no_authority() {
             // given
             Long userId = 1L;
@@ -457,7 +457,7 @@ public class AnnualLeaveServiceTest {
             assertThatThrownBy(
                             () -> annualLeaveService.deleteAnnualLeaveDispatchForAdmin(userId, 10L))
                     .isInstanceOf(CustomException.class)
-                    .hasMessageContaining("연차 발송 권한이 없습니다.");
+                    .hasMessageContaining("연차 관리 권한이 없습니다.");
         }
 
         @Test
@@ -465,7 +465,7 @@ public class AnnualLeaveServiceTest {
         void it_throws_when_history_not_found() {
             // given
             Long adminId = 1L;
-            User admin = createMockUser(Authority.EDIT_EMPLOYEE_INFO);
+            User admin = createMockUser(Authority.MANAGE_ANNUAL_LEAVE);
             given(userRepository.findById(adminId)).willReturn(Optional.of(admin));
             given(annualLeaveDispatchHistoryRepository.findById(999L)).willReturn(Optional.empty());
 
@@ -484,7 +484,7 @@ public class AnnualLeaveServiceTest {
             // given
             Long adminId = 1L;
             Long dispatchId = 10L;
-            User admin = createMockUser(Authority.EDIT_EMPLOYEE_INFO);
+            User admin = createMockUser(Authority.MANAGE_ANNUAL_LEAVE);
             given(userRepository.findById(adminId)).willReturn(Optional.of(admin));
 
             AnnualLeaveDispatchHistory history =
@@ -514,7 +514,7 @@ public class AnnualLeaveServiceTest {
             // given
             Long adminId = 1L;
             Long dispatchId = 10L;
-            User admin = createMockUser(Authority.EDIT_EMPLOYEE_INFO);
+            User admin = createMockUser(Authority.MANAGE_ANNUAL_LEAVE);
             given(userRepository.findById(adminId)).willReturn(Optional.of(admin));
 
             AnnualLeaveDispatchHistory deletedHistory =
@@ -569,7 +569,7 @@ public class AnnualLeaveServiceTest {
     class Describe_getAnnualLeaveDispatchDetailForAdmin {
 
         @Test
-        @DisplayName("연차 발송 권한이 없는 유저가 요청하면 NO_AUTHORITY_FOR_ANNUAL_LEAVE 예외를 던진다")
+        @DisplayName("연차 관리 권한이 없는 유저가 요청하면 NO_AUTHORITY_FOR_ANNUAL_LEAVE 예외를 던진다")
         void it_throws_when_user_has_no_authority() {
             // given
             Long userId = 1L;
@@ -581,7 +581,7 @@ public class AnnualLeaveServiceTest {
                                     annualLeaveService.getAnnualLeaveDispatchDetailForAdmin(
                                             userId, 10L))
                     .isInstanceOf(CustomException.class)
-                    .hasMessageContaining("연차 발송 권한이 없습니다.");
+                    .hasMessageContaining("연차 관리 권한이 없습니다.");
         }
 
         @Test
@@ -589,7 +589,7 @@ public class AnnualLeaveServiceTest {
         void it_throws_when_history_not_found() {
             // given
             Long adminId = 1L;
-            User admin = createMockUser(Authority.EDIT_EMPLOYEE_INFO);
+            User admin = createMockUser(Authority.MANAGE_ANNUAL_LEAVE);
             given(userRepository.findById(adminId)).willReturn(Optional.of(admin));
             given(annualLeaveDispatchHistoryRepository.findById(999L)).willReturn(Optional.empty());
 
@@ -607,7 +607,7 @@ public class AnnualLeaveServiceTest {
         void it_returns_dispatch_detail() {
             // given
             Long adminId = 1L;
-            User admin = createMockUser(Authority.EDIT_EMPLOYEE_INFO);
+            User admin = createMockUser(Authority.MANAGE_ANNUAL_LEAVE);
             admin.setPosition(Position.MANAGER);
             given(userRepository.findById(adminId)).willReturn(Optional.of(admin));
 
@@ -649,7 +649,7 @@ public class AnnualLeaveServiceTest {
     class Describe_rebuildAnnualLeavesForAdmin {
 
         @Test
-        @DisplayName("연차 발송 권한이 없는 유저가 요청하면 NO_AUTHORITY_FOR_ANNUAL_LEAVE 예외를 던진다")
+        @DisplayName("연차 관리 권한이 없는 유저가 요청하면 NO_AUTHORITY_FOR_ANNUAL_LEAVE 예외를 던진다")
         void it_throws_when_user_has_no_authority() {
             // given
             Long userId = 1L;
@@ -658,7 +658,7 @@ public class AnnualLeaveServiceTest {
             // when & then
             assertThatThrownBy(() -> annualLeaveService.rebuildAnnualLeavesForAdmin(userId))
                     .isInstanceOf(CustomException.class)
-                    .hasMessageContaining("연차 발송 권한이 없습니다.");
+                    .hasMessageContaining("연차 관리 권한이 없습니다.");
         }
 
         @Test
@@ -666,7 +666,7 @@ public class AnnualLeaveServiceTest {
         void it_rebuilds_annual_leaves() throws IOException {
             // given
             Long adminId = 1L;
-            User admin = createMockUser(Authority.EDIT_EMPLOYEE_INFO);
+            User admin = createMockUser(Authority.MANAGE_ANNUAL_LEAVE);
             given(userRepository.findById(adminId)).willReturn(Optional.of(admin));
 
             AnnualLeaveDispatchHistory history =
@@ -879,7 +879,7 @@ public class AnnualLeaveServiceTest {
             @DisplayName("DUPLICATE_ANNUAL_LEAVE_DISPATCH 예외를 던진다")
             void uploadAnnualLeaveFile_throwsWhenDuplicateMonth() throws IOException {
                 // given
-                User admin = createMockUser(Authority.EDIT_EMPLOYEE_INFO);
+                User admin = createMockUser(Authority.MANAGE_ANNUAL_LEAVE);
                 given(userRepository.findById(loginUserId)).willReturn(Optional.of(admin));
 
                 // 엑셀 파일의 baseDate는 2026-08-01이므로 중복 체크는 8월 기준으로 수행
@@ -912,7 +912,7 @@ public class AnnualLeaveServiceTest {
             @DisplayName("중복 체크를 통과하고 발송이 정상 처리된다")
             void uploadAnnualLeaveFile_succeedsWhenNoDuplicate() throws IOException {
                 // given
-                User admin = createMockUser(Authority.EDIT_EMPLOYEE_INFO);
+                User admin = createMockUser(Authority.MANAGE_ANNUAL_LEAVE);
                 given(userRepository.findById(loginUserId)).willReturn(Optional.of(admin));
 
                 // 엑셀 파일의 baseDate는 2026-08-01이므로 중복 체크는 8월 기준으로 수행
@@ -960,7 +960,7 @@ public class AnnualLeaveServiceTest {
             @DisplayName("ANNUAL_LEAVE_MONTH_MISMATCH 예외를 던진다")
             void uploadAnnualLeaveFile_throwsWhenMonthMismatch() throws IOException {
                 // given: 엑셀 파일의 기준일은 "2026-08-01"(8월), 시트명은 "5월"로 불일치
-                User admin = createMockUser(Authority.EDIT_EMPLOYEE_INFO);
+                User admin = createMockUser(Authority.MANAGE_ANNUAL_LEAVE);
                 given(userRepository.findById(loginUserId)).willReturn(Optional.of(admin));
 
                 MultipartFile mockFile = createMockExcelFile();
@@ -991,7 +991,7 @@ public class AnnualLeaveServiceTest {
             @DisplayName("annualLeaveRepository.save 및 알림 전송을 호출하지 않는다")
             void processAnnualLeaveRow_skipsWhenExistingDateIsNewer() throws IOException {
                 // given: 엑셀 파일 기준일은 2026-08-01, 기존 직원의 연차 updateDate는 2026-09-01 (더 최신)
-                User admin = createMockUser(Authority.EDIT_EMPLOYEE_INFO);
+                User admin = createMockUser(Authority.MANAGE_ANNUAL_LEAVE);
                 given(userRepository.findById(loginUserId)).willReturn(Optional.of(admin));
 
                 MultipartFile mockFile = createMockExcelFile();
@@ -1050,7 +1050,7 @@ public class AnnualLeaveServiceTest {
             void updateAnnualLeaveDispatchForAdmin_throwsWhenDuplicateExcludingSelf()
                     throws IOException {
                 // given
-                User admin = createMockUser(Authority.EDIT_EMPLOYEE_INFO);
+                User admin = createMockUser(Authority.MANAGE_ANNUAL_LEAVE);
                 given(userRepository.findById(adminId)).willReturn(Optional.of(admin));
 
                 AnnualLeaveDispatchHistory history =
@@ -1099,7 +1099,7 @@ public class AnnualLeaveServiceTest {
             void updateAnnualLeaveDispatchForAdmin_succeedsWhenNoDuplicateExcludingSelf()
                     throws IOException {
                 // given
-                User admin = createMockUser(Authority.EDIT_EMPLOYEE_INFO);
+                User admin = createMockUser(Authority.MANAGE_ANNUAL_LEAVE);
                 given(userRepository.findById(adminId)).willReturn(Optional.of(admin));
 
                 AnnualLeaveDispatchHistory history =
@@ -1280,7 +1280,7 @@ public class AnnualLeaveServiceTest {
             @DisplayName("DUPLICATE_ANNUAL_LEAVE_DISPATCH 예외를 던진다")
             void uploadAnnualLeaveFile_throwsWhenSameCompanySameMonthExists() throws IOException {
                 // given
-                User admin = createMockUser(Authority.EDIT_EMPLOYEE_INFO);
+                User admin = createMockUser(Authority.MANAGE_ANNUAL_LEAVE);
                 given(userRepository.findById(loginUserId)).willReturn(Optional.of(admin));
 
                 // 엑셀 파일의 baseDate는 2026-08-01이므로 중복 체크는 8월 기준으로 수행
@@ -1313,7 +1313,7 @@ public class AnnualLeaveServiceTest {
             @DisplayName("중복으로 보지 않고 정상 처리된다")
             void uploadAnnualLeaveFile_succeedsWhenDifferentCompanySameMonth() throws IOException {
                 // given: MARUI 6월 이력 있음 → AWESOME 8월은 중복 아님 (엑셀 baseDate 기준)
-                User admin = createMockUser(Authority.EDIT_EMPLOYEE_INFO);
+                User admin = createMockUser(Authority.MANAGE_ANNUAL_LEAVE);
                 given(userRepository.findById(loginUserId)).willReturn(Optional.of(admin));
 
                 // 엑셀 파일의 baseDate는 2026-08-01이므로 중복 체크는 8월 기준으로 수행
@@ -1363,7 +1363,7 @@ public class AnnualLeaveServiceTest {
             @DisplayName("ANNUAL_LEAVE_COMPANY_MISMATCH 예외를 던지고 전체 롤백한다")
             void uploadAnnualLeaveFile_throwsWhenCompanyMismatch() throws IOException {
                 // given: 요청은 AWESOME이지만 엑셀 직원의 workLocation은 MARUI
-                User admin = createMockUser(Authority.EDIT_EMPLOYEE_INFO);
+                User admin = createMockUser(Authority.MANAGE_ANNUAL_LEAVE);
                 given(userRepository.findById(loginUserId)).willReturn(Optional.of(admin));
 
                 MultipartFile mockFile = createMockExcelFile();
@@ -1402,7 +1402,7 @@ public class AnnualLeaveServiceTest {
             @DisplayName("각 회사별 당월 발송 이력 존재 여부를 Map으로 반환한다")
             void getMonthlyDispatchStatus_success() {
                 // given
-                User admin = createMockUser(Authority.EDIT_EMPLOYEE_INFO);
+                User admin = createMockUser(Authority.MANAGE_ANNUAL_LEAVE);
                 given(userRepository.findById(loginUserId)).willReturn(Optional.of(admin));
 
                 given(

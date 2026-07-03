@@ -10,6 +10,7 @@ import kr.co.awesomelead.groupware_backend.domain.notification.enums.Notificatio
 import kr.co.awesomelead.groupware_backend.domain.notification.enums.NotificationMessage;
 import kr.co.awesomelead.groupware_backend.domain.notification.repository.NotificationRepository;
 import kr.co.awesomelead.groupware_backend.domain.user.entity.User;
+import kr.co.awesomelead.groupware_backend.domain.user.enums.Authority;
 import kr.co.awesomelead.groupware_backend.domain.user.enums.Role;
 import kr.co.awesomelead.groupware_backend.domain.user.repository.UserRepository;
 import kr.co.awesomelead.groupware_backend.global.error.CustomException;
@@ -185,8 +186,12 @@ public class NotificationService {
 
         List<User> admins = userRepository.findAllByRole(Role.ADMIN);
         admins.addAll(userRepository.findAllByRole(Role.MASTER_ADMIN));
+        Authority requiredAuthority = resolveRequiredApprovalAuthority(domainType);
 
         for (User admin : admins) {
+            if (!canReceiveApprovalNotification(admin, requiredAuthority)) {
+                continue;
+            }
             // 1. 알림함 저장
             doCreateNotification(
                     admin.getId(),
@@ -208,6 +213,23 @@ public class NotificationService {
         }
 
         log.info("관리자 그룹 알림 전송 완료 - 대상 Admin 수: {}, 템플릿: {}", admins.size(), template.name());
+    }
+
+    private Authority resolveRequiredApprovalAuthority(NotificationDomainType domainType) {
+        if (domainType == NotificationDomainType.AUTH
+                || domainType == NotificationDomainType.MY_INFO_UPDATE) {
+            return Authority.EDIT_EMPLOYEE_INFO;
+        }
+        if (domainType == NotificationDomainType.REQUEST_HISTORY) {
+            return Authority.MANAGE_CERTIFICATE_REQUEST;
+        }
+        return null;
+    }
+
+    private boolean canReceiveApprovalNotification(User user, Authority requiredAuthority) {
+        return requiredAuthority == null
+                || user.getRole() == Role.MASTER_ADMIN
+                || user.hasAuthority(requiredAuthority);
     }
 
     /**

@@ -2,6 +2,7 @@ package kr.co.awesomelead.groupware_backend.domain.visit.dto.response;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 
+import kr.co.awesomelead.groupware_backend.domain.visit.enums.VisitCategory;
 import kr.co.awesomelead.groupware_backend.domain.visit.enums.VisitPurpose;
 import kr.co.awesomelead.groupware_backend.domain.visit.enums.VisitStatus;
 
@@ -26,6 +27,9 @@ public class MyVisitListResponseDto {
 
     @Schema(description = "방문 상태", example = "방문 전")
     private VisitStatus status;
+
+    @Schema(description = "방문 유형", example = "PRE_ONE_DAY")
+    private VisitCategory visitCategory;
 
     @Schema(description = "내방객 회사명", example = "어썸리드")
     private String visitorCompany;

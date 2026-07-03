@@ -18,6 +18,7 @@ import kr.co.awesomelead.groupware_backend.domain.notification.service.Notificat
 import kr.co.awesomelead.groupware_backend.domain.user.entity.User;
 import kr.co.awesomelead.groupware_backend.domain.user.enums.Authority;
 import kr.co.awesomelead.groupware_backend.domain.user.enums.JobType;
+import kr.co.awesomelead.groupware_backend.domain.user.enums.Position;
 import kr.co.awesomelead.groupware_backend.domain.user.repository.UserRepository;
 import kr.co.awesomelead.groupware_backend.domain.visit.dto.request.CheckInRequestDto;
 import kr.co.awesomelead.groupware_backend.domain.visit.dto.request.CheckOutRequestDto;
@@ -27,6 +28,7 @@ import kr.co.awesomelead.groupware_backend.domain.visit.dto.request.OnSiteVisitR
 import kr.co.awesomelead.groupware_backend.domain.visit.dto.request.OneDayVisitRequestDto;
 import kr.co.awesomelead.groupware_backend.domain.visit.dto.request.VisitProcessRequestDto;
 import kr.co.awesomelead.groupware_backend.domain.visit.dto.request.VisitSearchRequestDto;
+import kr.co.awesomelead.groupware_backend.domain.visit.dto.response.MyVisitDetailResponseDto;
 import kr.co.awesomelead.groupware_backend.domain.visit.dto.response.MyVisitListResponseDto;
 import kr.co.awesomelead.groupware_backend.domain.visit.dto.response.VisitListResponseDto;
 import kr.co.awesomelead.groupware_backend.domain.visit.entity.Visit;
@@ -416,7 +418,40 @@ public class VisitServiceTest {
                 // then
                 assertThat(result).hasSize(1);
                 assertThat(result.get(0).getPurpose()).isEqualTo(VisitPurpose.MEETING);
+                assertThat(result.get(0).getVisitCategory()).isEqualTo(VisitCategory.PRE_ONE_DAY);
             }
+        }
+    }
+
+    @Nested
+    @DisplayName("getMyVisitDetail 메서드는")
+    class Describe_getMyVisitDetail {
+
+        @Test
+        @DisplayName("내방객 본인 상세 조회에서는 퇴실 시간 등록/수정자 정보를 노출하지 않는다.")
+        void it_hides_exit_time_updated_by() {
+            // given
+            User manager = User.builder().id(1L).nameKor("김관리").position(Position.MANAGER).build();
+            manager.setDepartment(createDepartment(1L));
+
+            VisitRecord record =
+                    VisitRecord.builder()
+                            .id(10L)
+                            .entryTime(LocalDateTime.of(2026, 1, 22, 10, 0))
+                            .exitTime(LocalDateTime.of(2026, 1, 22, 18, 0))
+                            .exitTimeUpdatedBy(manager)
+                            .build();
+
+            Visit visit = createBaseVisit(VisitStatus.COMPLETED, VisitCategory.PRE_ONE_DAY);
+            visit.getRecords().add(record);
+            given(visitRepository.findById(VISIT_ID)).willReturn(Optional.of(visit));
+
+            // when
+            MyVisitDetailResponseDto result = visitService.getMyVisitDetail(VISIT_ID);
+
+            // then
+            assertThat(result.getRecords()).hasSize(1);
+            assertThat(result.getRecords().get(0).getExitTimeUpdatedBy()).isNull();
         }
     }
 
@@ -856,7 +891,13 @@ public class VisitServiceTest {
 
         @BeforeEach
         void setUpAdmin() {
-            User admin = User.builder().id(ADMIN_ID).jobType(JobType.MANAGEMENT).build();
+            User admin =
+                    User.builder()
+                            .id(ADMIN_ID)
+                            .nameKor("김관리")
+                            .jobType(JobType.MANAGEMENT)
+                            .position(Position.MANAGER)
+                            .build();
             admin.setDepartment(createDepartment(1L));
             admin.addAuthority(Authority.MANAGE_VISITOR);
             given(userRepository.findById(ADMIN_ID)).willReturn(Optional.of(admin));
@@ -908,6 +949,7 @@ public class VisitServiceTest {
                 // then
                 assertThat(visit.getStatus()).isEqualTo(VisitStatus.COMPLETED);
                 assertThat(record.getExitTime()).isEqualTo(CHECK_OUT_TIME);
+                assertThat(record.getExitTimeUpdatedBy().getId()).isEqualTo(ADMIN_ID);
             }
 
             @Test
@@ -965,6 +1007,7 @@ public class VisitServiceTest {
                 // then
                 assertThat(visit.getStatus()).isEqualTo(VisitStatus.COMPLETED); // 상태 유지
                 assertThat(record.getExitTime()).isEqualTo(newExitTime); // 시간만 업데이트
+                assertThat(record.getExitTimeUpdatedBy().getId()).isEqualTo(ADMIN_ID);
             }
         }
 
@@ -1306,6 +1349,43 @@ public class VisitServiceTest {
                     .isInstanceOf(
                             kr.co.awesomelead.groupware_backend.domain.visit.dto.response
                                     .MyVisitDetailResponseDto.class);
+        }
+
+        @Test
+        @DisplayName("records에 퇴실 시간 마지막 등록/수정자 정보를 포함한다.")
+        void it_returns_exit_time_updated_by_for_each_record() {
+            // given
+            User manager =
+                    User.builder().id(ADMIN_ID).nameKor("김관리").position(Position.MANAGER).build();
+            manager.setDepartment(createDepartment(1L));
+
+            VisitRecord record =
+                    VisitRecord.builder()
+                            .id(10L)
+                            .entryTime(LocalDateTime.of(2026, 1, 22, 10, 0))
+                            .exitTime(LocalDateTime.of(2026, 1, 22, 18, 0))
+                            .exitTimeUpdatedBy(manager)
+                            .build();
+
+            Visit visit = createBaseVisit(VisitStatus.COMPLETED, VisitCategory.PRE_ONE_DAY);
+            visit.getRecords().add(record);
+            given(visitRepository.findById(VISIT_ID)).willReturn(Optional.of(visit));
+
+            // when
+            MyVisitDetailResponseDto result =
+                    visitService.getVisitDetailForAdmin(ADMIN_ID, VISIT_ID);
+
+            // then
+            assertThat(result.getRecords()).hasSize(1);
+            assertThat(result.getRecords().get(0).getExitTimeUpdatedBy()).isNotNull();
+            assertThat(result.getRecords().get(0).getExitTimeUpdatedBy().getUserId())
+                    .isEqualTo(ADMIN_ID);
+            assertThat(result.getRecords().get(0).getExitTimeUpdatedBy().getName())
+                    .isEqualTo("김관리");
+            assertThat(result.getRecords().get(0).getExitTimeUpdatedBy().getDepartmentName())
+                    .isEqualTo(DepartmentName.SALES_DEPT);
+            assertThat(result.getRecords().get(0).getExitTimeUpdatedBy().getPosition())
+                    .isEqualTo(Position.MANAGER);
         }
     }
 

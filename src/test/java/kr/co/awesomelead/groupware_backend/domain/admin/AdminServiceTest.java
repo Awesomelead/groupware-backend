@@ -79,6 +79,7 @@ class AdminServiceTest {
         User admin = new User();
         admin.setId(adminId);
         admin.setRole(Role.ADMIN);
+        admin.addAuthority(Authority.EDIT_EMPLOYEE_INFO);
         when(userRepository.findById(adminId)).thenReturn(Optional.of(admin));
     }
 
@@ -117,6 +118,74 @@ class AdminServiceTest {
                 assertThat(savedUser.getRole()).isEqualTo(Role.USER);
                 assertThat(savedUser.getNameKor()).isEqualTo("홍길동");
                 assertThat(savedUser.getNameEng()).isEqualTo("Gildong Hong");
+            }
+
+            @Test
+            @DisplayName("관리직을 권한 목록 없이 승인하면 기본 권한을 부여하지 않는다")
+            void it_does_not_grant_default_authorities_to_management_job_type() {
+                // given
+                Department department =
+                        Department.builder().id(1L).name(DepartmentName.SALES_DEPT).build();
+                User pendingUser = new User();
+                pendingUser.setId(userId);
+                pendingUser.setStatus(Status.PENDING);
+                requestDto.setAuthorities(null);
+                requestDto.setJobType(JobType.MANAGEMENT);
+
+                when(userRepository.findById(userId)).thenReturn(Optional.of(pendingUser));
+                when(departmentRepository.findByName(any())).thenReturn(Optional.of(department));
+
+                // when
+                adminService.approveUserRegistration(userId, requestDto, adminId);
+
+                // then
+                assertThat(pendingUser.getAuthorities().size()).isEqualTo(0);
+            }
+
+            @Test
+            @DisplayName("birthDate만 보내면 생년월일을 직접 수정하지 않는다")
+            void it_ignores_birth_date_without_registration_number() {
+                // given
+                Department department =
+                        Department.builder().id(1L).name(DepartmentName.SALES_DEPT).build();
+                User pendingUser = new User();
+                pendingUser.setId(userId);
+                pendingUser.setStatus(Status.PENDING);
+                pendingUser.setBirthDate(LocalDate.of(1990, 1, 1));
+                requestDto.setBirthDate(LocalDate.of(2000, 1, 1));
+
+                when(userRepository.findById(userId)).thenReturn(Optional.of(pendingUser));
+                when(departmentRepository.findByName(any())).thenReturn(Optional.of(department));
+
+                // when
+                adminService.approveUserRegistration(userId, requestDto, adminId);
+
+                // then
+                assertThat(pendingUser.getBirthDate()).isEqualTo(LocalDate.of(1990, 1, 1));
+            }
+
+            @Test
+            @DisplayName("registrationNumber를 보내면 주민등록번호 기준으로 생년월일을 자동 계산한다")
+            void it_updates_birth_date_from_registration_number() {
+                // given
+                Department department =
+                        Department.builder().id(1L).name(DepartmentName.SALES_DEPT).build();
+                User pendingUser = new User();
+                pendingUser.setId(userId);
+                pendingUser.setStatus(Status.PENDING);
+                pendingUser.setBirthDate(LocalDate.of(1990, 1, 1));
+                requestDto.setBirthDate(LocalDate.of(1999, 12, 31));
+                requestDto.setRegistrationNumber("0001013123456");
+
+                when(userRepository.findById(userId)).thenReturn(Optional.of(pendingUser));
+                when(departmentRepository.findByName(any())).thenReturn(Optional.of(department));
+                when(userRepository.existsByRegistrationNumber("0001013123456")).thenReturn(false);
+
+                // when
+                adminService.approveUserRegistration(userId, requestDto, adminId);
+
+                // then
+                assertThat(pendingUser.getBirthDate()).isEqualTo(LocalDate.of(2000, 1, 1));
             }
 
             @Test
@@ -272,7 +341,7 @@ class AdminServiceTest {
         class Context_with_normal_user {
 
             @Test
-            @DisplayName("NO_AUTHORITY_FOR_REGISTRATION 에러를 던진다")
+            @DisplayName("NO_AUTHORITY_FOR_EMPLOYEE_MANAGEMENT 에러를 던진다")
             void it_throws_no_authority_exception() {
                 // given
                 User normalUser = new User();
@@ -286,7 +355,31 @@ class AdminServiceTest {
                                                 userId, requestDto, adminId))
                         .isInstanceOf(CustomException.class)
                         .extracting("errorCode")
-                        .isEqualTo(ErrorCode.NO_AUTHORITY_FOR_REGISTRATION);
+                        .isEqualTo(ErrorCode.NO_AUTHORITY_FOR_EMPLOYEE_MANAGEMENT);
+            }
+        }
+
+        @Nested
+        @DisplayName("ADMIN 역할이지만 직원 관리 권한이 없는 유저가 승인을 시도하면")
+        class Context_with_admin_without_edit_employee_info {
+
+            @Test
+            @DisplayName("NO_AUTHORITY_FOR_EMPLOYEE_MANAGEMENT 에러를 던진다")
+            void it_throws_no_authority_exception() {
+                // given
+                User adminWithoutAuthority = new User();
+                adminWithoutAuthority.setRole(Role.ADMIN);
+                when(userRepository.findById(adminId))
+                        .thenReturn(Optional.of(adminWithoutAuthority));
+
+                // when & then
+                assertThatThrownBy(
+                                () ->
+                                        adminService.approveUserRegistration(
+                                                userId, requestDto, adminId))
+                        .isInstanceOf(CustomException.class)
+                        .extracting("errorCode")
+                        .isEqualTo(ErrorCode.NO_AUTHORITY_FOR_EMPLOYEE_MANAGEMENT);
             }
         }
     }
@@ -336,7 +429,7 @@ class AdminServiceTest {
         }
 
         @Test
-        @DisplayName("관리자 권한이 없으면 NO_AUTHORITY_FOR_REGISTRATION 에러를 던진다")
+        @DisplayName("관리자 권한이 없으면 NO_AUTHORITY_FOR_EMPLOYEE_MANAGEMENT 에러를 던진다")
         void it_throws_when_admin_has_no_authority() {
             User normalUser = new User();
             normalUser.setRole(Role.USER);
@@ -345,7 +438,7 @@ class AdminServiceTest {
             assertThatThrownBy(() -> adminService.rejectUserRegistration(userId, adminId))
                     .isInstanceOf(CustomException.class)
                     .extracting("errorCode")
-                    .isEqualTo(ErrorCode.NO_AUTHORITY_FOR_REGISTRATION);
+                    .isEqualTo(ErrorCode.NO_AUTHORITY_FOR_EMPLOYEE_MANAGEMENT);
         }
     }
 
@@ -383,7 +476,7 @@ class AdminServiceTest {
         }
 
         @Test
-        @DisplayName("관리자 권한이 없는 사용자가 조회하면 NO_AUTHORITY_FOR_REGISTRATION 에러를 던진다")
+        @DisplayName("관리자 권한이 없는 사용자가 조회하면 NO_AUTHORITY_FOR_EMPLOYEE_MANAGEMENT 에러를 던진다")
         void it_throws_when_requester_is_not_admin() {
             // given
             User normalUser = new User();
@@ -394,7 +487,7 @@ class AdminServiceTest {
             assertThatThrownBy(() -> adminService.getPendingSignupUsers(adminId))
                     .isInstanceOf(CustomException.class)
                     .extracting("errorCode")
-                    .isEqualTo(ErrorCode.NO_AUTHORITY_FOR_REGISTRATION);
+                    .isEqualTo(ErrorCode.NO_AUTHORITY_FOR_EMPLOYEE_MANAGEMENT);
         }
     }
 
@@ -463,7 +556,7 @@ class AdminServiceTest {
         }
 
         @Test
-        @DisplayName("권한 없는 사용자가 조회하면 NO_AUTHORITY_FOR_REGISTRATION 에러를 던진다")
+        @DisplayName("권한 없는 사용자가 조회하면 NO_AUTHORITY_FOR_EMPLOYEE_MANAGEMENT 에러를 던진다")
         void it_throws_when_requester_is_not_admin() {
             // given
             User normalUser = new User();
@@ -486,7 +579,7 @@ class AdminServiceTest {
                                             PageRequest.of(0, 20)))
                     .isInstanceOf(CustomException.class)
                     .extracting("errorCode")
-                    .isEqualTo(ErrorCode.NO_AUTHORITY_FOR_REGISTRATION);
+                    .isEqualTo(ErrorCode.NO_AUTHORITY_FOR_EMPLOYEE_MANAGEMENT);
         }
 
         @Test
@@ -669,7 +762,7 @@ class AdminServiceTest {
         }
 
         @Test
-        @DisplayName("권한 없는 사용자가 조회하면 NO_AUTHORITY_FOR_REGISTRATION 에러를 던진다")
+        @DisplayName("권한 없는 사용자가 조회하면 NO_AUTHORITY_FOR_EMPLOYEE_MANAGEMENT 에러를 던진다")
         void it_throws_when_requester_is_not_admin() {
             // given
             User normalUser = new User();
@@ -680,7 +773,7 @@ class AdminServiceTest {
             assertThatThrownBy(() -> adminService.getUserDetail(adminId, 17L))
                     .isInstanceOf(CustomException.class)
                     .extracting("errorCode")
-                    .isEqualTo(ErrorCode.NO_AUTHORITY_FOR_REGISTRATION);
+                    .isEqualTo(ErrorCode.NO_AUTHORITY_FOR_EMPLOYEE_MANAGEMENT);
         }
     }
 
@@ -775,6 +868,55 @@ class AdminServiceTest {
 
             // then
             assertThat(targetUser.getAddress2()).isNull();
+        }
+
+        @Test
+        @DisplayName("birthDate만 보내면 생년월일을 직접 수정하지 않는다")
+        void it_ignores_birth_date_without_registration_number() {
+            // given
+            User targetUser =
+                    User.builder()
+                            .id(17L)
+                            .phoneNumber("01011112222")
+                            .birthDate(LocalDate.of(1990, 1, 1))
+                            .build();
+            targetUser.setPhoneNumberHash(User.hashValue("01011112222"));
+            when(userRepository.findById(17L)).thenReturn(Optional.of(targetUser));
+
+            AdminUserUpdateRequestDto dto = new AdminUserUpdateRequestDto();
+            dto.setBirthDate(LocalDate.of(2000, 1, 1));
+
+            // when
+            adminService.updateUserInfo(17L, dto, adminId);
+
+            // then
+            assertThat(targetUser.getBirthDate()).isEqualTo(LocalDate.of(1990, 1, 1));
+        }
+
+        @Test
+        @DisplayName("registrationNumber를 보내면 주민등록번호 기준으로 생년월일을 자동 계산한다")
+        void it_updates_birth_date_from_registration_number() {
+            // given
+            User targetUser =
+                    User.builder()
+                            .id(17L)
+                            .phoneNumber("01011112222")
+                            .birthDate(LocalDate.of(1990, 1, 1))
+                            .registrationNumber("9001011234567")
+                            .build();
+            targetUser.setPhoneNumberHash(User.hashValue("01011112222"));
+            when(userRepository.findById(17L)).thenReturn(Optional.of(targetUser));
+            when(userRepository.existsByRegistrationNumber("0001013123456")).thenReturn(false);
+
+            AdminUserUpdateRequestDto dto = new AdminUserUpdateRequestDto();
+            dto.setBirthDate(LocalDate.of(1999, 12, 31));
+            dto.setRegistrationNumber("0001013123456");
+
+            // when
+            adminService.updateUserInfo(17L, dto, adminId);
+
+            // then
+            assertThat(targetUser.getBirthDate()).isEqualTo(LocalDate.of(2000, 1, 1));
         }
 
         @Test
@@ -902,7 +1044,7 @@ class AdminServiceTest {
         class Context_with_normal_user {
 
             @Test
-            @DisplayName("NO_AUTHORITY_FOR_ROLE_UPDATE 에러를 던진다")
+            @DisplayName("NO_AUTHORITY_FOR_EMPLOYEE_MANAGEMENT 에러를 던진다")
             void it_throws_no_authority_exception() {
                 // given
                 User normalUser = new User();
@@ -913,7 +1055,7 @@ class AdminServiceTest {
                 assertThatThrownBy(() -> adminService.updateUserRole(1L, Role.ADMIN, adminId))
                         .isInstanceOf(CustomException.class)
                         .extracting("errorCode")
-                        .isEqualTo(ErrorCode.NO_AUTHORITY_FOR_ROLE_UPDATE);
+                        .isEqualTo(ErrorCode.NO_AUTHORITY_FOR_EMPLOYEE_MANAGEMENT);
             }
         }
 
@@ -1039,7 +1181,7 @@ class AdminServiceTest {
         }
 
         @Test
-        @DisplayName("관리자 권한이 없는 유저가 권한 수정을 시도하면 NO_AUTHORITY_FOR_ROLE_UPDATE 에러를 던진다")
+        @DisplayName("관리자 권한이 없는 유저가 권한 수정을 시도하면 NO_AUTHORITY_FOR_EMPLOYEE_MANAGEMENT 에러를 던진다")
         void it_throws_when_requester_is_not_admin() {
             // given
             User normalUser = new User();
@@ -1056,7 +1198,7 @@ class AdminServiceTest {
                                             adminId))
                     .isInstanceOf(CustomException.class)
                     .extracting("errorCode")
-                    .isEqualTo(ErrorCode.NO_AUTHORITY_FOR_ROLE_UPDATE);
+                    .isEqualTo(ErrorCode.NO_AUTHORITY_FOR_EMPLOYEE_MANAGEMENT);
         }
     }
 
@@ -1234,7 +1376,7 @@ class AdminServiceTest {
         class Context_with_no_authority_user {
 
             @Test
-            @DisplayName("NO_AUTHORITY_FOR_REGISTRATION 예외를 던진다")
+            @DisplayName("NO_AUTHORITY_FOR_EMPLOYEE_MANAGEMENT 예외를 던진다")
             void it_throws_no_authority_when_not_admin() {
                 // given
                 User normalUser = new User();
@@ -1248,7 +1390,7 @@ class AdminServiceTest {
                                                 adminId, null, null, null, null, null, null, null))
                         .isInstanceOf(CustomException.class)
                         .extracting("errorCode")
-                        .isEqualTo(ErrorCode.NO_AUTHORITY_FOR_REGISTRATION);
+                        .isEqualTo(ErrorCode.NO_AUTHORITY_FOR_EMPLOYEE_MANAGEMENT);
             }
         }
     }
@@ -1341,7 +1483,7 @@ class AdminServiceTest {
         }
 
         @Test
-        @DisplayName("관리자 권한이 없는 사용자가 조회하면 NO_AUTHORITY_FOR_MY_INFO_UPDATE_APPROVAL 에러를 던진다")
+        @DisplayName("관리자 권한이 없는 사용자가 조회하면 NO_AUTHORITY_FOR_EMPLOYEE_MANAGEMENT 에러를 던진다")
         void it_throws_when_requester_is_not_admin() {
             // given
             User normalUser = new User();
@@ -1353,7 +1495,7 @@ class AdminServiceTest {
                             () -> adminService.getPendingMyInfoUpdateRequestDetail(adminId, userId))
                     .isInstanceOf(CustomException.class)
                     .extracting("errorCode")
-                    .isEqualTo(ErrorCode.NO_AUTHORITY_FOR_MY_INFO_UPDATE_APPROVAL);
+                    .isEqualTo(ErrorCode.NO_AUTHORITY_FOR_EMPLOYEE_MANAGEMENT);
         }
     }
 }

@@ -32,7 +32,10 @@ public class UserApprovalRequestDto {
     @Schema(description = "영문 이름", example = "HONG GILDONG")
     private String nameEng;
 
-    @Schema(description = "생년월일", example = "1990-01-01")
+    @Schema(
+            description = "직접 수정 불가. 주민등록번호/외국인등록번호 기준으로 자동 계산됩니다.",
+            example = "1990-01-01",
+            accessMode = Schema.AccessMode.READ_ONLY)
     private LocalDate birthDate;
 
     @Schema(description = "국적", example = "대한민국")

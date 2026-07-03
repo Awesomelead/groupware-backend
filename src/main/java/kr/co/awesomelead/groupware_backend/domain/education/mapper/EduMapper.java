@@ -81,7 +81,9 @@ public interface EduMapper {
 
     @Mapping(
             target = "viewUrl",
-            expression = "java(s3Service.getPresignedViewUrl(attachment.getS3Key()))")
+            expression =
+                    "java(s3Service.getPresignedDownloadUrl(attachment.getS3Key(),"
+                            + " attachment.getOriginalFileName()))")
     EduReportDetailDto.AttachmentResponse toAttachmentDto(
             EduAttachment attachment, @Context S3Service s3Service);
 

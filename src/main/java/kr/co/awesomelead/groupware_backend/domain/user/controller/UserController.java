@@ -85,13 +85,15 @@ import java.util.List;
               - SUSPENDED: 비활성
 
             - **Authority**: 권한
-              - SEND_NOTIFICATION: 알림 전송 권한 -> jobType이 관리직일 경우 부여하고 시작
-              - MANAGE_DEPARTMENT_EDUCATION: 부서 교육 관리 -> jobType이 관리직일 경우 부여하고 시작
+              - SEND_NOTIFICATION: 알림 전송 권한
+              - MANAGE_DEPARTMENT_EDUCATION: 부서 교육 관리
               - MANAGE_PSM: PSM 관리 권한
               - MANAGE_SAFETY: 안전 보건 관리 권한
-              - ACCESS_NOTICE: 공지 작성 권한
+              - ACCESS_NOTICE: 공지사항 관리 권한
               - MANAGE_VISITOR: 내방객 관리 권한
-              - EDIT_EMPLOYEE_INFO: 직원 정보 수정 권한
+              - EDIT_EMPLOYEE_INFO: 직원 관리 권한
+              - MANAGE_ANNUAL_LEAVE: 연차 관리 권한
+              - MANAGE_PAYSLIP: 급여명세서 관리 권한
               - MANAGE_APPROVAL_LINE: 결재선 설정 관리 권한
             """)
 @RestController
@@ -238,9 +240,11 @@ public class UserController {
                                                                              "authorities": [
                                                                                { "code": "SEND_NOTIFICATION", "label": "알림 전송", "enabled": true },
                                                                                { "code": "MANAGE_DEPARTMENT_EDUCATION", "label": "부서 교육 관리", "enabled": false },
-                                                                               { "code": "ACCESS_NOTICE", "label": "공지 작성", "enabled": false },
+                                                                               { "code": "ACCESS_NOTICE", "label": "공지사항 관리", "enabled": false },
                                                                                { "code": "MANAGE_VISITOR", "label": "내방객 관리", "enabled": false },
-                                                                               { "code": "EDIT_EMPLOYEE_INFO", "label": "직원 정보 수정", "enabled": false }
+                                                                               { "code": "EDIT_EMPLOYEE_INFO", "label": "직원 관리", "enabled": false },
+                                                                               { "code": "MANAGE_ANNUAL_LEAVE", "label": "연차 관리", "enabled": false },
+                                                                               { "code": "MANAGE_PAYSLIP", "label": "급여명세서 관리", "enabled": false }
                                                                              ],
                                                                              "hireDate": "2024-03-01",
                                                                              "resignationDate": null

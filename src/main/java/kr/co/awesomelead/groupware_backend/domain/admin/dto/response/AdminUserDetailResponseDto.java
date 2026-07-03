@@ -109,7 +109,7 @@ public class AdminUserDetailResponseDto {
                 .position(user.getPosition())
                 .jobType(user.getJobType())
                 .authorities(
-                        java.util.Arrays.stream(Authority.values())
+                        Authority.sortedByDescription().stream()
                                 .map(
                                         a ->
                                                 MyInfoAuthorityItemDto.builder()

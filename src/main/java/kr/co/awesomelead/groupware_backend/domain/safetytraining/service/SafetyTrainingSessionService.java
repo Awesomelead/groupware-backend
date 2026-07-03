@@ -887,7 +887,9 @@ public class SafetyTrainingSessionService {
         return SafetyTrainingSessionDetailResponseDto.AttachmentItem.builder()
                 .attachmentId(attachment.getId())
                 .fileName(attachment.getOriginalFileName())
-                .fileUrl(s3Service.getPresignedViewUrl(attachment.getFileKey()))
+                .fileUrl(
+                        s3Service.getPresignedDownloadUrl(
+                                attachment.getFileKey(), attachment.getOriginalFileName()))
                 .contentType(attachment.getContentType())
                 .fileSize(attachment.getFileSize())
                 .build();

@@ -10,6 +10,8 @@ import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 
+import kr.co.awesomelead.groupware_backend.domain.user.entity.User;
+
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
@@ -42,6 +44,10 @@ public class VisitRecord {
     @JoinColumn(name = "visit_id", nullable = false)
     @JsonBackReference // 무한 참조 방지
     private Visit visit;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "exit_time_updated_by_user_id")
+    private User exitTimeUpdatedBy;
 
     // 상태 확인용 로직
     public boolean isCheckedIn() {

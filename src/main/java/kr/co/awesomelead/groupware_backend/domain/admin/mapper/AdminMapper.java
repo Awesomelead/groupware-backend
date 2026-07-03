@@ -10,7 +10,6 @@ import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 import org.mapstruct.MappingTarget;
 
-import java.util.Arrays;
 import java.util.List;
 
 @Mapper(componentModel = "spring")
@@ -53,7 +52,7 @@ public interface AdminMapper {
             return;
         }
         List<MyInfoAuthorityItemDto> authorities =
-                Arrays.stream(Authority.values())
+                Authority.sortedByDescription().stream()
                         .map(
                                 a ->
                                         MyInfoAuthorityItemDto.builder()

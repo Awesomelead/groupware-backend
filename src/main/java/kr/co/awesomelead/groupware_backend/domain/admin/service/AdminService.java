@@ -68,7 +68,7 @@ public class AdminService {
                 userRepository
                         .findById(adminId)
                         .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
-        validateRegistrationAuthority(admin);
+        validateEmployeeManagementAuthority(admin);
 
         // userId로 PENDING 상태의 사용자를 조회
         User user =
@@ -142,9 +142,6 @@ public class AdminService {
         }
         user.setPosition(requestDto.getPosition());
         user.setHireDate(requestDto.getHireDate());
-        if (requestDto.getBirthDate() != null) {
-            user.setBirthDate(requestDto.getBirthDate());
-        }
         // 사용자의 상태를 AVAILABLE로 변경
         user.setStatus(Status.AVAILABLE);
 
@@ -152,11 +149,6 @@ public class AdminService {
             user.getAuthorities().clear();
             requestDto.getAuthorities().forEach(user::addAuthority);
         } else {
-            // 관리직의 경우 기본 권한 부여
-            if (requestDto.getJobType() == JobType.MANAGEMENT) {
-                user.addAuthority(Authority.SEND_NOTIFICATION);
-                user.addAuthority(Authority.MANAGE_DEPARTMENT_EDUCATION);
-            }
             // ADMIN/MASTER_ADMIN 역할인 경우 모든 권한 부여
             if (requestDto.getRole() == Role.ADMIN || requestDto.getRole() == Role.MASTER_ADMIN) {
                 for (Authority authority : Authority.values()) {
@@ -176,7 +168,7 @@ public class AdminService {
                 userRepository
                         .findById(adminId)
                         .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
-        validateRegistrationAuthority(admin);
+        validateEmployeeManagementAuthority(admin);
 
         User user =
                 userRepository
@@ -197,7 +189,7 @@ public class AdminService {
                 userRepository
                         .findById(adminId)
                         .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
-        validateRegistrationAuthority(admin);
+        validateEmployeeManagementAuthority(admin);
 
         return userRepository.findAllByStatusWithDepartment(Status.PENDING).stream()
                 .map(PendingUserSummaryResponseDto::from)
@@ -220,7 +212,7 @@ public class AdminService {
                 userRepository
                         .findById(adminId)
                         .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
-        validateRegistrationAuthority(admin);
+        validateEmployeeManagementAuthority(admin);
 
         Set<Long> pendingMyInfoUserIds =
                 myInfoUpdateRequestRepository
@@ -253,7 +245,7 @@ public class AdminService {
                 userRepository
                         .findById(adminId)
                         .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
-        validateRegistrationAuthority(admin);
+        validateEmployeeManagementAuthority(admin);
 
         User user =
                 userRepository
@@ -273,7 +265,7 @@ public class AdminService {
                 userRepository
                         .findById(adminId)
                         .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
-        validateRegistrationAuthority(admin);
+        validateEmployeeManagementAuthority(admin);
 
         User user =
                 userRepository
@@ -288,9 +280,6 @@ public class AdminService {
         }
         if (requestDto.getNationality() != null) {
             user.setNationality(requestDto.getNationality());
-        }
-        if (requestDto.getBirthDate() != null) {
-            user.setBirthDate(requestDto.getBirthDate());
         }
         if (hasText(requestDto.getZipcode())) {
             user.setZipcode(requestDto.getZipcode().trim());
@@ -372,9 +361,7 @@ public class AdminService {
                         .findById(adminId)
                         .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
 
-        if (admin.getRole() != Role.ADMIN && admin.getRole() != Role.MASTER_ADMIN) {
-            throw new CustomException(ErrorCode.NO_AUTHORITY_FOR_ROLE_UPDATE);
-        }
+        validateEmployeeManagementAuthority(admin);
         // 1. 대상 사용자 조회
         User targetUser =
                 userRepository
@@ -403,9 +390,7 @@ public class AdminService {
                         .findById(adminId)
                         .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
 
-        if (admin.getRole() != Role.ADMIN && admin.getRole() != Role.MASTER_ADMIN) {
-            throw new CustomException(ErrorCode.NO_AUTHORITY_FOR_ROLE_UPDATE);
-        }
+        validateEmployeeManagementAuthority(admin);
 
         // 2. 대상 사용자 조회
         User targetUser =
@@ -447,7 +432,7 @@ public class AdminService {
                 userRepository
                         .findById(adminId)
                         .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
-        validateMyInfoApprovalAuthority(admin);
+        validateEmployeeManagementAuthority(admin);
 
         MyInfoUpdateRequest request =
                 myInfoUpdateRequestRepository
@@ -507,7 +492,7 @@ public class AdminService {
                 userRepository
                         .findById(adminId)
                         .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
-        validateMyInfoApprovalAuthority(admin);
+        validateEmployeeManagementAuthority(admin);
 
         if (reason == null || reason.isBlank()) {
             throw new CustomException(ErrorCode.MY_INFO_UPDATE_REJECT_REASON_REQUIRED);
@@ -549,7 +534,7 @@ public class AdminService {
                 userRepository
                         .findById(adminId)
                         .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
-        validateMyInfoApprovalAuthority(admin);
+        validateEmployeeManagementAuthority(admin);
 
         return myInfoUpdateRequestRepository
                 .findAllByStatusWithUser(MyInfoUpdateRequestStatus.PENDING)
@@ -565,7 +550,7 @@ public class AdminService {
                 userRepository
                         .findById(adminId)
                         .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
-        validateMyInfoApprovalAuthority(admin);
+        validateEmployeeManagementAuthority(admin);
 
         userRepository
                 .findById(userId)
@@ -597,7 +582,7 @@ public class AdminService {
                 userRepository
                         .findById(adminId)
                         .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
-        validateRegistrationAuthority(admin);
+        validateEmployeeManagementAuthority(admin);
 
         List<User> users =
                 userQueryRepository.findAllForAdminWithFiltersNoPaging(
@@ -724,15 +709,10 @@ public class AdminService {
         return value != null && !value.isBlank();
     }
 
-    private void validateRegistrationAuthority(User admin) {
-        if (admin.getRole() != Role.ADMIN && admin.getRole() != Role.MASTER_ADMIN) {
-            throw new CustomException(ErrorCode.NO_AUTHORITY_FOR_REGISTRATION);
-        }
-    }
-
-    private void validateMyInfoApprovalAuthority(User admin) {
-        if (admin.getRole() != Role.ADMIN && admin.getRole() != Role.MASTER_ADMIN) {
-            throw new CustomException(ErrorCode.NO_AUTHORITY_FOR_MY_INFO_UPDATE_APPROVAL);
+    private void validateEmployeeManagementAuthority(User admin) {
+        if (admin.getRole() != Role.MASTER_ADMIN
+                && !admin.hasAuthority(Authority.EDIT_EMPLOYEE_INFO)) {
+            throw new CustomException(ErrorCode.NO_AUTHORITY_FOR_EMPLOYEE_MANAGEMENT);
         }
     }
 }

@@ -1,6 +1,7 @@
 package kr.co.awesomelead.groupware_backend.domain.visit.mapper;
 
 import kr.co.awesomelead.groupware_backend.domain.department.enums.Company;
+import kr.co.awesomelead.groupware_backend.domain.user.entity.User;
 import kr.co.awesomelead.groupware_backend.domain.visit.dto.request.LongTermVisitRequestDto;
 import kr.co.awesomelead.groupware_backend.domain.visit.dto.request.MyVisitUpdateRequestDto;
 import kr.co.awesomelead.groupware_backend.domain.visit.dto.request.OnSiteVisitRequestDto;
@@ -10,6 +11,7 @@ import kr.co.awesomelead.groupware_backend.domain.visit.dto.response.MyVisitList
 import kr.co.awesomelead.groupware_backend.domain.visit.dto.response.VisitDetailResponseDto;
 import kr.co.awesomelead.groupware_backend.domain.visit.dto.response.VisitHostResponseDto;
 import kr.co.awesomelead.groupware_backend.domain.visit.dto.response.VisitListResponseDto;
+import kr.co.awesomelead.groupware_backend.domain.visit.dto.response.VisitRecordExitTimeUpdatedByResponseDto;
 import kr.co.awesomelead.groupware_backend.domain.visit.dto.response.VisitRecordResponseDto;
 import kr.co.awesomelead.groupware_backend.domain.visit.entity.Visit;
 import kr.co.awesomelead.groupware_backend.domain.visit.entity.VisitHost;
@@ -156,7 +158,22 @@ public interface VisitMapper {
     VisitDetailResponseDto toVisitDetailResponseDto(Visit visit);
 
     @Mapping(target = "signatureUrl", source = "signatureKey")
+    @Mapping(target = "exitTimeUpdatedBy", expression = "java(toExitTimeUpdatedBy(record))")
     VisitRecordResponseDto toRecordResponseDto(VisitRecord record);
+
+    default VisitRecordExitTimeUpdatedByResponseDto toExitTimeUpdatedBy(VisitRecord record) {
+        User user = record.getExitTimeUpdatedBy();
+        if (user == null) {
+            return null;
+        }
+        return VisitRecordExitTimeUpdatedByResponseDto.builder()
+                .userId(user.getId())
+                .name(user.getDisplayName())
+                .departmentName(
+                        user.getDepartment() != null ? user.getDepartment().getName() : null)
+                .position(user.getPosition())
+                .build();
+    }
 
     List<VisitListResponseDto> toVisitListResponseDtos(List<Visit> visits);
 

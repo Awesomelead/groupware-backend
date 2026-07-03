@@ -547,7 +547,6 @@ public class AdminController {
                                                         {
                                                           "nameKor": "홍길동",
                                                           "nameEng": "HONG GILDONG",
-                                                          "birthDate": "1990-01-01",
                                                           "nationality": "대한민국",
                                                           "zipcode": "06234",
                                                           "address1": "서울특별시 강남구 테헤란로 123",
@@ -571,7 +570,6 @@ public class AdminController {
                                                         {
                                                           "nameKor": "홍길동",
                                                           "nameEng": "HONG GILDONG",
-                                                          "birthDate": "1990-01-01",
                                                           "nationality": "대한민국",
                                                           "zipcode": "06234",
                                                           "address1": "서울특별시 강남구 테헤란로 123",

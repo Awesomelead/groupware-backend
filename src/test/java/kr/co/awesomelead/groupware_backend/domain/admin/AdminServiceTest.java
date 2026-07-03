@@ -120,6 +120,52 @@ class AdminServiceTest {
             }
 
             @Test
+            @DisplayName("birthDate만 보내면 생년월일을 직접 수정하지 않는다")
+            void it_ignores_birth_date_without_registration_number() {
+                // given
+                Department department =
+                        Department.builder().id(1L).name(DepartmentName.SALES_DEPT).build();
+                User pendingUser = new User();
+                pendingUser.setId(userId);
+                pendingUser.setStatus(Status.PENDING);
+                pendingUser.setBirthDate(LocalDate.of(1990, 1, 1));
+                requestDto.setBirthDate(LocalDate.of(2000, 1, 1));
+
+                when(userRepository.findById(userId)).thenReturn(Optional.of(pendingUser));
+                when(departmentRepository.findByName(any())).thenReturn(Optional.of(department));
+
+                // when
+                adminService.approveUserRegistration(userId, requestDto, adminId);
+
+                // then
+                assertThat(pendingUser.getBirthDate()).isEqualTo(LocalDate.of(1990, 1, 1));
+            }
+
+            @Test
+            @DisplayName("registrationNumber를 보내면 주민등록번호 기준으로 생년월일을 자동 계산한다")
+            void it_updates_birth_date_from_registration_number() {
+                // given
+                Department department =
+                        Department.builder().id(1L).name(DepartmentName.SALES_DEPT).build();
+                User pendingUser = new User();
+                pendingUser.setId(userId);
+                pendingUser.setStatus(Status.PENDING);
+                pendingUser.setBirthDate(LocalDate.of(1990, 1, 1));
+                requestDto.setBirthDate(LocalDate.of(1999, 12, 31));
+                requestDto.setRegistrationNumber("0001013123456");
+
+                when(userRepository.findById(userId)).thenReturn(Optional.of(pendingUser));
+                when(departmentRepository.findByName(any())).thenReturn(Optional.of(department));
+                when(userRepository.existsByRegistrationNumber("0001013123456")).thenReturn(false);
+
+                // when
+                adminService.approveUserRegistration(userId, requestDto, adminId);
+
+                // then
+                assertThat(pendingUser.getBirthDate()).isEqualTo(LocalDate.of(2000, 1, 1));
+            }
+
+            @Test
             @DisplayName("address2를 null로 명시하면 상세주소를 삭제한다")
             void it_clears_address2_when_explicit_null() {
                 // given
@@ -775,6 +821,55 @@ class AdminServiceTest {
 
             // then
             assertThat(targetUser.getAddress2()).isNull();
+        }
+
+        @Test
+        @DisplayName("birthDate만 보내면 생년월일을 직접 수정하지 않는다")
+        void it_ignores_birth_date_without_registration_number() {
+            // given
+            User targetUser =
+                    User.builder()
+                            .id(17L)
+                            .phoneNumber("01011112222")
+                            .birthDate(LocalDate.of(1990, 1, 1))
+                            .build();
+            targetUser.setPhoneNumberHash(User.hashValue("01011112222"));
+            when(userRepository.findById(17L)).thenReturn(Optional.of(targetUser));
+
+            AdminUserUpdateRequestDto dto = new AdminUserUpdateRequestDto();
+            dto.setBirthDate(LocalDate.of(2000, 1, 1));
+
+            // when
+            adminService.updateUserInfo(17L, dto, adminId);
+
+            // then
+            assertThat(targetUser.getBirthDate()).isEqualTo(LocalDate.of(1990, 1, 1));
+        }
+
+        @Test
+        @DisplayName("registrationNumber를 보내면 주민등록번호 기준으로 생년월일을 자동 계산한다")
+        void it_updates_birth_date_from_registration_number() {
+            // given
+            User targetUser =
+                    User.builder()
+                            .id(17L)
+                            .phoneNumber("01011112222")
+                            .birthDate(LocalDate.of(1990, 1, 1))
+                            .registrationNumber("9001011234567")
+                            .build();
+            targetUser.setPhoneNumberHash(User.hashValue("01011112222"));
+            when(userRepository.findById(17L)).thenReturn(Optional.of(targetUser));
+            when(userRepository.existsByRegistrationNumber("0001013123456")).thenReturn(false);
+
+            AdminUserUpdateRequestDto dto = new AdminUserUpdateRequestDto();
+            dto.setBirthDate(LocalDate.of(1999, 12, 31));
+            dto.setRegistrationNumber("0001013123456");
+
+            // when
+            adminService.updateUserInfo(17L, dto, adminId);
+
+            // then
+            assertThat(targetUser.getBirthDate()).isEqualTo(LocalDate.of(2000, 1, 1));
         }
 
         @Test

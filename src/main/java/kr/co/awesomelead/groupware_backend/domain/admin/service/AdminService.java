@@ -142,9 +142,6 @@ public class AdminService {
         }
         user.setPosition(requestDto.getPosition());
         user.setHireDate(requestDto.getHireDate());
-        if (requestDto.getBirthDate() != null) {
-            user.setBirthDate(requestDto.getBirthDate());
-        }
         // 사용자의 상태를 AVAILABLE로 변경
         user.setStatus(Status.AVAILABLE);
 
@@ -288,9 +285,6 @@ public class AdminService {
         }
         if (requestDto.getNationality() != null) {
             user.setNationality(requestDto.getNationality());
-        }
-        if (requestDto.getBirthDate() != null) {
-            user.setBirthDate(requestDto.getBirthDate());
         }
         if (hasText(requestDto.getZipcode())) {
             user.setZipcode(requestDto.getZipcode().trim());

@@ -431,12 +431,7 @@ public class VisitServiceTest {
         @DisplayName("내방객 본인 상세 조회에서는 퇴실 시간 등록/수정자 정보를 노출하지 않는다.")
         void it_hides_exit_time_updated_by() {
             // given
-            User manager =
-                    User.builder()
-                            .id(1L)
-                            .nameKor("김관리")
-                            .position(Position.MANAGER)
-                            .build();
+            User manager = User.builder().id(1L).nameKor("김관리").position(Position.MANAGER).build();
             manager.setDepartment(createDepartment(1L));
 
             VisitRecord record =
@@ -1361,11 +1356,7 @@ public class VisitServiceTest {
         void it_returns_exit_time_updated_by_for_each_record() {
             // given
             User manager =
-                    User.builder()
-                            .id(ADMIN_ID)
-                            .nameKor("김관리")
-                            .position(Position.MANAGER)
-                            .build();
+                    User.builder().id(ADMIN_ID).nameKor("김관리").position(Position.MANAGER).build();
             manager.setDepartment(createDepartment(1L));
 
             VisitRecord record =

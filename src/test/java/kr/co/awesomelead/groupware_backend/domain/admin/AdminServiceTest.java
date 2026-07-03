@@ -79,6 +79,7 @@ class AdminServiceTest {
         User admin = new User();
         admin.setId(adminId);
         admin.setRole(Role.ADMIN);
+        admin.addAuthority(Authority.EDIT_EMPLOYEE_INFO);
         when(userRepository.findById(adminId)).thenReturn(Optional.of(admin));
     }
 
@@ -324,6 +325,30 @@ class AdminServiceTest {
                 User normalUser = new User();
                 normalUser.setRole(Role.USER);
                 when(userRepository.findById(adminId)).thenReturn(Optional.of(normalUser));
+
+                // when & then
+                assertThatThrownBy(
+                                () ->
+                                        adminService.approveUserRegistration(
+                                                userId, requestDto, adminId))
+                        .isInstanceOf(CustomException.class)
+                        .extracting("errorCode")
+                        .isEqualTo(ErrorCode.NO_AUTHORITY_FOR_REGISTRATION);
+            }
+        }
+
+        @Nested
+        @DisplayName("ADMIN 역할이지만 직원 정보 수정 권한이 없는 유저가 승인을 시도하면")
+        class Context_with_admin_without_edit_employee_info {
+
+            @Test
+            @DisplayName("NO_AUTHORITY_FOR_REGISTRATION 에러를 던진다")
+            void it_throws_no_authority_exception() {
+                // given
+                User adminWithoutAuthority = new User();
+                adminWithoutAuthority.setRole(Role.ADMIN);
+                when(userRepository.findById(adminId))
+                        .thenReturn(Optional.of(adminWithoutAuthority));
 
                 // when & then
                 assertThatThrownBy(

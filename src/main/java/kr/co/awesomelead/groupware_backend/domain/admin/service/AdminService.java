@@ -719,7 +719,8 @@ public class AdminService {
     }
 
     private void validateRegistrationAuthority(User admin) {
-        if (admin.getRole() != Role.ADMIN && admin.getRole() != Role.MASTER_ADMIN) {
+        if (admin.getRole() != Role.MASTER_ADMIN
+                && !admin.hasAuthority(Authority.EDIT_EMPLOYEE_INFO)) {
             throw new CustomException(ErrorCode.NO_AUTHORITY_FOR_REGISTRATION);
         }
     }

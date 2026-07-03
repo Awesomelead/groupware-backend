@@ -108,6 +108,7 @@ public enum ErrorCode {
     NO_AUTHORITY_FOR_NOTICE(HttpStatus.FORBIDDEN, "공지사항 작성 권한이 없습니다."),
     NO_AUTHORITY_FOR_ANNUAL_LEAVE(HttpStatus.FORBIDDEN, "연차 발송 권한이 없습니다."),
     NO_AUTHORITY_FOR_PAYSLIP(HttpStatus.FORBIDDEN, "급여명세서 발송 권한이 없습니다."),
+    NO_AUTHORITY_FOR_EMPLOYEE_MANAGEMENT(HttpStatus.FORBIDDEN, "직원 관리 권한이 없습니다."),
     NO_AUTHORITY_FOR_REGISTRATION(HttpStatus.FORBIDDEN, "회원가입 승인 권한이 없습니다."),
     NO_AUTHORITY_FOR_ROLE_UPDATE(HttpStatus.FORBIDDEN, "사용자 역할 변경 권한이 없습니다."),
     NO_AUTHORITY_FOR_VIEW_PAYSLIP(HttpStatus.FORBIDDEN, "급여명세서 조회 권한이 없습니다."),

@@ -114,8 +114,8 @@ public class AdminController {
                                                                 """
                                         {
                                           "isSuccess": false,
-                                          "code": "NO_AUTHORITY_FOR_REGISTRATION",
-                                          "message": "회원가입 승인 권한이 없습니다.",
+                                          "code": "NO_AUTHORITY_FOR_EMPLOYEE_MANAGEMENT",
+                                          "message": "직원 관리 권한이 없습니다.",
                                           "result": null
                                         }
                                         """)))
@@ -222,8 +222,8 @@ public class AdminController {
                                                                 """
                                         {
                                           "isSuccess": false,
-                                          "code": "NO_AUTHORITY_FOR_REGISTRATION",
-                                          "message": "회원가입 승인 권한이 없습니다.",
+                                          "code": "NO_AUTHORITY_FOR_EMPLOYEE_MANAGEMENT",
+                                          "message": "직원 관리 권한이 없습니다.",
                                           "result": null
                                         }
                                         """))),
@@ -305,8 +305,8 @@ public class AdminController {
                                                                 """
                                         {
                                           "isSuccess": false,
-                                          "code": "NO_AUTHORITY_FOR_REGISTRATION",
-                                          "message": "회원가입 승인 권한이 없습니다.",
+                                          "code": "NO_AUTHORITY_FOR_EMPLOYEE_MANAGEMENT",
+                                          "message": "직원 관리 권한이 없습니다.",
                                           "result": null
                                         }
                                         """))),
@@ -423,8 +423,8 @@ public class AdminController {
                                                                 """
                                         {
                                           "isSuccess": false,
-                                          "code": "NO_AUTHORITY_FOR_REGISTRATION",
-                                          "message": "회원가입 승인 권한이 없습니다.",
+                                          "code": "NO_AUTHORITY_FOR_EMPLOYEE_MANAGEMENT",
+                                          "message": "직원 관리 권한이 없습니다.",
                                           "result": null
                                         }
                                         """)))
@@ -585,7 +585,7 @@ public class AdminController {
                                                             "부서 교육 관리",
                                                             "공지사항 관리",
                                                             "내방객 관리",
-                                                            "직원 정보 수정"
+                                                            "직원 관리"
                                                           ],
                                                           "hireDate": "2025-09-22",
                                                           "resignationDate": null,
@@ -640,8 +640,8 @@ public class AdminController {
                                                                 """
                                         {
                                           "isSuccess": false,
-                                          "code": "NO_AUTHORITY_FOR_REGISTRATION",
-                                          "message": "회원가입 승인 권한이 없습니다.",
+                                          "code": "NO_AUTHORITY_FOR_EMPLOYEE_MANAGEMENT",
+                                          "message": "직원 관리 권한이 없습니다.",
                                           "result": null
                                         }
                                         """))),
@@ -726,8 +726,8 @@ public class AdminController {
                                                                 """
                                         {
                                         "isSuccess": false,
-                                        "code": "NO_AUTHORITY_FOR_ROLE_UPDATE",
-                                        "message": "사용자 역할 변경 권한이 없습니다.",
+                                        "code": "NO_AUTHORITY_FOR_EMPLOYEE_MANAGEMENT",
+                                        "message": "직원 관리 권한이 없습니다.",
                                         "result": null
                                         }
                                         """))),
@@ -840,8 +840,8 @@ public class AdminController {
                                                                 """
                                         {
                                         "isSuccess": false,
-                                        "code": "NO_AUTHORITY_FOR_ROLE_UPDATE",
-                                        "message": "사용자 역할 변경 권한이 없습니다.",
+                                        "code": "NO_AUTHORITY_FOR_EMPLOYEE_MANAGEMENT",
+                                        "message": "직원 관리 권한이 없습니다.",
                                         "result": null
                                         }
                                         """))),
@@ -924,8 +924,8 @@ public class AdminController {
                                                                 """
                                         {
                                           "isSuccess": false,
-                                          "code": "NO_AUTHORITY_FOR_MY_INFO_UPDATE_APPROVAL",
-                                          "message": "개인정보 수정 승인 권한이 없습니다.",
+                                          "code": "NO_AUTHORITY_FOR_EMPLOYEE_MANAGEMENT",
+                                          "message": "직원 관리 권한이 없습니다.",
                                           "result": null
                                         }
                                         """))),
@@ -1008,8 +1008,8 @@ public class AdminController {
                                                                 """
                                         {
                                           "isSuccess": false,
-                                          "code": "NO_AUTHORITY_FOR_MY_INFO_UPDATE_APPROVAL",
-                                          "message": "개인정보 수정 승인 권한이 없습니다.",
+                                          "code": "NO_AUTHORITY_FOR_EMPLOYEE_MANAGEMENT",
+                                          "message": "직원 관리 권한이 없습니다.",
                                           "result": null
                                         }
                                         """))),
@@ -1090,8 +1090,8 @@ public class AdminController {
                                                                 """
                                         {
                                           "isSuccess": false,
-                                          "code": "NO_AUTHORITY_FOR_MY_INFO_UPDATE_APPROVAL",
-                                          "message": "개인정보 수정 승인 권한이 없습니다.",
+                                          "code": "NO_AUTHORITY_FOR_EMPLOYEE_MANAGEMENT",
+                                          "message": "직원 관리 권한이 없습니다.",
                                           "result": null
                                         }
                                         """)))
@@ -1226,8 +1226,8 @@ public class AdminController {
                                                                 """
                                         {
                                           "isSuccess": false,
-                                          "code": "NO_AUTHORITY_FOR_MY_INFO_UPDATE_APPROVAL",
-                                          "message": "개인정보 수정 승인 권한이 없습니다.",
+                                          "code": "NO_AUTHORITY_FOR_EMPLOYEE_MANAGEMENT",
+                                          "message": "직원 관리 권한이 없습니다.",
                                           "result": null
                                         }
                                         """))),

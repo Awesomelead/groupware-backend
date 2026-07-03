@@ -319,7 +319,7 @@ class AdminServiceTest {
         class Context_with_normal_user {
 
             @Test
-            @DisplayName("NO_AUTHORITY_FOR_REGISTRATION 에러를 던진다")
+            @DisplayName("NO_AUTHORITY_FOR_EMPLOYEE_MANAGEMENT 에러를 던진다")
             void it_throws_no_authority_exception() {
                 // given
                 User normalUser = new User();
@@ -333,16 +333,16 @@ class AdminServiceTest {
                                                 userId, requestDto, adminId))
                         .isInstanceOf(CustomException.class)
                         .extracting("errorCode")
-                        .isEqualTo(ErrorCode.NO_AUTHORITY_FOR_REGISTRATION);
+                        .isEqualTo(ErrorCode.NO_AUTHORITY_FOR_EMPLOYEE_MANAGEMENT);
             }
         }
 
         @Nested
-        @DisplayName("ADMIN 역할이지만 직원 정보 수정 권한이 없는 유저가 승인을 시도하면")
+        @DisplayName("ADMIN 역할이지만 직원 관리 권한이 없는 유저가 승인을 시도하면")
         class Context_with_admin_without_edit_employee_info {
 
             @Test
-            @DisplayName("NO_AUTHORITY_FOR_REGISTRATION 에러를 던진다")
+            @DisplayName("NO_AUTHORITY_FOR_EMPLOYEE_MANAGEMENT 에러를 던진다")
             void it_throws_no_authority_exception() {
                 // given
                 User adminWithoutAuthority = new User();
@@ -357,7 +357,7 @@ class AdminServiceTest {
                                                 userId, requestDto, adminId))
                         .isInstanceOf(CustomException.class)
                         .extracting("errorCode")
-                        .isEqualTo(ErrorCode.NO_AUTHORITY_FOR_REGISTRATION);
+                        .isEqualTo(ErrorCode.NO_AUTHORITY_FOR_EMPLOYEE_MANAGEMENT);
             }
         }
     }
@@ -407,7 +407,7 @@ class AdminServiceTest {
         }
 
         @Test
-        @DisplayName("관리자 권한이 없으면 NO_AUTHORITY_FOR_REGISTRATION 에러를 던진다")
+        @DisplayName("관리자 권한이 없으면 NO_AUTHORITY_FOR_EMPLOYEE_MANAGEMENT 에러를 던진다")
         void it_throws_when_admin_has_no_authority() {
             User normalUser = new User();
             normalUser.setRole(Role.USER);
@@ -416,7 +416,7 @@ class AdminServiceTest {
             assertThatThrownBy(() -> adminService.rejectUserRegistration(userId, adminId))
                     .isInstanceOf(CustomException.class)
                     .extracting("errorCode")
-                    .isEqualTo(ErrorCode.NO_AUTHORITY_FOR_REGISTRATION);
+                    .isEqualTo(ErrorCode.NO_AUTHORITY_FOR_EMPLOYEE_MANAGEMENT);
         }
     }
 
@@ -454,7 +454,7 @@ class AdminServiceTest {
         }
 
         @Test
-        @DisplayName("관리자 권한이 없는 사용자가 조회하면 NO_AUTHORITY_FOR_REGISTRATION 에러를 던진다")
+        @DisplayName("관리자 권한이 없는 사용자가 조회하면 NO_AUTHORITY_FOR_EMPLOYEE_MANAGEMENT 에러를 던진다")
         void it_throws_when_requester_is_not_admin() {
             // given
             User normalUser = new User();
@@ -465,7 +465,7 @@ class AdminServiceTest {
             assertThatThrownBy(() -> adminService.getPendingSignupUsers(adminId))
                     .isInstanceOf(CustomException.class)
                     .extracting("errorCode")
-                    .isEqualTo(ErrorCode.NO_AUTHORITY_FOR_REGISTRATION);
+                    .isEqualTo(ErrorCode.NO_AUTHORITY_FOR_EMPLOYEE_MANAGEMENT);
         }
     }
 
@@ -534,7 +534,7 @@ class AdminServiceTest {
         }
 
         @Test
-        @DisplayName("권한 없는 사용자가 조회하면 NO_AUTHORITY_FOR_REGISTRATION 에러를 던진다")
+        @DisplayName("권한 없는 사용자가 조회하면 NO_AUTHORITY_FOR_EMPLOYEE_MANAGEMENT 에러를 던진다")
         void it_throws_when_requester_is_not_admin() {
             // given
             User normalUser = new User();
@@ -557,7 +557,7 @@ class AdminServiceTest {
                                             PageRequest.of(0, 20)))
                     .isInstanceOf(CustomException.class)
                     .extracting("errorCode")
-                    .isEqualTo(ErrorCode.NO_AUTHORITY_FOR_REGISTRATION);
+                    .isEqualTo(ErrorCode.NO_AUTHORITY_FOR_EMPLOYEE_MANAGEMENT);
         }
 
         @Test
@@ -740,7 +740,7 @@ class AdminServiceTest {
         }
 
         @Test
-        @DisplayName("권한 없는 사용자가 조회하면 NO_AUTHORITY_FOR_REGISTRATION 에러를 던진다")
+        @DisplayName("권한 없는 사용자가 조회하면 NO_AUTHORITY_FOR_EMPLOYEE_MANAGEMENT 에러를 던진다")
         void it_throws_when_requester_is_not_admin() {
             // given
             User normalUser = new User();
@@ -751,7 +751,7 @@ class AdminServiceTest {
             assertThatThrownBy(() -> adminService.getUserDetail(adminId, 17L))
                     .isInstanceOf(CustomException.class)
                     .extracting("errorCode")
-                    .isEqualTo(ErrorCode.NO_AUTHORITY_FOR_REGISTRATION);
+                    .isEqualTo(ErrorCode.NO_AUTHORITY_FOR_EMPLOYEE_MANAGEMENT);
         }
     }
 
@@ -1022,7 +1022,7 @@ class AdminServiceTest {
         class Context_with_normal_user {
 
             @Test
-            @DisplayName("NO_AUTHORITY_FOR_ROLE_UPDATE 에러를 던진다")
+            @DisplayName("NO_AUTHORITY_FOR_EMPLOYEE_MANAGEMENT 에러를 던진다")
             void it_throws_no_authority_exception() {
                 // given
                 User normalUser = new User();
@@ -1033,7 +1033,7 @@ class AdminServiceTest {
                 assertThatThrownBy(() -> adminService.updateUserRole(1L, Role.ADMIN, adminId))
                         .isInstanceOf(CustomException.class)
                         .extracting("errorCode")
-                        .isEqualTo(ErrorCode.NO_AUTHORITY_FOR_ROLE_UPDATE);
+                        .isEqualTo(ErrorCode.NO_AUTHORITY_FOR_EMPLOYEE_MANAGEMENT);
             }
         }
 
@@ -1159,7 +1159,7 @@ class AdminServiceTest {
         }
 
         @Test
-        @DisplayName("관리자 권한이 없는 유저가 권한 수정을 시도하면 NO_AUTHORITY_FOR_ROLE_UPDATE 에러를 던진다")
+        @DisplayName("관리자 권한이 없는 유저가 권한 수정을 시도하면 NO_AUTHORITY_FOR_EMPLOYEE_MANAGEMENT 에러를 던진다")
         void it_throws_when_requester_is_not_admin() {
             // given
             User normalUser = new User();
@@ -1176,7 +1176,7 @@ class AdminServiceTest {
                                             adminId))
                     .isInstanceOf(CustomException.class)
                     .extracting("errorCode")
-                    .isEqualTo(ErrorCode.NO_AUTHORITY_FOR_ROLE_UPDATE);
+                    .isEqualTo(ErrorCode.NO_AUTHORITY_FOR_EMPLOYEE_MANAGEMENT);
         }
     }
 
@@ -1354,7 +1354,7 @@ class AdminServiceTest {
         class Context_with_no_authority_user {
 
             @Test
-            @DisplayName("NO_AUTHORITY_FOR_REGISTRATION 예외를 던진다")
+            @DisplayName("NO_AUTHORITY_FOR_EMPLOYEE_MANAGEMENT 예외를 던진다")
             void it_throws_no_authority_when_not_admin() {
                 // given
                 User normalUser = new User();
@@ -1368,7 +1368,7 @@ class AdminServiceTest {
                                                 adminId, null, null, null, null, null, null, null))
                         .isInstanceOf(CustomException.class)
                         .extracting("errorCode")
-                        .isEqualTo(ErrorCode.NO_AUTHORITY_FOR_REGISTRATION);
+                        .isEqualTo(ErrorCode.NO_AUTHORITY_FOR_EMPLOYEE_MANAGEMENT);
             }
         }
     }
@@ -1461,7 +1461,7 @@ class AdminServiceTest {
         }
 
         @Test
-        @DisplayName("관리자 권한이 없는 사용자가 조회하면 NO_AUTHORITY_FOR_MY_INFO_UPDATE_APPROVAL 에러를 던진다")
+        @DisplayName("관리자 권한이 없는 사용자가 조회하면 NO_AUTHORITY_FOR_EMPLOYEE_MANAGEMENT 에러를 던진다")
         void it_throws_when_requester_is_not_admin() {
             // given
             User normalUser = new User();
@@ -1473,7 +1473,7 @@ class AdminServiceTest {
                             () -> adminService.getPendingMyInfoUpdateRequestDetail(adminId, userId))
                     .isInstanceOf(CustomException.class)
                     .extracting("errorCode")
-                    .isEqualTo(ErrorCode.NO_AUTHORITY_FOR_MY_INFO_UPDATE_APPROVAL);
+                    .isEqualTo(ErrorCode.NO_AUTHORITY_FOR_EMPLOYEE_MANAGEMENT);
         }
     }
 }

@@ -17,6 +17,7 @@ import kr.co.awesomelead.groupware_backend.domain.notification.enums.Notificatio
 import kr.co.awesomelead.groupware_backend.domain.notification.repository.NotificationRepository;
 import kr.co.awesomelead.groupware_backend.domain.notification.service.NotificationService;
 import kr.co.awesomelead.groupware_backend.domain.user.entity.User;
+import kr.co.awesomelead.groupware_backend.domain.user.enums.Authority;
 import kr.co.awesomelead.groupware_backend.domain.user.enums.Role;
 import kr.co.awesomelead.groupware_backend.domain.user.repository.UserRepository;
 
@@ -573,5 +574,78 @@ class NotificationServiceTest {
         verify(notificationRepository, times(2)).save(captor.capture());
 
         captor.getAllValues().forEach(n -> assertThat(n.getMetadata()).containsKey("visitId"));
+    }
+
+    @Test
+    @DisplayName("sendAlertToAdminsRequiringApproval - 회원가입 알림은 직원 정보 수정 권한 보유자에게만 전송된다")
+    void sendAlertToAdminsRequiringApproval_signup_filtersByEditEmployeeInfoAuthority() {
+        User adminWithoutAuthority = createUser(10L, Role.ADMIN);
+        User adminWithAuthority = createUser(20L, Role.ADMIN, Authority.EDIT_EMPLOYEE_INFO);
+        User masterAdmin = createUser(30L, Role.MASTER_ADMIN);
+
+        when(userRepository.findAllByRole(Role.ADMIN))
+                .thenReturn(
+                        new java.util.ArrayList<>(
+                                List.of(adminWithoutAuthority, adminWithAuthority)));
+        when(userRepository.findAllByRole(Role.MASTER_ADMIN))
+                .thenReturn(new java.util.ArrayList<>(List.of(masterAdmin)));
+
+        notificationService.sendAlertToAdminsRequiringApproval(
+                NotificationMessage.SIGNUP_ADMIN_ALERT,
+                NotificationDomainType.AUTH,
+                99L,
+                Map.of("targetId", 99L),
+                "홍길동");
+
+        ArgumentCaptor<Notification> notificationCaptor = forClass(Notification.class);
+        verify(notificationRepository, times(2)).save(notificationCaptor.capture());
+        assertThat(notificationCaptor.getAllValues())
+                .extracting(Notification::getUserId)
+                .containsExactly(20L, 30L);
+
+        ArgumentCaptor<FcmSendEvent> eventCaptor = forClass(FcmSendEvent.class);
+        verify(eventPublisher, times(2)).publishEvent(eventCaptor.capture());
+        assertThat(eventCaptor.getAllValues())
+                .extracting(FcmSendEvent::userId)
+                .containsExactly(20L, 30L);
+    }
+
+    @Test
+    @DisplayName("sendAlertToAdminsRequiringApproval - 제증명 알림은 제증명 발급 관리 권한 보유자에게만 전송된다")
+    void sendAlertToAdminsRequiringApproval_requestHistory_filtersByCertificateAuthority() {
+        User adminWithoutAuthority = createUser(10L, Role.ADMIN, Authority.EDIT_EMPLOYEE_INFO);
+        User adminWithAuthority = createUser(20L, Role.ADMIN, Authority.MANAGE_CERTIFICATE_REQUEST);
+
+        when(userRepository.findAllByRole(Role.ADMIN))
+                .thenReturn(
+                        new java.util.ArrayList<>(
+                                List.of(adminWithoutAuthority, adminWithAuthority)));
+        when(userRepository.findAllByRole(Role.MASTER_ADMIN))
+                .thenReturn(new java.util.ArrayList<>());
+
+        notificationService.sendAlertToAdminsRequiringApproval(
+                NotificationMessage.REQUEST_HISTORY_CREATED,
+                NotificationDomainType.REQUEST_HISTORY,
+                77L,
+                Map.of("requestId", 77L),
+                "재직증명서");
+
+        ArgumentCaptor<Notification> notificationCaptor = forClass(Notification.class);
+        verify(notificationRepository).save(notificationCaptor.capture());
+        assertThat(notificationCaptor.getValue().getUserId()).isEqualTo(20L);
+
+        ArgumentCaptor<FcmSendEvent> eventCaptor = forClass(FcmSendEvent.class);
+        verify(eventPublisher).publishEvent(eventCaptor.capture());
+        assertThat(eventCaptor.getValue().userId()).isEqualTo(20L);
+    }
+
+    private User createUser(Long id, Role role, Authority... authorities) {
+        User user = new User();
+        user.setId(id);
+        user.setRole(role);
+        for (Authority authority : authorities) {
+            user.addAuthority(authority);
+        }
+        return user;
     }
 }

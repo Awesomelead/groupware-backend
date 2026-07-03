@@ -91,7 +91,7 @@ import java.util.List;
               - MANAGE_SAFETY: 안전 보건 관리 권한
               - ACCESS_NOTICE: 공지사항 관리 권한
               - MANAGE_VISITOR: 내방객 관리 권한
-              - EDIT_EMPLOYEE_INFO: 직원 정보 수정 권한
+              - EDIT_EMPLOYEE_INFO: 직원 관리 권한
               - MANAGE_APPROVAL_LINE: 결재선 설정 관리 권한
             """)
 @RestController
@@ -240,7 +240,7 @@ public class UserController {
                                                                                { "code": "MANAGE_DEPARTMENT_EDUCATION", "label": "부서 교육 관리", "enabled": false },
                                                                                { "code": "ACCESS_NOTICE", "label": "공지사항 관리", "enabled": false },
                                                                                { "code": "MANAGE_VISITOR", "label": "내방객 관리", "enabled": false },
-                                                                               { "code": "EDIT_EMPLOYEE_INFO", "label": "직원 정보 수정", "enabled": false }
+                                                                               { "code": "EDIT_EMPLOYEE_INFO", "label": "직원 관리", "enabled": false }
                                                                              ],
                                                                              "hireDate": "2024-03-01",
                                                                              "resignationDate": null

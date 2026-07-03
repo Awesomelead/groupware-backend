@@ -407,7 +407,9 @@ public class AnnualLeaveService {
                 .title(resolveDispatchMonthTitle(history))
                 .originalFileName(history.getOriginalFileName())
                 .sheetName(normalizeSheetName(history.getSheetName()))
-                .fileUrl(s3Service.getPresignedViewUrl(history.getFileKey()))
+                .fileUrl(
+                        s3Service.getPresignedDownloadUrl(
+                                history.getFileKey(), history.getOriginalFileName()))
                 .company(history.getCompany())
                 .build();
     }
@@ -505,7 +507,9 @@ public class AnnualLeaveService {
                 .senderName(resolveSenderName(history))
                 .senderPosition(resolveSenderPosition(history))
                 .createdAt(history.getCreatedAt())
-                .fileUrl(s3Service.getPresignedViewUrl(history.getFileKey()))
+                .fileUrl(
+                        s3Service.getPresignedDownloadUrl(
+                                history.getFileKey(), history.getOriginalFileName()))
                 .title(resolveDispatchMonthTitle(history))
                 .company(history.getCompany())
                 .build();

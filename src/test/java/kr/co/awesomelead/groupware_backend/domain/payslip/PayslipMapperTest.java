@@ -84,7 +84,7 @@ class PayslipMapperTest {
                         .build();
 
         S3Service s3Service = mock(S3Service.class);
-        when(s3Service.getPresignedViewUrl("payslip-7"))
+        when(s3Service.getPresignedDownloadUrl("payslip-7", originalFileName))
                 .thenReturn("https://example.com/payslip-7");
 
         AdminPayslipDetailDto response = payslipMapper.toAdminPayslipDetailDto(payslip, s3Service);

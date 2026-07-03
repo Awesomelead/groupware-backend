@@ -47,7 +47,9 @@ public interface NoticeMapper {
 
     @Mapping(
             target = "viewUrl",
-            expression = "java(s3Service.getPresignedViewUrl(attachment.getS3Key()))")
+            expression =
+                    "java(s3Service.getPresignedDownloadUrl(attachment.getS3Key(),"
+                            + " attachment.getOriginalFileName()))")
     NoticeDetailDto.AttachmentResponse toAttachmentResponse(
             NoticeAttachment attachment, @Context S3Service s3Service);
 }

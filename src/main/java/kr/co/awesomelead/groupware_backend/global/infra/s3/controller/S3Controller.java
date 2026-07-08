@@ -33,8 +33,7 @@ public class S3Controller {
     @Operation(summary = "파일 단일 업로드", description = "파일을 S3에 업로드하고 파일 키, 원본 파일명, 접근 URL을 반환합니다.")
     @PostMapping(value = "/upload", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<ApiResponse<FileUploadResponseDto>> uploadFile(
-            @RequestPart("file") MultipartFile file)
-            throws IOException {
+            @RequestPart("file") MultipartFile file) throws IOException {
 
         FileUploadResponseDto response = s3Service.uploadEditorFile(file);
 

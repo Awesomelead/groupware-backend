@@ -39,9 +39,6 @@ public class S3Service {
     @Value("${spring.cloud.aws.region.static}")
     private String region;
 
-    @Value("${spring.cloud.aws.s3.cdn-url:https://cdn.awesomelead.co.kr}")
-    private String cdnUrl;
-
     public String getPresignedViewUrl(String fileKey) {
         return generatePresignedUrl(fileKey, Duration.ofMinutes(30)); // 30분짜리 권한
     }
@@ -127,7 +124,7 @@ public class S3Service {
         return FileUploadResponseDto.builder()
                 .fileKey(fileKey)
                 .fileName(originalFileName)
-                .imageUrl(getCdnFileUrl(fileKey))
+                .imageUrl(getPresignedViewUrl(fileKey))
                 .build();
     }
 
@@ -193,15 +190,6 @@ public class S3Service {
 
     public String getFileUrl(String fileName) {
         return String.format("https://%s.s3.%s.amazonaws.com/%s", bucketName, region, fileName);
-    }
-
-    public String getCdnFileUrl(String fileKey) {
-        if (fileKey == null || fileKey.isBlank()) {
-            return null;
-        }
-
-        String baseUrl = cdnUrl.endsWith("/") ? cdnUrl.substring(0, cdnUrl.length() - 1) : cdnUrl;
-        return baseUrl + "/" + fileKey;
     }
 
     public byte[] downloadFile(String fileKey) {

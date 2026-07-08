@@ -22,6 +22,7 @@ public class FileUploadResponseDto {
 
     @Schema(
             description = "에디터에 삽입할 이미지 URL",
-            example = "https://cdn.awesomelead.co.kr/editor/2026/07/uuid-dummy1.png")
+            example =
+                    "https://bucket.s3.ap-northeast-2.amazonaws.com/editor/2026/07/uuid-dummy1.png?X-Amz-Signature=...")
     private String imageUrl;
 }

@@ -1,5 +1,7 @@
 package kr.co.awesomelead.groupware_backend.global.infra.s3.service;
 
+import kr.co.awesomelead.groupware_backend.global.infra.s3.dto.response.FileUploadResponseDto;
+
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
@@ -19,6 +21,8 @@ import java.io.IOException;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
+import java.time.LocalDate;
+import java.time.ZoneId;
 import java.util.UUID;
 
 @Slf4j
@@ -108,6 +112,22 @@ public class S3Service {
         return fileName;
     }
 
+    public FileUploadResponseDto uploadEditorFile(MultipartFile file) throws IOException {
+        if (file == null || file.isEmpty()) {
+            throw new IllegalArgumentException("파일이 비어있습니다.");
+        }
+
+        String originalFileName = file.getOriginalFilename();
+        String fileKey = generateEditorFileKey(originalFileName);
+        upload(file, fileKey);
+
+        return FileUploadResponseDto.builder()
+                .fileKey(fileKey)
+                .fileName(originalFileName)
+                .imageUrl(getPresignedViewUrl(fileKey))
+                .build();
+    }
+
     public String uploadBytes(byte[] fileData, String originalFileName, String contentType) {
         if (fileData == null || fileData.length == 0) {
             throw new IllegalArgumentException("파일 데이터가 비어있습니다.");
@@ -144,6 +164,28 @@ public class S3Service {
         return UUID.randomUUID().toString()
                 + "_"
                 + (originalFileName != null ? originalFileName : "file");
+    }
+
+    private String generateEditorFileKey(String originalFileName) {
+        LocalDate today = LocalDate.now(ZoneId.of("Asia/Seoul"));
+        String fileName = originalFileName != null ? originalFileName : "file";
+        return String.format(
+                "editor/%d/%02d/%s-%s",
+                today.getYear(), today.getMonthValue(), UUID.randomUUID(), fileName);
+    }
+
+    private void upload(MultipartFile file, String fileKey) throws IOException {
+        PutObjectRequest putObjectRequest =
+                PutObjectRequest.builder()
+                        .bucket(bucketName)
+                        .key(fileKey)
+                        .contentType(file.getContentType())
+                        .contentDisposition("inline")
+                        .build();
+
+        RequestBody requestBody =
+                RequestBody.fromInputStream(file.getInputStream(), file.getSize());
+        s3Client.putObject(putObjectRequest, requestBody);
     }
 
     public String getFileUrl(String fileName) {

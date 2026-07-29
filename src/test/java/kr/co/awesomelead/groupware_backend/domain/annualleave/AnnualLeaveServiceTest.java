@@ -451,8 +451,10 @@ public class AnnualLeaveServiceTest {
                             .id(dispatchId)
                             .uploadedBy(admin)
                             .originalFileName("old.xlsx")
-                            .sheetName("7월")
+                            .sheetName("8월")
                             .fileKey("annual-leave/old.xlsx")
+                            .baseDate(LocalDate.of(2026, 8, 1))
+                            .company(Company.AWESOME)
                             .build();
             given(annualLeaveDispatchHistoryRepository.findById(dispatchId))
                     .willReturn(Optional.of(history));
@@ -883,6 +885,26 @@ public class AnnualLeaveServiceTest {
         }
 
         @Nested
+        @DisplayName("ANNUAL_LEAVE_DISPATCH_MONTH_MISMATCH 상수가")
+        class Context_ANNUAL_LEAVE_DISPATCH_MONTH_MISMATCH {
+
+            @Test
+            @DisplayName("정의되어 있어야 하고 HttpStatus.BAD_REQUEST와 지정된 메시지를 가진다")
+            void it_has_correct_status_and_message() {
+                // given & when
+                kr.co.awesomelead.groupware_backend.global.error.ErrorCode code =
+                        kr.co.awesomelead.groupware_backend.global.error.ErrorCode.valueOf(
+                                "ANNUAL_LEAVE_DISPATCH_MONTH_MISMATCH");
+
+                // then
+                assertThat(code.getHttpStatus())
+                        .isEqualTo(org.springframework.http.HttpStatus.BAD_REQUEST);
+                assertThat(code.getMessage())
+                        .isEqualTo("수정하려는 연차 발송 월과 엑셀 기준일의 월이 일치하지 않습니다.");
+            }
+        }
+
+        @Nested
         @DisplayName("ANNUAL_LEAVE_MONTH_MISMATCH 상수가")
         class Context_ANNUAL_LEAVE_MONTH_MISMATCH {
 
@@ -1101,6 +1123,49 @@ public class AnnualLeaveServiceTest {
         private final String sheetName = "8월";
 
         @Nested
+        @DisplayName("수정 대상 월과 엑셀 기준월이 다르면")
+        class Context_when_dispatch_month_mismatch {
+
+            @Test
+            @DisplayName("ANNUAL_LEAVE_DISPATCH_MONTH_MISMATCH 예외를 던진다")
+            void updateAnnualLeaveDispatchForAdmin_throwsWhenDispatchMonthMismatch()
+                    throws IOException {
+                // given
+                User admin = createMockUser(Authority.MANAGE_ANNUAL_LEAVE);
+                given(userRepository.findById(adminId)).willReturn(Optional.of(admin));
+
+                AnnualLeaveDispatchHistory history =
+                        AnnualLeaveDispatchHistory.builder()
+                                .id(dispatchId)
+                                .uploadedBy(admin)
+                                .originalFileName("old.xlsx")
+                                .sheetName("6월")
+                                .fileKey("annual-leave/old.xlsx")
+                                .baseDate(LocalDate.of(2026, 6, 1))
+                                .company(Company.AWESOME)
+                                .build();
+                given(annualLeaveDispatchHistoryRepository.findById(dispatchId))
+                        .willReturn(Optional.of(history));
+
+                MultipartFile mockFile = createMockExcelFile();
+
+                // when & then
+                assertThatThrownBy(
+                                () ->
+                                        annualLeaveService.updateAnnualLeaveDispatchForAdmin(
+                                                adminId,
+                                                dispatchId,
+                                                mockFile,
+                                                sheetName,
+                                                Company.AWESOME))
+                        .isInstanceOf(CustomException.class)
+                        .hasMessageContaining("수정하려는 연차 발송 월과 엑셀 기준일의 월이 일치하지 않습니다.");
+                org.mockito.Mockito.verify(s3Service, org.mockito.Mockito.never())
+                        .uploadFile(mockFile);
+            }
+        }
+
+        @Nested
         @DisplayName("자기 자신을 제외한 같은 월에 이미 발송 이력이 존재하면")
         class Context_when_duplicate_exists_excluding_self {
 
@@ -1117,8 +1182,10 @@ public class AnnualLeaveServiceTest {
                                 .id(dispatchId)
                                 .uploadedBy(admin)
                                 .originalFileName("old.xlsx")
-                                .sheetName("2026-05")
+                                .sheetName("8월")
                                 .fileKey("annual-leave/old.xlsx")
+                                .baseDate(LocalDate.of(2026, 8, 1))
+                                .company(Company.AWESOME)
                                 .build();
                 given(annualLeaveDispatchHistoryRepository.findById(dispatchId))
                         .willReturn(Optional.of(history));
@@ -1166,8 +1233,10 @@ public class AnnualLeaveServiceTest {
                                 .id(dispatchId)
                                 .uploadedBy(admin)
                                 .originalFileName("old.xlsx")
-                                .sheetName("2026-05")
+                                .sheetName("8월")
                                 .fileKey("annual-leave/old.xlsx")
+                                .baseDate(LocalDate.of(2026, 8, 1))
+                                .company(Company.AWESOME)
                                 .build();
                 given(annualLeaveDispatchHistoryRepository.findById(dispatchId))
                         .willReturn(Optional.of(history));

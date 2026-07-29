@@ -110,12 +110,15 @@ public class AnnualLeaveService {
                                                 ErrorCode.ANNUAL_LEAVE_DISPATCH_HISTORY_NOT_FOUND));
         String normalizedSheetName = normalizeSheetName(sheetName);
 
+        LocalDate newBaseDate = parseAnnualLeaveBaseDate(file, normalizedSheetName);
+        validateSheetMonthMatchesBaseDate(normalizedSheetName, newBaseDate);
+        validateDispatchMonthMatchesBaseDate(history, newBaseDate);
+
         // S3 업로드를 DB 작업 전에 수행 (트랜잭션 내 네트워크 I/O 제거)
         String oldFileKey = history.getFileKey();
         String newFileKey = uploadAnnualLeaveSourceFile(file);
 
         ProcessResult processResult = processAnnualLeaveFile(file, normalizedSheetName, company);
-        validateSheetMonthMatchesBaseDate(normalizedSheetName, processResult.baseDate());
 
         if (processResult.baseDate() != null) {
             LocalDate start = processResult.baseDate().withDayOfMonth(1);
@@ -321,6 +324,21 @@ public class AnnualLeaveService {
         } catch (Exception e) {
             log.error("기준일 파싱 실패, 오늘 날짜로 대체합니다.");
             throw new CustomException(ErrorCode.INVALID_BASE_DATE_FORMAT);
+        }
+    }
+
+    private LocalDate parseAnnualLeaveBaseDate(MultipartFile file, String normalizedSheetName) {
+        try (InputStream is = file.getInputStream();
+                Workbook workbook = WorkbookFactory.create(is)) {
+            Sheet sheet = workbook.getSheet(normalizedSheetName);
+            if (sheet == null) {
+                throw new CustomException(ErrorCode.ANNUAL_LEAVE_SHEET_NOT_FOUND);
+            }
+            return parseBaseDate(sheet);
+        } catch (CustomException e) {
+            throw e;
+        } catch (IOException e) {
+            throw new CustomException(ErrorCode.FILE_UPLOAD_ERROR);
         }
     }
 
@@ -623,6 +641,34 @@ public class AnnualLeaveService {
             throw e;
         } catch (NumberFormatException e) {
             // 숫자 파싱 불가 시트명은 검증 통과
+        }
+    }
+
+    private void validateDispatchMonthMatchesBaseDate(
+            AnnualLeaveDispatchHistory history, LocalDate baseDate) {
+        if (baseDate == null) {
+            return;
+        }
+
+        YearMonth newYearMonth = YearMonth.from(baseDate);
+        if (history.getBaseDate() != null) {
+            if (!YearMonth.from(history.getBaseDate()).equals(newYearMonth)) {
+                throw new CustomException(ErrorCode.ANNUAL_LEAVE_DISPATCH_MONTH_MISMATCH);
+            }
+            return;
+        }
+
+        YearMonth historyYearMonth = parseStrictYearMonthFromSheetName(history.getSheetName());
+        if (historyYearMonth != null) {
+            if (!historyYearMonth.equals(newYearMonth)) {
+                throw new CustomException(ErrorCode.ANNUAL_LEAVE_DISPATCH_MONTH_MISMATCH);
+            }
+            return;
+        }
+
+        Integer historyMonth = parseMonthFromSheetName(history.getSheetName());
+        if (historyMonth != null && historyMonth != baseDate.getMonthValue()) {
+            throw new CustomException(ErrorCode.ANNUAL_LEAVE_DISPATCH_MONTH_MISMATCH);
         }
     }
 

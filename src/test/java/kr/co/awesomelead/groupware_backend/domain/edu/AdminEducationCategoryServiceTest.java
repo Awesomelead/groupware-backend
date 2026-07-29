@@ -6,6 +6,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import kr.co.awesomelead.groupware_backend.domain.education.dto.response.AdminEducationCategoryNodeDto;
+import kr.co.awesomelead.groupware_backend.domain.education.dto.response.AdminEducationCategoryResponseDto;
 import kr.co.awesomelead.groupware_backend.domain.education.entity.EducationCategory;
 import kr.co.awesomelead.groupware_backend.domain.education.enums.EducationCategoryType;
 import kr.co.awesomelead.groupware_backend.domain.education.repository.EducationCategoryRepository;
@@ -86,5 +87,53 @@ class AdminEducationCategoryServiceTest {
                         "errorCode", ErrorCode.NO_AUTHORITY_FOR_EDUCATION_CATEGORY_MANAGE);
 
         verify(userRepository).findById(userId);
+    }
+
+    @Test
+    void 관리자_조회는_비활성_카테고리_목록을_반환한다() {
+        Long adminId = 1L;
+        User admin = User.builder().id(adminId).role(Role.ADMIN).build();
+        EducationCategory parent =
+                EducationCategory.builder()
+                        .id(10L)
+                        .code("SAFETY")
+                        .name("안전보건")
+                        .categoryType(EducationCategoryType.SAFETY)
+                        .depth(0)
+                        .sortOrder(1)
+                        .active(true)
+                        .build();
+        EducationCategory inactiveCategory =
+                EducationCategory.builder()
+                        .id(11L)
+                        .code("SAFETY_RESOURCE")
+                        .name("안전보건 자료")
+                        .categoryType(EducationCategoryType.SAFETY)
+                        .parent(parent)
+                        .depth(1)
+                        .sortOrder(2)
+                        .active(false)
+                        .build();
+
+        when(userRepository.findById(adminId)).thenReturn(Optional.of(admin));
+        when(educationCategoryRepository
+                        .findAllByCategoryTypeAndActiveFalseOrderByDepthAscSortOrderAscIdAsc(
+                                EducationCategoryType.SAFETY))
+                .thenReturn(List.of(inactiveCategory));
+
+        List<AdminEducationCategoryResponseDto> result =
+                adminEducationCategoryService.getInactiveCategories(
+                        adminId, EducationCategoryType.SAFETY);
+
+        assertThat(result).hasSize(1);
+        assertThat(result.get(0).getId()).isEqualTo(11L);
+        assertThat(result.get(0).getCode()).isEqualTo("SAFETY_RESOURCE");
+        assertThat(result.get(0).getName()).isEqualTo("안전보건 자료");
+        assertThat(result.get(0).getCategoryType()).isEqualTo(EducationCategoryType.SAFETY);
+        assertThat(result.get(0).getParentId()).isEqualTo(10L);
+        assertThat(result.get(0).getParentName()).isEqualTo("안전보건");
+        assertThat(result.get(0).getDepth()).isEqualTo(1);
+        assertThat(result.get(0).getSortOrder()).isEqualTo(2);
+        assertThat(result.get(0).isActive()).isFalse();
     }
 }

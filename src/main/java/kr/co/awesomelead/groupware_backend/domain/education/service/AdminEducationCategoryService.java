@@ -4,6 +4,7 @@ import kr.co.awesomelead.groupware_backend.domain.education.dto.request.Educatio
 import kr.co.awesomelead.groupware_backend.domain.education.dto.request.EducationCategoryReorderRequestDto;
 import kr.co.awesomelead.groupware_backend.domain.education.dto.request.EducationCategoryUpdateRequestDto;
 import kr.co.awesomelead.groupware_backend.domain.education.dto.response.AdminEducationCategoryNodeDto;
+import kr.co.awesomelead.groupware_backend.domain.education.dto.response.AdminEducationCategoryResponseDto;
 import kr.co.awesomelead.groupware_backend.domain.education.entity.EducationCategory;
 import kr.co.awesomelead.groupware_backend.domain.education.enums.EducationCategoryType;
 import kr.co.awesomelead.groupware_backend.domain.education.repository.EducationCategoryRepository;
@@ -72,6 +73,17 @@ public class AdminEducationCategoryService {
         }
 
         return roots;
+    }
+
+    @Transactional(readOnly = true)
+    public List<AdminEducationCategoryResponseDto> getInactiveCategories(
+            Long adminId, EducationCategoryType type) {
+        validateCategoryManageAuthority(adminId);
+
+        return educationCategoryRepository
+                .findAllByCategoryTypeAndActiveFalseOrderByDepthAscSortOrderAscIdAsc(type).stream()
+                .map(this::toCategoryResponseDto)
+                .toList();
     }
 
     @Transactional
@@ -223,5 +235,20 @@ public class AdminEducationCategoryService {
         if (admin.getRole() != Role.ADMIN && admin.getRole() != Role.MASTER_ADMIN) {
             throw new CustomException(ErrorCode.NO_AUTHORITY_FOR_EDUCATION_CATEGORY_MANAGE);
         }
+    }
+
+    private AdminEducationCategoryResponseDto toCategoryResponseDto(EducationCategory category) {
+        EducationCategory parent = category.getParent();
+        return AdminEducationCategoryResponseDto.builder()
+                .id(category.getId())
+                .code(category.getCode())
+                .name(category.getName())
+                .categoryType(category.getCategoryType())
+                .parentId(parent != null ? parent.getId() : null)
+                .parentName(parent != null ? parent.getName() : null)
+                .depth(category.getDepth())
+                .sortOrder(category.getSortOrder())
+                .active(category.isActive())
+                .build();
     }
 }

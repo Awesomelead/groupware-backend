@@ -80,8 +80,7 @@ public enum ErrorCode {
     SAFETY_TRAINING_ABSENT_REASON_REQUIRED(
             HttpStatus.BAD_REQUEST, "결석자가 있을 경우 교육 미참석 사유 입력은 필수입니다."),
     ANNUAL_LEAVE_SHEET_NOT_FOUND(HttpStatus.BAD_REQUEST, "입력한 시트명을 엑셀 파일에서 찾을 수 없습니다."),
-    ANNUAL_LEAVE_INVALID_SHEET_NAME(
-            HttpStatus.BAD_REQUEST, "시트명에는 월 외의 날짜 숫자를 포함할 수 없습니다."),
+    ANNUAL_LEAVE_INVALID_SHEET_NAME(HttpStatus.BAD_REQUEST, "시트명에는 월 외의 날짜 숫자를 포함할 수 없습니다."),
     ANNUAL_LEAVE_MONTH_MISMATCH(HttpStatus.BAD_REQUEST, "시트명의 월 정보와 엑셀 기준일의 월 정보가 일치하지 않습니다."),
     ANNUAL_LEAVE_DISPATCH_MONTH_MISMATCH(
             HttpStatus.BAD_REQUEST, "수정하려는 연차 발송 월과 엑셀 기준일의 월이 일치하지 않습니다."),

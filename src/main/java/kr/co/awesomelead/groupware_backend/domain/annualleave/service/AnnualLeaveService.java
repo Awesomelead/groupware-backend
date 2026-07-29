@@ -59,7 +59,8 @@ import java.util.stream.Collectors;
 public class AnnualLeaveService {
 
     private static final Pattern SHEET_NAME_DAY_PATTERN = Pattern.compile("\\d+\\s*일");
-    private static final Pattern SHEET_NAME_MONTH_PATTERN = Pattern.compile("(?<!\\d)(1[0-2]|[1-9])\\s*월");
+    private static final Pattern SHEET_NAME_MONTH_PATTERN =
+            Pattern.compile("(?<!\\d)(1[0-2]|[1-9])\\s*월");
 
     private final AnnualLeaveRepository annualLeaveRepository;
     private final AnnualLeaveDispatchHistoryRepository annualLeaveDispatchHistoryRepository;

@@ -917,8 +917,7 @@ public class AnnualLeaveServiceTest {
                 // then
                 assertThat(code.getHttpStatus())
                         .isEqualTo(org.springframework.http.HttpStatus.BAD_REQUEST);
-                assertThat(code.getMessage())
-                        .isEqualTo("수정하려는 연차 발송 월과 엑셀 기준일의 월이 일치하지 않습니다.");
+                assertThat(code.getMessage()).isEqualTo("수정하려는 연차 발송 월과 엑셀 기준일의 월이 일치하지 않습니다.");
             }
         }
 
@@ -1685,7 +1684,8 @@ public class AnnualLeaveServiceTest {
     private MultipartFile createMockExcelFileWithSheetName(String sheetName) throws IOException {
         ClassPathResource resource = new ClassPathResource("excel/annual_leave_test.xlsx");
         try (org.apache.poi.ss.usermodel.Workbook workbook =
-                        org.apache.poi.ss.usermodel.WorkbookFactory.create(resource.getInputStream());
+                        org.apache.poi.ss.usermodel.WorkbookFactory.create(
+                                resource.getInputStream());
                 ByteArrayOutputStream outputStream = new ByteArrayOutputStream()) {
             workbook.setSheetName(0, sheetName);
             workbook.write(outputStream);
@@ -1700,7 +1700,8 @@ public class AnnualLeaveServiceTest {
     private MultipartFile createMockExcelFileWithRemark(String remark) throws IOException {
         ClassPathResource resource = new ClassPathResource("excel/annual_leave_test.xlsx");
         try (org.apache.poi.ss.usermodel.Workbook workbook =
-                        org.apache.poi.ss.usermodel.WorkbookFactory.create(resource.getInputStream());
+                        org.apache.poi.ss.usermodel.WorkbookFactory.create(
+                                resource.getInputStream());
                 ByteArrayOutputStream outputStream = new ByteArrayOutputStream()) {
             workbook.getSheet("8월").getRow(7).getCell(10).setCellValue(remark);
             workbook.write(outputStream);

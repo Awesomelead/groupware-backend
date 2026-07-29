@@ -21,12 +21,12 @@ import kr.co.awesomelead.groupware_backend.domain.safetytraining.dto.request.Saf
 import kr.co.awesomelead.groupware_backend.domain.safetytraining.dto.request.SafetyTrainingSessionSearchConditionDto;
 import kr.co.awesomelead.groupware_backend.domain.safetytraining.dto.request.SafetyTrainingSessionStatusUpdateRequestDto;
 import kr.co.awesomelead.groupware_backend.domain.safetytraining.dto.request.SafetyTrainingSessionUpdateRequestDto;
-import kr.co.awesomelead.groupware_backend.domain.safetytraining.dto.response.SafetyTrainingPreviewResponseDto;
 import kr.co.awesomelead.groupware_backend.domain.safetytraining.dto.response.SafetyTrainingSessionAttendeesResponseDto;
 import kr.co.awesomelead.groupware_backend.domain.safetytraining.dto.response.SafetyTrainingSessionDetailResponseDto;
 import kr.co.awesomelead.groupware_backend.domain.safetytraining.dto.response.SafetyTrainingSessionReportResponseDto;
 import kr.co.awesomelead.groupware_backend.domain.safetytraining.dto.response.SafetyTrainingSessionSummaryResponseDto;
 import kr.co.awesomelead.groupware_backend.domain.safetytraining.service.SafetyTrainingSessionService;
+import kr.co.awesomelead.groupware_backend.domain.safetytraining.service.SafetyTrainingSessionService.ExcelDownload;
 import kr.co.awesomelead.groupware_backend.domain.user.dto.CustomUserDetails;
 import kr.co.awesomelead.groupware_backend.global.common.response.ApiResponse;
 import kr.co.awesomelead.groupware_backend.global.error.CustomException;
@@ -54,6 +54,8 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
+import java.io.UnsupportedEncodingException;
+import java.net.URLEncoder;
 import java.util.List;
 import java.util.Set;
 
@@ -86,6 +88,8 @@ import java.util.Set;
               - `AWESOME`(어썸리드), `MARUI`(한국마루이)
             """)
 public class SafetyTrainingSessionController {
+    private static final String EXCEL_CONTENT_TYPE =
+            "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet";
 
     private final SafetyTrainingSessionService safetyTrainingSessionService;
     private final ObjectMapper objectMapper;
@@ -255,8 +259,8 @@ public class SafetyTrainingSessionController {
                         description = "생성 성공",
                         content =
                                 @Content(
-                                        mediaType = "application/json",
-                                        schema = @Schema(implementation = ApiResponse.class))),
+                                        mediaType =
+                                                "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")),
                 @io.swagger.v3.oas.annotations.responses.ApiResponse(
                         responseCode = "403",
                         description = "관리 권한 없음",
@@ -279,14 +283,13 @@ public class SafetyTrainingSessionController {
                         description = "교육일지/사용자 없음")
             })
     @PostMapping("/{sessionId}/report")
-    public ResponseEntity<ApiResponse<SafetyTrainingSessionReportResponseDto>>
-            generateSessionReport(
+    public ResponseEntity<byte[]> generateSessionReport(
                     @PathVariable Long sessionId,
                     @Parameter(hidden = true) @AuthenticationPrincipal
                             CustomUserDetails userDetails) {
-        SafetyTrainingSessionReportResponseDto result =
+        ExcelDownload result =
                 safetyTrainingSessionService.generateSessionReport(sessionId, userDetails.getId());
-        return ResponseEntity.ok(ApiResponse.onSuccess(result));
+        return excelDownloadResponse(result);
     }
 
     @Operation(
@@ -733,13 +736,21 @@ public class SafetyTrainingSessionController {
                               "companyScope": "AWESOME"
                             }
                             """))))
+    @ApiResponses({
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                responseCode = "200",
+                description = "미리보기 엑셀 생성 성공",
+                content =
+                        @Content(
+                                mediaType =
+                                        "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"))
+    })
     @PostMapping("/preview")
-    public ResponseEntity<ApiResponse<SafetyTrainingPreviewResponseDto>> preview(
+    public ResponseEntity<byte[]> preview(
             @Parameter(hidden = true) @AuthenticationPrincipal CustomUserDetails userDetails,
             @Valid @RequestBody SafetyTrainingSessionCreateRequestDto requestDto) {
-        return ResponseEntity.ok(
-                ApiResponse.onSuccess(
-                        safetyTrainingSessionService.preview(userDetails.getId(), requestDto)));
+        ExcelDownload result = safetyTrainingSessionService.preview(userDetails.getId(), requestDto);
+        return excelDownloadResponse(result);
     }
 
     @Operation(
@@ -1002,5 +1013,19 @@ public class SafetyTrainingSessionController {
             @Parameter(hidden = true) @AuthenticationPrincipal CustomUserDetails userDetails) {
         safetyTrainingSessionService.remindSession(sessionId, userDetails.getId());
         return ResponseEntity.ok(ApiResponse.onNoContent());
+    }
+
+    private ResponseEntity<byte[]> excelDownloadResponse(ExcelDownload download) {
+        String encodedFilename;
+        try {
+            encodedFilename = URLEncoder.encode(download.fileName(), "UTF-8");
+        } catch (UnsupportedEncodingException e) {
+            encodedFilename = download.fileName();
+        }
+        return ResponseEntity.ok()
+                .header("Content-Disposition", "attachment; filename*=UTF-8''" + encodedFilename)
+                .header("Access-Control-Expose-Headers", "Content-Disposition")
+                .header("Content-Type", EXCEL_CONTENT_TYPE)
+                .body(download.bytes());
     }
 }

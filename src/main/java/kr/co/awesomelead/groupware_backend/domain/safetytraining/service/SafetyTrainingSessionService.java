@@ -8,7 +8,6 @@ import kr.co.awesomelead.groupware_backend.domain.safetytraining.dto.request.Saf
 import kr.co.awesomelead.groupware_backend.domain.safetytraining.dto.request.SafetyTrainingSessionSearchConditionDto;
 import kr.co.awesomelead.groupware_backend.domain.safetytraining.dto.request.SafetyTrainingSessionStatusUpdateRequestDto;
 import kr.co.awesomelead.groupware_backend.domain.safetytraining.dto.request.SafetyTrainingSessionUpdateRequestDto;
-import kr.co.awesomelead.groupware_backend.domain.safetytraining.dto.response.SafetyTrainingPreviewResponseDto;
 import kr.co.awesomelead.groupware_backend.domain.safetytraining.dto.response.SafetyTrainingSessionAttendeesResponseDto;
 import kr.co.awesomelead.groupware_backend.domain.safetytraining.dto.response.SafetyTrainingSessionDetailResponseDto;
 import kr.co.awesomelead.groupware_backend.domain.safetytraining.dto.response.SafetyTrainingSessionReportResponseDto;
@@ -62,7 +61,7 @@ public class SafetyTrainingSessionService {
             DateTimeFormatter.ofPattern("yyyy년 MM월 dd일 HH시 mm분");
     private static final DateTimeFormatter FILE_DATE_FORMATTER =
             DateTimeFormatter.ofPattern("yyyyMMdd");
-    private static final String EXCEL_FILE_EXTENSION = ".xls";
+    private static final String EXCEL_FILE_EXTENSION = ".xlsx";
 
     private final SafetyTrainingSessionRepository sessionRepository;
     private final SafetyTrainingSessionAttendeeRepository attendeeRepository;
@@ -73,8 +72,10 @@ public class SafetyTrainingSessionService {
     private final S3Service s3Service;
     private final NotificationService notificationService;
 
+    public record ExcelDownload(String fileName, byte[] bytes) {}
+
     @Transactional(readOnly = true)
-    public SafetyTrainingPreviewResponseDto preview(
+    public ExcelDownload preview(
             Long userId, SafetyTrainingSessionCreateRequestDto requestDto) {
         User actor =
                 userRepository
@@ -91,25 +92,10 @@ public class SafetyTrainingSessionService {
         byte[] excelBytes =
                 safetyTrainingExcelService.buildPreviewExcel(
                         requestDto, educationDateText, attendees, instructor.getNameKor());
-
-        String previewFileKey =
-                s3Service.uploadBytes(
-                        excelBytes,
-                        "safety-training-preview-"
-                                + System.currentTimeMillis()
-                                + EXCEL_FILE_EXTENSION,
-                        "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
         String previewFileName =
                 buildExportFileName(requestDto.getStartAt(), requestDto.getTitle());
-        String previewUrl = s3Service.getPresignedDownloadUrl(previewFileKey, previewFileName);
 
-        return SafetyTrainingPreviewResponseDto.builder()
-                .previewFileUrl(previewUrl)
-                .previewFileName(previewFileName)
-                .targetCount(attendees.size())
-                .attendedCount(0)
-                .absentCount(0)
-                .build();
+        return new ExcelDownload(previewFileName, excelBytes);
     }
 
     @Transactional
@@ -425,7 +411,7 @@ public class SafetyTrainingSessionService {
     }
 
     @Transactional
-    public SafetyTrainingSessionReportResponseDto generateSessionReport(
+    public ExcelDownload generateSessionReport(
             Long sessionId, Long userId) {
         User actor =
                 userRepository
@@ -467,32 +453,8 @@ public class SafetyTrainingSessionService {
                         attendees,
                         signatureImagesByUserId);
 
-        String previousReportKey = session.getReportFileKey();
-        String newReportKey =
-                s3Service.uploadBytes(
-                        reportExcel,
-                        "safety-training-report-"
-                                + session.getId()
-                                + "-"
-                                + System.currentTimeMillis()
-                                + EXCEL_FILE_EXTENSION,
-                        "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
-        session.setReportFileKey(newReportKey);
-
-        if (previousReportKey != null && !previousReportKey.equals(newReportKey)) {
-            try {
-                s3Service.deleteFile(previousReportKey);
-            } catch (Exception ignored) {
-                // 이전 보고서 정리 실패는 현재 요청을 실패시키지 않음
-            }
-        }
-
         String reportFileName = buildExportFileName(session.getStartAt(), session.getTitle());
-        return SafetyTrainingSessionReportResponseDto.builder()
-                .sessionId(session.getId())
-                .reportFileUrl(s3Service.getPresignedDownloadUrl(newReportKey, reportFileName))
-                .reportFileName(reportFileName)
-                .build();
+        return new ExcelDownload(reportFileName, reportExcel);
     }
 
     @Transactional(readOnly = true)

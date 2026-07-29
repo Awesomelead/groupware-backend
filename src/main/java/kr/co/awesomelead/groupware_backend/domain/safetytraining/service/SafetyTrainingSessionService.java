@@ -75,8 +75,7 @@ public class SafetyTrainingSessionService {
     public record ExcelDownload(String fileName, byte[] bytes) {}
 
     @Transactional(readOnly = true)
-    public ExcelDownload preview(
-            Long userId, SafetyTrainingSessionCreateRequestDto requestDto) {
+    public ExcelDownload preview(Long userId, SafetyTrainingSessionCreateRequestDto requestDto) {
         User actor =
                 userRepository
                         .findById(userId)
@@ -411,8 +410,7 @@ public class SafetyTrainingSessionService {
     }
 
     @Transactional
-    public ExcelDownload generateSessionReport(
-            Long sessionId, Long userId) {
+    public ExcelDownload generateSessionReport(Long sessionId, Long userId) {
         User actor =
                 userRepository
                         .findById(userId)

@@ -81,7 +81,8 @@ public class AdminEducationCategoryService {
         validateCategoryManageAuthority(adminId);
 
         return educationCategoryRepository
-                .findAllByCategoryTypeAndActiveFalseOrderByDepthAscSortOrderAscIdAsc(type).stream()
+                .findAllByCategoryTypeAndActiveFalseOrderByDepthAscSortOrderAscIdAsc(type)
+                .stream()
                 .map(this::toCategoryResponseDto)
                 .toList();
     }

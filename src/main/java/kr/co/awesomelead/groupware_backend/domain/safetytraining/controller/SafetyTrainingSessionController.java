@@ -284,9 +284,8 @@ public class SafetyTrainingSessionController {
             })
     @PostMapping("/{sessionId}/report")
     public ResponseEntity<byte[]> generateSessionReport(
-                    @PathVariable Long sessionId,
-                    @Parameter(hidden = true) @AuthenticationPrincipal
-                            CustomUserDetails userDetails) {
+            @PathVariable Long sessionId,
+            @Parameter(hidden = true) @AuthenticationPrincipal CustomUserDetails userDetails) {
         ExcelDownload result =
                 safetyTrainingSessionService.generateSessionReport(sessionId, userDetails.getId());
         return excelDownloadResponse(result);
@@ -749,7 +748,8 @@ public class SafetyTrainingSessionController {
     public ResponseEntity<byte[]> preview(
             @Parameter(hidden = true) @AuthenticationPrincipal CustomUserDetails userDetails,
             @Valid @RequestBody SafetyTrainingSessionCreateRequestDto requestDto) {
-        ExcelDownload result = safetyTrainingSessionService.preview(userDetails.getId(), requestDto);
+        ExcelDownload result =
+                safetyTrainingSessionService.preview(userDetails.getId(), requestDto);
         return excelDownloadResponse(result);
     }
 

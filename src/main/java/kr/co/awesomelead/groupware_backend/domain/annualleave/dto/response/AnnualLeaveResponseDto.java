@@ -18,5 +18,6 @@ public class AnnualLeaveResponseDto {
     private Double carriedOver; // 이월 월차
     private Double used; // 사용
     private Double remain; // 잔여일
+    private String remark; // 비고
     private LocalDate updateDate; // 수정일
 }

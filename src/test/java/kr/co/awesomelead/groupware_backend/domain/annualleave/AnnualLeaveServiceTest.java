@@ -33,6 +33,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -102,7 +103,7 @@ public class AnnualLeaveServiceTest {
                 User admin = createMockUser(Authority.MANAGE_ANNUAL_LEAVE); // 연차 관리 권한 추가
                 given(userRepository.findById(loginUserId)).willReturn(Optional.of(admin));
 
-                MultipartFile mockFile = createMockExcelFile();
+                MultipartFile mockFile = createMockExcelFileWithRemark("비고 테스트");
 
                 User targetUser =
                         User.builder()
@@ -122,7 +123,10 @@ public class AnnualLeaveServiceTest {
                 // then
                 assertThat(response.getSuccessCount()).isGreaterThan(0);
                 assertThat(response.getFailureCount()).isEqualTo(0);
-                verify(annualLeaveRepository, atLeastOnce()).save(any());
+                ArgumentCaptor<AnnualLeave> annualLeaveCaptor =
+                        ArgumentCaptor.forClass(AnnualLeave.class);
+                verify(annualLeaveRepository, atLeastOnce()).save(annualLeaveCaptor.capture());
+                assertThat(annualLeaveCaptor.getValue().getRemark()).isEqualTo("비고 테스트");
                 verify(notificationService, atLeastOnce())
                         .sendAnnualLeaveAlertToUser(any(), anyString());
                 verify(annualLeaveDispatchHistoryRepository, atLeastOnce()).save(any());
@@ -1552,6 +1556,21 @@ public class AnnualLeaveServiceTest {
                         org.apache.poi.ss.usermodel.WorkbookFactory.create(resource.getInputStream());
                 ByteArrayOutputStream outputStream = new ByteArrayOutputStream()) {
             workbook.setSheetName(0, sheetName);
+            workbook.write(outputStream);
+            return new MockMultipartFile(
+                    "file",
+                    "annual_leave_test.xlsx",
+                    "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                    outputStream.toByteArray());
+        }
+    }
+
+    private MultipartFile createMockExcelFileWithRemark(String remark) throws IOException {
+        ClassPathResource resource = new ClassPathResource("excel/annual_leave_test.xlsx");
+        try (org.apache.poi.ss.usermodel.Workbook workbook =
+                        org.apache.poi.ss.usermodel.WorkbookFactory.create(resource.getInputStream());
+                ByteArrayOutputStream outputStream = new ByteArrayOutputStream()) {
+            workbook.getSheet("8월").getRow(7).getCell(10).setCellValue(remark);
             workbook.write(outputStream);
             return new MockMultipartFile(
                     "file",

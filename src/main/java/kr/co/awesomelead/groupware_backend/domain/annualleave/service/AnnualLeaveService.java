@@ -277,6 +277,7 @@ public class AnnualLeaveService {
         Double carried = getCellValueAsDouble(row.getCell(7));
         Double used = getCellValueAsDouble(row.getCell(8));
         Double remain = getCellValueAsDouble(row.getCell(9));
+        String remark = getCellValueAsString(row.getCell(10)).trim();
 
         // 기존 정보가 있으면 업데이트, 없으면 신규 생성
         AnnualLeave annualLeave =
@@ -297,6 +298,7 @@ public class AnnualLeaveService {
         annualLeave.setCarriedOver(carried);
         annualLeave.setUsed(used);
         annualLeave.setRemain(remain);
+        annualLeave.setRemark(remark);
         annualLeave.setUpdateDate(updateDate); // Date 타입 호환
 
         annualLeaveRepository.save(annualLeave);

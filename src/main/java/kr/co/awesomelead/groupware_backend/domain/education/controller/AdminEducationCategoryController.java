@@ -14,6 +14,7 @@ import kr.co.awesomelead.groupware_backend.domain.education.dto.request.Educatio
 import kr.co.awesomelead.groupware_backend.domain.education.dto.request.EducationCategoryReorderRequestDto;
 import kr.co.awesomelead.groupware_backend.domain.education.dto.request.EducationCategoryUpdateRequestDto;
 import kr.co.awesomelead.groupware_backend.domain.education.dto.response.AdminEducationCategoryNodeDto;
+import kr.co.awesomelead.groupware_backend.domain.education.dto.response.AdminEducationCategoryResponseDto;
 import kr.co.awesomelead.groupware_backend.domain.education.enums.EducationCategoryType;
 import kr.co.awesomelead.groupware_backend.domain.education.service.AdminEducationCategoryService;
 import kr.co.awesomelead.groupware_backend.domain.user.dto.CustomUserDetails;
@@ -53,6 +54,23 @@ public class AdminEducationCategoryController {
         return ResponseEntity.ok(
                 ApiResponse.onSuccess(
                         adminEducationCategoryService.getCategoryTree(userDetails.getId(), type)));
+    }
+
+    @Operation(
+            summary = "관리자용 비활성 교육 카테고리 목록 조회",
+            description = "유형(PSM/SAFETY)에 해당하는 비활성 카테고리 목록을 조회합니다.")
+    @GetMapping("/inactive")
+    public ResponseEntity<ApiResponse<List<AdminEducationCategoryResponseDto>>>
+            getInactiveCategories(
+                    @Parameter(hidden = true) @AuthenticationPrincipal
+                            CustomUserDetails userDetails,
+                    @Parameter(description = "카테고리 유형", example = "SAFETY", required = true)
+                            @RequestParam
+                            EducationCategoryType type) {
+        return ResponseEntity.ok(
+                ApiResponse.onSuccess(
+                        adminEducationCategoryService.getInactiveCategories(
+                                userDetails.getId(), type)));
     }
 
     @Operation(summary = "교육 카테고리 생성", description = "관리자가 교육 카테고리를 생성합니다.")

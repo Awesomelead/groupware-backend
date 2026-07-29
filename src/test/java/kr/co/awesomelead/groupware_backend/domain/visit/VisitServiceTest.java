@@ -1178,6 +1178,23 @@ public class VisitServiceTest {
         }
 
         @Test
+        @DisplayName("관리자 목록 응답에 방문 유형을 포함한다.")
+        void it_returns_visit_category() {
+            // given
+            Visit visit = createBaseVisit(VisitStatus.PENDING, VisitCategory.PRE_LONG_TERM);
+            given(visitQueryRepository.findVisitsForAdmin(null, null, null, null, pageable))
+                    .willReturn(new PageImpl<>(List.of(visit)));
+
+            // when
+            Page<VisitListResponseDto> result =
+                    visitService.getVisitsForAdmin(ADMIN_ID, null, null, null, null, pageable);
+
+            // then
+            assertThat(result.getContent().get(0).getVisitCategory())
+                    .isEqualTo(VisitCategory.PRE_LONG_TERM);
+        }
+
+        @Test
         @DisplayName("날짜 범위 없이 호출하면 null로 저장소를 호출한다.")
         void it_calls_repository_with_null_dates_when_not_provided() {
             // given

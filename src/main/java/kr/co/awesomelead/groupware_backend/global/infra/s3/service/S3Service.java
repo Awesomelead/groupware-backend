@@ -12,6 +12,7 @@ import org.springframework.web.multipart.MultipartFile;
 import software.amazon.awssdk.core.sync.RequestBody;
 import software.amazon.awssdk.services.s3.S3Client;
 import software.amazon.awssdk.services.s3.model.GetObjectRequest;
+import software.amazon.awssdk.services.s3.model.GetObjectResponse;
 import software.amazon.awssdk.services.s3.model.PutObjectRequest;
 import software.amazon.awssdk.services.s3.presigner.S3Presigner;
 import software.amazon.awssdk.services.s3.presigner.model.GetObjectPresignRequest;
@@ -39,6 +40,8 @@ public class S3Service {
     @Value("${spring.cloud.aws.region.static}")
     private String region;
 
+    public record S3File(String contentType, byte[] bytes) {}
+
     public String getPresignedViewUrl(String fileKey) {
         return generatePresignedUrl(fileKey, Duration.ofMinutes(30)); // 30분짜리 권한
     }
@@ -48,6 +51,14 @@ public class S3Service {
                 fileKey,
                 Duration.ofMinutes(30),
                 buildAttachmentContentDisposition(downloadFileName));
+    }
+
+    public String getProxyViewUrl(String fileKey) {
+        if (fileKey == null || fileKey.isBlank()) {
+            return null;
+        }
+        return "/api/files/view?fileKey="
+                + URLEncoder.encode(fileKey, StandardCharsets.UTF_8).replace("+", "%20");
     }
 
     public String generatePresignedUrl(String fileKey, Duration duration) {
@@ -124,7 +135,7 @@ public class S3Service {
         return FileUploadResponseDto.builder()
                 .fileKey(fileKey)
                 .fileName(originalFileName)
-                .imageUrl(getPresignedViewUrl(fileKey))
+                .imageUrl(getProxyViewUrl(fileKey))
                 .build();
     }
 
@@ -196,6 +207,18 @@ public class S3Service {
         try {
             return s3Client.getObjectAsBytes(builder -> builder.bucket(bucketName).key(fileKey))
                     .asByteArray();
+        } catch (Exception e) {
+            log.error("S3 파일 다운로드 실패: {}", e.getMessage());
+            throw new RuntimeException("파일 다운로드 중 오류가 발생했습니다.");
+        }
+    }
+
+    public S3File downloadFileWithMetadata(String fileKey) {
+        try {
+            var responseBytes =
+                    s3Client.getObjectAsBytes(builder -> builder.bucket(bucketName).key(fileKey));
+            GetObjectResponse response = responseBytes.response();
+            return new S3File(response.contentType(), responseBytes.asByteArray());
         } catch (Exception e) {
             log.error("S3 파일 다운로드 실패: {}", e.getMessage());
             throw new RuntimeException("파일 다운로드 중 오류가 발생했습니다.");

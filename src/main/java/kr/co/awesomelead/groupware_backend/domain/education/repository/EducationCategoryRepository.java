@@ -17,6 +17,9 @@ public interface EducationCategoryRepository extends JpaRepository<EducationCate
     List<EducationCategory> findAllByCategoryTypeAndActiveTrueOrderByDepthAscSortOrderAscIdAsc(
             EducationCategoryType categoryType);
 
+    List<EducationCategory> findAllByCategoryTypeAndActiveFalseOrderByDepthAscSortOrderAscIdAsc(
+            EducationCategoryType categoryType);
+
     List<EducationCategory> findAllByCategoryTypeOrderByDepthAscSortOrderAscIdAsc(
             EducationCategoryType categoryType);
 }

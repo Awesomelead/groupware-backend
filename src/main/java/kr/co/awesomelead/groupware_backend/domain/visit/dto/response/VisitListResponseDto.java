@@ -2,6 +2,7 @@ package kr.co.awesomelead.groupware_backend.domain.visit.dto.response;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 
+import kr.co.awesomelead.groupware_backend.domain.visit.enums.VisitCategory;
 import kr.co.awesomelead.groupware_backend.domain.visit.enums.VisitStatus;
 
 import lombok.AllArgsConstructor;
@@ -37,4 +38,7 @@ public class VisitListResponseDto {
 
     @Schema(description = "방문 상태", example = "방문 중")
     private VisitStatus status;
+
+    @Schema(description = "방문 유형", example = "PRE_ONE_DAY")
+    private VisitCategory visitCategory;
 }

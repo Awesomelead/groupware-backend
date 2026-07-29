@@ -7,6 +7,7 @@ import kr.co.awesomelead.groupware_backend.global.error.CustomException;
 import kr.co.awesomelead.groupware_backend.global.error.ErrorCode;
 import kr.co.awesomelead.groupware_backend.global.infra.s3.dto.response.FileUploadResponseDto;
 import kr.co.awesomelead.groupware_backend.global.infra.s3.service.S3Service;
+import kr.co.awesomelead.groupware_backend.global.infra.s3.service.S3Service.S3File;
 
 import lombok.RequiredArgsConstructor;
 
@@ -14,6 +15,7 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -35,9 +37,33 @@ public class S3Controller {
     public ResponseEntity<ApiResponse<FileUploadResponseDto>> uploadFile(
             @RequestPart("file") MultipartFile file) throws IOException {
 
-        FileUploadResponseDto response = s3Service.uploadEditorFile(file);
+        FileUploadResponseDto uploaded = s3Service.uploadEditorFile(file);
+        FileUploadResponseDto response =
+                FileUploadResponseDto.builder()
+                        .fileKey(uploaded.getFileKey())
+                        .fileName(uploaded.getFileName())
+                        .imageUrl(s3Service.getProxyViewUrl(uploaded.getFileKey()))
+                        .build();
 
         return ResponseEntity.ok(ApiResponse.onSuccess(response));
+    }
+
+    @Operation(summary = "파일 보기", description = "S3 파일 키(fileKey)를 입력하여 파일 바이트를 바로 조회합니다.")
+    @GetMapping("/view")
+    public ResponseEntity<byte[]> viewFile(@RequestParam("fileKey") String fileKey) {
+        if (!StringUtils.hasText(fileKey)) {
+            throw new CustomException(ErrorCode.INVALID_ARGUMENT);
+        }
+
+        S3File file = s3Service.downloadFileWithMetadata(fileKey.trim());
+        String contentType =
+                StringUtils.hasText(file.contentType())
+                        ? file.contentType()
+                        : MediaType.APPLICATION_OCTET_STREAM_VALUE;
+        return ResponseEntity.ok()
+                .header("Content-Type", contentType)
+                .header("Cache-Control", "private, max-age=300")
+                .body(file.bytes());
     }
 
     @Operation(summary = "파일 단일 삭제", description = "파일 키(fileKey)를 입력하여 S3 파일을 삭제합니다.")

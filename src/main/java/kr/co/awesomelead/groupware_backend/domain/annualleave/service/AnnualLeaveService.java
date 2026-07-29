@@ -432,6 +432,9 @@ public class AnnualLeaveService {
                         s3Service.getPresignedDownloadUrl(
                                 history.getFileKey(), history.getOriginalFileName()))
                 .company(history.getCompany())
+                .createdAt(history.getCreatedAt())
+                .senderName(resolveSenderName(history))
+                .senderPosition(resolveSenderPosition(history))
                 .build();
     }
 

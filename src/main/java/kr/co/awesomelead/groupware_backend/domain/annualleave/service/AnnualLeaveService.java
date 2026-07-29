@@ -205,7 +205,7 @@ public class AnnualLeaveService {
 
             Sheet sheet = workbook.getSheet(normalizedSheetName);
             if (sheet == null) {
-                sheet = workbook.getSheetAt(0);
+                throw new CustomException(ErrorCode.ANNUAL_LEAVE_SHEET_NOT_FOUND);
             }
 
             // 기준일 파싱 (5행 J열(Index 9)에서 기준일 추출)

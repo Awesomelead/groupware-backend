@@ -40,6 +40,7 @@ import org.springframework.core.io.ClassPathResource;
 import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -151,6 +152,32 @@ public class AnnualLeaveServiceTest {
                         .isInstanceOf(CustomException.class)
                         .hasMessageContaining(
                                 "유효하지 않은 기준일자 형식입니다. (yyyy-MM-dd)"); // ErrorCode 메시지에 따라 수정
+            }
+        }
+
+        @Nested
+        @DisplayName("엑셀 파일에 입력한 시트명이 없으면")
+        class Context_with_missing_sheet {
+
+            @Test
+            @DisplayName("ANNUAL_LEAVE_SHEET_NOT_FOUND 예외를 던진다")
+            void it_throws_when_sheet_not_found() throws IOException {
+                // given
+                User admin = createMockUser(Authority.MANAGE_ANNUAL_LEAVE);
+                given(userRepository.findById(loginUserId)).willReturn(Optional.of(admin));
+                MultipartFile mockFile = createMockExcelFile();
+                given(s3Service.uploadFile(mockFile)).willReturn("annual-leave/history.xlsx");
+
+                // when & then
+                assertThatThrownBy(
+                                () ->
+                                        annualLeaveService.uploadAnnualLeaveFile(
+                                                mockFile,
+                                                "6월 1일 연차 기준현황",
+                                                loginUserId,
+                                                Company.AWESOME))
+                        .isInstanceOf(CustomException.class)
+                        .hasMessageContaining("입력한 시트명을 엑셀 파일에서 찾을 수 없습니다.");
             }
         }
 
@@ -833,6 +860,25 @@ public class AnnualLeaveServiceTest {
         }
 
         @Nested
+        @DisplayName("ANNUAL_LEAVE_SHEET_NOT_FOUND 상수가")
+        class Context_ANNUAL_LEAVE_SHEET_NOT_FOUND {
+
+            @Test
+            @DisplayName("정의되어 있어야 하고 HttpStatus.BAD_REQUEST와 지정된 메시지를 가진다")
+            void it_has_correct_status_and_message() {
+                // given & when
+                kr.co.awesomelead.groupware_backend.global.error.ErrorCode code =
+                        kr.co.awesomelead.groupware_backend.global.error.ErrorCode.valueOf(
+                                "ANNUAL_LEAVE_SHEET_NOT_FOUND");
+
+                // then
+                assertThat(code.getHttpStatus())
+                        .isEqualTo(org.springframework.http.HttpStatus.BAD_REQUEST);
+                assertThat(code.getMessage()).isEqualTo("입력한 시트명을 엑셀 파일에서 찾을 수 없습니다.");
+            }
+        }
+
+        @Nested
         @DisplayName("ANNUAL_LEAVE_MONTH_MISMATCH 상수가")
         class Context_ANNUAL_LEAVE_MONTH_MISMATCH {
 
@@ -877,7 +923,7 @@ public class AnnualLeaveServiceTest {
     class Describe_uploadAnnualLeaveFile_duplicateCheck {
 
         private final Long loginUserId = 1L;
-        private final String sheetName = "2026-06";
+        private final String sheetName = "8월";
 
         @Nested
         @DisplayName("같은 월에 이미 발송 이력이 존재하면")
@@ -941,7 +987,7 @@ public class AnnualLeaveServiceTest {
                 given(userRepository.findByNameAndJoinDate(anyString(), any()))
                         .willReturn(Optional.of(targetUser));
                 given(annualLeaveRepository.findByUser(targetUser)).willReturn(Optional.empty());
-                given(s3Service.uploadFile(mockFile)).willReturn("annual-leave/2026-06.xlsx");
+                given(s3Service.uploadFile(mockFile)).willReturn("annual-leave/2026-08.xlsx");
 
                 // when
                 ExcelUploadResponseDto response =
@@ -971,7 +1017,8 @@ public class AnnualLeaveServiceTest {
                 User admin = createMockUser(Authority.MANAGE_ANNUAL_LEAVE);
                 given(userRepository.findById(loginUserId)).willReturn(Optional.of(admin));
 
-                MultipartFile mockFile = createMockExcelFile();
+                MultipartFile mockFile = createMockExcelFileWithSheetName("5월");
+                given(s3Service.uploadFile(mockFile)).willReturn("annual-leave/history.xlsx");
 
                 // when & then
                 assertThatThrownBy(
@@ -1047,7 +1094,7 @@ public class AnnualLeaveServiceTest {
 
         private final Long adminId = 1L;
         private final Long dispatchId = 10L;
-        private final String sheetName = "2026-06";
+        private final String sheetName = "8월";
 
         @Nested
         @DisplayName("자기 자신을 제외한 같은 월에 이미 발송 이력이 존재하면")
@@ -1139,7 +1186,7 @@ public class AnnualLeaveServiceTest {
                 given(userRepository.findByNameAndJoinDate(anyString(), any()))
                         .willReturn(Optional.of(targetUser));
                 given(annualLeaveRepository.findByUser(targetUser)).willReturn(Optional.empty());
-                given(s3Service.uploadFile(mockFile)).willReturn("annual-leave/2026-06.xlsx");
+                given(s3Service.uploadFile(mockFile)).willReturn("annual-leave/2026-08.xlsx");
 
                 // when
                 ExcelUploadResponseDto result =
@@ -1278,7 +1325,7 @@ public class AnnualLeaveServiceTest {
     class Describe_uploadAnnualLeaveFile_company_duplicate_check {
 
         private final Long loginUserId = 1L;
-        private final String sheetName = "2026-06";
+        private final String sheetName = "8월";
 
         @Nested
         @DisplayName("같은 Company + 같은 월에 이미 이력이 존재하면")
@@ -1343,7 +1390,7 @@ public class AnnualLeaveServiceTest {
                 given(userRepository.findByNameAndJoinDate(anyString(), any()))
                         .willReturn(Optional.of(targetUser));
                 given(annualLeaveRepository.findByUser(targetUser)).willReturn(Optional.empty());
-                given(s3Service.uploadFile(mockFile)).willReturn("annual-leave/2026-06.xlsx");
+                given(s3Service.uploadFile(mockFile)).willReturn("annual-leave/2026-08.xlsx");
 
                 // when
                 ExcelUploadResponseDto response =
@@ -1497,5 +1544,20 @@ public class AnnualLeaveServiceTest {
                 "wrong_annual_leave_test.xlsx",
                 "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
                 resource.getInputStream());
+    }
+
+    private MultipartFile createMockExcelFileWithSheetName(String sheetName) throws IOException {
+        ClassPathResource resource = new ClassPathResource("excel/annual_leave_test.xlsx");
+        try (org.apache.poi.ss.usermodel.Workbook workbook =
+                        org.apache.poi.ss.usermodel.WorkbookFactory.create(resource.getInputStream());
+                ByteArrayOutputStream outputStream = new ByteArrayOutputStream()) {
+            workbook.setSheetName(0, sheetName);
+            workbook.write(outputStream);
+            return new MockMultipartFile(
+                    "file",
+                    "annual_leave_test.xlsx",
+                    "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                    outputStream.toByteArray());
+        }
     }
 }

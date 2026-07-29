@@ -323,6 +323,7 @@ public class AnnualLeaveServiceTest {
             // given
             Long adminId = 1L;
             User admin = createMockUser(Authority.MANAGE_ANNUAL_LEAVE);
+            admin.setPosition(Position.MANAGER);
             given(userRepository.findById(adminId)).willReturn(Optional.of(admin));
 
             AnnualLeaveDispatchHistory first =
@@ -333,6 +334,7 @@ public class AnnualLeaveServiceTest {
                             .sheetName("2026-06")
                             .fileKey("annual-leave/2026-06-first.xlsx")
                             .baseDate(LocalDate.of(2026, 6, 1))
+                            .createdAt(LocalDateTime.of(2026, 6, 1, 9, 0))
                             .company(Company.AWESOME)
                             .build();
             AnnualLeaveDispatchHistory second =
@@ -343,6 +345,7 @@ public class AnnualLeaveServiceTest {
                             .sheetName("2026-06")
                             .fileKey("annual-leave/2026-06-second.xlsx")
                             .baseDate(LocalDate.of(2026, 6, 1))
+                            .createdAt(LocalDateTime.of(2026, 6, 2, 9, 0))
                             .company(Company.AWESOME)
                             .build();
             AnnualLeaveDispatchHistory third =
@@ -353,6 +356,7 @@ public class AnnualLeaveServiceTest {
                             .sheetName("2026-07")
                             .fileKey("annual-leave/2026-07-first.xlsx")
                             .baseDate(LocalDate.of(2026, 7, 1))
+                            .createdAt(LocalDateTime.of(2026, 7, 1, 9, 0))
                             .company(Company.AWESOME)
                             .build();
             given(annualLeaveDispatchHistoryRepository.findAllByCompanyOrderByCreatedAtDesc(null))
@@ -385,6 +389,10 @@ public class AnnualLeaveServiceTest {
                     .isEqualTo("2026_연차현황.xlsx");
             assertThat(result.get(0).getItems().get(0).getSheetName()).isEqualTo("2026-06");
             assertThat(result.get(0).getItems().get(0).getCompany()).isEqualTo(Company.AWESOME);
+            assertThat(result.get(0).getItems().get(0).getCreatedAt())
+                    .isEqualTo(LocalDateTime.of(2026, 6, 1, 9, 0));
+            assertThat(result.get(0).getItems().get(0).getSenderName()).isEqualTo("테스트 업로더");
+            assertThat(result.get(0).getItems().get(0).getSenderPosition()).isEqualTo("과장");
             assertThat(result.get(0).getItems().get(1).getTitle()).isEqualTo("6월");
             assertThat(result.get(0).getItems().get(1).getOriginalFileName())
                     .isEqualTo("2026_연차현황_수정본.xlsx");

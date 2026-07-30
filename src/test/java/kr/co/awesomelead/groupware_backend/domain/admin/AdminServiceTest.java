@@ -7,6 +7,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import kr.co.awesomelead.groupware_backend.domain.admin.dto.request.AdminUserUpdateRequestDto;
+import kr.co.awesomelead.groupware_backend.domain.admin.dto.request.AdminUserEmailUpdateRequestDto;
 import kr.co.awesomelead.groupware_backend.domain.admin.dto.request.UserApprovalRequestDto;
 import kr.co.awesomelead.groupware_backend.domain.admin.dto.response.AdminPendingMyInfoDetailResponseDto;
 import kr.co.awesomelead.groupware_backend.domain.admin.dto.response.AdminUserDetailResponseDto;
@@ -1001,6 +1002,77 @@ class AdminServiceTest {
                 // then
                 assertThat(targetUser.getStatus()).isEqualTo(Status.PENDING);
             }
+        }
+    }
+
+    @Nested
+    @DisplayName("updateUserEmail 메서드는")
+    class Describe_updateUserEmail {
+
+        @Test
+        @DisplayName("관리자가 직원 이메일을 변경하면 이메일을 저장하고 기존 리프레시 토큰을 삭제한다")
+        void it_updates_user_email_and_deletes_refresh_token() {
+            User targetUser =
+                    User.builder().id(17L).email("old@example.com").role(Role.USER).build();
+            when(userRepository.findById(17L)).thenReturn(Optional.of(targetUser));
+            when(userRepository.existsByEmail("new@example.com")).thenReturn(false);
+
+            AdminUserEmailUpdateRequestDto dto = new AdminUserEmailUpdateRequestDto();
+            dto.setEmail("  new@example.com  ");
+
+            adminService.updateUserEmail(17L, dto, adminId);
+
+            assertThat(targetUser.getEmail()).isEqualTo("new@example.com");
+            verify(refreshTokenService).deleteRefreshTokenByEmail("old@example.com");
+            verify(userRepository).save(targetUser);
+        }
+
+        @Test
+        @DisplayName("동일한 이메일이면 변경하지 않고 토큰을 삭제하지 않는다")
+        void it_does_nothing_when_email_is_same() {
+            User targetUser =
+                    User.builder().id(17L).email("same@example.com").role(Role.USER).build();
+            when(userRepository.findById(17L)).thenReturn(Optional.of(targetUser));
+
+            AdminUserEmailUpdateRequestDto dto = new AdminUserEmailUpdateRequestDto();
+            dto.setEmail("same@example.com");
+
+            adminService.updateUserEmail(17L, dto, adminId);
+
+            assertThat(targetUser.getEmail()).isEqualTo("same@example.com");
+        }
+
+        @Test
+        @DisplayName("이미 사용 중인 이메일이면 DUPLICATE_LOGIN_ID 에러를 던진다")
+        void it_throws_when_email_is_duplicated() {
+            User targetUser =
+                    User.builder().id(17L).email("old@example.com").role(Role.USER).build();
+            when(userRepository.findById(17L)).thenReturn(Optional.of(targetUser));
+            when(userRepository.existsByEmail("used@example.com")).thenReturn(true);
+
+            AdminUserEmailUpdateRequestDto dto = new AdminUserEmailUpdateRequestDto();
+            dto.setEmail("used@example.com");
+
+            assertThatThrownBy(() -> adminService.updateUserEmail(17L, dto, adminId))
+                    .isInstanceOf(CustomException.class)
+                    .extracting("errorCode")
+                    .isEqualTo(ErrorCode.DUPLICATE_LOGIN_ID);
+        }
+
+        @Test
+        @DisplayName("관리자 권한이 없으면 NO_AUTHORITY_FOR_EMPLOYEE_MANAGEMENT 에러를 던진다")
+        void it_throws_when_admin_has_no_authority() {
+            User normalUser = new User();
+            normalUser.setRole(Role.USER);
+            when(userRepository.findById(adminId)).thenReturn(Optional.of(normalUser));
+
+            AdminUserEmailUpdateRequestDto dto = new AdminUserEmailUpdateRequestDto();
+            dto.setEmail("new@example.com");
+
+            assertThatThrownBy(() -> adminService.updateUserEmail(17L, dto, adminId))
+                    .isInstanceOf(CustomException.class)
+                    .extracting("errorCode")
+                    .isEqualTo(ErrorCode.NO_AUTHORITY_FOR_EMPLOYEE_MANAGEMENT);
         }
     }
 

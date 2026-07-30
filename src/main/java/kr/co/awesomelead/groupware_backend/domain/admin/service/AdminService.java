@@ -1,5 +1,6 @@
 package kr.co.awesomelead.groupware_backend.domain.admin.service;
 
+import kr.co.awesomelead.groupware_backend.domain.admin.dto.request.AdminUserEmailUpdateRequestDto;
 import kr.co.awesomelead.groupware_backend.domain.admin.dto.request.AdminUserUpdateRequestDto;
 import kr.co.awesomelead.groupware_backend.domain.admin.dto.request.UserApprovalRequestDto;
 import kr.co.awesomelead.groupware_backend.domain.admin.dto.response.AdminPendingMyInfoDetailResponseDto;
@@ -350,6 +351,35 @@ public class AdminService {
             refreshTokenService.deleteRefreshTokenByEmail(user.getEmail());
         }
 
+        userRepository.save(user);
+    }
+
+    @Transactional
+    public void updateUserEmail(
+            Long userId, AdminUserEmailUpdateRequestDto requestDto, Long adminId) {
+        User admin =
+                userRepository
+                        .findById(adminId)
+                        .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
+        validateEmployeeManagementAuthority(admin);
+
+        User user =
+                userRepository
+                        .findById(userId)
+                        .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
+
+        String newEmail = requestDto.getEmail().trim();
+        String currentEmail = user.getEmail();
+        if (newEmail.equals(currentEmail)) {
+            return;
+        }
+
+        if (userRepository.existsByEmail(newEmail)) {
+            throw new CustomException(ErrorCode.DUPLICATE_LOGIN_ID);
+        }
+
+        refreshTokenService.deleteRefreshTokenByEmail(currentEmail);
+        user.setEmail(newEmail);
         userRepository.save(user);
     }
 

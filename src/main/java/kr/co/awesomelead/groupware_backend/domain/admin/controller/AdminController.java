@@ -12,8 +12,8 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 
 import jakarta.validation.Valid;
 
-import kr.co.awesomelead.groupware_backend.domain.admin.dto.request.AdminUserUpdateRequestDto;
 import kr.co.awesomelead.groupware_backend.domain.admin.dto.request.AdminUserEmailUpdateRequestDto;
+import kr.co.awesomelead.groupware_backend.domain.admin.dto.request.AdminUserUpdateRequestDto;
 import kr.co.awesomelead.groupware_backend.domain.admin.dto.request.MyInfoUpdateRejectRequestDto;
 import kr.co.awesomelead.groupware_backend.domain.admin.dto.request.UserApprovalRequestDto;
 import kr.co.awesomelead.groupware_backend.domain.admin.dto.response.AdminPendingMyInfoDetailResponseDto;

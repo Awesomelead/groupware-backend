@@ -6,8 +6,8 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-import kr.co.awesomelead.groupware_backend.domain.admin.dto.request.AdminUserUpdateRequestDto;
 import kr.co.awesomelead.groupware_backend.domain.admin.dto.request.AdminUserEmailUpdateRequestDto;
+import kr.co.awesomelead.groupware_backend.domain.admin.dto.request.AdminUserUpdateRequestDto;
 import kr.co.awesomelead.groupware_backend.domain.admin.dto.request.UserApprovalRequestDto;
 import kr.co.awesomelead.groupware_backend.domain.admin.dto.response.AdminPendingMyInfoDetailResponseDto;
 import kr.co.awesomelead.groupware_backend.domain.admin.dto.response.AdminUserDetailResponseDto;

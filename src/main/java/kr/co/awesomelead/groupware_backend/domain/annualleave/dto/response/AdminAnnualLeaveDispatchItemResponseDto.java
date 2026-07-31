@@ -7,6 +7,8 @@ import kr.co.awesomelead.groupware_backend.domain.department.enums.Company;
 import lombok.Builder;
 import lombok.Getter;
 
+import java.time.LocalDateTime;
+
 @Getter
 @Builder
 @Schema(description = "관리자용 연차 발송 목록 아이템")
@@ -29,4 +31,13 @@ public class AdminAnnualLeaveDispatchItemResponseDto {
 
     @Schema(description = "소속 회사", example = "AWESOME")
     private Company company;
+
+    @Schema(description = "업로드 시각", example = "2026-05-31T15:29:04")
+    private LocalDateTime createdAt;
+
+    @Schema(description = "발송자 이름", example = "김관리")
+    private String senderName;
+
+    @Schema(description = "발송자 직급", example = "과장")
+    private String senderPosition;
 }

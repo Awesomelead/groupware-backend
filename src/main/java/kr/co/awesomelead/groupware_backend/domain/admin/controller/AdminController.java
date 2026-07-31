@@ -12,6 +12,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 
 import jakarta.validation.Valid;
 
+import kr.co.awesomelead.groupware_backend.domain.admin.dto.request.AdminUserEmailUpdateRequestDto;
 import kr.co.awesomelead.groupware_backend.domain.admin.dto.request.AdminUserUpdateRequestDto;
 import kr.co.awesomelead.groupware_backend.domain.admin.dto.request.MyInfoUpdateRejectRequestDto;
 import kr.co.awesomelead.groupware_backend.domain.admin.dto.request.UserApprovalRequestDto;
@@ -349,6 +350,112 @@ public class AdminController {
             @Parameter(hidden = true) @AuthenticationPrincipal CustomUserDetails userDetails) {
         adminService.updateUserInfo(userId, requestDto, userDetails.getId());
         return ResponseEntity.ok(ApiResponse.onSuccess("직원 정보가 성공적으로 수정되었습니다."));
+    }
+
+    @Operation(
+            summary = "직원 이메일 변경",
+            description =
+                    "관리자가 직원의 로그인 이메일을 변경합니다. 이메일 변경 시 해당 직원의 기존 로그인 세션은 만료되며,"
+                            + " 변경된 이메일로 다시 로그인해야 합니다.")
+    @ApiResponses(
+            value = {
+                @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                        responseCode = "200",
+                        description = "이메일 변경 성공",
+                        content =
+                                @Content(
+                                        mediaType = "application/json",
+                                        examples =
+                                                @ExampleObject(
+                                                        value =
+                                                                """
+                                        {
+                                          "isSuccess": true,
+                                          "code": "COMMON200",
+                                          "message": "요청에 성공했습니다.",
+                                          "result": "직원 이메일이 성공적으로 변경되었습니다."
+                                        }
+                                        """))),
+                @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                        responseCode = "400",
+                        description = "잘못된 이메일 형식",
+                        content =
+                                @Content(
+                                        mediaType = "application/json",
+                                        examples =
+                                                @ExampleObject(
+                                                        value =
+                                                                """
+                                        {
+                                          "isSuccess": false,
+                                          "code": "COMMON400",
+                                          "message": "입력값이 유효하지 않습니다.",
+                                          "result": {
+                                            "email": "유효한 이메일 형식이 아닙니다."
+                                          }
+                                        }
+                                        """))),
+                @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                        responseCode = "403",
+                        description = "권한 없음",
+                        content =
+                                @Content(
+                                        mediaType = "application/json",
+                                        examples =
+                                                @ExampleObject(
+                                                        value =
+                                                                """
+                                        {
+                                          "isSuccess": false,
+                                          "code": "NO_AUTHORITY_FOR_EMPLOYEE_MANAGEMENT",
+                                          "message": "직원 관리 권한이 없습니다.",
+                                          "result": null
+                                        }
+                                        """))),
+                @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                        responseCode = "404",
+                        description = "사용자 없음",
+                        content =
+                                @Content(
+                                        mediaType = "application/json",
+                                        examples =
+                                                @ExampleObject(
+                                                        value =
+                                                                """
+                                        {
+                                          "isSuccess": false,
+                                          "code": "USER_NOT_FOUND",
+                                          "message": "해당 사용자를 찾을 수 없습니다.",
+                                          "result": null
+                                        }
+                                        """))),
+                @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                        responseCode = "409",
+                        description = "이메일 중복",
+                        content =
+                                @Content(
+                                        mediaType = "application/json",
+                                        examples =
+                                                @ExampleObject(
+                                                        value =
+                                                                """
+                                        {
+                                          "isSuccess": false,
+                                          "code": "DUPLICATE_LOGIN_ID",
+                                          "message": "이미 사용 중인 이메일입니다.",
+                                          "result": null
+                                        }
+                                        """)))
+            })
+    @PatchMapping("/users/{userId}/email")
+    public ResponseEntity<ApiResponse<String>> updateUserEmail(
+            @Parameter(description = "이메일을 변경할 사용자 ID", required = true, example = "17")
+                    @PathVariable
+                    Long userId,
+            @Valid @RequestBody AdminUserEmailUpdateRequestDto requestDto,
+            @Parameter(hidden = true) @AuthenticationPrincipal CustomUserDetails userDetails) {
+        adminService.updateUserEmail(userId, requestDto, userDetails.getId());
+        return ResponseEntity.ok(ApiResponse.onSuccess("직원 이메일이 성공적으로 변경되었습니다."));
     }
 
     @Operation(summary = "회원가입 승인 대기 목록 조회", description = "승인 대기(PENDING) 사용자 목록을 조회합니다.")

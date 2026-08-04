@@ -14,6 +14,7 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -95,6 +96,9 @@ public class ApprovalDetailResponseDto {
     @Schema(description = "결재선/합의/참조/열람/수신부서 라인")
     private List<LineDto> lines;
 
+    @Schema(description = "결재칸 표시 정보")
+    private List<ApprovalBoxDto> approvalBoxes;
+
     @Schema(description = "첨부파일 목록")
     private List<AttachmentDto> attachments;
 
@@ -124,6 +128,29 @@ public class ApprovalDetailResponseDto {
         private String processedByUserName;
         private String processedComment;
         private LocalDateTime processedAt;
+    }
+
+    @Getter
+    @Builder
+    @AllArgsConstructor
+    @Schema(description = "결재칸 표시 정보")
+    public static class ApprovalBoxDto {
+        private Long lineId;
+        private ApprovalRouteRole role;
+        private String type;
+        private String label;
+        private Long userId;
+        private String userName;
+        private String departmentName;
+        private String positionName;
+        private Integer sequenceNo;
+        private ApprovalLineStatus lineStatus;
+        private String lineStatusLabel;
+        private String signatureImageUrl;
+        private LocalDate processedDate;
+        private LocalDateTime processedAt;
+        private String displayDate;
+        private String displayText;
     }
 
     @Getter

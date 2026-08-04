@@ -18,6 +18,7 @@ import kr.co.awesomelead.groupware_backend.domain.approval.entity.ApprovalAttach
 import kr.co.awesomelead.groupware_backend.domain.approval.entity.ApprovalDocument;
 import kr.co.awesomelead.groupware_backend.domain.approval.entity.ApprovalDocumentLine;
 import kr.co.awesomelead.groupware_backend.domain.approval.entity.ApprovalDocumentRead;
+import kr.co.awesomelead.groupware_backend.domain.approval.entity.ApprovalPersonalSetting;
 import kr.co.awesomelead.groupware_backend.domain.approval.entity.ApprovalTemplate;
 import kr.co.awesomelead.groupware_backend.domain.approval.entity.ApprovalTemplateCategory;
 import kr.co.awesomelead.groupware_backend.domain.approval.entity.ApprovalTemplateLine;
@@ -33,6 +34,7 @@ import kr.co.awesomelead.groupware_backend.domain.approval.repository.ApprovalAt
 import kr.co.awesomelead.groupware_backend.domain.approval.repository.ApprovalDocumentLineRepository;
 import kr.co.awesomelead.groupware_backend.domain.approval.repository.ApprovalDocumentReadRepository;
 import kr.co.awesomelead.groupware_backend.domain.approval.repository.ApprovalDocumentRepository;
+import kr.co.awesomelead.groupware_backend.domain.approval.repository.ApprovalPersonalSettingRepository;
 import kr.co.awesomelead.groupware_backend.domain.approval.repository.ApprovalTemplateCategoryRepository;
 import kr.co.awesomelead.groupware_backend.domain.approval.repository.ApprovalTemplateLineRepository;
 import kr.co.awesomelead.groupware_backend.domain.approval.repository.ApprovalTemplateRepository;
@@ -52,6 +54,7 @@ import org.springframework.util.StringUtils;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
@@ -62,6 +65,9 @@ import java.util.List;
 @RequiredArgsConstructor
 public class ApprovalWorkflowService {
 
+    private static final DateTimeFormatter APPROVAL_BOX_DATE_FORMATTER =
+            DateTimeFormatter.ofPattern("MM/dd");
+
     private final ApprovalTemplateCategoryRepository approvalTemplateCategoryRepository;
     private final ApprovalTemplateRepository approvalTemplateRepository;
     private final ApprovalTemplateLineRepository approvalTemplateLineRepository;
@@ -70,6 +76,7 @@ public class ApprovalWorkflowService {
     private final ApprovalActionHistoryRepository approvalActionHistoryRepository;
     private final ApprovalAttachmentRepository approvalAttachmentRepository;
     private final ApprovalDocumentReadRepository approvalDocumentReadRepository;
+    private final ApprovalPersonalSettingRepository approvalPersonalSettingRepository;
     private final UserRepository userRepository;
     private final DepartmentRepository departmentRepository;
     private final S3Service s3Service;
@@ -162,6 +169,7 @@ public class ApprovalWorkflowService {
                 .createdAt(document.getCreatedAt())
                 .modifiedAt(document.getModifiedAt())
                 .lines(toDetailLineDtos(lines))
+                .approvalBoxes(toApprovalBoxDtos(document, lines))
                 .attachments(toAttachmentDtos(attachments))
                 .actionHistories(toActionHistoryDtos(actionHistories))
                 .reads(toReadDtos(reads))
@@ -835,6 +843,132 @@ public class ApprovalWorkflowService {
                 .processedComment(line.getProcessedComment())
                 .processedAt(line.getProcessedAt())
                 .build();
+    }
+
+    private List<ApprovalDetailResponseDto.ApprovalBoxDto> toApprovalBoxDtos(
+            ApprovalDocument document, List<ApprovalDocumentLine> lines) {
+        List<ApprovalDetailResponseDto.ApprovalBoxDto> approvalBoxes = new ArrayList<>();
+        approvalBoxes.add(toDraftApprovalBoxDto(document));
+        approvalBoxes.addAll(
+                lines.stream()
+                        .filter(line -> isApprovalBoxRole(line.getRole()))
+                        .sorted(this::compareLineOrder)
+                        .map(this::toApprovalBoxDto)
+                        .toList());
+        return approvalBoxes;
+    }
+
+    private ApprovalDetailResponseDto.ApprovalBoxDto toDraftApprovalBoxDto(
+            ApprovalDocument document) {
+        User drafter = document.getDrafterUser();
+        LocalDateTime draftedAt =
+                document.getSubmittedAt() != null ? document.getSubmittedAt() : document.getCreatedAt();
+        LocalDate draftedDate = draftedAt != null ? draftedAt.toLocalDate() : null;
+        return ApprovalDetailResponseDto.ApprovalBoxDto.builder()
+                .type("DRAFT")
+                .label("기안")
+                .userId(drafter != null ? drafter.getId() : null)
+                .userName(drafter != null ? drafter.getDisplayName() : null)
+                .departmentName(drafter != null ? toDepartmentName(drafter.getDepartment()) : null)
+                .positionName(toPositionName(drafter))
+                .sequenceNo(0)
+                .signatureImageUrl(toSignatureImageUrl(drafter))
+                .processedDate(draftedDate)
+                .processedAt(draftedAt)
+                .displayDate(toApprovalBoxDisplayDate(draftedDate))
+                .displayText(toApprovalBoxDisplayText("기안", draftedDate))
+                .build();
+    }
+
+    private ApprovalDetailResponseDto.ApprovalBoxDto toApprovalBoxDto(
+            ApprovalDocumentLine line) {
+        User displayUser = line.getProcessedByUser() != null ? line.getProcessedByUser() : line.getTargetUser();
+        LocalDate processedDate =
+                line.getProcessedAt() != null ? line.getProcessedAt().toLocalDate() : null;
+        String label = toApprovalBoxLabel(line);
+        String displayLabel = toApprovalBoxDisplayLabel(line, label);
+        boolean signed = isSignedApprovalBox(line);
+
+        return ApprovalDetailResponseDto.ApprovalBoxDto.builder()
+                .lineId(line.getId())
+                .role(line.getRole())
+                .type(line.getRole() != null ? line.getRole().name() : null)
+                .label(label)
+                .userId(displayUser != null ? displayUser.getId() : null)
+                .userName(displayUser != null ? displayUser.getDisplayName() : null)
+                .departmentName(
+                        displayUser != null
+                                ? toDepartmentName(displayUser.getDepartment())
+                                : toDepartmentName(line.getTargetDepartment()))
+                .positionName(toPositionName(displayUser))
+                .sequenceNo(line.getSequenceNo())
+                .lineStatus(line.getLineStatus())
+                .lineStatusLabel(
+                        line.getLineStatus() != null ? line.getLineStatus().getDescription() : null)
+                .signatureImageUrl(signed ? toSignatureImageUrl(displayUser) : null)
+                .processedDate(signed ? processedDate : null)
+                .processedAt(signed ? line.getProcessedAt() : null)
+                .displayDate(signed ? toApprovalBoxDisplayDate(processedDate) : null)
+                .displayText(signed ? toApprovalBoxDisplayText(displayLabel, processedDate) : null)
+                .build();
+    }
+
+    private boolean isApprovalBoxRole(ApprovalRouteRole role) {
+        return role == ApprovalRouteRole.APPROVAL_LINE
+                || role == ApprovalRouteRole.AGREEMENT_REQUIRED
+                || role == ApprovalRouteRole.AGREEMENT_OPTIONAL
+                || role == ApprovalRouteRole.RECEIVER_DEPARTMENT;
+    }
+
+    private boolean isSignedApprovalBox(ApprovalDocumentLine line) {
+        return line.getProcessedAt() != null
+                && (line.getLineStatus() == ApprovalLineStatus.APPROVED
+                        || line.getLineStatus() == ApprovalLineStatus.REJECTED);
+    }
+
+    private String toApprovalBoxLabel(ApprovalDocumentLine line) {
+        if (line.getRole() == ApprovalRouteRole.AGREEMENT_REQUIRED
+                || line.getRole() == ApprovalRouteRole.AGREEMENT_OPTIONAL) {
+            return "합의";
+        }
+        if (line.getRole() == ApprovalRouteRole.RECEIVER_DEPARTMENT) {
+            return "수신";
+        }
+        return "승인";
+    }
+
+    private String toApprovalBoxDisplayLabel(ApprovalDocumentLine line, String defaultLabel) {
+        if (line.getLineStatus() == ApprovalLineStatus.REJECTED) {
+            return "반려";
+        }
+        return defaultLabel;
+    }
+
+    private String toApprovalBoxDisplayDate(LocalDate date) {
+        return date != null ? date.format(APPROVAL_BOX_DATE_FORMATTER) : null;
+    }
+
+    private String toApprovalBoxDisplayText(String label, LocalDate date) {
+        String displayDate = toApprovalBoxDisplayDate(date);
+        return displayDate != null ? label + " " + displayDate : label;
+    }
+
+    private String toSignatureImageUrl(User user) {
+        if (user == null) {
+            return null;
+        }
+        return approvalPersonalSettingRepository
+                .findByUserId(user.getId())
+                .map(ApprovalPersonalSetting::getSignatureImageKey)
+                .filter(StringUtils::hasText)
+                .map(s3Service::getPresignedViewUrl)
+                .orElse(null);
+    }
+
+    private String toPositionName(User user) {
+        return user != null && user.getPosition() != null
+                ? user.getPosition().getDescription()
+                : null;
     }
 
     private List<ApprovalDetailResponseDto.AttachmentDto> toAttachmentDtos(

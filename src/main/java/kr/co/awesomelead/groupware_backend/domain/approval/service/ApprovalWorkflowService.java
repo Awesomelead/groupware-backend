@@ -44,6 +44,7 @@ import kr.co.awesomelead.groupware_backend.domain.approval.repository.ApprovalTe
 import kr.co.awesomelead.groupware_backend.domain.approval.repository.ApprovalTemplateRepository;
 import kr.co.awesomelead.groupware_backend.domain.department.entity.Department;
 import kr.co.awesomelead.groupware_backend.domain.department.repository.DepartmentRepository;
+import kr.co.awesomelead.groupware_backend.domain.notification.service.NotificationService;
 import kr.co.awesomelead.groupware_backend.domain.user.entity.User;
 import kr.co.awesomelead.groupware_backend.domain.user.repository.UserRepository;
 import kr.co.awesomelead.groupware_backend.global.error.CustomException;
@@ -64,6 +65,7 @@ import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Objects;
 
 @Service
 @RequiredArgsConstructor
@@ -85,6 +87,7 @@ public class ApprovalWorkflowService {
     private final UserRepository userRepository;
     private final DepartmentRepository departmentRepository;
     private final S3Service s3Service;
+    private final NotificationService notificationService;
 
     @Transactional(readOnly = true)
     public ApprovalTemplateListResponseDto getTemplateList() {
@@ -647,6 +650,8 @@ public class ApprovalWorkflowService {
                         .actionComment(comment)
                         .build());
 
+        sendDecisionNotification(action, document, nextLine, lines, comment);
+
         return ApprovalDecisionResponseDto.builder()
                 .documentId(document.getId())
                 .documentNo(document.getDocumentNo())
@@ -738,6 +743,8 @@ public class ApprovalWorkflowService {
                         .actorUser(actor)
                         .build());
 
+        sendSubmitNotification(document, lines);
+
         return ApprovalSubmitResponseDto.builder()
                 .documentId(document.getId())
                 .documentNo(document.getDocumentNo())
@@ -824,6 +831,94 @@ public class ApprovalWorkflowService {
             case REJECT -> ApprovalActionType.REJECT;
             case HOLD -> ApprovalActionType.HOLD;
         };
+    }
+
+    private void sendSubmitNotification(
+            ApprovalDocument document, List<ApprovalDocumentLine> lines) {
+        List<Long> firstApproverIds =
+                lines.stream()
+                        .filter(line -> isProcessingRole(line.getRole()))
+                        .filter(line -> line.getLineStatus() == ApprovalLineStatus.PENDING)
+                        .sorted(this::compareLineOrder)
+                        .findFirst()
+                        .map(this::resolveLineTargetUserIds)
+                        .orElse(List.of());
+        if (firstApproverIds.isEmpty()) {
+            return;
+        }
+
+        Long firstApproverId = firstApproverIds.get(0);
+        List<Long> referrerIds = resolveRoleTargetUserIds(lines, ApprovalRouteRole.REFERENCE);
+        notificationService.sendApprovalCreatedAlert(
+                document.getId(), document.getTitle(), firstApproverId, referrerIds);
+
+        firstApproverIds.stream()
+                .skip(1)
+                .forEach(
+                        approverId ->
+                                notificationService.sendApprovalNextStepAlert(
+                                        approverId, document.getId(), document.getTitle()));
+    }
+
+    private void sendDecisionNotification(
+            ApprovalDecisionAction action,
+            ApprovalDocument document,
+            ApprovalDocumentLine nextLine,
+            List<ApprovalDocumentLine> lines,
+            String comment) {
+        if (action == ApprovalDecisionAction.APPROVE) {
+            if (nextLine != null) {
+                resolveLineTargetUserIds(nextLine)
+                        .forEach(
+                                approverId ->
+                                        notificationService.sendApprovalNextStepAlert(
+                                                approverId,
+                                                document.getId(),
+                                                document.getTitle()));
+                return;
+            }
+
+            Long drafterId =
+                    document.getDrafterUser() != null ? document.getDrafterUser().getId() : null;
+            if (drafterId == null) {
+                return;
+            }
+            List<Long> viewerIds =
+                    resolveRoleTargetUserIds(lines, ApprovalRouteRole.VIEWER).stream()
+                            .filter(viewerId -> !viewerId.equals(drafterId))
+                            .toList();
+            notificationService.sendApprovalFinallyApprovedAlert(
+                    document.getId(), document.getTitle(), drafterId, viewerIds);
+            return;
+        }
+
+        if (action == ApprovalDecisionAction.REJECT && document.getDrafterUser() != null) {
+            notificationService.sendApprovalRejectedAlert(
+                    document.getDrafterUser().getId(),
+                    document.getId(),
+                    document.getTitle(),
+                    comment != null ? comment : "");
+        }
+    }
+
+    private List<Long> resolveRoleTargetUserIds(
+            List<ApprovalDocumentLine> lines, ApprovalRouteRole role) {
+        return lines.stream()
+                .filter(line -> line.getRole() == role)
+                .flatMap(line -> resolveLineTargetUserIds(line).stream())
+                .filter(Objects::nonNull)
+                .distinct()
+                .toList();
+    }
+
+    private List<Long> resolveLineTargetUserIds(ApprovalDocumentLine line) {
+        if (line.getTargetType() == ApprovalTargetType.USER) {
+            return line.getTargetUser() != null ? List.of(line.getTargetUser().getId()) : List.of();
+        }
+        if (line.getTargetDepartment() == null) {
+            return List.of();
+        }
+        return userRepository.findAllIdsByDepartmentId(line.getTargetDepartment().getId());
     }
 
     private String normalizeComment(String comment) {

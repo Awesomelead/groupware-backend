@@ -451,7 +451,10 @@ public class AnnualLeaveService {
         if (period.month() == null) {
             return normalizeSheetName(history.getSheetName());
         }
-        return period.month() + "월";
+        if (period.year() == null) {
+            return period.month() + "월";
+        }
+        return period.year() + "년 " + period.month() + "월";
     }
 
     private DispatchPeriod resolveDispatchPeriod(AnnualLeaveDispatchHistory history) {

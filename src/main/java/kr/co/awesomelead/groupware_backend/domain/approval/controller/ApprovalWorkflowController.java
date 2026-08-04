@@ -703,8 +703,7 @@ public class ApprovalWorkflowController {
             @Parameter(hidden = true) @AuthenticationPrincipal CustomUserDetails userDetails) {
         return ResponseEntity.ok(
                 ApiResponse.onSuccess(
-                        approvalWorkflowService.decide(
-                                userDetails.getId(), documentId, request)));
+                        approvalWorkflowService.decide(userDetails.getId(), documentId, request)));
     }
 
     @Operation(

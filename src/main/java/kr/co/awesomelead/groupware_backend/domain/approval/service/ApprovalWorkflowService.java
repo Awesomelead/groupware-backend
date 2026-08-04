@@ -5,9 +5,9 @@ import kr.co.awesomelead.groupware_backend.domain.approval.dto.request.ApprovalD
 import kr.co.awesomelead.groupware_backend.domain.approval.dto.request.ApprovalDraftUpsertRequestDto;
 import kr.co.awesomelead.groupware_backend.domain.approval.dto.request.ApprovalLineRequestDto;
 import kr.co.awesomelead.groupware_backend.domain.approval.dto.request.ApprovalSubmitRequestDto;
-import kr.co.awesomelead.groupware_backend.domain.approval.dto.response.ApprovalDetailResponseDto;
-import kr.co.awesomelead.groupware_backend.domain.approval.dto.response.ApprovalDecisionResponseDto;
 import kr.co.awesomelead.groupware_backend.domain.approval.dto.response.ApprovalAttachmentResponseDto;
+import kr.co.awesomelead.groupware_backend.domain.approval.dto.response.ApprovalDecisionResponseDto;
+import kr.co.awesomelead.groupware_backend.domain.approval.dto.response.ApprovalDetailResponseDto;
 import kr.co.awesomelead.groupware_backend.domain.approval.dto.response.ApprovalDraftResponseDto;
 import kr.co.awesomelead.groupware_backend.domain.approval.dto.response.ApprovalInboxAllResponseDto;
 import kr.co.awesomelead.groupware_backend.domain.approval.dto.response.ApprovalRecallResponseDto;
@@ -486,9 +486,7 @@ public class ApprovalWorkflowService {
                 approvalAttachmentRepository
                         .findByIdAndDocumentId(attachmentId, documentId)
                         .orElseThrow(
-                                () ->
-                                        new CustomException(
-                                                ErrorCode.APPROVAL_ATTACHMENT_NOT_FOUND));
+                                () -> new CustomException(ErrorCode.APPROVAL_ATTACHMENT_NOT_FOUND));
 
         approvalAttachmentRepository.delete(attachment);
         safeDeleteFile(attachment.getS3Key());
@@ -856,8 +854,7 @@ public class ApprovalWorkflowService {
                         s3Service.getPresignedDownloadUrl(
                                 attachment.getS3Key(), attachment.getOriginalFileName()))
                 .uploadedByUserId(uploadedByUser != null ? uploadedByUser.getId() : null)
-                .uploadedByUserName(
-                        uploadedByUser != null ? uploadedByUser.getDisplayName() : null)
+                .uploadedByUserName(uploadedByUser != null ? uploadedByUser.getDisplayName() : null)
                 .build();
     }
 
@@ -875,8 +872,7 @@ public class ApprovalWorkflowService {
                         s3Service.getPresignedDownloadUrl(
                                 attachment.getS3Key(), attachment.getOriginalFileName()))
                 .uploadedByUserId(uploadedByUser != null ? uploadedByUser.getId() : null)
-                .uploadedByUserName(
-                        uploadedByUser != null ? uploadedByUser.getDisplayName() : null)
+                .uploadedByUserName(uploadedByUser != null ? uploadedByUser.getDisplayName() : null)
                 .uploadedAt(attachment.getCreatedAt())
                 .build();
     }
@@ -1613,7 +1609,9 @@ public class ApprovalWorkflowService {
     }
 
     private String toOriginalFileName(MultipartFile file) {
-        return StringUtils.hasText(file.getOriginalFilename()) ? file.getOriginalFilename() : "file";
+        return StringUtils.hasText(file.getOriginalFilename())
+                ? file.getOriginalFilename()
+                : "file";
     }
 
     private void safeDeleteFile(String fileKey) {

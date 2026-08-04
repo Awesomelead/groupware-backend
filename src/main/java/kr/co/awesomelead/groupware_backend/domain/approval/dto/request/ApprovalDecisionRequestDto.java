@@ -16,7 +16,10 @@ import lombok.Setter;
 public class ApprovalDecisionRequestDto {
 
     @NotNull(message = "처리 액션은 필수입니다.")
-    @Schema(description = "처리 액션", example = "APPROVE", allowableValues = {"APPROVE", "REJECT", "HOLD"})
+    @Schema(
+            description = "처리 액션",
+            example = "APPROVE",
+            allowableValues = {"APPROVE", "REJECT", "HOLD"})
     private ApprovalDecisionAction action;
 
     @Size(max = 1000, message = "결재 의견은 1000자 이하로 입력해주세요.")

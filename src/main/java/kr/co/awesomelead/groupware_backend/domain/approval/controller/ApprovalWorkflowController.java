@@ -6,11 +6,13 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 
 import jakarta.validation.Valid;
 
+import kr.co.awesomelead.groupware_backend.domain.approval.dto.request.ApprovalDecisionRequestDto;
 import kr.co.awesomelead.groupware_backend.domain.approval.dto.request.ApprovalDirectSubmitRequestDto;
 import kr.co.awesomelead.groupware_backend.domain.approval.dto.request.ApprovalDraftCreateRequestDto;
 import kr.co.awesomelead.groupware_backend.domain.approval.dto.request.ApprovalDraftUpdateRequestDto;
 import kr.co.awesomelead.groupware_backend.domain.approval.dto.request.ApprovalDraftUpsertRequestDto;
 import kr.co.awesomelead.groupware_backend.domain.approval.dto.request.ApprovalSubmitRequestDto;
+import kr.co.awesomelead.groupware_backend.domain.approval.dto.response.ApprovalDecisionResponseDto;
 import kr.co.awesomelead.groupware_backend.domain.approval.dto.response.ApprovalDetailResponseDto;
 import kr.co.awesomelead.groupware_backend.domain.approval.dto.response.ApprovalDraftResponseDto;
 import kr.co.awesomelead.groupware_backend.domain.approval.dto.response.ApprovalInboxAllResponseDto;
@@ -68,6 +70,7 @@ import org.springframework.web.bind.annotation.RestController;
             - 바로 상신(임시저장 없이 1회 요청): POST /api/approvals/submit-direct
             - 문서 상세 조회: GET /api/approvals/{documentId}
             - 문서 회수: POST /api/approvals/{documentId}/recall
+            - 결재처리(승인/반려/보류): POST /api/approvals/{documentId}/decision
 
             ### 권한 정보
             - 로그인 필요
@@ -625,6 +628,30 @@ public class ApprovalWorkflowController {
         return ResponseEntity.ok(
                 ApiResponse.onSuccess(
                         approvalWorkflowService.recall(userDetails.getId(), documentId)));
+    }
+
+    @Operation(
+            summary = "전자결재 결재처리",
+            description =
+                    """
+                결재진행 문서를 승인/반려/보류 처리합니다.
+
+                ### 처리 조건
+                - 문서 상태가 IN_PROGRESS(결재진행)이어야 합니다.
+                - 현재 로그인 사용자가 PENDING 상태의 현재 결재 대상이어야 합니다.
+                - APPROVE: 현재 결재선을 승인하고 다음 결재선으로 진행합니다.
+                - REJECT: 현재 결재선을 반려하고 문서를 REJECTED로 종료합니다.
+                - HOLD: 문서/결재선 상태는 유지하고 보류 이력만 저장합니다.
+                """)
+    @PostMapping("/approvals/{documentId}/decision")
+    public ResponseEntity<ApiResponse<ApprovalDecisionResponseDto>> decide(
+            @PathVariable Long documentId,
+            @Valid @RequestBody ApprovalDecisionRequestDto request,
+            @Parameter(hidden = true) @AuthenticationPrincipal CustomUserDetails userDetails) {
+        return ResponseEntity.ok(
+                ApiResponse.onSuccess(
+                        approvalWorkflowService.decide(
+                                userDetails.getId(), documentId, request)));
     }
 
     @Operation(

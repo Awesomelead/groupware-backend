@@ -3,6 +3,7 @@ package kr.co.awesomelead.groupware_backend.domain.auth.service;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
 
+import kr.co.awesomelead.groupware_backend.domain.aligo.enums.PhoneAuthChannel;
 import kr.co.awesomelead.groupware_backend.domain.aligo.service.PhoneAuthService;
 import kr.co.awesomelead.groupware_backend.domain.auth.dto.request.LoginRequestDto;
 import kr.co.awesomelead.groupware_backend.domain.auth.dto.request.ResetPasswordByEmailRequestDto;
@@ -76,8 +77,13 @@ public class AuthService {
 
     @Transactional(readOnly = true)
     public void sendSignupPhoneAuthCode(String phoneNumber) {
+        sendSignupPhoneAuthCode(phoneNumber, PhoneAuthChannel.KAKAO);
+    }
+
+    @Transactional(readOnly = true)
+    public void sendSignupPhoneAuthCode(String phoneNumber, PhoneAuthChannel channel) {
         validatePhoneNumberNotDuplicated(phoneNumber);
-        phoneAuthService.sendAuthCode(phoneNumber);
+        phoneAuthService.sendAuthCode(phoneNumber, channel);
     }
 
     @Transactional

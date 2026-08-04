@@ -61,6 +61,7 @@ spring:
 aligo:
   api:
     url: ${ALIGO_API_URL}
+    sms-url: ${ALIGO_SMS_URL:https://apis.aligo.in/send/}
     apikey: ${ALIGO_API_APIKEY}
     userid: ${ALIGO_API_USERID}
     senderkey: ${ALIGO_API_SENDERKEY}

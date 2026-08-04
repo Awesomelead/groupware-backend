@@ -16,6 +16,7 @@ import static org.mockito.Mockito.when;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.Query;
 
+import kr.co.awesomelead.groupware_backend.domain.aligo.enums.PhoneAuthChannel;
 import kr.co.awesomelead.groupware_backend.domain.aligo.service.PhoneAuthService;
 import kr.co.awesomelead.groupware_backend.domain.auth.dto.request.LoginRequestDto;
 import kr.co.awesomelead.groupware_backend.domain.auth.dto.request.ResetPasswordByEmailRequestDto;
@@ -347,7 +348,19 @@ class AuthServiceTest {
             authService.sendSignupPhoneAuthCode(TEST_PHONE);
 
             verify(userRepository).existsByPhoneNumberHash(phoneNumberHash);
-            verify(phoneAuthService).sendAuthCode(TEST_PHONE);
+            verify(phoneAuthService).sendAuthCode(TEST_PHONE, PhoneAuthChannel.KAKAO);
+        }
+
+        @Test
+        @DisplayName("SMS 발송 방식을 선택하면 문자 채널로 인증번호를 발송한다")
+        void sendSignupPhoneAuthCode_WithSmsChannel() {
+            String phoneNumberHash = User.hashValue(TEST_PHONE);
+            when(userRepository.existsByPhoneNumberHash(phoneNumberHash)).thenReturn(false);
+
+            authService.sendSignupPhoneAuthCode(TEST_PHONE, PhoneAuthChannel.SMS);
+
+            verify(userRepository).existsByPhoneNumberHash(phoneNumberHash);
+            verify(phoneAuthService).sendAuthCode(TEST_PHONE, PhoneAuthChannel.SMS);
         }
 
         @Test
@@ -360,7 +373,7 @@ class AuthServiceTest {
                     .isInstanceOf(CustomException.class)
                     .hasFieldOrPropertyWithValue("errorCode", ErrorCode.DUPLICATE_PHONE_NUMBER);
 
-            verify(phoneAuthService, never()).sendAuthCode(anyString());
+            verify(phoneAuthService, never()).sendAuthCode(anyString(), any());
         }
     }
 

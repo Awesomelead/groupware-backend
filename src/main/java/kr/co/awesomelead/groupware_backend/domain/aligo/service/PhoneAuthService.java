@@ -1,5 +1,6 @@
 package kr.co.awesomelead.groupware_backend.domain.aligo.service;
 
+import kr.co.awesomelead.groupware_backend.domain.aligo.enums.PhoneAuthChannel;
 import kr.co.awesomelead.groupware_backend.global.error.CustomException;
 import kr.co.awesomelead.groupware_backend.global.error.ErrorCode;
 
@@ -30,11 +31,21 @@ public class PhoneAuthService {
 
     /** 인증번호 발송 */
     public void sendAuthCode(String phoneNumber) {
+        sendAuthCode(phoneNumber, PhoneAuthChannel.KAKAO);
+    }
+
+    /** 인증번호 발송 */
+    public void sendAuthCode(String phoneNumber, PhoneAuthChannel channel) {
         // 인증번호 생성
         String authCode = generateAuthCode();
+        PhoneAuthChannel resolvedChannel =
+                channel != null ? channel : PhoneAuthChannel.KAKAO;
 
-        // 알림톡 전송
-        boolean success = aligoKakaoService.sendAuthCodeAlimtalk(phoneNumber, authCode);
+        boolean success =
+                switch (resolvedChannel) {
+                    case KAKAO -> aligoKakaoService.sendAuthCodeAlimtalk(phoneNumber, authCode);
+                    case SMS -> aligoKakaoService.sendAuthCodeSms(phoneNumber, authCode);
+                };
 
         if (!success) {
             throw new CustomException(ErrorCode.ALIMTALK_SEND_FAILED);
@@ -55,7 +66,7 @@ public class PhoneAuthService {
             log.warn("========================================");
         }
 
-        log.info("인증번호 발송 성공 - 전화번호: {}", phoneNumber);
+        log.info("인증번호 발송 성공 - 전화번호: {}, 발송방식: {}", phoneNumber, resolvedChannel);
     }
 
     /** 인증번호 검증 */

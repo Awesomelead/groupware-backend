@@ -872,9 +872,7 @@ public class ApprovalWorkflowService {
                         .forEach(
                                 approverId ->
                                         notificationService.sendApprovalNextStepAlert(
-                                                approverId,
-                                                document.getId(),
-                                                document.getTitle()));
+                                                approverId, document.getId(), document.getTitle()));
                 return;
             }
 

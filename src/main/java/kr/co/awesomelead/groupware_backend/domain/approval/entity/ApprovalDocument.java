@@ -106,6 +106,10 @@ public class ApprovalDocument extends BaseTimeEntity {
 
     @Builder.Default
     @OneToMany(mappedBy = "document")
+    private List<ApprovalComment> comments = new ArrayList<>();
+
+    @Builder.Default
+    @OneToMany(mappedBy = "document")
     private List<ApprovalAttachment> attachments = new ArrayList<>();
 
     @Builder.Default

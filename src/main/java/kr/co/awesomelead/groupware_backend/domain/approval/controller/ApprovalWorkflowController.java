@@ -6,13 +6,20 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 
 import jakarta.validation.Valid;
 
+import kr.co.awesomelead.groupware_backend.domain.approval.dto.request.ApprovalCommentCreateRequestDto;
+import kr.co.awesomelead.groupware_backend.domain.approval.dto.request.ApprovalDecisionRequestDto;
 import kr.co.awesomelead.groupware_backend.domain.approval.dto.request.ApprovalDirectSubmitRequestDto;
 import kr.co.awesomelead.groupware_backend.domain.approval.dto.request.ApprovalDraftCreateRequestDto;
 import kr.co.awesomelead.groupware_backend.domain.approval.dto.request.ApprovalDraftUpdateRequestDto;
 import kr.co.awesomelead.groupware_backend.domain.approval.dto.request.ApprovalDraftUpsertRequestDto;
 import kr.co.awesomelead.groupware_backend.domain.approval.dto.request.ApprovalSubmitRequestDto;
+import kr.co.awesomelead.groupware_backend.domain.approval.dto.response.ApprovalAttachmentResponseDto;
+import kr.co.awesomelead.groupware_backend.domain.approval.dto.response.ApprovalCommentResponseDto;
+import kr.co.awesomelead.groupware_backend.domain.approval.dto.response.ApprovalDecisionResponseDto;
+import kr.co.awesomelead.groupware_backend.domain.approval.dto.response.ApprovalDetailResponseDto;
 import kr.co.awesomelead.groupware_backend.domain.approval.dto.response.ApprovalDraftResponseDto;
 import kr.co.awesomelead.groupware_backend.domain.approval.dto.response.ApprovalInboxAllResponseDto;
+import kr.co.awesomelead.groupware_backend.domain.approval.dto.response.ApprovalRecallResponseDto;
 import kr.co.awesomelead.groupware_backend.domain.approval.dto.response.ApprovalSubmitResponseDto;
 import kr.co.awesomelead.groupware_backend.domain.approval.dto.response.ApprovalTemplateListResponseDto;
 import kr.co.awesomelead.groupware_backend.domain.approval.service.ApprovalWorkflowService;
@@ -21,15 +28,21 @@ import kr.co.awesomelead.groupware_backend.global.common.response.ApiResponse;
 
 import lombok.RequiredArgsConstructor;
 
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestPart;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.multipart.MultipartFile;
+
+import java.util.List;
 
 @RestController
 @RequiredArgsConstructor
@@ -50,6 +63,7 @@ import org.springframework.web.bind.annotation.RestController;
             - 참조문서 참조문서 탭: GET /api/approvals/references
             - 참조문서 열람획득문서 탭: GET /api/approvals/references/viewer-acquired
             - 참조문서 열람부여문서 탭: GET /api/approvals/references/viewer-granted
+            - 완결문서 탭: GET /api/approvals/completed
             - 부서결재함(내 부서) 탭: GET /api/approvals/department-box
             - 결재진행 전체 탭: GET /api/approvals/inbox/all
             - 결재진행 결재하기 탭: GET /api/approvals/inbox/to-approve
@@ -59,8 +73,15 @@ import org.springframework.web.bind.annotation.RestController;
             - 결재진행 임시저장함 탭: GET /api/approvals/inbox/draft-box
             - 임시저장 생성: POST /api/approvals/drafts
             - 임시저장 수정: PUT /api/approvals/drafts/{documentId}
+            - 임시저장 삭제: DELETE /api/approvals/drafts/{documentId}
+            - 첨부파일 추가: POST /api/approvals/{documentId}/attachments
+            - 첨부파일 삭제: DELETE /api/approvals/{documentId}/attachments/{attachmentId}
+            - 의견글 등록: POST /api/approvals/{documentId}/comments
             - 임시저장 문서 상신: POST /api/approvals/drafts/{documentId}/submit
             - 바로 상신(임시저장 없이 1회 요청): POST /api/approvals/submit-direct
+            - 문서 상세 조회: GET /api/approvals/{documentId}
+            - 문서 회수: POST /api/approvals/{documentId}/recall
+            - 결재처리(승인/반려/보류): POST /api/approvals/{documentId}/decision
 
             ### 권한 정보
             - 로그인 필요
@@ -138,6 +159,33 @@ public class ApprovalWorkflowController {
     @GetMapping("/approval/templates")
     public ResponseEntity<ApiResponse<ApprovalTemplateListResponseDto>> getTemplates() {
         return ResponseEntity.ok(ApiResponse.onSuccess(approvalWorkflowService.getTemplateList()));
+    }
+
+    @Operation(
+            summary = "전자결재 문서 상세 조회",
+            description =
+                    """
+                전자결재 문서 1건의 상세 정보를 조회합니다.
+
+                ### 조회 권한
+                - 임시저장(DRAFT): 기안자 본인만 조회 가능
+                - 그 외 상태: 본인기안, 본인결재, 참조자, 열람권자(완결 후), 부서결재함 대상 문서 조회 가능
+
+                ### 응답 주요 필드
+                - 문서 기본정보/본문(contentDelta, contentHtml)
+                - 결재선/참조자/열람권자(lines)
+                - 첨부파일(attachments)
+                - 의견/처리 이력(actionHistories)
+                - 열람 정보(reads)
+                """)
+    @GetMapping("/approvals/{documentId}")
+    public ResponseEntity<ApiResponse<ApprovalDetailResponseDto>> getApprovalDetail(
+            @PathVariable Long documentId,
+            @Parameter(hidden = true) @AuthenticationPrincipal CustomUserDetails userDetails) {
+        return ResponseEntity.ok(
+                ApiResponse.onSuccess(
+                        approvalWorkflowService.getApprovalDetail(
+                                userDetails.getId(), documentId)));
     }
 
     @Operation(
@@ -462,6 +510,32 @@ public class ApprovalWorkflowController {
     }
 
     @Operation(
+            summary = "완결문서 탭 조회",
+            description =
+                    """
+            현재 사용자 기준 `완결문서` 문서를 조회합니다.
+
+            ### 조회 대상
+            - 문서 상태가 APPROVED(완결)
+            - 기안자가 현재 로그인 사용자 본인인 문서
+
+            ### 응답 주요 필드
+            - 문서번호(documentNo)
+            - 기안자(drafterName)
+            - 제목(title)
+            - 결재선(approvalLines)
+            - 기안일(draftedAt)
+            - 완료일(completedAt)
+            """)
+    @GetMapping("/approvals/completed")
+    public ResponseEntity<ApiResponse<ApprovalInboxAllResponseDto>> getCompletedDocuments(
+            @Parameter(hidden = true) @AuthenticationPrincipal CustomUserDetails userDetails) {
+        return ResponseEntity.ok(
+                ApiResponse.onSuccess(
+                        approvalWorkflowService.getCompletedDocuments(userDetails.getId())));
+    }
+
+    @Operation(
             summary = "부서결재함(내 부서) 탭 조회",
             description =
                     """
@@ -544,6 +618,139 @@ public class ApprovalWorkflowController {
         ApprovalDraftResponseDto result =
                 approvalWorkflowService.upsertDraft(userDetails.getId(), upsertRequest);
         return ResponseEntity.ok(ApiResponse.onSuccess(result));
+    }
+
+    @Operation(
+            summary = "전자결재 첨부파일 추가",
+            description =
+                    """
+                전자결재 문서에 첨부파일을 추가합니다.
+
+                ### 사용 조건
+                - 기안자 본인만 추가할 수 있습니다.
+                - DRAFT/RECALLED/REJECTED 상태 문서만 수정할 수 있습니다.
+                - 요청 형식은 multipart/form-data 입니다.
+                - files 파트에 하나 이상의 파일을 전달합니다.
+                """)
+    @PostMapping(
+            value = "/approvals/{documentId}/attachments",
+            consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ResponseEntity<ApiResponse<List<ApprovalAttachmentResponseDto>>> uploadAttachments(
+            @PathVariable Long documentId,
+            @RequestPart("files") List<MultipartFile> files,
+            @Parameter(hidden = true) @AuthenticationPrincipal CustomUserDetails userDetails) {
+        return ResponseEntity.ok(
+                ApiResponse.onSuccess(
+                        approvalWorkflowService.uploadAttachments(
+                                userDetails.getId(), documentId, files)));
+    }
+
+    @Operation(
+            summary = "전자결재 첨부파일 삭제",
+            description =
+                    """
+                전자결재 문서의 첨부파일을 삭제합니다.
+
+                ### 사용 조건
+                - 기안자 본인만 삭제할 수 있습니다.
+                - DRAFT/RECALLED/REJECTED 상태 문서만 수정할 수 있습니다.
+                - DB 첨부파일 레코드와 S3 파일을 함께 삭제합니다.
+                """)
+    @DeleteMapping("/approvals/{documentId}/attachments/{attachmentId}")
+    public ResponseEntity<ApiResponse<Void>> deleteAttachment(
+            @PathVariable Long documentId,
+            @PathVariable Long attachmentId,
+            @Parameter(hidden = true) @AuthenticationPrincipal CustomUserDetails userDetails) {
+        approvalWorkflowService.deleteAttachment(userDetails.getId(), documentId, attachmentId);
+        return ResponseEntity.ok(ApiResponse.onNoContent("첨부파일이 삭제되었습니다."));
+    }
+
+    @Operation(
+            summary = "전자결재 의견글 등록",
+            description =
+                    """
+                전자결재 문서 상세 화면의 의견글을 등록합니다.
+
+                ### 등록 조건
+                - 해당 문서 상세조회 권한이 있는 사용자만 등록할 수 있습니다.
+                - DRAFT 문서는 기안자 본인만 등록할 수 있습니다.
+                - 의견은 1000자 이하입니다.
+
+                ### 응답
+                - 등록된 의견글의 작성자/부서/직급/내용/작성일시를 반환합니다.
+                """)
+    @PostMapping("/approvals/{documentId}/comments")
+    public ResponseEntity<ApiResponse<ApprovalCommentResponseDto>> createComment(
+            @PathVariable Long documentId,
+            @Valid @RequestBody ApprovalCommentCreateRequestDto request,
+            @Parameter(hidden = true) @AuthenticationPrincipal CustomUserDetails userDetails) {
+        return ResponseEntity.ok(
+                ApiResponse.onSuccess(
+                        approvalWorkflowService.createComment(
+                                userDetails.getId(), documentId, request)));
+    }
+
+    @Operation(
+            summary = "전자결재 문서 회수",
+            description =
+                    """
+                상신한 전자결재 문서를 회수합니다.
+
+                ### 회수 조건
+                - 기안자 본인만 회수할 수 있습니다.
+                - IN_PROGRESS(결재진행) 상태 문서만 회수할 수 있습니다.
+                - 회수 시 문서 상태는 RECALLED가 됩니다.
+                - 아직 승인/반려 처리되지 않은 결재선은 SKIPPED로 정리됩니다.
+                """)
+    @PostMapping("/approvals/{documentId}/recall")
+    public ResponseEntity<ApiResponse<ApprovalRecallResponseDto>> recall(
+            @PathVariable Long documentId,
+            @Parameter(hidden = true) @AuthenticationPrincipal CustomUserDetails userDetails) {
+        return ResponseEntity.ok(
+                ApiResponse.onSuccess(
+                        approvalWorkflowService.recall(userDetails.getId(), documentId)));
+    }
+
+    @Operation(
+            summary = "전자결재 결재처리",
+            description =
+                    """
+                결재진행 문서를 승인/반려/보류 처리합니다.
+
+                ### 처리 조건
+                - 문서 상태가 IN_PROGRESS(결재진행)이어야 합니다.
+                - 현재 로그인 사용자가 PENDING 상태의 현재 결재 대상이어야 합니다.
+                - APPROVE: 현재 결재선을 승인하고 다음 결재선으로 진행합니다.
+                - REJECT: 현재 결재선을 반려하고 문서를 REJECTED로 종료합니다.
+                - HOLD: 문서/결재선 상태는 유지하고 보류 이력만 저장합니다.
+                """)
+    @PostMapping("/approvals/{documentId}/decision")
+    public ResponseEntity<ApiResponse<ApprovalDecisionResponseDto>> decide(
+            @PathVariable Long documentId,
+            @Valid @RequestBody ApprovalDecisionRequestDto request,
+            @Parameter(hidden = true) @AuthenticationPrincipal CustomUserDetails userDetails) {
+        return ResponseEntity.ok(
+                ApiResponse.onSuccess(
+                        approvalWorkflowService.decide(userDetails.getId(), documentId, request)));
+    }
+
+    @Operation(
+            summary = "전자결재 임시저장 삭제",
+            description =
+                    """
+                임시저장 문서를 삭제합니다.
+
+                ### 삭제 조건
+                - 문서 상태가 DRAFT(임시저장)인 경우만 삭제할 수 있습니다.
+                - 기안자 본인만 삭제할 수 있습니다.
+                - 문서 결재선/첨부/열람/이력 데이터도 함께 삭제됩니다.
+                """)
+    @DeleteMapping("/approvals/drafts/{documentId}")
+    public ResponseEntity<ApiResponse<Void>> deleteDraft(
+            @PathVariable Long documentId,
+            @Parameter(hidden = true) @AuthenticationPrincipal CustomUserDetails userDetails) {
+        approvalWorkflowService.deleteDraft(userDetails.getId(), documentId);
+        return ResponseEntity.ok(ApiResponse.onNoContent("임시저장 문서가 삭제되었습니다."));
     }
 
     @Operation(

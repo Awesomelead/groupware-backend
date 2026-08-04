@@ -9,4 +9,6 @@ import java.util.List;
 public interface ApprovalAttachmentRepository extends JpaRepository<ApprovalAttachment, Long> {
 
     List<ApprovalAttachment> findByDocumentIdOrderByIdAsc(Long documentId);
+
+    void deleteByDocumentId(Long documentId);
 }

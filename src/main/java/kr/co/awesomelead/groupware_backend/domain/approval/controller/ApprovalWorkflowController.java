@@ -24,6 +24,7 @@ import lombok.RequiredArgsConstructor;
 
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -61,6 +62,7 @@ import org.springframework.web.bind.annotation.RestController;
             - 결재진행 임시저장함 탭: GET /api/approvals/inbox/draft-box
             - 임시저장 생성: POST /api/approvals/drafts
             - 임시저장 수정: PUT /api/approvals/drafts/{documentId}
+            - 임시저장 삭제: DELETE /api/approvals/drafts/{documentId}
             - 임시저장 문서 상신: POST /api/approvals/drafts/{documentId}/submit
             - 바로 상신(임시저장 없이 1회 요청): POST /api/approvals/submit-direct
             - 문서 상세 조회: GET /api/approvals/{documentId}
@@ -600,6 +602,25 @@ public class ApprovalWorkflowController {
         ApprovalDraftResponseDto result =
                 approvalWorkflowService.upsertDraft(userDetails.getId(), upsertRequest);
         return ResponseEntity.ok(ApiResponse.onSuccess(result));
+    }
+
+    @Operation(
+            summary = "전자결재 임시저장 삭제",
+            description =
+                    """
+                임시저장 문서를 삭제합니다.
+
+                ### 삭제 조건
+                - 문서 상태가 DRAFT(임시저장)인 경우만 삭제할 수 있습니다.
+                - 기안자 본인만 삭제할 수 있습니다.
+                - 문서 결재선/첨부/열람/이력 데이터도 함께 삭제됩니다.
+                """)
+    @DeleteMapping("/approvals/drafts/{documentId}")
+    public ResponseEntity<ApiResponse<Void>> deleteDraft(
+            @PathVariable Long documentId,
+            @Parameter(hidden = true) @AuthenticationPrincipal CustomUserDetails userDetails) {
+        approvalWorkflowService.deleteDraft(userDetails.getId(), documentId);
+        return ResponseEntity.ok(ApiResponse.onNoContent("임시저장 문서가 삭제되었습니다."));
     }
 
     @Operation(

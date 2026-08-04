@@ -420,6 +420,23 @@ public class ApprovalWorkflowService {
     }
 
     @Transactional
+    public void deleteDraft(Long userId, Long documentId) {
+        ApprovalDocument document =
+                approvalDocumentRepository
+                        .findByIdAndDrafterUserId(documentId, userId)
+                        .orElseThrow(() -> new CustomException(ErrorCode.APPROVAL_NOT_FOUND));
+        if (document.getStatus() != ApprovalStatus.DRAFT) {
+            throw new CustomException(ErrorCode.INVALID_ARGUMENT);
+        }
+
+        approvalActionHistoryRepository.deleteByDocumentId(documentId);
+        approvalDocumentReadRepository.deleteByDocumentId(documentId);
+        approvalAttachmentRepository.deleteByDocumentId(documentId);
+        approvalDocumentLineRepository.deleteByDocumentId(documentId);
+        approvalDocumentRepository.delete(document);
+    }
+
+    @Transactional
     public ApprovalSubmitResponseDto submit(
             Long userId, Long documentId, ApprovalSubmitRequestDto request) {
         User actor = getUser(userId);

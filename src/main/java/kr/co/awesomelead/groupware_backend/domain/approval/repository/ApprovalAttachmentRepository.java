@@ -5,10 +5,13 @@ import kr.co.awesomelead.groupware_backend.domain.approval.entity.ApprovalAttach
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.List;
+import java.util.Optional;
 
 public interface ApprovalAttachmentRepository extends JpaRepository<ApprovalAttachment, Long> {
 
     List<ApprovalAttachment> findByDocumentIdOrderByIdAsc(Long documentId);
+
+    Optional<ApprovalAttachment> findByIdAndDocumentId(Long id, Long documentId);
 
     void deleteByDocumentId(Long documentId);
 }

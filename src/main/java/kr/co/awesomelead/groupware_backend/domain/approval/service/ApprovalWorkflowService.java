@@ -7,6 +7,7 @@ import kr.co.awesomelead.groupware_backend.domain.approval.dto.request.ApprovalL
 import kr.co.awesomelead.groupware_backend.domain.approval.dto.request.ApprovalSubmitRequestDto;
 import kr.co.awesomelead.groupware_backend.domain.approval.dto.response.ApprovalDetailResponseDto;
 import kr.co.awesomelead.groupware_backend.domain.approval.dto.response.ApprovalDecisionResponseDto;
+import kr.co.awesomelead.groupware_backend.domain.approval.dto.response.ApprovalAttachmentResponseDto;
 import kr.co.awesomelead.groupware_backend.domain.approval.dto.response.ApprovalDraftResponseDto;
 import kr.co.awesomelead.groupware_backend.domain.approval.dto.response.ApprovalInboxAllResponseDto;
 import kr.co.awesomelead.groupware_backend.domain.approval.dto.response.ApprovalRecallResponseDto;
@@ -48,7 +49,9 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
+import org.springframework.web.multipart.MultipartFile;
 
+import java.io.IOException;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
@@ -441,6 +444,57 @@ public class ApprovalWorkflowService {
     }
 
     @Transactional
+    public List<ApprovalAttachmentResponseDto> uploadAttachments(
+            Long userId, Long documentId, List<MultipartFile> files) {
+        User uploader = getUser(userId);
+        ApprovalDocument document = getWritableDocumentByDrafter(documentId, userId);
+        if (files == null || files.stream().allMatch(file -> file == null || file.isEmpty())) {
+            throw new CustomException(ErrorCode.INVALID_ARGUMENT);
+        }
+
+        List<ApprovalAttachment> attachments = new ArrayList<>();
+        for (MultipartFile file : files) {
+            if (file == null || file.isEmpty()) {
+                continue;
+            }
+            String s3Key;
+            try {
+                s3Key = s3Service.uploadFile(file);
+            } catch (IOException e) {
+                throw new CustomException(ErrorCode.FILE_UPLOAD_ERROR);
+            }
+
+            attachments.add(
+                    ApprovalAttachment.builder()
+                            .document(document)
+                            .originalFileName(toOriginalFileName(file))
+                            .s3Key(s3Key)
+                            .fileSize(file.getSize())
+                            .uploadedByUser(uploader)
+                            .build());
+        }
+
+        return approvalAttachmentRepository.saveAll(attachments).stream()
+                .map(this::toAttachmentResponseDto)
+                .toList();
+    }
+
+    @Transactional
+    public void deleteAttachment(Long userId, Long documentId, Long attachmentId) {
+        getWritableDocumentByDrafter(documentId, userId);
+        ApprovalAttachment attachment =
+                approvalAttachmentRepository
+                        .findByIdAndDocumentId(attachmentId, documentId)
+                        .orElseThrow(
+                                () ->
+                                        new CustomException(
+                                                ErrorCode.APPROVAL_ATTACHMENT_NOT_FOUND));
+
+        approvalAttachmentRepository.delete(attachment);
+        safeDeleteFile(attachment.getS3Key());
+    }
+
+    @Transactional
     public ApprovalRecallResponseDto recall(Long userId, Long documentId) {
         User actor = getUser(userId);
         ApprovalDocument document =
@@ -804,6 +858,26 @@ public class ApprovalWorkflowService {
                 .uploadedByUserId(uploadedByUser != null ? uploadedByUser.getId() : null)
                 .uploadedByUserName(
                         uploadedByUser != null ? uploadedByUser.getDisplayName() : null)
+                .build();
+    }
+
+    private ApprovalAttachmentResponseDto toAttachmentResponseDto(ApprovalAttachment attachment) {
+        User uploadedByUser = attachment.getUploadedByUser();
+        ApprovalDocument document = attachment.getDocument();
+        return ApprovalAttachmentResponseDto.builder()
+                .attachmentId(attachment.getId())
+                .documentId(document != null ? document.getId() : null)
+                .originalFileName(attachment.getOriginalFileName())
+                .fileKey(attachment.getS3Key())
+                .fileSize(attachment.getFileSize())
+                .viewUrl(s3Service.getProxyViewUrl(attachment.getS3Key()))
+                .downloadUrl(
+                        s3Service.getPresignedDownloadUrl(
+                                attachment.getS3Key(), attachment.getOriginalFileName()))
+                .uploadedByUserId(uploadedByUser != null ? uploadedByUser.getId() : null)
+                .uploadedByUserName(
+                        uploadedByUser != null ? uploadedByUser.getDisplayName() : null)
+                .uploadedAt(attachment.getCreatedAt())
                 .build();
     }
 
@@ -1519,6 +1593,34 @@ public class ApprovalWorkflowService {
             return null;
         }
         return department.getName().getDescription();
+    }
+
+    private ApprovalDocument getWritableDocumentByDrafter(Long documentId, Long userId) {
+        ApprovalDocument document =
+                approvalDocumentRepository
+                        .findByIdAndDrafterUserId(documentId, userId)
+                        .orElseThrow(() -> new CustomException(ErrorCode.APPROVAL_NOT_FOUND));
+        if (!isWritableDocumentStatus(document.getStatus())) {
+            throw new CustomException(ErrorCode.INVALID_ARGUMENT);
+        }
+        return document;
+    }
+
+    private boolean isWritableDocumentStatus(ApprovalStatus status) {
+        return status == ApprovalStatus.DRAFT
+                || status == ApprovalStatus.RECALLED
+                || status == ApprovalStatus.REJECTED;
+    }
+
+    private String toOriginalFileName(MultipartFile file) {
+        return StringUtils.hasText(file.getOriginalFilename()) ? file.getOriginalFilename() : "file";
+    }
+
+    private void safeDeleteFile(String fileKey) {
+        try {
+            s3Service.deleteFile(fileKey);
+        } catch (Exception ignored) {
+        }
     }
 
     private User getUser(Long userId) {

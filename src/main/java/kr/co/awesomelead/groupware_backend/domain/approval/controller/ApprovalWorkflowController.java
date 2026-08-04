@@ -12,6 +12,7 @@ import kr.co.awesomelead.groupware_backend.domain.approval.dto.request.ApprovalD
 import kr.co.awesomelead.groupware_backend.domain.approval.dto.request.ApprovalDraftUpdateRequestDto;
 import kr.co.awesomelead.groupware_backend.domain.approval.dto.request.ApprovalDraftUpsertRequestDto;
 import kr.co.awesomelead.groupware_backend.domain.approval.dto.request.ApprovalSubmitRequestDto;
+import kr.co.awesomelead.groupware_backend.domain.approval.dto.response.ApprovalAttachmentResponseDto;
 import kr.co.awesomelead.groupware_backend.domain.approval.dto.response.ApprovalDecisionResponseDto;
 import kr.co.awesomelead.groupware_backend.domain.approval.dto.response.ApprovalDetailResponseDto;
 import kr.co.awesomelead.groupware_backend.domain.approval.dto.response.ApprovalDraftResponseDto;
@@ -25,6 +26,7 @@ import kr.co.awesomelead.groupware_backend.global.common.response.ApiResponse;
 
 import lombok.RequiredArgsConstructor;
 
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -34,7 +36,11 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestPart;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.multipart.MultipartFile;
+
+import java.util.List;
 
 @RestController
 @RequiredArgsConstructor
@@ -66,6 +72,8 @@ import org.springframework.web.bind.annotation.RestController;
             - 임시저장 생성: POST /api/approvals/drafts
             - 임시저장 수정: PUT /api/approvals/drafts/{documentId}
             - 임시저장 삭제: DELETE /api/approvals/drafts/{documentId}
+            - 첨부파일 추가: POST /api/approvals/{documentId}/attachments
+            - 첨부파일 삭제: DELETE /api/approvals/{documentId}/attachments/{attachmentId}
             - 임시저장 문서 상신: POST /api/approvals/drafts/{documentId}/submit
             - 바로 상신(임시저장 없이 1회 요청): POST /api/approvals/submit-direct
             - 문서 상세 조회: GET /api/approvals/{documentId}
@@ -607,6 +615,51 @@ public class ApprovalWorkflowController {
         ApprovalDraftResponseDto result =
                 approvalWorkflowService.upsertDraft(userDetails.getId(), upsertRequest);
         return ResponseEntity.ok(ApiResponse.onSuccess(result));
+    }
+
+    @Operation(
+            summary = "전자결재 첨부파일 추가",
+            description =
+                    """
+                전자결재 문서에 첨부파일을 추가합니다.
+
+                ### 사용 조건
+                - 기안자 본인만 추가할 수 있습니다.
+                - DRAFT/RECALLED/REJECTED 상태 문서만 수정할 수 있습니다.
+                - 요청 형식은 multipart/form-data 입니다.
+                - files 파트에 하나 이상의 파일을 전달합니다.
+                """)
+    @PostMapping(
+            value = "/approvals/{documentId}/attachments",
+            consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ResponseEntity<ApiResponse<List<ApprovalAttachmentResponseDto>>> uploadAttachments(
+            @PathVariable Long documentId,
+            @RequestPart("files") List<MultipartFile> files,
+            @Parameter(hidden = true) @AuthenticationPrincipal CustomUserDetails userDetails) {
+        return ResponseEntity.ok(
+                ApiResponse.onSuccess(
+                        approvalWorkflowService.uploadAttachments(
+                                userDetails.getId(), documentId, files)));
+    }
+
+    @Operation(
+            summary = "전자결재 첨부파일 삭제",
+            description =
+                    """
+                전자결재 문서의 첨부파일을 삭제합니다.
+
+                ### 사용 조건
+                - 기안자 본인만 삭제할 수 있습니다.
+                - DRAFT/RECALLED/REJECTED 상태 문서만 수정할 수 있습니다.
+                - DB 첨부파일 레코드와 S3 파일을 함께 삭제합니다.
+                """)
+    @DeleteMapping("/approvals/{documentId}/attachments/{attachmentId}")
+    public ResponseEntity<ApiResponse<Void>> deleteAttachment(
+            @PathVariable Long documentId,
+            @PathVariable Long attachmentId,
+            @Parameter(hidden = true) @AuthenticationPrincipal CustomUserDetails userDetails) {
+        approvalWorkflowService.deleteAttachment(userDetails.getId(), documentId, attachmentId);
+        return ResponseEntity.ok(ApiResponse.onNoContent("첨부파일이 삭제되었습니다."));
     }
 
     @Operation(

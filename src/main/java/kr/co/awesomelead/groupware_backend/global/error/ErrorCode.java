@@ -147,6 +147,7 @@ public enum ErrorCode {
     APPROVAL_TEMPLATE_CATEGORY_NOT_FOUND(HttpStatus.NOT_FOUND, "해당 전자결재 양식구분을 찾을 수 없습니다."),
     APPROVAL_TEMPLATE_NOT_FOUND(HttpStatus.NOT_FOUND, "해당 전자결재 양식을 찾을 수 없습니다."),
     SAVED_APPROVAL_LINE_NOT_FOUND(HttpStatus.NOT_FOUND, "해당 저장 결재선을 찾을 수 없습니다."),
+    APPROVAL_ATTACHMENT_NOT_FOUND(HttpStatus.NOT_FOUND, "해당 전자결재 첨부파일을 찾을 수 없습니다."),
 
     // 409 Conflict
     DUPLICATED_SIGNUP_REQUEST(HttpStatus.CONFLICT, "이미 처리된 가입 요청입니다."),

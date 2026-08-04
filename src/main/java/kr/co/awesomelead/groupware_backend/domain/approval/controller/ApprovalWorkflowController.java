@@ -6,6 +6,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 
 import jakarta.validation.Valid;
 
+import kr.co.awesomelead.groupware_backend.domain.approval.dto.request.ApprovalCommentCreateRequestDto;
 import kr.co.awesomelead.groupware_backend.domain.approval.dto.request.ApprovalDecisionRequestDto;
 import kr.co.awesomelead.groupware_backend.domain.approval.dto.request.ApprovalDirectSubmitRequestDto;
 import kr.co.awesomelead.groupware_backend.domain.approval.dto.request.ApprovalDraftCreateRequestDto;
@@ -13,6 +14,7 @@ import kr.co.awesomelead.groupware_backend.domain.approval.dto.request.ApprovalD
 import kr.co.awesomelead.groupware_backend.domain.approval.dto.request.ApprovalDraftUpsertRequestDto;
 import kr.co.awesomelead.groupware_backend.domain.approval.dto.request.ApprovalSubmitRequestDto;
 import kr.co.awesomelead.groupware_backend.domain.approval.dto.response.ApprovalAttachmentResponseDto;
+import kr.co.awesomelead.groupware_backend.domain.approval.dto.response.ApprovalCommentResponseDto;
 import kr.co.awesomelead.groupware_backend.domain.approval.dto.response.ApprovalDecisionResponseDto;
 import kr.co.awesomelead.groupware_backend.domain.approval.dto.response.ApprovalDetailResponseDto;
 import kr.co.awesomelead.groupware_backend.domain.approval.dto.response.ApprovalDraftResponseDto;
@@ -74,6 +76,7 @@ import java.util.List;
             - 임시저장 삭제: DELETE /api/approvals/drafts/{documentId}
             - 첨부파일 추가: POST /api/approvals/{documentId}/attachments
             - 첨부파일 삭제: DELETE /api/approvals/{documentId}/attachments/{attachmentId}
+            - 의견글 등록: POST /api/approvals/{documentId}/comments
             - 임시저장 문서 상신: POST /api/approvals/drafts/{documentId}/submit
             - 바로 상신(임시저장 없이 1회 요청): POST /api/approvals/submit-direct
             - 문서 상세 조회: GET /api/approvals/{documentId}
@@ -660,6 +663,31 @@ public class ApprovalWorkflowController {
             @Parameter(hidden = true) @AuthenticationPrincipal CustomUserDetails userDetails) {
         approvalWorkflowService.deleteAttachment(userDetails.getId(), documentId, attachmentId);
         return ResponseEntity.ok(ApiResponse.onNoContent("첨부파일이 삭제되었습니다."));
+    }
+
+    @Operation(
+            summary = "전자결재 의견글 등록",
+            description =
+                    """
+                전자결재 문서 상세 화면의 의견글을 등록합니다.
+
+                ### 등록 조건
+                - 해당 문서 상세조회 권한이 있는 사용자만 등록할 수 있습니다.
+                - DRAFT 문서는 기안자 본인만 등록할 수 있습니다.
+                - 의견은 1000자 이하입니다.
+
+                ### 응답
+                - 등록된 의견글의 작성자/부서/직급/내용/작성일시를 반환합니다.
+                """)
+    @PostMapping("/approvals/{documentId}/comments")
+    public ResponseEntity<ApiResponse<ApprovalCommentResponseDto>> createComment(
+            @PathVariable Long documentId,
+            @Valid @RequestBody ApprovalCommentCreateRequestDto request,
+            @Parameter(hidden = true) @AuthenticationPrincipal CustomUserDetails userDetails) {
+        return ResponseEntity.ok(
+                ApiResponse.onSuccess(
+                        approvalWorkflowService.createComment(
+                                userDetails.getId(), documentId, request)));
     }
 
     @Operation(

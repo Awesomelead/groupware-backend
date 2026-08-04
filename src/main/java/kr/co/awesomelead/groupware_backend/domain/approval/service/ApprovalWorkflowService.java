@@ -1,11 +1,13 @@
 package kr.co.awesomelead.groupware_backend.domain.approval.service;
 
 import kr.co.awesomelead.groupware_backend.domain.approval.dto.request.ApprovalDecisionRequestDto;
+import kr.co.awesomelead.groupware_backend.domain.approval.dto.request.ApprovalCommentCreateRequestDto;
 import kr.co.awesomelead.groupware_backend.domain.approval.dto.request.ApprovalDirectSubmitRequestDto;
 import kr.co.awesomelead.groupware_backend.domain.approval.dto.request.ApprovalDraftUpsertRequestDto;
 import kr.co.awesomelead.groupware_backend.domain.approval.dto.request.ApprovalLineRequestDto;
 import kr.co.awesomelead.groupware_backend.domain.approval.dto.request.ApprovalSubmitRequestDto;
 import kr.co.awesomelead.groupware_backend.domain.approval.dto.response.ApprovalAttachmentResponseDto;
+import kr.co.awesomelead.groupware_backend.domain.approval.dto.response.ApprovalCommentResponseDto;
 import kr.co.awesomelead.groupware_backend.domain.approval.dto.response.ApprovalDecisionResponseDto;
 import kr.co.awesomelead.groupware_backend.domain.approval.dto.response.ApprovalDetailResponseDto;
 import kr.co.awesomelead.groupware_backend.domain.approval.dto.response.ApprovalDraftResponseDto;
@@ -15,6 +17,7 @@ import kr.co.awesomelead.groupware_backend.domain.approval.dto.response.Approval
 import kr.co.awesomelead.groupware_backend.domain.approval.dto.response.ApprovalTemplateListResponseDto;
 import kr.co.awesomelead.groupware_backend.domain.approval.entity.ApprovalActionHistory;
 import kr.co.awesomelead.groupware_backend.domain.approval.entity.ApprovalAttachment;
+import kr.co.awesomelead.groupware_backend.domain.approval.entity.ApprovalComment;
 import kr.co.awesomelead.groupware_backend.domain.approval.entity.ApprovalDocument;
 import kr.co.awesomelead.groupware_backend.domain.approval.entity.ApprovalDocumentLine;
 import kr.co.awesomelead.groupware_backend.domain.approval.entity.ApprovalDocumentRead;
@@ -31,6 +34,7 @@ import kr.co.awesomelead.groupware_backend.domain.approval.enums.ApprovalTargetT
 import kr.co.awesomelead.groupware_backend.domain.approval.enums.ApprovalType;
 import kr.co.awesomelead.groupware_backend.domain.approval.repository.ApprovalActionHistoryRepository;
 import kr.co.awesomelead.groupware_backend.domain.approval.repository.ApprovalAttachmentRepository;
+import kr.co.awesomelead.groupware_backend.domain.approval.repository.ApprovalCommentRepository;
 import kr.co.awesomelead.groupware_backend.domain.approval.repository.ApprovalDocumentLineRepository;
 import kr.co.awesomelead.groupware_backend.domain.approval.repository.ApprovalDocumentReadRepository;
 import kr.co.awesomelead.groupware_backend.domain.approval.repository.ApprovalDocumentRepository;
@@ -75,6 +79,7 @@ public class ApprovalWorkflowService {
     private final ApprovalDocumentLineRepository approvalDocumentLineRepository;
     private final ApprovalActionHistoryRepository approvalActionHistoryRepository;
     private final ApprovalAttachmentRepository approvalAttachmentRepository;
+    private final ApprovalCommentRepository approvalCommentRepository;
     private final ApprovalDocumentReadRepository approvalDocumentReadRepository;
     private final ApprovalPersonalSettingRepository approvalPersonalSettingRepository;
     private final UserRepository userRepository;
@@ -132,6 +137,8 @@ public class ApprovalWorkflowService {
         List<ApprovalActionHistory> actionHistories =
                 approvalActionHistoryRepository.findByDocumentIdOrderByCreatedAtAscIdAsc(
                         documentId);
+        List<ApprovalComment> comments =
+                approvalCommentRepository.findByDocumentIdOrderByCreatedAtAscIdAsc(documentId);
         List<ApprovalDocumentRead> reads =
                 approvalDocumentReadRepository.findByDocumentIdOrderByIdAsc(documentId);
 
@@ -172,6 +179,7 @@ public class ApprovalWorkflowService {
                 .approvalBoxes(toApprovalBoxDtos(document, lines))
                 .attachments(toAttachmentDtos(attachments))
                 .actionHistories(toActionHistoryDtos(actionHistories))
+                .comments(toCommentDtos(comments))
                 .reads(toReadDtos(reads))
                 .build();
     }
@@ -445,10 +453,35 @@ public class ApprovalWorkflowService {
         }
 
         approvalActionHistoryRepository.deleteByDocumentId(documentId);
+        approvalCommentRepository.deleteByDocumentId(documentId);
         approvalDocumentReadRepository.deleteByDocumentId(documentId);
         approvalAttachmentRepository.deleteByDocumentId(documentId);
         approvalDocumentLineRepository.deleteByDocumentId(documentId);
         approvalDocumentRepository.delete(document);
+    }
+
+    @Transactional
+    public ApprovalCommentResponseDto createComment(
+            Long userId, Long documentId, ApprovalCommentCreateRequestDto request) {
+        User writer = getUser(userId);
+        Long departmentId = writer.getDepartment() != null ? writer.getDepartment().getId() : null;
+        ApprovalDocument document =
+                approvalDocumentRepository
+                        .findById(documentId)
+                        .orElseThrow(() -> new CustomException(ErrorCode.APPROVAL_NOT_FOUND));
+        if (!canReadDocumentDetail(document, userId, departmentId)) {
+            throw new CustomException(ErrorCode.NOT_APPROVER);
+        }
+
+        ApprovalComment comment =
+                approvalCommentRepository.save(
+                        ApprovalComment.builder()
+                                .document(document)
+                                .writerUser(writer)
+                                .content(request.getContent().strip())
+                                .build());
+
+        return toCommentResponseDto(comment);
     }
 
     @Transactional
@@ -1044,6 +1077,39 @@ public class ApprovalWorkflowService {
                 .actorUserName(actorUser != null ? actorUser.getDisplayName() : null)
                 .actionComment(history.getActionComment())
                 .createdAt(history.getCreatedAt())
+                .build();
+    }
+
+    private List<ApprovalDetailResponseDto.CommentDto> toCommentDtos(
+            List<ApprovalComment> comments) {
+        return comments.stream().map(this::toCommentDto).toList();
+    }
+
+    private ApprovalDetailResponseDto.CommentDto toCommentDto(ApprovalComment comment) {
+        User writer = comment.getWriterUser();
+        return ApprovalDetailResponseDto.CommentDto.builder()
+                .commentId(comment.getId())
+                .writerUserId(writer != null ? writer.getId() : null)
+                .writerUserName(writer != null ? writer.getDisplayName() : null)
+                .writerDepartmentName(writer != null ? toDepartmentName(writer.getDepartment()) : null)
+                .writerPositionName(toPositionName(writer))
+                .content(comment.getContent())
+                .createdAt(comment.getCreatedAt())
+                .build();
+    }
+
+    private ApprovalCommentResponseDto toCommentResponseDto(ApprovalComment comment) {
+        User writer = comment.getWriterUser();
+        ApprovalDocument document = comment.getDocument();
+        return ApprovalCommentResponseDto.builder()
+                .commentId(comment.getId())
+                .documentId(document != null ? document.getId() : null)
+                .writerUserId(writer != null ? writer.getId() : null)
+                .writerUserName(writer != null ? writer.getDisplayName() : null)
+                .writerDepartmentName(writer != null ? toDepartmentName(writer.getDepartment()) : null)
+                .writerPositionName(toPositionName(writer))
+                .content(comment.getContent())
+                .createdAt(comment.getCreatedAt())
                 .build();
     }
 

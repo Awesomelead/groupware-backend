@@ -105,6 +105,9 @@ public class ApprovalDetailResponseDto {
     @Schema(description = "의견/처리 이력")
     private List<ActionHistoryDto> actionHistories;
 
+    @Schema(description = "의견글 목록")
+    private List<CommentDto> comments;
+
     @Schema(description = "열람 정보")
     private List<ReadDto> reads;
 
@@ -183,6 +186,20 @@ public class ApprovalDetailResponseDto {
         private Long actorUserId;
         private String actorUserName;
         private String actionComment;
+        private LocalDateTime createdAt;
+    }
+
+    @Getter
+    @Builder
+    @AllArgsConstructor
+    @Schema(description = "문서 의견글")
+    public static class CommentDto {
+        private Long commentId;
+        private Long writerUserId;
+        private String writerUserName;
+        private String writerDepartmentName;
+        private String writerPositionName;
+        private String content;
         private LocalDateTime createdAt;
     }
 

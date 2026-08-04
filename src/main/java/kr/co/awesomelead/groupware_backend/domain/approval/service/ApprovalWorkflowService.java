@@ -259,6 +259,20 @@ public class ApprovalWorkflowService {
     }
 
     @Transactional(readOnly = true)
+    public ApprovalInboxAllResponseDto getCompletedDocuments(Long userId) {
+        User user = getUser(userId);
+        Long departmentId = user.getDepartment() != null ? user.getDepartment().getId() : null;
+
+        List<ApprovalInboxAllResponseDto.DocumentDto> documents =
+                approvalDocumentRepository.findAllWithLinesOrderByIdDesc().stream()
+                        .filter(document -> isCompletedDocument(document, userId, departmentId))
+                        .map(document -> toInboxDocumentDto(document, userId, departmentId))
+                        .toList();
+
+        return ApprovalInboxAllResponseDto.builder().documents(documents).build();
+    }
+
+    @Transactional(readOnly = true)
     public ApprovalInboxAllResponseDto getDepartmentBox(Long userId) {
         User user = getUser(userId);
         if (user.getDepartment() == null) {
@@ -546,6 +560,13 @@ public class ApprovalWorkflowService {
         }
         return document.getLines().stream()
                 .anyMatch(line -> line.getRole() == ApprovalRouteRole.VIEWER);
+    }
+
+    private boolean isCompletedDocument(ApprovalDocument document, Long userId, Long departmentId) {
+        if (document.getStatus() != ApprovalStatus.APPROVED) {
+            return false;
+        }
+        return isDraftedByMe(document, userId);
     }
 
     private boolean isDepartmentBoxDocument(ApprovalDocument document, Long departmentId) {

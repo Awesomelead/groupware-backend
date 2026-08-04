@@ -50,6 +50,7 @@ import org.springframework.web.bind.annotation.RestController;
             - 참조문서 참조문서 탭: GET /api/approvals/references
             - 참조문서 열람획득문서 탭: GET /api/approvals/references/viewer-acquired
             - 참조문서 열람부여문서 탭: GET /api/approvals/references/viewer-granted
+            - 완결문서 탭: GET /api/approvals/completed
             - 부서결재함(내 부서) 탭: GET /api/approvals/department-box
             - 결재진행 전체 탭: GET /api/approvals/inbox/all
             - 결재진행 결재하기 탭: GET /api/approvals/inbox/to-approve
@@ -459,6 +460,32 @@ public class ApprovalWorkflowController {
         return ResponseEntity.ok(
                 ApiResponse.onSuccess(
                         approvalWorkflowService.getViewerGrantedDocuments(userDetails.getId())));
+    }
+
+    @Operation(
+            summary = "완결문서 탭 조회",
+            description =
+                    """
+            현재 사용자 기준 `완결문서` 문서를 조회합니다.
+
+            ### 조회 대상
+            - 문서 상태가 APPROVED(완결)
+            - 기안자가 현재 로그인 사용자 본인인 문서
+
+            ### 응답 주요 필드
+            - 문서번호(documentNo)
+            - 기안자(drafterName)
+            - 제목(title)
+            - 결재선(approvalLines)
+            - 기안일(draftedAt)
+            - 완료일(completedAt)
+            """)
+    @GetMapping("/approvals/completed")
+    public ResponseEntity<ApiResponse<ApprovalInboxAllResponseDto>> getCompletedDocuments(
+            @Parameter(hidden = true) @AuthenticationPrincipal CustomUserDetails userDetails) {
+        return ResponseEntity.ok(
+                ApiResponse.onSuccess(
+                        approvalWorkflowService.getCompletedDocuments(userDetails.getId())));
     }
 
     @Operation(

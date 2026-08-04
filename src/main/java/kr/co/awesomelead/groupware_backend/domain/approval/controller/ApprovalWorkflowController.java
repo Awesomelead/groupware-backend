@@ -11,6 +11,7 @@ import kr.co.awesomelead.groupware_backend.domain.approval.dto.request.ApprovalD
 import kr.co.awesomelead.groupware_backend.domain.approval.dto.request.ApprovalDraftUpdateRequestDto;
 import kr.co.awesomelead.groupware_backend.domain.approval.dto.request.ApprovalDraftUpsertRequestDto;
 import kr.co.awesomelead.groupware_backend.domain.approval.dto.request.ApprovalSubmitRequestDto;
+import kr.co.awesomelead.groupware_backend.domain.approval.dto.response.ApprovalDetailResponseDto;
 import kr.co.awesomelead.groupware_backend.domain.approval.dto.response.ApprovalDraftResponseDto;
 import kr.co.awesomelead.groupware_backend.domain.approval.dto.response.ApprovalInboxAllResponseDto;
 import kr.co.awesomelead.groupware_backend.domain.approval.dto.response.ApprovalSubmitResponseDto;
@@ -62,6 +63,7 @@ import org.springframework.web.bind.annotation.RestController;
             - 임시저장 수정: PUT /api/approvals/drafts/{documentId}
             - 임시저장 문서 상신: POST /api/approvals/drafts/{documentId}/submit
             - 바로 상신(임시저장 없이 1회 요청): POST /api/approvals/submit-direct
+            - 문서 상세 조회: GET /api/approvals/{documentId}
 
             ### 권한 정보
             - 로그인 필요
@@ -139,6 +141,33 @@ public class ApprovalWorkflowController {
     @GetMapping("/approval/templates")
     public ResponseEntity<ApiResponse<ApprovalTemplateListResponseDto>> getTemplates() {
         return ResponseEntity.ok(ApiResponse.onSuccess(approvalWorkflowService.getTemplateList()));
+    }
+
+    @Operation(
+            summary = "전자결재 문서 상세 조회",
+            description =
+                    """
+                전자결재 문서 1건의 상세 정보를 조회합니다.
+
+                ### 조회 권한
+                - 임시저장(DRAFT): 기안자 본인만 조회 가능
+                - 그 외 상태: 본인기안, 본인결재, 참조자, 열람권자(완결 후), 부서결재함 대상 문서 조회 가능
+
+                ### 응답 주요 필드
+                - 문서 기본정보/본문(contentDelta, contentHtml)
+                - 결재선/참조자/열람권자(lines)
+                - 첨부파일(attachments)
+                - 의견/처리 이력(actionHistories)
+                - 열람 정보(reads)
+                """)
+    @GetMapping("/approvals/{documentId}")
+    public ResponseEntity<ApiResponse<ApprovalDetailResponseDto>> getApprovalDetail(
+            @PathVariable Long documentId,
+            @Parameter(hidden = true) @AuthenticationPrincipal CustomUserDetails userDetails) {
+        return ResponseEntity.ok(
+                ApiResponse.onSuccess(
+                        approvalWorkflowService.getApprovalDetail(
+                                userDetails.getId(), documentId)));
     }
 
     @Operation(

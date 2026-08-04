@@ -168,7 +168,8 @@ public class AligoKakaoService {
                 return Integer.valueOf(1).equals(smsResponse.getResultCode())
                         && smsResponse.getSuccessCount() != null
                         && smsResponse.getSuccessCount() > 0
-                        && (smsResponse.getErrorCount() == null || smsResponse.getErrorCount() == 0);
+                        && (smsResponse.getErrorCount() == null
+                                || smsResponse.getErrorCount() == 0);
             }
 
             log.error("문자 API 호출 실패 - status: {}", response.getStatusCode());

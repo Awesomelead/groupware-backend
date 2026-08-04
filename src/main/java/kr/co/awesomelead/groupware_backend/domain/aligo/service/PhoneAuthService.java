@@ -38,8 +38,7 @@ public class PhoneAuthService {
     public void sendAuthCode(String phoneNumber, PhoneAuthChannel channel) {
         // 인증번호 생성
         String authCode = generateAuthCode();
-        PhoneAuthChannel resolvedChannel =
-                channel != null ? channel : PhoneAuthChannel.KAKAO;
+        PhoneAuthChannel resolvedChannel = channel != null ? channel : PhoneAuthChannel.KAKAO;
 
         boolean success =
                 switch (resolvedChannel) {

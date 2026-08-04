@@ -39,11 +39,7 @@ class PhoneAuthServiceTest {
 
         verify(aligoKakaoService).sendAuthCodeAlimtalk(eq(PHONE_NUMBER), anyString());
         verify(valueOperations)
-                .set(
-                        eq("auth:phone:" + PHONE_NUMBER),
-                        anyString(),
-                        eq(5L),
-                        eq(TimeUnit.MINUTES));
+                .set(eq("auth:phone:" + PHONE_NUMBER), anyString(), eq(5L), eq(TimeUnit.MINUTES));
     }
 
     @Test
@@ -55,10 +51,6 @@ class PhoneAuthServiceTest {
 
         verify(aligoKakaoService).sendAuthCodeSms(eq(PHONE_NUMBER), anyString());
         verify(valueOperations)
-                .set(
-                        eq("auth:phone:" + PHONE_NUMBER),
-                        anyString(),
-                        eq(5L),
-                        eq(TimeUnit.MINUTES));
+                .set(eq("auth:phone:" + PHONE_NUMBER), anyString(), eq(5L), eq(TimeUnit.MINUTES));
     }
 }

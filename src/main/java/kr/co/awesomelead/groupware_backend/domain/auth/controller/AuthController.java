@@ -135,7 +135,8 @@ public class AuthController {
     @PostMapping("/send-phone-code")
     public ResponseEntity<ApiResponse<Void>> sendAuthCode(
             @Valid @RequestBody SendAuthCodeRequestDto requestDto) {
-        phoneAuthService.sendAuthCode(requestDto.getPhoneNumber(), requestDto.getChannelOrDefault());
+        phoneAuthService.sendAuthCode(
+                requestDto.getPhoneNumber(), requestDto.getChannelOrDefault());
         return ResponseEntity.ok(ApiResponse.onNoContent("휴대폰 인증번호가 발송되었습니다."));
     }
 

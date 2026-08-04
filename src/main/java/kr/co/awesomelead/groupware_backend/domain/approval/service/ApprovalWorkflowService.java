@@ -862,7 +862,9 @@ public class ApprovalWorkflowService {
             ApprovalDocument document) {
         User drafter = document.getDrafterUser();
         LocalDateTime draftedAt =
-                document.getSubmittedAt() != null ? document.getSubmittedAt() : document.getCreatedAt();
+                document.getSubmittedAt() != null
+                        ? document.getSubmittedAt()
+                        : document.getCreatedAt();
         LocalDate draftedDate = draftedAt != null ? draftedAt.toLocalDate() : null;
         return ApprovalDetailResponseDto.ApprovalBoxDto.builder()
                 .type("DRAFT")
@@ -880,9 +882,11 @@ public class ApprovalWorkflowService {
                 .build();
     }
 
-    private ApprovalDetailResponseDto.ApprovalBoxDto toApprovalBoxDto(
-            ApprovalDocumentLine line) {
-        User displayUser = line.getProcessedByUser() != null ? line.getProcessedByUser() : line.getTargetUser();
+    private ApprovalDetailResponseDto.ApprovalBoxDto toApprovalBoxDto(ApprovalDocumentLine line) {
+        User displayUser =
+                line.getProcessedByUser() != null
+                        ? line.getProcessedByUser()
+                        : line.getTargetUser();
         LocalDate processedDate =
                 line.getProcessedAt() != null ? line.getProcessedAt().toLocalDate() : null;
         String label = toApprovalBoxLabel(line);

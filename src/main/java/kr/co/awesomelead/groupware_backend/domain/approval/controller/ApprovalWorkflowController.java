@@ -14,6 +14,7 @@ import kr.co.awesomelead.groupware_backend.domain.approval.dto.request.ApprovalS
 import kr.co.awesomelead.groupware_backend.domain.approval.dto.response.ApprovalDetailResponseDto;
 import kr.co.awesomelead.groupware_backend.domain.approval.dto.response.ApprovalDraftResponseDto;
 import kr.co.awesomelead.groupware_backend.domain.approval.dto.response.ApprovalInboxAllResponseDto;
+import kr.co.awesomelead.groupware_backend.domain.approval.dto.response.ApprovalRecallResponseDto;
 import kr.co.awesomelead.groupware_backend.domain.approval.dto.response.ApprovalSubmitResponseDto;
 import kr.co.awesomelead.groupware_backend.domain.approval.dto.response.ApprovalTemplateListResponseDto;
 import kr.co.awesomelead.groupware_backend.domain.approval.service.ApprovalWorkflowService;
@@ -66,6 +67,7 @@ import org.springframework.web.bind.annotation.RestController;
             - 임시저장 문서 상신: POST /api/approvals/drafts/{documentId}/submit
             - 바로 상신(임시저장 없이 1회 요청): POST /api/approvals/submit-direct
             - 문서 상세 조회: GET /api/approvals/{documentId}
+            - 문서 회수: POST /api/approvals/{documentId}/recall
 
             ### 권한 정보
             - 로그인 필요
@@ -602,6 +604,27 @@ public class ApprovalWorkflowController {
         ApprovalDraftResponseDto result =
                 approvalWorkflowService.upsertDraft(userDetails.getId(), upsertRequest);
         return ResponseEntity.ok(ApiResponse.onSuccess(result));
+    }
+
+    @Operation(
+            summary = "전자결재 문서 회수",
+            description =
+                    """
+                상신한 전자결재 문서를 회수합니다.
+
+                ### 회수 조건
+                - 기안자 본인만 회수할 수 있습니다.
+                - IN_PROGRESS(결재진행) 상태 문서만 회수할 수 있습니다.
+                - 회수 시 문서 상태는 RECALLED가 됩니다.
+                - 아직 승인/반려 처리되지 않은 결재선은 SKIPPED로 정리됩니다.
+                """)
+    @PostMapping("/approvals/{documentId}/recall")
+    public ResponseEntity<ApiResponse<ApprovalRecallResponseDto>> recall(
+            @PathVariable Long documentId,
+            @Parameter(hidden = true) @AuthenticationPrincipal CustomUserDetails userDetails) {
+        return ResponseEntity.ok(
+                ApiResponse.onSuccess(
+                        approvalWorkflowService.recall(userDetails.getId(), documentId)));
     }
 
     @Operation(

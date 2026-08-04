@@ -7,6 +7,7 @@ import kr.co.awesomelead.groupware_backend.domain.approval.dto.request.ApprovalS
 import kr.co.awesomelead.groupware_backend.domain.approval.dto.response.ApprovalDetailResponseDto;
 import kr.co.awesomelead.groupware_backend.domain.approval.dto.response.ApprovalDraftResponseDto;
 import kr.co.awesomelead.groupware_backend.domain.approval.dto.response.ApprovalInboxAllResponseDto;
+import kr.co.awesomelead.groupware_backend.domain.approval.dto.response.ApprovalRecallResponseDto;
 import kr.co.awesomelead.groupware_backend.domain.approval.dto.response.ApprovalSubmitResponseDto;
 import kr.co.awesomelead.groupware_backend.domain.approval.dto.response.ApprovalTemplateListResponseDto;
 import kr.co.awesomelead.groupware_backend.domain.approval.entity.ApprovalActionHistory;
@@ -434,6 +435,52 @@ public class ApprovalWorkflowService {
         approvalAttachmentRepository.deleteByDocumentId(documentId);
         approvalDocumentLineRepository.deleteByDocumentId(documentId);
         approvalDocumentRepository.delete(document);
+    }
+
+    @Transactional
+    public ApprovalRecallResponseDto recall(Long userId, Long documentId) {
+        User actor = getUser(userId);
+        ApprovalDocument document =
+                approvalDocumentRepository
+                        .findByIdAndDrafterUserIdWithLines(documentId, userId)
+                        .orElseThrow(() -> new CustomException(ErrorCode.APPROVAL_NOT_FOUND));
+        ApprovalStatus fromStatus = document.getStatus();
+        if (fromStatus != ApprovalStatus.IN_PROGRESS) {
+            throw new CustomException(ErrorCode.INVALID_ARGUMENT);
+        }
+
+        document.setStatus(ApprovalStatus.RECALLED);
+        document.setCompletedAt(LocalDateTime.now());
+        approvalDocumentRepository.save(document);
+
+        List<ApprovalDocumentLine> lines =
+                approvalDocumentLineRepository.findByDocumentIdOrderBySequenceNoAscIdAsc(
+                        documentId);
+        lines.stream()
+                .filter(
+                        line ->
+                                line.getLineStatus() == ApprovalLineStatus.WAITING
+                                        || line.getLineStatus() == ApprovalLineStatus.PENDING)
+                .forEach(line -> line.setLineStatus(ApprovalLineStatus.SKIPPED));
+        approvalDocumentLineRepository.saveAll(lines);
+
+        approvalActionHistoryRepository.save(
+                ApprovalActionHistory.builder()
+                        .document(document)
+                        .actionType(ApprovalActionType.RECALL)
+                        .fromStatus(fromStatus)
+                        .toStatus(ApprovalStatus.RECALLED)
+                        .actorUser(actor)
+                        .build());
+
+        return ApprovalRecallResponseDto.builder()
+                .documentId(document.getId())
+                .documentNo(document.getDocumentNo())
+                .status(document.getStatus())
+                .statusLabel(document.getStatus().getDescription())
+                .title(document.getTitle())
+                .recalledAt(document.getCompletedAt())
+                .build();
     }
 
     @Transactional

@@ -1,7 +1,7 @@
 package kr.co.awesomelead.groupware_backend.domain.approval.service;
 
-import kr.co.awesomelead.groupware_backend.domain.approval.dto.request.ApprovalDecisionRequestDto;
 import kr.co.awesomelead.groupware_backend.domain.approval.dto.request.ApprovalCommentCreateRequestDto;
+import kr.co.awesomelead.groupware_backend.domain.approval.dto.request.ApprovalDecisionRequestDto;
 import kr.co.awesomelead.groupware_backend.domain.approval.dto.request.ApprovalDirectSubmitRequestDto;
 import kr.co.awesomelead.groupware_backend.domain.approval.dto.request.ApprovalDraftUpsertRequestDto;
 import kr.co.awesomelead.groupware_backend.domain.approval.dto.request.ApprovalLineRequestDto;
@@ -1091,7 +1091,8 @@ public class ApprovalWorkflowService {
                 .commentId(comment.getId())
                 .writerUserId(writer != null ? writer.getId() : null)
                 .writerUserName(writer != null ? writer.getDisplayName() : null)
-                .writerDepartmentName(writer != null ? toDepartmentName(writer.getDepartment()) : null)
+                .writerDepartmentName(
+                        writer != null ? toDepartmentName(writer.getDepartment()) : null)
                 .writerPositionName(toPositionName(writer))
                 .content(comment.getContent())
                 .createdAt(comment.getCreatedAt())
@@ -1106,7 +1107,8 @@ public class ApprovalWorkflowService {
                 .documentId(document != null ? document.getId() : null)
                 .writerUserId(writer != null ? writer.getId() : null)
                 .writerUserName(writer != null ? writer.getDisplayName() : null)
-                .writerDepartmentName(writer != null ? toDepartmentName(writer.getDepartment()) : null)
+                .writerDepartmentName(
+                        writer != null ? toDepartmentName(writer.getDepartment()) : null)
                 .writerPositionName(toPositionName(writer))
                 .content(comment.getContent())
                 .createdAt(comment.getCreatedAt())

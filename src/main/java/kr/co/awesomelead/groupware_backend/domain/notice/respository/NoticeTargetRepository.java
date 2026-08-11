@@ -9,6 +9,8 @@ import org.springframework.data.repository.query.Param;
 
 public interface NoticeTargetRepository extends JpaRepository<NoticeTarget, Long> {
 
+    boolean existsByNoticeIdAndUserId(Long noticeId, Long userId);
+
     @Modifying(clearAutomatically = true, flushAutomatically = true)
     @Query("delete from NoticeTarget nt where nt.notice.id = :noticeId")
     void deleteByNoticeId(@Param("noticeId") Long noticeId);

@@ -156,8 +156,7 @@ public class ApprovalWorkflowService {
                 .templateCode(document.getTemplateCodeSnapshot())
                 .templateName(document.getTemplateNameSnapshot())
                 .title(document.getTitle())
-                .contentDelta(document.getContentDelta())
-                .contentHtml(document.getContentHtml())
+                .content(document.getContent())
                 .approvalType(document.getApprovalType())
                 .approvalTypeLabel(
                         document.getApprovalType() != null
@@ -424,8 +423,7 @@ public class ApprovalWorkflowService {
                 document,
                 template,
                 request.getTitle(),
-                request.getContentDelta(),
-                request.getContentHtml(),
+                request.getContent(),
                 request.getApprovalType(),
                 request.getReceiverDepartmentId(),
                 false);
@@ -693,12 +691,9 @@ public class ApprovalWorkflowService {
                 document,
                 template,
                 StringUtils.hasText(request.getTitle()) ? request.getTitle() : document.getTitle(),
-                StringUtils.hasText(request.getContentDelta())
-                        ? request.getContentDelta()
-                        : document.getContentDelta(),
-                request.getContentHtml() != null
-                        ? request.getContentHtml()
-                        : document.getContentHtml(),
+                StringUtils.hasText(request.getContent())
+                        ? request.getContent()
+                        : document.getContent(),
                 request.getApprovalType() != null
                         ? request.getApprovalType()
                         : document.getApprovalType(),
@@ -772,8 +767,7 @@ public class ApprovalWorkflowService {
         draftRequest.setDocumentId(null);
         draftRequest.setTemplateId(request.getTemplateId());
         draftRequest.setTitle(request.getTitle());
-        draftRequest.setContentDelta(request.getContentDelta());
-        draftRequest.setContentHtml(request.getContentHtml());
+        draftRequest.setContent(request.getContent());
         draftRequest.setApprovalType(request.getApprovalType());
         draftRequest.setReceiverDepartmentId(request.getReceiverDepartmentId());
         draftRequest.setLines(request.getLines());
@@ -782,8 +776,7 @@ public class ApprovalWorkflowService {
 
         ApprovalSubmitRequestDto submitRequest = new ApprovalSubmitRequestDto();
         submitRequest.setTitle(request.getTitle());
-        submitRequest.setContentDelta(request.getContentDelta());
-        submitRequest.setContentHtml(request.getContentHtml());
+        submitRequest.setContent(request.getContent());
         submitRequest.setApprovalType(request.getApprovalType());
         submitRequest.setReceiverDepartmentId(request.getReceiverDepartmentId());
         submitRequest.setLines(request.getLines());
@@ -1270,7 +1263,7 @@ public class ApprovalWorkflowService {
                 .editorType(template.getEditorType())
                 .approvalType(template.getApprovalType())
                 .linePolicy(template.getLinePolicy())
-                .defaultContentDelta(template.getDefaultContentDelta())
+                .defaultContent(template.getDefaultContent())
                 .defaultLines(lineDtos)
                 .build();
     }
@@ -1670,8 +1663,7 @@ public class ApprovalWorkflowService {
             ApprovalDocument document,
             ApprovalTemplate template,
             String title,
-            String contentDelta,
-            String contentHtml,
+            String content,
             ApprovalType approvalType,
             Long receiverDepartmentId,
             boolean strictSubmit) {
@@ -1682,7 +1674,7 @@ public class ApprovalWorkflowService {
         if (strictSubmit && !StringUtils.hasText(title)) {
             throw new CustomException(ErrorCode.INVALID_ARGUMENT);
         }
-        if (strictSubmit && !StringUtils.hasText(contentDelta)) {
+        if (strictSubmit && !StringUtils.hasText(content)) {
             throw new CustomException(ErrorCode.INVALID_ARGUMENT);
         }
 
@@ -1692,18 +1684,15 @@ public class ApprovalWorkflowService {
                         : (title != null
                                 ? title
                                 : (document.getTitle() != null ? document.getTitle() : ""));
-        String resolvedContentDelta =
+        String resolvedContent =
                 strictSubmit
-                        ? contentDelta
-                        : (contentDelta != null
-                                ? contentDelta
-                                : (document.getContentDelta() != null
-                                        ? document.getContentDelta()
-                                        : ""));
+                        ? content
+                        : (content != null
+                                ? content
+                                : (document.getContent() != null ? document.getContent() : ""));
 
         document.setTitle(resolvedTitle.strip());
-        document.setContentDelta(resolvedContentDelta);
-        document.setContentHtml(contentHtml);
+        document.setContent(resolvedContent);
 
         ApprovalType resolvedType =
                 approvalType != null

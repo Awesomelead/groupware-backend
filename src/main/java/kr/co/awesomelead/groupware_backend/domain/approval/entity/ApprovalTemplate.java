@@ -69,7 +69,7 @@ public class ApprovalTemplate extends BaseTimeEntity {
 
     @Lob
     @Column(columnDefinition = "TEXT")
-    private String defaultContentDelta;
+    private String defaultContent;
 
     @Column(nullable = false)
     @Builder.Default

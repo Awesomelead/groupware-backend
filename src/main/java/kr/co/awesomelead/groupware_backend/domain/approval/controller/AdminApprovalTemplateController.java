@@ -219,7 +219,7 @@ public class AdminApprovalTemplateController {
                 ### 응답 필드
                 - 기본정보: id, categoryId/categoryName, code, name, description
                 - 작성정보: editorType, approvalType, linePolicy
-                - 본문기본값: defaultContentDelta
+                - 본문기본값: defaultContent
                 - 기본 라인: lines(role/targetType/targetUserId/targetDepartmentId/sequenceNo/required)
                 """)
     @GetMapping("/approval-templates")

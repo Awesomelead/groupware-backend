@@ -42,11 +42,8 @@ public class ApprovalDetailResponseDto {
     @Schema(description = "문서 제목", example = "1분기 출장비 정산")
     private String title;
 
-    @Schema(description = "문서 본문 Delta(JSON 문자열)")
-    private String contentDelta;
-
-    @Schema(description = "문서 본문 HTML")
-    private String contentHtml;
+    @Schema(description = "문서 본문 문자열")
+    private String content;
 
     @Schema(description = "결재유형", example = "INTERNAL")
     private ApprovalType approvalType;

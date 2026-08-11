@@ -1263,7 +1263,7 @@ public class ApprovalWorkflowService {
                 .editorType(template.getEditorType())
                 .approvalType(template.getApprovalType())
                 .linePolicy(template.getLinePolicy())
-                .defaultContentDelta(template.getDefaultContentDelta())
+                .defaultContent(template.getDefaultContent())
                 .defaultLines(lineDtos)
                 .build();
     }

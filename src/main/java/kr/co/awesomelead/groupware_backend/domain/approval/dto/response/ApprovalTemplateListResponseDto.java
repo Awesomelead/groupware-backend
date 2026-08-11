@@ -79,8 +79,8 @@ public class ApprovalTemplateListResponseDto {
                 allowableValues = {"FIXED", "FLEXIBLE"})
         private ApprovalLinePolicy linePolicy;
 
-        @Schema(description = "양식 기본 본문 Delta(JSON 문자열)")
-        private String defaultContentDelta;
+        @Schema(description = "양식 기본 본문 문자열")
+        private String defaultContent;
 
         @Schema(description = "양식 기본 결재선/참조자/열람권자")
         private List<LineDto> defaultLines;

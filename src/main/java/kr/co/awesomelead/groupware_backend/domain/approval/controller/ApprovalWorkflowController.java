@@ -149,12 +149,12 @@ public class ApprovalWorkflowController {
                     - editorType(QUILL/HTML/EXCEL)
                     - approvalType(INTERNAL/COOPERATIVE)
                     - linePolicy(FIXED/FLEXIBLE)
-                    - defaultContentDelta(기본 본문)
+                    - defaultContent(기본 본문)
                     - defaultLines(기본 결재선/참조자/열람권자)
 
                 ### 프론트 사용 포인트
                 - templateId를 임시저장/상신 API로 전달합니다.
-                - defaultContentDelta는 양식 선택 시 에디터 초기값으로 사용합니다.
+                - defaultContent는 양식 선택 시 에디터 초기값으로 사용합니다.
                 """)
     @GetMapping("/approval/templates")
     public ResponseEntity<ApiResponse<ApprovalTemplateListResponseDto>> getTemplates() {

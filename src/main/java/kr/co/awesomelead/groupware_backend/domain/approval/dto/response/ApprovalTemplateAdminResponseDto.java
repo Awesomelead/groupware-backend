@@ -59,8 +59,8 @@ public class ApprovalTemplateAdminResponseDto {
             allowableValues = {"FIXED", "FLEXIBLE"})
     private ApprovalLinePolicy linePolicy;
 
-    @Schema(description = "기본 본문 Delta(JSON 문자열)")
-    private String defaultContentDelta;
+    @Schema(description = "기본 본문 문자열")
+    private String defaultContent;
 
     @Schema(description = "사용여부", example = "true")
     private Boolean isActive;

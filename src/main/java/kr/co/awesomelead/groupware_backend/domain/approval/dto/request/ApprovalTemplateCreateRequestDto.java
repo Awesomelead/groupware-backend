@@ -61,9 +61,9 @@ public class ApprovalTemplateCreateRequestDto {
     private ApprovalLinePolicy linePolicy;
 
     @Schema(
-            description = "기본 본문 Delta(JSON 문자열). QUILL/HTML/EXCEL 공통으로 텍스트 저장 가능",
-            example = "{\"ops\":[{\"insert\":\"기본양식 본문\\n\"}]}")
-    private String defaultContentDelta;
+            description = "기본 본문 문자열. QUILL/HTML/EXCEL 공통으로 텍스트 저장 가능",
+            example = "기본양식 본문")
+    private String defaultContent;
 
     @NotNull
     @Schema(description = "사용여부", example = "true")

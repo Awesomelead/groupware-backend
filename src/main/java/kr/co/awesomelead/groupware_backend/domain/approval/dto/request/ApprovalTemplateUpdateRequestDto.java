@@ -60,9 +60,7 @@ public class ApprovalTemplateUpdateRequestDto {
             allowableValues = {"FIXED", "FLEXIBLE"})
     private ApprovalLinePolicy linePolicy;
 
-    @Schema(
-            description = "기본 본문 문자열. QUILL/HTML/EXCEL 공통으로 텍스트 저장 가능",
-            example = "기본양식 본문")
+    @Schema(description = "기본 본문 문자열. QUILL/HTML/EXCEL 공통으로 텍스트 저장 가능", example = "기본양식 본문")
     private String defaultContent;
 
     @NotNull

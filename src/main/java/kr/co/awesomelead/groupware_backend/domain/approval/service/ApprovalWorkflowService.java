@@ -1689,9 +1689,7 @@ public class ApprovalWorkflowService {
                         ? content
                         : (content != null
                                 ? content
-                                : (document.getContent() != null
-                                        ? document.getContent()
-                                        : ""));
+                                : (document.getContent() != null ? document.getContent() : ""));
 
         document.setTitle(resolvedTitle.strip());
         document.setContent(resolvedContent);

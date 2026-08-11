@@ -110,6 +110,7 @@ public enum ErrorCode {
     NO_AUTHORITY_FOR_SAVED_APPROVAL_LINE_READ(HttpStatus.FORBIDDEN, "해당 결재선에 대한 접근 권한이 없습니다."),
     VISIT_ACCESS_DENIED(HttpStatus.FORBIDDEN, "해당 방문정보에 대한 접근 권한이 없습니다."),
     NO_AUTHORITY_FOR_NOTICE(HttpStatus.FORBIDDEN, "공지사항 작성 권한이 없습니다."),
+    NO_AUTHORITY_FOR_NOTICE_READ(HttpStatus.FORBIDDEN, "해당 공지사항에 대한 조회 권한이 없습니다."),
     NO_AUTHORITY_FOR_ANNUAL_LEAVE(HttpStatus.FORBIDDEN, "연차 관리 권한이 없습니다."),
     NO_AUTHORITY_FOR_PAYSLIP(HttpStatus.FORBIDDEN, "급여명세서 관리 권한이 없습니다."),
     NO_AUTHORITY_FOR_EMPLOYEE_MANAGEMENT(HttpStatus.FORBIDDEN, "직원 관리 권한이 없습니다."),

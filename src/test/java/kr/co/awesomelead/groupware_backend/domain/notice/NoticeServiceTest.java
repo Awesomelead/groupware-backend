@@ -187,9 +187,30 @@ class NoticeServiceTest {
         class Context_admin_user {
 
             @Test
-            @DisplayName("권한 여부를 true로 설정하여 모든 공지를 조회한다")
-            void it_calls_repo_with_admin_authority() {
+            @DisplayName("공지사항 관리 권한만으로는 전체 조회하지 않는다")
+            void it_calls_repo_without_all_notice_authority() {
                 // given
+                Pageable pageable = PageRequest.of(0, 10);
+                NoticeSearchConditionDto condition = new NoticeSearchConditionDto();
+                given(userRepository.findById(1L)).willReturn(Optional.of(adminUser));
+                given(
+                                noticeQueryRepository.findNoticesWithFilters(
+                                        eq(condition), eq(1L), eq(false), any()))
+                        .willReturn(Page.empty());
+
+                // when
+                noticeService.getNoticesByType(condition, 1L, pageable);
+
+                // then
+                verify(noticeQueryRepository)
+                        .findNoticesWithFilters(eq(condition), eq(1L), eq(false), any());
+            }
+
+            @Test
+            @DisplayName("공지사항 전체 조회 권한이 있으면 모든 공지를 조회한다")
+            void it_calls_repo_with_all_notice_authority() {
+                // given
+                adminUser.addAuthority(Authority.VIEW_ALL_NOTICE);
                 Pageable pageable = PageRequest.of(0, 10);
                 NoticeSearchConditionDto condition = new NoticeSearchConditionDto();
                 given(userRepository.findById(1L)).willReturn(Optional.of(adminUser));
@@ -240,7 +261,7 @@ class NoticeServiceTest {
         @DisplayName("조회수를 1 증가시키고 상세 정보를 반환한다")
         void it_increases_view_count_and_returns_dto() {
             // given
-            Notice notice = Notice.builder().title("상세조회").build();
+            Notice notice = Notice.builder().title("상세조회").author(adminUser).build();
             ReflectionTestUtils.setField(notice, "viewCount", 0);
             given(noticeRepository.findByIdWithDetails(1L)).willReturn(Optional.of(notice));
             given(userRepository.findById(1L)).willReturn(Optional.of(adminUser));
@@ -265,7 +286,7 @@ class NoticeServiceTest {
                 "대상 설정 정보(targetCompanies, targetDepartmentIds, targetUserIds)를 포함한 상세 정보를 반환한다")
         void it_returns_dto_with_target_fields() {
             // given
-            Notice notice = Notice.builder().title("대상조회").build();
+            Notice notice = Notice.builder().title("대상조회").author(adminUser).build();
             ReflectionTestUtils.setField(notice, "viewCount", 0);
             given(noticeRepository.findByIdWithDetails(1L)).willReturn(Optional.of(notice));
             given(userRepository.findById(1L)).willReturn(Optional.of(adminUser));
@@ -295,7 +316,7 @@ class NoticeServiceTest {
         @DisplayName("mapper를 통해 생성된 NoticeDetailDto의 type 필드가 영문 코드값으로 반환된다")
         void it_returns_dto_with_english_type_code() {
             // given
-            Notice notice = Notice.builder().title("타입조회").build();
+            Notice notice = Notice.builder().title("타입조회").author(adminUser).build();
             ReflectionTestUtils.setField(notice, "viewCount", 0);
             given(noticeRepository.findByIdWithDetails(1L)).willReturn(Optional.of(notice));
             given(userRepository.findById(1L)).willReturn(Optional.of(adminUser));
@@ -323,7 +344,7 @@ class NoticeServiceTest {
         @DisplayName("이전/다음 공지사항 정보를 포함하여 반환한다")
         void it_returns_dto_with_prev_next_notice() {
             // given
-            Notice notice = Notice.builder().title("이전다음조회").build();
+            Notice notice = Notice.builder().title("이전다음조회").author(adminUser).build();
             ReflectionTestUtils.setField(notice, "viewCount", 0);
 
             NoticeDetailDto.NoticeInfo prevInfo =
@@ -511,13 +532,13 @@ class NoticeServiceTest {
         void it_returns_top3_list() {
             // given
             given(userRepository.findById(1L)).willReturn(Optional.of(adminUser));
-            given(noticeQueryRepository.findTop3Notices(eq(1L), eq(true))).willReturn(List.of());
+            given(noticeQueryRepository.findTop3Notices(eq(1L), eq(false))).willReturn(List.of());
             // when
             List<NoticeSummaryDto> result = noticeService.getTop3NoticesForHome(1L);
 
             // then
             assertThat(result).isNotNull();
-            verify(noticeQueryRepository).findTop3Notices(eq(1L), eq(true));
+            verify(noticeQueryRepository).findTop3Notices(eq(1L), eq(false));
         }
     }
 }

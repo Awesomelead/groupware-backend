@@ -90,6 +90,7 @@ import java.util.List;
               - MANAGE_PSM: PSM 관리 권한
               - MANAGE_SAFETY: 안전 보건 관리 권한
               - ACCESS_NOTICE: 공지사항 관리 권한
+              - VIEW_ALL_NOTICE: 공지사항 전체 조회 권한
               - MANAGE_VISITOR: 내방객 관리 권한
               - EDIT_EMPLOYEE_INFO: 직원 관리 권한
               - MANAGE_ANNUAL_LEAVE: 연차 관리 권한
@@ -241,6 +242,7 @@ public class UserController {
                                                                                { "code": "SEND_NOTIFICATION", "label": "알림 전송", "enabled": true },
                                                                                { "code": "MANAGE_DEPARTMENT_EDUCATION", "label": "부서 교육 관리", "enabled": false },
                                                                                { "code": "ACCESS_NOTICE", "label": "공지사항 관리", "enabled": false },
+                                                                               { "code": "VIEW_ALL_NOTICE", "label": "공지사항 전체 조회", "enabled": false },
                                                                                { "code": "MANAGE_VISITOR", "label": "내방객 관리", "enabled": false },
                                                                                { "code": "EDIT_EMPLOYEE_INFO", "label": "직원 관리", "enabled": false },
                                                                                { "code": "MANAGE_ANNUAL_LEAVE", "label": "연차 관리", "enabled": false },

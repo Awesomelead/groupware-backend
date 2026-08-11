@@ -154,7 +154,7 @@ public class NoticeService {
                 userRepository
                         .findById(userId)
                         .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
-        boolean hasAccessNotice = user.hasAuthority(Authority.ACCESS_NOTICE);
+        boolean hasAccessNotice = user.hasAuthority(Authority.VIEW_ALL_NOTICE);
 
         return noticeQueryRepository.findNoticesWithFilters(
                 conditionDto, userId, hasAccessNotice, pageable);
@@ -167,15 +167,18 @@ public class NoticeService {
                         .findByIdWithDetails(noticeId)
                         .orElseThrow(() -> new CustomException(ErrorCode.NOTICE_NOT_FOUND));
 
-        // 조회수 증가
-        notice.increaseViewCount();
-        noticeRepository.save(notice);
-
         User user =
                 userRepository
                         .findById(userId)
                         .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
-        boolean hasAccessNotice = user.hasAuthority(Authority.ACCESS_NOTICE);
+        boolean hasAccessNotice = user.hasAuthority(Authority.VIEW_ALL_NOTICE);
+        if (!canReadNotice(notice, userId, hasAccessNotice)) {
+            throw new CustomException(ErrorCode.NO_AUTHORITY_FOR_NOTICE_READ);
+        }
+
+        // 조회수 증가
+        notice.increaseViewCount();
+        noticeRepository.save(notice);
 
         NoticeDetailDto dto = noticeMapper.toNoticeDetailDto(notice, s3Service);
         dto.setPrevNotice(
@@ -341,6 +344,16 @@ public class NoticeService {
 
         excludeMasterAdminTargets(finalTargetUserIds);
         return finalTargetUserIds;
+    }
+
+    private boolean canReadNotice(Notice notice, Long userId, boolean hasAccessNotice) {
+        if (hasAccessNotice) {
+            return true;
+        }
+        if (notice.getAuthor() != null && userId.equals(notice.getAuthor().getId())) {
+            return true;
+        }
+        return noticeTargetRepository.existsByNoticeIdAndUserId(notice.getId(), userId);
     }
 
     private void excludeMasterAdminTargets(Set<Long> targetUserIds) {
@@ -542,7 +555,7 @@ public class NoticeService {
                         .findById(userId)
                         .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
 
-        boolean hasAccessNotice = user.hasAuthority(Authority.ACCESS_NOTICE);
+        boolean hasAccessNotice = user.hasAuthority(Authority.VIEW_ALL_NOTICE);
 
         return noticeQueryRepository.findTop3Notices(userId, hasAccessNotice);
     }

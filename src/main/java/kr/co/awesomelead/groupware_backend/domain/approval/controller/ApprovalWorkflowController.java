@@ -172,7 +172,7 @@ public class ApprovalWorkflowController {
                 - 그 외 상태: 본인기안, 본인결재, 참조자, 열람권자(완결 후), 부서결재함 대상 문서 조회 가능
 
                 ### 응답 주요 필드
-                - 문서 기본정보/본문(contentDelta, contentHtml)
+                - 문서 기본정보/본문(content)
                 - 결재선/참조자/열람권자(lines)
                 - 첨부파일(attachments)
                 - 의견/처리 이력(actionHistories)
@@ -580,7 +580,7 @@ public class ApprovalWorkflowController {
 
                 ### 입력 규칙
                 - templateId: 필수
-                - title/contentDelta: 임시저장 단계에서는 선택 (상신 시 필수)
+                - title/content: 임시저장 단계에서는 선택 (상신 시 필수)
                 - approvalType=COOPERATIVE일 때 receiverDepartmentId 지정 권장
                 - lines 미입력 시 양식 기본 결재선이 자동 적용됩니다.
                 - lines 입력 시 targetType=USER면 targetUserId, DEPARTMENT면 targetDepartmentId 필수입니다.
@@ -762,7 +762,7 @@ public class ApprovalWorkflowController {
                 - {documentId}: POST /api/approvals/drafts 로 생성한 임시저장 문서 ID
                 - 임시저장 문서가 없으면 먼저 POST /api/approvals/drafts 로 생성해야 합니다.
                 - 임시저장 없이 바로 상신하려면 POST /api/approvals/submit-direct 를 사용하세요.
-                - 상신 시 title/contentDelta는 필수입니다.
+                - 상신 시 title/content는 필수입니다.
                 - approvalType=COOPERATIVE면 receiverDepartmentId를 반드시 지정해야 합니다.
                 - lines 미입력 시 기존 임시저장 결재선을 사용하며, 없으면 양식 기본 결재선을 사용합니다.
                 - 상신 시 문서번호가 자동 부여됩니다.
@@ -788,7 +788,7 @@ public class ApprovalWorkflowController {
 
                 - 내부 동작: 임시저장 생성 -> 상신
                 - 결과로 최종 상신된 documentId를 반환합니다.
-                - title/contentDelta는 필수입니다.
+                - title/content는 필수입니다.
                 - approvalType=COOPERATIVE면 receiverDepartmentId를 반드시 지정해야 합니다.
                 - lines 미입력 시 양식 기본 결재선을 사용합니다.
                 - 상신 시 문서번호가 자동 부여됩니다.
@@ -809,8 +809,7 @@ public class ApprovalWorkflowController {
         ApprovalDraftUpsertRequestDto upsert = new ApprovalDraftUpsertRequestDto();
         upsert.setTemplateId(request.getTemplateId());
         upsert.setTitle(request.getTitle());
-        upsert.setContentDelta(request.getContentDelta());
-        upsert.setContentHtml(request.getContentHtml());
+        upsert.setContent(request.getContent());
         upsert.setApprovalType(request.getApprovalType());
         upsert.setReceiverDepartmentId(request.getReceiverDepartmentId());
         upsert.setLines(request.getLines());
@@ -821,8 +820,7 @@ public class ApprovalWorkflowController {
         ApprovalDraftUpsertRequestDto upsert = new ApprovalDraftUpsertRequestDto();
         upsert.setTemplateId(request.getTemplateId());
         upsert.setTitle(request.getTitle());
-        upsert.setContentDelta(request.getContentDelta());
-        upsert.setContentHtml(request.getContentHtml());
+        upsert.setContent(request.getContent());
         upsert.setApprovalType(request.getApprovalType());
         upsert.setReceiverDepartmentId(request.getReceiverDepartmentId());
         upsert.setLines(request.getLines());

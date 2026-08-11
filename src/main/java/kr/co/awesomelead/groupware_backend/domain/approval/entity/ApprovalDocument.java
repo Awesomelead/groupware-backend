@@ -61,11 +61,7 @@ public class ApprovalDocument extends BaseTimeEntity {
 
     @Lob
     @Column(nullable = false, columnDefinition = "TEXT")
-    private String contentDelta;
-
-    @Lob
-    @Column(columnDefinition = "TEXT")
-    private String contentHtml;
+    private String content;
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 20)

@@ -123,7 +123,7 @@ public class ApprovalTemplateAdminService {
                         .editorType(request.getEditorType())
                         .approvalType(request.getApprovalType())
                         .linePolicy(request.getLinePolicy())
-                        .defaultContentDelta(request.getDefaultContentDelta())
+                        .defaultContent(request.getDefaultContent())
                         .isActive(request.getIsActive())
                         .createdBy(actor)
                         .build();
@@ -169,7 +169,7 @@ public class ApprovalTemplateAdminService {
         template.setEditorType(request.getEditorType());
         template.setApprovalType(request.getApprovalType());
         template.setLinePolicy(request.getLinePolicy());
-        template.setDefaultContentDelta(request.getDefaultContentDelta());
+        template.setDefaultContent(request.getDefaultContent());
         template.setIsActive(request.getIsActive());
 
         replaceTemplateLines(template, request.getLines());
@@ -311,7 +311,7 @@ public class ApprovalTemplateAdminService {
                 .editorType(template.getEditorType())
                 .approvalType(template.getApprovalType())
                 .linePolicy(template.getLinePolicy())
-                .defaultContentDelta(template.getDefaultContentDelta())
+                .defaultContent(template.getDefaultContent())
                 .isActive(template.getIsActive())
                 .lines(lineDtos)
                 .build();

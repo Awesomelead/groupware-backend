@@ -61,11 +61,7 @@ public class ApprovalDocument extends BaseTimeEntity {
 
     @Lob
     @Column(nullable = false, columnDefinition = "TEXT")
-    private String contentDelta;
-
-    @Lob
-    @Column(columnDefinition = "TEXT")
-    private String contentHtml;
+    private String content;
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 20)
@@ -103,6 +99,10 @@ public class ApprovalDocument extends BaseTimeEntity {
     @Builder.Default
     @OneToMany(mappedBy = "document")
     private List<ApprovalActionHistory> actionHistories = new ArrayList<>();
+
+    @Builder.Default
+    @OneToMany(mappedBy = "document")
+    private List<ApprovalComment> comments = new ArrayList<>();
 
     @Builder.Default
     @OneToMany(mappedBy = "document")

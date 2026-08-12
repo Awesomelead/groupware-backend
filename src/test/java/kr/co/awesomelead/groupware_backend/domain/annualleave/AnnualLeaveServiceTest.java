@@ -384,7 +384,7 @@ public class AnnualLeaveServiceTest {
             assertThat(result.get(0).getTitle()).isEqualTo("2026년");
             assertThat(result.get(0).getTotalCount()).isEqualTo(3);
             assertThat(result.get(0).getItems().get(0).getDispatchId()).isEqualTo(10L);
-            assertThat(result.get(0).getItems().get(0).getTitle()).isEqualTo("6월");
+            assertThat(result.get(0).getItems().get(0).getTitle()).isEqualTo("2026년 6월");
             assertThat(result.get(0).getItems().get(0).getOriginalFileName())
                     .isEqualTo("2026_연차현황.xlsx");
             assertThat(result.get(0).getItems().get(0).getSheetName()).isEqualTo("2026-06");
@@ -393,12 +393,12 @@ public class AnnualLeaveServiceTest {
                     .isEqualTo(LocalDateTime.of(2026, 6, 1, 9, 0));
             assertThat(result.get(0).getItems().get(0).getSenderName()).isEqualTo("테스트 업로더");
             assertThat(result.get(0).getItems().get(0).getSenderPosition()).isEqualTo("과장");
-            assertThat(result.get(0).getItems().get(1).getTitle()).isEqualTo("6월");
+            assertThat(result.get(0).getItems().get(1).getTitle()).isEqualTo("2026년 6월");
             assertThat(result.get(0).getItems().get(1).getOriginalFileName())
                     .isEqualTo("2026_연차현황_수정본.xlsx");
             assertThat(result.get(0).getItems().get(0).getFileUrl())
                     .isEqualTo("https://example.com/annual-leave-2026-06-first");
-            assertThat(result.get(0).getItems().get(2).getTitle()).isEqualTo("7월");
+            assertThat(result.get(0).getItems().get(2).getTitle()).isEqualTo("2026년 7월");
             assertThat(result.get(0).getItems().get(2).getFileUrl())
                     .isEqualTo("https://example.com/annual-leave-2026-07-first");
         }
@@ -687,7 +687,7 @@ public class AnnualLeaveServiceTest {
             assertThat(result.getSenderPosition()).isEqualTo("과장");
             assertThat(result.getFileUrl())
                     .isEqualTo("https://example.com/annual-leave-2026-06-first");
-            assertThat(result.getTitle()).isEqualTo("6월");
+            assertThat(result.getTitle()).isEqualTo("2026년 6월");
             assertThat(result.getCompany()).isEqualTo(Company.AWESOME);
         }
     }
@@ -1410,7 +1410,7 @@ public class AnnualLeaveServiceTest {
             @DisplayName("각각 올바른 값을 반환한다")
             void it_returns_title_and_company() {
                 // given
-                String expectedTitle = "7월";
+                String expectedTitle = "2026년 7월";
                 Company expectedCompany = Company.AWESOME;
 
                 // when
@@ -1452,7 +1452,7 @@ public class AnnualLeaveServiceTest {
                 AdminAnnualLeaveDispatchItemResponseDto dto =
                         AdminAnnualLeaveDispatchItemResponseDto.builder()
                                 .dispatchId(10L)
-                                .title("7월")
+                                .title("2026년 7월")
                                 .originalFileName("2026_연차현황.xlsx")
                                 .sheetName("2026-07")
                                 .company(expectedCompany)

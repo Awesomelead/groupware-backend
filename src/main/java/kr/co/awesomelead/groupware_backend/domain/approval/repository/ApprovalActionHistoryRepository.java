@@ -10,4 +10,6 @@ public interface ApprovalActionHistoryRepository
         extends JpaRepository<ApprovalActionHistory, Long> {
 
     List<ApprovalActionHistory> findByDocumentIdOrderByCreatedAtAscIdAsc(Long documentId);
+
+    void deleteByDocumentId(Long documentId);
 }

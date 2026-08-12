@@ -1,53 +1,78 @@
 package kr.co.awesomelead.groupware_backend.domain.approval.service;
 
+import kr.co.awesomelead.groupware_backend.domain.approval.dto.request.ApprovalCommentCreateRequestDto;
+import kr.co.awesomelead.groupware_backend.domain.approval.dto.request.ApprovalDecisionRequestDto;
 import kr.co.awesomelead.groupware_backend.domain.approval.dto.request.ApprovalDirectSubmitRequestDto;
 import kr.co.awesomelead.groupware_backend.domain.approval.dto.request.ApprovalDraftUpsertRequestDto;
 import kr.co.awesomelead.groupware_backend.domain.approval.dto.request.ApprovalLineRequestDto;
 import kr.co.awesomelead.groupware_backend.domain.approval.dto.request.ApprovalSubmitRequestDto;
+import kr.co.awesomelead.groupware_backend.domain.approval.dto.response.ApprovalAttachmentResponseDto;
+import kr.co.awesomelead.groupware_backend.domain.approval.dto.response.ApprovalCommentResponseDto;
+import kr.co.awesomelead.groupware_backend.domain.approval.dto.response.ApprovalDecisionResponseDto;
+import kr.co.awesomelead.groupware_backend.domain.approval.dto.response.ApprovalDetailResponseDto;
 import kr.co.awesomelead.groupware_backend.domain.approval.dto.response.ApprovalDraftResponseDto;
 import kr.co.awesomelead.groupware_backend.domain.approval.dto.response.ApprovalInboxAllResponseDto;
+import kr.co.awesomelead.groupware_backend.domain.approval.dto.response.ApprovalRecallResponseDto;
 import kr.co.awesomelead.groupware_backend.domain.approval.dto.response.ApprovalSubmitResponseDto;
 import kr.co.awesomelead.groupware_backend.domain.approval.dto.response.ApprovalTemplateListResponseDto;
 import kr.co.awesomelead.groupware_backend.domain.approval.entity.ApprovalActionHistory;
+import kr.co.awesomelead.groupware_backend.domain.approval.entity.ApprovalAttachment;
+import kr.co.awesomelead.groupware_backend.domain.approval.entity.ApprovalComment;
 import kr.co.awesomelead.groupware_backend.domain.approval.entity.ApprovalDocument;
 import kr.co.awesomelead.groupware_backend.domain.approval.entity.ApprovalDocumentLine;
+import kr.co.awesomelead.groupware_backend.domain.approval.entity.ApprovalDocumentRead;
+import kr.co.awesomelead.groupware_backend.domain.approval.entity.ApprovalPersonalSetting;
 import kr.co.awesomelead.groupware_backend.domain.approval.entity.ApprovalTemplate;
 import kr.co.awesomelead.groupware_backend.domain.approval.entity.ApprovalTemplateCategory;
 import kr.co.awesomelead.groupware_backend.domain.approval.entity.ApprovalTemplateLine;
 import kr.co.awesomelead.groupware_backend.domain.approval.enums.ApprovalActionType;
+import kr.co.awesomelead.groupware_backend.domain.approval.enums.ApprovalDecisionAction;
 import kr.co.awesomelead.groupware_backend.domain.approval.enums.ApprovalLineStatus;
 import kr.co.awesomelead.groupware_backend.domain.approval.enums.ApprovalRouteRole;
 import kr.co.awesomelead.groupware_backend.domain.approval.enums.ApprovalStatus;
 import kr.co.awesomelead.groupware_backend.domain.approval.enums.ApprovalTargetType;
 import kr.co.awesomelead.groupware_backend.domain.approval.enums.ApprovalType;
 import kr.co.awesomelead.groupware_backend.domain.approval.repository.ApprovalActionHistoryRepository;
+import kr.co.awesomelead.groupware_backend.domain.approval.repository.ApprovalAttachmentRepository;
+import kr.co.awesomelead.groupware_backend.domain.approval.repository.ApprovalCommentRepository;
 import kr.co.awesomelead.groupware_backend.domain.approval.repository.ApprovalDocumentLineRepository;
+import kr.co.awesomelead.groupware_backend.domain.approval.repository.ApprovalDocumentReadRepository;
 import kr.co.awesomelead.groupware_backend.domain.approval.repository.ApprovalDocumentRepository;
+import kr.co.awesomelead.groupware_backend.domain.approval.repository.ApprovalPersonalSettingRepository;
 import kr.co.awesomelead.groupware_backend.domain.approval.repository.ApprovalTemplateCategoryRepository;
 import kr.co.awesomelead.groupware_backend.domain.approval.repository.ApprovalTemplateLineRepository;
 import kr.co.awesomelead.groupware_backend.domain.approval.repository.ApprovalTemplateRepository;
 import kr.co.awesomelead.groupware_backend.domain.department.entity.Department;
 import kr.co.awesomelead.groupware_backend.domain.department.repository.DepartmentRepository;
+import kr.co.awesomelead.groupware_backend.domain.notification.service.NotificationService;
 import kr.co.awesomelead.groupware_backend.domain.user.entity.User;
 import kr.co.awesomelead.groupware_backend.domain.user.repository.UserRepository;
 import kr.co.awesomelead.groupware_backend.global.error.CustomException;
 import kr.co.awesomelead.groupware_backend.global.error.ErrorCode;
+import kr.co.awesomelead.groupware_backend.global.infra.s3.service.S3Service;
 
 import lombok.RequiredArgsConstructor;
 
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
+import org.springframework.web.multipart.MultipartFile;
 
+import java.io.IOException;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Objects;
 
 @Service
 @RequiredArgsConstructor
 public class ApprovalWorkflowService {
+
+    private static final DateTimeFormatter APPROVAL_BOX_DATE_FORMATTER =
+            DateTimeFormatter.ofPattern("MM/dd");
 
     private final ApprovalTemplateCategoryRepository approvalTemplateCategoryRepository;
     private final ApprovalTemplateRepository approvalTemplateRepository;
@@ -55,8 +80,14 @@ public class ApprovalWorkflowService {
     private final ApprovalDocumentRepository approvalDocumentRepository;
     private final ApprovalDocumentLineRepository approvalDocumentLineRepository;
     private final ApprovalActionHistoryRepository approvalActionHistoryRepository;
+    private final ApprovalAttachmentRepository approvalAttachmentRepository;
+    private final ApprovalCommentRepository approvalCommentRepository;
+    private final ApprovalDocumentReadRepository approvalDocumentReadRepository;
+    private final ApprovalPersonalSettingRepository approvalPersonalSettingRepository;
     private final UserRepository userRepository;
     private final DepartmentRepository departmentRepository;
+    private final S3Service s3Service;
+    private final NotificationService notificationService;
 
     @Transactional(readOnly = true)
     public ApprovalTemplateListResponseDto getTemplateList() {
@@ -86,6 +117,73 @@ public class ApprovalWorkflowService {
                         .toList();
 
         return ApprovalTemplateListResponseDto.builder().categories(categoryDtos).build();
+    }
+
+    @Transactional(readOnly = true)
+    public ApprovalDetailResponseDto getApprovalDetail(Long userId, Long documentId) {
+        User user = getUser(userId);
+        Long departmentId = user.getDepartment() != null ? user.getDepartment().getId() : null;
+        ApprovalDocument document =
+                approvalDocumentRepository
+                        .findById(documentId)
+                        .orElseThrow(() -> new CustomException(ErrorCode.APPROVAL_NOT_FOUND));
+
+        if (!canReadDocumentDetail(document, userId, departmentId)) {
+            throw new CustomException(ErrorCode.NOT_APPROVER);
+        }
+
+        List<ApprovalDocumentLine> lines =
+                approvalDocumentLineRepository.findByDocumentIdOrderBySequenceNoAscIdAsc(
+                        documentId);
+        List<ApprovalAttachment> attachments =
+                approvalAttachmentRepository.findByDocumentIdOrderByIdAsc(documentId);
+        List<ApprovalActionHistory> actionHistories =
+                approvalActionHistoryRepository.findByDocumentIdOrderByCreatedAtAscIdAsc(
+                        documentId);
+        List<ApprovalComment> comments =
+                approvalCommentRepository.findByDocumentIdOrderByCreatedAtAscIdAsc(documentId);
+        List<ApprovalDocumentRead> reads =
+                approvalDocumentReadRepository.findByDocumentIdOrderByIdAsc(documentId);
+
+        User drafterUser = document.getDrafterUser();
+        Department drafterDepartment = document.getDrafterDepartment();
+        Department receiverDepartment = document.getReceiverDepartment();
+
+        return ApprovalDetailResponseDto.builder()
+                .documentId(document.getId())
+                .documentNo(document.getDocumentNo())
+                .templateId(document.getTemplate() != null ? document.getTemplate().getId() : null)
+                .templateCode(document.getTemplateCodeSnapshot())
+                .templateName(document.getTemplateNameSnapshot())
+                .title(document.getTitle())
+                .content(document.getContent())
+                .approvalType(document.getApprovalType())
+                .approvalTypeLabel(
+                        document.getApprovalType() != null
+                                ? document.getApprovalType().getDescription()
+                                : null)
+                .status(document.getStatus())
+                .statusLabel(
+                        document.getStatus() != null ? document.getStatus().getDescription() : null)
+                .drafterUserId(drafterUser != null ? drafterUser.getId() : null)
+                .drafterUserName(drafterUser != null ? drafterUser.getDisplayName() : null)
+                .drafterDepartmentId(drafterDepartment != null ? drafterDepartment.getId() : null)
+                .drafterDepartmentName(toDepartmentName(drafterDepartment))
+                .receiverDepartmentId(
+                        receiverDepartment != null ? receiverDepartment.getId() : null)
+                .receiverDepartmentName(toDepartmentName(receiverDepartment))
+                .mine(drafterUser != null && userId.equals(drafterUser.getId()))
+                .submittedAt(document.getSubmittedAt())
+                .completedAt(document.getCompletedAt())
+                .createdAt(document.getCreatedAt())
+                .modifiedAt(document.getModifiedAt())
+                .lines(toDetailLineDtos(lines))
+                .approvalBoxes(toApprovalBoxDtos(document, lines))
+                .attachments(toAttachmentDtos(attachments))
+                .actionHistories(toActionHistoryDtos(actionHistories))
+                .comments(toCommentDtos(comments))
+                .reads(toReadDtos(reads))
+                .build();
     }
 
     @Transactional(readOnly = true)
@@ -259,6 +357,20 @@ public class ApprovalWorkflowService {
     }
 
     @Transactional(readOnly = true)
+    public ApprovalInboxAllResponseDto getCompletedDocuments(Long userId) {
+        User user = getUser(userId);
+        Long departmentId = user.getDepartment() != null ? user.getDepartment().getId() : null;
+
+        List<ApprovalInboxAllResponseDto.DocumentDto> documents =
+                approvalDocumentRepository.findAllWithLinesOrderByIdDesc().stream()
+                        .filter(document -> isCompletedDocument(document, userId, departmentId))
+                        .map(document -> toInboxDocumentDto(document, userId, departmentId))
+                        .toList();
+
+        return ApprovalInboxAllResponseDto.builder().documents(documents).build();
+    }
+
+    @Transactional(readOnly = true)
     public ApprovalInboxAllResponseDto getDepartmentBox(Long userId) {
         User user = getUser(userId);
         if (user.getDepartment() == null) {
@@ -311,8 +423,7 @@ public class ApprovalWorkflowService {
                 document,
                 template,
                 request.getTitle(),
-                request.getContentDelta(),
-                request.getContentHtml(),
+                request.getContent(),
                 request.getApprovalType(),
                 request.getReceiverDepartmentId(),
                 false);
@@ -329,6 +440,233 @@ public class ApprovalWorkflowService {
                 .documentId(document.getId())
                 .status(document.getStatus())
                 .updatedAt(document.getModifiedAt())
+                .build();
+    }
+
+    @Transactional
+    public void deleteDraft(Long userId, Long documentId) {
+        ApprovalDocument document =
+                approvalDocumentRepository
+                        .findByIdAndDrafterUserId(documentId, userId)
+                        .orElseThrow(() -> new CustomException(ErrorCode.APPROVAL_NOT_FOUND));
+        if (document.getStatus() != ApprovalStatus.DRAFT) {
+            throw new CustomException(ErrorCode.INVALID_ARGUMENT);
+        }
+
+        approvalActionHistoryRepository.deleteByDocumentId(documentId);
+        approvalCommentRepository.deleteByDocumentId(documentId);
+        approvalDocumentReadRepository.deleteByDocumentId(documentId);
+        approvalAttachmentRepository.deleteByDocumentId(documentId);
+        approvalDocumentLineRepository.deleteByDocumentId(documentId);
+        approvalDocumentRepository.delete(document);
+    }
+
+    @Transactional
+    public ApprovalCommentResponseDto createComment(
+            Long userId, Long documentId, ApprovalCommentCreateRequestDto request) {
+        User writer = getUser(userId);
+        Long departmentId = writer.getDepartment() != null ? writer.getDepartment().getId() : null;
+        ApprovalDocument document =
+                approvalDocumentRepository
+                        .findById(documentId)
+                        .orElseThrow(() -> new CustomException(ErrorCode.APPROVAL_NOT_FOUND));
+        if (!canReadDocumentDetail(document, userId, departmentId)) {
+            throw new CustomException(ErrorCode.NOT_APPROVER);
+        }
+
+        ApprovalComment comment =
+                approvalCommentRepository.save(
+                        ApprovalComment.builder()
+                                .document(document)
+                                .writerUser(writer)
+                                .content(request.getContent().strip())
+                                .build());
+
+        return toCommentResponseDto(comment);
+    }
+
+    @Transactional
+    public List<ApprovalAttachmentResponseDto> uploadAttachments(
+            Long userId, Long documentId, List<MultipartFile> files) {
+        User uploader = getUser(userId);
+        ApprovalDocument document = getWritableDocumentByDrafter(documentId, userId);
+        if (files == null || files.stream().allMatch(file -> file == null || file.isEmpty())) {
+            throw new CustomException(ErrorCode.INVALID_ARGUMENT);
+        }
+
+        List<ApprovalAttachment> attachments = new ArrayList<>();
+        for (MultipartFile file : files) {
+            if (file == null || file.isEmpty()) {
+                continue;
+            }
+            String s3Key;
+            try {
+                s3Key = s3Service.uploadFile(file);
+            } catch (IOException e) {
+                throw new CustomException(ErrorCode.FILE_UPLOAD_ERROR);
+            }
+
+            attachments.add(
+                    ApprovalAttachment.builder()
+                            .document(document)
+                            .originalFileName(toOriginalFileName(file))
+                            .s3Key(s3Key)
+                            .fileSize(file.getSize())
+                            .uploadedByUser(uploader)
+                            .build());
+        }
+
+        return approvalAttachmentRepository.saveAll(attachments).stream()
+                .map(this::toAttachmentResponseDto)
+                .toList();
+    }
+
+    @Transactional
+    public void deleteAttachment(Long userId, Long documentId, Long attachmentId) {
+        getWritableDocumentByDrafter(documentId, userId);
+        ApprovalAttachment attachment =
+                approvalAttachmentRepository
+                        .findByIdAndDocumentId(attachmentId, documentId)
+                        .orElseThrow(
+                                () -> new CustomException(ErrorCode.APPROVAL_ATTACHMENT_NOT_FOUND));
+
+        approvalAttachmentRepository.delete(attachment);
+        safeDeleteFile(attachment.getS3Key());
+    }
+
+    @Transactional
+    public ApprovalRecallResponseDto recall(Long userId, Long documentId) {
+        User actor = getUser(userId);
+        ApprovalDocument document =
+                approvalDocumentRepository
+                        .findByIdAndDrafterUserIdWithLines(documentId, userId)
+                        .orElseThrow(() -> new CustomException(ErrorCode.APPROVAL_NOT_FOUND));
+        ApprovalStatus fromStatus = document.getStatus();
+        if (fromStatus != ApprovalStatus.IN_PROGRESS) {
+            throw new CustomException(ErrorCode.INVALID_ARGUMENT);
+        }
+
+        document.setStatus(ApprovalStatus.RECALLED);
+        document.setCompletedAt(LocalDateTime.now());
+        approvalDocumentRepository.save(document);
+
+        List<ApprovalDocumentLine> lines =
+                approvalDocumentLineRepository.findByDocumentIdOrderBySequenceNoAscIdAsc(
+                        documentId);
+        lines.stream()
+                .filter(
+                        line ->
+                                line.getLineStatus() == ApprovalLineStatus.WAITING
+                                        || line.getLineStatus() == ApprovalLineStatus.PENDING)
+                .forEach(line -> line.setLineStatus(ApprovalLineStatus.SKIPPED));
+        approvalDocumentLineRepository.saveAll(lines);
+
+        approvalActionHistoryRepository.save(
+                ApprovalActionHistory.builder()
+                        .document(document)
+                        .actionType(ApprovalActionType.RECALL)
+                        .fromStatus(fromStatus)
+                        .toStatus(ApprovalStatus.RECALLED)
+                        .actorUser(actor)
+                        .build());
+
+        return ApprovalRecallResponseDto.builder()
+                .documentId(document.getId())
+                .documentNo(document.getDocumentNo())
+                .status(document.getStatus())
+                .statusLabel(document.getStatus().getDescription())
+                .title(document.getTitle())
+                .recalledAt(document.getCompletedAt())
+                .build();
+    }
+
+    @Transactional
+    public ApprovalDecisionResponseDto decide(
+            Long userId, Long documentId, ApprovalDecisionRequestDto request) {
+        User actor = getUser(userId);
+        ApprovalDocument document =
+                approvalDocumentRepository
+                        .findById(documentId)
+                        .orElseThrow(() -> new CustomException(ErrorCode.APPROVAL_NOT_FOUND));
+        if (document.getStatus() != ApprovalStatus.IN_PROGRESS) {
+            throw new CustomException(ErrorCode.INVALID_ARGUMENT);
+        }
+
+        Long departmentId = actor.getDepartment() != null ? actor.getDepartment().getId() : null;
+        List<ApprovalDocumentLine> lines =
+                approvalDocumentLineRepository.findByDocumentIdOrderBySequenceNoAscIdAsc(
+                        documentId);
+        ApprovalDocumentLine currentLine =
+                lines.stream()
+                        .filter(line -> line.getLineStatus() == ApprovalLineStatus.PENDING)
+                        .findFirst()
+                        .orElseThrow(() -> new CustomException(ErrorCode.NOT_YOUR_TURN));
+        if (!isMyProcessingLine(currentLine, userId, departmentId)) {
+            throw new CustomException(ErrorCode.NOT_APPROVER);
+        }
+
+        ApprovalDecisionAction action = request.getAction();
+        String comment = normalizeComment(request.getComment());
+        LocalDateTime processedAt = LocalDateTime.now();
+        ApprovalDocumentLine nextLine = null;
+        ApprovalStatus fromStatus = document.getStatus();
+
+        if (action == ApprovalDecisionAction.APPROVE) {
+            currentLine.setLineStatus(ApprovalLineStatus.APPROVED);
+            currentLine.setProcessedByUser(actor);
+            currentLine.setProcessedComment(comment);
+            currentLine.setProcessedAt(processedAt);
+            nextLine = activateNextProcessingLine(lines, currentLine);
+            if (nextLine == null) {
+                document.setStatus(ApprovalStatus.APPROVED);
+                document.setCompletedAt(processedAt);
+            }
+        } else if (action == ApprovalDecisionAction.REJECT) {
+            currentLine.setLineStatus(ApprovalLineStatus.REJECTED);
+            currentLine.setProcessedByUser(actor);
+            currentLine.setProcessedComment(comment);
+            currentLine.setProcessedAt(processedAt);
+            document.setStatus(ApprovalStatus.REJECTED);
+            document.setCompletedAt(processedAt);
+            skipWaitingProcessingLines(lines, currentLine);
+        } else if (action == ApprovalDecisionAction.HOLD) {
+            currentLine.setProcessedComment(comment);
+        } else {
+            throw new CustomException(ErrorCode.INVALID_ARGUMENT);
+        }
+
+        approvalDocumentLineRepository.saveAll(lines);
+        approvalDocumentRepository.save(document);
+        approvalActionHistoryRepository.save(
+                ApprovalActionHistory.builder()
+                        .document(document)
+                        .documentLine(currentLine)
+                        .actionType(toActionType(action))
+                        .fromStatus(fromStatus)
+                        .toStatus(document.getStatus())
+                        .actorUser(actor)
+                        .actionComment(comment)
+                        .build());
+
+        sendDecisionNotification(action, document, nextLine, lines, comment);
+
+        return ApprovalDecisionResponseDto.builder()
+                .documentId(document.getId())
+                .documentNo(document.getDocumentNo())
+                .action(action)
+                .actionLabel(action.getDescription())
+                .status(document.getStatus())
+                .statusLabel(document.getStatus().getDescription())
+                .lineId(currentLine.getId())
+                .lineStatus(currentLine.getLineStatus())
+                .lineStatusLabel(currentLine.getLineStatus().getDescription())
+                .nextLineId(nextLine != null ? nextLine.getId() : null)
+                .nextTargetName(nextLine != null ? nextLine.getTargetNameSnapshot() : null)
+                .processedByUserId(actor.getId())
+                .processedByUserName(actor.getDisplayName())
+                .comment(comment)
+                .processedAt(processedAt)
+                .completedAt(document.getCompletedAt())
                 .build();
     }
 
@@ -353,12 +691,9 @@ public class ApprovalWorkflowService {
                 document,
                 template,
                 StringUtils.hasText(request.getTitle()) ? request.getTitle() : document.getTitle(),
-                StringUtils.hasText(request.getContentDelta())
-                        ? request.getContentDelta()
-                        : document.getContentDelta(),
-                request.getContentHtml() != null
-                        ? request.getContentHtml()
-                        : document.getContentHtml(),
+                StringUtils.hasText(request.getContent())
+                        ? request.getContent()
+                        : document.getContent(),
                 request.getApprovalType() != null
                         ? request.getApprovalType()
                         : document.getApprovalType(),
@@ -403,6 +738,8 @@ public class ApprovalWorkflowService {
                         .actorUser(actor)
                         .build());
 
+        sendSubmitNotification(document, lines);
+
         return ApprovalSubmitResponseDto.builder()
                 .documentId(document.getId())
                 .documentNo(document.getDocumentNo())
@@ -430,8 +767,7 @@ public class ApprovalWorkflowService {
         draftRequest.setDocumentId(null);
         draftRequest.setTemplateId(request.getTemplateId());
         draftRequest.setTitle(request.getTitle());
-        draftRequest.setContentDelta(request.getContentDelta());
-        draftRequest.setContentHtml(request.getContentHtml());
+        draftRequest.setContent(request.getContent());
         draftRequest.setApprovalType(request.getApprovalType());
         draftRequest.setReceiverDepartmentId(request.getReceiverDepartmentId());
         draftRequest.setLines(request.getLines());
@@ -440,13 +776,453 @@ public class ApprovalWorkflowService {
 
         ApprovalSubmitRequestDto submitRequest = new ApprovalSubmitRequestDto();
         submitRequest.setTitle(request.getTitle());
-        submitRequest.setContentDelta(request.getContentDelta());
-        submitRequest.setContentHtml(request.getContentHtml());
+        submitRequest.setContent(request.getContent());
         submitRequest.setApprovalType(request.getApprovalType());
         submitRequest.setReceiverDepartmentId(request.getReceiverDepartmentId());
         submitRequest.setLines(request.getLines());
 
         return submit(userId, draftResult.getDocumentId(), submitRequest);
+    }
+
+    private ApprovalDocumentLine activateNextProcessingLine(
+            List<ApprovalDocumentLine> lines, ApprovalDocumentLine currentLine) {
+        List<ApprovalDocumentLine> processingLines =
+                lines.stream()
+                        .filter(line -> isProcessingRole(line.getRole()))
+                        .sorted(this::compareLineOrder)
+                        .toList();
+
+        boolean afterCurrent = false;
+        for (ApprovalDocumentLine line : processingLines) {
+            if (line.getId().equals(currentLine.getId())) {
+                afterCurrent = true;
+                continue;
+            }
+            if (afterCurrent && line.getLineStatus() == ApprovalLineStatus.WAITING) {
+                line.setLineStatus(ApprovalLineStatus.PENDING);
+                return line;
+            }
+        }
+        return null;
+    }
+
+    private void skipWaitingProcessingLines(
+            List<ApprovalDocumentLine> lines, ApprovalDocumentLine currentLine) {
+        lines.stream()
+                .filter(line -> isProcessingRole(line.getRole()))
+                .filter(line -> !line.getId().equals(currentLine.getId()))
+                .filter(
+                        line ->
+                                line.getLineStatus() == ApprovalLineStatus.WAITING
+                                        || line.getLineStatus() == ApprovalLineStatus.PENDING)
+                .forEach(line -> line.setLineStatus(ApprovalLineStatus.SKIPPED));
+    }
+
+    private ApprovalActionType toActionType(ApprovalDecisionAction action) {
+        return switch (action) {
+            case APPROVE -> ApprovalActionType.APPROVE;
+            case REJECT -> ApprovalActionType.REJECT;
+            case HOLD -> ApprovalActionType.HOLD;
+        };
+    }
+
+    private void sendSubmitNotification(
+            ApprovalDocument document, List<ApprovalDocumentLine> lines) {
+        List<Long> firstApproverIds =
+                lines.stream()
+                        .filter(line -> isProcessingRole(line.getRole()))
+                        .filter(line -> line.getLineStatus() == ApprovalLineStatus.PENDING)
+                        .sorted(this::compareLineOrder)
+                        .findFirst()
+                        .map(this::resolveLineTargetUserIds)
+                        .orElse(List.of());
+        if (firstApproverIds.isEmpty()) {
+            return;
+        }
+
+        Long firstApproverId = firstApproverIds.get(0);
+        List<Long> referrerIds = resolveRoleTargetUserIds(lines, ApprovalRouteRole.REFERENCE);
+        notificationService.sendApprovalCreatedAlert(
+                document.getId(), document.getTitle(), firstApproverId, referrerIds);
+
+        firstApproverIds.stream()
+                .skip(1)
+                .forEach(
+                        approverId ->
+                                notificationService.sendApprovalNextStepAlert(
+                                        approverId, document.getId(), document.getTitle()));
+    }
+
+    private void sendDecisionNotification(
+            ApprovalDecisionAction action,
+            ApprovalDocument document,
+            ApprovalDocumentLine nextLine,
+            List<ApprovalDocumentLine> lines,
+            String comment) {
+        if (action == ApprovalDecisionAction.APPROVE) {
+            if (nextLine != null) {
+                resolveLineTargetUserIds(nextLine)
+                        .forEach(
+                                approverId ->
+                                        notificationService.sendApprovalNextStepAlert(
+                                                approverId, document.getId(), document.getTitle()));
+                return;
+            }
+
+            Long drafterId =
+                    document.getDrafterUser() != null ? document.getDrafterUser().getId() : null;
+            if (drafterId == null) {
+                return;
+            }
+            List<Long> viewerIds =
+                    resolveRoleTargetUserIds(lines, ApprovalRouteRole.VIEWER).stream()
+                            .filter(viewerId -> !viewerId.equals(drafterId))
+                            .toList();
+            notificationService.sendApprovalFinallyApprovedAlert(
+                    document.getId(), document.getTitle(), drafterId, viewerIds);
+            return;
+        }
+
+        if (action == ApprovalDecisionAction.REJECT && document.getDrafterUser() != null) {
+            notificationService.sendApprovalRejectedAlert(
+                    document.getDrafterUser().getId(),
+                    document.getId(),
+                    document.getTitle(),
+                    comment != null ? comment : "");
+        }
+    }
+
+    private List<Long> resolveRoleTargetUserIds(
+            List<ApprovalDocumentLine> lines, ApprovalRouteRole role) {
+        return lines.stream()
+                .filter(line -> line.getRole() == role)
+                .flatMap(line -> resolveLineTargetUserIds(line).stream())
+                .filter(Objects::nonNull)
+                .distinct()
+                .toList();
+    }
+
+    private List<Long> resolveLineTargetUserIds(ApprovalDocumentLine line) {
+        if (line.getTargetType() == ApprovalTargetType.USER) {
+            return line.getTargetUser() != null ? List.of(line.getTargetUser().getId()) : List.of();
+        }
+        if (line.getTargetDepartment() == null) {
+            return List.of();
+        }
+        return userRepository.findAllIdsByDepartmentId(line.getTargetDepartment().getId());
+    }
+
+    private String normalizeComment(String comment) {
+        return StringUtils.hasText(comment) ? comment.strip() : null;
+    }
+
+    private int compareLineOrder(ApprovalDocumentLine left, ApprovalDocumentLine right) {
+        int sequenceCompare =
+                Comparator.nullsLast(Integer::compareTo)
+                        .compare(left.getSequenceNo(), right.getSequenceNo());
+        if (sequenceCompare != 0) {
+            return sequenceCompare;
+        }
+        return Comparator.nullsLast(Long::compareTo).compare(left.getId(), right.getId());
+    }
+
+    private List<ApprovalDetailResponseDto.LineDto> toDetailLineDtos(
+            List<ApprovalDocumentLine> lines) {
+        return lines.stream()
+                .sorted(
+                        Comparator.comparing(
+                                        ApprovalDocumentLine::getSequenceNo,
+                                        Comparator.nullsLast(Integer::compareTo))
+                                .thenComparing(ApprovalDocumentLine::getId))
+                .map(this::toDetailLineDto)
+                .toList();
+    }
+
+    private ApprovalDetailResponseDto.LineDto toDetailLineDto(ApprovalDocumentLine line) {
+        User processedByUser = line.getProcessedByUser();
+        return ApprovalDetailResponseDto.LineDto.builder()
+                .lineId(line.getId())
+                .role(line.getRole())
+                .roleLabel(line.getRole() != null ? line.getRole().getDescription() : null)
+                .targetType(line.getTargetType())
+                .targetUserId(line.getTargetUser() != null ? line.getTargetUser().getId() : null)
+                .targetDepartmentId(
+                        line.getTargetDepartment() != null
+                                ? line.getTargetDepartment().getId()
+                                : null)
+                .targetName(line.getTargetNameSnapshot())
+                .sequenceNo(line.getSequenceNo())
+                .required(line.getIsRequired())
+                .lineStatus(line.getLineStatus())
+                .lineStatusLabel(
+                        line.getLineStatus() != null ? line.getLineStatus().getDescription() : null)
+                .processedByUserId(processedByUser != null ? processedByUser.getId() : null)
+                .processedByUserName(
+                        processedByUser != null ? processedByUser.getDisplayName() : null)
+                .processedComment(line.getProcessedComment())
+                .processedAt(line.getProcessedAt())
+                .build();
+    }
+
+    private List<ApprovalDetailResponseDto.ApprovalBoxDto> toApprovalBoxDtos(
+            ApprovalDocument document, List<ApprovalDocumentLine> lines) {
+        List<ApprovalDetailResponseDto.ApprovalBoxDto> approvalBoxes = new ArrayList<>();
+        approvalBoxes.add(toDraftApprovalBoxDto(document));
+        approvalBoxes.addAll(
+                lines.stream()
+                        .filter(line -> isApprovalBoxRole(line.getRole()))
+                        .sorted(this::compareLineOrder)
+                        .map(this::toApprovalBoxDto)
+                        .toList());
+        return approvalBoxes;
+    }
+
+    private ApprovalDetailResponseDto.ApprovalBoxDto toDraftApprovalBoxDto(
+            ApprovalDocument document) {
+        User drafter = document.getDrafterUser();
+        LocalDateTime draftedAt =
+                document.getSubmittedAt() != null
+                        ? document.getSubmittedAt()
+                        : document.getCreatedAt();
+        LocalDate draftedDate = draftedAt != null ? draftedAt.toLocalDate() : null;
+        return ApprovalDetailResponseDto.ApprovalBoxDto.builder()
+                .type("DRAFT")
+                .label("기안")
+                .userId(drafter != null ? drafter.getId() : null)
+                .userName(drafter != null ? drafter.getDisplayName() : null)
+                .departmentName(drafter != null ? toDepartmentName(drafter.getDepartment()) : null)
+                .positionName(toPositionName(drafter))
+                .sequenceNo(0)
+                .signatureImageUrl(toSignatureImageUrl(drafter))
+                .processedDate(draftedDate)
+                .processedAt(draftedAt)
+                .displayDate(toApprovalBoxDisplayDate(draftedDate))
+                .displayText(toApprovalBoxDisplayText("기안", draftedDate))
+                .build();
+    }
+
+    private ApprovalDetailResponseDto.ApprovalBoxDto toApprovalBoxDto(ApprovalDocumentLine line) {
+        User displayUser =
+                line.getProcessedByUser() != null
+                        ? line.getProcessedByUser()
+                        : line.getTargetUser();
+        LocalDate processedDate =
+                line.getProcessedAt() != null ? line.getProcessedAt().toLocalDate() : null;
+        String label = toApprovalBoxLabel(line);
+        String displayLabel = toApprovalBoxDisplayLabel(line, label);
+        boolean signed = isSignedApprovalBox(line);
+
+        return ApprovalDetailResponseDto.ApprovalBoxDto.builder()
+                .lineId(line.getId())
+                .role(line.getRole())
+                .type(line.getRole() != null ? line.getRole().name() : null)
+                .label(label)
+                .userId(displayUser != null ? displayUser.getId() : null)
+                .userName(displayUser != null ? displayUser.getDisplayName() : null)
+                .departmentName(
+                        displayUser != null
+                                ? toDepartmentName(displayUser.getDepartment())
+                                : toDepartmentName(line.getTargetDepartment()))
+                .positionName(toPositionName(displayUser))
+                .sequenceNo(line.getSequenceNo())
+                .lineStatus(line.getLineStatus())
+                .lineStatusLabel(
+                        line.getLineStatus() != null ? line.getLineStatus().getDescription() : null)
+                .signatureImageUrl(signed ? toSignatureImageUrl(displayUser) : null)
+                .processedDate(signed ? processedDate : null)
+                .processedAt(signed ? line.getProcessedAt() : null)
+                .displayDate(signed ? toApprovalBoxDisplayDate(processedDate) : null)
+                .displayText(signed ? toApprovalBoxDisplayText(displayLabel, processedDate) : null)
+                .build();
+    }
+
+    private boolean isApprovalBoxRole(ApprovalRouteRole role) {
+        return role == ApprovalRouteRole.APPROVAL_LINE
+                || role == ApprovalRouteRole.AGREEMENT_REQUIRED
+                || role == ApprovalRouteRole.AGREEMENT_OPTIONAL
+                || role == ApprovalRouteRole.RECEIVER_DEPARTMENT;
+    }
+
+    private boolean isSignedApprovalBox(ApprovalDocumentLine line) {
+        return line.getProcessedAt() != null
+                && (line.getLineStatus() == ApprovalLineStatus.APPROVED
+                        || line.getLineStatus() == ApprovalLineStatus.REJECTED);
+    }
+
+    private String toApprovalBoxLabel(ApprovalDocumentLine line) {
+        if (line.getRole() == ApprovalRouteRole.AGREEMENT_REQUIRED
+                || line.getRole() == ApprovalRouteRole.AGREEMENT_OPTIONAL) {
+            return "합의";
+        }
+        if (line.getRole() == ApprovalRouteRole.RECEIVER_DEPARTMENT) {
+            return "수신";
+        }
+        return "승인";
+    }
+
+    private String toApprovalBoxDisplayLabel(ApprovalDocumentLine line, String defaultLabel) {
+        if (line.getLineStatus() == ApprovalLineStatus.REJECTED) {
+            return "반려";
+        }
+        return defaultLabel;
+    }
+
+    private String toApprovalBoxDisplayDate(LocalDate date) {
+        return date != null ? date.format(APPROVAL_BOX_DATE_FORMATTER) : null;
+    }
+
+    private String toApprovalBoxDisplayText(String label, LocalDate date) {
+        String displayDate = toApprovalBoxDisplayDate(date);
+        return displayDate != null ? label + " " + displayDate : label;
+    }
+
+    private String toSignatureImageUrl(User user) {
+        if (user == null) {
+            return null;
+        }
+        return approvalPersonalSettingRepository
+                .findByUserId(user.getId())
+                .map(ApprovalPersonalSetting::getSignatureImageKey)
+                .filter(StringUtils::hasText)
+                .map(s3Service::getPresignedViewUrl)
+                .orElse(null);
+    }
+
+    private String toPositionName(User user) {
+        return user != null && user.getPosition() != null
+                ? user.getPosition().getDescription()
+                : null;
+    }
+
+    private List<ApprovalDetailResponseDto.AttachmentDto> toAttachmentDtos(
+            List<ApprovalAttachment> attachments) {
+        return attachments.stream().map(this::toAttachmentDto).toList();
+    }
+
+    private ApprovalDetailResponseDto.AttachmentDto toAttachmentDto(ApprovalAttachment attachment) {
+        User uploadedByUser = attachment.getUploadedByUser();
+        return ApprovalDetailResponseDto.AttachmentDto.builder()
+                .attachmentId(attachment.getId())
+                .originalFileName(attachment.getOriginalFileName())
+                .fileKey(attachment.getS3Key())
+                .fileSize(attachment.getFileSize())
+                .viewUrl(s3Service.getProxyViewUrl(attachment.getS3Key()))
+                .downloadUrl(
+                        s3Service.getPresignedDownloadUrl(
+                                attachment.getS3Key(), attachment.getOriginalFileName()))
+                .uploadedByUserId(uploadedByUser != null ? uploadedByUser.getId() : null)
+                .uploadedByUserName(uploadedByUser != null ? uploadedByUser.getDisplayName() : null)
+                .build();
+    }
+
+    private ApprovalAttachmentResponseDto toAttachmentResponseDto(ApprovalAttachment attachment) {
+        User uploadedByUser = attachment.getUploadedByUser();
+        ApprovalDocument document = attachment.getDocument();
+        return ApprovalAttachmentResponseDto.builder()
+                .attachmentId(attachment.getId())
+                .documentId(document != null ? document.getId() : null)
+                .originalFileName(attachment.getOriginalFileName())
+                .fileKey(attachment.getS3Key())
+                .fileSize(attachment.getFileSize())
+                .viewUrl(s3Service.getProxyViewUrl(attachment.getS3Key()))
+                .downloadUrl(
+                        s3Service.getPresignedDownloadUrl(
+                                attachment.getS3Key(), attachment.getOriginalFileName()))
+                .uploadedByUserId(uploadedByUser != null ? uploadedByUser.getId() : null)
+                .uploadedByUserName(uploadedByUser != null ? uploadedByUser.getDisplayName() : null)
+                .uploadedAt(attachment.getCreatedAt())
+                .build();
+    }
+
+    private List<ApprovalDetailResponseDto.ActionHistoryDto> toActionHistoryDtos(
+            List<ApprovalActionHistory> actionHistories) {
+        return actionHistories.stream().map(this::toActionHistoryDto).toList();
+    }
+
+    private ApprovalDetailResponseDto.ActionHistoryDto toActionHistoryDto(
+            ApprovalActionHistory history) {
+        User actorUser = history.getActorUser();
+        return ApprovalDetailResponseDto.ActionHistoryDto.builder()
+                .historyId(history.getId())
+                .actionType(history.getActionType())
+                .actionTypeLabel(
+                        history.getActionType() != null
+                                ? history.getActionType().getDescription()
+                                : null)
+                .fromStatus(history.getFromStatus())
+                .fromStatusLabel(
+                        history.getFromStatus() != null
+                                ? history.getFromStatus().getDescription()
+                                : null)
+                .toStatus(history.getToStatus())
+                .toStatusLabel(
+                        history.getToStatus() != null
+                                ? history.getToStatus().getDescription()
+                                : null)
+                .actorUserId(actorUser != null ? actorUser.getId() : null)
+                .actorUserName(actorUser != null ? actorUser.getDisplayName() : null)
+                .actionComment(history.getActionComment())
+                .createdAt(history.getCreatedAt())
+                .build();
+    }
+
+    private List<ApprovalDetailResponseDto.CommentDto> toCommentDtos(
+            List<ApprovalComment> comments) {
+        return comments.stream().map(this::toCommentDto).toList();
+    }
+
+    private ApprovalDetailResponseDto.CommentDto toCommentDto(ApprovalComment comment) {
+        User writer = comment.getWriterUser();
+        return ApprovalDetailResponseDto.CommentDto.builder()
+                .commentId(comment.getId())
+                .writerUserId(writer != null ? writer.getId() : null)
+                .writerUserName(writer != null ? writer.getDisplayName() : null)
+                .writerDepartmentName(
+                        writer != null ? toDepartmentName(writer.getDepartment()) : null)
+                .writerPositionName(toPositionName(writer))
+                .content(comment.getContent())
+                .createdAt(comment.getCreatedAt())
+                .build();
+    }
+
+    private ApprovalCommentResponseDto toCommentResponseDto(ApprovalComment comment) {
+        User writer = comment.getWriterUser();
+        ApprovalDocument document = comment.getDocument();
+        return ApprovalCommentResponseDto.builder()
+                .commentId(comment.getId())
+                .documentId(document != null ? document.getId() : null)
+                .writerUserId(writer != null ? writer.getId() : null)
+                .writerUserName(writer != null ? writer.getDisplayName() : null)
+                .writerDepartmentName(
+                        writer != null ? toDepartmentName(writer.getDepartment()) : null)
+                .writerPositionName(toPositionName(writer))
+                .content(comment.getContent())
+                .createdAt(comment.getCreatedAt())
+                .build();
+    }
+
+    private List<ApprovalDetailResponseDto.ReadDto> toReadDtos(List<ApprovalDocumentRead> reads) {
+        return reads.stream().map(this::toReadDto).toList();
+    }
+
+    private ApprovalDetailResponseDto.ReadDto toReadDto(ApprovalDocumentRead read) {
+        return ApprovalDetailResponseDto.ReadDto.builder()
+                .readId(read.getId())
+                .readRole(read.getReadRole())
+                .targetType(read.getTargetType())
+                .targetUserId(read.getTargetUser() != null ? read.getTargetUser().getId() : null)
+                .targetDepartmentId(
+                        read.getTargetDepartment() != null
+                                ? read.getTargetDepartment().getId()
+                                : null)
+                .targetName(
+                        toTargetName(
+                                read.getTargetType(),
+                                read.getTargetUser(),
+                                read.getTargetDepartment()))
+                .read(read.getIsRead())
+                .readAt(read.getReadAt())
+                .build();
     }
 
     private ApprovalTemplateListResponseDto.TemplateDto toTemplateDto(ApprovalTemplate template) {
@@ -487,7 +1263,7 @@ public class ApprovalWorkflowService {
                 .editorType(template.getEditorType())
                 .approvalType(template.getApprovalType())
                 .linePolicy(template.getLinePolicy())
-                .defaultContentDelta(template.getDefaultContentDelta())
+                .defaultContent(template.getDefaultContent())
                 .defaultLines(lineDtos)
                 .build();
     }
@@ -498,6 +1274,19 @@ public class ApprovalWorkflowService {
                 || isBeforeMyTurnDocument(document, userId, departmentId)
                 || isProcessedByMeDocument(document, userId, departmentId)
                 || isRejectedOrRecalledDocument(document, userId, departmentId);
+    }
+
+    private boolean canReadDocumentDetail(
+            ApprovalDocument document, Long userId, Long departmentId) {
+        if (document.getStatus() == ApprovalStatus.DRAFT) {
+            return isDraftedByMe(document, userId);
+        }
+        return isDraftedByMe(document, userId)
+                || isMyApprovalDocument(document, userId, departmentId)
+                || isReferenceDocument(document, userId, departmentId)
+                || isViewerAcquiredDocument(document, userId, departmentId)
+                || isViewerGrantedDocument(document, userId)
+                || (departmentId != null && isDepartmentBoxDocument(document, departmentId));
     }
 
     private boolean isDraftBoxDocument(ApprovalDocument document, Long userId) {
@@ -546,6 +1335,13 @@ public class ApprovalWorkflowService {
         }
         return document.getLines().stream()
                 .anyMatch(line -> line.getRole() == ApprovalRouteRole.VIEWER);
+    }
+
+    private boolean isCompletedDocument(ApprovalDocument document, Long userId, Long departmentId) {
+        if (document.getStatus() != ApprovalStatus.APPROVED) {
+            return false;
+        }
+        return isDraftedByMe(document, userId);
     }
 
     private boolean isDepartmentBoxDocument(ApprovalDocument document, Long departmentId) {
@@ -867,8 +1663,7 @@ public class ApprovalWorkflowService {
             ApprovalDocument document,
             ApprovalTemplate template,
             String title,
-            String contentDelta,
-            String contentHtml,
+            String content,
             ApprovalType approvalType,
             Long receiverDepartmentId,
             boolean strictSubmit) {
@@ -879,7 +1674,7 @@ public class ApprovalWorkflowService {
         if (strictSubmit && !StringUtils.hasText(title)) {
             throw new CustomException(ErrorCode.INVALID_ARGUMENT);
         }
-        if (strictSubmit && !StringUtils.hasText(contentDelta)) {
+        if (strictSubmit && !StringUtils.hasText(content)) {
             throw new CustomException(ErrorCode.INVALID_ARGUMENT);
         }
 
@@ -889,18 +1684,15 @@ public class ApprovalWorkflowService {
                         : (title != null
                                 ? title
                                 : (document.getTitle() != null ? document.getTitle() : ""));
-        String resolvedContentDelta =
+        String resolvedContent =
                 strictSubmit
-                        ? contentDelta
-                        : (contentDelta != null
-                                ? contentDelta
-                                : (document.getContentDelta() != null
-                                        ? document.getContentDelta()
-                                        : ""));
+                        ? content
+                        : (content != null
+                                ? content
+                                : (document.getContent() != null ? document.getContent() : ""));
 
         document.setTitle(resolvedTitle.strip());
-        document.setContentDelta(resolvedContentDelta);
-        document.setContentHtml(contentHtml);
+        document.setContent(resolvedContent);
 
         ApprovalType resolvedType =
                 approvalType != null
@@ -1078,6 +1870,43 @@ public class ApprovalWorkflowService {
             return "[" + departmentName + "] " + name + " (" + position + ")";
         }
         return "[" + departmentName + "] " + name;
+    }
+
+    private String toDepartmentName(Department department) {
+        if (department == null || department.getName() == null) {
+            return null;
+        }
+        return department.getName().getDescription();
+    }
+
+    private ApprovalDocument getWritableDocumentByDrafter(Long documentId, Long userId) {
+        ApprovalDocument document =
+                approvalDocumentRepository
+                        .findByIdAndDrafterUserId(documentId, userId)
+                        .orElseThrow(() -> new CustomException(ErrorCode.APPROVAL_NOT_FOUND));
+        if (!isWritableDocumentStatus(document.getStatus())) {
+            throw new CustomException(ErrorCode.INVALID_ARGUMENT);
+        }
+        return document;
+    }
+
+    private boolean isWritableDocumentStatus(ApprovalStatus status) {
+        return status == ApprovalStatus.DRAFT
+                || status == ApprovalStatus.RECALLED
+                || status == ApprovalStatus.REJECTED;
+    }
+
+    private String toOriginalFileName(MultipartFile file) {
+        return StringUtils.hasText(file.getOriginalFilename())
+                ? file.getOriginalFilename()
+                : "file";
+    }
+
+    private void safeDeleteFile(String fileKey) {
+        try {
+            s3Service.deleteFile(fileKey);
+        } catch (Exception ignored) {
+        }
     }
 
     private User getUser(Long userId) {

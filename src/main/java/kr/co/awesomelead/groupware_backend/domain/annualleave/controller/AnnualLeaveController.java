@@ -145,7 +145,7 @@ public class AnnualLeaveController {
                                     "senderPosition": "과장",
                                     "createdAt": "2026-05-31T15:29:04",
                                     "fileUrl": "https://...presigned-url",
-                                    "title": "6월",
+                                    "title": "2026년 6월",
                                     "company": "AWESOME"
                                 }
                                 }

@@ -19,13 +19,8 @@ public class ApprovalSubmitRequestDto {
     @Schema(description = "문서 제목 (상신 시 비어있으면 오류)", example = "국외출장여비정산서")
     private String title;
 
-    @Schema(
-            description = "Quill Delta JSON 문자열 (상신 시 비어있으면 오류)",
-            example = "{\"ops\":[{\"insert\":\"출장 목적: 일본 법인 미팅\\n\"}]}")
-    private String contentDelta;
-
-    @Schema(description = "HTML 본문(선택)")
-    private String contentHtml;
+    @Schema(description = "문서 본문 문자열 (상신 시 비어있으면 오류)", example = "출장 목적: 일본 법인 미팅")
+    private String content;
 
     @Schema(
             description = "결재유형",

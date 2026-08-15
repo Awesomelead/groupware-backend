@@ -40,7 +40,8 @@ public class SavedApprovalLineApprovalTargetRequestDto {
     private ApprovalRouteRole approvalLineRole;
 
     @Schema(
-            description = "합의부서 내 합의방법. approvalLineRole이 AGREEMENT_REQUIRED/AGREEMENT_OPTIONAL일 때 사용",
+            description =
+                    "합의부서 내 합의방법. approvalLineRole이 AGREEMENT_REQUIRED/AGREEMENT_OPTIONAL일 때 사용",
             example = "SEQUENTIAL",
             allowableValues = {"SEQUENTIAL", "PARALLEL"})
     private ApprovalAgreementMethod agreementMethod;

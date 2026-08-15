@@ -1,7 +1,7 @@
 package kr.co.awesomelead.groupware_backend.domain.approval.service;
 
-import kr.co.awesomelead.groupware_backend.domain.approval.dto.request.SavedApprovalLineDetailRequestDto;
 import kr.co.awesomelead.groupware_backend.domain.approval.dto.request.SavedApprovalLineApprovalTargetRequestDto;
+import kr.co.awesomelead.groupware_backend.domain.approval.dto.request.SavedApprovalLineDetailRequestDto;
 import kr.co.awesomelead.groupware_backend.domain.approval.dto.request.SavedApprovalLineTargetRequestDto;
 import kr.co.awesomelead.groupware_backend.domain.approval.dto.request.SavedDepartmentApprovalLineUpsertRequestDto;
 import kr.co.awesomelead.groupware_backend.domain.approval.dto.request.SavedPersonalApprovalLineUpsertRequestDto;
@@ -241,17 +241,13 @@ public class SavedApprovalLineService {
     private List<SavedApprovalLineDetailRequestDto> toDetailRequests(
             SavedPersonalApprovalLineUpsertRequestDto request) {
         return toDetailRequests(
-                request.getApprovalLines(),
-                request.getReferences(),
-                request.getViewers());
+                request.getApprovalLines(), request.getReferences(), request.getViewers());
     }
 
     private List<SavedApprovalLineDetailRequestDto> toDetailRequests(
             SavedDepartmentApprovalLineUpsertRequestDto request) {
         return toDetailRequests(
-                request.getApprovalLines(),
-                request.getReferences(),
-                request.getViewers());
+                request.getApprovalLines(), request.getReferences(), request.getViewers());
     }
 
     private List<SavedApprovalLineDetailRequestDto> toDetailRequests(
@@ -273,7 +269,9 @@ public class SavedApprovalLineService {
                 detail.setTargetUserId(approvalLine.getTargetUserId());
                 detail.setTargetDepartmentId(approvalLine.getTargetDepartmentId());
                 detail.setSequenceNo(
-                        approvalLine.getSequenceNo() != null ? approvalLine.getSequenceNo() : i + 1);
+                        approvalLine.getSequenceNo() != null
+                                ? approvalLine.getSequenceNo()
+                                : i + 1);
                 detail.setRequired(
                         approvalLine.getRequired() != null
                                 ? approvalLine.getRequired()
@@ -546,7 +544,8 @@ public class SavedApprovalLineService {
                 .build();
     }
 
-    private SavedApprovalLineResponseDto.TargetDto toTargetResponse(SavedApprovalLineDetail detail) {
+    private SavedApprovalLineResponseDto.TargetDto toTargetResponse(
+            SavedApprovalLineDetail detail) {
         User targetUser = detail.getTargetUser();
         Department targetDepartment = detail.getTargetDepartment();
 

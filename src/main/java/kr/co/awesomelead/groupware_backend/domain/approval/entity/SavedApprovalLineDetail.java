@@ -12,6 +12,7 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 
+import kr.co.awesomelead.groupware_backend.domain.approval.enums.ApprovalAgreementMethod;
 import kr.co.awesomelead.groupware_backend.domain.approval.enums.ApprovalRouteRole;
 import kr.co.awesomelead.groupware_backend.domain.approval.enums.ApprovalTargetType;
 import kr.co.awesomelead.groupware_backend.domain.department.entity.Department;
@@ -44,6 +45,10 @@ public class SavedApprovalLineDetail extends BaseTimeEntity {
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 30)
     private ApprovalRouteRole role;
+
+    @Enumerated(EnumType.STRING)
+    @Column(length = 20)
+    private ApprovalAgreementMethod agreementMethod;
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 20)

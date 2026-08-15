@@ -13,28 +13,8 @@ import lombok.Setter;
 
 @Getter
 @Setter
-@Schema(description = "결재선 상세 항목")
-public class SavedApprovalLineDetailRequestDto {
-
-    @NotNull
-    @Schema(
-            description = "결재선 역할",
-            example = "APPROVAL_LINE",
-            allowableValues = {
-                "APPROVAL_LINE",
-                "AGREEMENT_REQUIRED",
-                "AGREEMENT_OPTIONAL",
-                "REFERENCE",
-                "VIEWER",
-                "RECEIVER_DEPARTMENT"
-            })
-    private ApprovalRouteRole role;
-
-    @Schema(
-            description = "합의부서 내 합의방법. role이 AGREEMENT_REQUIRED/AGREEMENT_OPTIONAL일 때 사용",
-            example = "SEQUENTIAL",
-            allowableValues = {"SEQUENTIAL", "PARALLEL"})
-    private ApprovalAgreementMethod agreementMethod;
+@Schema(description = "결재선 대상 항목")
+public class SavedApprovalLineApprovalTargetRequestDto {
 
     @NotNull
     @Schema(
@@ -49,10 +29,22 @@ public class SavedApprovalLineDetailRequestDto {
     @Schema(description = "타겟 부서 ID (targetType=DEPARTMENT일 때 필수)", example = "3")
     private Long targetDepartmentId;
 
-    @Schema(description = "정렬 순서 (미입력 시 1부터 자동 부여)", example = "1")
+    @Schema(description = "결재 순서 (미입력 시 1부터 자동 부여)", example = "1")
     private Integer sequenceNo;
 
     @NotNull
-    @Schema(description = "필수 여부", example = "true")
+    @Schema(
+            description = "해당 결재 대상의 결재방법",
+            example = "APPROVAL_LINE",
+            allowableValues = {"APPROVAL_LINE", "AGREEMENT_REQUIRED", "AGREEMENT_OPTIONAL"})
+    private ApprovalRouteRole approvalLineRole;
+
+    @Schema(
+            description = "합의부서 내 합의방법. approvalLineRole이 AGREEMENT_REQUIRED/AGREEMENT_OPTIONAL일 때 사용",
+            example = "SEQUENTIAL",
+            allowableValues = {"SEQUENTIAL", "PARALLEL"})
+    private ApprovalAgreementMethod agreementMethod;
+
+    @Schema(description = "필수 여부 (미입력 시 결재방법 기준 자동 처리)", example = "true")
     private Boolean required;
 }

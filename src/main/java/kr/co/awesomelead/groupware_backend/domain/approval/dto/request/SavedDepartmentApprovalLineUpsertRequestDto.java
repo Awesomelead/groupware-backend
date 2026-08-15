@@ -38,6 +38,14 @@ public class SavedDepartmentApprovalLineUpsertRequestDto {
     private Boolean isDefault;
 
     @Valid
-    @Schema(description = "결재선 상세 목록")
-    private List<SavedApprovalLineDetailRequestDto> lines;
+    @Schema(description = "결재선 목록")
+    private List<SavedApprovalLineApprovalTargetRequestDto> approvalLines;
+
+    @Valid
+    @Schema(description = "참조자 목록")
+    private List<SavedApprovalLineTargetRequestDto> references;
+
+    @Valid
+    @Schema(description = "열람권자 목록")
+    private List<SavedApprovalLineTargetRequestDto> viewers;
 }

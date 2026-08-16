@@ -84,13 +84,9 @@ import java.util.List;
               - REFERENCE (참조자)
               - VIEWER (열람권자)
               - RECEIVER_DEPARTMENT (수신부서)
-            - ApprovalTargetType
-              - USER (사용자)
-              - DEPARTMENT (부서)
-
             ### 타겟 지정 규칙
-            - targetType=USER -> targetUserId 필수
-            - targetType=DEPARTMENT -> targetDepartmentId 필수
+            - 저장 결재선의 결재선/참조자/열람권자는 사용자 ID(targetUserId)로만 지정합니다.
+            - 화면에서 부서를 선택한 경우 프론트에서 해당 부서 소속 사용자 목록으로 펼쳐서 전달합니다.
             """)
 public class SavedApprovalLineController {
 
@@ -143,7 +139,8 @@ public class SavedApprovalLineController {
                 - approvalLines[].agreementMethod는 합의부서 필수/선택 항목에서만 사용합니다.
                 - approvalLines, references, viewers를 각각 분리해서 전달합니다.
                 - isDefault=true이면 같은 결재유형의 기존 기본결재선은 자동 해제됩니다.
-                - targetType=USER면 targetUserId, targetType=DEPARTMENT면 targetDepartmentId를 입력해야 합니다.
+                - 저장 결재선의 대상은 USER만 허용합니다.
+                - 부서를 선택한 경우 프론트에서 해당 부서 소속 사용자 목록으로 펼쳐서 전달합니다.
                 """)
     @PostMapping("/personal")
     public ResponseEntity<ApiResponse<Long>> createPersonalLine(
@@ -243,11 +240,11 @@ public class SavedApprovalLineController {
                 ### 사용 Enum
                 - approvalLines[].approvalLineRole: APPROVAL_LINE, AGREEMENT_REQUIRED, AGREEMENT_OPTIONAL
                 - approvalLines[].agreementMethod: SEQUENTIAL, PARALLEL
-                - targetType: USER, DEPARTMENT
 
                 ### 타겟 지정 규칙
-                - targetType=USER -> targetUserId 필수
-                - targetType=DEPARTMENT -> targetDepartmentId 필수
+                - 저장 결재선의 대상은 USER만 허용합니다.
+                - 부서를 선택한 경우 프론트에서 해당 부서 소속 사용자 목록으로 펼쳐서 전달합니다.
+                - targetUserId 필수
 
                 ### 기본결재선 규칙
                 - isDefault=true이면 같은 부서 + 같은 approvalType의 기존 기본결재선은 자동 해제됩니다.
@@ -269,8 +266,8 @@ public class SavedApprovalLineController {
                 - approvalLines, references, viewers를 함께 수정할 수 있습니다.
                 - approvalLines[].approvalLineRole, approvalLines[].agreementMethod로 각 결재 대상의 결재방법을 수정합니다.
                 - isDefault=true이면 같은 부서 + 같은 결재유형의 다른 기본결재선은 자동 해제됩니다.
-                - targetType=USER -> targetUserId 필수
-                - targetType=DEPARTMENT -> targetDepartmentId 필수
+                - 저장 결재선의 대상은 USER만 허용합니다.
+                - 부서를 선택한 경우 프론트에서 해당 부서 소속 사용자 목록으로 펼쳐서 전달합니다.
                 """)
     @PutMapping("/department/{lineId}")
     public ResponseEntity<ApiResponse<Void>> updateDepartmentLine(

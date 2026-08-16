@@ -5,7 +5,6 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import kr.co.awesomelead.groupware_backend.domain.approval.enums.ApprovalAgreementMethod;
 import kr.co.awesomelead.groupware_backend.domain.approval.enums.ApprovalRouteRole;
 import kr.co.awesomelead.groupware_backend.domain.approval.enums.ApprovalSavedLineType;
-import kr.co.awesomelead.groupware_backend.domain.approval.enums.ApprovalTargetType;
 import kr.co.awesomelead.groupware_backend.domain.approval.enums.ApprovalType;
 
 import lombok.AllArgsConstructor;
@@ -124,13 +123,7 @@ public class SavedApprovalLineResponseDto {
         @Schema(description = "결재 순서", example = "1")
         private Integer sequenceNo;
 
-        @Schema(
-                description = "타겟 타입",
-                example = "USER",
-                allowableValues = {"USER", "DEPARTMENT"})
-        private ApprovalTargetType targetType;
-
-        @Schema(description = "타겟 사용자 ID(targetType=USER일 때)", example = "14")
+        @Schema(description = "타겟 사용자 ID", example = "14")
         private Long targetUserId;
 
         @Schema(description = "타겟 사용자 이름", example = "고영민")
@@ -141,12 +134,6 @@ public class SavedApprovalLineResponseDto {
 
         @Schema(description = "타겟 사용자 부서명", example = "환경안전부")
         private String targetUserDepartmentName;
-
-        @Schema(description = "타겟 부서 ID(targetType=DEPARTMENT일 때)", example = "3")
-        private Long targetDepartmentId;
-
-        @Schema(description = "타겟 부서명", example = "환경안전부")
-        private String targetDepartmentName;
 
         @Schema(description = "표시용 타겟명", example = "[환경안전부] 고은서 (사원)")
         private String targetName;
@@ -185,13 +172,7 @@ public class SavedApprovalLineResponseDto {
         @Schema(description = "합의부서 내 합의방법 한글 라벨", example = "순차합의")
         private String agreementMethodLabel;
 
-        @Schema(
-                description = "타겟 타입",
-                example = "USER",
-                allowableValues = {"USER", "DEPARTMENT"})
-        private ApprovalTargetType targetType;
-
-        @Schema(description = "타겟 사용자 ID(targetType=USER일 때)", example = "14")
+        @Schema(description = "타겟 사용자 ID", example = "14")
         private Long targetUserId;
 
         @Schema(description = "타겟 사용자명", example = "고영민")
@@ -202,12 +183,6 @@ public class SavedApprovalLineResponseDto {
 
         @Schema(description = "타겟 사용자 부서명", example = "경영지원부")
         private String targetUserDepartmentName;
-
-        @Schema(description = "타겟 부서 ID(targetType=DEPARTMENT일 때)", example = "3")
-        private Long targetDepartmentId;
-
-        @Schema(description = "타겟 부서명", example = "환경안전부")
-        private String targetDepartmentName;
 
         @Schema(description = "표시용 타겟명", example = "[경영지원부] 고영민 (사원)")
         private String targetName;
@@ -227,13 +202,7 @@ public class SavedApprovalLineResponseDto {
         @Schema(description = "상세 항목 ID", example = "1001")
         private Long id;
 
-        @Schema(
-                description = "타겟 타입",
-                example = "USER",
-                allowableValues = {"USER", "DEPARTMENT"})
-        private ApprovalTargetType targetType;
-
-        @Schema(description = "타겟 사용자 ID(targetType=USER일 때)", example = "14")
+        @Schema(description = "타겟 사용자 ID", example = "14")
         private Long targetUserId;
 
         @Schema(description = "타겟 사용자명", example = "고영민")
@@ -244,12 +213,6 @@ public class SavedApprovalLineResponseDto {
 
         @Schema(description = "타겟 사용자 부서명", example = "경영지원부")
         private String targetUserDepartmentName;
-
-        @Schema(description = "타겟 부서 ID(targetType=DEPARTMENT일 때)", example = "3")
-        private Long targetDepartmentId;
-
-        @Schema(description = "타겟 부서명", example = "환경안전부")
-        private String targetDepartmentName;
 
         @Schema(description = "표시용 타겟명", example = "[경영지원부] 고영민 (사원)")
         private String targetName;

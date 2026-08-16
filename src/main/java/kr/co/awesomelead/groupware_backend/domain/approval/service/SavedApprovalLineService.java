@@ -265,9 +265,9 @@ public class SavedApprovalLineService {
                         resolveAgreementMethod(
                                 approvalLine.getAgreementMethod(),
                                 approvalLine.getApprovalLineRole()));
-                detail.setTargetType(approvalLine.getTargetType());
+                detail.setTargetType(ApprovalTargetType.USER);
                 detail.setTargetUserId(approvalLine.getTargetUserId());
-                detail.setTargetDepartmentId(approvalLine.getTargetDepartmentId());
+                detail.setTargetDepartmentId(null);
                 detail.setSequenceNo(
                         approvalLine.getSequenceNo() != null
                                 ? approvalLine.getSequenceNo()
@@ -296,9 +296,9 @@ public class SavedApprovalLineService {
             SavedApprovalLineTargetRequestDto target = targets.get(i);
             SavedApprovalLineDetailRequestDto detail = new SavedApprovalLineDetailRequestDto();
             detail.setRole(role);
-            detail.setTargetType(target.getTargetType());
+            detail.setTargetType(ApprovalTargetType.USER);
             detail.setTargetUserId(target.getTargetUserId());
-            detail.setTargetDepartmentId(target.getTargetDepartmentId());
+            detail.setTargetDepartmentId(null);
             detail.setSequenceNo(i + 1);
             detail.setRequired(true);
             details.add(detail);
@@ -354,13 +354,11 @@ public class SavedApprovalLineService {
     }
 
     private void validateDetailRequest(SavedApprovalLineDetailRequestDto request) {
-        if (request.getTargetType() == ApprovalTargetType.USER) {
-            if (request.getTargetUserId() == null) {
-                throw new CustomException(ErrorCode.INVALID_ARGUMENT);
-            }
-            return;
+        if (request.getTargetType() != ApprovalTargetType.USER) {
+            throw new CustomException(ErrorCode.INVALID_ARGUMENT);
         }
-        if (request.getTargetDepartmentId() == null) {
+
+        if (request.getTargetUserId() == null) {
             throw new CustomException(ErrorCode.INVALID_ARGUMENT);
         }
     }
@@ -519,8 +517,6 @@ public class SavedApprovalLineService {
                 targetUser != null && targetUser.getDepartment() != null
                         ? targetUser.getDepartment().getName().getDescription()
                         : null;
-        String targetDepartmentName =
-                targetDepartment != null ? targetDepartment.getName().getDescription() : null;
 
         return SavedApprovalLineResponseDto.ApprovalLineDto.builder()
                 .id(detail.getId())
@@ -531,13 +527,10 @@ public class SavedApprovalLineService {
                         detail.getAgreementMethod() != null
                                 ? detail.getAgreementMethod().getDescription()
                                 : null)
-                .targetType(detail.getTargetType())
                 .targetUserId(targetUser != null ? targetUser.getId() : null)
                 .targetUserName(targetUserName)
                 .targetUserPosition(targetUserPosition)
                 .targetUserDepartmentName(targetUserDepartmentName)
-                .targetDepartmentId(targetDepartment != null ? targetDepartment.getId() : null)
-                .targetDepartmentName(targetDepartmentName)
                 .targetName(detail.getTargetNameSnapshot())
                 .sequenceNo(detail.getSequenceNo())
                 .required(detail.getIsRequired())
@@ -547,7 +540,6 @@ public class SavedApprovalLineService {
     private SavedApprovalLineResponseDto.TargetDto toTargetResponse(
             SavedApprovalLineDetail detail) {
         User targetUser = detail.getTargetUser();
-        Department targetDepartment = detail.getTargetDepartment();
 
         String targetUserName =
                 targetUser == null
@@ -563,18 +555,13 @@ public class SavedApprovalLineService {
                 targetUser != null && targetUser.getDepartment() != null
                         ? targetUser.getDepartment().getName().getDescription()
                         : null;
-        String targetDepartmentName =
-                targetDepartment != null ? targetDepartment.getName().getDescription() : null;
 
         return SavedApprovalLineResponseDto.TargetDto.builder()
                 .id(detail.getId())
-                .targetType(detail.getTargetType())
                 .targetUserId(targetUser != null ? targetUser.getId() : null)
                 .targetUserName(targetUserName)
                 .targetUserPosition(targetUserPosition)
                 .targetUserDepartmentName(targetUserDepartmentName)
-                .targetDepartmentId(targetDepartment != null ? targetDepartment.getId() : null)
-                .targetDepartmentName(targetDepartmentName)
                 .targetName(detail.getTargetNameSnapshot())
                 .build();
     }
@@ -633,17 +620,12 @@ public class SavedApprovalLineService {
                                                                         .getDescription()
                                                                 : null)
                                                 .sequenceNo(approvalLine.getSequenceNo())
-                                                .targetType(approvalLine.getTargetType())
                                                 .targetUserId(approvalLine.getTargetUserId())
                                                 .targetUserName(approvalLine.getTargetUserName())
                                                 .targetUserPosition(
                                                         approvalLine.getTargetUserPosition())
                                                 .targetUserDepartmentName(
                                                         approvalLine.getTargetUserDepartmentName())
-                                                .targetDepartmentId(
-                                                        approvalLine.getTargetDepartmentId())
-                                                .targetDepartmentName(
-                                                        approvalLine.getTargetDepartmentName())
                                                 .targetName(approvalLine.getTargetName())
                                                 .build())
                         .toList();

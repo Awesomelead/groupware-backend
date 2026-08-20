@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import kr.co.awesomelead.groupware_backend.domain.department.dto.response.UserSummaryResponseDto;
+import kr.co.awesomelead.groupware_backend.domain.department.entity.Department;
 import kr.co.awesomelead.groupware_backend.domain.department.enums.Company;
 import kr.co.awesomelead.groupware_backend.domain.department.service.DepartmentService;
 import kr.co.awesomelead.groupware_backend.domain.notice.dto.request.NoticeCreateRequestDto;
@@ -19,7 +20,6 @@ import kr.co.awesomelead.groupware_backend.domain.notice.respository.NoticeAttac
 import kr.co.awesomelead.groupware_backend.domain.notice.respository.NoticeQueryRepository;
 import kr.co.awesomelead.groupware_backend.domain.notice.respository.NoticeRepository;
 import kr.co.awesomelead.groupware_backend.domain.notice.respository.NoticeTargetRepository;
-import kr.co.awesomelead.groupware_backend.domain.department.entity.Department;
 import kr.co.awesomelead.groupware_backend.domain.notification.service.NotificationService;
 import kr.co.awesomelead.groupware_backend.domain.user.entity.User;
 import kr.co.awesomelead.groupware_backend.domain.user.enums.Authority;

@@ -41,6 +41,7 @@ public interface NoticeMapper {
     @Mapping(target = "targetCompanies", source = "notice.targetCompanies")
     @Mapping(target = "targetDepartmentIds", source = "notice.targetDepartments")
     @Mapping(target = "targetUserIds", source = "notice.targetUsers")
+    @Mapping(target = "targetUsers", ignore = true)
     @Mapping(target = "prevNotice", ignore = true)
     @Mapping(target = "nextNotice", ignore = true)
     NoticeDetailDto toNoticeDetailDto(Notice notice, @Context S3Service s3Service);

@@ -19,6 +19,7 @@ import kr.co.awesomelead.groupware_backend.domain.notice.respository.NoticeAttac
 import kr.co.awesomelead.groupware_backend.domain.notice.respository.NoticeQueryRepository;
 import kr.co.awesomelead.groupware_backend.domain.notice.respository.NoticeRepository;
 import kr.co.awesomelead.groupware_backend.domain.notice.respository.NoticeTargetRepository;
+import kr.co.awesomelead.groupware_backend.domain.department.entity.Department;
 import kr.co.awesomelead.groupware_backend.domain.notification.service.NotificationService;
 import kr.co.awesomelead.groupware_backend.domain.user.entity.User;
 import kr.co.awesomelead.groupware_backend.domain.user.enums.Authority;
@@ -181,6 +182,7 @@ public class NoticeService {
         noticeRepository.save(notice);
 
         NoticeDetailDto dto = noticeMapper.toNoticeDetailDto(notice, s3Service);
+        dto.setTargetUsers(toTargetUserResponses(noticeId));
         dto.setPrevNotice(
                 noticeQueryRepository.findPrevNotice(
                         noticeId,
@@ -197,6 +199,52 @@ public class NoticeService {
                         hasAccessNotice));
 
         return dto;
+    }
+
+    private List<NoticeDetailDto.TargetUserResponse> toTargetUserResponses(Long noticeId) {
+        return noticeTargetRepository.findAllByNoticeIdWithUserAndDepartment(noticeId).stream()
+                .map(this::toTargetUserResponse)
+                .toList();
+    }
+
+    private NoticeDetailDto.TargetUserResponse toTargetUserResponse(NoticeTarget target) {
+        User user = target.getUser();
+        Department department = user != null ? user.getDepartment() : null;
+
+        String name = user != null ? user.getDisplayName() : null;
+        String departmentName =
+                department != null && department.getName() != null
+                        ? department.getName().getDescription()
+                        : null;
+        String position =
+                user != null && user.getPosition() != null
+                        ? user.getPosition().getDescription()
+                        : null;
+
+        return NoticeDetailDto.TargetUserResponse.builder()
+                .userId(user != null ? user.getId() : null)
+                .name(name)
+                .departmentId(department != null ? department.getId() : null)
+                .departmentName(departmentName)
+                .position(position)
+                .targetName(toTargetUserName(departmentName, name, position))
+                .build();
+    }
+
+    private String toTargetUserName(String departmentName, String name, String position) {
+        if (!StringUtils.hasText(name)) {
+            return null;
+        }
+
+        StringBuilder builder = new StringBuilder();
+        if (StringUtils.hasText(departmentName)) {
+            builder.append("[").append(departmentName).append("] ");
+        }
+        builder.append(name);
+        if (StringUtils.hasText(position)) {
+            builder.append(" (").append(position).append(")");
+        }
+        return builder.toString();
     }
 
     @Transactional

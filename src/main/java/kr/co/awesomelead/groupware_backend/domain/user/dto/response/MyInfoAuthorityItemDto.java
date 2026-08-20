@@ -19,6 +19,9 @@ public class MyInfoAuthorityItemDto {
     @Schema(description = "권한 라벨", example = "알림 전송")
     private String label;
 
+    @Schema(description = "권한 설명", example = "사용자에게 알림을 전송할 수 있습니다.")
+    private String description;
+
     @Schema(description = "보유 여부", example = "true")
     private boolean enabled;
 }

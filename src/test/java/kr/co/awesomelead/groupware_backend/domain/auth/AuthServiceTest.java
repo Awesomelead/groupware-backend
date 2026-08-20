@@ -139,7 +139,8 @@ class AuthServiceTest {
 
         MyInfoAuthorityItemDto authorityDto = response.getAuthorities().get(0);
         assertThat(authorityDto.getCode()).isEqualTo(Authority.MANAGE_DEPARTMENT_EDUCATION.name());
-        assertThat(authorityDto.getLabel())
+        assertThat(authorityDto.getLabel()).isEqualTo(Authority.MANAGE_DEPARTMENT_EDUCATION.getLabel());
+        assertThat(authorityDto.getDescription())
                 .isEqualTo(Authority.MANAGE_DEPARTMENT_EDUCATION.getDescription());
         assertThat(authorityDto.isEnabled()).isTrue();
     }

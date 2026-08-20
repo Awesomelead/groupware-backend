@@ -4,6 +4,7 @@ import io.swagger.v3.oas.annotations.media.Schema;
 
 import kr.co.awesomelead.groupware_backend.domain.department.enums.Company;
 import kr.co.awesomelead.groupware_backend.domain.department.enums.DepartmentName;
+import kr.co.awesomelead.groupware_backend.domain.user.dto.response.MyInfoAuthorityItemDto;
 import kr.co.awesomelead.groupware_backend.domain.user.entity.User;
 import kr.co.awesomelead.groupware_backend.domain.user.enums.Authority;
 import kr.co.awesomelead.groupware_backend.domain.user.enums.JobType;
@@ -68,7 +69,7 @@ public class PendingUserSummaryResponseDto {
     private JobType jobType;
 
     @Schema(description = "권한부여 목록")
-    private List<Authority> authorities;
+    private List<MyInfoAuthorityItemDto> authorities;
 
     @Schema(description = "입사일", example = "2025-09-22")
     private LocalDate hireDate;
@@ -105,6 +106,14 @@ public class PendingUserSummaryResponseDto {
                                 ? List.of()
                                 : user.getAuthorities().stream()
                                         .sorted(Authority.descriptionComparator())
+                                        .map(
+                                                a ->
+                                                        MyInfoAuthorityItemDto.builder()
+                                                                .code(a.name())
+                                                                .label(a.getLabel())
+                                                                .description(a.getDescription())
+                                                                .enabled(true)
+                                                                .build())
                                         .toList())
                 .hireDate(user.getHireDate())
                 .resignationDate(user.getResignationDate())

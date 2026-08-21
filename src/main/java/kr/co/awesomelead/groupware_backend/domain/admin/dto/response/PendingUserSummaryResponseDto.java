@@ -105,6 +105,7 @@ public class PendingUserSummaryResponseDto {
                         user.getAuthorities() == null
                                 ? List.of()
                                 : user.getAuthorities().stream()
+                                        .filter(Authority::isVisible)
                                         .sorted(Authority.descriptionComparator())
                                         .map(
                                                 a ->

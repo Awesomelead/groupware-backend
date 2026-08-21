@@ -52,7 +52,7 @@ public interface AdminMapper {
             return;
         }
         List<MyInfoAuthorityItemDto> authorities =
-                Authority.sortedByDescription().stream()
+                Authority.visibleSortedByDescription().stream()
                         .map(
                                 a ->
                                         MyInfoAuthorityItemDto.builder()

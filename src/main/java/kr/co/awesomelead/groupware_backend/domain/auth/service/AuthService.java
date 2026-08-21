@@ -210,6 +210,7 @@ public class AuthService {
         // 7. 응답 생성
         List<MyInfoAuthorityItemDto> authorityDtos =
                 user.getAuthorities().stream()
+                        .filter(Authority::isVisible)
                         .sorted(Authority.descriptionComparator())
                         .map(
                                 authority ->

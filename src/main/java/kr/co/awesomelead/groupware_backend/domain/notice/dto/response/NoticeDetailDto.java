@@ -4,6 +4,7 @@ import io.swagger.v3.oas.annotations.media.Schema;
 
 import kr.co.awesomelead.groupware_backend.domain.department.enums.Company;
 import kr.co.awesomelead.groupware_backend.domain.notice.dto.NoticeCompanyJobTypeTargetDto;
+import kr.co.awesomelead.groupware_backend.domain.user.enums.JobType;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -128,6 +129,9 @@ public class NoticeDetailDto {
 
         @Schema(description = "대상자 직급", example = "사원")
         private String position;
+
+        @Schema(description = "대상자 근무 직종", example = "관리직")
+        private JobType jobType;
 
         @Schema(description = "표시용 대상자명", example = "[경영지원부] 고영민 (사원)")
         private String targetName;

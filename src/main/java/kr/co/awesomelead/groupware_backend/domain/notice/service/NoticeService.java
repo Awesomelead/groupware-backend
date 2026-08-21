@@ -213,6 +213,7 @@ public class NoticeService {
                 .departmentId(department != null ? department.getId() : null)
                 .departmentName(departmentName)
                 .position(position)
+                .jobType(user != null ? user.getJobType() : null)
                 .targetName(toTargetUserName(departmentName, name, position))
                 .build();
     }

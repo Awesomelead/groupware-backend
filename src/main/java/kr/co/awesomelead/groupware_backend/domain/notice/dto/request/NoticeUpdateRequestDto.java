@@ -5,6 +5,7 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import io.swagger.v3.oas.annotations.media.Schema;
 
 import kr.co.awesomelead.groupware_backend.domain.department.enums.Company;
+import kr.co.awesomelead.groupware_backend.domain.notice.dto.NoticeCompanyJobTypeTargetDto;
 import kr.co.awesomelead.groupware_backend.domain.notice.enums.NoticeType;
 
 import lombok.AllArgsConstructor;
@@ -26,6 +27,7 @@ import java.util.List;
     "contentHtml",
     "content",
     "targetCompanies",
+    "targetCompanyJobTypes",
     "targetDepartmentIds",
     "targetUserIds",
     "attachmentsIdsToRemove"
@@ -42,6 +44,9 @@ import java.util.List;
                   "contentHtml": "<p>회의 시간이 오후 3시로 변경되었습니다.</p>",
                   "content": "회의 시간이 오후 3시로 변경되었습니다.",
                   "targetCompanies": ["어썸리드"],
+                  "targetCompanyJobTypes": [
+                    { "company": "한국마루이", "jobType": "현장직" }
+                  ],
                   "targetDepartmentIds": [11, 12],
                   "targetUserIds": [17, 22],
                   "attachmentsIdsToRemove": [1, 2]
@@ -73,6 +78,9 @@ public class NoticeUpdateRequestDto {
 
     @Schema(description = "공지 대상 회사 목록 (수정하지 않으려면 null, 전체 초기화하려면 [], MASTER_ADMIN 제외)")
     private List<Company> targetCompanies;
+
+    @Schema(description = "공지 대상 회사/직군 조건 목록 (수정하지 않으려면 null, 전체 초기화하려면 [], MASTER_ADMIN 제외)")
+    private List<NoticeCompanyJobTypeTargetDto> targetCompanyJobTypes;
 
     @Schema(description = "공지 대상 부서 ID 목록 (수정하지 않으려면 null, 전체 초기화하려면 [], MASTER_ADMIN 제외)")
     private List<Long> targetDepartmentIds;

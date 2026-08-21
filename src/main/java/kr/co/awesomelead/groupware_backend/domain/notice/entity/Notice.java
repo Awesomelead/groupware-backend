@@ -20,10 +20,12 @@ import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
 
 import kr.co.awesomelead.groupware_backend.domain.department.enums.Company;
+import kr.co.awesomelead.groupware_backend.domain.notice.dto.NoticeCompanyJobTypeTargetDto;
 import kr.co.awesomelead.groupware_backend.domain.notice.enums.NoticeType;
 import kr.co.awesomelead.groupware_backend.domain.user.entity.User;
 import kr.co.awesomelead.groupware_backend.global.util.CompanyListConverter;
 import kr.co.awesomelead.groupware_backend.global.util.LongListConverter;
+import kr.co.awesomelead.groupware_backend.global.util.NoticeCompanyJobTypeTargetListConverter;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -108,6 +110,11 @@ public class Notice {
     @Builder.Default
     private List<Company> targetCompanies = new ArrayList<>();
 
+    @Convert(converter = NoticeCompanyJobTypeTargetListConverter.class)
+    @Column(name = "target_company_job_types", columnDefinition = "TEXT")
+    @Builder.Default
+    private List<NoticeCompanyJobTypeTargetDto> targetCompanyJobTypes = new ArrayList<>();
+
     @Convert(converter = LongListConverter.class)
     @Column(name = "target_departments", columnDefinition = "TEXT")
     @Builder.Default
@@ -154,6 +161,7 @@ public class Notice {
             String contentText,
             Boolean pinned,
             List<Company> targetCompanies,
+            List<NoticeCompanyJobTypeTargetDto> targetCompanyJobTypes,
             List<Long> targetDepartments,
             List<Long> targetUsers) {
         if (type != null) {
@@ -179,6 +187,9 @@ public class Notice {
         }
         if (targetCompanies != null) {
             this.targetCompanies = new ArrayList<>(targetCompanies);
+        }
+        if (targetCompanyJobTypes != null) {
+            this.targetCompanyJobTypes = new ArrayList<>(targetCompanyJobTypes);
         }
         if (targetDepartments != null) {
             this.targetDepartments = new ArrayList<>(targetDepartments);

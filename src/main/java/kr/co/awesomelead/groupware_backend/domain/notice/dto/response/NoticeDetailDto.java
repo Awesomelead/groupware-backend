@@ -3,6 +3,7 @@ package kr.co.awesomelead.groupware_backend.domain.notice.dto.response;
 import io.swagger.v3.oas.annotations.media.Schema;
 
 import kr.co.awesomelead.groupware_backend.domain.department.enums.Company;
+import kr.co.awesomelead.groupware_backend.domain.notice.dto.NoticeCompanyJobTypeTargetDto;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -61,6 +62,9 @@ public class NoticeDetailDto {
 
     @Schema(description = "대상 회사 목록", example = "[\"어썸리드\", \"한국마루이\"]")
     private List<Company> targetCompanies;
+
+    @Schema(description = "대상 회사/직군 조건 목록")
+    private List<NoticeCompanyJobTypeTargetDto> targetCompanyJobTypes;
 
     @Schema(description = "대상 부서 ID 목록", example = "[1, 2, 3]")
     private List<Long> targetDepartmentIds;

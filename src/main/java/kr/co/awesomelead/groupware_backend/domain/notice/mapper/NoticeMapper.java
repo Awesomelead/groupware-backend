@@ -39,6 +39,7 @@ public interface NoticeMapper {
     @Mapping(target = "createdDate", source = "notice.createdDate")
     @Mapping(target = "attachments", source = "attachments")
     @Mapping(target = "targetCompanies", source = "notice.targetCompanies")
+    @Mapping(target = "targetCompanyJobTypes", source = "notice.targetCompanyJobTypes")
     @Mapping(target = "targetDepartmentIds", source = "notice.targetDepartments")
     @Mapping(target = "targetUserIds", source = "notice.targetUsers")
     @Mapping(target = "targetUsers", ignore = true)

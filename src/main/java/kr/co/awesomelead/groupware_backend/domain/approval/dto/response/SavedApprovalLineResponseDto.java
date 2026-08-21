@@ -2,9 +2,9 @@ package kr.co.awesomelead.groupware_backend.domain.approval.dto.response;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 
+import kr.co.awesomelead.groupware_backend.domain.approval.enums.ApprovalAgreementMethod;
 import kr.co.awesomelead.groupware_backend.domain.approval.enums.ApprovalRouteRole;
 import kr.co.awesomelead.groupware_backend.domain.approval.enums.ApprovalSavedLineType;
-import kr.co.awesomelead.groupware_backend.domain.approval.enums.ApprovalTargetType;
 import kr.co.awesomelead.groupware_backend.domain.approval.enums.ApprovalType;
 
 import lombok.AllArgsConstructor;
@@ -71,8 +71,14 @@ public class SavedApprovalLineResponseDto {
     @Schema(description = "최종 수정일시")
     private LocalDateTime modifiedAt;
 
-    @Schema(description = "결재선 상세 라인 목록")
-    private List<LineDetailDto> lines;
+    @Schema(description = "결재선 목록")
+    private List<ApprovalLineDto> approvalLines;
+
+    @Schema(description = "참조자 목록")
+    private List<TargetDto> references;
+
+    @Schema(description = "열람권자 목록")
+    private List<TargetDto> viewers;
 
     @Schema(description = "결재칸 미리보기 데이터")
     private ApprovalBoxPreviewDto approvalBoxPreview;
@@ -91,16 +97,33 @@ public class SavedApprovalLineResponseDto {
     @AllArgsConstructor
     @Schema(description = "결재칸 단일 슬롯")
     public static class ApprovalBoxSlotDto {
+        @Schema(
+                description = "결재칸 역할",
+                example = "APPROVAL_LINE",
+                allowableValues = {
+                    "APPROVAL_LINE",
+                    "AGREEMENT_REQUIRED",
+                    "AGREEMENT_OPTIONAL",
+                    "RECEIVER_DEPARTMENT"
+                })
+        private ApprovalRouteRole role;
+
+        @Schema(description = "결재칸 역할 한글 라벨", example = "결재선")
+        private String roleLabel;
+
+        @Schema(
+                description = "합의부서 내 합의방법",
+                example = "SEQUENTIAL",
+                allowableValues = {"SEQUENTIAL", "PARALLEL"})
+        private ApprovalAgreementMethod agreementMethod;
+
+        @Schema(description = "합의부서 내 합의방법 한글 라벨", example = "순차합의")
+        private String agreementMethodLabel;
+
         @Schema(description = "결재 순서", example = "1")
         private Integer sequenceNo;
 
-        @Schema(
-                description = "타겟 타입",
-                example = "USER",
-                allowableValues = {"USER", "DEPARTMENT"})
-        private ApprovalTargetType targetType;
-
-        @Schema(description = "타겟 사용자 ID(targetType=USER일 때)", example = "14")
+        @Schema(description = "타겟 사용자 ID", example = "14")
         private Long targetUserId;
 
         @Schema(description = "타겟 사용자 이름", example = "고영민")
@@ -112,12 +135,6 @@ public class SavedApprovalLineResponseDto {
         @Schema(description = "타겟 사용자 부서명", example = "환경안전부")
         private String targetUserDepartmentName;
 
-        @Schema(description = "타겟 부서 ID(targetType=DEPARTMENT일 때)", example = "3")
-        private Long targetDepartmentId;
-
-        @Schema(description = "타겟 부서명", example = "환경안전부")
-        private String targetDepartmentName;
-
         @Schema(description = "표시용 타겟명", example = "[환경안전부] 고은서 (사원)")
         private String targetName;
     }
@@ -125,8 +142,8 @@ public class SavedApprovalLineResponseDto {
     @Getter
     @Builder
     @AllArgsConstructor
-    @Schema(description = "저장 결재선 상세 항목")
-    public static class LineDetailDto {
+    @Schema(description = "저장 결재선 항목")
+    public static class ApprovalLineDto {
         @Schema(description = "결재선 상세 항목 ID", example = "1001")
         private Long id;
 
@@ -143,13 +160,19 @@ public class SavedApprovalLineResponseDto {
                 })
         private ApprovalRouteRole role;
 
-        @Schema(
-                description = "타겟 타입",
-                example = "USER",
-                allowableValues = {"USER", "DEPARTMENT"})
-        private ApprovalTargetType targetType;
+        @Schema(description = "결재선 역할 한글 라벨", example = "결재선")
+        private String roleLabel;
 
-        @Schema(description = "타겟 사용자 ID(targetType=USER일 때)", example = "14")
+        @Schema(
+                description = "합의부서 내 합의방법",
+                example = "SEQUENTIAL",
+                allowableValues = {"SEQUENTIAL", "PARALLEL"})
+        private ApprovalAgreementMethod agreementMethod;
+
+        @Schema(description = "합의부서 내 합의방법 한글 라벨", example = "순차합의")
+        private String agreementMethodLabel;
+
+        @Schema(description = "타겟 사용자 ID", example = "14")
         private Long targetUserId;
 
         @Schema(description = "타겟 사용자명", example = "고영민")
@@ -161,12 +184,6 @@ public class SavedApprovalLineResponseDto {
         @Schema(description = "타겟 사용자 부서명", example = "경영지원부")
         private String targetUserDepartmentName;
 
-        @Schema(description = "타겟 부서 ID(targetType=DEPARTMENT일 때)", example = "3")
-        private Long targetDepartmentId;
-
-        @Schema(description = "타겟 부서명", example = "환경안전부")
-        private String targetDepartmentName;
-
         @Schema(description = "표시용 타겟명", example = "[경영지원부] 고영민 (사원)")
         private String targetName;
 
@@ -175,5 +192,29 @@ public class SavedApprovalLineResponseDto {
 
         @Schema(description = "필수 여부", example = "true")
         private Boolean required;
+    }
+
+    @Getter
+    @Builder
+    @AllArgsConstructor
+    @Schema(description = "참조자/열람권자 항목")
+    public static class TargetDto {
+        @Schema(description = "상세 항목 ID", example = "1001")
+        private Long id;
+
+        @Schema(description = "타겟 사용자 ID", example = "14")
+        private Long targetUserId;
+
+        @Schema(description = "타겟 사용자명", example = "고영민")
+        private String targetUserName;
+
+        @Schema(description = "타겟 사용자 직급", example = "사원")
+        private String targetUserPosition;
+
+        @Schema(description = "타겟 사용자 부서명", example = "경영지원부")
+        private String targetUserDepartmentName;
+
+        @Schema(description = "표시용 타겟명", example = "[경영지원부] 고영민 (사원)")
+        private String targetName;
     }
 }

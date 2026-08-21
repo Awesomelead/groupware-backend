@@ -1,11 +1,14 @@
 package kr.co.awesomelead.groupware_backend.domain.approval.service;
 
+import kr.co.awesomelead.groupware_backend.domain.approval.dto.request.SavedApprovalLineApprovalTargetRequestDto;
 import kr.co.awesomelead.groupware_backend.domain.approval.dto.request.SavedApprovalLineDetailRequestDto;
+import kr.co.awesomelead.groupware_backend.domain.approval.dto.request.SavedApprovalLineTargetRequestDto;
 import kr.co.awesomelead.groupware_backend.domain.approval.dto.request.SavedDepartmentApprovalLineUpsertRequestDto;
 import kr.co.awesomelead.groupware_backend.domain.approval.dto.request.SavedPersonalApprovalLineUpsertRequestDto;
 import kr.co.awesomelead.groupware_backend.domain.approval.dto.response.SavedApprovalLineResponseDto;
 import kr.co.awesomelead.groupware_backend.domain.approval.entity.SavedApprovalLine;
 import kr.co.awesomelead.groupware_backend.domain.approval.entity.SavedApprovalLineDetail;
+import kr.co.awesomelead.groupware_backend.domain.approval.enums.ApprovalAgreementMethod;
 import kr.co.awesomelead.groupware_backend.domain.approval.enums.ApprovalRouteRole;
 import kr.co.awesomelead.groupware_backend.domain.approval.enums.ApprovalSavedLineType;
 import kr.co.awesomelead.groupware_backend.domain.approval.enums.ApprovalTargetType;
@@ -81,7 +84,7 @@ public class SavedApprovalLineService {
                         .isDefault(isDefaultRequested)
                         .build();
         SavedApprovalLine saved = savedApprovalLineRepository.save(line);
-        replaceDetails(saved, request.getLines());
+        replaceDetails(saved, toDetailRequests(request));
         return saved.getId();
     }
 
@@ -105,7 +108,7 @@ public class SavedApprovalLineService {
         line.setLineName(request.getLineName().trim());
         line.setApprovalType(request.getApprovalType());
         line.setIsDefault(isDefaultRequested);
-        replaceDetails(line, request.getLines());
+        replaceDetails(line, toDetailRequests(request));
     }
 
     @Transactional
@@ -179,7 +182,7 @@ public class SavedApprovalLineService {
                         .isDefault(isDefaultRequested)
                         .build();
         SavedApprovalLine saved = savedApprovalLineRepository.save(line);
-        replaceDetails(saved, request.getLines());
+        replaceDetails(saved, toDetailRequests(request));
         return saved.getId();
     }
 
@@ -213,7 +216,7 @@ public class SavedApprovalLineService {
         line.setApprovalType(request.getApprovalType());
         line.setDepartment(targetDepartment);
         line.setIsDefault(isDefaultRequested);
-        replaceDetails(line, request.getLines());
+        replaceDetails(line, toDetailRequests(request));
     }
 
     @Transactional
@@ -235,6 +238,81 @@ public class SavedApprovalLineService {
         savedApprovalLineRepository.delete(line);
     }
 
+    private List<SavedApprovalLineDetailRequestDto> toDetailRequests(
+            SavedPersonalApprovalLineUpsertRequestDto request) {
+        return toDetailRequests(
+                request.getApprovalLines(), request.getReferences(), request.getViewers());
+    }
+
+    private List<SavedApprovalLineDetailRequestDto> toDetailRequests(
+            SavedDepartmentApprovalLineUpsertRequestDto request) {
+        return toDetailRequests(
+                request.getApprovalLines(), request.getReferences(), request.getViewers());
+    }
+
+    private List<SavedApprovalLineDetailRequestDto> toDetailRequests(
+            List<SavedApprovalLineApprovalTargetRequestDto> approvalLines,
+            List<SavedApprovalLineTargetRequestDto> references,
+            List<SavedApprovalLineTargetRequestDto> viewers) {
+        List<SavedApprovalLineDetailRequestDto> details = new ArrayList<>();
+        if (approvalLines != null) {
+            for (int i = 0; i < approvalLines.size(); i++) {
+                SavedApprovalLineApprovalTargetRequestDto approvalLine = approvalLines.get(i);
+                validateApprovalLineRole(approvalLine.getApprovalLineRole());
+                SavedApprovalLineDetailRequestDto detail = new SavedApprovalLineDetailRequestDto();
+                detail.setRole(approvalLine.getApprovalLineRole());
+                detail.setAgreementMethod(
+                        resolveAgreementMethod(
+                                approvalLine.getAgreementMethod(),
+                                approvalLine.getApprovalLineRole()));
+                detail.setTargetType(ApprovalTargetType.USER);
+                detail.setTargetUserId(approvalLine.getTargetUserId());
+                detail.setTargetDepartmentId(null);
+                detail.setSequenceNo(
+                        approvalLine.getSequenceNo() != null
+                                ? approvalLine.getSequenceNo()
+                                : i + 1);
+                detail.setRequired(
+                        approvalLine.getRequired() != null
+                                ? approvalLine.getRequired()
+                                : approvalLine.getApprovalLineRole()
+                                        != ApprovalRouteRole.AGREEMENT_OPTIONAL);
+                details.add(detail);
+            }
+        }
+        appendTargetDetails(details, ApprovalRouteRole.REFERENCE, references);
+        appendTargetDetails(details, ApprovalRouteRole.VIEWER, viewers);
+        return details;
+    }
+
+    private void appendTargetDetails(
+            List<SavedApprovalLineDetailRequestDto> details,
+            ApprovalRouteRole role,
+            List<SavedApprovalLineTargetRequestDto> targets) {
+        if (targets == null) {
+            return;
+        }
+        for (int i = 0; i < targets.size(); i++) {
+            SavedApprovalLineTargetRequestDto target = targets.get(i);
+            SavedApprovalLineDetailRequestDto detail = new SavedApprovalLineDetailRequestDto();
+            detail.setRole(role);
+            detail.setTargetType(ApprovalTargetType.USER);
+            detail.setTargetUserId(target.getTargetUserId());
+            detail.setTargetDepartmentId(null);
+            detail.setSequenceNo(i + 1);
+            detail.setRequired(true);
+            details.add(detail);
+        }
+    }
+
+    private void validateApprovalLineRole(ApprovalRouteRole approvalLineRole) {
+        if (approvalLineRole != ApprovalRouteRole.APPROVAL_LINE
+                && approvalLineRole != ApprovalRouteRole.AGREEMENT_REQUIRED
+                && approvalLineRole != ApprovalRouteRole.AGREEMENT_OPTIONAL) {
+            throw new CustomException(ErrorCode.INVALID_ARGUMENT);
+        }
+    }
+
     private void replaceDetails(
             SavedApprovalLine savedLine, List<SavedApprovalLineDetailRequestDto> detailRequests) {
         savedApprovalLineDetailRepository.deleteBySavedLineId(savedLine.getId());
@@ -250,6 +328,7 @@ public class SavedApprovalLineService {
             SavedApprovalLineDetail detail = new SavedApprovalLineDetail();
             detail.setSavedLine(savedLine);
             detail.setRole(request.getRole());
+            detail.setAgreementMethod(request.getAgreementMethod());
             detail.setTargetType(request.getTargetType());
             detail.setSequenceNo(request.getSequenceNo() != null ? request.getSequenceNo() : i + 1);
             detail.setIsRequired(request.getRequired());
@@ -275,13 +354,11 @@ public class SavedApprovalLineService {
     }
 
     private void validateDetailRequest(SavedApprovalLineDetailRequestDto request) {
-        if (request.getTargetType() == ApprovalTargetType.USER) {
-            if (request.getTargetUserId() == null) {
-                throw new CustomException(ErrorCode.INVALID_ARGUMENT);
-            }
-            return;
+        if (request.getTargetType() != ApprovalTargetType.USER) {
+            throw new CustomException(ErrorCode.INVALID_ARGUMENT);
         }
-        if (request.getTargetDepartmentId() == null) {
+
+        if (request.getTargetUserId() == null) {
             throw new CustomException(ErrorCode.INVALID_ARGUMENT);
         }
     }
@@ -351,17 +428,31 @@ public class SavedApprovalLineService {
     }
 
     private SavedApprovalLineResponseDto toResponse(SavedApprovalLine line) {
-        List<SavedApprovalLineResponseDto.LineDetailDto> details =
+        List<SavedApprovalLineDetail> sortedDetails =
                 line.getDetails().stream()
                         .sorted(
                                 Comparator.comparing(
                                                 SavedApprovalLineDetail::getSequenceNo,
                                                 Comparator.nullsLast(Integer::compareTo))
                                         .thenComparing(SavedApprovalLineDetail::getId))
-                        .map(this::toDetailResponse)
+                        .toList();
+        List<SavedApprovalLineResponseDto.ApprovalLineDto> approvalLines =
+                sortedDetails.stream()
+                        .filter(detail -> isApprovalLineRole(detail.getRole()))
+                        .map(this::toApprovalLineResponse)
+                        .toList();
+        List<SavedApprovalLineResponseDto.TargetDto> references =
+                sortedDetails.stream()
+                        .filter(detail -> detail.getRole() == ApprovalRouteRole.REFERENCE)
+                        .map(this::toTargetResponse)
+                        .toList();
+        List<SavedApprovalLineResponseDto.TargetDto> viewers =
+                sortedDetails.stream()
+                        .filter(detail -> detail.getRole() == ApprovalRouteRole.VIEWER)
+                        .map(this::toTargetResponse)
                         .toList();
         SavedApprovalLineResponseDto.ApprovalBoxPreviewDto approvalBoxPreview =
-                buildApprovalBoxPreview(details);
+                buildApprovalBoxPreview(approvalLines);
 
         String ownerUserName =
                 line.getOwnerUser() != null
@@ -400,12 +491,14 @@ public class SavedApprovalLineService {
                 .createdByUserName(createdByUserName)
                 .createdAt(line.getCreatedAt())
                 .modifiedAt(line.getModifiedAt())
-                .lines(details)
+                .approvalLines(approvalLines)
+                .references(references)
+                .viewers(viewers)
                 .approvalBoxPreview(approvalBoxPreview)
                 .build();
     }
 
-    private SavedApprovalLineResponseDto.LineDetailDto toDetailResponse(
+    private SavedApprovalLineResponseDto.ApprovalLineDto toApprovalLineResponse(
             SavedApprovalLineDetail detail) {
         User targetUser = detail.getTargetUser();
         Department targetDepartment = detail.getTargetDepartment();
@@ -424,22 +517,52 @@ public class SavedApprovalLineService {
                 targetUser != null && targetUser.getDepartment() != null
                         ? targetUser.getDepartment().getName().getDescription()
                         : null;
-        String targetDepartmentName =
-                targetDepartment != null ? targetDepartment.getName().getDescription() : null;
 
-        return SavedApprovalLineResponseDto.LineDetailDto.builder()
+        return SavedApprovalLineResponseDto.ApprovalLineDto.builder()
                 .id(detail.getId())
                 .role(detail.getRole())
-                .targetType(detail.getTargetType())
+                .roleLabel(detail.getRole().getDescription())
+                .agreementMethod(detail.getAgreementMethod())
+                .agreementMethodLabel(
+                        detail.getAgreementMethod() != null
+                                ? detail.getAgreementMethod().getDescription()
+                                : null)
                 .targetUserId(targetUser != null ? targetUser.getId() : null)
                 .targetUserName(targetUserName)
                 .targetUserPosition(targetUserPosition)
                 .targetUserDepartmentName(targetUserDepartmentName)
-                .targetDepartmentId(targetDepartment != null ? targetDepartment.getId() : null)
-                .targetDepartmentName(targetDepartmentName)
                 .targetName(detail.getTargetNameSnapshot())
                 .sequenceNo(detail.getSequenceNo())
                 .required(detail.getIsRequired())
+                .build();
+    }
+
+    private SavedApprovalLineResponseDto.TargetDto toTargetResponse(
+            SavedApprovalLineDetail detail) {
+        User targetUser = detail.getTargetUser();
+
+        String targetUserName =
+                targetUser == null
+                        ? null
+                        : (StringUtils.hasText(targetUser.getNameKor())
+                                ? targetUser.getNameKor()
+                                : targetUser.getNameEng());
+        String targetUserPosition =
+                targetUser != null && targetUser.getPosition() != null
+                        ? targetUser.getPosition().getDescription()
+                        : null;
+        String targetUserDepartmentName =
+                targetUser != null && targetUser.getDepartment() != null
+                        ? targetUser.getDepartment().getName().getDescription()
+                        : null;
+
+        return SavedApprovalLineResponseDto.TargetDto.builder()
+                .id(detail.getId())
+                .targetUserId(targetUser != null ? targetUser.getId() : null)
+                .targetUserName(targetUserName)
+                .targetUserPosition(targetUserPosition)
+                .targetUserDepartmentName(targetUserDepartmentName)
+                .targetName(detail.getTargetNameSnapshot())
                 .build();
     }
 
@@ -473,35 +596,55 @@ public class SavedApprovalLineService {
     }
 
     private SavedApprovalLineResponseDto.ApprovalBoxPreviewDto buildApprovalBoxPreview(
-            List<SavedApprovalLineResponseDto.LineDetailDto> details) {
+            List<SavedApprovalLineResponseDto.ApprovalLineDto> approvalLines) {
         List<SavedApprovalLineResponseDto.ApprovalBoxSlotDto> slots =
-                details.stream()
-                        .filter(detail -> detail.getRole() == ApprovalRouteRole.APPROVAL_LINE)
+                approvalLines.stream()
                         .sorted(
                                 Comparator.comparing(
-                                                SavedApprovalLineResponseDto.LineDetailDto
+                                                SavedApprovalLineResponseDto.ApprovalLineDto
                                                         ::getSequenceNo,
                                                 Comparator.nullsLast(Integer::compareTo))
                                         .thenComparing(
-                                                SavedApprovalLineResponseDto.LineDetailDto::getId,
+                                                SavedApprovalLineResponseDto.ApprovalLineDto::getId,
                                                 Comparator.nullsLast(Long::compareTo)))
                         .map(
-                                detail ->
+                                approvalLine ->
                                         SavedApprovalLineResponseDto.ApprovalBoxSlotDto.builder()
-                                                .sequenceNo(detail.getSequenceNo())
-                                                .targetType(detail.getTargetType())
-                                                .targetUserId(detail.getTargetUserId())
-                                                .targetUserName(detail.getTargetUserName())
-                                                .targetUserPosition(detail.getTargetUserPosition())
+                                                .role(approvalLine.getRole())
+                                                .roleLabel(approvalLine.getRole().getDescription())
+                                                .agreementMethod(approvalLine.getAgreementMethod())
+                                                .agreementMethodLabel(
+                                                        approvalLine.getAgreementMethod() != null
+                                                                ? approvalLine
+                                                                        .getAgreementMethod()
+                                                                        .getDescription()
+                                                                : null)
+                                                .sequenceNo(approvalLine.getSequenceNo())
+                                                .targetUserId(approvalLine.getTargetUserId())
+                                                .targetUserName(approvalLine.getTargetUserName())
+                                                .targetUserPosition(
+                                                        approvalLine.getTargetUserPosition())
                                                 .targetUserDepartmentName(
-                                                        detail.getTargetUserDepartmentName())
-                                                .targetDepartmentId(detail.getTargetDepartmentId())
-                                                .targetDepartmentName(
-                                                        detail.getTargetDepartmentName())
-                                                .targetName(detail.getTargetName())
+                                                        approvalLine.getTargetUserDepartmentName())
+                                                .targetName(approvalLine.getTargetName())
                                                 .build())
                         .toList();
         return SavedApprovalLineResponseDto.ApprovalBoxPreviewDto.builder().slots(slots).build();
+    }
+
+    private boolean isApprovalLineRole(ApprovalRouteRole role) {
+        return role == ApprovalRouteRole.APPROVAL_LINE
+                || role == ApprovalRouteRole.AGREEMENT_REQUIRED
+                || role == ApprovalRouteRole.AGREEMENT_OPTIONAL;
+    }
+
+    private ApprovalAgreementMethod resolveAgreementMethod(
+            ApprovalAgreementMethod agreementMethod, ApprovalRouteRole approvalLineRole) {
+        if (approvalLineRole != ApprovalRouteRole.AGREEMENT_REQUIRED
+                && approvalLineRole != ApprovalRouteRole.AGREEMENT_OPTIONAL) {
+            return null;
+        }
+        return agreementMethod != null ? agreementMethod : ApprovalAgreementMethod.SEQUENTIAL;
     }
 
     private boolean isTrue(Boolean value) {

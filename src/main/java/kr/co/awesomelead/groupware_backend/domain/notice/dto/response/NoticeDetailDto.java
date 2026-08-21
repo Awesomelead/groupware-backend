@@ -3,6 +3,8 @@ package kr.co.awesomelead.groupware_backend.domain.notice.dto.response;
 import io.swagger.v3.oas.annotations.media.Schema;
 
 import kr.co.awesomelead.groupware_backend.domain.department.enums.Company;
+import kr.co.awesomelead.groupware_backend.domain.notice.dto.NoticeCompanyJobTypeTargetDto;
+import kr.co.awesomelead.groupware_backend.domain.user.enums.JobType;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -29,14 +31,6 @@ public class NoticeDetailDto {
     @Schema(description = "공지사항 내용", example = "오는 1월 15일 오후 2시에 전체 회의가 있습니다.")
     private String content;
 
-    @Schema(
-            description = "Quill Delta JSON 문자열",
-            example = "{\"ops\":[{\"insert\":\"오는 1월 15일 오후 2시에 전체 회의가 있습니다.\\n\"}]}")
-    private String contentDelta;
-
-    @Schema(description = "공지 HTML 본문")
-    private String contentHtml;
-
     @Schema(description = "작성자 이름", example = "홍길동")
     private String authorName;
 
@@ -62,11 +56,18 @@ public class NoticeDetailDto {
     @Schema(description = "대상 회사 목록", example = "[\"어썸리드\", \"한국마루이\"]")
     private List<Company> targetCompanies;
 
+    @Schema(description = "대상 회사/직군 조건 목록")
+    private List<NoticeCompanyJobTypeTargetDto> targetCompanyJobTypes;
+
     @Schema(description = "대상 부서 ID 목록", example = "[1, 2, 3]")
     private List<Long> targetDepartmentIds;
 
     @Schema(description = "대상 유저 ID 목록", example = "[10, 20]")
     private List<Long> targetUserIds;
+
+    @Setter
+    @Schema(description = "실제 공지 대상자 목록")
+    private List<TargetUserResponse> targetUsers;
 
     @Setter
     @Schema(description = "이전 공지사항 정보 (없으면 null)")
@@ -97,6 +98,35 @@ public class NoticeDetailDto {
                 description = "파일 조회 URL",
                 example = "https://bucket.s3.amazonaws.com/notices/uuid_file.pdf")
         private String viewUrl; // S3에서 바로 열기 위한 URL
+    }
+
+    @Getter
+    @Builder
+    @AllArgsConstructor
+    @NoArgsConstructor
+    @Schema(description = "공지 대상자 정보")
+    public static class TargetUserResponse {
+
+        @Schema(description = "대상자 사용자 ID", example = "10")
+        private Long userId;
+
+        @Schema(description = "대상자 이름", example = "고영민")
+        private String name;
+
+        @Schema(description = "대상자 부서 ID", example = "3")
+        private Long departmentId;
+
+        @Schema(description = "대상자 부서명", example = "경영지원부")
+        private String departmentName;
+
+        @Schema(description = "대상자 직급", example = "사원")
+        private String position;
+
+        @Schema(description = "대상자 근무 직종", example = "관리직")
+        private JobType jobType;
+
+        @Schema(description = "표시용 대상자명", example = "[경영지원부] 고영민 (사원)")
+        private String targetName;
     }
 
     @Getter

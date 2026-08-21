@@ -20,10 +20,12 @@ import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
 
 import kr.co.awesomelead.groupware_backend.domain.department.enums.Company;
+import kr.co.awesomelead.groupware_backend.domain.notice.dto.NoticeCompanyJobTypeTargetDto;
 import kr.co.awesomelead.groupware_backend.domain.notice.enums.NoticeType;
 import kr.co.awesomelead.groupware_backend.domain.user.entity.User;
 import kr.co.awesomelead.groupware_backend.global.util.CompanyListConverter;
 import kr.co.awesomelead.groupware_backend.global.util.LongListConverter;
+import kr.co.awesomelead.groupware_backend.global.util.NoticeCompanyJobTypeTargetListConverter;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -66,16 +68,6 @@ public class Notice {
     @Column(columnDefinition = "TEXT")
     private String content;
 
-    // Quill Delta 본문(JSON 문자열)
-    @Lob
-    @Column(name = "content_delta", columnDefinition = "TEXT")
-    private String contentDelta;
-
-    // HTML 본문
-    @Lob
-    @Column(name = "content_html", columnDefinition = "TEXT")
-    private String contentHtml;
-
     // 본문 검색용 평문
     @Lob
     @Column(name = "content_text", columnDefinition = "TEXT")
@@ -107,6 +99,11 @@ public class Notice {
     @Column(name = "target_companies", columnDefinition = "TEXT")
     @Builder.Default
     private List<Company> targetCompanies = new ArrayList<>();
+
+    @Convert(converter = NoticeCompanyJobTypeTargetListConverter.class)
+    @Column(name = "target_company_job_types", columnDefinition = "TEXT")
+    @Builder.Default
+    private List<NoticeCompanyJobTypeTargetDto> targetCompanyJobTypes = new ArrayList<>();
 
     @Convert(converter = LongListConverter.class)
     @Column(name = "target_departments", columnDefinition = "TEXT")
@@ -149,11 +146,10 @@ public class Notice {
             NoticeType type,
             String title,
             String content,
-            String contentDelta,
-            String contentHtml,
             String contentText,
             Boolean pinned,
             List<Company> targetCompanies,
+            List<NoticeCompanyJobTypeTargetDto> targetCompanyJobTypes,
             List<Long> targetDepartments,
             List<Long> targetUsers) {
         if (type != null) {
@@ -165,12 +161,6 @@ public class Notice {
         if (content != null) {
             this.content = content;
         }
-        if (contentDelta != null) {
-            this.contentDelta = contentDelta;
-        }
-        if (contentHtml != null) {
-            this.contentHtml = contentHtml;
-        }
         if (contentText != null) {
             this.contentText = contentText;
         }
@@ -180,6 +170,9 @@ public class Notice {
         if (targetCompanies != null) {
             this.targetCompanies = new ArrayList<>(targetCompanies);
         }
+        if (targetCompanyJobTypes != null) {
+            this.targetCompanyJobTypes = new ArrayList<>(targetCompanyJobTypes);
+        }
         if (targetDepartments != null) {
             this.targetDepartments = new ArrayList<>(targetDepartments);
         }
@@ -188,16 +181,9 @@ public class Notice {
         }
     }
 
-    public void updateEditorContent(
-            String content, String contentDelta, String contentHtml, String contentText) {
+    public void updateEditorContent(String content, String contentText) {
         if (content != null) {
             this.content = content;
-        }
-        if (contentDelta != null) {
-            this.contentDelta = contentDelta;
-        }
-        if (contentHtml != null) {
-            this.contentHtml = contentHtml;
         }
         if (contentText != null) {
             this.contentText = contentText;

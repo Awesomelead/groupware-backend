@@ -200,8 +200,8 @@ public class AdminController {
                                             "position": "사원",
                                             "jobType": "관리직",
                                             "authorities": [
-                                              { "code": "SEND_NOTIFICATION", "label": "알림 전송", "enabled": true },
-                                              { "code": "MANAGE_DEPARTMENT_EDUCATION", "label": "부서 교육 관리", "enabled": false }
+                                              { "code": "SEND_NOTIFICATION", "label": "알림 전송", "description": "사용자에게 알림을 전송할 수 있습니다.", "enabled": true },
+                                              { "code": "MANAGE_DEPARTMENT_EDUCATION", "label": "부서 교육 관리", "description": "부서교육 전체 목록을 조회하고 생성, 수정, 삭제할 수 있습니다.", "enabled": false }
                                             ],
                                             "hireDate": "2025-09-22",
                                             "resignationDate": null,
@@ -492,7 +492,10 @@ public class AdminController {
                                               "departmentName": "경영지원부",
                                               "position": "사원",
                                               "jobType": "관리직",
-                                              "authorities": ["알림 전송"],
+                                              "authorities": [
+                                                { "code": "SEND_NOTIFICATION", "label": "알림 전송", "description": "사용자에게 알림을 전송할 수 있습니다.", "enabled": true },
+                                                { "code": "MANAGE_DEPARTMENT_EDUCATION", "label": "부서 교육 관리", "description": "부서교육 전체 목록을 조회하고 생성, 수정, 삭제할 수 있습니다.", "enabled": false }
+                                              ],
                                               "hireDate": "2025-09-22",
                                               "resignationDate": null,
                                               "role": "일반 사용자",
@@ -1304,8 +1307,8 @@ public class AdminController {
                                             "position": "사원",
                                             "jobType": "사무직",
                                             "authorities": [
-                                              { "code": "SEND_NOTIFICATION", "label": "알림 전송", "enabled": false },
-                                              { "code": "MANAGE_DEPARTMENT_EDUCATION", "label": "부서 교육 관리", "enabled": true }
+                                              { "code": "SEND_NOTIFICATION", "label": "알림 전송", "description": "사용자에게 알림을 전송할 수 있습니다.", "enabled": false },
+                                              { "code": "MANAGE_DEPARTMENT_EDUCATION", "label": "부서 교육 관리", "description": "부서교육 전체 목록을 조회하고 생성, 수정, 삭제할 수 있습니다.", "enabled": true }
                                             ],
                                             "hireDate": "2025-09-22",
                                             "resignationDate": null,

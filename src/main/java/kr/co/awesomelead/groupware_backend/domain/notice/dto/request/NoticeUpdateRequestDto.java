@@ -23,8 +23,6 @@ import java.util.List;
     "title",
     "type",
     "pinned",
-    "contentDelta",
-    "contentHtml",
     "content",
     "targetCompanies",
     "targetCompanyJobTypes",
@@ -40,8 +38,6 @@ import java.util.List;
                   "title": "2025년 1월 전체 회의 안내 (수정)",
                   "type": "상시공지",
                   "pinned": true,
-                  "contentDelta": "{\\"ops\\":[{\\"insert\\":\\"회의 시간이 오후 3시로 변경되었습니다.\\\\n\\"}]}",
-                  "contentHtml": "<p>회의 시간이 오후 3시로 변경되었습니다.</p>",
                   "content": "회의 시간이 오후 3시로 변경되었습니다.",
                   "targetCompanies": ["어썸리드"],
                   "targetCompanyJobTypes": [
@@ -57,18 +53,8 @@ public class NoticeUpdateRequestDto {
     @Schema(description = "공지사항 제목 (수정하지 않으려면 null)", example = "2025년 1월 전체 회의 안내 (수정)")
     private String title;
 
-    @Schema(
-            description = "레거시 평문 본문(수정하지 않으려면 null). 신규 개발은 contentDelta + contentHtml 사용 권장",
-            example = "회의 시간이 오후 3시로 변경되었습니다.")
+    @Schema(description = "공지사항 본문 (수정하지 않으려면 null)", example = "회의 시간이 오후 3시로 변경되었습니다.")
     private String content;
-
-    @Schema(
-            description = "Quill Delta JSON 문자열(에디터 원본, 수정하지 않으려면 null)",
-            example = "{\"ops\":[{\"insert\":\"회의 시간이 오후 3시로 변경되었습니다.\\n\"}]}")
-    private String contentDelta;
-
-    @Schema(description = "HTML 본문(수정하지 않으려면 null)", example = "<p>회의 시간이 오후 3시로 변경되었습니다.</p>")
-    private String contentHtml;
 
     @Schema(description = "공지 유형 (수정하지 않으려면 null)", example = "상시공지")
     private NoticeType type;

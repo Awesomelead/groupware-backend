@@ -1,8 +1,5 @@
 package kr.co.awesomelead.groupware_backend.domain.notice.service;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
-
 import kr.co.awesomelead.groupware_backend.domain.department.dto.response.UserSummaryResponseDto;
 import kr.co.awesomelead.groupware_backend.domain.department.entity.Department;
 import kr.co.awesomelead.groupware_backend.domain.department.enums.Company;
@@ -48,8 +45,6 @@ import java.util.Set;
 @RequiredArgsConstructor
 public class NoticeService {
 
-    private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
-
     private final NoticeRepository noticeRepository;
     private final NoticeQueryRepository noticeQueryRepository;
     private final NoticeAttachmentRepository noticeAttachmentRepository;
@@ -84,25 +79,13 @@ public class NoticeService {
         notice.update(
                 null,
                 requestDto.getTitle(),
-                null,
-                null,
-                null,
-                null,
+                requestDto.getContent(),
+                resolveSearchableText(requestDto.getContent()),
                 null,
                 requestDto.getTargetCompanies(),
                 requestDto.getTargetCompanyJobTypes(),
                 requestDto.getTargetDepartmentIds(),
                 targetUserIds);
-        NoticeContentFields contentFields =
-                resolveCreateContentFields(
-                        requestDto.getContent(),
-                        requestDto.getContentDelta(),
-                        requestDto.getContentHtml());
-        notice.updateEditorContent(
-                contentFields.content(),
-                contentFields.contentDelta(),
-                contentFields.contentHtml(),
-                contentFields.contentText());
         noticeRepository.save(notice);
 
         Set<Long> finalTargetUserIds =
@@ -213,6 +196,7 @@ public class NoticeService {
                 .departmentId(department != null ? department.getId() : null)
                 .departmentName(departmentName)
                 .position(position)
+                .jobType(user != null ? user.getJobType() : null)
                 .targetName(toTargetUserName(departmentName, name, position))
                 .build();
     }
@@ -264,19 +248,13 @@ public class NoticeService {
                         .findByIdWithDetails(noticeId)
                         .orElseThrow(() -> new CustomException(ErrorCode.NOTICE_NOT_FOUND));
 
-        NoticeContentFields contentFields =
-                resolveUpdateContentFields(
-                        notice, dto.getContent(), dto.getContentDelta(), dto.getContentHtml());
-
         List<Long> targetUserIds = excludeMasterAdminTargetIds(dto.getTargetUserIds());
 
         notice.update(
                 dto.getType(),
                 dto.getTitle(),
-                contentFields.content(),
-                contentFields.contentDelta(),
-                contentFields.contentHtml(),
-                contentFields.contentText(),
+                dto.getContent(),
+                dto.getContent() != null ? resolveSearchableText(dto.getContent()) : null,
                 dto.getPinned(),
                 dto.getTargetCompanies(),
                 dto.getTargetCompanyJobTypes(),
@@ -307,18 +285,7 @@ public class NoticeService {
                             ? targetUserIds
                             : excludeMasterAdminTargetIds(notice.getTargetUsers());
             if (targetUserIds == null && effectiveUserIds != null) {
-                notice.update(
-                        null,
-                        null,
-                        null,
-                        null,
-                        null,
-                        null,
-                        null,
-                        null,
-                        null,
-                        null,
-                        effectiveUserIds);
+                notice.update(null, null, null, null, null, null, null, null, effectiveUserIds);
             }
 
             Set<Long> finalTargetUserIds =
@@ -449,67 +416,7 @@ public class NoticeService {
         }
     }
 
-    private NoticeContentFields resolveCreateContentFields(
-            String requestContent, String requestContentDelta, String requestContentHtml) {
-        String content = requestContent;
-        if (content == null) {
-            if (StringUtils.hasText(requestContentHtml)) {
-                content = requestContentHtml;
-            } else if (StringUtils.hasText(requestContentDelta)) {
-                content = extractPlainTextFromDelta(requestContentDelta);
-            }
-        }
-
-        String contentText =
-                resolveSearchableText(requestContentDelta, requestContentHtml, content, null);
-        return new NoticeContentFields(
-                content, requestContentDelta, requestContentHtml, contentText);
-    }
-
-    private NoticeContentFields resolveUpdateContentFields(
-            Notice notice,
-            String requestContent,
-            String requestContentDelta,
-            String requestContentHtml) {
-        String resolvedContentDelta =
-                requestContentDelta != null ? requestContentDelta : notice.getContentDelta();
-        String resolvedContentHtml =
-                requestContentHtml != null ? requestContentHtml : notice.getContentHtml();
-
-        String resolvedContent;
-        if (requestContent != null) {
-            resolvedContent = requestContent;
-        } else if (requestContentHtml != null) {
-            resolvedContent = requestContentHtml;
-        } else if (requestContentDelta != null) {
-            resolvedContent = extractPlainTextFromDelta(requestContentDelta);
-        } else {
-            resolvedContent = notice.getContent();
-        }
-
-        String resolvedContentText =
-                resolveSearchableText(
-                        resolvedContentDelta,
-                        resolvedContentHtml,
-                        resolvedContent,
-                        notice.getContentText());
-
-        return new NoticeContentFields(
-                resolvedContent, resolvedContentDelta, resolvedContentHtml, resolvedContentText);
-    }
-
-    private String resolveSearchableText(
-            String contentDelta, String contentHtml, String content, String fallbackContentText) {
-        String deltaText = extractPlainTextFromDelta(contentDelta);
-        if (StringUtils.hasText(deltaText)) {
-            return deltaText;
-        }
-
-        String htmlText = extractPlainTextFromHtml(contentHtml);
-        if (StringUtils.hasText(htmlText)) {
-            return htmlText;
-        }
-
+    private String resolveSearchableText(String content) {
         String contentText = extractPlainTextFromHtml(content);
         if (StringUtils.hasText(contentText)) {
             return contentText;
@@ -519,40 +426,7 @@ public class NoticeService {
             return content.trim();
         }
 
-        if (StringUtils.hasText(fallbackContentText)) {
-            return fallbackContentText;
-        }
         return "";
-    }
-
-    private String extractPlainTextFromDelta(String contentDelta) {
-        if (!StringUtils.hasText(contentDelta)) {
-            return "";
-        }
-
-        try {
-            JsonNode root = OBJECT_MAPPER.readTree(contentDelta);
-            JsonNode ops = root.path("ops");
-            if (!ops.isArray()) {
-                return "";
-            }
-
-            StringBuilder plain = new StringBuilder();
-            for (JsonNode op : ops) {
-                JsonNode insert = op.get("insert");
-                if (insert == null) {
-                    continue;
-                }
-                if (insert.isTextual()) {
-                    plain.append(insert.asText());
-                } else if (insert.isObject() && insert.has("image")) {
-                    plain.append(' ');
-                }
-            }
-            return normalizeWhitespace(plain.toString());
-        } catch (Exception e) {
-            return "";
-        }
     }
 
     private String extractPlainTextFromHtml(String html) {
@@ -583,9 +457,6 @@ public class NoticeService {
                 .replaceAll("\\n{3,}", "\n\n")
                 .trim();
     }
-
-    private record NoticeContentFields(
-            String content, String contentDelta, String contentHtml, String contentText) {}
 
     private void uploadFiles(List<MultipartFile> files, Notice notice) throws IOException {
         if (files != null && !files.isEmpty()) {

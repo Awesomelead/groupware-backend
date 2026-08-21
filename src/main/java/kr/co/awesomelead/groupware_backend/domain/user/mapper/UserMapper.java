@@ -38,5 +38,6 @@ public interface UserMapper {
     User toEntity(SignupRequestDto dto);
 
     @Mapping(target = "name", expression = "java(user.getDisplayName())")
+    @Mapping(target = "jobType", source = "user.jobType")
     UserSummaryResponseDto toSummaryDto(User user);
 }

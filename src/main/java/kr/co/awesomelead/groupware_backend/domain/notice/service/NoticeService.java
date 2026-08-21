@@ -7,11 +7,11 @@ import kr.co.awesomelead.groupware_backend.domain.department.dto.response.UserSu
 import kr.co.awesomelead.groupware_backend.domain.department.entity.Department;
 import kr.co.awesomelead.groupware_backend.domain.department.enums.Company;
 import kr.co.awesomelead.groupware_backend.domain.department.service.DepartmentService;
+import kr.co.awesomelead.groupware_backend.domain.notice.dto.NoticeCompanyJobTypeTargetDto;
 import kr.co.awesomelead.groupware_backend.domain.notice.dto.request.NoticeCreateRequestDto;
 import kr.co.awesomelead.groupware_backend.domain.notice.dto.request.NoticeSearchConditionDto;
 import kr.co.awesomelead.groupware_backend.domain.notice.dto.request.NoticeUpdateRequestDto;
 import kr.co.awesomelead.groupware_backend.domain.notice.dto.response.NoticeDetailDto;
-import kr.co.awesomelead.groupware_backend.domain.notice.dto.NoticeCompanyJobTypeTargetDto;
 import kr.co.awesomelead.groupware_backend.domain.notice.dto.response.NoticeSummaryDto;
 import kr.co.awesomelead.groupware_backend.domain.notice.entity.Notice;
 import kr.co.awesomelead.groupware_backend.domain.notice.entity.NoticeAttachment;

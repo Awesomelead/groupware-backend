@@ -3,10 +3,10 @@ package kr.co.awesomelead.groupware_backend.domain.user.repository;
 import kr.co.awesomelead.groupware_backend.domain.department.entity.Department;
 import kr.co.awesomelead.groupware_backend.domain.department.enums.Company;
 import kr.co.awesomelead.groupware_backend.domain.user.entity.User;
+import kr.co.awesomelead.groupware_backend.domain.user.enums.JobType;
 import kr.co.awesomelead.groupware_backend.domain.user.enums.Position;
 import kr.co.awesomelead.groupware_backend.domain.user.enums.Role;
 import kr.co.awesomelead.groupware_backend.domain.user.enums.Status;
-import kr.co.awesomelead.groupware_backend.domain.user.enums.JobType;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;

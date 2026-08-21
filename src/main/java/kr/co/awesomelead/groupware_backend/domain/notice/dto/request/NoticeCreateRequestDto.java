@@ -87,8 +87,7 @@ public class NoticeCreateRequestDto {
             example = "[\"어썸리드\"]")
     private List<Company> targetCompanies;
 
-    @Schema(
-            description = "공지 대상 회사/직군 조건 목록 (예: 어썸리드 관리직, 한국마루이 현장직, MASTER_ADMIN 제외)")
+    @Schema(description = "공지 대상 회사/직군 조건 목록 (예: 어썸리드 관리직, 한국마루이 현장직, MASTER_ADMIN 제외)")
     private List<NoticeCompanyJobTypeTargetDto> targetCompanyJobTypes;
 
     @Schema(

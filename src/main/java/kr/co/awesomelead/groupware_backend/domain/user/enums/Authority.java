@@ -37,6 +37,17 @@ public enum Authority {
         return Arrays.stream(values()).sorted(descriptionComparator()).toList();
     }
 
+    public static List<Authority> visibleSortedByDescription() {
+        return Arrays.stream(values())
+                .filter(Authority::isVisible)
+                .sorted(descriptionComparator())
+                .toList();
+    }
+
+    public boolean isVisible() {
+        return this != MANAGE_APPROVAL_LINE && this != SEND_NOTIFICATION;
+    }
+
     public static Comparator<Authority> descriptionComparator() {
         Collator collator = Collator.getInstance(Locale.KOREAN);
         return (left, right) -> {

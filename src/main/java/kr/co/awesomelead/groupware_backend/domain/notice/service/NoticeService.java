@@ -285,16 +285,7 @@ public class NoticeService {
                             ? targetUserIds
                             : excludeMasterAdminTargetIds(notice.getTargetUsers());
             if (targetUserIds == null && effectiveUserIds != null) {
-                notice.update(
-                        null,
-                        null,
-                        null,
-                        null,
-                        null,
-                        null,
-                        null,
-                        null,
-                        effectiveUserIds);
+                notice.update(null, null, null, null, null, null, null, null, effectiveUserIds);
             }
 
             Set<Long> finalTargetUserIds =

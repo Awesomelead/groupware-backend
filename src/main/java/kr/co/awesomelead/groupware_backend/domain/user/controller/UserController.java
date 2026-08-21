@@ -239,14 +239,14 @@ public class UserController {
                                                                              "jobType": "관리직",
                                                                              "role": "일반 사용자",
                                                                              "authorities": [
-                                                                               { "code": "SEND_NOTIFICATION", "label": "알림 전송", "enabled": true },
-                                                                               { "code": "MANAGE_DEPARTMENT_EDUCATION", "label": "부서 교육 관리", "enabled": false },
-                                                                               { "code": "ACCESS_NOTICE", "label": "공지사항 관리", "enabled": false },
-                                                                               { "code": "VIEW_ALL_NOTICE", "label": "공지사항 전체 조회", "enabled": false },
-                                                                               { "code": "MANAGE_VISITOR", "label": "내방객 관리", "enabled": false },
-                                                                               { "code": "EDIT_EMPLOYEE_INFO", "label": "직원 관리", "enabled": false },
-                                                                               { "code": "MANAGE_ANNUAL_LEAVE", "label": "연차 관리", "enabled": false },
-                                                                               { "code": "MANAGE_PAYSLIP", "label": "급여명세서 관리", "enabled": false }
+                                                                               { "code": "SEND_NOTIFICATION", "label": "알림 전송", "description": "사용자에게 알림을 전송할 수 있습니다.", "enabled": true },
+                                                                               { "code": "MANAGE_DEPARTMENT_EDUCATION", "label": "부서 교육 관리", "description": "부서교육 전체 목록을 조회하고 생성, 수정, 삭제할 수 있습니다.", "enabled": false },
+                                                                               { "code": "ACCESS_NOTICE", "label": "공지사항 관리", "description": "공지를 생성, 수정, 삭제할 수 있고 내가 작성한 공지를 조회할 수 있습니다.", "enabled": false },
+                                                                               { "code": "VIEW_ALL_NOTICE", "label": "공지사항 전체 조회", "description": "공지 대상자가 아니어도 모든 회사와 모든 대상의 공지를 조회할 수 있습니다.", "enabled": false },
+                                                                               { "code": "MANAGE_VISITOR", "label": "내방객 관리", "description": "내방객 신청, 방문 기록, 출입 상태를 조회하고 관리할 수 있습니다.", "enabled": false },
+                                                                               { "code": "EDIT_EMPLOYEE_INFO", "label": "직원 관리", "description": "직원 정보를 조회, 수정하고 권한, 역할, 계정 상태를 관리할 수 있습니다.", "enabled": false },
+                                                                               { "code": "MANAGE_ANNUAL_LEAVE", "label": "연차 관리", "description": "직원 연차를 생성, 수정, 삭제하고 관리자 연차 목록을 조회할 수 있습니다.", "enabled": false },
+                                                                               { "code": "MANAGE_PAYSLIP", "label": "급여명세서 관리", "description": "급여명세서를 생성, 수정, 삭제, 발송하고 관리자 목록을 조회할 수 있습니다.", "enabled": false }
                                                                              ],
                                                                              "hireDate": "2024-03-01",
                                                                              "resignationDate": null

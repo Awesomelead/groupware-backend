@@ -114,7 +114,8 @@ public class AdminUserDetailResponseDto {
                                         a ->
                                                 MyInfoAuthorityItemDto.builder()
                                                         .code(a.name())
-                                                        .label(a.getDescription())
+                                                        .label(a.getLabel())
+                                                        .description(a.getDescription())
                                                         .enabled(
                                                                 user.getAuthorities() != null
                                                                         && user.getAuthorities()

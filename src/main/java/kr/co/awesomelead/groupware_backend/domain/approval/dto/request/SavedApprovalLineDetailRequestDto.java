@@ -4,6 +4,7 @@ import io.swagger.v3.oas.annotations.media.Schema;
 
 import jakarta.validation.constraints.NotNull;
 
+import kr.co.awesomelead.groupware_backend.domain.approval.enums.ApprovalAgreementMethod;
 import kr.co.awesomelead.groupware_backend.domain.approval.enums.ApprovalRouteRole;
 import kr.co.awesomelead.groupware_backend.domain.approval.enums.ApprovalTargetType;
 
@@ -28,6 +29,12 @@ public class SavedApprovalLineDetailRequestDto {
                 "RECEIVER_DEPARTMENT"
             })
     private ApprovalRouteRole role;
+
+    @Schema(
+            description = "합의부서 내 합의방법. role이 AGREEMENT_REQUIRED/AGREEMENT_OPTIONAL일 때 사용",
+            example = "SEQUENTIAL",
+            allowableValues = {"SEQUENTIAL", "PARALLEL"})
+    private ApprovalAgreementMethod agreementMethod;
 
     @NotNull
     @Schema(

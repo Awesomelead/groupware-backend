@@ -69,6 +69,10 @@ public class NoticeDetailDto {
     private List<Long> targetUserIds;
 
     @Setter
+    @Schema(description = "실제 공지 대상자 목록")
+    private List<TargetUserResponse> targetUsers;
+
+    @Setter
     @Schema(description = "이전 공지사항 정보 (없으면 null)")
     private NoticeInfo prevNotice;
 
@@ -97,6 +101,32 @@ public class NoticeDetailDto {
                 description = "파일 조회 URL",
                 example = "https://bucket.s3.amazonaws.com/notices/uuid_file.pdf")
         private String viewUrl; // S3에서 바로 열기 위한 URL
+    }
+
+    @Getter
+    @Builder
+    @AllArgsConstructor
+    @NoArgsConstructor
+    @Schema(description = "공지 대상자 정보")
+    public static class TargetUserResponse {
+
+        @Schema(description = "대상자 사용자 ID", example = "10")
+        private Long userId;
+
+        @Schema(description = "대상자 이름", example = "고영민")
+        private String name;
+
+        @Schema(description = "대상자 부서 ID", example = "3")
+        private Long departmentId;
+
+        @Schema(description = "대상자 부서명", example = "경영지원부")
+        private String departmentName;
+
+        @Schema(description = "대상자 직급", example = "사원")
+        private String position;
+
+        @Schema(description = "표시용 대상자명", example = "[경영지원부] 고영민 (사원)")
+        private String targetName;
     }
 
     @Getter

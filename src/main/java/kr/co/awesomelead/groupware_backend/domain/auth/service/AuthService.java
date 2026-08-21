@@ -215,7 +215,8 @@ public class AuthService {
                                 authority ->
                                         MyInfoAuthorityItemDto.builder()
                                                 .code(authority.name())
-                                                .label(authority.getDescription())
+                                                .label(authority.getLabel())
+                                                .description(authority.getDescription())
                                                 .enabled(true)
                                                 .build())
                         .toList();

@@ -68,16 +68,6 @@ public class Notice {
     @Column(columnDefinition = "TEXT")
     private String content;
 
-    // Quill Delta 본문(JSON 문자열)
-    @Lob
-    @Column(name = "content_delta", columnDefinition = "TEXT")
-    private String contentDelta;
-
-    // HTML 본문
-    @Lob
-    @Column(name = "content_html", columnDefinition = "TEXT")
-    private String contentHtml;
-
     // 본문 검색용 평문
     @Lob
     @Column(name = "content_text", columnDefinition = "TEXT")
@@ -156,8 +146,6 @@ public class Notice {
             NoticeType type,
             String title,
             String content,
-            String contentDelta,
-            String contentHtml,
             String contentText,
             Boolean pinned,
             List<Company> targetCompanies,
@@ -172,12 +160,6 @@ public class Notice {
         }
         if (content != null) {
             this.content = content;
-        }
-        if (contentDelta != null) {
-            this.contentDelta = contentDelta;
-        }
-        if (contentHtml != null) {
-            this.contentHtml = contentHtml;
         }
         if (contentText != null) {
             this.contentText = contentText;
@@ -199,16 +181,9 @@ public class Notice {
         }
     }
 
-    public void updateEditorContent(
-            String content, String contentDelta, String contentHtml, String contentText) {
+    public void updateEditorContent(String content, String contentText) {
         if (content != null) {
             this.content = content;
-        }
-        if (contentDelta != null) {
-            this.contentDelta = contentDelta;
-        }
-        if (contentHtml != null) {
-            this.contentHtml = contentHtml;
         }
         if (contentText != null) {
             this.contentText = contentText;

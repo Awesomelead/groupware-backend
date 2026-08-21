@@ -31,14 +31,6 @@ public class NoticeDetailDto {
     @Schema(description = "공지사항 내용", example = "오는 1월 15일 오후 2시에 전체 회의가 있습니다.")
     private String content;
 
-    @Schema(
-            description = "Quill Delta JSON 문자열",
-            example = "{\"ops\":[{\"insert\":\"오는 1월 15일 오후 2시에 전체 회의가 있습니다.\\n\"}]}")
-    private String contentDelta;
-
-    @Schema(description = "공지 HTML 본문")
-    private String contentHtml;
-
     @Schema(description = "작성자 이름", example = "홍길동")
     private String authorName;
 

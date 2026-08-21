@@ -26,8 +26,6 @@ import java.util.List;
     "title",
     "type",
     "pinned",
-    "contentDelta",
-    "contentHtml",
     "content",
     "targetCompanies",
     "targetCompanyJobTypes",
@@ -42,8 +40,6 @@ import java.util.List;
                   "title": "2025년 1월 전체 회의 안내",
                   "type": "상시공지",
                   "pinned": false,
-                  "contentDelta": "{\\"ops\\":[{\\"insert\\":\\"공지 본문입니다.\\\\n\\"}]}",
-                  "contentHtml": "<p>오는 1월 15일 오후 2시에 전체 회의가 있습니다.</p>",
                   "content": "오는 1월 15일 오후 2시에 전체 회의가 있습니다.",
                   "targetCompanies": ["어썸리드"],
                   "targetCompanyJobTypes": [
@@ -59,20 +55,8 @@ public class NoticeCreateRequestDto {
     @Schema(description = "공지사항 제목", example = "2025년 1월 전체 회의 안내", required = true)
     private String title;
 
-    @Schema(
-            description = "레거시 평문 본문(하위 호환용). 신규 개발은 contentDelta + contentHtml 사용 권장",
-            example = "오는 1월 15일 오후 2시에 전체 회의가 있습니다.")
+    @Schema(description = "공지사항 본문", example = "오는 1월 15일 오후 2시에 전체 회의가 있습니다.")
     private String content;
-
-    @Schema(
-            description = "Quill Delta JSON 문자열(에디터 원본). 프론트 저장 기준으로 권장",
-            example = "{\"ops\":[{\"insert\":\"공지 본문입니다.\\n\"}]}")
-    private String contentDelta;
-
-    @Schema(
-            description = "HTML 본문(선택). 상세 렌더링/미리보기 호환용",
-            example = "<p>오는 1월 15일 오후 2시에 전체 회의가 있습니다.</p>")
-    private String contentHtml;
 
     @NotNull(message = "공지 유형은 필수입니다.")
     @Schema(description = "공지 유형", example = "상시공지", required = true)

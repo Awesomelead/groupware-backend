@@ -78,10 +78,11 @@ public class NoticeController {
 
                 **공지 대상 설정 로직**:
                 1. **회사(targetCompanies)**: 선택된 회사 소속 전체 인원을 대상으로 합니다.
-                2. **부서(targetDepartmentIds)**: 선택된 부서 및 그 하위 부서의 모든 인원을 대상으로 합니다.
-                3. **개인(targetUserIds)**: 특정 유저를 직접 대상으로 지정합니다.
+                2. **회사/직군(targetCompanyJobTypes)**: 선택된 회사의 특정 직군 인원을 대상으로 합니다.
+                3. **부서(targetDepartmentIds)**: 선택된 부서 및 그 하위 부서의 모든 인원을 대상으로 합니다.
+                4. **개인(targetUserIds)**: 특정 유저를 직접 대상으로 지정합니다.
 
-                *위 세 조건은 **합집합(OR)**으로 계산되어 최종 공지 대상자(NoticeTarget)가 결정됩니다.*
+                *위 네 조건은 **합집합(OR)**으로 계산되어 최종 공지 대상자(NoticeTarget)가 결정됩니다.*
                 *MASTER_ADMIN 계정은 회사/부서/개인 지정 여부와 관계없이 최종 대상자에서 제외됩니다.*
                 """,
             requestBody =
@@ -371,6 +372,12 @@ public class NoticeController {
                                   }
                                 ],
                                 "targetCompanies": ["어썸리드"],
+                                "targetCompanyJobTypes": [
+                                  {
+                                    "company": "한국마루이",
+                                    "jobType": "현장직"
+                                  }
+                                ],
                                 "targetDepartmentIds": [1, 2],
                                 "targetUserIds": [10, 20],
                                 "prevNotice": {
@@ -529,6 +536,12 @@ public class NoticeController {
                                       "notice": {
                                         "type": "상시공지",
                                         "targetCompanies": ["어썸리드"],
+                                        "targetCompanyJobTypes": [
+                                          {
+                                            "company": "한국마루이",
+                                            "jobType": "현장직"
+                                          }
+                                        ],
                                         "targetDepartmentIds": [11, 12],
                                         "targetUserIds": [17, 22]
                                       }
@@ -698,6 +711,12 @@ class NoticeUpdateMultipartRequestDoc {
                       "contentHtml": "<p>회의 시간이 오후 3시로 변경되었습니다.</p>",
                       "content": "회의 시간이 오후 3시로 변경되었습니다.",
                       "targetCompanies": ["어썸리드"],
+                      "targetCompanyJobTypes": [
+                        {
+                          "company": "한국마루이",
+                          "jobType": "현장직"
+                        }
+                      ],
                       "targetDepartmentIds": [11, 12],
                       "targetUserIds": [17, 22],
                       "attachmentsIdsToRemove": [1, 2]
@@ -724,6 +743,12 @@ class NoticeCreateMultipartRequestDoc {
                       "contentHtml": "<p>오는 1월 15일 오후 2시에 전체 회의가 있습니다.</p>",
                       "content": "오는 1월 15일 오후 2시에 전체 회의가 있습니다.",
                       "targetCompanies": ["어썸리드"],
+                      "targetCompanyJobTypes": [
+                        {
+                          "company": "한국마루이",
+                          "jobType": "현장직"
+                        }
+                      ],
                       "targetDepartmentIds": [1, 5, 12],
                       "targetUserIds": [101, 205]
                     }

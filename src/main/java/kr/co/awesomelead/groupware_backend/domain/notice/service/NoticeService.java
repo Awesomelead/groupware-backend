@@ -11,6 +11,7 @@ import kr.co.awesomelead.groupware_backend.domain.notice.dto.request.NoticeCreat
 import kr.co.awesomelead.groupware_backend.domain.notice.dto.request.NoticeSearchConditionDto;
 import kr.co.awesomelead.groupware_backend.domain.notice.dto.request.NoticeUpdateRequestDto;
 import kr.co.awesomelead.groupware_backend.domain.notice.dto.response.NoticeDetailDto;
+import kr.co.awesomelead.groupware_backend.domain.notice.dto.NoticeCompanyJobTypeTargetDto;
 import kr.co.awesomelead.groupware_backend.domain.notice.dto.response.NoticeSummaryDto;
 import kr.co.awesomelead.groupware_backend.domain.notice.entity.Notice;
 import kr.co.awesomelead.groupware_backend.domain.notice.entity.NoticeAttachment;
@@ -89,6 +90,7 @@ public class NoticeService {
                 null,
                 null,
                 requestDto.getTargetCompanies(),
+                requestDto.getTargetCompanyJobTypes(),
                 requestDto.getTargetDepartmentIds(),
                 targetUserIds);
         NoticeContentFields contentFields =
@@ -103,28 +105,12 @@ public class NoticeService {
                 contentFields.contentText());
         noticeRepository.save(notice);
 
-        Set<Long> finalTargetUserIds = new HashSet<>();
-
-        if (requestDto.getTargetCompanies() != null) {
-            for (Company company : requestDto.getTargetCompanies()) {
-                List<Long> companyUserIds = userRepository.findAllIdsByCompany(company);
-                finalTargetUserIds.addAll(companyUserIds);
-            }
-        }
-
-        if (requestDto.getTargetDepartmentIds() != null) {
-            for (Long deptId : requestDto.getTargetDepartmentIds()) {
-                List<UserSummaryResponseDto> deptUsers =
-                        departmentService.getUsersByDepartmentHierarchy(deptId);
-                deptUsers.forEach(u -> finalTargetUserIds.add(u.getId()));
-            }
-        }
-
-        if (targetUserIds != null) {
-            finalTargetUserIds.addAll(targetUserIds);
-        }
-
-        excludeMasterAdminTargets(finalTargetUserIds);
+        Set<Long> finalTargetUserIds =
+                resolveTargetUserIds(
+                        requestDto.getTargetCompanies(),
+                        requestDto.getTargetCompanyJobTypes(),
+                        requestDto.getTargetDepartmentIds(),
+                        targetUserIds);
         validateTargetsNotEmpty(finalTargetUserIds);
 
         List<NoticeTarget> targets =
@@ -293,11 +279,13 @@ public class NoticeService {
                 contentFields.contentText(),
                 dto.getPinned(),
                 dto.getTargetCompanies(),
+                dto.getTargetCompanyJobTypes(),
                 dto.getTargetDepartmentIds(),
                 targetUserIds);
 
         boolean shouldRebuildTargets =
                 dto.getTargetCompanies() != null
+                        || dto.getTargetCompanyJobTypes() != null
                         || dto.getTargetDepartmentIds() != null
                         || dto.getTargetUserIds() != null;
 
@@ -306,6 +294,10 @@ public class NoticeService {
                     dto.getTargetCompanies() != null
                             ? dto.getTargetCompanies()
                             : notice.getTargetCompanies();
+            List<NoticeCompanyJobTypeTargetDto> effectiveCompanyJobTypes =
+                    dto.getTargetCompanyJobTypes() != null
+                            ? dto.getTargetCompanyJobTypes()
+                            : notice.getTargetCompanyJobTypes();
             List<Long> effectiveDepartmentIds =
                     dto.getTargetDepartmentIds() != null
                             ? dto.getTargetDepartmentIds()
@@ -316,12 +308,25 @@ public class NoticeService {
                             : excludeMasterAdminTargetIds(notice.getTargetUsers());
             if (targetUserIds == null && effectiveUserIds != null) {
                 notice.update(
-                        null, null, null, null, null, null, null, null, null, effectiveUserIds);
+                        null,
+                        null,
+                        null,
+                        null,
+                        null,
+                        null,
+                        null,
+                        null,
+                        null,
+                        null,
+                        effectiveUserIds);
             }
 
             Set<Long> finalTargetUserIds =
                     resolveTargetUserIds(
-                            effectiveCompanies, effectiveDepartmentIds, effectiveUserIds);
+                            effectiveCompanies,
+                            effectiveCompanyJobTypes,
+                            effectiveDepartmentIds,
+                            effectiveUserIds);
 
             validateTargetsNotEmpty(finalTargetUserIds);
 
@@ -367,6 +372,7 @@ public class NoticeService {
 
     private Set<Long> resolveTargetUserIds(
             List<Company> targetCompanies,
+            List<NoticeCompanyJobTypeTargetDto> targetCompanyJobTypes,
             List<Long> targetDepartmentIds,
             List<Long> targetUserIds) {
         Set<Long> finalTargetUserIds = new HashSet<>();
@@ -375,6 +381,18 @@ public class NoticeService {
             for (Company company : targetCompanies) {
                 List<Long> companyUserIds = userRepository.findAllIdsByCompany(company);
                 finalTargetUserIds.addAll(companyUserIds);
+            }
+        }
+
+        if (targetCompanyJobTypes != null) {
+            for (NoticeCompanyJobTypeTargetDto target : targetCompanyJobTypes) {
+                if (target.getCompany() == null || target.getJobType() == null) {
+                    continue;
+                }
+                List<Long> companyJobTypeUserIds =
+                        userRepository.findAllIdsByCompanyAndJobType(
+                                target.getCompany(), target.getJobType());
+                finalTargetUserIds.addAll(companyJobTypeUserIds);
             }
         }
 

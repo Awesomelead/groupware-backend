@@ -6,6 +6,7 @@ import kr.co.awesomelead.groupware_backend.domain.user.entity.User;
 import kr.co.awesomelead.groupware_backend.domain.user.enums.Position;
 import kr.co.awesomelead.groupware_backend.domain.user.enums.Role;
 import kr.co.awesomelead.groupware_backend.domain.user.enums.Status;
+import kr.co.awesomelead.groupware_backend.domain.user.enums.JobType;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -68,6 +69,12 @@ public interface UserRepository extends JpaRepository<User, Long> {
 
     @Query("SELECT u.id FROM User u WHERE u.workLocation = :company AND u.role <> 'MASTER_ADMIN'")
     List<Long> findAllIdsByCompany(@Param("company") Company company);
+
+    @Query(
+            "SELECT u.id FROM User u WHERE u.workLocation = :company AND u.jobType = :jobType AND"
+                    + " u.role <> 'MASTER_ADMIN'")
+    List<Long> findAllIdsByCompanyAndJobType(
+            @Param("company") Company company, @Param("jobType") JobType jobType);
 
     @Query(
             "SELECT u FROM User u "

@@ -84,7 +84,9 @@ public class SecurityConfig {
 
         http.authorizeHttpRequests(
                 (auth) ->
-                        auth.requestMatchers(
+                        auth.requestMatchers("/api/visits/admin/**", "/api/visits/check-out")
+                                .authenticated()
+                                .requestMatchers(
                                         "/",
                                         "/index.html",
                                         "/api/test/**",
@@ -112,8 +114,6 @@ public class SecurityConfig {
                                         "/api/auth/user",
                                         "/api/auth/reset-password", // 로그인 상태에서의 비번 변경
                                         "/api/admin/**", // 관리자 기능
-                                        "/api/visits/admin/**",
-                                        "/api/visits/check-out",
                                         "/api/approval-configs/**") // 결재선 설정 (권한 체크는 Service에서)
                                 .authenticated()
                                 .anyRequest()

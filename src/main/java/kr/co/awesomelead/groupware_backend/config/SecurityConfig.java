@@ -84,9 +84,7 @@ public class SecurityConfig {
 
         http.authorizeHttpRequests(
                 (auth) ->
-                        auth.requestMatchers(
-                                        "/api/visits/admin/**",
-                                        "/api/visits/check-out")
+                        auth.requestMatchers("/api/visits/admin/**", "/api/visits/check-out")
                                 .authenticated()
                                 .requestMatchers(
                                         "/",

@@ -10,6 +10,7 @@ import kr.co.awesomelead.groupware_backend.domain.notification.enums.Notificatio
 import kr.co.awesomelead.groupware_backend.domain.notification.service.NotificationService;
 import kr.co.awesomelead.groupware_backend.domain.user.entity.User;
 import kr.co.awesomelead.groupware_backend.domain.user.enums.Authority;
+import kr.co.awesomelead.groupware_backend.domain.user.enums.Position;
 import kr.co.awesomelead.groupware_backend.domain.user.repository.UserRepository;
 import kr.co.awesomelead.groupware_backend.domain.visit.dto.request.CheckInRequestDto;
 import kr.co.awesomelead.groupware_backend.domain.visit.dto.request.CheckOutRequestDto;
@@ -257,7 +258,9 @@ public class VisitService {
                         .findById(dto.getVisitId())
                         .orElseThrow(() -> new CustomException(ErrorCode.VISIT_NOT_FOUND));
         User manager = validateVisitorManageAuthority(userId);
-        validateManagedDepartmentAccess(manager, visit);
+        if (manager.getPosition() != Position.SECURITY_GUARD) {
+            validateManagedDepartmentAccess(manager, visit);
+        }
 
         VisitRecord record =
                 visit.getRecords().stream()

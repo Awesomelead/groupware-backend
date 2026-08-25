@@ -450,7 +450,11 @@ public class VisitService {
 
     @Transactional(readOnly = true)
     public byte[] getVisitsExcel(
-            Long userId, Long departmentId, VisitStatus status, LocalDate startDate, LocalDate endDate) {
+            Long userId,
+            Long departmentId,
+            VisitStatus status,
+            LocalDate startDate,
+            LocalDate endDate) {
         validateVisitorManageAuthority(userId);
 
         List<Visit> visits =

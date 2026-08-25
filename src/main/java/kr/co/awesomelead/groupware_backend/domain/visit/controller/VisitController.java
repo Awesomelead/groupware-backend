@@ -174,7 +174,7 @@ public class VisitController {
             summary = "방문자 퇴실 처리",
             description =
                     "MANAGE_VISITOR 권한을 가진 담당 부서 직원이 내방객의 퇴실 시간을 기록합니다. 경비원은 MANAGE_VISITOR 권한이 있으면"
-                        + " 모든 내방객 퇴실 처리가 가능합니다.")
+                            + " 모든 내방객 퇴실 처리가 가능합니다.")
     @PatchMapping("/check-out")
     public ResponseEntity<ApiResponse<Long>> checkOut(
             @Parameter(hidden = true) @AuthenticationPrincipal CustomUserDetails userDetails,

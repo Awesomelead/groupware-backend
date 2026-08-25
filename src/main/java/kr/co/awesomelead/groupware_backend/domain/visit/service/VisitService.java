@@ -41,6 +41,16 @@ import kr.co.awesomelead.groupware_backend.global.infra.s3.service.S3Service;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
+import org.apache.poi.ss.usermodel.BorderStyle;
+import org.apache.poi.ss.usermodel.Cell;
+import org.apache.poi.ss.usermodel.CellStyle;
+import org.apache.poi.ss.usermodel.FillPatternType;
+import org.apache.poi.ss.usermodel.Font;
+import org.apache.poi.ss.usermodel.HorizontalAlignment;
+import org.apache.poi.ss.usermodel.IndexedColors;
+import org.apache.poi.ss.usermodel.Row;
+import org.apache.poi.ss.usermodel.Sheet;
+import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -48,11 +58,13 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
+import java.util.Comparator;
 import java.util.EnumSet;
 import java.util.List;
 import java.util.Map;
@@ -437,6 +449,22 @@ public class VisitService {
     }
 
     @Transactional(readOnly = true)
+    public byte[] getVisitsExcel(
+            Long userId,
+            Long departmentId,
+            VisitStatus status,
+            LocalDate startDate,
+            LocalDate endDate) {
+        validateVisitorManageAuthority(userId);
+
+        List<Visit> visits =
+                visitQueryRepository.findVisitsForAdminExcel(
+                        departmentId, status, startDate, endDate);
+
+        return createVisitExcel(visits);
+    }
+
+    @Transactional(readOnly = true)
     public MyVisitDetailResponseDto getVisitDetailForAdmin(Long userId, Long visitId) {
         validateVisitorManageAuthority(userId);
 
@@ -472,6 +500,207 @@ public class VisitService {
             throw new CustomException(ErrorCode.VISIT_ACCESS_DENIED);
         }
         return user;
+    }
+
+    private byte[] createVisitExcel(List<Visit> visits) {
+        String[] headers = {
+            "No.",
+            "상태",
+            "방문 유형",
+            "방문 목적",
+            "방문 회사",
+            "내방객 회사",
+            "내방객 이름",
+            "내방객 전화번호",
+            "차량번호",
+            "담당자",
+            "담당부서",
+            "방문 시작일",
+            "방문 종료일",
+            "추가 허가 유형",
+            "추가 허가 상세",
+            "반려사유",
+            "방문일",
+            "희망 입실시간",
+            "희망 퇴실시간",
+            "실제 입실시간",
+            "실제 퇴실시간",
+            "퇴실 처리자",
+            "서명 여부",
+            "서명 URL"
+        };
+
+        try (XSSFWorkbook workbook = new XSSFWorkbook()) {
+            Sheet sheet = workbook.createSheet("내방객기록");
+
+            CellStyle headerStyle = workbook.createCellStyle();
+            headerStyle.setFillForegroundColor(IndexedColors.GREY_25_PERCENT.getIndex());
+            headerStyle.setFillPattern(FillPatternType.SOLID_FOREGROUND);
+            Font headerFont = workbook.createFont();
+            headerFont.setBold(true);
+            headerStyle.setFont(headerFont);
+            headerStyle.setAlignment(HorizontalAlignment.CENTER);
+            setExcelBorderThin(headerStyle);
+
+            CellStyle dataStyle = workbook.createCellStyle();
+            setExcelBorderThin(dataStyle);
+
+            Row headerRow = sheet.createRow(0);
+            for (int i = 0; i < headers.length; i++) {
+                createExcelCell(headerRow, i, headers[i], headerStyle);
+            }
+
+            int rowNo = 1;
+            for (Visit visit : visits) {
+                List<VisitRecord> records =
+                        visit.getRecords().stream()
+                                .sorted(
+                                        Comparator.comparing(
+                                                        VisitRecord::getVisitDate,
+                                                        Comparator.nullsLast(
+                                                                Comparator.naturalOrder()))
+                                                .thenComparing(
+                                                        VisitRecord::getId,
+                                                        Comparator.nullsLast(
+                                                                Comparator.naturalOrder())))
+                                .toList();
+
+                if (records.isEmpty()) {
+                    Row row = sheet.createRow(rowNo);
+                    fillVisitExcelRow(row, rowNo++, visit, null, dataStyle);
+                    continue;
+                }
+
+                for (VisitRecord record : records) {
+                    Row row = sheet.createRow(rowNo);
+                    fillVisitExcelRow(row, rowNo++, visit, record, dataStyle);
+                }
+            }
+
+            for (int i = 0; i < headers.length; i++) {
+                sheet.autoSizeColumn(i);
+                int currentWidth = sheet.getColumnWidth(i);
+                sheet.setColumnWidth(i, Math.max((int) (currentWidth * 1.3), 3000));
+            }
+
+            ByteArrayOutputStream out = new ByteArrayOutputStream();
+            workbook.write(out);
+            return out.toByteArray();
+        } catch (IOException e) {
+            throw new RuntimeException("엑셀 파일 생성 중 오류가 발생했습니다.", e);
+        }
+    }
+
+    private void fillVisitExcelRow(
+            Row row, int rowNo, Visit visit, VisitRecord record, CellStyle dataStyle) {
+        int col = 0;
+        createExcelCell(row, col++, String.valueOf(rowNo), dataStyle);
+        createExcelCell(
+                row,
+                col++,
+                visit.getStatus() != null ? visit.getStatus().getDescription() : "",
+                dataStyle);
+        createExcelCell(
+                row,
+                col++,
+                visit.getVisitCategory() != null ? visit.getVisitCategory().getDescription() : "",
+                dataStyle);
+        createExcelCell(
+                row,
+                col++,
+                visit.getPurpose() != null ? visit.getPurpose().getDescription() : "",
+                dataStyle);
+        createExcelCell(
+                row,
+                col++,
+                visit.getHostCompany() != null ? visit.getHostCompany().getDescription() : "",
+                dataStyle);
+        createExcelCell(row, col++, visit.getVisitorCompany(), dataStyle);
+        createExcelCell(row, col++, visit.getVisitorName(), dataStyle);
+        createExcelCell(row, col++, visit.getVisitorPhoneNumber(), dataStyle);
+        createExcelCell(row, col++, visit.getCarNumber(), dataStyle);
+        createExcelCell(row, col++, getHostNames(visit), dataStyle);
+        createExcelCell(row, col++, getHostDepartmentNames(visit), dataStyle);
+        createExcelCell(row, col++, formatDate(visit.getStartDate()), dataStyle);
+        createExcelCell(row, col++, formatDate(visit.getEndDate()), dataStyle);
+        createExcelCell(
+                row,
+                col++,
+                visit.getPermissionType() != null ? visit.getPermissionType().getDescription() : "",
+                dataStyle);
+        createExcelCell(row, col++, visit.getPermissionDetail(), dataStyle);
+        createExcelCell(row, col++, visit.getRejectionReason(), dataStyle);
+        createExcelCell(
+                row, col++, record != null ? formatDate(record.getVisitDate()) : "", dataStyle);
+        createExcelCell(row, col++, formatTime(visit.getPlannedEntryTime()), dataStyle);
+        createExcelCell(row, col++, formatTime(visit.getPlannedExitTime()), dataStyle);
+        createExcelCell(
+                row, col++, record != null ? formatDateTime(record.getEntryTime()) : "", dataStyle);
+        createExcelCell(
+                row, col++, record != null ? formatDateTime(record.getExitTime()) : "", dataStyle);
+        createExcelCell(row, col++, getExitTimeUpdatedByName(record), dataStyle);
+        createExcelCell(row, col++, hasSignature(record) ? "Y" : "N", dataStyle);
+        createExcelCell(row, col++, getSignatureUrl(record), dataStyle);
+    }
+
+    private String getHostNames(Visit visit) {
+        return visit.getHosts().stream()
+                .map(VisitHost::getUser)
+                .filter(user -> user != null)
+                .map(User::getDisplayName)
+                .filter(StringUtils::hasText)
+                .distinct()
+                .collect(Collectors.joining(", "));
+    }
+
+    private String getHostDepartmentNames(Visit visit) {
+        return visit.getHosts().stream()
+                .map(VisitHost::getUser)
+                .filter(user -> user != null && user.getDepartment() != null)
+                .map(user -> user.getDepartment().getName().getDescription())
+                .filter(StringUtils::hasText)
+                .distinct()
+                .collect(Collectors.joining(", "));
+    }
+
+    private String getExitTimeUpdatedByName(VisitRecord record) {
+        if (record == null || record.getExitTimeUpdatedBy() == null) {
+            return "";
+        }
+        return record.getExitTimeUpdatedBy().getDisplayName();
+    }
+
+    private boolean hasSignature(VisitRecord record) {
+        return record != null && StringUtils.hasText(record.getSignatureKey());
+    }
+
+    private String getSignatureUrl(VisitRecord record) {
+        return hasSignature(record) ? s3Service.getFileUrl(record.getSignatureKey()) : "";
+    }
+
+    private String formatDate(LocalDate value) {
+        return value != null ? value.toString() : "";
+    }
+
+    private String formatTime(LocalTime value) {
+        return value != null ? value.toString() : "";
+    }
+
+    private String formatDateTime(LocalDateTime value) {
+        return value != null ? value.format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm")) : "";
+    }
+
+    private void setExcelBorderThin(CellStyle style) {
+        style.setBorderTop(BorderStyle.THIN);
+        style.setBorderBottom(BorderStyle.THIN);
+        style.setBorderLeft(BorderStyle.THIN);
+        style.setBorderRight(BorderStyle.THIN);
+    }
+
+    private void createExcelCell(Row row, int col, String value, CellStyle style) {
+        Cell cell = row.createCell(col);
+        cell.setCellValue(value != null ? value : "");
+        cell.setCellStyle(style);
     }
 
     private void validateManagedDepartmentAccess(User manager, Visit visit) {

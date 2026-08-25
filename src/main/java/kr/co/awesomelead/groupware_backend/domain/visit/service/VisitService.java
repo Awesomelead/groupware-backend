@@ -429,7 +429,7 @@ public class VisitService {
             LocalDate startDate,
             LocalDate endDate,
             Pageable pageable) {
-        validateEmployeeAccess(userId);
+        validateVisitorManageAuthority(userId);
 
         return visitQueryRepository
                 .findVisitsForAdmin(departmentId, status, startDate, endDate, pageable)
@@ -438,7 +438,7 @@ public class VisitService {
 
     @Transactional(readOnly = true)
     public MyVisitDetailResponseDto getVisitDetailForAdmin(Long userId, Long visitId) {
-        validateEmployeeAccess(userId);
+        validateVisitorManageAuthority(userId);
 
         Visit visit =
                 visitRepository
@@ -460,12 +460,6 @@ public class VisitService {
         }
 
         return responseDto;
-    }
-
-    private void validateEmployeeAccess(Long userId) {
-        userRepository
-                .findById(userId)
-                .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
     }
 
     private User validateVisitorManageAuthority(Long userId) {

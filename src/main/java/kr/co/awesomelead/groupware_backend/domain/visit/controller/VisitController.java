@@ -217,7 +217,7 @@ public class VisitController {
 
     @Operation(
             summary = "직원용 내방객 목록 조회",
-            description = "직원 계정으로 전체 내방객 목록을 조회합니다. 부서 및 상태별 필터링과 페이징이 가능합니다.")
+            description = "MANAGE_VISITOR 권한을 가진 직원이 내방객 목록을 조회합니다. 부서 및 상태별 필터링과 페이징이 가능합니다.")
     @ApiResponses({
         @io.swagger.v3.oas.annotations.responses.ApiResponse(
                 responseCode = "200",
@@ -287,7 +287,7 @@ public class VisitController {
 
     @Operation(
             summary = "직원용 내방객 상세 조회",
-            description = "직원 계정으로 특정 내방객의 상세 정보, 서명 이미지 및 모든 입퇴실 기록을 조회합니다.")
+            description = "MANAGE_VISITOR 권한을 가진 직원이 특정 내방객의 상세 정보, 서명 이미지 및 모든 입퇴실 기록을 조회합니다.")
     @GetMapping("/admin/{visitId}")
     public ResponseEntity<ApiResponse<MyVisitDetailResponseDto>> getAdminVisitDetail(
             @Parameter(hidden = true) @AuthenticationPrincipal CustomUserDetails userDetails,

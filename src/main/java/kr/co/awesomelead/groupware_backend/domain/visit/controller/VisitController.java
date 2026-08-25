@@ -287,6 +287,62 @@ public class VisitController {
     }
 
     @Operation(
+            summary = "직원용 내방객 기록 엑셀 다운로드",
+            description =
+                    "MANAGE_VISITOR 권한을 가진 직원이 내방객 기록을 엑셀로 다운로드합니다. 목록 조회와 동일하게 부서, 상태, 기간 필터를 사용할 수"
+                            + " 있습니다.")
+    @ApiResponses({
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                responseCode = "200",
+                description = "엑셀 다운로드 성공",
+                content =
+                        @Content(
+                                mediaType =
+                                        "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")),
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                responseCode = "403",
+                description = "권한 없음")
+    })
+    @GetMapping("/admin/excel")
+    public ResponseEntity<byte[]> getAdminVisitExcel(
+            @Parameter(hidden = true) @AuthenticationPrincipal CustomUserDetails userDetails,
+            @Parameter(description = "필터링할 부서 ID", example = "10")
+                    @RequestParam(name = "departmentId", required = false)
+                    Long departmentId,
+            @Parameter(description = "필터링할 방문 상태", example = "IN_PROGRESS")
+                    @RequestParam(name = "status", required = false)
+                    VisitStatus status,
+            @Parameter(description = "조회 시작일 (이 날짜 이후 종료되는 방문 포함)", example = "2024-07-01")
+                    @RequestParam(name = "startDate", required = false)
+                    LocalDate startDate,
+            @Parameter(description = "조회 종료일 (이 날짜 이전 시작되는 방문 포함)", example = "2024-07-05")
+                    @RequestParam(name = "endDate", required = false)
+                    LocalDate endDate) {
+        byte[] excelBytes =
+                visitService.getVisitsExcel(
+                        userDetails.getId(), departmentId, status, startDate, endDate);
+        String filename =
+                "내방객기록_"
+                        + java.time.LocalDate.now()
+                                .format(java.time.format.DateTimeFormatter.ofPattern("yyyyMMdd"))
+                        + ".xlsx";
+        String encodedFilename;
+        try {
+            encodedFilename = java.net.URLEncoder.encode(filename, "UTF-8");
+        } catch (java.io.UnsupportedEncodingException e) {
+            encodedFilename = filename;
+        }
+
+        return ResponseEntity.ok()
+                .header("Content-Disposition", "attachment; filename*=UTF-8''" + encodedFilename)
+                .header("Access-Control-Expose-Headers", "Content-Disposition")
+                .header(
+                        "Content-Type",
+                        "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
+                .body(excelBytes);
+    }
+
+    @Operation(
             summary = "직원용 내방객 상세 조회",
             description = "MANAGE_VISITOR 권한을 가진 직원이 특정 내방객의 상세 정보, 서명 이미지 및 모든 입퇴실 기록을 조회합니다.")
     @GetMapping("/admin/{visitId}")

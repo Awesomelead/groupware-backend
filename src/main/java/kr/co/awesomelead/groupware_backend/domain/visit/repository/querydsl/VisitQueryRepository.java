@@ -79,7 +79,8 @@ public class VisitQueryRepository {
         // Fetch full Visit entities with hosts eagerly loaded
         List<Visit> content =
                 queryFactory
-                        .selectFrom(visit)
+                        .selectDistinct(visit)
+                        .from(visit)
                         .leftJoin(visit.hosts, qVisitHost)
                         .fetchJoin()
                         .leftJoin(qVisitHost.user, qUser)
@@ -91,6 +92,45 @@ public class VisitQueryRepository {
                         .fetch();
 
         return new PageImpl<>(content, pageable, total);
+    }
+
+    public List<Visit> findVisitsForAdminExcel(
+            Long departmentId, VisitStatus status, LocalDate startDate, LocalDate endDate) {
+
+        QVisitHost qVisitHost = QVisitHost.visitHost;
+        QUser qUser = QUser.user;
+
+        List<Long> visitIds =
+                queryFactory
+                        .selectDistinct(visit.id)
+                        .from(visit)
+                        .leftJoin(visit.hosts, qVisitHost)
+                        .leftJoin(qVisitHost.user, qUser)
+                        .leftJoin(qUser.department)
+                        .where(
+                                departmentIdEq(qVisitHost, departmentId),
+                                statusEq(status),
+                                endDateGoe(startDate),
+                                startDateLoe(endDate))
+                        .orderBy(visit.id.desc())
+                        .fetch();
+
+        if (visitIds.isEmpty()) {
+            return List.of();
+        }
+
+        return queryFactory
+                .selectDistinct(visit)
+                .from(visit)
+                .leftJoin(visit.hosts, qVisitHost)
+                .fetchJoin()
+                .leftJoin(qVisitHost.user, qUser)
+                .fetchJoin()
+                .leftJoin(qUser.department)
+                .fetchJoin()
+                .where(visit.id.in(visitIds))
+                .orderBy(visit.id.desc())
+                .fetch();
     }
 
     private BooleanExpression departmentIdEq(QVisitHost qVisitHost, Long departmentId) {

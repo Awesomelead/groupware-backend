@@ -120,37 +120,37 @@ public interface VisitMapper {
 
     @Mapping(target = "visitId", source = "id")
     @Mapping(target = "hosts", source = "hosts")
-    @Mapping(target = "entryTime", expression = "java(getEntryTimeLogic(visit))")
-    @Mapping(target = "exitTime", expression = "java(getExitTimeLogic(visit))")
+    @Mapping(target = "entryTime", expression = "java(getActualEntryTime(visit))")
+    @Mapping(target = "exitTime", expression = "java(getActualExitTime(visit))")
     @Mapping(target = "records", source = "records")
     @Mapping(target = "rejectionReason", source = "rejectionReason")
     MyVisitDetailResponseDto toMyVisitDetailResponseDto(Visit visit);
 
-    default LocalDateTime getEntryTimeLogic(Visit visit) {
+    default LocalDateTime getActualEntryTime(Visit visit) {
         if (visit.getRecords() != null && !visit.getRecords().isEmpty()) {
-            if (visit.getRecords().get(0).getEntryTime() != null) {
-                return visit.getRecords().get(0).getEntryTime();
-            }
+            return visit.getRecords().stream()
+                    .map(VisitRecord::getEntryTime)
+                    .filter(java.util.Objects::nonNull)
+                    .findFirst()
+                    .orElse(null);
         }
-        if (visit.getPlannedEntryTime() == null) {
-            return null;
-        }
-        return LocalDateTime.of(visit.getStartDate(), visit.getPlannedEntryTime());
+        return null;
     }
 
-    default LocalDateTime getExitTimeLogic(Visit visit) {
+    default LocalDateTime getActualExitTime(Visit visit) {
         if (visit.getRecords() != null && !visit.getRecords().isEmpty()) {
-            if (visit.getRecords().get(0).getExitTime() != null) {
-                return visit.getRecords().get(0).getExitTime();
-            }
+            return visit.getRecords().stream()
+                    .map(VisitRecord::getExitTime)
+                    .filter(java.util.Objects::nonNull)
+                    .findFirst()
+                    .orElse(null);
         }
-        if (visit.getPlannedExitTime() == null) {
-            return null;
-        }
-        return LocalDateTime.of(visit.getStartDate(), visit.getPlannedExitTime());
+        return null;
     }
 
     @Mapping(target = "hosts", source = "hosts")
+    @Mapping(target = "entryTime", expression = "java(getActualEntryTime(visit))")
+    @Mapping(target = "exitTime", expression = "java(getActualExitTime(visit))")
     VisitListResponseDto toVisitListResponseDto(Visit visit);
 
     @Mapping(target = "hosts", source = "hosts")

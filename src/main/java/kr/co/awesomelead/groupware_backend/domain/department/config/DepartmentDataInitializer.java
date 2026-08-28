@@ -38,8 +38,6 @@ public class DepartmentDataInitializer implements ApplicationRunner {
         createOrUpdate(DepartmentName.TECHNICAL_ADVISOR, Company.AWESOME, root);
         createOrUpdate(DepartmentName.ENVIRONMENT_SAFETY, Company.AWESOME, root);
         createOrUpdate(DepartmentName.QUALITY_CONTROL, Company.AWESOME, root);
-        createOrUpdate(DepartmentName.AWESOME_SECURITY_DEPT, Company.AWESOME, root);
-        createOrUpdate(DepartmentName.MARUI_SECURITY_DEPT, Company.MARUI, root);
 
         createOrUpdate(DepartmentName.MANAGEMENT_SUPPORT, Company.AWESOME, planning);
         createOrUpdate(DepartmentName.CHAMBER_PROD, Company.AWESOME, awesomeProduction);

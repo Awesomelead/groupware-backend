@@ -10,6 +10,8 @@ import lombok.Builder;
 import lombok.Getter;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.util.List;
 
 @Getter
@@ -35,6 +37,18 @@ public class VisitListResponseDto {
 
     @Schema(description = "방문 종료일", example = "2026-02-05")
     private LocalDate endDate;
+
+    @Schema(description = "희망 입실 시간", example = "14:00:00")
+    private LocalTime plannedEntryTime;
+
+    @Schema(description = "희망 퇴실 시간", example = "18:00:00")
+    private LocalTime plannedExitTime;
+
+    @Schema(description = "실제 입실 시간", example = "2026-02-01T14:10:00")
+    private LocalDateTime entryTime;
+
+    @Schema(description = "실제 퇴실 시간", example = "2026-02-01T17:55:00")
+    private LocalDateTime exitTime;
 
     @Schema(description = "방문 상태", example = "방문 중")
     private VisitStatus status;

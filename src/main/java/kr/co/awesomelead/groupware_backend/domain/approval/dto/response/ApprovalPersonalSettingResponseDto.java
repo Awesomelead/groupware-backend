@@ -50,7 +50,7 @@ public class ApprovalPersonalSettingResponseDto {
         @Schema(description = "대결자 직급", example = "사원")
         private String position;
 
-        @Schema(description = "대결자 부서명", example = "한국마루이 경비")
+        @Schema(description = "대결자 부서명", example = "경영지원부")
         private String departmentName;
     }
 

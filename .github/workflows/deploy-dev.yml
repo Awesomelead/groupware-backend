@@ -49,9 +49,10 @@ jobs:
           script: |
             mkdir -p /home/ubuntu/groupware-dev
             if [ -d /home/ubuntu/groupware-dev/monitoring/prometheus/prometheus-dev.yml ]; then
-              rm -rf /home/ubuntu/groupware-dev/monitoring/prometheus/prometheus-dev.yml
+              sudo rm -rf /home/ubuntu/groupware-dev/monitoring/prometheus/prometheus-dev.yml
             fi
-            mkdir -p /home/ubuntu/groupware-dev/monitoring/prometheus
+            sudo mkdir -p /home/ubuntu/groupware-dev/monitoring/prometheus
+            sudo chown -R ubuntu:ubuntu /home/ubuntu/groupware-dev/monitoring
 
       - name: Copy docker-compose.dev.yml to EC2 (1st attempt)
         id: scp_copy
@@ -85,8 +86,7 @@ jobs:
           username: ubuntu
           key: ${{ secrets.EC2_SSH_KEY }}
           source: "./monitoring/prometheus/prometheus-dev.yml"
-          target: "/home/ubuntu/groupware-dev/monitoring/prometheus"
-          strip_components: 2
+          target: "/home/ubuntu/groupware-dev"
           overwrite: true
 
       - name: Retry copy prometheus dev config to EC2 (if failed)
@@ -97,8 +97,7 @@ jobs:
           username: ubuntu
           key: ${{ secrets.EC2_SSH_KEY }}
           source: "./monitoring/prometheus/prometheus-dev.yml"
-          target: "/home/ubuntu/groupware-dev/monitoring/prometheus"
-          strip_components: 2
+          target: "/home/ubuntu/groupware-dev"
           overwrite: true
 
       - name: Deploy dev to EC2 with Docker Compose

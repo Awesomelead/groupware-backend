@@ -97,8 +97,6 @@ services:
   prometheus:
     image: prom/prometheus
     container_name: groupware-prometheus-dev
-    ports:
-      - "9090:9090"
     volumes:
       - ./monitoring/prometheus/prometheus-dev.yml:/etc/prometheus/prometheus.yml:ro
     depends_on:
@@ -111,7 +109,10 @@ services:
     image: grafana/grafana
     container_name: groupware-grafana-dev
     ports:
-      - "3000:3000"
+      - "127.0.0.1:3000:3000"
+    environment:
+      - GF_SERVER_ROOT_URL=https://dev.awesomelead.co.kr/grafana/
+      - GF_SERVER_SERVE_FROM_SUB_PATH=true
     volumes:
       - grafana-dev-data:/var/lib/grafana
     depends_on:

@@ -148,10 +148,8 @@ jobs:
 
             cd /home/ubuntu/groupware-dev
 
-            docker-compose -f docker-compose.dev.yml stop app || true
-            docker-compose -f docker-compose.dev.yml rm -f app || true
-            docker-compose -f docker-compose.dev.yml pull app
-            docker-compose -f docker-compose.dev.yml up -d app prometheus grafana
+            docker compose -f docker-compose.dev.yml pull app
+            docker compose -f docker-compose.dev.yml up -d app prometheus grafana
 
             echo "Waiting for dev application to start..."
             sleep 10

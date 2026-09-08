@@ -10,6 +10,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 
 import kr.co.awesomelead.groupware_backend.domain.user.dto.CustomUserDetails;
+import kr.co.awesomelead.groupware_backend.domain.department.enums.Company;
 import kr.co.awesomelead.groupware_backend.domain.visit.dto.request.CheckInRequestDto;
 import kr.co.awesomelead.groupware_backend.domain.visit.dto.request.CheckOutRequestDto;
 import kr.co.awesomelead.groupware_backend.domain.visit.dto.request.LongTermVisitRequestDto;
@@ -218,7 +219,7 @@ public class VisitController {
 
     @Operation(
             summary = "직원용 내방객 목록 조회",
-            description = "MANAGE_VISITOR 권한을 가진 직원이 내방객 목록을 조회합니다. 부서 및 상태별 필터링과 페이징이 가능합니다.")
+            description = "MANAGE_VISITOR 권한을 가진 직원이 내방객 목록을 조회합니다. 회사, 부서 및 상태별 필터링과 페이징이 가능합니다.")
     @ApiResponses({
         @io.swagger.v3.oas.annotations.responses.ApiResponse(
                 responseCode = "200",
@@ -270,6 +271,9 @@ public class VisitController {
             @Parameter(description = "필터링할 부서 ID", example = "10")
                     @RequestParam(name = "departmentId", required = false)
                     Long departmentId,
+            @Parameter(description = "필터링할 방문 회사", example = "AWESOME")
+                    @RequestParam(name = "hostCompany", required = false)
+                    Company hostCompany,
             @Parameter(description = "필터링할 방문 상태", example = "IN_PROGRESS")
                     @RequestParam(name = "status", required = false)
                     VisitStatus status,
@@ -282,14 +286,20 @@ public class VisitController {
             @ParameterObject @PageableDefault(page = 0, size = 20) Pageable pageable) {
         Page<VisitListResponseDto> response =
                 visitService.getVisitsForAdmin(
-                        userDetails.getId(), departmentId, status, startDate, endDate, pageable);
+                        userDetails.getId(),
+                        departmentId,
+                        hostCompany,
+                        status,
+                        startDate,
+                        endDate,
+                        pageable);
         return ResponseEntity.ok(ApiResponse.onSuccess(response));
     }
 
     @Operation(
             summary = "직원용 내방객 기록 엑셀 다운로드",
             description =
-                    "MANAGE_VISITOR 권한을 가진 직원이 내방객 기록을 엑셀로 다운로드합니다. 목록 조회와 동일하게 부서, 상태, 기간 필터를 사용할"
+                    "MANAGE_VISITOR 권한을 가진 직원이 내방객 기록을 엑셀로 다운로드합니다. 목록 조회와 동일하게 회사, 부서, 상태, 기간 필터를 사용할"
                             + " 수 있습니다.")
     @ApiResponses({
         @io.swagger.v3.oas.annotations.responses.ApiResponse(
@@ -309,6 +319,9 @@ public class VisitController {
             @Parameter(description = "필터링할 부서 ID", example = "10")
                     @RequestParam(name = "departmentId", required = false)
                     Long departmentId,
+            @Parameter(description = "필터링할 방문 회사", example = "AWESOME")
+                    @RequestParam(name = "hostCompany", required = false)
+                    Company hostCompany,
             @Parameter(description = "필터링할 방문 상태", example = "IN_PROGRESS")
                     @RequestParam(name = "status", required = false)
                     VisitStatus status,
@@ -320,7 +333,7 @@ public class VisitController {
                     LocalDate endDate) {
         byte[] excelBytes =
                 visitService.getVisitsExcel(
-                        userDetails.getId(), departmentId, status, startDate, endDate);
+                        userDetails.getId(), departmentId, hostCompany, status, startDate, endDate);
         String filename =
                 "내방객기록_"
                         + java.time.LocalDate.now()

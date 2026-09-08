@@ -1163,17 +1163,39 @@ public class VisitServiceTest {
             // given
             LocalDate startDate = LocalDate.of(2024, 7, 1);
             LocalDate endDate = LocalDate.of(2024, 7, 5);
-            given(visitQueryRepository.findVisitsForAdmin(null, null, startDate, endDate, pageable))
+            given(
+                            visitQueryRepository.findVisitsForAdmin(
+                                    null, null, null, startDate, endDate, pageable))
                     .willReturn(new PageImpl<>(List.of()));
 
             // when
             Page<VisitListResponseDto> result =
                     visitService.getVisitsForAdmin(
-                            ADMIN_ID, null, null, startDate, endDate, pageable);
+                            ADMIN_ID, null, null, null, startDate, endDate, pageable);
 
             // then
             verify(visitQueryRepository)
-                    .findVisitsForAdmin(null, null, startDate, endDate, pageable);
+                    .findVisitsForAdmin(null, null, null, startDate, endDate, pageable);
+            assertThat(result.getContent()).isEmpty();
+        }
+
+        @Test
+        @DisplayName("방문 회사 필터를 포함하여 저장소를 호출한다.")
+        void it_calls_repository_with_host_company() {
+            // given
+            given(
+                            visitQueryRepository.findVisitsForAdmin(
+                                    null, Company.AWESOME, null, null, null, pageable))
+                    .willReturn(new PageImpl<>(List.of()));
+
+            // when
+            Page<VisitListResponseDto> result =
+                    visitService.getVisitsForAdmin(
+                            ADMIN_ID, null, Company.AWESOME, null, null, null, pageable);
+
+            // then
+            verify(visitQueryRepository)
+                    .findVisitsForAdmin(null, Company.AWESOME, null, null, null, pageable);
             assertThat(result.getContent()).isEmpty();
         }
 
@@ -1182,12 +1204,13 @@ public class VisitServiceTest {
         void it_returns_visit_category() {
             // given
             Visit visit = createBaseVisit(VisitStatus.PENDING, VisitCategory.PRE_LONG_TERM);
-            given(visitQueryRepository.findVisitsForAdmin(null, null, null, null, pageable))
+            given(visitQueryRepository.findVisitsForAdmin(null, null, null, null, null, pageable))
                     .willReturn(new PageImpl<>(List.of(visit)));
 
             // when
             Page<VisitListResponseDto> result =
-                    visitService.getVisitsForAdmin(ADMIN_ID, null, null, null, null, pageable);
+                    visitService.getVisitsForAdmin(
+                            ADMIN_ID, null, null, null, null, null, pageable);
 
             // then
             assertThat(result.getContent().get(0).getVisitCategory())
@@ -1198,14 +1221,14 @@ public class VisitServiceTest {
         @DisplayName("날짜 범위 없이 호출하면 null로 저장소를 호출한다.")
         void it_calls_repository_with_null_dates_when_not_provided() {
             // given
-            given(visitQueryRepository.findVisitsForAdmin(null, null, null, null, pageable))
+            given(visitQueryRepository.findVisitsForAdmin(null, null, null, null, null, pageable))
                     .willReturn(new PageImpl<>(List.of()));
 
             // when
-            visitService.getVisitsForAdmin(ADMIN_ID, null, null, null, null, pageable);
+            visitService.getVisitsForAdmin(ADMIN_ID, null, null, null, null, null, pageable);
 
             // then
-            verify(visitQueryRepository).findVisitsForAdmin(null, null, null, null, pageable);
+            verify(visitQueryRepository).findVisitsForAdmin(null, null, null, null, null, pageable);
         }
     }
 

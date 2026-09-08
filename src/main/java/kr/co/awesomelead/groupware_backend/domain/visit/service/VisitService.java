@@ -3,6 +3,7 @@ package kr.co.awesomelead.groupware_backend.domain.visit.service;
 import static kr.co.awesomelead.groupware_backend.domain.visit.entity.Visit.hashValue;
 
 import kr.co.awesomelead.groupware_backend.domain.department.entity.Department;
+import kr.co.awesomelead.groupware_backend.domain.department.enums.Company;
 import kr.co.awesomelead.groupware_backend.domain.department.enums.DepartmentName;
 import kr.co.awesomelead.groupware_backend.domain.department.repository.DepartmentRepository;
 import kr.co.awesomelead.groupware_backend.domain.notification.enums.NotificationDomainType;
@@ -437,6 +438,7 @@ public class VisitService {
     public Page<VisitListResponseDto> getVisitsForAdmin(
             Long userId,
             Long departmentId,
+            Company hostCompany,
             VisitStatus status,
             LocalDate startDate,
             LocalDate endDate,
@@ -444,7 +446,7 @@ public class VisitService {
         validateVisitorManageAuthority(userId);
 
         return visitQueryRepository
-                .findVisitsForAdmin(departmentId, status, startDate, endDate, pageable)
+                .findVisitsForAdmin(departmentId, hostCompany, status, startDate, endDate, pageable)
                 .map(visitMapper::toVisitListResponseDto);
     }
 
@@ -452,6 +454,7 @@ public class VisitService {
     public byte[] getVisitsExcel(
             Long userId,
             Long departmentId,
+            Company hostCompany,
             VisitStatus status,
             LocalDate startDate,
             LocalDate endDate) {
@@ -459,7 +462,7 @@ public class VisitService {
 
         List<Visit> visits =
                 visitQueryRepository.findVisitsForAdminExcel(
-                        departmentId, status, startDate, endDate);
+                        departmentId, hostCompany, status, startDate, endDate);
 
         return createVisitExcel(visits);
     }

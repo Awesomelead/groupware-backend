@@ -38,7 +38,7 @@ public class MyVisitDetailResponseDto {
     @Schema(description = "내방객 전화번호", example = "01012345678")
     private String visitorPhoneNumber;
 
-    @Schema(description = "방문 목적", example = "고객 검수")
+    @Schema(description = "방문 목적", example = "검수/현장작업")
     private VisitPurpose purpose;
 
     @Schema(description = "담당자 목록")
@@ -74,7 +74,7 @@ public class MyVisitDetailResponseDto {
     @Schema(description = "방문 유형 (사전 하루 / 사전 장기 / 현장 입실)", example = "사전 하루")
     private VisitCategory visitCategory;
 
-    @Schema(description = "추가 허가 유형", example = "밀폐공간 출입")
+    @Schema(description = "추가 허가 유형", example = "밀폐공간 작업")
     private AdditionalPermissionType permissionType;
 
     @Schema(description = "추가 허가 상세 내용", example = "B동 3층 밀폐 구역")

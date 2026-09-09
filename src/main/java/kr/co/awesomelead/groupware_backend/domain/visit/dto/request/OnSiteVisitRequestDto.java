@@ -46,11 +46,11 @@ public class OnSiteVisitRequestDto implements VisitRequest {
     private String carNumber;
 
     @NotNull(message = "방문 목적은 필수입니다.")
-    @Schema(description = "방문 목적", example = "고객 검수")
+    @Schema(description = "방문 목적", example = "검수/현장작업")
     private VisitPurpose purpose;
 
     // 보충적 허가 관련
-    @Schema(description = "보충적 허가 타입 (없을 시 NONE)", example = "해당 없음")
+    @Schema(description = "보충적 허가 타입 (없을 시 NONE)", example = "해당없음")
     @Builder.Default
     private AdditionalPermissionType permissionType = AdditionalPermissionType.NONE;
 

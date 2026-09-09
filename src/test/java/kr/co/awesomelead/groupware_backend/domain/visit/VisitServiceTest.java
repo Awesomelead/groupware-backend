@@ -135,18 +135,26 @@ public class VisitServiceTest {
         }
 
         @Nested
-        @DisplayName("방문목적이 '시설공사'인데, '보충적허가필요여부'가 없으면")
+        @DisplayName("추가 허가가 필요한 방문 목적인데, '보충적허가필요여부'가 없으면")
         class Context_with_facility_construction_and_no_additional_permission_type {
 
             @Test
             @DisplayName("ADDITIONAL_PERMISSION_REQUIRED 예외를 던진다.")
             void it_throws_additional_permission_required_exception() {
-                OneDayVisitRequestDto dto =
-                        createOneDayDto(VisitPurpose.FACILITY_CONSTRUCTION, null, null);
+                List.of(
+                                VisitPurpose.CUSTOMER_INSPECTION,
+                                VisitPurpose.FACILITY_CONSTRUCTION,
+                                VisitPurpose.HAZARDOUS_SUBSTANCE)
+                        .forEach(
+                                purpose -> {
+                                    OneDayVisitRequestDto dto =
+                                            createOneDayDto(purpose, null, null);
 
-                assertThatThrownBy(() -> visitService.registerOneDayPreVisit(dto))
-                        .isInstanceOf(CustomException.class)
-                        .hasMessage("시설공사 목적의 방문 시 추가 허가가 필요합니다.");
+                                    assertThatThrownBy(
+                                                    () -> visitService.registerOneDayPreVisit(dto))
+                                            .isInstanceOf(CustomException.class)
+                                            .hasMessage("해당 방문 목적은 추가 허가가 필요합니다.");
+                                });
             }
         }
 
@@ -1861,7 +1869,7 @@ public class VisitServiceTest {
                                 .visitorPhoneNumber("01012345678")
                                 .visitorCompany("테스트컴퍼니")
                                 .purpose(VisitPurpose.CUSTOMER_INSPECTION)
-                                .permissionType(AdditionalPermissionType.NONE)
+                                .permissionType(AdditionalPermissionType.CONFINED_SPACE_ENTRY)
                                 .visitDate(LocalDate.now().plusDays(1))
                                 .plannedEntryTime(LocalTime.of(10, 0))
                                 .plannedExitTime(LocalTime.of(18, 0))

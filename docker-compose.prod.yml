@@ -98,9 +98,9 @@ volumes:
   redis-prod-data:
     name: redis-prod-data
     driver: local
-정  grafana-prod-data:
-  name: grafana-prod-data
-  driver: local
+  grafana-prod-data:
+    name: grafana-prod-data
+    driver: local
 
 networks:
   prod-network:

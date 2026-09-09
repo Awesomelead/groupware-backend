@@ -147,7 +147,8 @@ public class VisitServiceTest {
                                 VisitPurpose.HAZARDOUS_SUBSTANCE)
                         .forEach(
                                 purpose -> {
-                                    OneDayVisitRequestDto dto = createOneDayDto(purpose, null, null);
+                                    OneDayVisitRequestDto dto =
+                                            createOneDayDto(purpose, null, null);
 
                                     assertThatThrownBy(
                                                     () -> visitService.registerOneDayPreVisit(dto))

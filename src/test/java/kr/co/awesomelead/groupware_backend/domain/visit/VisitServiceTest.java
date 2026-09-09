@@ -115,6 +115,7 @@ public class VisitServiceTest {
                 Visit.builder()
                         .id(VISIT_ID)
                         .password(ENCODED_PASSWORD)
+                        .hostCompany(Company.AWESOME)
                         .status(status)
                         .visitCategory(visitCategory)
                         .records(new ArrayList<>())
@@ -417,6 +418,7 @@ public class VisitServiceTest {
 
                 // then
                 assertThat(result).hasSize(1);
+                assertThat(result.get(0).getHostCompany()).isEqualTo(Company.AWESOME);
                 assertThat(result.get(0).getPurpose()).isEqualTo(VisitPurpose.MEETING);
                 assertThat(result.get(0).getVisitCategory()).isEqualTo(VisitCategory.PRE_ONE_DAY);
             }
@@ -450,6 +452,7 @@ public class VisitServiceTest {
             MyVisitDetailResponseDto result = visitService.getMyVisitDetail(VISIT_ID);
 
             // then
+            assertThat(result.getHostCompany()).isEqualTo(Company.AWESOME);
             assertThat(result.getRecords()).hasSize(1);
             assertThat(result.getRecords().get(0).getExitTimeUpdatedBy()).isNull();
         }
@@ -1215,6 +1218,7 @@ public class VisitServiceTest {
             // then
             assertThat(result.getContent().get(0).getVisitCategory())
                     .isEqualTo(VisitCategory.PRE_LONG_TERM);
+            assertThat(result.getContent().get(0).getHostCompany()).isEqualTo(Company.AWESOME);
         }
 
         @Test

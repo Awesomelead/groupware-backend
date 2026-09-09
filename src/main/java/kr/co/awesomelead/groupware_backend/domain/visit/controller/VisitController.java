@@ -300,7 +300,7 @@ public class VisitController {
             summary = "직원용 내방객 기록 엑셀 다운로드",
             description =
                     "MANAGE_VISITOR 권한을 가진 직원이 내방객 기록을 엑셀로 다운로드합니다. 목록 조회와 동일하게 회사, 부서, 상태, 기간 필터를"
-                        + " 사용할 수 있습니다.")
+                            + " 사용할 수 있습니다.")
     @ApiResponses({
         @io.swagger.v3.oas.annotations.responses.ApiResponse(
                 responseCode = "200",

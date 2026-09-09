@@ -84,7 +84,7 @@ services:
     ports:
       - "127.0.0.1:3000:3000"
     environment:
-      - GF_SERVER_ROOT_URL=https://https://api.awesomelead.co.kr/grafana/
+      - GF_SERVER_ROOT_URL=https://api.awesomelead.co.kr/grafana/
       - GF_SERVER_SERVE_FROM_SUB_PATH=true
     volumes:
       - grafana-prod-data:/var/lib/grafana

@@ -42,6 +42,20 @@ jobs:
           docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
           docker push $ECR_REGISTRY/$ECR_REPOSITORY:latest
 
+      - name: Prepare prod monitoring directory on EC2
+        uses: appleboy/ssh-action@v1
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ubuntu
+          key: ${{ secrets.EC2_SSH_KEY }}
+          script: |
+            mkdir -p /home/ubuntu
+            if [ -d /home/ubuntu/monitoring/prometheus/prometheus-prod.yml ]; then
+              sudo rm -rf /home/ubuntu/monitoring/prometheus/prometheus-prod.yml
+            fi
+            sudo mkdir -p /home/ubuntu/monitoring/prometheus
+            sudo chown -R ubuntu:ubuntu /home/ubuntu/monitoring
+
       - name: Copy docker-compose.prod.yml to EC2 (1st attempt)
         id: scp_copy
         continue-on-error: true
@@ -62,6 +76,29 @@ jobs:
           username: ubuntu
           key: ${{ secrets.EC2_SSH_KEY }}
           source: "./docker-compose.prod.yml"
+          target: "/home/ubuntu"
+          overwrite: true
+
+      - name: Copy prometheus prod config to EC2 (1st attempt)
+        id: scp_prometheus_config
+        continue-on-error: true
+        uses: appleboy/scp-action@v1
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ubuntu
+          key: ${{ secrets.EC2_SSH_KEY }}
+          source: "./monitoring/prometheus/prometheus-prod.yml"
+          target: "/home/ubuntu"
+          overwrite: true
+
+      - name: Retry copy prometheus prod config to EC2 (if failed)
+        if: steps.scp_prometheus_config.outcome == 'failure'
+        uses: appleboy/scp-action@v1
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ubuntu
+          key: ${{ secrets.EC2_SSH_KEY }}
+          source: "./monitoring/prometheus/prometheus-prod.yml"
           target: "/home/ubuntu"
           overwrite: true
 
@@ -123,17 +160,11 @@ jobs:
             docker stop groupware-backend groupware-redis 2>/dev/null || true
             docker rm groupware-backend groupware-redis 2>/dev/null || true
             
-            # 기존 컨테이너 중지
-            docker-compose -f docker-compose.prod.yml stop app || true
-            
-            # 중지된 컨테이너 제거
-            docker-compose -f docker-compose.prod.yml rm -f app || true
-            
             # 최신 이미지 다운로드
-            docker-compose -f docker-compose.prod.yml pull app
+            docker compose -f docker-compose.prod.yml pull app
             
             # 컨테이너 시작
-            docker-compose -f docker-compose.prod.yml up -d app
+            docker compose -f docker-compose.prod.yml up -d app prometheus grafana
             
             # 새 컨테이너가 정상 시작될 때까지 대기
             echo "Waiting for application to start..."

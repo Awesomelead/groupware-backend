@@ -38,7 +38,7 @@ public class MyVisitDetailResponseDto {
     @Schema(description = "내방객 전화번호", example = "01012345678")
     private String visitorPhoneNumber;
 
-    @Schema(description = "방문 목적", example = "고객 검수")
+    @Schema(description = "방문 목적", example = "검수/현장작업")
     private VisitPurpose purpose;
 
     @Schema(description = "담당자 목록")

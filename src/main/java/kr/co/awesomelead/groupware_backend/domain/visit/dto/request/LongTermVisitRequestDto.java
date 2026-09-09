@@ -44,7 +44,7 @@ public class LongTermVisitRequestDto implements VisitRequest {
     private String carNumber;
 
     @NotNull(message = "방문 목적은 필수입니다.")
-    @Schema(description = "방문 목적", example = "고객 검수")
+    @Schema(description = "방문 목적", example = "검수/현장작업")
     private VisitPurpose purpose;
 
     @NotNull(message = "시작일은 필수입니다.")

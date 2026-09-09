@@ -39,7 +39,7 @@ public class MyVisitUpdateRequestDto implements VisitRequest {
     @Schema(description = "내방객 소속 회사", example = "ABC 주식회사")
     private String visitorCompany;
 
-    @Schema(description = "방문 목적", example = "고객 검수")
+    @Schema(description = "방문 목적", example = "검수/현장작업")
     private VisitPurpose purpose;
 
     @Schema(description = "보충적 허가 타입", example = "해당 없음")

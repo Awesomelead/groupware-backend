@@ -39,7 +39,7 @@ public enum ErrorCode {
     NAME_ENG_ALREADY_SAME(HttpStatus.BAD_REQUEST, "입력한 영문 이름이 현재 영문 이름과 동일합니다."),
     PHONE_NUMBER_ALREADY_SAME(HttpStatus.BAD_REQUEST, "입력한 전화번호가 현재 전화번호와 동일합니다."),
     PERMISSION_DETAIL_REQUIRED(HttpStatus.BAD_REQUEST, "기타 허가 선택 시 요구사항 작성이 필요합니다."),
-    ADDITIONAL_PERMISSION_REQUIRED(HttpStatus.BAD_REQUEST, "시설공사 목적의 방문 시 추가 허가가 필요합니다."),
+    ADDITIONAL_PERMISSION_REQUIRED(HttpStatus.BAD_REQUEST, "해당 방문 목적은 추가 허가가 필요합니다."),
     INVALID_PASSWORD(HttpStatus.BAD_REQUEST, "유효하지 않은 비밀번호입니다."),
     NOT_VISIT_DATE(HttpStatus.BAD_REQUEST, "오늘 방문 일정이 아닙니다."),
     NOT_IN_PROGRESS(HttpStatus.BAD_REQUEST, "현재 방문 상태가 '방문 중'이 아닙니다."),

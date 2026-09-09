@@ -48,6 +48,11 @@ jobs:
           key: ${{ secrets.EC2_SSH_KEY }}
           script: |
             mkdir -p /home/ubuntu/groupware-dev
+            if [ -d /home/ubuntu/groupware-dev/monitoring/prometheus/prometheus-dev.yml ]; then
+              sudo rm -rf /home/ubuntu/groupware-dev/monitoring/prometheus/prometheus-dev.yml
+            fi
+            sudo mkdir -p /home/ubuntu/groupware-dev/monitoring/prometheus
+            sudo chown -R ubuntu:ubuntu /home/ubuntu/groupware-dev/monitoring
 
       - name: Copy docker-compose.dev.yml to EC2 (1st attempt)
         id: scp_copy
@@ -69,6 +74,29 @@ jobs:
           username: ubuntu
           key: ${{ secrets.EC2_SSH_KEY }}
           source: "./docker-compose.dev.yml"
+          target: "/home/ubuntu/groupware-dev"
+          overwrite: true
+
+      - name: Copy prometheus dev config to EC2 (1st attempt)
+        id: scp_prometheus_config
+        continue-on-error: true
+        uses: appleboy/scp-action@v1
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ubuntu
+          key: ${{ secrets.EC2_SSH_KEY }}
+          source: "./monitoring/prometheus/prometheus-dev.yml"
+          target: "/home/ubuntu/groupware-dev"
+          overwrite: true
+
+      - name: Retry copy prometheus dev config to EC2 (if failed)
+        if: steps.scp_prometheus_config.outcome == 'failure'
+        uses: appleboy/scp-action@v1
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ubuntu
+          key: ${{ secrets.EC2_SSH_KEY }}
+          source: "./monitoring/prometheus/prometheus-dev.yml"
           target: "/home/ubuntu/groupware-dev"
           overwrite: true
 
@@ -120,10 +148,8 @@ jobs:
 
             cd /home/ubuntu/groupware-dev
 
-            docker-compose -f docker-compose.dev.yml stop app || true
-            docker-compose -f docker-compose.dev.yml rm -f app || true
-            docker-compose -f docker-compose.dev.yml pull app
-            docker-compose -f docker-compose.dev.yml up -d app
+            docker compose -f docker-compose.dev.yml pull app
+            docker compose -f docker-compose.dev.yml up -d app prometheus grafana
 
             echo "Waiting for dev application to start..."
             sleep 10

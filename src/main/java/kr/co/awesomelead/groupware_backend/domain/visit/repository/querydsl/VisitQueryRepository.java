@@ -5,6 +5,7 @@ import static kr.co.awesomelead.groupware_backend.domain.visit.entity.QVisit.vis
 import com.querydsl.core.types.dsl.BooleanExpression;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 
+import kr.co.awesomelead.groupware_backend.domain.department.enums.Company;
 import kr.co.awesomelead.groupware_backend.domain.user.entity.QUser;
 import kr.co.awesomelead.groupware_backend.domain.visit.entity.QVisitHost;
 import kr.co.awesomelead.groupware_backend.domain.visit.entity.Visit;
@@ -29,6 +30,7 @@ public class VisitQueryRepository {
 
     public Page<Visit> findVisitsForAdmin(
             Long departmentId,
+            Company hostCompany,
             VisitStatus status,
             LocalDate startDate,
             LocalDate endDate,
@@ -48,6 +50,7 @@ public class VisitQueryRepository {
                                         .leftJoin(qUser.department)
                                         .where(
                                                 departmentIdEq(qVisitHost, departmentId),
+                                                hostCompanyEq(hostCompany),
                                                 statusEq(status),
                                                 endDateGoe(startDate),
                                                 startDateLoe(endDate))
@@ -68,6 +71,7 @@ public class VisitQueryRepository {
                         .leftJoin(qUser.department)
                         .where(
                                 departmentIdEq(qVisitHost, departmentId),
+                                hostCompanyEq(hostCompany),
                                 statusEq(status),
                                 endDateGoe(startDate),
                                 startDateLoe(endDate))
@@ -95,7 +99,11 @@ public class VisitQueryRepository {
     }
 
     public List<Visit> findVisitsForAdminExcel(
-            Long departmentId, VisitStatus status, LocalDate startDate, LocalDate endDate) {
+            Long departmentId,
+            Company hostCompany,
+            VisitStatus status,
+            LocalDate startDate,
+            LocalDate endDate) {
 
         QVisitHost qVisitHost = QVisitHost.visitHost;
         QUser qUser = QUser.user;
@@ -109,6 +117,7 @@ public class VisitQueryRepository {
                         .leftJoin(qUser.department)
                         .where(
                                 departmentIdEq(qVisitHost, departmentId),
+                                hostCompanyEq(hostCompany),
                                 statusEq(status),
                                 endDateGoe(startDate),
                                 startDateLoe(endDate))
@@ -135,6 +144,10 @@ public class VisitQueryRepository {
 
     private BooleanExpression departmentIdEq(QVisitHost qVisitHost, Long departmentId) {
         return departmentId != null ? qVisitHost.user.department.id.eq(departmentId) : null;
+    }
+
+    private BooleanExpression hostCompanyEq(Company hostCompany) {
+        return hostCompany != null ? visit.hostCompany.eq(hostCompany) : null;
     }
 
     private BooleanExpression statusEq(VisitStatus status) {

@@ -94,12 +94,42 @@ services:
     networks:
       - dev-network
 
+  prometheus:
+    image: prom/prometheus
+    container_name: groupware-prometheus-dev
+    volumes:
+      - ./monitoring/prometheus/prometheus-dev.yml:/etc/prometheus/prometheus.yml:ro
+    depends_on:
+      - app
+    restart: unless-stopped
+    networks:
+      - dev-network
+
+  grafana:
+    image: grafana/grafana
+    container_name: groupware-grafana-dev
+    ports:
+      - "127.0.0.1:3000:3000"
+    environment:
+      - GF_SERVER_ROOT_URL=https://dev-api.awesomelead.co.kr/grafana/
+      - GF_SERVER_SERVE_FROM_SUB_PATH=true
+    volumes:
+      - grafana-dev-data:/var/lib/grafana
+    depends_on:
+      - prometheus
+    restart: unless-stopped
+    networks:
+      - dev-network
+
 volumes:
   mysql-dev-data:
     name: mysql-dev-data
     driver: local
   redis-dev-data:
     name: redis-dev-data
+    driver: local
+  grafana-dev-data:
+    name: grafana-dev-data
     driver: local
 
 networks:

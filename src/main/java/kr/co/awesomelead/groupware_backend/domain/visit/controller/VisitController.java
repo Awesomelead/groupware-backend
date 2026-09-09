@@ -66,7 +66,7 @@ import java.util.List;
             - **VisitCategory**: 방문 유형 (`PRE_ONE_DAY`: 사전 하루, `PRE_LONG_TERM`: 사전 장기, `ON_SITE`: 현장 입실)
             - **VisitPurpose**: 방문 목적 (`CUSTOMER_INSPECTION`: 검수/현장작업, `LOGISTICS_AND_DELIVERY`: 입출고 및 물품 납품, `FACILITY_CONSTRUCTION`: 시설공사, `HAZARDOUS_SUBSTANCE`: 유해화학물질취급, `MEETING`: 미팅, `OTHER`: 기타)
             - **VisitStatus**: 방문 상태 (`PENDING`: 승인 대기, `APPROVED`: 승인 완료, `NOT_VISITED`: 방문 전, `IN_PROGRESS`: 방문 중, `COMPLETED`: 방문 완료, `REJECTED`: 반려)
-            - **AdditionalPermissionType**: 추가 허가 유형 (`NONE`: 해당 없음, `CONFINED_SPACE_ENTRY`: 밀폐공간 출입, `HIGH_ALTITUDE_WORK`: 고소 작업, `OTHER_PERMISSION`: 기타 허가)
+            - **AdditionalPermissionType**: 추가 허가 유형 (`NONE`: 해당없음, `CONFINED_SPACE_ENTRY`: 밀폐공간 작업, `HOT_WORK`: 화기 작업 (용접, 에어로졸 사용 포함), `FIRE_PROTECTION_WORK`: 소방공사 작업, `ELECTRICAL_OUTAGE_WORK`: 정전(전기) 작업, `HIGH_ALTITUDE_WORK`: 고소 작업, `HEAVY_EQUIPMENT_WORK`: 중장비 작업, `OTHER_PERMISSION`: 기타 허가)
             """)
 public class VisitController {
 

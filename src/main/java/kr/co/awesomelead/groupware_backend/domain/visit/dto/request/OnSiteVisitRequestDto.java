@@ -50,7 +50,7 @@ public class OnSiteVisitRequestDto implements VisitRequest {
     private VisitPurpose purpose;
 
     // 보충적 허가 관련
-    @Schema(description = "보충적 허가 타입 (없을 시 NONE)", example = "해당 없음")
+    @Schema(description = "보충적 허가 타입 (없을 시 NONE)", example = "해당없음")
     @Builder.Default
     private AdditionalPermissionType permissionType = AdditionalPermissionType.NONE;
 

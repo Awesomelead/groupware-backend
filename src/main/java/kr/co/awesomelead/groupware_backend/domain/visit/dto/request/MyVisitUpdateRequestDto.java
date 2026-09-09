@@ -42,7 +42,7 @@ public class MyVisitUpdateRequestDto implements VisitRequest {
     @Schema(description = "방문 목적", example = "검수/현장작업")
     private VisitPurpose purpose;
 
-    @Schema(description = "보충적 허가 타입", example = "해당 없음")
+    @Schema(description = "보충적 허가 타입", example = "해당없음")
     private AdditionalPermissionType permissionType;
 
     @Schema(description = "기타 허가 요구사항", example = "화기 사용 허가 필요")

@@ -74,7 +74,7 @@ public class MyVisitDetailResponseDto {
     @Schema(description = "방문 유형 (사전 하루 / 사전 장기 / 현장 입실)", example = "사전 하루")
     private VisitCategory visitCategory;
 
-    @Schema(description = "추가 허가 유형", example = "밀폐공간 출입")
+    @Schema(description = "추가 허가 유형", example = "밀폐공간 작업")
     private AdditionalPermissionType permissionType;
 
     @Schema(description = "추가 허가 상세 내용", example = "B동 3층 밀폐 구역")

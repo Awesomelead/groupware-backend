@@ -16,9 +16,11 @@ import kr.co.awesomelead.groupware_backend.domain.user.enums.MyInfoUpdateRequest
 import kr.co.awesomelead.groupware_backend.domain.user.enums.Position;
 import kr.co.awesomelead.groupware_backend.domain.user.enums.Role;
 import kr.co.awesomelead.groupware_backend.domain.user.enums.Status;
+import kr.co.awesomelead.groupware_backend.domain.user.enums.UserSortType;
 import kr.co.awesomelead.groupware_backend.domain.user.repository.MyInfoUpdateRequestRepository;
 import kr.co.awesomelead.groupware_backend.domain.user.repository.UserRepository;
 import kr.co.awesomelead.groupware_backend.domain.user.repository.querydsl.UserQueryRepository;
+import kr.co.awesomelead.groupware_backend.domain.visit.dto.response.VisitHostCandidateResponseDto;
 import kr.co.awesomelead.groupware_backend.global.error.CustomException;
 import kr.co.awesomelead.groupware_backend.global.error.ErrorCode;
 
@@ -218,6 +220,29 @@ public class UserService {
             Company workLocation,
             List<Status> statuses,
             Pageable pageable) {
+        return getEmployeeList(
+                keyword,
+                position,
+                departmentId,
+                jobType,
+                role,
+                workLocation,
+                statuses,
+                UserSortType.NAME_ASC,
+                pageable);
+    }
+
+    @Transactional(readOnly = true)
+    public Page<UserSummaryResponseDto> getEmployeeList(
+            String keyword,
+            Position position,
+            Long departmentId,
+            JobType jobType,
+            Role role,
+            Company workLocation,
+            List<Status> statuses,
+            UserSortType sortType,
+            Pageable pageable) {
         Pageable unsorted = PageRequest.of(pageable.getPageNumber(), pageable.getPageSize());
         return userQueryRepository
                 .findAllAvailableWithFilters(
@@ -228,8 +253,18 @@ public class UserService {
                         role,
                         workLocation,
                         statuses,
+                        sortType,
                         unsorted)
                 .map(UserSummaryResponseDto::from);
+    }
+
+    @Transactional(readOnly = true)
+    public Page<VisitHostCandidateResponseDto> getVisitHostCandidates(
+            String keyword, Long departmentId, Company workLocation, Pageable pageable) {
+        Pageable unsorted = PageRequest.of(pageable.getPageNumber(), pageable.getPageSize());
+        return userQueryRepository
+                .findVisitHostCandidates(keyword, departmentId, workLocation, unsorted)
+                .map(VisitHostCandidateResponseDto::from);
     }
 
     // 직원 상세 조회

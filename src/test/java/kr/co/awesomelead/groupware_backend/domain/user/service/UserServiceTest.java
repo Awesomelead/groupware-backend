@@ -24,9 +24,11 @@ import kr.co.awesomelead.groupware_backend.domain.user.enums.MyInfoUpdateRequest
 import kr.co.awesomelead.groupware_backend.domain.user.enums.Position;
 import kr.co.awesomelead.groupware_backend.domain.user.enums.Role;
 import kr.co.awesomelead.groupware_backend.domain.user.enums.Status;
+import kr.co.awesomelead.groupware_backend.domain.user.enums.UserSortType;
 import kr.co.awesomelead.groupware_backend.domain.user.repository.MyInfoUpdateRequestRepository;
 import kr.co.awesomelead.groupware_backend.domain.user.repository.UserRepository;
 import kr.co.awesomelead.groupware_backend.domain.user.repository.querydsl.UserQueryRepository;
+import kr.co.awesomelead.groupware_backend.domain.visit.dto.response.VisitHostCandidateResponseDto;
 import kr.co.awesomelead.groupware_backend.global.error.CustomException;
 import kr.co.awesomelead.groupware_backend.global.error.ErrorCode;
 
@@ -642,7 +644,15 @@ class UserServiceTest {
 
             given(
                             userQueryRepository.findAllAvailableWithFilters(
-                                    null, null, null, null, null, Company.AWESOME, null, unsorted))
+                                    null,
+                                    null,
+                                    null,
+                                    null,
+                                    null,
+                                    Company.AWESOME,
+                                    null,
+                                    UserSortType.NAME_ASC,
+                                    unsorted))
                     .willReturn(userPage);
 
             // when
@@ -656,7 +666,15 @@ class UserServiceTest {
 
             verify(userQueryRepository)
                     .findAllAvailableWithFilters(
-                            null, null, null, null, null, Company.AWESOME, null, unsorted);
+                            null,
+                            null,
+                            null,
+                            null,
+                            null,
+                            Company.AWESOME,
+                            null,
+                            UserSortType.NAME_ASC,
+                            unsorted);
         }
 
         @Test
@@ -773,6 +791,38 @@ class UserServiceTest {
             verify(userQueryRepository)
                     .findAllAvailableWithFilters(
                             null, null, null, null, null, List.of(Status.PENDING), unsorted);
+        }
+    }
+
+    @Nested
+    @DisplayName("내방객 담당직원 후보 조회")
+    class GetVisitHostCandidatesTest {
+
+        @Test
+        @DisplayName("성공: 담당직원 후보 목록을 페이징으로 반환한다")
+        void getVisitHostCandidates_success() {
+            // given
+            Pageable pageable = PageRequest.of(0, 20);
+            Pageable unsorted = PageRequest.of(0, 20);
+            User user = createTestUser();
+            Page<User> userPage = new PageImpl<>(List.of(user), pageable, 1);
+
+            given(userQueryRepository.findVisitHostCandidates("김", 1L, Company.AWESOME, unsorted))
+                    .willReturn(userPage);
+
+            // when
+            Page<VisitHostCandidateResponseDto> result =
+                    userService.getVisitHostCandidates("김", 1L, Company.AWESOME, pageable);
+
+            // then
+            assertThat(result.getTotalElements()).isEqualTo(1);
+            assertThat(result.getContent().get(0).getUserId()).isEqualTo(1L);
+            assertThat(result.getContent().get(0).getName()).isEqualTo(TEST_NAME_KOR);
+            assertThat(result.getContent().get(0).getDepartmentName())
+                    .isEqualTo(DepartmentName.CHUNGNAM_HQ);
+            assertThat(result.getContent().get(0).getWorkLocation()).isEqualTo(Company.AWESOME);
+
+            verify(userQueryRepository).findVisitHostCandidates("김", 1L, Company.AWESOME, unsorted);
         }
     }
 

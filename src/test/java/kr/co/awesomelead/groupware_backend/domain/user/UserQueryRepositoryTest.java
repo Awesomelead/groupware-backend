@@ -7,6 +7,7 @@ import kr.co.awesomelead.groupware_backend.domain.user.entity.User;
 import kr.co.awesomelead.groupware_backend.domain.user.enums.MyInfoUpdateRequestStatus;
 import kr.co.awesomelead.groupware_backend.domain.user.enums.Role;
 import kr.co.awesomelead.groupware_backend.domain.user.enums.Status;
+import kr.co.awesomelead.groupware_backend.domain.user.enums.UserSortType;
 import kr.co.awesomelead.groupware_backend.domain.user.repository.MyInfoUpdateRequestRepository;
 import kr.co.awesomelead.groupware_backend.domain.user.repository.UserRepository;
 import kr.co.awesomelead.groupware_backend.domain.user.repository.querydsl.UserQueryRepository;
@@ -19,6 +20,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDate;
 import java.util.List;
 
 @SpringBootTest
@@ -159,6 +161,108 @@ class UserQueryRepositoryTest {
 
         // then
         assertThat(result.getContent()).extracting(User::getRole).containsExactly(Role.USER);
+    }
+
+    @Test
+    @DisplayName("findAllAvailableWithFilters 메서드는 이름순으로 조회한다")
+    void findAllAvailableWithFilters_orders_by_name() {
+        // given
+        userRepository.save(
+                createUser(
+                        "user-order-b@example.com",
+                        "이영희",
+                        "900109-1234567",
+                        "01099990000",
+                        Role.USER));
+        userRepository.save(
+                createUser(
+                        "user-order-a@example.com",
+                        "김철수",
+                        "900110-1234567",
+                        "01000001111",
+                        Role.USER));
+
+        // when
+        var result =
+                userQueryRepository.findAllAvailableWithFilters(
+                        null, null, null, null, null, null, PageRequest.of(0, 20));
+
+        // then
+        assertThat(result.getContent()).extracting(User::getNameKor).containsExactly("김철수", "이영희");
+    }
+
+    @Test
+    @DisplayName("findAllAvailableWithFilters 메서드는 입사일 최신순으로 조회한다")
+    void findAllAvailableWithFilters_orders_by_hire_date_desc() {
+        // given
+        User oldHireUser =
+                createUser(
+                        "old-hire@example.com", "김철수", "900111-1234567", "01011112222", Role.USER);
+        oldHireUser.setHireDate(LocalDate.of(2020, 1, 1));
+        userRepository.save(oldHireUser);
+
+        User newHireUser =
+                createUser(
+                        "new-hire@example.com", "이영희", "900112-1234567", "01022223333", Role.USER);
+        newHireUser.setHireDate(LocalDate.of(2024, 1, 1));
+        userRepository.save(newHireUser);
+
+        // when
+        var result =
+                userQueryRepository.findAllAvailableWithFilters(
+                        null,
+                        null,
+                        null,
+                        null,
+                        null,
+                        null,
+                        null,
+                        UserSortType.HIRE_DATE_DESC,
+                        PageRequest.of(0, 20));
+
+        // then
+        assertThat(result.getContent()).extracting(User::getNameKor).containsExactly("이영희", "김철수");
+    }
+
+    @Test
+    @DisplayName("findAllAvailableWithFilters 메서드는 입사일 오래된순으로 조회한다")
+    void findAllAvailableWithFilters_orders_by_hire_date_asc() {
+        // given
+        User oldHireUser =
+                createUser(
+                        "old-hire-asc@example.com",
+                        "김철수",
+                        "900113-1234567",
+                        "01033334444",
+                        Role.USER);
+        oldHireUser.setHireDate(LocalDate.of(2020, 1, 1));
+        userRepository.save(oldHireUser);
+
+        User newHireUser =
+                createUser(
+                        "new-hire-asc@example.com",
+                        "이영희",
+                        "900114-1234567",
+                        "01044445555",
+                        Role.USER);
+        newHireUser.setHireDate(LocalDate.of(2024, 1, 1));
+        userRepository.save(newHireUser);
+
+        // when
+        var result =
+                userQueryRepository.findAllAvailableWithFilters(
+                        null,
+                        null,
+                        null,
+                        null,
+                        null,
+                        null,
+                        null,
+                        UserSortType.HIRE_DATE_ASC,
+                        PageRequest.of(0, 20));
+
+        // then
+        assertThat(result.getContent()).extracting(User::getNameKor).containsExactly("김철수", "이영희");
     }
 
     private User createUser(

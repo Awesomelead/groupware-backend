@@ -24,6 +24,7 @@ import kr.co.awesomelead.groupware_backend.domain.user.enums.MyInfoUpdateRequest
 import kr.co.awesomelead.groupware_backend.domain.user.enums.Position;
 import kr.co.awesomelead.groupware_backend.domain.user.enums.Role;
 import kr.co.awesomelead.groupware_backend.domain.user.enums.Status;
+import kr.co.awesomelead.groupware_backend.domain.user.enums.UserSortType;
 import kr.co.awesomelead.groupware_backend.domain.user.repository.MyInfoUpdateRequestRepository;
 import kr.co.awesomelead.groupware_backend.domain.user.repository.UserRepository;
 import kr.co.awesomelead.groupware_backend.domain.user.repository.querydsl.UserQueryRepository;
@@ -643,7 +644,15 @@ class UserServiceTest {
 
             given(
                             userQueryRepository.findAllAvailableWithFilters(
-                                    null, null, null, null, null, Company.AWESOME, null, unsorted))
+                                    null,
+                                    null,
+                                    null,
+                                    null,
+                                    null,
+                                    Company.AWESOME,
+                                    null,
+                                    UserSortType.NAME_ASC,
+                                    unsorted))
                     .willReturn(userPage);
 
             // when
@@ -657,7 +666,15 @@ class UserServiceTest {
 
             verify(userQueryRepository)
                     .findAllAvailableWithFilters(
-                            null, null, null, null, null, Company.AWESOME, null, unsorted);
+                            null,
+                            null,
+                            null,
+                            null,
+                            null,
+                            Company.AWESOME,
+                            null,
+                            UserSortType.NAME_ASC,
+                            unsorted);
         }
 
         @Test

@@ -3,6 +3,7 @@ package kr.co.awesomelead.groupware_backend.domain.user.repository.querydsl;
 import static kr.co.awesomelead.groupware_backend.domain.user.entity.QMyInfoUpdateRequest.myInfoUpdateRequest;
 import static kr.co.awesomelead.groupware_backend.domain.user.entity.QUser.user;
 
+import com.querydsl.core.types.OrderSpecifier;
 import com.querydsl.core.types.dsl.BooleanExpression;
 import com.querydsl.jpa.JPAExpressions;
 import com.querydsl.jpa.impl.JPAQueryFactory;
@@ -15,6 +16,7 @@ import kr.co.awesomelead.groupware_backend.domain.user.enums.MyInfoUpdateRequest
 import kr.co.awesomelead.groupware_backend.domain.user.enums.Position;
 import kr.co.awesomelead.groupware_backend.domain.user.enums.Role;
 import kr.co.awesomelead.groupware_backend.domain.user.enums.Status;
+import kr.co.awesomelead.groupware_backend.domain.user.enums.UserSortType;
 
 import lombok.RequiredArgsConstructor;
 
@@ -53,6 +55,28 @@ public class UserQueryRepository {
             Company workLocation,
             List<Status> statuses,
             Pageable pageable) {
+        return findAllAvailableWithFilters(
+                keyword,
+                position,
+                departmentId,
+                jobType,
+                role,
+                workLocation,
+                statuses,
+                UserSortType.NAME_ASC,
+                pageable);
+    }
+
+    public Page<User> findAllAvailableWithFilters(
+            String keyword,
+            Position position,
+            Long departmentId,
+            JobType jobType,
+            Role role,
+            Company workLocation,
+            List<Status> statuses,
+            UserSortType sortType,
+            Pageable pageable) {
 
         List<User> content =
                 queryFactory
@@ -68,10 +92,7 @@ public class UserQueryRepository {
                                 roleFilter(role),
                                 workLocationFilter(workLocation),
                                 excludeMasterAdmin())
-                        .orderBy(
-                                user.nameKor.asc().nullsLast(),
-                                user.nameEng.asc().nullsLast(),
-                                user.id.asc())
+                        .orderBy(userOrderSpecifiers(sortType))
                         .offset(pageable.getOffset())
                         .limit(pageable.getPageSize())
                         .fetch();
@@ -93,6 +114,21 @@ public class UserQueryRepository {
                                         workLocationFilter(workLocation),
                                         excludeMasterAdmin())
                                 .fetchOne());
+    }
+
+    private OrderSpecifier<?>[] userOrderSpecifiers(UserSortType sortType) {
+        if (sortType == UserSortType.HIRE_DATE_DESC) {
+            return new OrderSpecifier<?>[] {
+                user.hireDate.desc().nullsLast(),
+                user.nameKor.asc().nullsLast(),
+                user.nameEng.asc().nullsLast(),
+                user.id.asc()
+            };
+        }
+
+        return new OrderSpecifier<?>[] {
+            user.nameKor.asc().nullsLast(), user.nameEng.asc().nullsLast(), user.id.asc()
+        };
     }
 
     public Page<User> findVisitHostCandidates(

@@ -16,6 +16,7 @@ import kr.co.awesomelead.groupware_backend.domain.user.enums.MyInfoUpdateRequest
 import kr.co.awesomelead.groupware_backend.domain.user.enums.Position;
 import kr.co.awesomelead.groupware_backend.domain.user.enums.Role;
 import kr.co.awesomelead.groupware_backend.domain.user.enums.Status;
+import kr.co.awesomelead.groupware_backend.domain.user.enums.UserSortType;
 import kr.co.awesomelead.groupware_backend.domain.user.repository.MyInfoUpdateRequestRepository;
 import kr.co.awesomelead.groupware_backend.domain.user.repository.UserRepository;
 import kr.co.awesomelead.groupware_backend.domain.user.repository.querydsl.UserQueryRepository;
@@ -219,6 +220,29 @@ public class UserService {
             Company workLocation,
             List<Status> statuses,
             Pageable pageable) {
+        return getEmployeeList(
+                keyword,
+                position,
+                departmentId,
+                jobType,
+                role,
+                workLocation,
+                statuses,
+                UserSortType.NAME_ASC,
+                pageable);
+    }
+
+    @Transactional(readOnly = true)
+    public Page<UserSummaryResponseDto> getEmployeeList(
+            String keyword,
+            Position position,
+            Long departmentId,
+            JobType jobType,
+            Role role,
+            Company workLocation,
+            List<Status> statuses,
+            UserSortType sortType,
+            Pageable pageable) {
         Pageable unsorted = PageRequest.of(pageable.getPageNumber(), pageable.getPageSize());
         return userQueryRepository
                 .findAllAvailableWithFilters(
@@ -229,6 +253,7 @@ public class UserService {
                         role,
                         workLocation,
                         statuses,
+                        sortType,
                         unsorted)
                 .map(UserSummaryResponseDto::from);
     }

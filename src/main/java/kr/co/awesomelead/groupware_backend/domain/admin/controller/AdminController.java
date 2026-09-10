@@ -1247,7 +1247,13 @@ public class AdminController {
             @RequestParam(required = false) JobType jobType,
             @RequestParam(required = false) Role role,
             @RequestParam(required = false) Company workLocation,
-            @RequestParam(required = false) List<Status> statuses) {
+            @RequestParam(required = false) List<Status> statuses,
+            @Parameter(
+                            description =
+                                    "정렬 기준 (NAME_ASC: 이름순, HIRE_DATE_DESC: 입사일 최신순,"
+                                            + " HIRE_DATE_ASC: 입사일 오래된순)")
+                    @RequestParam(defaultValue = "NAME_ASC")
+                    UserSortType sortType) {
         byte[] excelBytes =
                 adminService.getUsersExcel(
                         userDetails.getId(),
@@ -1257,7 +1263,8 @@ public class AdminController {
                         jobType,
                         role,
                         workLocation,
-                        statuses);
+                        statuses,
+                        sortType);
         String filename =
                 "근로자명부_"
                         + java.time.LocalDate.now()

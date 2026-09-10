@@ -637,6 +637,29 @@ public class AdminService {
             Role role,
             Company workLocation,
             List<Status> statuses) {
+        return getUsersExcel(
+                adminId,
+                keyword,
+                position,
+                departmentId,
+                jobType,
+                role,
+                workLocation,
+                statuses,
+                UserSortType.NAME_ASC);
+    }
+
+    @Transactional(readOnly = true)
+    public byte[] getUsersExcel(
+            Long adminId,
+            String keyword,
+            Position position,
+            Long departmentId,
+            JobType jobType,
+            Role role,
+            Company workLocation,
+            List<Status> statuses,
+            UserSortType sortType) {
         User admin =
                 userRepository
                         .findById(adminId)
@@ -645,7 +668,14 @@ public class AdminService {
 
         List<User> users =
                 userQueryRepository.findAllForAdminWithFiltersNoPaging(
-                        keyword, position, departmentId, jobType, role, workLocation, statuses);
+                        keyword,
+                        position,
+                        departmentId,
+                        jobType,
+                        role,
+                        workLocation,
+                        statuses,
+                        sortType);
 
         String[] headers = {
             "No.", "한글 이름", "영문 이름", "생년월일", "국적", "우편번호", "주소1", "주소2", "주민등록번호", "전화번호", "이메일",

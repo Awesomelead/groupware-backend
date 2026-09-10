@@ -254,6 +254,86 @@ class UserQueryRepositoryTest {
     }
 
     @Test
+    @DisplayName("findAllForAdminWithFiltersNoPaging 메서드는 입사일 최신순으로 조회한다")
+    void findAllForAdminWithFiltersNoPaging_orders_by_hire_date_desc() {
+        // given
+        User oldHireUser =
+                createUser(
+                        "admin-excel-old-hire@example.com",
+                        "김철수",
+                        "900121-1234567",
+                        "01011110000",
+                        Role.USER);
+        oldHireUser.setHireDate(LocalDate.of(2020, 1, 1));
+        userRepository.save(oldHireUser);
+
+        User newHireUser =
+                createUser(
+                        "admin-excel-new-hire@example.com",
+                        "이영희",
+                        "900122-1234567",
+                        "01022220000",
+                        Role.USER);
+        newHireUser.setHireDate(LocalDate.of(2024, 1, 1));
+        userRepository.save(newHireUser);
+
+        // when
+        List<User> result =
+                userQueryRepository.findAllForAdminWithFiltersNoPaging(
+                        null,
+                        null,
+                        null,
+                        null,
+                        null,
+                        null,
+                        null,
+                        UserSortType.HIRE_DATE_DESC);
+
+        // then
+        assertThat(result).extracting(User::getNameKor).containsExactly("이영희", "김철수");
+    }
+
+    @Test
+    @DisplayName("findAllForAdminWithFiltersNoPaging 메서드는 입사일 오래된순으로 조회한다")
+    void findAllForAdminWithFiltersNoPaging_orders_by_hire_date_asc() {
+        // given
+        User oldHireUser =
+                createUser(
+                        "admin-excel-old-hire-asc@example.com",
+                        "김철수",
+                        "900123-1234567",
+                        "01033330000",
+                        Role.USER);
+        oldHireUser.setHireDate(LocalDate.of(2020, 1, 1));
+        userRepository.save(oldHireUser);
+
+        User newHireUser =
+                createUser(
+                        "admin-excel-new-hire-asc@example.com",
+                        "이영희",
+                        "900124-1234567",
+                        "01044440000",
+                        Role.USER);
+        newHireUser.setHireDate(LocalDate.of(2024, 1, 1));
+        userRepository.save(newHireUser);
+
+        // when
+        List<User> result =
+                userQueryRepository.findAllForAdminWithFiltersNoPaging(
+                        null,
+                        null,
+                        null,
+                        null,
+                        null,
+                        null,
+                        null,
+                        UserSortType.HIRE_DATE_ASC);
+
+        // then
+        assertThat(result).extracting(User::getNameKor).containsExactly("김철수", "이영희");
+    }
+
+    @Test
     @DisplayName("findAllAvailableWithFilters 메서드는 MASTER_ADMIN을 제외한다")
     void findAllAvailableWithFilters_excludes_master_admin() {
         // given

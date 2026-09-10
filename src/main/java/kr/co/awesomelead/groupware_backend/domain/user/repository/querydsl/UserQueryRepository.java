@@ -271,6 +271,26 @@ public class UserQueryRepository {
             Role role,
             Company workLocation,
             List<Status> statuses) {
+        return findAllForAdminWithFiltersNoPaging(
+                keyword,
+                position,
+                departmentId,
+                jobType,
+                role,
+                workLocation,
+                statuses,
+                UserSortType.NAME_ASC);
+    }
+
+    public List<User> findAllForAdminWithFiltersNoPaging(
+            String keyword,
+            Position position,
+            Long departmentId,
+            JobType jobType,
+            Role role,
+            Company workLocation,
+            List<Status> statuses,
+            UserSortType sortType) {
         return queryFactory
                 .selectFrom(user)
                 .leftJoin(user.department, QDepartment.department)
@@ -284,7 +304,7 @@ public class UserQueryRepository {
                         workLocationFilter(workLocation),
                         adminStatusFilter(statuses),
                         excludeMasterAdmin())
-                .orderBy(user.id.desc())
+                .orderBy(userOrderSpecifiers(sortType))
                 .fetch();
     }
 

@@ -155,7 +155,9 @@ public class UserController {
                     List<Status> statuses,
             @RequestParam(defaultValue = "NAME_ASC")
                     @io.swagger.v3.oas.annotations.Parameter(
-                            description = "정렬 기준 (NAME_ASC: 이름순, HIRE_DATE_DESC: 입사일 최신순)")
+                            description =
+                                    "정렬 기준 (NAME_ASC: 이름순, HIRE_DATE_DESC: 입사일 최신순,"
+                                            + " HIRE_DATE_ASC: 입사일 오래된순)")
                     UserSortType sortType,
             @PageableDefault(size = 20) Pageable pageable) {
         return ResponseEntity.ok(

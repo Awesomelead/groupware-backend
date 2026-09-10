@@ -125,6 +125,14 @@ public class UserQueryRepository {
                 user.id.asc()
             };
         }
+        if (sortType == UserSortType.HIRE_DATE_ASC) {
+            return new OrderSpecifier<?>[] {
+                user.hireDate.asc().nullsLast(),
+                user.nameKor.asc().nullsLast(),
+                user.nameEng.asc().nullsLast(),
+                user.id.asc()
+            };
+        }
 
         return new OrderSpecifier<?>[] {
             user.nameKor.asc().nullsLast(), user.nameEng.asc().nullsLast(), user.id.asc()

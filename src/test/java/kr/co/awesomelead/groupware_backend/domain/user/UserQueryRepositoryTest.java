@@ -108,6 +108,36 @@ class UserQueryRepositoryTest {
     }
 
     @Test
+    @DisplayName("findAllForAdminWithFilters 메서드는 이름순으로 조회한다")
+    void findAllForAdminWithFilters_orders_by_name() {
+        // given
+        userRepository.save(
+                createUser(
+                        "admin-user-order-b@example.com",
+                        "이영희",
+                        "900115-1234567",
+                        "01055556666",
+                        Role.USER));
+        userRepository.save(
+                createUser(
+                        "admin-user-order-a@example.com",
+                        "김철수",
+                        "900116-1234567",
+                        "01066667777",
+                        Role.USER));
+
+        // when
+        var result =
+                userQueryRepository.findAllForAdminWithFilters(
+                        null, null, null, null, null, null, null, null, PageRequest.of(0, 20));
+
+        // then
+        assertThat(result.getContent())
+                .extracting(User::getNameKor)
+                .containsExactly("김철수", "이영희");
+    }
+
+    @Test
     @DisplayName("findAllForAdminWithFiltersNoPaging 메서드는 MASTER_ADMIN을 제외한다")
     void findAllForAdminWithFiltersNoPaging_excludes_master_admin() {
         // given

@@ -214,7 +214,7 @@ public class UserQueryRepository {
                                 adminStatusFilter(statuses),
                                 pendingMyInfoRequestFilter(hasPendingMyInfoRequest),
                                 excludeMasterAdmin())
-                        .orderBy(user.id.desc())
+                        .orderBy(userOrderSpecifiers(UserSortType.NAME_ASC))
                         .offset(pageable.getOffset())
                         .limit(pageable.getPageSize())
                         .fetch();

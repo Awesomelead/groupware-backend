@@ -68,7 +68,10 @@ public class UserQueryRepository {
                                 roleFilter(role),
                                 workLocationFilter(workLocation),
                                 excludeMasterAdmin())
-                        .orderBy(user.id.desc())
+                        .orderBy(
+                                user.nameKor.asc().nullsLast(),
+                                user.nameEng.asc().nullsLast(),
+                                user.id.asc())
                         .offset(pageable.getOffset())
                         .limit(pageable.getPageSize())
                         .fetch();

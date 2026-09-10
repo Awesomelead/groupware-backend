@@ -161,6 +161,34 @@ class UserQueryRepositoryTest {
         assertThat(result.getContent()).extracting(User::getRole).containsExactly(Role.USER);
     }
 
+    @Test
+    @DisplayName("findAllAvailableWithFilters 메서드는 이름순으로 조회한다")
+    void findAllAvailableWithFilters_orders_by_name() {
+        // given
+        userRepository.save(
+                createUser(
+                        "user-order-b@example.com",
+                        "이영희",
+                        "900109-1234567",
+                        "01099990000",
+                        Role.USER));
+        userRepository.save(
+                createUser(
+                        "user-order-a@example.com",
+                        "김철수",
+                        "900110-1234567",
+                        "01000001111",
+                        Role.USER));
+
+        // when
+        var result =
+                userQueryRepository.findAllAvailableWithFilters(
+                        null, null, null, null, null, null, PageRequest.of(0, 20));
+
+        // then
+        assertThat(result.getContent()).extracting(User::getNameKor).containsExactly("김철수", "이영희");
+    }
+
     private User createUser(
             String email,
             String nameKor,

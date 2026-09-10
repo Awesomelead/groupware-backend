@@ -182,6 +182,50 @@ class UserQueryRepositoryTest {
     }
 
     @Test
+    @DisplayName("findAllForAdminWithFilters 메서드는 입사일 오래된순으로 조회한다")
+    void findAllForAdminWithFilters_orders_by_hire_date_asc() {
+        // given
+        User oldHireUser =
+                createUser(
+                        "admin-old-hire-asc@example.com",
+                        "김철수",
+                        "900119-1234567",
+                        "01099990000",
+                        Role.USER);
+        oldHireUser.setHireDate(LocalDate.of(2020, 1, 1));
+        userRepository.save(oldHireUser);
+
+        User newHireUser =
+                createUser(
+                        "admin-new-hire-asc@example.com",
+                        "이영희",
+                        "900120-1234567",
+                        "01000001111",
+                        Role.USER);
+        newHireUser.setHireDate(LocalDate.of(2024, 1, 1));
+        userRepository.save(newHireUser);
+
+        // when
+        var result =
+                userQueryRepository.findAllForAdminWithFilters(
+                        null,
+                        null,
+                        null,
+                        null,
+                        null,
+                        null,
+                        null,
+                        null,
+                        UserSortType.HIRE_DATE_ASC,
+                        PageRequest.of(0, 20));
+
+        // then
+        assertThat(result.getContent())
+                .extracting(User::getNameKor)
+                .containsExactly("김철수", "이영희");
+    }
+
+    @Test
     @DisplayName("findAllForAdminWithFiltersNoPaging 메서드는 MASTER_ADMIN을 제외한다")
     void findAllForAdminWithFiltersNoPaging_excludes_master_admin() {
         // given

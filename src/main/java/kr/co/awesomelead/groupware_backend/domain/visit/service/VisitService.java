@@ -201,8 +201,7 @@ public class VisitService {
         }
 
         if (ENVIRONMENT_SAFETY_REQUIRED_PURPOSES.contains(visit.getPurpose())) {
-            if (visit.getPermissionType() == null
-                    || visit.getPermissionType() == AdditionalPermissionType.NONE) {
+            if (dto.getPermissionType() == null) {
                 throw new CustomException(ErrorCode.ADDITIONAL_PERMISSION_REQUIRED);
             }
         }

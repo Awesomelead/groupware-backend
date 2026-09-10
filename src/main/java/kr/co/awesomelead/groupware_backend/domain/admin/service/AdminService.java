@@ -26,6 +26,7 @@ import kr.co.awesomelead.groupware_backend.domain.user.enums.MyInfoUpdateRequest
 import kr.co.awesomelead.groupware_backend.domain.user.enums.Position;
 import kr.co.awesomelead.groupware_backend.domain.user.enums.Role;
 import kr.co.awesomelead.groupware_backend.domain.user.enums.Status;
+import kr.co.awesomelead.groupware_backend.domain.user.enums.UserSortType;
 import kr.co.awesomelead.groupware_backend.domain.user.repository.MyInfoUpdateRequestRepository;
 import kr.co.awesomelead.groupware_backend.domain.user.repository.UserRepository;
 import kr.co.awesomelead.groupware_backend.domain.user.repository.querydsl.UserQueryRepository;
@@ -209,6 +210,33 @@ public class AdminService {
             List<Status> statuses,
             Boolean hasPendingMyInfoRequest,
             Pageable pageable) {
+        return getUsers(
+                adminId,
+                keyword,
+                position,
+                departmentId,
+                jobType,
+                role,
+                workLocation,
+                statuses,
+                hasPendingMyInfoRequest,
+                UserSortType.NAME_ASC,
+                pageable);
+    }
+
+    @Transactional(readOnly = true)
+    public Page<AdminUserSummaryResponseDto> getUsers(
+            Long adminId,
+            String keyword,
+            Position position,
+            Long departmentId,
+            JobType jobType,
+            Role role,
+            Company workLocation,
+            List<Status> statuses,
+            Boolean hasPendingMyInfoRequest,
+            UserSortType sortType,
+            Pageable pageable) {
         User admin =
                 userRepository
                         .findById(adminId)
@@ -233,6 +261,7 @@ public class AdminService {
                         workLocation,
                         statuses,
                         hasPendingMyInfoRequest,
+                        sortType,
                         pageable)
                 .map(
                         u ->

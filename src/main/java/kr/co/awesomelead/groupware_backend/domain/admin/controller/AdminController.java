@@ -30,6 +30,7 @@ import kr.co.awesomelead.groupware_backend.domain.user.enums.JobType;
 import kr.co.awesomelead.groupware_backend.domain.user.enums.Position;
 import kr.co.awesomelead.groupware_backend.domain.user.enums.Role;
 import kr.co.awesomelead.groupware_backend.domain.user.enums.Status;
+import kr.co.awesomelead.groupware_backend.domain.user.enums.UserSortType;
 import kr.co.awesomelead.groupware_backend.global.common.response.ApiResponse;
 
 import lombok.RequiredArgsConstructor;
@@ -147,6 +148,12 @@ public class AdminController {
             @Parameter(description = "개인정보 수정 승인 대기 여부 필터", required = false, example = "true")
                     @RequestParam(required = false)
                     Boolean hasPendingMyInfoRequest,
+            @Parameter(
+                            description =
+                                    "정렬 기준 (NAME_ASC: 이름순, HIRE_DATE_DESC: 입사일 최신순,"
+                                            + " HIRE_DATE_ASC: 입사일 오래된순)")
+                    @RequestParam(defaultValue = "NAME_ASC")
+                    UserSortType sortType,
             @ParameterObject @PageableDefault(page = 0, size = 20) Pageable pageable) {
 
         Page<AdminUserSummaryResponseDto> result =
@@ -160,6 +167,7 @@ public class AdminController {
                         workLocation,
                         statuses,
                         hasPendingMyInfoRequest,
+                        sortType,
                         pageable);
 
         return ResponseEntity.ok(ApiResponse.onSuccess(result));

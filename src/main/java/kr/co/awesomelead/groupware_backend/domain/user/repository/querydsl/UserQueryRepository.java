@@ -199,6 +199,30 @@ public class UserQueryRepository {
             List<Status> statuses,
             Boolean hasPendingMyInfoRequest,
             Pageable pageable) {
+        return findAllForAdminWithFilters(
+                keyword,
+                position,
+                departmentId,
+                jobType,
+                role,
+                workLocation,
+                statuses,
+                hasPendingMyInfoRequest,
+                UserSortType.NAME_ASC,
+                pageable);
+    }
+
+    public Page<User> findAllForAdminWithFilters(
+            String keyword,
+            Position position,
+            Long departmentId,
+            JobType jobType,
+            Role role,
+            Company workLocation,
+            List<Status> statuses,
+            Boolean hasPendingMyInfoRequest,
+            UserSortType sortType,
+            Pageable pageable) {
         List<User> content =
                 queryFactory
                         .selectFrom(user)
@@ -214,7 +238,7 @@ public class UserQueryRepository {
                                 adminStatusFilter(statuses),
                                 pendingMyInfoRequestFilter(hasPendingMyInfoRequest),
                                 excludeMasterAdmin())
-                        .orderBy(userOrderSpecifiers(UserSortType.NAME_ASC))
+                        .orderBy(userOrderSpecifiers(sortType))
                         .offset(pageable.getOffset())
                         .limit(pageable.getPageSize())
                         .fetch();

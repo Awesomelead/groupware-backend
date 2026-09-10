@@ -807,9 +807,7 @@ class UserServiceTest {
             User user = createTestUser();
             Page<User> userPage = new PageImpl<>(List.of(user), pageable, 1);
 
-            given(
-                            userQueryRepository.findVisitHostCandidates(
-                                    "김", 1L, Company.AWESOME, unsorted))
+            given(userQueryRepository.findVisitHostCandidates("김", 1L, Company.AWESOME, unsorted))
                     .willReturn(userPage);
 
             // when

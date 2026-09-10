@@ -83,10 +83,8 @@ public class VisitController {
             @RequestParam(required = false)
                     @Parameter(description = "검색어 (이름/영문이름/이메일 부분 일치)", example = "김")
                     String keyword,
-            @RequestParam(required = false) @Parameter(description = "부서 ID 필터")
-                    Long departmentId,
-            @RequestParam(required = false)
-                    @Parameter(description = "근무사업장 필터 (AWESOME, MARUI)")
+            @RequestParam(required = false) @Parameter(description = "부서 ID 필터") Long departmentId,
+            @RequestParam(required = false) @Parameter(description = "근무사업장 필터 (AWESOME, MARUI)")
                     Company workLocation,
             @PageableDefault(size = 20) Pageable pageable) {
         return ResponseEntity.ok(

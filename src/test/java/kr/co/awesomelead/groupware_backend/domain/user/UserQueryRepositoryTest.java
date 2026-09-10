@@ -188,9 +188,7 @@ class UserQueryRepositoryTest {
                         null, null, null, null, null, null, PageRequest.of(0, 20));
 
         // then
-        assertThat(result.getContent())
-                .extracting(User::getNameKor)
-                .containsExactly("김철수", "이영희");
+        assertThat(result.getContent()).extracting(User::getNameKor).containsExactly("김철수", "이영희");
     }
 
     @Test
@@ -199,21 +197,13 @@ class UserQueryRepositoryTest {
         // given
         User oldHireUser =
                 createUser(
-                        "old-hire@example.com",
-                        "김철수",
-                        "900111-1234567",
-                        "01011112222",
-                        Role.USER);
+                        "old-hire@example.com", "김철수", "900111-1234567", "01011112222", Role.USER);
         oldHireUser.setHireDate(LocalDate.of(2020, 1, 1));
         userRepository.save(oldHireUser);
 
         User newHireUser =
                 createUser(
-                        "new-hire@example.com",
-                        "이영희",
-                        "900112-1234567",
-                        "01022223333",
-                        Role.USER);
+                        "new-hire@example.com", "이영희", "900112-1234567", "01022223333", Role.USER);
         newHireUser.setHireDate(LocalDate.of(2024, 1, 1));
         userRepository.save(newHireUser);
 
@@ -231,9 +221,7 @@ class UserQueryRepositoryTest {
                         PageRequest.of(0, 20));
 
         // then
-        assertThat(result.getContent())
-                .extracting(User::getNameKor)
-                .containsExactly("이영희", "김철수");
+        assertThat(result.getContent()).extracting(User::getNameKor).containsExactly("이영희", "김철수");
     }
 
     @Test
@@ -274,9 +262,7 @@ class UserQueryRepositoryTest {
                         PageRequest.of(0, 20));
 
         // then
-        assertThat(result.getContent())
-                .extracting(User::getNameKor)
-                .containsExactly("김철수", "이영희");
+        assertThat(result.getContent()).extracting(User::getNameKor).containsExactly("김철수", "이영희");
     }
 
     private User createUser(

@@ -33,6 +33,7 @@ import kr.co.awesomelead.groupware_backend.domain.user.enums.MyInfoUpdateRequest
 import kr.co.awesomelead.groupware_backend.domain.user.enums.Position;
 import kr.co.awesomelead.groupware_backend.domain.user.enums.Role;
 import kr.co.awesomelead.groupware_backend.domain.user.enums.Status;
+import kr.co.awesomelead.groupware_backend.domain.user.enums.UserSortType;
 import kr.co.awesomelead.groupware_backend.domain.user.repository.MyInfoUpdateRequestRepository;
 import kr.co.awesomelead.groupware_backend.domain.user.repository.UserRepository;
 import kr.co.awesomelead.groupware_backend.domain.user.repository.querydsl.UserQueryRepository;
@@ -524,6 +525,7 @@ class AdminServiceTest {
                             null,
                             null,
                             null,
+                            UserSortType.NAME_ASC,
                             pageable))
                     .thenReturn(userPage);
             when(myInfoUpdateRequestRepository.findDistinctUserIdsByStatus(
@@ -599,6 +601,7 @@ class AdminServiceTest {
                             null,
                             (List<Status>) null,
                             null,
+                            UserSortType.NAME_ASC,
                             pageable))
                     .thenReturn(Page.empty());
 
@@ -626,6 +629,7 @@ class AdminServiceTest {
                             null,
                             (List<Status>) null,
                             null,
+                            UserSortType.NAME_ASC,
                             pageable);
         }
 
@@ -637,7 +641,16 @@ class AdminServiceTest {
             when(myInfoUpdateRequestRepository.findDistinctUserIdsByStatus(any()))
                     .thenReturn(List.of());
             when(userQueryRepository.findAllForAdminWithFilters(
-                            null, null, null, null, null, null, List.of(), null, pageable))
+                            null,
+                            null,
+                            null,
+                            null,
+                            null,
+                            null,
+                            List.of(),
+                            null,
+                            UserSortType.NAME_ASC,
+                            pageable))
                     .thenReturn(Page.empty());
 
             // when
@@ -647,7 +660,16 @@ class AdminServiceTest {
             // then
             verify(userQueryRepository)
                     .findAllForAdminWithFilters(
-                            null, null, null, null, null, null, List.of(), null, pageable);
+                            null,
+                            null,
+                            null,
+                            null,
+                            null,
+                            null,
+                            List.of(),
+                            null,
+                            UserSortType.NAME_ASC,
+                            pageable);
         }
 
         @Test
@@ -659,7 +681,16 @@ class AdminServiceTest {
             when(myInfoUpdateRequestRepository.findDistinctUserIdsByStatus(any()))
                     .thenReturn(List.of());
             when(userQueryRepository.findAllForAdminWithFilters(
-                            null, null, null, null, null, null, statuses, null, pageable))
+                            null,
+                            null,
+                            null,
+                            null,
+                            null,
+                            null,
+                            statuses,
+                            null,
+                            UserSortType.NAME_ASC,
+                            pageable))
                     .thenReturn(Page.empty());
 
             // when
@@ -669,7 +700,16 @@ class AdminServiceTest {
             // then
             verify(userQueryRepository)
                     .findAllForAdminWithFilters(
-                            null, null, null, null, null, null, statuses, null, pageable);
+                            null,
+                            null,
+                            null,
+                            null,
+                            null,
+                            null,
+                            statuses,
+                            null,
+                            UserSortType.NAME_ASC,
+                            pageable);
         }
 
         @Test
@@ -681,7 +721,16 @@ class AdminServiceTest {
             when(myInfoUpdateRequestRepository.findDistinctUserIdsByStatus(any()))
                     .thenReturn(List.of());
             when(userQueryRepository.findAllForAdminWithFilters(
-                            null, null, null, null, null, null, statuses, null, pageable))
+                            null,
+                            null,
+                            null,
+                            null,
+                            null,
+                            null,
+                            statuses,
+                            null,
+                            UserSortType.NAME_ASC,
+                            pageable))
                     .thenReturn(Page.empty());
 
             // when
@@ -691,7 +740,16 @@ class AdminServiceTest {
             // then
             verify(userQueryRepository)
                     .findAllForAdminWithFilters(
-                            null, null, null, null, null, null, statuses, null, pageable);
+                            null,
+                            null,
+                            null,
+                            null,
+                            null,
+                            null,
+                            statuses,
+                            null,
+                            UserSortType.NAME_ASC,
+                            pageable);
         }
 
         @Test
@@ -702,7 +760,16 @@ class AdminServiceTest {
             when(myInfoUpdateRequestRepository.findDistinctUserIdsByStatus(any()))
                     .thenReturn(List.of());
             when(userQueryRepository.findAllForAdminWithFilters(
-                            null, null, null, null, null, null, null, true, pageable))
+                            null,
+                            null,
+                            null,
+                            null,
+                            null,
+                            null,
+                            null,
+                            true,
+                            UserSortType.NAME_ASC,
+                            pageable))
                     .thenReturn(Page.empty());
 
             // when
@@ -712,7 +779,16 @@ class AdminServiceTest {
             // then
             verify(userQueryRepository)
                     .findAllForAdminWithFilters(
-                            null, null, null, null, null, null, null, true, pageable);
+                            null,
+                            null,
+                            null,
+                            null,
+                            null,
+                            null,
+                            null,
+                            true,
+                            UserSortType.NAME_ASC,
+                            pageable);
         }
     }
 
@@ -1429,7 +1505,7 @@ class AdminServiceTest {
                                 .hireDate(LocalDate.of(2025, 1, 1))
                                 .build();
                 when(userQueryRepository.findAllForAdminWithFiltersNoPaging(
-                                null, null, null, null, null, null, null))
+                                null, null, null, null, null, null, null, UserSortType.NAME_ASC))
                         .thenReturn(List.of(user));
 
                 // when

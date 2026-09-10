@@ -3,6 +3,7 @@ package kr.co.awesomelead.groupware_backend.domain.user.repository.querydsl;
 import static kr.co.awesomelead.groupware_backend.domain.user.entity.QMyInfoUpdateRequest.myInfoUpdateRequest;
 import static kr.co.awesomelead.groupware_backend.domain.user.entity.QUser.user;
 
+import com.querydsl.core.types.OrderSpecifier;
 import com.querydsl.core.types.dsl.BooleanExpression;
 import com.querydsl.jpa.JPAExpressions;
 import com.querydsl.jpa.impl.JPAQueryFactory;
@@ -15,6 +16,7 @@ import kr.co.awesomelead.groupware_backend.domain.user.enums.MyInfoUpdateRequest
 import kr.co.awesomelead.groupware_backend.domain.user.enums.Position;
 import kr.co.awesomelead.groupware_backend.domain.user.enums.Role;
 import kr.co.awesomelead.groupware_backend.domain.user.enums.Status;
+import kr.co.awesomelead.groupware_backend.domain.user.enums.UserSortType;
 
 import lombok.RequiredArgsConstructor;
 
@@ -53,6 +55,28 @@ public class UserQueryRepository {
             Company workLocation,
             List<Status> statuses,
             Pageable pageable) {
+        return findAllAvailableWithFilters(
+                keyword,
+                position,
+                departmentId,
+                jobType,
+                role,
+                workLocation,
+                statuses,
+                UserSortType.NAME_ASC,
+                pageable);
+    }
+
+    public Page<User> findAllAvailableWithFilters(
+            String keyword,
+            Position position,
+            Long departmentId,
+            JobType jobType,
+            Role role,
+            Company workLocation,
+            List<Status> statuses,
+            UserSortType sortType,
+            Pageable pageable) {
 
         List<User> content =
                 queryFactory
@@ -68,7 +92,7 @@ public class UserQueryRepository {
                                 roleFilter(role),
                                 workLocationFilter(workLocation),
                                 excludeMasterAdmin())
-                        .orderBy(user.id.desc())
+                        .orderBy(userOrderSpecifiers(sortType))
                         .offset(pageable.getOffset())
                         .limit(pageable.getPageSize())
                         .fetch();
@@ -87,6 +111,68 @@ public class UserQueryRepository {
                                         departmentFilter(departmentId),
                                         jobTypeFilter(jobType),
                                         roleFilter(role),
+                                        workLocationFilter(workLocation),
+                                        excludeMasterAdmin())
+                                .fetchOne());
+    }
+
+    private OrderSpecifier<?>[] userOrderSpecifiers(UserSortType sortType) {
+        if (sortType == UserSortType.HIRE_DATE_DESC) {
+            return new OrderSpecifier<?>[] {
+                user.hireDate.desc().nullsLast(),
+                user.nameKor.asc().nullsLast(),
+                user.nameEng.asc().nullsLast(),
+                user.id.asc()
+            };
+        }
+        if (sortType == UserSortType.HIRE_DATE_ASC) {
+            return new OrderSpecifier<?>[] {
+                user.hireDate.asc().nullsLast(),
+                user.nameKor.asc().nullsLast(),
+                user.nameEng.asc().nullsLast(),
+                user.id.asc()
+            };
+        }
+
+        return new OrderSpecifier<?>[] {
+            user.nameKor.asc().nullsLast(), user.nameEng.asc().nullsLast(), user.id.asc()
+        };
+    }
+
+    public Page<User> findVisitHostCandidates(
+            String keyword, Long departmentId, Company workLocation, Pageable pageable) {
+        List<User> content =
+                queryFactory
+                        .selectFrom(user)
+                        .leftJoin(user.department, QDepartment.department)
+                        .fetchJoin()
+                        .where(
+                                statusFilter(List.of(Status.AVAILABLE)),
+                                keywordFilter(keyword),
+                                departmentFilter(departmentId),
+                                jobTypeFilter(JobType.MANAGEMENT),
+                                workLocationFilter(workLocation),
+                                excludeMasterAdmin())
+                        .orderBy(
+                                user.nameKor.asc().nullsLast(),
+                                user.nameEng.asc().nullsLast(),
+                                user.id.asc())
+                        .offset(pageable.getOffset())
+                        .limit(pageable.getPageSize())
+                        .fetch();
+
+        return PageableExecutionUtils.getPage(
+                content,
+                pageable,
+                () ->
+                        queryFactory
+                                .select(user.count())
+                                .from(user)
+                                .where(
+                                        statusFilter(List.of(Status.AVAILABLE)),
+                                        keywordFilter(keyword),
+                                        departmentFilter(departmentId),
+                                        jobTypeFilter(JobType.MANAGEMENT),
                                         workLocationFilter(workLocation),
                                         excludeMasterAdmin())
                                 .fetchOne());
@@ -113,6 +199,30 @@ public class UserQueryRepository {
             List<Status> statuses,
             Boolean hasPendingMyInfoRequest,
             Pageable pageable) {
+        return findAllForAdminWithFilters(
+                keyword,
+                position,
+                departmentId,
+                jobType,
+                role,
+                workLocation,
+                statuses,
+                hasPendingMyInfoRequest,
+                UserSortType.NAME_ASC,
+                pageable);
+    }
+
+    public Page<User> findAllForAdminWithFilters(
+            String keyword,
+            Position position,
+            Long departmentId,
+            JobType jobType,
+            Role role,
+            Company workLocation,
+            List<Status> statuses,
+            Boolean hasPendingMyInfoRequest,
+            UserSortType sortType,
+            Pageable pageable) {
         List<User> content =
                 queryFactory
                         .selectFrom(user)
@@ -128,7 +238,7 @@ public class UserQueryRepository {
                                 adminStatusFilter(statuses),
                                 pendingMyInfoRequestFilter(hasPendingMyInfoRequest),
                                 excludeMasterAdmin())
-                        .orderBy(user.id.desc())
+                        .orderBy(userOrderSpecifiers(sortType))
                         .offset(pageable.getOffset())
                         .limit(pageable.getPageSize())
                         .fetch();
@@ -161,6 +271,26 @@ public class UserQueryRepository {
             Role role,
             Company workLocation,
             List<Status> statuses) {
+        return findAllForAdminWithFiltersNoPaging(
+                keyword,
+                position,
+                departmentId,
+                jobType,
+                role,
+                workLocation,
+                statuses,
+                UserSortType.NAME_ASC);
+    }
+
+    public List<User> findAllForAdminWithFiltersNoPaging(
+            String keyword,
+            Position position,
+            Long departmentId,
+            JobType jobType,
+            Role role,
+            Company workLocation,
+            List<Status> statuses,
+            UserSortType sortType) {
         return queryFactory
                 .selectFrom(user)
                 .leftJoin(user.department, QDepartment.department)
@@ -174,7 +304,7 @@ public class UserQueryRepository {
                         workLocationFilter(workLocation),
                         adminStatusFilter(statuses),
                         excludeMasterAdmin())
-                .orderBy(user.id.desc())
+                .orderBy(userOrderSpecifiers(sortType))
                 .fetch();
     }
 

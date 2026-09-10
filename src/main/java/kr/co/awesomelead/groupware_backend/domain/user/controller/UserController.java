@@ -18,6 +18,7 @@ import kr.co.awesomelead.groupware_backend.domain.user.enums.JobType;
 import kr.co.awesomelead.groupware_backend.domain.user.enums.Position;
 import kr.co.awesomelead.groupware_backend.domain.user.enums.Role;
 import kr.co.awesomelead.groupware_backend.domain.user.enums.Status;
+import kr.co.awesomelead.groupware_backend.domain.user.enums.UserSortType;
 import kr.co.awesomelead.groupware_backend.domain.user.service.UserService;
 import kr.co.awesomelead.groupware_backend.global.common.response.ApiResponse;
 
@@ -152,6 +153,12 @@ public class UserController {
                     @io.swagger.v3.oas.annotations.Parameter(
                             description = "상태 필터 (AVAILABLE, SUSPENDED)")
                     List<Status> statuses,
+            @RequestParam(defaultValue = "NAME_ASC")
+                    @io.swagger.v3.oas.annotations.Parameter(
+                            description =
+                                    "정렬 기준 (NAME_ASC: 이름순, HIRE_DATE_DESC: 입사일 최신순,"
+                                            + " HIRE_DATE_ASC: 입사일 오래된순)")
+                    UserSortType sortType,
             @PageableDefault(size = 20) Pageable pageable) {
         return ResponseEntity.ok(
                 ApiResponse.onSuccess(
@@ -163,6 +170,7 @@ public class UserController {
                                 role,
                                 workLocation,
                                 statuses,
+                                sortType,
                                 pageable)));
     }
 

@@ -132,9 +132,7 @@ class UserQueryRepositoryTest {
                         null, null, null, null, null, null, null, null, PageRequest.of(0, 20));
 
         // then
-        assertThat(result.getContent())
-                .extracting(User::getNameKor)
-                .containsExactly("김철수", "이영희");
+        assertThat(result.getContent()).extracting(User::getNameKor).containsExactly("김철수", "이영희");
     }
 
     @Test
@@ -176,9 +174,7 @@ class UserQueryRepositoryTest {
                         PageRequest.of(0, 20));
 
         // then
-        assertThat(result.getContent())
-                .extracting(User::getNameKor)
-                .containsExactly("이영희", "김철수");
+        assertThat(result.getContent()).extracting(User::getNameKor).containsExactly("이영희", "김철수");
     }
 
     @Test
@@ -220,9 +216,7 @@ class UserQueryRepositoryTest {
                         PageRequest.of(0, 20));
 
         // then
-        assertThat(result.getContent())
-                .extracting(User::getNameKor)
-                .containsExactly("김철수", "이영희");
+        assertThat(result.getContent()).extracting(User::getNameKor).containsExactly("김철수", "이영희");
     }
 
     @Test
@@ -280,14 +274,7 @@ class UserQueryRepositoryTest {
         // when
         List<User> result =
                 userQueryRepository.findAllForAdminWithFiltersNoPaging(
-                        null,
-                        null,
-                        null,
-                        null,
-                        null,
-                        null,
-                        null,
-                        UserSortType.HIRE_DATE_DESC);
+                        null, null, null, null, null, null, null, UserSortType.HIRE_DATE_DESC);
 
         // then
         assertThat(result).extracting(User::getNameKor).containsExactly("이영희", "김철수");
@@ -320,14 +307,7 @@ class UserQueryRepositoryTest {
         // when
         List<User> result =
                 userQueryRepository.findAllForAdminWithFiltersNoPaging(
-                        null,
-                        null,
-                        null,
-                        null,
-                        null,
-                        null,
-                        null,
-                        UserSortType.HIRE_DATE_ASC);
+                        null, null, null, null, null, null, null, UserSortType.HIRE_DATE_ASC);
 
         // then
         assertThat(result).extracting(User::getNameKor).containsExactly("김철수", "이영희");

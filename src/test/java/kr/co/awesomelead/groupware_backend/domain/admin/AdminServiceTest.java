@@ -1505,14 +1505,7 @@ class AdminServiceTest {
                                 .hireDate(LocalDate.of(2025, 1, 1))
                                 .build();
                 when(userQueryRepository.findAllForAdminWithFiltersNoPaging(
-                                null,
-                                null,
-                                null,
-                                null,
-                                null,
-                                null,
-                                null,
-                                UserSortType.NAME_ASC))
+                                null, null, null, null, null, null, null, UserSortType.NAME_ASC))
                         .thenReturn(List.of(user));
 
                 // when

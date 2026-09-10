@@ -11,6 +11,7 @@ import jakarta.validation.Valid;
 
 import kr.co.awesomelead.groupware_backend.domain.department.enums.Company;
 import kr.co.awesomelead.groupware_backend.domain.user.dto.CustomUserDetails;
+import kr.co.awesomelead.groupware_backend.domain.user.service.UserService;
 import kr.co.awesomelead.groupware_backend.domain.visit.dto.request.CheckInRequestDto;
 import kr.co.awesomelead.groupware_backend.domain.visit.dto.request.CheckOutRequestDto;
 import kr.co.awesomelead.groupware_backend.domain.visit.dto.request.LongTermVisitRequestDto;
@@ -21,6 +22,7 @@ import kr.co.awesomelead.groupware_backend.domain.visit.dto.request.VisitProcess
 import kr.co.awesomelead.groupware_backend.domain.visit.dto.request.VisitSearchRequestDto;
 import kr.co.awesomelead.groupware_backend.domain.visit.dto.response.MyVisitDetailResponseDto;
 import kr.co.awesomelead.groupware_backend.domain.visit.dto.response.MyVisitListResponseDto;
+import kr.co.awesomelead.groupware_backend.domain.visit.dto.response.VisitHostCandidateResponseDto;
 import kr.co.awesomelead.groupware_backend.domain.visit.dto.response.VisitListResponseDto;
 import kr.co.awesomelead.groupware_backend.domain.visit.enums.VisitStatus;
 import kr.co.awesomelead.groupware_backend.domain.visit.service.VisitService;
@@ -71,6 +73,27 @@ import java.util.List;
 public class VisitController {
 
     private final VisitService visitService;
+    private final UserService userService;
+
+    @Operation(
+            summary = "내방객 담당직원 후보 조회",
+            description = "내방객 방문 신청 시 담당자로 선택 가능한 활성 관리직 직원을 이름순으로 조회합니다.")
+    @GetMapping("/host-candidates")
+    public ResponseEntity<ApiResponse<Page<VisitHostCandidateResponseDto>>> getHostCandidates(
+            @RequestParam(required = false)
+                    @Parameter(description = "검색어 (이름/영문이름/이메일 부분 일치)", example = "김")
+                    String keyword,
+            @RequestParam(required = false) @Parameter(description = "부서 ID 필터")
+                    Long departmentId,
+            @RequestParam(required = false)
+                    @Parameter(description = "근무사업장 필터 (AWESOME, MARUI)")
+                    Company workLocation,
+            @PageableDefault(size = 20) Pageable pageable) {
+        return ResponseEntity.ok(
+                ApiResponse.onSuccess(
+                        userService.getVisitHostCandidates(
+                                keyword, departmentId, workLocation, pageable)));
+    }
 
     @Operation(summary = "사전 하루 방문 신청", description = "방문 전 내방객이 하루 방문을 사전에 신청합니다.")
     @ApiResponses({

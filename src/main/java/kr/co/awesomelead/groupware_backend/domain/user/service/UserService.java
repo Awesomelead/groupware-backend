@@ -19,6 +19,7 @@ import kr.co.awesomelead.groupware_backend.domain.user.enums.Status;
 import kr.co.awesomelead.groupware_backend.domain.user.repository.MyInfoUpdateRequestRepository;
 import kr.co.awesomelead.groupware_backend.domain.user.repository.UserRepository;
 import kr.co.awesomelead.groupware_backend.domain.user.repository.querydsl.UserQueryRepository;
+import kr.co.awesomelead.groupware_backend.domain.visit.dto.response.VisitHostCandidateResponseDto;
 import kr.co.awesomelead.groupware_backend.global.error.CustomException;
 import kr.co.awesomelead.groupware_backend.global.error.ErrorCode;
 
@@ -230,6 +231,15 @@ public class UserService {
                         statuses,
                         unsorted)
                 .map(UserSummaryResponseDto::from);
+    }
+
+    @Transactional(readOnly = true)
+    public Page<VisitHostCandidateResponseDto> getVisitHostCandidates(
+            String keyword, Long departmentId, Company workLocation, Pageable pageable) {
+        Pageable unsorted = PageRequest.of(pageable.getPageNumber(), pageable.getPageSize());
+        return userQueryRepository
+                .findVisitHostCandidates(keyword, departmentId, workLocation, unsorted)
+                .map(VisitHostCandidateResponseDto::from);
     }
 
     // 직원 상세 조회

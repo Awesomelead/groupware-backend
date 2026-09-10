@@ -92,6 +92,45 @@ public class UserQueryRepository {
                                 .fetchOne());
     }
 
+    public Page<User> findVisitHostCandidates(
+            String keyword, Long departmentId, Company workLocation, Pageable pageable) {
+        List<User> content =
+                queryFactory
+                        .selectFrom(user)
+                        .leftJoin(user.department, QDepartment.department)
+                        .fetchJoin()
+                        .where(
+                                statusFilter(List.of(Status.AVAILABLE)),
+                                keywordFilter(keyword),
+                                departmentFilter(departmentId),
+                                jobTypeFilter(JobType.MANAGEMENT),
+                                workLocationFilter(workLocation),
+                                excludeMasterAdmin())
+                        .orderBy(
+                                user.nameKor.asc().nullsLast(),
+                                user.nameEng.asc().nullsLast(),
+                                user.id.asc())
+                        .offset(pageable.getOffset())
+                        .limit(pageable.getPageSize())
+                        .fetch();
+
+        return PageableExecutionUtils.getPage(
+                content,
+                pageable,
+                () ->
+                        queryFactory
+                                .select(user.count())
+                                .from(user)
+                                .where(
+                                        statusFilter(List.of(Status.AVAILABLE)),
+                                        keywordFilter(keyword),
+                                        departmentFilter(departmentId),
+                                        jobTypeFilter(JobType.MANAGEMENT),
+                                        workLocationFilter(workLocation),
+                                        excludeMasterAdmin())
+                                .fetchOne());
+    }
+
     private BooleanExpression statusFilter(List<Status> statuses) {
         if (statuses == null || statuses.isEmpty()) {
             return user.status.in(Status.AVAILABLE, Status.SUSPENDED);

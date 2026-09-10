@@ -159,6 +159,33 @@ public class VisitServiceTest {
         }
 
         @Nested
+        @DisplayName("추가 허가가 필요한 방문 목적이고, 허가 타입이 '해당없음'이면")
+        class Context_with_required_permission_purpose_and_none_permission_type {
+
+            @Test
+            @DisplayName("방문 예약이 정상적으로 등록된다.")
+            void it_registers_visit_successfully() {
+                OneDayVisitRequestDto dto =
+                        createOneDayDto(
+                                VisitPurpose.CUSTOMER_INSPECTION,
+                                AdditionalPermissionType.NONE,
+                                null);
+
+                String encodedPassword = "encoded_password_1234";
+
+                Visit mockVisit =
+                        createBaseVisit(VisitStatus.NOT_VISITED, VisitCategory.PRE_ONE_DAY);
+                mockVisit.setPurpose(dto.getPurpose());
+
+                given(passwordEncoder.encode(any())).willReturn(encodedPassword);
+                given(visitMapper.toOneDayVisit(any(), any(), any())).willReturn(mockVisit);
+                given(visitRepository.save(any(Visit.class))).willReturn(mockVisit);
+
+                assertDoesNotThrow(() -> visitService.registerOneDayPreVisit(dto));
+            }
+        }
+
+        @Nested
         @DisplayName("방문 목적이 '시설공사'이고, 허가 타입이 '기타 허가'인데 상세 내용이 없으면")
         class Context_facility_construction_with_other_permission_but_no_detail {
 

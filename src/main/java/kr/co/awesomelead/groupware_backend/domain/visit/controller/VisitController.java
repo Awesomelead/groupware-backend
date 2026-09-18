@@ -175,10 +175,18 @@ public class VisitController {
     })
     @PostMapping(value = "/on-site", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<ApiResponse<Long>> createOnSiteVisit(
-            @Valid @ModelAttribute OnSiteVisitRequestDto requestDto)
+            @Parameter(
+                            description = "현장 방문 신청 정보(JSON)",
+                            schema =
+                                    @io.swagger.v3.oas.annotations.media.Schema(
+                                            implementation = OnSiteVisitRequestDto.class))
+                    @RequestPart("dto")
+                    String dto,
+            @Parameter(description = "방문자 서명 png 이미지 파일") @RequestPart("signatureFile")
+                    MultipartFile signatureFile)
             throws IOException {
 
-        Long visitId = visitService.registerOnSiteVisit(requestDto);
+        Long visitId = visitService.registerOnSiteVisit(parseOnSiteVisitRequest(dto), signatureFile);
 
         URI location =
                 ServletUriComponentsBuilder.fromCurrentContextPath()
@@ -237,6 +245,17 @@ public class VisitController {
         try {
             LongTermVisitRequestDto requestDto =
                     objectMapper.readValue(dto, LongTermVisitRequestDto.class);
+            validateMultipartDto(requestDto);
+            return requestDto;
+        } catch (JsonProcessingException e) {
+            throw new CustomException(ErrorCode.INVALID_ARGUMENT);
+        }
+    }
+
+    private OnSiteVisitRequestDto parseOnSiteVisitRequest(String dto) {
+        try {
+            OnSiteVisitRequestDto requestDto =
+                    objectMapper.readValue(dto, OnSiteVisitRequestDto.class);
             validateMultipartDto(requestDto);
             return requestDto;
         } catch (JsonProcessingException e) {

@@ -362,9 +362,6 @@ public class VisitServiceTest {
                             .visitorName("현장방문객")
                             .hostIds(List.of(1L))
                             .password("1234")
-                            .signatureFile(
-                                    new MockMultipartFile(
-                                            "file", "sig.png", "image/png", "test".getBytes()))
                             .purpose(VisitPurpose.MEETING)
                             .permissionType(AdditionalPermissionType.NONE)
                             .build();
@@ -380,7 +377,7 @@ public class VisitServiceTest {
             given(visitRepository.save(any())).willReturn(mockVisit);
 
             // when
-            visitService.registerOnSiteVisit(dto);
+            visitService.registerOnSiteVisit(dto, createSignatureFile());
 
             // then
             verify(visitRepository)

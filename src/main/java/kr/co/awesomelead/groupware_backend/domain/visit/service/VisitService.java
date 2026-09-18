@@ -159,10 +159,11 @@ public class VisitService {
     }
 
     @Transactional
-    public Long registerOnSiteVisit(OnSiteVisitRequestDto dto) throws IOException {
+    public Long registerOnSiteVisit(OnSiteVisitRequestDto dto, MultipartFile signatureFile)
+            throws IOException {
         List<User> hosts = findUsersByIds(dto.getHostIds());
         String encodedPassword = passwordEncoder.encode(dto.getPassword());
-        String signatureKey = s3Service.uploadFile(dto.getSignatureFile());
+        String signatureKey = s3Service.uploadFile(signatureFile);
 
         Visit visit =
                 visitMapper.toOnSiteVisit(dto, hosts.get(0).getWorkLocation(), encodedPassword);

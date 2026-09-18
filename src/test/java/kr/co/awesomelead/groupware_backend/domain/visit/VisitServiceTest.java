@@ -206,7 +206,9 @@ public class VisitServiceTest {
                                 null);
 
                 assertThatThrownBy(
-                                () -> visitService.registerOneDayPreVisit(dto, createSignatureFile()))
+                                () ->
+                                        visitService.registerOneDayPreVisit(
+                                                dto, createSignatureFile()))
                         .isInstanceOf(CustomException.class)
                         .hasMessage("기타 허가 선택 시 요구사항 작성이 필요합니다.");
             }

@@ -10,8 +10,8 @@ import io.swagger.v3.oas.annotations.media.ExampleObject;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 
-import jakarta.validation.Valid;
 import jakarta.validation.ConstraintViolation;
+import jakarta.validation.Valid;
 import jakarta.validation.Validator;
 
 import kr.co.awesomelead.groupware_backend.domain.department.enums.Company;
@@ -45,7 +45,6 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -54,8 +53,8 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RequestPart;
 import org.springframework.web.bind.annotation.RestController;
-import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 import org.springframework.web.multipart.MultipartFile;
+import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 import java.io.IOException;
 import java.net.URI;
@@ -111,7 +110,9 @@ public class VisitController {
                 responseCode = "200",
                 description = "신청 성공")
     })
-    @PostMapping(value = "/pre-registration/one-day", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @PostMapping(
+            value = "/pre-registration/one-day",
+            consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<ApiResponse<Long>> registerOneDayPreVisit(
             @Parameter(
                             description = "하루 방문 신청 정보(JSON)",
@@ -147,7 +148,9 @@ public class VisitController {
                                                                 + " \"message\": \"장기 방문은 최대 3개월까지"
                                                                 + " 가능합니다.\"}")))
     })
-    @PostMapping(value = "/pre-registration/long-term", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @PostMapping(
+            value = "/pre-registration/long-term",
+            consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<ApiResponse<Long>> registerLongTermPreVisit(
             @Parameter(
                             description = "장기 방문 신청 정보(JSON)",
@@ -161,7 +164,8 @@ public class VisitController {
             throws IOException {
 
         Long visitId =
-                visitService.registerLongTermPreVisit(parseLongTermVisitRequest(dto), signatureFile);
+                visitService.registerLongTermPreVisit(
+                        parseLongTermVisitRequest(dto), signatureFile);
         return ResponseEntity.ok(ApiResponse.onSuccess(visitId));
     }
 
@@ -186,7 +190,8 @@ public class VisitController {
                     MultipartFile signatureFile)
             throws IOException {
 
-        Long visitId = visitService.registerOnSiteVisit(parseOnSiteVisitRequest(dto), signatureFile);
+        Long visitId =
+                visitService.registerOnSiteVisit(parseOnSiteVisitRequest(dto), signatureFile);
 
         URI location =
                 ServletUriComponentsBuilder.fromCurrentContextPath()

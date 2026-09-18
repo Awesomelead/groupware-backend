@@ -1,5 +1,8 @@
 package kr.co.awesomelead.groupware_backend.domain.visit.controller;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -8,6 +11,8 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 
 import jakarta.validation.Valid;
+import jakarta.validation.ConstraintViolation;
+import jakarta.validation.Validator;
 
 import kr.co.awesomelead.groupware_backend.domain.department.enums.Company;
 import kr.co.awesomelead.groupware_backend.domain.user.dto.CustomUserDetails;
@@ -27,6 +32,8 @@ import kr.co.awesomelead.groupware_backend.domain.visit.dto.response.VisitListRe
 import kr.co.awesomelead.groupware_backend.domain.visit.enums.VisitStatus;
 import kr.co.awesomelead.groupware_backend.domain.visit.service.VisitService;
 import kr.co.awesomelead.groupware_backend.global.common.response.ApiResponse;
+import kr.co.awesomelead.groupware_backend.global.error.CustomException;
+import kr.co.awesomelead.groupware_backend.global.error.ErrorCode;
 
 import lombok.RequiredArgsConstructor;
 
@@ -45,13 +52,16 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RequestPart;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
 import java.net.URI;
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Set;
 
 @RestController
 @RequiredArgsConstructor
@@ -74,6 +84,8 @@ public class VisitController {
 
     private final VisitService visitService;
     private final UserService userService;
+    private final ObjectMapper objectMapper;
+    private final Validator validator;
 
     @Operation(
             summary = "내방객 담당직원 후보 조회",
@@ -93,21 +105,31 @@ public class VisitController {
                                 keyword, departmentId, workLocation, pageable)));
     }
 
-    @Operation(summary = "사전 하루 방문 신청", description = "방문 전 내방객이 하루 방문을 사전에 신청합니다.")
+    @Operation(summary = "사전 하루 방문 신청", description = "방문 전 내방객이 하루 방문을 사전에 신청하고 서명을 등록합니다.")
     @ApiResponses({
         @io.swagger.v3.oas.annotations.responses.ApiResponse(
                 responseCode = "200",
                 description = "신청 성공")
     })
-    @PostMapping("/pre-registration/one-day")
+    @PostMapping(value = "/pre-registration/one-day", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<ApiResponse<Long>> registerOneDayPreVisit(
-            @Parameter(description = "하루 방문 신청 정보") @Valid @RequestBody OneDayVisitRequestDto dto) {
+            @Parameter(
+                            description = "하루 방문 신청 정보(JSON)",
+                            schema =
+                                    @io.swagger.v3.oas.annotations.media.Schema(
+                                            implementation = OneDayVisitRequestDto.class))
+                    @RequestPart("dto")
+                    String dto,
+            @Parameter(description = "방문자 서명 png 이미지 파일") @RequestPart("signatureFile")
+                    MultipartFile signatureFile)
+            throws IOException {
 
-        Long visitId = visitService.registerOneDayPreVisit(dto);
+        Long visitId =
+                visitService.registerOneDayPreVisit(parseOneDayVisitRequest(dto), signatureFile);
         return ResponseEntity.ok(ApiResponse.onSuccess(visitId));
     }
 
-    @Operation(summary = "사전 장기 방문 신청", description = "방문 전 내방객이 장기 방문을 사전에 신청합니다.")
+    @Operation(summary = "사전 장기 방문 신청", description = "방문 전 내방객이 장기 방문을 사전에 신청하고 서명을 등록합니다.")
     @ApiResponses({
         @io.swagger.v3.oas.annotations.responses.ApiResponse(
                 responseCode = "200",
@@ -125,12 +147,21 @@ public class VisitController {
                                                                 + " \"message\": \"장기 방문은 최대 3개월까지"
                                                                 + " 가능합니다.\"}")))
     })
-    @PostMapping("/pre-registration/long-term")
+    @PostMapping(value = "/pre-registration/long-term", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<ApiResponse<Long>> registerLongTermPreVisit(
-            @Parameter(description = "장기 방문 신청 정보") @Valid @RequestBody
-                    LongTermVisitRequestDto dto) {
+            @Parameter(
+                            description = "장기 방문 신청 정보(JSON)",
+                            schema =
+                                    @io.swagger.v3.oas.annotations.media.Schema(
+                                            implementation = LongTermVisitRequestDto.class))
+                    @RequestPart("dto")
+                    String dto,
+            @Parameter(description = "방문자 서명 png 이미지 파일") @RequestPart("signatureFile")
+                    MultipartFile signatureFile)
+            throws IOException {
 
-        Long visitId = visitService.registerLongTermPreVisit(dto);
+        Long visitId =
+                visitService.registerLongTermPreVisit(parseLongTermVisitRequest(dto), signatureFile);
         return ResponseEntity.ok(ApiResponse.onSuccess(visitId));
     }
 
@@ -144,8 +175,7 @@ public class VisitController {
     })
     @PostMapping(value = "/on-site", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<ApiResponse<Long>> createOnSiteVisit(
-            @Parameter(description = "현장 방문 정보 및 서명 파일") @Valid @ModelAttribute
-                    OnSiteVisitRequestDto requestDto)
+            @Valid @ModelAttribute OnSiteVisitRequestDto requestDto)
             throws IOException {
 
         Long visitId = visitService.registerOnSiteVisit(requestDto);
@@ -159,7 +189,7 @@ public class VisitController {
         return ResponseEntity.created(location).body(ApiResponse.onCreated(visitId));
     }
 
-    @Operation(summary = "사전 예약자 입실 처리", description = "사전 신청한 내방객이 도착했을 때 서명을 받고 입실을 완료합니다.")
+    @Operation(summary = "사전 예약자 입실 처리", description = "사전 신청한 내방객이 도착했을 때 현장 방문 확인만으로 입실을 완료합니다.")
     @ApiResponses({
         @io.swagger.v3.oas.annotations.responses.ApiResponse(
                 responseCode = "200",
@@ -184,12 +214,41 @@ public class VisitController {
                                                         + " \"message\": \"이미 체크아웃된 방문정보입니다.\"}")
                                 }))
     })
-    @PostMapping(value = "/check-in", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @PostMapping("/check-in")
     public ResponseEntity<ApiResponse<Long>> checkIn(
-            @Valid @ModelAttribute CheckInRequestDto requestDto) throws IOException {
+            @Valid @RequestBody CheckInRequestDto requestDto) throws IOException {
 
         Long visitId = visitService.checkIn(requestDto);
         return ResponseEntity.ok(ApiResponse.onSuccess(visitId));
+    }
+
+    private OneDayVisitRequestDto parseOneDayVisitRequest(String dto) {
+        try {
+            OneDayVisitRequestDto requestDto =
+                    objectMapper.readValue(dto, OneDayVisitRequestDto.class);
+            validateMultipartDto(requestDto);
+            return requestDto;
+        } catch (JsonProcessingException e) {
+            throw new CustomException(ErrorCode.INVALID_ARGUMENT);
+        }
+    }
+
+    private LongTermVisitRequestDto parseLongTermVisitRequest(String dto) {
+        try {
+            LongTermVisitRequestDto requestDto =
+                    objectMapper.readValue(dto, LongTermVisitRequestDto.class);
+            validateMultipartDto(requestDto);
+            return requestDto;
+        } catch (JsonProcessingException e) {
+            throw new CustomException(ErrorCode.INVALID_ARGUMENT);
+        }
+    }
+
+    private <T> void validateMultipartDto(T requestDto) {
+        Set<ConstraintViolation<T>> violations = validator.validate(requestDto);
+        if (!violations.isEmpty()) {
+            throw new CustomException(ErrorCode.INVALID_ARGUMENT);
+        }
     }
 
     @Operation(

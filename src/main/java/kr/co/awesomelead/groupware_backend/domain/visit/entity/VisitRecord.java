@@ -38,7 +38,7 @@ public class VisitRecord {
     private LocalDateTime entryTime; // 실제 입실 시간
     private LocalDateTime exitTime; // 실제 퇴실 시간
 
-    private String signatureKey; // 입실 시 수행하는 서명 (S3)
+    private String signatureKey; // 방문 서명 (S3)
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "visit_id", nullable = false)

@@ -124,6 +124,10 @@ public class VisitServiceTest {
         return visit;
     }
 
+    private MockMultipartFile createSignatureFile() {
+        return new MockMultipartFile("signatureFile", "sig.png", "image/png", "test".getBytes());
+    }
+
     @Nested
     @DisplayName("registerOneDayPreVisit 메서드는")
     class Describe_registerOneDayPreVisit {
@@ -151,7 +155,9 @@ public class VisitServiceTest {
                                             createOneDayDto(purpose, null, null);
 
                                     assertThatThrownBy(
-                                                    () -> visitService.registerOneDayPreVisit(dto))
+                                                    () ->
+                                                            visitService.registerOneDayPreVisit(
+                                                                    dto, createSignatureFile()))
                                             .isInstanceOf(CustomException.class)
                                             .hasMessage("해당 방문 목적은 추가 허가가 필요합니다.");
                                 });
@@ -164,7 +170,7 @@ public class VisitServiceTest {
 
             @Test
             @DisplayName("방문 예약이 정상적으로 등록된다.")
-            void it_registers_visit_successfully() {
+            void it_registers_visit_successfully() throws IOException {
                 OneDayVisitRequestDto dto =
                         createOneDayDto(
                                 VisitPurpose.CUSTOMER_INSPECTION,
@@ -181,7 +187,8 @@ public class VisitServiceTest {
                 given(visitMapper.toOneDayVisit(any(), any(), any())).willReturn(mockVisit);
                 given(visitRepository.save(any(Visit.class))).willReturn(mockVisit);
 
-                assertDoesNotThrow(() -> visitService.registerOneDayPreVisit(dto));
+                assertDoesNotThrow(
+                        () -> visitService.registerOneDayPreVisit(dto, createSignatureFile()));
             }
         }
 
@@ -198,7 +205,10 @@ public class VisitServiceTest {
                                 AdditionalPermissionType.OTHER_PERMISSION,
                                 null);
 
-                assertThatThrownBy(() -> visitService.registerOneDayPreVisit(dto))
+                assertThatThrownBy(
+                                () ->
+                                        visitService.registerOneDayPreVisit(
+                                                dto, createSignatureFile()))
                         .isInstanceOf(CustomException.class)
                         .hasMessage("기타 허가 선택 시 요구사항 작성이 필요합니다.");
             }
@@ -210,7 +220,7 @@ public class VisitServiceTest {
 
             @Test
             @DisplayName("방문 예약이 정상적으로 등록된다.")
-            void it_registers_visit_successfully() {
+            void it_registers_visit_successfully() throws IOException {
                 // given
                 OneDayVisitRequestDto dto =
                         createOneDayDto(VisitPurpose.MEETING, AdditionalPermissionType.NONE, null);
@@ -229,7 +239,7 @@ public class VisitServiceTest {
                 given(visitRepository.save(any(Visit.class))).willReturn(mockVisit);
 
                 // when
-                Long resultId = visitService.registerOneDayPreVisit(dto);
+                Long resultId = visitService.registerOneDayPreVisit(dto, createSignatureFile());
 
                 // then
                 assertThat(resultId).isEqualTo(VISIT_ID);
@@ -279,7 +289,10 @@ public class VisitServiceTest {
                                 .build();
 
                 // when & then
-                assertThatThrownBy(() -> visitService.registerLongTermPreVisit(dto))
+                assertThatThrownBy(
+                                () ->
+                                        visitService.registerLongTermPreVisit(
+                                                dto, createSignatureFile()))
                         .isInstanceOf(CustomException.class)
                         .hasMessage("종료일은 시작일보다 빠를 수 없습니다.");
             }
@@ -296,7 +309,10 @@ public class VisitServiceTest {
                                 .build();
 
                 // when & then
-                assertThatThrownBy(() -> visitService.registerLongTermPreVisit(dto))
+                assertThatThrownBy(
+                                () ->
+                                        visitService.registerLongTermPreVisit(
+                                                dto, createSignatureFile()))
                         .isInstanceOf(CustomException.class)
                         .hasMessage("장기 방문은 최대 3개월까지만 신청 가능합니다.");
             }
@@ -329,7 +345,8 @@ public class VisitServiceTest {
                 given(visitRepository.save(any())).willReturn(Visit.builder().id(1L).build());
 
                 // when & then
-                assertDoesNotThrow(() -> visitService.registerLongTermPreVisit(dto));
+                assertDoesNotThrow(
+                        () -> visitService.registerLongTermPreVisit(dto, createSignatureFile()));
             }
         }
     }
@@ -347,9 +364,6 @@ public class VisitServiceTest {
                             .visitorName("현장방문객")
                             .hostIds(List.of(1L))
                             .password("1234")
-                            .signatureFile(
-                                    new MockMultipartFile(
-                                            "file", "sig.png", "image/png", "test".getBytes()))
                             .purpose(VisitPurpose.MEETING)
                             .permissionType(AdditionalPermissionType.NONE)
                             .build();
@@ -365,7 +379,7 @@ public class VisitServiceTest {
             given(visitRepository.save(any())).willReturn(mockVisit);
 
             // when
-            visitService.registerOnSiteVisit(dto);
+            visitService.registerOnSiteVisit(dto, createSignatureFile());
 
             // then
             verify(visitRepository)
@@ -713,8 +727,6 @@ public class VisitServiceTest {
     @DisplayName("checkIn 메서드는")
     class Describe_checkIn {
 
-        @Mock private MockMultipartFile signatureFile;
-
         @Nested
         @DisplayName("하루 방문인데 방문 예정일이 오늘이 아니면")
         class Context_with_invalid_visit_date {
@@ -723,7 +735,7 @@ public class VisitServiceTest {
             @DisplayName("NOT_VISIT_DATE 예외를 던진다.")
             void it_throws_not_visit_date_exception() throws IOException {
                 // given
-                CheckInRequestDto dto = new CheckInRequestDto(1L, signatureFile);
+                CheckInRequestDto dto = new CheckInRequestDto(1L);
                 // 어제 날짜로 예약된 하루 방문 건
                 Visit visit = createBaseVisit(VisitStatus.NOT_VISITED, VisitCategory.PRE_ONE_DAY);
                 visit.setStartDate(LocalDate.now().minusDays(1));
@@ -745,7 +757,7 @@ public class VisitServiceTest {
             @DisplayName("VISIT_ALREADY_CHECKED_OUT 예외를 던진다.")
             void it_throws_visit_already_checked_out_exception() throws IOException {
                 // given
-                CheckInRequestDto dto = new CheckInRequestDto(1L, signatureFile);
+                CheckInRequestDto dto = new CheckInRequestDto(1L);
                 Visit visit = createBaseVisit(VisitStatus.COMPLETED, VisitCategory.PRE_ONE_DAY);
                 visit.setStartDate(LocalDate.now());
                 visit.setVisited(true);
@@ -767,12 +779,18 @@ public class VisitServiceTest {
             @DisplayName("방문 상태를 IN_PROGRESS로 바꾸고 입실 기록을 생성한다.")
             void it_check_in_successfully() throws IOException {
                 // given
-                CheckInRequestDto dto = new CheckInRequestDto(1L, signatureFile);
+                CheckInRequestDto dto = new CheckInRequestDto(1L);
                 Visit visit = createBaseVisit(VisitStatus.NOT_VISITED, VisitCategory.PRE_ONE_DAY);
                 visit.setStartDate(LocalDate.now());
+                visit.getRecords()
+                        .add(
+                                VisitRecord.builder()
+                                        .visit(visit)
+                                        .visitDate(LocalDate.now())
+                                        .signatureKey("s3-signature-key")
+                                        .build());
 
                 given(visitRepository.findById(1L)).willReturn(Optional.of(visit));
-                given(s3Service.uploadFile(any())).willReturn("s3-signature-key");
 
                 // when
                 Long resultId = visitService.checkIn(dto);
@@ -784,8 +802,9 @@ public class VisitServiceTest {
                 assertThat(visit.getRecords()).hasSize(1);
                 assertThat(visit.getRecords().get(0).getSignatureKey())
                         .isEqualTo("s3-signature-key");
+                assertThat(visit.getRecords().get(0).getEntryTime()).isNotNull();
 
-                verify(s3Service, times(1)).uploadFile(any());
+                verify(s3Service, times(0)).uploadFile(any());
             }
         }
 
@@ -799,10 +818,7 @@ public class VisitServiceTest {
                 // given
                 Long visitId = 200L;
                 Long adminId = 2L;
-                MockMultipartFile sig =
-                        new MockMultipartFile(
-                                "signature", "sig.png", "image/png", "test".getBytes());
-                CheckInRequestDto checkInDto = new CheckInRequestDto(visitId, sig);
+                CheckInRequestDto checkInDto = new CheckInRequestDto(visitId);
 
                 Visit visit =
                         Visit.builder()
@@ -815,6 +831,13 @@ public class VisitServiceTest {
                                 .visited(false)
                                 .build();
                 visit.getHosts().add(VisitHost.builder().user(createHost()).build());
+                visit.getRecords()
+                        .add(
+                                VisitRecord.builder()
+                                        .visit(visit)
+                                        .visitDate(LocalDate.now())
+                                        .signatureKey("s3-key")
+                                        .build());
 
                 User admin =
                         User.builder()
@@ -825,7 +848,6 @@ public class VisitServiceTest {
                 admin.addAuthority(Authority.MANAGE_VISITOR);
 
                 given(visitRepository.findById(visitId)).willReturn(Optional.of(visit));
-                given(s3Service.uploadFile(any())).willReturn("s3-key");
 
                 // 1. 첫 번째 입실
                 visitService.checkIn(checkInDto);
@@ -857,10 +879,7 @@ public class VisitServiceTest {
             void it_throws_already_checked_in() throws IOException {
                 // given
                 Long visitId = 201L;
-                MockMultipartFile sig =
-                        new MockMultipartFile(
-                                "signature", "sig.png", "image/png", "test".getBytes());
-                CheckInRequestDto dto = new CheckInRequestDto(visitId, sig);
+                CheckInRequestDto dto = new CheckInRequestDto(visitId);
 
                 Visit visit =
                         Visit.builder()
@@ -891,10 +910,7 @@ public class VisitServiceTest {
             void it_throws_not_visit_date_for_long_term() throws IOException {
                 // given
                 Long visitId = 202L;
-                MockMultipartFile sig =
-                        new MockMultipartFile(
-                                "signature", "sig.png", "image/png", "test".getBytes());
-                CheckInRequestDto dto = new CheckInRequestDto(visitId, sig);
+                CheckInRequestDto dto = new CheckInRequestDto(visitId);
 
                 Visit visit =
                         Visit.builder()
@@ -1482,7 +1498,7 @@ public class VisitServiceTest {
 
             @Test
             @DisplayName("Visit에 VisitHost가 2개 생성되어 저장된다.")
-            void registerOneDayPreVisit_twoHostIdsCreatingTwoVisitHosts() {
+            void registerOneDayPreVisit_twoHostIdsCreatingTwoVisitHosts() throws IOException {
                 // given
                 Long hostId1 = 1L;
                 Long hostId2 = 2L;
@@ -1539,7 +1555,7 @@ public class VisitServiceTest {
                 given(visitRepository.save(any(Visit.class))).willReturn(savedVisit);
 
                 // when
-                visitService.registerOneDayPreVisit(dto);
+                visitService.registerOneDayPreVisit(dto, createSignatureFile());
 
                 // then
                 verify(visitRepository).save(argThat(visit -> visit.getHosts().size() == 2));
@@ -1561,7 +1577,7 @@ public class VisitServiceTest {
 
             @Test
             @DisplayName("sendVisitAlertToDepartment가 2번 호출된다.")
-            void registerOneDayPreVisit_differentDepartments_sendAlertTwice() {
+            void registerOneDayPreVisit_differentDepartments_sendAlertTwice() throws IOException {
                 // given
                 Long hostId1 = 1L;
                 Long hostId2 = 2L;
@@ -1620,7 +1636,7 @@ public class VisitServiceTest {
                 given(visitRepository.save(any(Visit.class))).willReturn(savedVisit);
 
                 // when
-                visitService.registerOneDayPreVisit(dto);
+                visitService.registerOneDayPreVisit(dto, createSignatureFile());
 
                 // then: 서로 다른 부서 ID(10L, 20L)로 각각 1회씩 총 2회 호출
                 verify(notificationService, times(2))
@@ -1635,7 +1651,7 @@ public class VisitServiceTest {
 
             @Test
             @DisplayName("sendVisitAlertToDepartment가 1번만 호출된다 (중복 제거).")
-            void registerOneDayPreVisit_sameDepartment_sendAlertOnce() {
+            void registerOneDayPreVisit_sameDepartment_sendAlertOnce() throws IOException {
                 // given
                 Long hostId1 = 1L;
                 Long hostId2 = 2L;
@@ -1692,7 +1708,7 @@ public class VisitServiceTest {
                 given(visitRepository.save(any(Visit.class))).willReturn(savedVisit);
 
                 // when
-                visitService.registerOneDayPreVisit(dto);
+                visitService.registerOneDayPreVisit(dto, createSignatureFile());
 
                 // then: 같은 부서이므로 중복 제거 후 1회만 호출
                 verify(notificationService, times(1))
@@ -1720,7 +1736,7 @@ public class VisitServiceTest {
 
             @Test
             @DisplayName("sendVisitAlertToDepartment가 해당 부서로 정확히 1회만 호출된다.")
-            void registerOneDayPreVisit_sameDept_sendAlertOnce() {
+            void registerOneDayPreVisit_sameDept_sendAlertOnce() throws IOException {
                 // given
                 Long deptId = 1L;
                 Department sharedDept = createDepartment(deptId);
@@ -1775,7 +1791,7 @@ public class VisitServiceTest {
                 given(visitRepository.save(any(Visit.class))).willReturn(savedVisit);
 
                 // when
-                visitService.registerOneDayPreVisit(dto);
+                visitService.registerOneDayPreVisit(dto, createSignatureFile());
 
                 // then: 같은 부서이므로 중복 제거 후 deptId=1L로 정확히 1회만 호출
                 verify(notificationService, times(1))
@@ -1790,7 +1806,8 @@ public class VisitServiceTest {
 
             @Test
             @DisplayName("sendVisitAlertToDepartment가 환경안전부(99L)로 정확히 1회만 호출된다.")
-            void registerOneDayPreVisit_envSafetyHostWithFacilityConstruction_sendAlertOnce() {
+            void registerOneDayPreVisit_envSafetyHostWithFacilityConstruction_sendAlertOnce()
+                    throws IOException {
                 // given
                 Long envSafetyDeptId = 99L;
                 Department envSafetyDept =
@@ -1840,7 +1857,7 @@ public class VisitServiceTest {
                 given(visitRepository.save(any(Visit.class))).willReturn(savedVisit);
 
                 // when
-                visitService.registerOneDayPreVisit(dto);
+                visitService.registerOneDayPreVisit(dto, createSignatureFile());
 
                 // then: 호스트 부서=환경안전부(99L), 조건부 환경안전부(99L) 모두 동일 부서이므로
                 //       중복 제거 후 99L로 정확히 1회만 호출되어야 한다.
@@ -1868,7 +1885,8 @@ public class VisitServiceTest {
 
             @Test
             @DisplayName("환경안전부가 존재하면 해당 부서 ID로 sendVisitAlertToDepartment가 추가 호출된다.")
-            void registerOneDayPreVisit_customerInspection_sendsEnvironmentSafetyAlert() {
+            void registerOneDayPreVisit_customerInspection_sendsEnvironmentSafetyAlert()
+                    throws IOException {
                 // given
                 Long hostId = 1L;
                 Long envSafetyDeptId = 99L;
@@ -1921,7 +1939,7 @@ public class VisitServiceTest {
                 given(visitRepository.save(any(Visit.class))).willReturn(savedVisit);
 
                 // when
-                visitService.registerOneDayPreVisit(dto);
+                visitService.registerOneDayPreVisit(dto, createSignatureFile());
 
                 // then
                 // 담당부서(10L) 1회 + 환경안전부(99L) 1회 = 총 2회
@@ -1938,7 +1956,8 @@ public class VisitServiceTest {
 
             @Test
             @DisplayName("departmentRepository.findByName이 호출되지 않는다.")
-            void registerOneDayPreVisit_meeting_doesNotQueryEnvironmentSafetyDept() {
+            void registerOneDayPreVisit_meeting_doesNotQueryEnvironmentSafetyDept()
+                    throws IOException {
                 // given
                 Long hostId = 1L;
                 Department hostDept = createDepartment(10L);
@@ -1982,7 +2001,7 @@ public class VisitServiceTest {
                 given(visitRepository.save(any(Visit.class))).willReturn(savedVisit);
 
                 // when
-                visitService.registerOneDayPreVisit(dto);
+                visitService.registerOneDayPreVisit(dto, createSignatureFile());
 
                 // then
                 verify(departmentRepository, times(0))

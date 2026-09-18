@@ -58,6 +58,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -95,7 +96,8 @@ public class VisitService {
     private final NotificationService notificationService;
 
     @Transactional
-    public Long registerOneDayPreVisit(OneDayVisitRequestDto dto) {
+    public Long registerOneDayPreVisit(OneDayVisitRequestDto dto, MultipartFile signatureFile)
+            throws IOException {
         List<User> hosts = findUsersByIds(dto.getHostIds());
         String encodedPassword = passwordEncoder.encode(dto.getPassword());
 
@@ -104,6 +106,9 @@ public class VisitService {
         normalizeVisitorInfo(visit);
         syncAndValidatePermissions(visit, dto);
         addHostsToVisit(visit, hosts);
+
+        String signatureKey = s3Service.uploadFile(signatureFile);
+        addPreRegistrationSignatureRecord(visit, dto.getVisitDate(), signatureKey);
 
         Long visitId = visitRepository.save(visit).getId();
 
@@ -122,7 +127,8 @@ public class VisitService {
     }
 
     @Transactional
-    public Long registerLongTermPreVisit(LongTermVisitRequestDto dto) {
+    public Long registerLongTermPreVisit(LongTermVisitRequestDto dto, MultipartFile signatureFile)
+            throws IOException {
         validateLongTermPeriod(dto.getStartDate(), dto.getEndDate());
 
         List<User> hosts = findUsersByIds(dto.getHostIds());
@@ -133,6 +139,9 @@ public class VisitService {
         normalizeVisitorInfo(visit);
         syncAndValidatePermissions(visit, dto);
         addHostsToVisit(visit, hosts);
+
+        String signatureKey = s3Service.uploadFile(signatureFile);
+        addPreRegistrationSignatureRecord(visit, dto.getStartDate(), signatureKey);
 
         Long visitId = visitRepository.save(visit).getId();
 
@@ -150,10 +159,11 @@ public class VisitService {
     }
 
     @Transactional
-    public Long registerOnSiteVisit(OnSiteVisitRequestDto dto) throws IOException {
+    public Long registerOnSiteVisit(OnSiteVisitRequestDto dto, MultipartFile signatureFile)
+            throws IOException {
         List<User> hosts = findUsersByIds(dto.getHostIds());
         String encodedPassword = passwordEncoder.encode(dto.getPassword());
-        String signatureKey = s3Service.uploadFile(dto.getSignatureFile());
+        String signatureKey = s3Service.uploadFile(signatureFile);
 
         Visit visit =
                 visitMapper.toOnSiteVisit(dto, hosts.get(0).getWorkLocation(), encodedPassword);
@@ -236,17 +246,9 @@ public class VisitService {
 
         visit.validateCheckInEligible();
 
-        String signatureKey = s3Service.uploadFile(dto.getSignatureFile());
+        LocalDateTime entryTime = LocalDateTime.now();
+        VisitRecord record = resolveCheckInRecord(visit, entryTime);
 
-        VisitRecord record =
-                VisitRecord.builder()
-                        .visit(visit)
-                        .visitDate(LocalDate.now())
-                        .entryTime(LocalDateTime.now())
-                        .signatureKey(signatureKey)
-                        .build();
-
-        visit.getRecords().add(record);
         visit.setStatus(VisitStatus.IN_PROGRESS);
         visit.setVisited(true);
 
@@ -261,6 +263,52 @@ public class VisitService {
                 formatNotificationTime(record.getEntryTime().toLocalTime()));
 
         return visit.getId();
+    }
+
+    private void addPreRegistrationSignatureRecord(
+            Visit visit, LocalDate visitDate, String signatureKey) {
+        VisitRecord record =
+                VisitRecord.builder()
+                        .visit(visit)
+                        .visitDate(visitDate)
+                        .entryTime(null)
+                        .exitTime(null)
+                        .signatureKey(signatureKey)
+                        .build();
+
+        visit.getRecords().add(record);
+    }
+
+    private VisitRecord resolveCheckInRecord(Visit visit, LocalDateTime entryTime) {
+        VisitRecord preRegistrationRecord =
+                visit.getRecords().stream()
+                        .filter(record -> record.getEntryTime() == null)
+                        .filter(record -> StringUtils.hasText(record.getSignatureKey()))
+                        .findFirst()
+                        .orElse(null);
+
+        if (preRegistrationRecord != null) {
+            preRegistrationRecord.setVisitDate(LocalDate.now());
+            preRegistrationRecord.setEntryTime(entryTime);
+            return preRegistrationRecord;
+        }
+
+        String signatureKey =
+                visit.getRecords().stream()
+                        .map(VisitRecord::getSignatureKey)
+                        .filter(StringUtils::hasText)
+                        .findFirst()
+                        .orElseThrow(() -> new CustomException(ErrorCode.NO_SIGNATURE_PROVIDED));
+
+        VisitRecord record =
+                VisitRecord.builder()
+                        .visit(visit)
+                        .visitDate(LocalDate.now())
+                        .entryTime(entryTime)
+                        .signatureKey(signatureKey)
+                        .build();
+        visit.getRecords().add(record);
+        return record;
     }
 
     @Transactional

@@ -15,14 +15,10 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-import lombok.Setter;
-
-import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 
 @Getter
-@Setter
 @NoArgsConstructor // 추가: 기본 생성자를 만듭니다.
 @AllArgsConstructor
 @Builder
@@ -65,8 +61,4 @@ public class OnSiteVisitRequestDto implements VisitRequest {
     @Size(min = 4, max = 4, message = "비밀번호는 숫자 4자리여야 합니다.")
     @Schema(description = "조회용 비밀번호 (4자리)", example = "1234")
     private String password;
-
-    @NotNull(message = "방문자 서명은 필수입니다.")
-    @Schema(type = "string", format = "binary", description = "방문자 서명 png 이미지 파일")
-    private MultipartFile signatureFile;
 }

@@ -43,7 +43,7 @@ jobs:
       - name: Prepare dev directory on EC2
         uses: appleboy/ssh-action@v1
         with:
-          host: ${{ secrets.EC2_HOST }}
+          host: ${{ secrets.DEV_EC2_HOST }}
           username: ubuntu
           key: ${{ secrets.EC2_SSH_KEY }}
           script: |
@@ -59,7 +59,7 @@ jobs:
         continue-on-error: true
         uses: appleboy/scp-action@v1
         with:
-          host: ${{ secrets.EC2_HOST }}
+          host: ${{ secrets.DEV_EC2_HOST }}
           username: ubuntu
           key: ${{ secrets.EC2_SSH_KEY }}
           source: "./docker-compose.dev.yml"
@@ -70,7 +70,7 @@ jobs:
         if: steps.scp_copy.outcome == 'failure'
         uses: appleboy/scp-action@v1
         with:
-          host: ${{ secrets.EC2_HOST }}
+          host: ${{ secrets.DEV_EC2_HOST }}
           username: ubuntu
           key: ${{ secrets.EC2_SSH_KEY }}
           source: "./docker-compose.dev.yml"
@@ -82,7 +82,7 @@ jobs:
         continue-on-error: true
         uses: appleboy/scp-action@v1
         with:
-          host: ${{ secrets.EC2_HOST }}
+          host: ${{ secrets.DEV_EC2_HOST }}
           username: ubuntu
           key: ${{ secrets.EC2_SSH_KEY }}
           source: "./monitoring/prometheus/prometheus-dev.yml"
@@ -93,7 +93,7 @@ jobs:
         if: steps.scp_prometheus_config.outcome == 'failure'
         uses: appleboy/scp-action@v1
         with:
-          host: ${{ secrets.EC2_HOST }}
+          host: ${{ secrets.DEV_EC2_HOST }}
           username: ubuntu
           key: ${{ secrets.EC2_SSH_KEY }}
           source: "./monitoring/prometheus/prometheus-dev.yml"
@@ -103,7 +103,7 @@ jobs:
       - name: Deploy dev to EC2 with Docker Compose
         uses: appleboy/ssh-action@v1
         with:
-          host: ${{ secrets.EC2_HOST }}
+          host: ${{ secrets.DEV_EC2_HOST }}
           username: ubuntu
           key: ${{ secrets.EC2_SSH_KEY }}
           script: |

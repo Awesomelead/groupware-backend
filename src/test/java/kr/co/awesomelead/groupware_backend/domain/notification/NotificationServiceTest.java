@@ -170,7 +170,8 @@ class NotificationServiceTest {
     @Test
     @DisplayName("sendVisitAlertToDepartment - 저장된 Notification의 messageType이 전달된 template과 동일하다")
     void sendVisitAlertToDepartment_messageType_matchesTemplate() {
-        when(userRepository.findAllIdsByDepartmentId(3L)).thenReturn(List.of(1L));
+        when(userRepository.findAllIdsByDepartmentIdAndAuthority(3L, Authority.MANAGE_VISITOR))
+                .thenReturn(List.of(1L));
 
         notificationService.sendVisitAlertToDepartment(
                 NotificationMessage.VISIT_CHECK_IN, 99L, 3L, "홍길동", "2026-04-09 09:00");

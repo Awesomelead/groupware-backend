@@ -155,7 +155,7 @@ jobs:
             sleep 10
 
             for i in {1..30}; do
-              if curl -f http://localhost:8081/ > /dev/null 2>&1; then
+              if curl -f http://localhost:8080/ > /dev/null 2>&1; then
                 echo "Dev application is healthy!"
                 break
               fi

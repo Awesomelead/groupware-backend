@@ -3,6 +3,7 @@ package kr.co.awesomelead.groupware_backend.domain.user.repository;
 import kr.co.awesomelead.groupware_backend.domain.department.entity.Department;
 import kr.co.awesomelead.groupware_backend.domain.department.enums.Company;
 import kr.co.awesomelead.groupware_backend.domain.user.entity.User;
+import kr.co.awesomelead.groupware_backend.domain.user.enums.Authority;
 import kr.co.awesomelead.groupware_backend.domain.user.enums.JobType;
 import kr.co.awesomelead.groupware_backend.domain.user.enums.Position;
 import kr.co.awesomelead.groupware_backend.domain.user.enums.Role;
@@ -63,6 +64,14 @@ public interface UserRepository extends JpaRepository<User, Long> {
 
     @Query("SELECT u.id FROM User u WHERE u.department.id = :departmentId")
     List<Long> findAllIdsByDepartmentId(@Param("departmentId") Long departmentId);
+
+    @Query(
+            "SELECT DISTINCT u.id FROM User u JOIN u.authorities authority "
+                    + "WHERE u.department.id = :departmentId "
+                    + "AND authority = :authority "
+                    + "AND u.status = 'AVAILABLE'")
+    List<Long> findAllIdsByDepartmentIdAndAuthority(
+            @Param("departmentId") Long departmentId, @Param("authority") Authority authority);
 
     @Query("SELECT u.id FROM User u WHERE u.status = 'AVAILABLE' AND u.role <> 'MASTER_ADMIN'")
     List<Long> findAllActiveUserIds();

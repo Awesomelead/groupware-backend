@@ -394,7 +394,9 @@ public class NotificationService {
             Long hostDepartmentId,
             Map<String, Object> metadata,
             Object... contentArgs) {
-        List<Long> targetUserIds = userRepository.findAllIdsByDepartmentId(hostDepartmentId);
+        List<Long> targetUserIds =
+                userRepository.findAllIdsByDepartmentIdAndAuthority(
+                        hostDepartmentId, Authority.MANAGE_VISITOR);
 
         if (targetUserIds.isEmpty()) {
             log.info("방문 알림 전송 건너뜀 - 대상 없음, visitId: {}", visitId);

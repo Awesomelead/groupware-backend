@@ -5,7 +5,7 @@ services:
     image: ${DEV_BACKEND_IMAGE:-188932086032.dkr.ecr.ap-northeast-2.amazonaws.com/groupware-backend:dev}
     container_name: groupware-backend-dev
     ports:
-      - "8081:8080"
+      - "8080:8080"
     environment:
       - SPRING_PROFILES_ACTIVE=dev
       - SPRING_DATASOURCE_URL=jdbc:mysql://mysql:3306/groupware_dev?serverTimezone=Asia/Seoul&characterEncoding=UTF-8&useSSL=false&allowPublicKeyRetrieval=true
@@ -113,7 +113,7 @@ services:
     image: grafana/grafana
     container_name: groupware-grafana-dev
     ports:
-      - "127.0.0.1:3001:3000"
+      - "127.0.0.1:3000:3000"
     environment:
       - GF_SERVER_ROOT_URL=https://dev-api.awesomelead.co.kr/grafana/
       - GF_SERVER_SERVE_FROM_SUB_PATH=true

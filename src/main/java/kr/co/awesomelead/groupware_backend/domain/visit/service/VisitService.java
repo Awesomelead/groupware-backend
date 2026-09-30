@@ -101,8 +101,7 @@ public class VisitService {
         List<User> hosts = findUsersByIds(dto.getHostIds());
         String encodedPassword = passwordEncoder.encode(dto.getPassword());
 
-        Visit visit =
-                visitMapper.toOneDayVisit(dto, hosts.get(0).getWorkLocation(), encodedPassword);
+        Visit visit = visitMapper.toOneDayVisit(dto, requireHostCompany(dto), encodedPassword);
         normalizeVisitorInfo(visit);
         syncAndValidatePermissions(visit, dto);
         addHostsToVisit(visit, hosts);
@@ -134,8 +133,7 @@ public class VisitService {
         List<User> hosts = findUsersByIds(dto.getHostIds());
         String encodedPassword = passwordEncoder.encode(dto.getPassword());
 
-        Visit visit =
-                visitMapper.toLongTermVisit(dto, hosts.get(0).getWorkLocation(), encodedPassword);
+        Visit visit = visitMapper.toLongTermVisit(dto, requireHostCompany(dto), encodedPassword);
         normalizeVisitorInfo(visit);
         syncAndValidatePermissions(visit, dto);
         addHostsToVisit(visit, hosts);
@@ -165,8 +163,7 @@ public class VisitService {
         String encodedPassword = passwordEncoder.encode(dto.getPassword());
         String signatureKey = s3Service.uploadFile(signatureFile);
 
-        Visit visit =
-                visitMapper.toOnSiteVisit(dto, hosts.get(0).getWorkLocation(), encodedPassword);
+        Visit visit = visitMapper.toOnSiteVisit(dto, requireHostCompany(dto), encodedPassword);
         normalizeVisitorInfo(visit);
         syncAndValidatePermissions(visit, dto);
         addHostsToVisit(visit, hosts);
@@ -235,6 +232,13 @@ public class VisitService {
 
     private String formatNotificationTime(LocalTime time) {
         return time.format(NOTIFICATION_TIME_FORMATTER);
+    }
+
+    private Company requireHostCompany(VisitRequest dto) {
+        if (dto.getHostCompany() == null) {
+            throw new CustomException(ErrorCode.VISIT_HOST_COMPANY_REQUIRED);
+        }
+        return dto.getHostCompany();
     }
 
     @Transactional

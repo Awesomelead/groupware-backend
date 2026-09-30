@@ -250,6 +250,37 @@ public class VisitServiceTest {
                 verify(passwordEncoder, times(1)).encode(dto.getPassword());
                 verify(visitRepository, times(1)).save(any(Visit.class));
             }
+
+            @Test
+            @DisplayName("담당직원 소속이 아닌 QR 코드의 방문 사업장으로 등록한다.")
+            void it_uses_host_company_from_qr_request() throws IOException {
+                OneDayVisitRequestDto dto =
+                        OneDayVisitRequestDto.builder()
+                                .visitorName("홍길동")
+                                .visitorPhoneNumber("01012345678")
+                                .visitorCompany("테스트컴퍼니")
+                                .hostCompany(Company.MARUI)
+                                .purpose(VisitPurpose.MEETING)
+                                .permissionType(AdditionalPermissionType.NONE)
+                                .visitDate(LocalDate.now().plusDays(1))
+                                .plannedEntryTime(LocalTime.of(10, 0))
+                                .plannedExitTime(LocalTime.of(18, 0))
+                                .hostIds(List.of(1L))
+                                .password("1234")
+                                .build();
+
+                String encodedPassword = "encoded_password_1234";
+                Visit mockVisit =
+                        createBaseVisit(VisitStatus.NOT_VISITED, VisitCategory.PRE_ONE_DAY);
+
+                given(passwordEncoder.encode(dto.getPassword())).willReturn(encodedPassword);
+                given(visitMapper.toOneDayVisit(any(), any(), any())).willReturn(mockVisit);
+                given(visitRepository.save(any(Visit.class))).willReturn(mockVisit);
+
+                visitService.registerOneDayPreVisit(dto, createSignatureFile());
+
+                verify(visitMapper).toOneDayVisit(eq(dto), eq(Company.MARUI), eq(encodedPassword));
+            }
         }
 
         private OneDayVisitRequestDto createOneDayDto(
@@ -258,6 +289,7 @@ public class VisitServiceTest {
                     .visitorName("홍길동")
                     .visitorPhoneNumber("01012345678")
                     .visitorCompany("테스트컴퍼니")
+                    .hostCompany(Company.AWESOME)
                     .purpose(purpose)
                     .permissionType(type)
                     .permissionDetail(detail)
@@ -331,6 +363,7 @@ public class VisitServiceTest {
                         LongTermVisitRequestDto.builder()
                                 .hostIds(List.of(1L))
                                 .password("1234")
+                                .hostCompany(Company.AWESOME)
                                 .startDate(startDate)
                                 .endDate(startDate.plusMonths(3))
                                 .purpose(VisitPurpose.MEETING)
@@ -362,6 +395,7 @@ public class VisitServiceTest {
             OnSiteVisitRequestDto dto =
                     OnSiteVisitRequestDto.builder()
                             .visitorName("현장방문객")
+                            .hostCompany(Company.AWESOME)
                             .hostIds(List.of(1L))
                             .password("1234")
                             .purpose(VisitPurpose.MEETING)
@@ -1530,6 +1564,7 @@ public class VisitServiceTest {
                                 .visitorName("홍길동")
                                 .visitorPhoneNumber("01012345678")
                                 .visitorCompany("테스트컴퍼니")
+                                .hostCompany(Company.AWESOME)
                                 .purpose(VisitPurpose.MEETING)
                                 .permissionType(AdditionalPermissionType.NONE)
                                 .visitDate(LocalDate.now().plusDays(1))
@@ -1611,6 +1646,7 @@ public class VisitServiceTest {
                                 .visitorName("홍길동")
                                 .visitorPhoneNumber("01012345678")
                                 .visitorCompany("테스트컴퍼니")
+                                .hostCompany(Company.AWESOME)
                                 .purpose(VisitPurpose.MEETING)
                                 .permissionType(AdditionalPermissionType.NONE)
                                 .visitDate(LocalDate.now().plusDays(1))
@@ -1683,6 +1719,7 @@ public class VisitServiceTest {
                                 .visitorName("홍길동")
                                 .visitorPhoneNumber("01012345678")
                                 .visitorCompany("테스트컴퍼니")
+                                .hostCompany(Company.AWESOME)
                                 .purpose(VisitPurpose.MEETING)
                                 .permissionType(AdditionalPermissionType.NONE)
                                 .visitDate(LocalDate.now().plusDays(1))
@@ -1766,6 +1803,7 @@ public class VisitServiceTest {
                                 .visitorName("홍길동")
                                 .visitorPhoneNumber("01012345678")
                                 .visitorCompany("테스트컴퍼니")
+                                .hostCompany(Company.AWESOME)
                                 .purpose(VisitPurpose.MEETING)
                                 .permissionType(AdditionalPermissionType.NONE)
                                 .visitDate(LocalDate.now().plusDays(1))
@@ -1831,6 +1869,7 @@ public class VisitServiceTest {
                                 .visitorName("홍길동")
                                 .visitorPhoneNumber("01012345678")
                                 .visitorCompany("테스트컴퍼니")
+                                .hostCompany(Company.AWESOME)
                                 .purpose(VisitPurpose.FACILITY_CONSTRUCTION)
                                 .permissionType(AdditionalPermissionType.CONFINED_SPACE_ENTRY)
                                 .visitDate(LocalDate.now().plusDays(1))
@@ -1913,6 +1952,7 @@ public class VisitServiceTest {
                                 .visitorName("홍길동")
                                 .visitorPhoneNumber("01012345678")
                                 .visitorCompany("테스트컴퍼니")
+                                .hostCompany(Company.AWESOME)
                                 .purpose(VisitPurpose.CUSTOMER_INSPECTION)
                                 .permissionType(AdditionalPermissionType.CONFINED_SPACE_ENTRY)
                                 .visitDate(LocalDate.now().plusDays(1))
@@ -1977,6 +2017,7 @@ public class VisitServiceTest {
                                 .visitorName("홍길동")
                                 .visitorPhoneNumber("01012345678")
                                 .visitorCompany("테스트컴퍼니")
+                                .hostCompany(Company.AWESOME)
                                 .purpose(VisitPurpose.MEETING)
                                 .permissionType(AdditionalPermissionType.NONE)
                                 .visitDate(LocalDate.now().plusDays(1))

@@ -53,6 +53,8 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.EnumSource;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.Spy;
@@ -966,6 +968,111 @@ public class VisitServiceTest {
                         .isInstanceOf(CustomException.class)
                         .hasMessageContaining(ErrorCode.NOT_VISIT_DATE.getMessage());
             }
+        }
+    }
+
+    @Nested
+    @DisplayName("경영지원부와 충남 경영기획실의 전체 방문 입퇴실 권한은")
+    class Describe_entryExitDepartmentAccess {
+        private User manager;
+        private Visit visit;
+        private LocalDateTime entryTime;
+
+        private void prepare(DepartmentName departmentName, boolean hasAuthority) {
+            Department department = Department.builder().id(99L).name(departmentName).build();
+            manager =
+                    User.builder().id(99L).department(department).position(Position.STAFF).build();
+            if (hasAuthority) {
+                manager.addAuthority(Authority.MANAGE_VISITOR);
+            }
+            entryTime = LocalDate.now().minusDays(1).atTime(10, 0);
+            visit = createBaseVisit(VisitStatus.NOT_VISITED, VisitCategory.PRE_ONE_DAY);
+            visit.setStartDate(entryTime.toLocalDate());
+            visit.setEndDate(entryTime.toLocalDate());
+            visit.setPurpose(VisitPurpose.MEETING);
+            visit.getRecords()
+                    .add(
+                            VisitRecord.builder()
+                                    .id(10L)
+                                    .visit(visit)
+                                    .visitDate(entryTime.toLocalDate())
+                                    .signatureKey("signature")
+                                    .build());
+            given(userRepository.findById(99L)).willReturn(Optional.of(manager));
+        }
+
+        @ParameterizedTest
+        @EnumSource(
+                value = DepartmentName.class,
+                names = {"MANAGEMENT_SUPPORT", "CHUNGNAM_PLANNING"})
+        void allowsOtherDepartmentEntryAndExitAndTimeCorrections(DepartmentName departmentName) {
+            prepare(departmentName, true);
+            given(visitRepository.findById(VISIT_ID)).willReturn(Optional.of(visit));
+            assertThat(
+                            visitService.checkInForAdmin(
+                                    99L, VISIT_ID, new AdminCheckInRequestDto(entryTime)))
+                    .isEqualTo(VISIT_ID);
+            LocalDateTime correctedEntry = entryTime.minusHours(1);
+            visitService.updateCheckInTime(
+                    99L, VISIT_ID, 10L, new AdminCheckInRequestDto(correctedEntry));
+            LocalDateTime exitTime = entryTime.plusHours(7);
+            visitService.checkOut(99L, new CheckOutRequestDto(VISIT_ID, 10L, exitTime));
+            LocalDateTime correctedExit = exitTime.plusHours(1);
+            visitService.checkOut(99L, new CheckOutRequestDto(VISIT_ID, 10L, correctedExit));
+            assertThat(visit.getRecords().get(0).getEntryTime()).isEqualTo(correctedEntry);
+            assertThat(visit.getRecords().get(0).getExitTime()).isEqualTo(correctedExit);
+            assertThat(visit.getRecords().get(0).getExitTimeUpdatedBy()).isSameAs(manager);
+            assertThat(visit.getStatus()).isEqualTo(VisitStatus.COMPLETED);
+        }
+
+        @ParameterizedTest
+        @EnumSource(
+                value = DepartmentName.class,
+                names = {"MANAGEMENT_SUPPORT", "CHUNGNAM_PLANNING"})
+        void stillRequiresManageVisitorAuthority(DepartmentName departmentName) {
+            prepare(departmentName, false);
+            given(visitRepository.findById(VISIT_ID)).willReturn(Optional.of(visit));
+            assertThatThrownBy(
+                            () ->
+                                    visitService.checkInForAdmin(
+                                            99L, VISIT_ID, new AdminCheckInRequestDto(entryTime)))
+                    .hasMessage(ErrorCode.VISIT_ACCESS_DENIED.getMessage());
+            assertThatThrownBy(
+                            () ->
+                                    visitService.updateCheckInTime(
+                                            99L,
+                                            VISIT_ID,
+                                            10L,
+                                            new AdminCheckInRequestDto(entryTime)))
+                    .hasMessage(ErrorCode.VISIT_ACCESS_DENIED.getMessage());
+            assertThatThrownBy(
+                            () ->
+                                    visitService.checkOut(
+                                            99L,
+                                            new CheckOutRequestDto(
+                                                    VISIT_ID, 10L, entryTime.plusHours(7))))
+                    .hasMessage(ErrorCode.VISIT_ACCESS_DENIED.getMessage());
+        }
+
+        @ParameterizedTest
+        @EnumSource(
+                value = DepartmentName.class,
+                names = {"MANAGEMENT_SUPPORT", "CHUNGNAM_PLANNING"})
+        void doesNotExpandLongTermApprovalAuthority(DepartmentName departmentName) {
+            prepare(departmentName, true);
+            visit.setVisitCategory(VisitCategory.PRE_LONG_TERM);
+            visit.setStatus(VisitStatus.PENDING);
+            given(visitRepository.findById(VISIT_ID)).willReturn(Optional.of(visit));
+            for (VisitStatus status : List.of(VisitStatus.APPROVED, VisitStatus.REJECTED)) {
+                assertThatThrownBy(
+                                () ->
+                                        visitService.processVisit(
+                                                99L,
+                                                VISIT_ID,
+                                                new VisitProcessRequestDto(status, "반려 사유")))
+                        .hasMessage(ErrorCode.VISIT_ACCESS_DENIED.getMessage());
+            }
+            assertThat(visit.getStatus()).isEqualTo(VisitStatus.PENDING);
         }
     }
 

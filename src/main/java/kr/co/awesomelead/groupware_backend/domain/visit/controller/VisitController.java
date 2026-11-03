@@ -240,7 +240,7 @@ public class VisitController {
             summary = "직원용 사전 예약자 입실 처리",
             description =
                     "MANAGE_VISITOR 권한을 가진 담당 부서 직원이 누락된 실제 입실 시간을 등록합니다. "
-                            + "경비원은 같은 권한으로 모든 내방객을 처리할 수 있습니다. "
+                            + "경비원, 경영지원부, 충남 경영기획실 직원은 같은 권한으로 모든 내방객을 처리할 수 있습니다. "
                             + "하루 방문은 방문 전, 장기 방문은 승인 완료 상태에서만 가능합니다.")
     @PostMapping("/admin/{visitId}/check-in")
     public ResponseEntity<ApiResponse<Long>> checkInForAdmin(
@@ -313,8 +313,8 @@ public class VisitController {
     @Operation(
             summary = "방문자 퇴실 처리",
             description =
-                    "MANAGE_VISITOR 권한을 가진 담당 부서 직원이 내방객의 퇴실 시간을 기록합니다. 경비원은 MANAGE_VISITOR 권한이 있으면"
-                            + " 모든 내방객 퇴실 처리가 가능합니다.")
+                    "MANAGE_VISITOR 권한을 가진 담당 부서 직원이 내방객의 퇴실 시간을 등록하거나 수정합니다. "
+                            + "경비원, 경영지원부, 충남 경영기획실 직원은 같은 권한으로 모든 내방객을 처리할 수 있습니다.")
     @PatchMapping("/check-out")
     public ResponseEntity<ApiResponse<Long>> checkOut(
             @Parameter(hidden = true) @AuthenticationPrincipal CustomUserDetails userDetails,

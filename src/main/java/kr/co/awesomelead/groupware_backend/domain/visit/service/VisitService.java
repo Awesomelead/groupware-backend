@@ -262,9 +262,7 @@ public class VisitService {
                 visitRepository
                         .findById(visitId)
                         .orElseThrow(() -> new CustomException(ErrorCode.VISIT_NOT_FOUND));
-        if (manager.getPosition() != Position.SECURITY_GUARD) {
-            validateManagedDepartmentAccess(manager, visit);
-        }
+        validateEntryExitAccess(manager, visit);
 
         if (visit.getStatus() == VisitStatus.IN_PROGRESS
                 || visit.getRecords().stream()
@@ -305,9 +303,7 @@ public class VisitService {
                 visitRepository
                         .findById(visitId)
                         .orElseThrow(() -> new CustomException(ErrorCode.VISIT_NOT_FOUND));
-        if (manager.getPosition() != Position.SECURITY_GUARD) {
-            validateManagedDepartmentAccess(manager, visit);
-        }
+        validateEntryExitAccess(manager, visit);
         VisitRecord record =
                 visit.getRecords().stream()
                         .filter(r -> recordId.equals(r.getId()))
@@ -416,9 +412,7 @@ public class VisitService {
                         .findById(dto.getVisitId())
                         .orElseThrow(() -> new CustomException(ErrorCode.VISIT_NOT_FOUND));
         User manager = validateVisitorManageAuthority(userId);
-        if (manager.getPosition() != Position.SECURITY_GUARD) {
-            validateManagedDepartmentAccess(manager, visit);
-        }
+        validateEntryExitAccess(manager, visit);
 
         VisitRecord record =
                 visit.getRecords().stream()
@@ -849,6 +843,19 @@ public class VisitService {
         Cell cell = row.createCell(col);
         cell.setCellValue(value != null ? value : "");
         cell.setCellStyle(style);
+    }
+
+    private void validateEntryExitAccess(User manager, Visit visit) {
+        if (manager.getPosition() == Position.SECURITY_GUARD) {
+            return;
+        }
+        Department department = manager.getDepartment();
+        if (department != null
+                && (department.getName() == DepartmentName.MANAGEMENT_SUPPORT
+                        || department.getName() == DepartmentName.CHUNGNAM_PLANNING)) {
+            return;
+        }
+        validateManagedDepartmentAccess(manager, visit);
     }
 
     private void validateManagedDepartmentAccess(User manager, Visit visit) {

@@ -9,6 +9,7 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
 
 import kr.co.awesomelead.groupware_backend.domain.department.entity.Department;
 import kr.co.awesomelead.groupware_backend.domain.department.enums.Company;
@@ -20,6 +21,7 @@ import kr.co.awesomelead.groupware_backend.domain.user.enums.Authority;
 import kr.co.awesomelead.groupware_backend.domain.user.enums.JobType;
 import kr.co.awesomelead.groupware_backend.domain.user.enums.Position;
 import kr.co.awesomelead.groupware_backend.domain.user.repository.UserRepository;
+import kr.co.awesomelead.groupware_backend.domain.visit.dto.request.AdminCheckInRequestDto;
 import kr.co.awesomelead.groupware_backend.domain.visit.dto.request.CheckInRequestDto;
 import kr.co.awesomelead.groupware_backend.domain.visit.dto.request.CheckOutRequestDto;
 import kr.co.awesomelead.groupware_backend.domain.visit.dto.request.LongTermVisitRequestDto;
@@ -51,6 +53,8 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.EnumSource;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.Spy;
@@ -964,6 +968,462 @@ public class VisitServiceTest {
                         .isInstanceOf(CustomException.class)
                         .hasMessageContaining(ErrorCode.NOT_VISIT_DATE.getMessage());
             }
+        }
+    }
+
+    @Nested
+    @DisplayName("경영지원부와 충남 경영기획실의 전체 방문 입퇴실 권한은")
+    class Describe_entryExitDepartmentAccess {
+        private User manager;
+        private Visit visit;
+        private LocalDateTime entryTime;
+
+        private void prepare(DepartmentName departmentName, boolean hasAuthority) {
+            Department department = Department.builder().id(99L).name(departmentName).build();
+            manager =
+                    User.builder().id(99L).department(department).position(Position.STAFF).build();
+            if (hasAuthority) {
+                manager.addAuthority(Authority.MANAGE_VISITOR);
+            }
+            entryTime = LocalDate.now().minusDays(1).atTime(10, 0);
+            visit = createBaseVisit(VisitStatus.NOT_VISITED, VisitCategory.PRE_ONE_DAY);
+            visit.setStartDate(entryTime.toLocalDate());
+            visit.setEndDate(entryTime.toLocalDate());
+            visit.setPurpose(VisitPurpose.MEETING);
+            visit.getRecords()
+                    .add(
+                            VisitRecord.builder()
+                                    .id(10L)
+                                    .visit(visit)
+                                    .visitDate(entryTime.toLocalDate())
+                                    .signatureKey("signature")
+                                    .build());
+            given(userRepository.findById(99L)).willReturn(Optional.of(manager));
+        }
+
+        @ParameterizedTest
+        @EnumSource(
+                value = DepartmentName.class,
+                names = {"MANAGEMENT_SUPPORT", "CHUNGNAM_PLANNING"})
+        void allowsOtherDepartmentEntryAndExitAndTimeCorrections(DepartmentName departmentName) {
+            prepare(departmentName, true);
+            given(visitRepository.findById(VISIT_ID)).willReturn(Optional.of(visit));
+            assertThat(
+                            visitService.checkInForAdmin(
+                                    99L, VISIT_ID, new AdminCheckInRequestDto(entryTime)))
+                    .isEqualTo(VISIT_ID);
+            LocalDateTime correctedEntry = entryTime.minusHours(1);
+            visitService.updateCheckInTime(
+                    99L, VISIT_ID, 10L, new AdminCheckInRequestDto(correctedEntry));
+            LocalDateTime exitTime = entryTime.plusHours(7);
+            visitService.checkOut(99L, new CheckOutRequestDto(VISIT_ID, 10L, exitTime));
+            LocalDateTime correctedExit = exitTime.plusHours(1);
+            visitService.checkOut(99L, new CheckOutRequestDto(VISIT_ID, 10L, correctedExit));
+            assertThat(visit.getRecords().get(0).getEntryTime()).isEqualTo(correctedEntry);
+            assertThat(visit.getRecords().get(0).getExitTime()).isEqualTo(correctedExit);
+            assertThat(visit.getRecords().get(0).getExitTimeUpdatedBy()).isSameAs(manager);
+            assertThat(visit.getStatus()).isEqualTo(VisitStatus.COMPLETED);
+        }
+
+        @ParameterizedTest
+        @EnumSource(
+                value = DepartmentName.class,
+                names = {"MANAGEMENT_SUPPORT", "CHUNGNAM_PLANNING"})
+        void stillRequiresManageVisitorAuthority(DepartmentName departmentName) {
+            prepare(departmentName, false);
+            given(visitRepository.findById(VISIT_ID)).willReturn(Optional.of(visit));
+            assertThatThrownBy(
+                            () ->
+                                    visitService.checkInForAdmin(
+                                            99L, VISIT_ID, new AdminCheckInRequestDto(entryTime)))
+                    .hasMessage(ErrorCode.VISIT_ACCESS_DENIED.getMessage());
+            assertThatThrownBy(
+                            () ->
+                                    visitService.updateCheckInTime(
+                                            99L,
+                                            VISIT_ID,
+                                            10L,
+                                            new AdminCheckInRequestDto(entryTime)))
+                    .hasMessage(ErrorCode.VISIT_ACCESS_DENIED.getMessage());
+            assertThatThrownBy(
+                            () ->
+                                    visitService.checkOut(
+                                            99L,
+                                            new CheckOutRequestDto(
+                                                    VISIT_ID, 10L, entryTime.plusHours(7))))
+                    .hasMessage(ErrorCode.VISIT_ACCESS_DENIED.getMessage());
+        }
+
+        @ParameterizedTest
+        @EnumSource(
+                value = DepartmentName.class,
+                names = {"MANAGEMENT_SUPPORT", "CHUNGNAM_PLANNING"})
+        void doesNotExpandLongTermApprovalAuthority(DepartmentName departmentName) {
+            prepare(departmentName, true);
+            visit.setVisitCategory(VisitCategory.PRE_LONG_TERM);
+            visit.setStatus(VisitStatus.PENDING);
+            given(visitRepository.findById(VISIT_ID)).willReturn(Optional.of(visit));
+            for (VisitStatus status : List.of(VisitStatus.APPROVED, VisitStatus.REJECTED)) {
+                assertThatThrownBy(
+                                () ->
+                                        visitService.processVisit(
+                                                99L,
+                                                VISIT_ID,
+                                                new VisitProcessRequestDto(status, "반려 사유")))
+                        .hasMessage(ErrorCode.VISIT_ACCESS_DENIED.getMessage());
+            }
+            assertThat(visit.getStatus()).isEqualTo(VisitStatus.PENDING);
+        }
+    }
+
+    @Nested
+    @DisplayName("직원용 누락 입실 등록은")
+    class Describe_checkInForAdmin {
+        private Visit visit;
+        private User manager;
+        private LocalDateTime entryTime;
+
+        @BeforeEach
+        void setUp() {
+            entryTime = LocalDate.now().minusDays(1).atTime(10, 0);
+            manager = createHost();
+            visit = createBaseVisit(VisitStatus.NOT_VISITED, VisitCategory.PRE_ONE_DAY);
+            visit.setStartDate(entryTime.toLocalDate());
+            visit.setEndDate(entryTime.toLocalDate());
+            visit.setPurpose(VisitPurpose.MEETING);
+            visit.getRecords()
+                    .add(
+                            VisitRecord.builder()
+                                    .id(10L)
+                                    .visit(visit)
+                                    .visitDate(entryTime.toLocalDate())
+                                    .signatureKey("signature")
+                                    .build());
+            given(userRepository.findById(HOST_ID)).willReturn(Optional.of(manager));
+        }
+
+        private Long checkIn(LocalDateTime time) {
+            given(visitRepository.findById(VISIT_ID)).willReturn(Optional.of(visit));
+            return visitService.checkInForAdmin(
+                    HOST_ID, VISIT_ID, new AdminCheckInRequestDto(time));
+        }
+
+        @Test
+        @DisplayName("지난 날짜의 입실을 보정한 후 기존 API로 퇴실할 수 있다")
+        void registersMissedEntryAndChecksOut() {
+            assertThat(checkIn(entryTime)).isEqualTo(VISIT_ID);
+            assertThat(visit.getRecords()).hasSize(1);
+            VisitRecord record = visit.getRecords().get(0);
+            assertThat(record.getVisitDate()).isEqualTo(entryTime.toLocalDate());
+            assertThat(record.getEntryTime()).isEqualTo(entryTime);
+            assertThat(record.getSignatureKey()).isEqualTo("signature");
+            assertThat(visit.getStatus()).isEqualTo(VisitStatus.IN_PROGRESS);
+            assertThat(visit.isVisited()).isTrue();
+
+            LocalDateTime exitTime = entryTime.plusHours(7);
+            visitService.checkOut(
+                    HOST_ID, new CheckOutRequestDto(VISIT_ID, record.getId(), exitTime));
+            assertThat(record.getExitTime()).isEqualTo(exitTime);
+            assertThat(visit.getStatus()).isEqualTo(VisitStatus.COMPLETED);
+        }
+
+        @Test
+        void rejectsManagerWithoutAuthority() {
+            manager = User.builder().id(HOST_ID).department(createDepartment(1L)).build();
+            given(userRepository.findById(HOST_ID)).willReturn(Optional.of(manager));
+            assertThatThrownBy(
+                            () ->
+                                    visitService.checkInForAdmin(
+                                            HOST_ID,
+                                            VISIT_ID,
+                                            new AdminCheckInRequestDto(entryTime)))
+                    .isInstanceOf(CustomException.class)
+                    .hasMessage(ErrorCode.VISIT_ACCESS_DENIED.getMessage());
+        }
+
+        @Test
+        void rejectsOtherDepartment() {
+            manager.setDepartment(createDepartment(99L));
+            assertThatThrownBy(() -> checkIn(entryTime))
+                    .hasMessage(ErrorCode.VISIT_ACCESS_DENIED.getMessage());
+        }
+
+        @Test
+        void allowsAncestorDepartment() {
+            Department child = createDepartment(2L);
+            child.setParent(manager.getDepartment());
+            visit.getHosts().get(0).getUser().setDepartment(child);
+            assertThat(checkIn(entryTime)).isEqualTo(VISIT_ID);
+        }
+
+        @Test
+        void allowsSecurityGuardForOtherDepartment() {
+            manager.setPosition(Position.SECURITY_GUARD);
+            manager.setDepartment(createDepartment(99L));
+            assertThat(checkIn(entryTime)).isEqualTo(VISIT_ID);
+        }
+
+        @Test
+        void rejectsFutureOrMissingTime() {
+            assertThatThrownBy(() -> checkIn(LocalDateTime.now().plusHours(1)))
+                    .hasMessage(ErrorCode.INVALID_CHECKIN_TIME.getMessage());
+            assertThatThrownBy(() -> checkIn(null))
+                    .hasMessage(ErrorCode.INVALID_CHECKIN_TIME.getMessage());
+        }
+
+        @Test
+        void rejectsTimeOutsideReservation() {
+            assertThatThrownBy(() -> checkIn(entryTime.minusDays(1)))
+                    .hasMessage(ErrorCode.INVALID_CHECKIN_TIME.getMessage());
+            assertThatThrownBy(() -> checkIn(entryTime.plusDays(1)))
+                    .hasMessage(ErrorCode.INVALID_CHECKIN_TIME.getMessage());
+        }
+
+        @Test
+        void rejectsDuplicateEntry() {
+            checkIn(entryTime);
+            assertThatThrownBy(() -> checkIn(entryTime))
+                    .hasMessage(ErrorCode.ALREADY_CHECKED_IN.getMessage());
+        }
+
+        @Test
+        void rejectsOpenRecordEvenWhenStatusIsNotInProgress() {
+            visit.getRecords().get(0).setEntryTime(entryTime.minusHours(1));
+            assertThatThrownBy(() -> checkIn(entryTime))
+                    .hasMessage(ErrorCode.ALREADY_CHECKED_IN.getMessage());
+        }
+
+        @Test
+        void rejectsCompletedAndAlreadyVisitedOneDayVisit() {
+            visit.setStatus(VisitStatus.COMPLETED);
+            assertThatThrownBy(() -> checkIn(entryTime))
+                    .hasMessage(ErrorCode.CHECKIN_NOT_ALLOWED.getMessage());
+            visit.setStatus(VisitStatus.NOT_VISITED);
+            visit.setVisited(true);
+            assertThatThrownBy(() -> checkIn(entryTime))
+                    .hasMessage(ErrorCode.CHECKIN_NOT_ALLOWED.getMessage());
+        }
+
+        @Test
+        void rejectsUnapprovedLongTermAndOnSiteVisits() {
+            visit.setVisitCategory(VisitCategory.PRE_LONG_TERM);
+            for (VisitStatus status :
+                    List.of(VisitStatus.PENDING, VisitStatus.REJECTED, VisitStatus.COMPLETED)) {
+                visit.setStatus(status);
+                assertThatThrownBy(() -> checkIn(entryTime))
+                        .hasMessage(ErrorCode.CHECKIN_NOT_ALLOWED.getMessage());
+            }
+            visit.setVisitCategory(VisitCategory.ON_SITE);
+            visit.setStatus(VisitStatus.NOT_VISITED);
+            assertThatThrownBy(() -> checkIn(entryTime))
+                    .hasMessage(ErrorCode.CHECKIN_NOT_ALLOWED.getMessage());
+        }
+
+        @Test
+        void longTermReentryUsesActualDateAndExistingSignature() {
+            visit.setVisitCategory(VisitCategory.PRE_LONG_TERM);
+            visit.setStatus(VisitStatus.APPROVED);
+            visit.setStartDate(entryTime.toLocalDate().minusDays(7));
+            visit.setEndDate(entryTime.toLocalDate().plusDays(7));
+            VisitRecord previous = visit.getRecords().get(0);
+            previous.setEntryTime(entryTime.minusDays(1));
+            previous.setExitTime(entryTime.minusDays(1).plusHours(7));
+            assertThatThrownBy(() -> checkIn(entryTime.minusDays(2)))
+                    .hasMessage(ErrorCode.INVALID_CHECKIN_TIME.getMessage());
+
+            checkIn(entryTime);
+            assertThat(visit.getRecords()).hasSize(2);
+            VisitRecord current = visit.getRecords().get(1);
+            assertThat(current.getEntryTime()).isEqualTo(entryTime);
+            assertThat(current.getVisitDate()).isEqualTo(entryTime.toLocalDate());
+            assertThat(current.getSignatureKey()).isEqualTo("signature");
+        }
+
+        @Test
+        void rejectsEntryWithoutSignature() {
+            visit.getRecords().clear();
+            assertThatThrownBy(() -> checkIn(entryTime))
+                    .hasMessage(ErrorCode.NO_SIGNATURE_PROVIDED.getMessage());
+        }
+    }
+
+    @Nested
+    @DisplayName("입실 시간 수정은")
+    class Describe_updateCheckInTime {
+        private Visit visit;
+        private VisitRecord record;
+        private User manager;
+        private LocalDateTime entryTime;
+
+        @BeforeEach
+        void setUp() {
+            entryTime = LocalDate.now().minusDays(2).atTime(10, 0);
+            manager = createHost();
+            visit = createBaseVisit(VisitStatus.IN_PROGRESS, VisitCategory.PRE_ONE_DAY);
+            visit.setStartDate(entryTime.toLocalDate());
+            visit.setEndDate(entryTime.toLocalDate());
+            visit.setVisited(true);
+            record =
+                    VisitRecord.builder()
+                            .id(10L)
+                            .visit(visit)
+                            .visitDate(entryTime.toLocalDate())
+                            .entryTime(entryTime)
+                            .signatureKey("signature")
+                            .build();
+            visit.getRecords().add(record);
+            given(userRepository.findById(HOST_ID)).willReturn(Optional.of(manager));
+        }
+
+        private Long update(Long recordId, LocalDateTime time) {
+            given(visitRepository.findById(VISIT_ID)).willReturn(Optional.of(visit));
+            return visitService.updateCheckInTime(
+                    HOST_ID, VISIT_ID, recordId, new AdminCheckInRequestDto(time));
+        }
+
+        private void addPreviousLongTermRecord() {
+            visit.setVisitCategory(VisitCategory.PRE_LONG_TERM);
+            visit.setStartDate(entryTime.toLocalDate().minusDays(7));
+            visit.setEndDate(entryTime.toLocalDate().plusDays(7));
+            visit.getRecords()
+                    .add(
+                            VisitRecord.builder()
+                                    .id(11L)
+                                    .visit(visit)
+                                    .visitDate(entryTime.minusDays(1).toLocalDate())
+                                    .entryTime(entryTime.minusDays(1))
+                                    .exitTime(entryTime.minusDays(1).plusHours(7))
+                                    .signatureKey("signature")
+                                    .build());
+        }
+
+        @Test
+        void updatesOnlySelectedRecordWithoutChangingStateOrSendingAlert() {
+            addPreviousLongTermRecord();
+            VisitRecord previous = visit.getRecords().get(1);
+            LocalDateTime corrected = entryTime.minusHours(1);
+            assertThat(update(10L, corrected)).isEqualTo(VISIT_ID);
+            assertThat(record.getEntryTime()).isEqualTo(corrected);
+            assertThat(record.getSignatureKey()).isEqualTo("signature");
+            assertThat(previous.getEntryTime()).isEqualTo(entryTime.minusDays(1));
+            assertThat(visit.getRecords()).hasSize(2);
+            assertThat(visit.getStatus()).isEqualTo(VisitStatus.IN_PROGRESS);
+            assertThat(visit.isVisited()).isTrue();
+            verifyNoInteractions(notificationService);
+        }
+
+        @Test
+        void allowsCompletedRecordCorrectionAndKeepsExitTime() {
+            visit.setStatus(VisitStatus.COMPLETED);
+            record.setExitTime(entryTime.plusHours(7));
+            record.setExitTimeUpdatedBy(manager);
+            update(10L, entryTime.plusHours(1));
+            assertThat(record.getEntryTime()).isEqualTo(entryTime.plusHours(1));
+            assertThat(record.getExitTime()).isEqualTo(entryTime.plusHours(7));
+            assertThat(record.getExitTimeUpdatedBy()).isSameAs(manager);
+            assertThat(visit.getStatus()).isEqualTo(VisitStatus.COMPLETED);
+        }
+
+        @Test
+        void updatesVisitDateWhenCorrectingLongTermEntryDate() {
+            addPreviousLongTermRecord();
+            LocalDateTime corrected = entryTime.minusDays(1).plusHours(8);
+            update(10L, corrected);
+            assertThat(record.getVisitDate()).isEqualTo(corrected.toLocalDate());
+        }
+
+        @Test
+        void rejectsUnknownOrOtherVisitRecordId() {
+            assertThatThrownBy(() -> update(999L, entryTime))
+                    .hasMessage(ErrorCode.RECORD_NOT_FOUND.getMessage());
+        }
+
+        @Test
+        void rejectsUnregisteredEntryAndOnSiteVisit() {
+            record.setEntryTime(null);
+            assertThatThrownBy(() -> update(10L, entryTime))
+                    .hasMessage(ErrorCode.CHECKIN_NOT_ALLOWED.getMessage());
+            record.setEntryTime(entryTime);
+            visit.setVisitCategory(VisitCategory.ON_SITE);
+            assertThatThrownBy(() -> update(10L, entryTime))
+                    .hasMessage(ErrorCode.CHECKIN_NOT_ALLOWED.getMessage());
+        }
+
+        @Test
+        void rejectsFutureMissingAndOutsideReservationTimes() {
+            for (LocalDateTime invalid :
+                    List.of(
+                            LocalDateTime.now().plusHours(1),
+                            entryTime.minusDays(1),
+                            entryTime.plusDays(1))) {
+                assertThatThrownBy(() -> update(10L, invalid))
+                        .hasMessage(ErrorCode.INVALID_CHECKIN_UPDATE_TIME.getMessage());
+            }
+            assertThatThrownBy(() -> update(10L, null))
+                    .hasMessage(ErrorCode.INVALID_CHECKIN_UPDATE_TIME.getMessage());
+            assertThat(record.getEntryTime()).isEqualTo(entryTime);
+        }
+
+        @Test
+        void rejectsEntryAfterOwnExitButAllowsSameTime() {
+            record.setExitTime(entryTime.plusHours(7));
+            assertThatThrownBy(() -> update(10L, entryTime.plusHours(8)))
+                    .hasMessage(ErrorCode.INVALID_CHECKIN_UPDATE_TIME.getMessage());
+            update(10L, record.getExitTime());
+            assertThat(record.getEntryTime()).isEqualTo(record.getExitTime());
+        }
+
+        @Test
+        void preventsOverlapWithPreviousRecordAndAllowsAdjacentTimes() {
+            addPreviousLongTermRecord();
+            VisitRecord previous = visit.getRecords().get(1);
+            assertThatThrownBy(() -> update(10L, previous.getExitTime().minusMinutes(1)))
+                    .hasMessage(ErrorCode.INVALID_CHECKIN_UPDATE_TIME.getMessage());
+            update(10L, previous.getExitTime());
+            assertThat(record.getEntryTime()).isEqualTo(previous.getExitTime());
+        }
+
+        @Test
+        void correctsHistoricalRecordWhileLaterVisitIsInProgress() {
+            addPreviousLongTermRecord();
+            VisitRecord previous = visit.getRecords().get(1);
+            LocalDateTime corrected = previous.getEntryTime().minusHours(1);
+            update(previous.getId(), corrected);
+            assertThat(previous.getEntryTime()).isEqualTo(corrected);
+            assertThat(record.getEntryTime()).isEqualTo(entryTime);
+            assertThat(visit.getStatus()).isEqualTo(VisitStatus.IN_PROGRESS);
+        }
+
+        @Test
+        void rejectsOverlapWithLaterOpenRecord() {
+            addPreviousLongTermRecord();
+            VisitRecord previous = visit.getRecords().get(1);
+            previous.setExitTime(null);
+            assertThatThrownBy(() -> update(11L, entryTime.minusHours(1)))
+                    .hasMessage(ErrorCode.INVALID_CHECKIN_UPDATE_TIME.getMessage());
+        }
+
+        @Test
+        void rejectsManagerWithoutAuthority() {
+            manager = User.builder().id(HOST_ID).department(createDepartment(1L)).build();
+            given(userRepository.findById(HOST_ID)).willReturn(Optional.of(manager));
+            assertThatThrownBy(
+                            () ->
+                                    visitService.updateCheckInTime(
+                                            HOST_ID,
+                                            VISIT_ID,
+                                            10L,
+                                            new AdminCheckInRequestDto(entryTime)))
+                    .hasMessage(ErrorCode.VISIT_ACCESS_DENIED.getMessage());
+        }
+
+        @Test
+        void rejectsOtherDepartmentButAllowsSecurityGuard() {
+            manager.setDepartment(createDepartment(99L));
+            assertThatThrownBy(() -> update(10L, entryTime))
+                    .hasMessage(ErrorCode.VISIT_ACCESS_DENIED.getMessage());
+            manager.setPosition(Position.SECURITY_GUARD);
+            assertThat(update(10L, entryTime)).isEqualTo(VISIT_ID);
         }
     }
 

@@ -17,6 +17,7 @@ import jakarta.validation.Validator;
 import kr.co.awesomelead.groupware_backend.domain.department.enums.Company;
 import kr.co.awesomelead.groupware_backend.domain.user.dto.CustomUserDetails;
 import kr.co.awesomelead.groupware_backend.domain.user.service.UserService;
+import kr.co.awesomelead.groupware_backend.domain.visit.dto.request.AdminCheckInRequestDto;
 import kr.co.awesomelead.groupware_backend.domain.visit.dto.request.CheckInRequestDto;
 import kr.co.awesomelead.groupware_backend.domain.visit.dto.request.CheckOutRequestDto;
 import kr.co.awesomelead.groupware_backend.domain.visit.dto.request.LongTermVisitRequestDto;
@@ -233,6 +234,22 @@ public class VisitController {
 
         Long visitId = visitService.checkIn(requestDto);
         return ResponseEntity.ok(ApiResponse.onSuccess(visitId));
+    }
+
+    @Operation(
+            summary = "직원용 사전 예약자 입실 처리",
+            description =
+                    "MANAGE_VISITOR 권한을 가진 담당 부서 직원이 누락된 실제 입실 시간을 등록합니다. "
+                            + "경비원은 같은 권한으로 모든 내방객을 처리할 수 있습니다. "
+                            + "하루 방문은 방문 전, 장기 방문은 승인 완료 상태에서만 가능합니다.")
+    @PostMapping("/admin/{visitId}/check-in")
+    public ResponseEntity<ApiResponse<Long>> checkInForAdmin(
+            @Parameter(hidden = true) @AuthenticationPrincipal CustomUserDetails userDetails,
+            @PathVariable Long visitId,
+            @Valid @RequestBody AdminCheckInRequestDto dto) {
+        return ResponseEntity.ok(
+                ApiResponse.onSuccess(
+                        visitService.checkInForAdmin(userDetails.getId(), visitId, dto)));
     }
 
     private OneDayVisitRequestDto parseOneDayVisitRequest(String dto) {

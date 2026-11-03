@@ -13,6 +13,7 @@ import kr.co.awesomelead.groupware_backend.domain.user.entity.User;
 import kr.co.awesomelead.groupware_backend.domain.user.enums.Authority;
 import kr.co.awesomelead.groupware_backend.domain.user.enums.Position;
 import kr.co.awesomelead.groupware_backend.domain.user.repository.UserRepository;
+import kr.co.awesomelead.groupware_backend.domain.visit.dto.request.AdminCheckInRequestDto;
 import kr.co.awesomelead.groupware_backend.domain.visit.dto.request.CheckInRequestDto;
 import kr.co.awesomelead.groupware_backend.domain.visit.dto.request.CheckOutRequestDto;
 import kr.co.awesomelead.groupware_backend.domain.visit.dto.request.LongTermVisitRequestDto;
@@ -251,6 +252,52 @@ public class VisitService {
         visit.validateCheckInEligible();
 
         LocalDateTime entryTime = LocalDateTime.now();
+        return completeCheckIn(visit, entryTime);
+    }
+
+    @Transactional
+    public Long checkInForAdmin(Long userId, Long visitId, AdminCheckInRequestDto dto) {
+        User manager = validateVisitorManageAuthority(userId);
+        Visit visit =
+                visitRepository
+                        .findById(visitId)
+                        .orElseThrow(() -> new CustomException(ErrorCode.VISIT_NOT_FOUND));
+        if (manager.getPosition() != Position.SECURITY_GUARD) {
+            validateManagedDepartmentAccess(manager, visit);
+        }
+
+        if (visit.getStatus() == VisitStatus.IN_PROGRESS
+                || visit.getRecords().stream()
+                        .anyMatch(r -> r.getEntryTime() != null && r.getExitTime() == null)) {
+            throw new CustomException(ErrorCode.ALREADY_CHECKED_IN);
+        }
+        boolean eligible =
+                switch (visit.getVisitCategory()) {
+                    case PRE_ONE_DAY -> visit.getStatus() == VisitStatus.NOT_VISITED
+                            && !visit.isVisited();
+                    case PRE_LONG_TERM -> visit.getStatus() == VisitStatus.APPROVED;
+                    case ON_SITE -> false;
+                };
+        if (!eligible) {
+            throw new CustomException(ErrorCode.CHECKIN_NOT_ALLOWED);
+        }
+
+        LocalDateTime entryTime = dto.getCheckInTime();
+        if (entryTime == null
+                || entryTime.isAfter(LocalDateTime.now())
+                || entryTime.toLocalDate().isBefore(visit.getStartDate())
+                || entryTime.toLocalDate().isAfter(visit.getEndDate())
+                || visit.getRecords().stream()
+                        .anyMatch(
+                                r ->
+                                        r.getExitTime() != null
+                                                && entryTime.isBefore(r.getExitTime()))) {
+            throw new CustomException(ErrorCode.INVALID_CHECKIN_TIME);
+        }
+        return completeCheckIn(visit, entryTime);
+    }
+
+    private Long completeCheckIn(Visit visit, LocalDateTime entryTime) {
         VisitRecord record = resolveCheckInRecord(visit, entryTime);
 
         visit.setStatus(VisitStatus.IN_PROGRESS);
@@ -292,7 +339,7 @@ public class VisitService {
                         .orElse(null);
 
         if (preRegistrationRecord != null) {
-            preRegistrationRecord.setVisitDate(LocalDate.now());
+            preRegistrationRecord.setVisitDate(entryTime.toLocalDate());
             preRegistrationRecord.setEntryTime(entryTime);
             return preRegistrationRecord;
         }
@@ -307,7 +354,7 @@ public class VisitService {
         VisitRecord record =
                 VisitRecord.builder()
                         .visit(visit)
-                        .visitDate(LocalDate.now())
+                        .visitDate(entryTime.toLocalDate())
                         .entryTime(entryTime)
                         .signatureKey(signatureKey)
                         .build();

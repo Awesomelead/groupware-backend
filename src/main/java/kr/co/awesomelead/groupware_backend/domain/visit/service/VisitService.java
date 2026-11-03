@@ -297,6 +297,53 @@ public class VisitService {
         return completeCheckIn(visit, entryTime);
     }
 
+    @Transactional
+    public Long updateCheckInTime(
+            Long userId, Long visitId, Long recordId, AdminCheckInRequestDto dto) {
+        User manager = validateVisitorManageAuthority(userId);
+        Visit visit =
+                visitRepository
+                        .findById(visitId)
+                        .orElseThrow(() -> new CustomException(ErrorCode.VISIT_NOT_FOUND));
+        if (manager.getPosition() != Position.SECURITY_GUARD) {
+            validateManagedDepartmentAccess(manager, visit);
+        }
+        VisitRecord record =
+                visit.getRecords().stream()
+                        .filter(r -> recordId.equals(r.getId()))
+                        .findFirst()
+                        .orElseThrow(() -> new CustomException(ErrorCode.RECORD_NOT_FOUND));
+        if (visit.getVisitCategory() == VisitCategory.ON_SITE || record.getEntryTime() == null) {
+            throw new CustomException(ErrorCode.CHECKIN_NOT_ALLOWED);
+        }
+
+        LocalDateTime entryTime = dto.getCheckInTime();
+        if (entryTime == null
+                || entryTime.isAfter(LocalDateTime.now())
+                || entryTime.toLocalDate().isBefore(visit.getStartDate())
+                || entryTime.toLocalDate().isAfter(visit.getEndDate())
+                || (record.getExitTime() != null && entryTime.isAfter(record.getExitTime()))) {
+            throw new CustomException(ErrorCode.INVALID_CHECKIN_UPDATE_TIME);
+        }
+        boolean overlaps =
+                visit.getRecords().stream()
+                        .filter(other -> other != record && other.getEntryTime() != null)
+                        .anyMatch(
+                                other ->
+                                        (other.getExitTime() == null
+                                                        || entryTime.isBefore(other.getExitTime()))
+                                                && (record.getExitTime() == null
+                                                        || other.getEntryTime()
+                                                                .isBefore(record.getExitTime())));
+        if (overlaps) {
+            throw new CustomException(ErrorCode.INVALID_CHECKIN_UPDATE_TIME);
+        }
+
+        record.setEntryTime(entryTime);
+        record.setVisitDate(entryTime.toLocalDate());
+        return visit.getId();
+    }
+
     private Long completeCheckIn(Visit visit, LocalDateTime entryTime) {
         VisitRecord record = resolveCheckInRecord(visit, entryTime);
 

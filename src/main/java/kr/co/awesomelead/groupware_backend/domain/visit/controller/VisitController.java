@@ -252,6 +252,24 @@ public class VisitController {
                         visitService.checkInForAdmin(userDetails.getId(), visitId, dto)));
     }
 
+    @Operation(
+            summary = "직원용 사전 예약자 입실 시간 수정",
+            description =
+                    "입실 처리와 동일한 권한으로 특정 입퇴실 기록의 입실 시간을 수정합니다. "
+                            + "recordId는 직원용 방문 상세 조회 응답의 records[].id입니다. "
+                            + "방문 상태는 유지하며 입실 알림은 다시 발송하지 않습니다.")
+    @PatchMapping("/admin/{visitId}/records/{recordId}/check-in")
+    public ResponseEntity<ApiResponse<Long>> updateCheckInTime(
+            @Parameter(hidden = true) @AuthenticationPrincipal CustomUserDetails userDetails,
+            @PathVariable Long visitId,
+            @Parameter(description = "방문 상세 응답 records[].id") @PathVariable Long recordId,
+            @Valid @RequestBody AdminCheckInRequestDto dto) {
+        return ResponseEntity.ok(
+                ApiResponse.onSuccess(
+                        visitService.updateCheckInTime(
+                                userDetails.getId(), visitId, recordId, dto)));
+    }
+
     private OneDayVisitRequestDto parseOneDayVisitRequest(String dto) {
         try {
             OneDayVisitRequestDto requestDto =

@@ -14,7 +14,7 @@ import java.time.LocalDateTime;
 @Getter
 @NoArgsConstructor
 @AllArgsConstructor
-@Schema(description = "직원용 사전 예약자 입실 처리 요청")
+@Schema(description = "직원용 사전 예약자 입실 등록 및 시간 수정 요청")
 public class AdminCheckInRequestDto {
 
     @NotNull(message = "입실 시간은 필수입니다.")

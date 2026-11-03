@@ -16,7 +16,9 @@ import java.time.LocalDateTime;
 @Schema(description = "입퇴실 및 서명 기록 DTO")
 public class VisitRecordResponseDto {
 
-    @Schema(description = "방문 기록 ID (PK)", example = "10")
+    @Schema(
+            description = "방문 기록 ID (PK). 입실 시간 수정 API의 recordId 및 퇴실 API의 visitRecordId로 사용",
+            example = "10")
     private Long id;
 
     @Schema(description = "입실 시간", example = "2026-02-01 10:00:00")
